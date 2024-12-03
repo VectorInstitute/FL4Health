@@ -44,6 +44,17 @@ The settings for `mypy` are in the `mypy.ini`, settings for `flake8` are contain
 
 All of these checks and formatters are invoked by pre-commit hooks. These hooks are run remotely on GitHub. In order to ensure that your code conforms to these standards, and, therefore, passes the remote checks, you can install the pre-commit hooks to be run locally. This is done by running (with your environment active)
 
+**Note**: We use the modern mypy types introduced in Python 3.10 and above. See some of the [documentation here](https://mypy.readthedocs.io/en/stable/builtin_types.html)
+
+For example, this means that we're using `list[str], tuple[int, int], tuple[int, ...], dict[str, int], type[C]` as built-in types and `Iterable[int], Sequence[bool], Mapping[str, int], Callable[[...], ...]` from collections.abc (as now recommended by mypy).
+
+We are also moving to the new Optional and Union specification style:
+```python
+Optional[typing_stuff] -> typing_stuff | None
+Union[typing1, typing2] -> typing1 | typing2
+Optional[Union[typing1, typing2]] -> typing1 | typing2 | None
+```
+
 ```bash
 pre-commit install
 ```

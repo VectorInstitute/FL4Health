@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Sequence
+from collections.abc import Callable, Sequence
 
 from flwr.common.typing import Config, Scalar
 from flwr.server.client_manager import ClientManager
@@ -17,7 +17,7 @@ class DittoServer(FlServer):
         strategy: FedAvgWithAdaptiveConstraint,
         reporters: Sequence[BaseReporter] | None = None,
         checkpoint_and_state_module: AdaptiveConstraintServerCheckpointAndStateModule | None = None,
-        on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_init_parameters_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         server_name: str | None = None,
         accept_failures: bool = True,
     ) -> None:
@@ -44,7 +44,7 @@ class DittoServer(FlServer):
                 module is provided, no checkpointing or state preservation will happen. Defaults to None.
                 NOTE: For Ditto, the model shared with the server is the GLOBAL MODEL, which isn't the target of FL
                 training for this algorithm. However, one may still want to save this model for other purposes.
-            on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional): Function used to
+            on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to
                 configure how one asks a client to provide parameters from which to initialize all other clients by
                 providing a Config dictionary. If this is none, then a blank config is sent with the parameter request
                 (which is default behavior for flower servers). Defaults to None.

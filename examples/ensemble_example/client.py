@@ -1,6 +1,5 @@
 import argparse
 from pathlib import Path
-from typing import Dict, Tuple
 
 import flwr as fl
 import torch
@@ -20,22 +19,22 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class MnistEnsembleClient(EnsembleClient):
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=float(config["sample_percentage"]))
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler=sampler)
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> EnsembleModel:
-        ensemble_models: Dict[str, nn.Module] = {
+        ensemble_models: dict[str, nn.Module] = {
             "model_0": ConfigurableMnistNet(out_channel_mult=1).to(self.device),
             "model_1": ConfigurableMnistNet(out_channel_mult=2).to(self.device),
             "model_2": ConfigurableMnistNet(out_channel_mult=3).to(self.device),
         }
         return EnsembleModel(ensemble_models)
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
-        ensemble_optimizers: Dict[str, torch.optim.Optimizer] = {
+    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
+        ensemble_optimizers: dict[str, torch.optim.Optimizer] = {
             "model_0": torch.optim.AdamW(self.model.ensemble_models["model_0"].parameters(), lr=0.01),
             "model_1": torch.optim.AdamW(self.model.ensemble_models["model_1"].parameters(), lr=0.01),
             "model_2": torch.optim.AdamW(self.model.ensemble_models["model_2"].parameters(), lr=0.01),

@@ -1,12 +1,11 @@
 import argparse
 import os
-from typing import Dict, List
 
 from research.flamby.visualization_scripts.average_performance_configs import fed_isic_file_names_to_info
 
 
-def process_results_dict(results_lines: List[str]) -> Dict[str, float]:
-    results_dict: Dict[str, float] = {}
+def process_results_dict(results_lines: list[str]) -> dict[str, float]:
+    results_dict: dict[str, float] = {}
     for results_line in results_lines:
         split_line = results_line.split(":")
         results_dict[split_line[0]] = float(split_line[1])
@@ -14,7 +13,7 @@ def process_results_dict(results_lines: List[str]) -> Dict[str, float]:
 
 
 def process_results_to_matlab_string(
-    chart_method_names: List[str], chart_means: List[float], chart_std_devs: List[float]
+    chart_method_names: list[str], chart_means: list[float], chart_std_devs: list[float]
 ) -> None:
     out_string = "method = {'"
     chart_method_names_joined = "', '".join(chart_method_names)

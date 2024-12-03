@@ -1,8 +1,8 @@
 import random
 import warnings
+from collections.abc import Callable
 from logging import INFO
 from pathlib import Path
-from typing import Callable, Dict, Optional, Tuple
 
 import numpy as np
 import torch
@@ -28,8 +28,8 @@ class ToNumpy:
 
 
 def split_data_and_targets(
-    data: torch.Tensor, targets: torch.Tensor, validation_proportion: float = 0.2, hash_key: Optional[int] = None
-) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    data: torch.Tensor, targets: torch.Tensor, validation_proportion: float = 0.2, hash_key: int | None = None
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
 
     total_size = data.shape[0]
     train_size = int(total_size * (1 - validation_proportion))
@@ -42,7 +42,7 @@ def split_data_and_targets(
     return train_data, train_targets, val_data, val_targets
 
 
-def get_mnist_data_and_target_tensors(data_dir: Path, train: bool) -> Tuple[torch.Tensor, torch.Tensor]:
+def get_mnist_data_and_target_tensors(data_dir: Path, train: bool) -> tuple[torch.Tensor, torch.Tensor]:
     mnist_dataset = MNIST(data_dir, train=train, download=True)
     data = torch.Tensor(mnist_dataset.data)
     targets = torch.Tensor(mnist_dataset.targets).long()
@@ -51,11 +51,11 @@ def get_mnist_data_and_target_tensors(data_dir: Path, train: bool) -> Tuple[torc
 
 def get_train_and_val_mnist_datasets(
     data_dir: Path,
-    transform: Optional[Callable] = None,
-    target_transform: Optional[Callable] = None,
+    transform: Callable | None = None,
+    target_transform: Callable | None = None,
     validation_proportion: float = 0.2,
-    hash_key: Optional[int] = None,
-) -> Tuple[TensorDataset, TensorDataset]:
+    hash_key: int | None = None,
+) -> tuple[TensorDataset, TensorDataset]:
     data, targets = get_mnist_data_and_target_tensors(data_dir, True)
 
     train_data, train_targets, val_data, val_targets = split_data_and_targets(
@@ -70,13 +70,13 @@ def get_train_and_val_mnist_datasets(
 def load_mnist_data(
     data_dir: Path,
     batch_size: int,
-    sampler: Optional[LabelBasedSampler] = None,
-    transform: Optional[Callable] = None,
-    target_transform: Optional[Callable] = None,
-    dataset_converter: Optional[DatasetConverter] = None,
+    sampler: LabelBasedSampler | None = None,
+    transform: Callable | None = None,
+    target_transform: Callable | None = None,
+    dataset_converter: DatasetConverter | None = None,
     validation_proportion: float = 0.2,
-    hash_key: Optional[int] = None,
-) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
+    hash_key: int | None = None,
+) -> tuple[DataLoader, DataLoader, dict[str, int]]:
     """
     Load MNIST Dataset (training and validation set).
 
@@ -84,18 +84,18 @@ def load_mnist_data(
         data_dir (Path): The path to the MNIST dataset locally.
             Dataset is downloaded to this location if it does not already exist.
         batch_size (int): The batch size to use for the train and validation dataloader.
-        sampler (Optional[LabelBasedSampler]): Optional sampler to subsample dataset based on labels.
-        transform (Optional[Callable]): Optional transform to be applied to input samples.
-        target_transform (Optional[Callable]): Optional transform to be applied to targets.
-        dataset_converter (Optional[DatasetConverter]): Optional dataset converter used to convert
+        sampler (LabelBasedSampler | None): Optional sampler to subsample dataset based on labels.
+        transform (Callable | None): Optional transform to be applied to input samples.
+        target_transform (Callable | None): Optional transform to be applied to targets.
+        dataset_converter (DatasetConverter | None): Optional dataset converter used to convert
             the input and/or target of train and validation dataset.
         validation_proportion (float): A float between 0 and 1 specifying the proportion of samples
             to allocate to the validation dataset. Defaults to 0.2.
-        hash_key (Optional[int]): Optional hash key to create a reproducible split for train and validation
+        hash_key (int | None): Optional hash key to create a reproducible split for train and validation
             datasets.
 
     Returns:
-        Tuple[DataLoader, DataLoader, Dict[str, int]]: The train data loader, validation data loader
+        tuple[DataLoader, DataLoader, dict[str, int]]: The train data loader, validation data loader
             and a dictionary with the sample counts of datasets underpinning the respective data loaders.
     """
     log(INFO, f"Data directory: {str(data_dir)}")
@@ -130,9 +130,9 @@ def load_mnist_data(
 def load_mnist_test_data(
     data_dir: Path,
     batch_size: int,
-    sampler: Optional[LabelBasedSampler] = None,
-    transform: Optional[Callable] = None,
-) -> Tuple[DataLoader, Dict[str, int]]:
+    sampler: LabelBasedSampler | None = None,
+    transform: Callable | None = None,
+) -> tuple[DataLoader, dict[str, int]]:
     """
     Load MNIST Test Dataset.
 
@@ -140,11 +140,11 @@ def load_mnist_test_data(
         data_dir (Path): The path to the MNIST dataset locally.
             Dataset is downloaded to this location if it does not already exist.
         batch_size (int): The batch size to use for the test dataloader.
-        sampler (Optional[LabelBasedSampler]): Optional sampler to subsample dataset based on labels.
-        transform (Optional[Callable]): Optional transform to be applied to input samples.
+        sampler (LabelBasedSampler | None): Optional sampler to subsample dataset based on labels.
+        transform (Callable | None): Optional transform to be applied to input samples.
 
     Returns:
-        Tuple[DataLoader, Dict[str, int]]: The test data loader and a dictionary containing the sample count
+        tuple[DataLoader, dict[str, int]]: The test data loader and a dictionary containing the sample count
             of the test dataset.
     """
     log(INFO, f"Data directory: {str(data_dir)}")
@@ -169,7 +169,7 @@ def load_mnist_test_data(
     return evaluation_loader, num_examples
 
 
-def get_cifar10_data_and_target_tensors(data_dir: Path, train: bool) -> Tuple[torch.Tensor, torch.Tensor]:
+def get_cifar10_data_and_target_tensors(data_dir: Path, train: bool) -> tuple[torch.Tensor, torch.Tensor]:
     cifar_dataset = CIFAR10(data_dir, train=train, download=True)
     data = torch.Tensor(cifar_dataset.data)
     targets = torch.Tensor(cifar_dataset.targets).long()
@@ -178,11 +178,11 @@ def get_cifar10_data_and_target_tensors(data_dir: Path, train: bool) -> Tuple[to
 
 def get_train_and_val_cifar10_datasets(
     data_dir: Path,
-    transform: Optional[Callable] = None,
-    target_transform: Optional[Callable] = None,
+    transform: Callable | None = None,
+    target_transform: Callable | None = None,
     validation_proportion: float = 0.2,
-    hash_key: Optional[int] = None,
-) -> Tuple[TensorDataset, TensorDataset]:
+    hash_key: int | None = None,
+) -> tuple[TensorDataset, TensorDataset]:
     data, targets = get_cifar10_data_and_target_tensors(data_dir, True)
 
     train_data, train_targets, val_data, val_targets = split_data_and_targets(
@@ -198,10 +198,10 @@ def get_train_and_val_cifar10_datasets(
 def load_cifar10_data(
     data_dir: Path,
     batch_size: int,
-    sampler: Optional[LabelBasedSampler] = None,
+    sampler: LabelBasedSampler | None = None,
     validation_proportion: float = 0.2,
-    hash_key: Optional[int] = None,
-) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
+    hash_key: int | None = None,
+) -> tuple[DataLoader, DataLoader, dict[str, int]]:
     """
     Load CIFAR10 Dataset (training and validation set).
 
@@ -209,14 +209,14 @@ def load_cifar10_data(
         data_dir (Path): The path to the CIFAR10 dataset locally.
             Dataset is downloaded to this location if it does not already exist.
         batch_size (int): The batch size to use for the train and validation dataloader.
-        sampler (Optional[LabelBasedSampler]): Optional sampler to subsample dataset based on labels.
+        sampler (LabelBasedSampler | None): Optional sampler to subsample dataset based on labels.
         validation_proportion (float): A float between 0 and 1 specifying the proportion of samples
             to allocate to the validation dataset. Defaults to 0.2.
-        hash_key (Optional[int]): Optional hash key to create a reproducible split for train and validation
+        hash_key (int | None): Optional hash key to create a reproducible split for train and validation
             datasets.
 
     Returns:
-        Tuple[DataLoader, DataLoader, Dict[str, int]]: The train data loader, validation data loader
+        tuple[DataLoader, DataLoader, dict[str, int]]: The train data loader, validation data loader
             and a dictionary with the sample counts of datasets underpinning the respective data loaders.
     """
     log(INFO, f"Data directory: {str(data_dir)}")
@@ -246,8 +246,8 @@ def load_cifar10_data(
 
 
 def load_cifar10_test_data(
-    data_dir: Path, batch_size: int, sampler: Optional[LabelBasedSampler] = None
-) -> Tuple[DataLoader, Dict[str, int]]:
+    data_dir: Path, batch_size: int, sampler: LabelBasedSampler | None = None
+) -> tuple[DataLoader, dict[str, int]]:
     """
     Load CIFAR10 Test Dataset.
 
@@ -255,10 +255,10 @@ def load_cifar10_test_data(
         data_dir (Path): The path to the CIFAR10 dataset locally.
             Dataset is downloaded to this location if it does not already exist.
         batch_size (int): The batch size to use for the test dataloader.
-        sampler (Optional[LabelBasedSampler]): Optional sampler to subsample dataset based on labels.
+        sampler (LabelBasedSampler | None): Optional sampler to subsample dataset based on labels.
 
     Returns:
-        Tuple[DataLoader, Dict[str, int]]: The test data loader and a dictionary containing the sample count
+        tuple[DataLoader, dict[str, int]]: The test data loader and a dictionary containing the sample count
             of the test dataset.
     """
     log(INFO, f"Data directory: {str(data_dir)}")

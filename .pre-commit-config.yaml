@@ -46,6 +46,14 @@ repos:
       - id: nbqa-flake8
       - id: nbqa-mypy
 
+  - repo: local
+    hooks:
+      - id: mypy legacy type check
+        name: mypy legacy type check
+        entry: python mypy_disallow_legacy_types.py
+        language: python
+        pass_filenames: true
+
 ci:
     autofix_commit_msg: |
         [pre-commit.ci] Add auto fixes from pre-commit.com hooks

@@ -1,6 +1,6 @@
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
 
 import torch
 from flwr.common import NDArrays
@@ -27,10 +27,10 @@ class NumpyClippingClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        client_name: Optional[str] = None,
+        client_name: str | None = None,
     ) -> None:
         """
         Client that clips updates being sent to the server where noise is added. Used to obtain Client Level
@@ -43,7 +43,7 @@ class NumpyClippingClient(BasicClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpoint_and_state_module (Optional[ClientCheckpointAndStateModule], optional): A module meant to handle
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
                 No checkpointing (state or model) is done if not provided. Defaults to None.
@@ -51,7 +51,7 @@ class NumpyClippingClient(BasicClient):
                 should send data to. Defaults to None.
             progress_bar (bool, optional): Whether or not to display a progress bar during client training and
                 validation. Uses tqdm. Defaults to False
-            client_name (Optional[str], optional): An optional client name that uniquely identifies a client.
+            client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
         """
@@ -66,15 +66,15 @@ class NumpyClippingClient(BasicClient):
             client_name=client_name,
         )
         self.parameter_exchanger: FullParameterExchangerWithPacking[float]
-        self.clipping_bound: Optional[float] = None
-        self.adaptive_clipping: Optional[bool] = None
+        self.clipping_bound: float | None = None
+        self.adaptive_clipping: bool | None = None
 
     def calculate_parameters_norm(self, parameters: NDArrays) -> float:
         layer_inner_products = [pow(linalg.norm(layer_weights), 2) for layer_weights in parameters]
         # network Frobenius norm
         return pow(sum(layer_inner_products), 0.5)
 
-    def clip_parameters(self, parameters: NDArrays) -> Tuple[NDArrays, float]:
+    def clip_parameters(self, parameters: NDArrays) -> tuple[NDArrays, float]:
         assert self.clipping_bound is not None
         assert self.adaptive_clipping is not None
         # performs flat clipping (i.e. parameters * min(1, C/||parameters||_2))
@@ -89,7 +89,7 @@ class NumpyClippingClient(BasicClient):
         # parameters and clipping bit
         return [layer_weights * clip_scalar for layer_weights in parameters], 0.0
 
-    def compute_weight_update_and_clip(self, parameters: NDArrays) -> Tuple[NDArrays, float]:
+    def compute_weight_update_and_clip(self, parameters: NDArrays) -> tuple[NDArrays, float]:
         assert self.initial_weights is not None
         assert len(parameters) == len(self.initial_weights)
         weight_update: NDArrays = [

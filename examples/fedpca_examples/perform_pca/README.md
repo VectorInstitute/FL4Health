@@ -3,7 +3,7 @@ This example performs federated principal component analysis. The goal is to com
 
 This is achieved by each client performing PCA locally at first, then the principal components are sent to a central server to be merged.
 
-Each client performs Dirichlet subsampling on the whole dataset to produce heterogeneous local datasets. This is done to ensure that local principal compoents are distinct across different clients.
+Each client performs Dirichlet subsampling on the whole dataset to produce heterogeneous local datasets. This is done to ensure that local principal components are distinct across different clients.
 
 ## Running the Example
 In order to run the example, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.
@@ -36,6 +36,6 @@ python -m examples.fedpca_examples.perform_pca.client --dataset_path /path/to/da
 the dataset already exists at the path specified, it will be loaded from there. Otherwise, the dataset will be
 automatically downloaded to the path specified and used in the run.
 
-* The argument `components_save_path` specifies the directory in which the merged principal components will be saved, so they can be leveraged for other downstream tasks. An example of dimensionality reduction can be found at `exampes/fedpca_examples/dim_reduction`.
+* The argument `components_save_path` specifies the directory in which the merged principal components will be saved, so they can be leveraged for other downstream tasks. An example of dimensionality reduction can be found at `examples/fedpca_examples/dim_reduction`.
 
 After the clients have been started federated pca should commence.

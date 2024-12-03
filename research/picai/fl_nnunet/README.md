@@ -27,7 +27,7 @@ Then start a single or multiple clients in different sessions using the followin
 python -m research.picai.fl_nnunet.start_client --dataset-id 012
 ```
 
-The federated training will commmence once n_clients have been instantiated.
+The federated training will commence once n_clients have been instantiated.
 
 ## Running on Vector Cluster
 A slurm script has been made available to launch the experiments on the Vector Cluster. This script will automatically handle relaunching the job if it times out. The script `run_fl_single_node.slrm` first spins up a server and subsequently the clients to perform an FL experiment on the same machine. The commands below should be run from the top level directory:

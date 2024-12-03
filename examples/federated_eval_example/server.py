@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import flwr as fl
 
@@ -10,7 +10,7 @@ from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import uniform_evaluate_metrics_aggregation_fn
 
 
-def main(config: Dict[str, Any], server_checkpoint_path: Optional[Path]) -> None:
+def main(config: dict[str, Any], server_checkpoint_path: Path | None) -> None:
     evaluate_config = {"batch_size": config["batch_size"]}
 
     # ClientManager that performs Poisson type sampling

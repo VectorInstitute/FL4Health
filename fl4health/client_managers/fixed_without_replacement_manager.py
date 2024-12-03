@@ -1,6 +1,5 @@
 import random
 from logging import WARNING
-from typing import List, Optional
 
 from flwr.common.logger import log
 from flwr.server.client_proxy import ClientProxy
@@ -16,9 +15,9 @@ class FixedSamplingByFractionClientManager(BaseFractionSamplingManager):
         self,
         sample_fraction: float,
         # minimum number of clients required to be available
-        min_num_clients: Optional[int] = None,
-        criterion: Optional[Criterion] = None,
-    ) -> List[ClientProxy]:
+        min_num_clients: int | None = None,
+        criterion: Criterion | None = None,
+    ) -> list[ClientProxy]:
         """Sample a number of Flower ClientProxy instances."""
 
         available_cids = self.wait_and_filter(min_num_clients, criterion)

@@ -1,9 +1,9 @@
 import json
 import os
 import random
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -91,7 +91,7 @@ class ZScoreNormalization(Transform):
 def get_img_transform() -> Compose:
     """
     Basic transformation pipeline for images that includes ensuring type and shape of data,
-    performing z score normalization, random roation, intensity scaling and adjusting contrast.
+    performing z score normalization, random rotation, intensity scaling and adjusting contrast.
 
     Returns:
         Compose: Image transformation pipeline.
@@ -119,18 +119,18 @@ def get_seg_transform() -> Compose:
     return Compose(transforms)
 
 
-def z_score_norm(image: torch.Tensor, quantile: Optional[float] = None) -> torch.Tensor:
+def z_score_norm(image: torch.Tensor, quantile: float | None = None) -> torch.Tensor:
     """
     Function that performs instance wise Z-score normalization (mean=0; stdev=1), where intensities
     below or above the given percentile are discarded.
 
     Args:
         image (torch.Tensor): N-dimensional image to be normalized and optionally clipped.
-        quantile (Optional[float]): Quantile used to set threshold to clip activations.
+        quantile (float | None): Quantile used to set threshold to clip activations.
             If None, no clipping occurs. If a quantile is specified, must be 0 =< 0.5
 
     Returns:
-       torch.Tensor: Z-Score Normalized vesrion of input that is clipped if a quantile is specified.
+       torch.Tensor: Z-Score Normalized version of input that is clipped if a quantile is specified.
     """
     image = image.float()
 
@@ -157,7 +157,7 @@ def get_img_and_seg_paths(
     include_t2w: bool = True,
     include_adc: bool = True,
     include_hbv: bool = True,
-) -> Tuple[List[List[str]], List[str], torch.Tensor]:
+) -> tuple[list[list[str]], list[str], torch.Tensor]:
     """
     Gets the image paths, segmentation paths and label proportions for the specified fold.
     Exclude t2w, adc or hbv scan if specified.
@@ -173,9 +173,9 @@ def get_img_and_seg_paths(
         include_hbv (bool): Whether or not to include hbv Sequence as part of the input data.
 
     Returns:
-        Tuple[Sequence[Sequence[str]], Sequence[str], torch.Tensor]: The first element of the returned tuple
+        tuple[Sequence[Sequence[str]], Sequence[str], torch.Tensor]: The first element of the returned tuple
             is a list of list of strings where the outer list represents a list of file paths corresponding
-            to the diffferent MRI Sequences for a given patient exam. The second element is a list of strings
+            to the different MRI Sequences for a given patient exam. The second element is a list of strings
             representing the associated segmentation labels. The final element of the returned tuple is a
             torch tensor that give the class proportions.
     """
@@ -217,25 +217,25 @@ def get_img_and_seg_paths(
 
 
 def split_img_and_seg_paths(
-    img_paths: List[List[str]], seg_paths: List[str], splits: int, seed: int = 0
-) -> Tuple[List[List[List[str]]], List[List[str]]]:
+    img_paths: list[list[str]], seg_paths: list[str], splits: int, seed: int = 0
+) -> tuple[list[list[list[str]]], list[list[str]]]:
     """
     Split image and segmentation paths into a number of mutually exclusive sets.
 
     img_paths (Sequence[Sequence[str]]: List of list of strings where the outer list represents
-        a list of file paths corresponding to the diffferent MRI Sequences for a given patient exam.
+        a list of file paths corresponding to the different MRI Sequences for a given patient exam.
     seg_paths (Sequence[str]): List of strings representing the segmentation labels associated with images.
     splits (int): The number of splits to partition the dataset.
 
     Returns:
-        Tuple[Sequence[Sequence[str]], Sequence[str]]: The image and segmentation paths for
+        tuple[Sequence[Sequence[str]], Sequence[str]]: The image and segmentation paths for
         images and segmentation labels.
     """
     assert len(img_paths) == len(seg_paths)
     random.seed(seed)
     client_assignments = [random.choice([i for i in range(splits)]) for _ in range(len(img_paths))]
-    client_img_paths: List[List[List[str]]] = [[] for _ in range(splits)]
-    client_seg_paths: List[List[str]] = [[] for _ in range(splits)]
+    client_img_paths: list[list[list[str]]] = [[] for _ in range(splits)]
+    client_seg_paths: list[list[str]] = [[] for _ in range(splits)]
     for i, assignment in enumerate(client_assignments):
         client_img_paths[assignment].append(img_paths[i])
         client_seg_paths[assignment].append(seg_paths[i])
@@ -244,7 +244,7 @@ def split_img_and_seg_paths(
 
 
 def get_dataloader(
-    img_paths: Union[Sequence[Sequence[str]], Sequence[str]],
+    img_paths: Sequence[Sequence[str]] | Sequence[str],
     seg_paths: Sequence[str],
     batch_size: int,
     img_transform: Compose,
@@ -256,10 +256,10 @@ def get_dataloader(
     Initializes and returns MONAI Dataloader.
     Args:
         img_paths (Sequence[Sequence[str]]: List of list of strings where the outer list represents a
-            list of file paths corresponding to the diffferent MRI Sequences for a given patient exam.
+            list of file paths corresponding to the different MRI Sequences for a given patient exam.
         seg_paths (Sequence[str]): List of strings representing the segmentation labels associated with images.
         batch_size (str): The number of samples per batch yielded by the DataLoader.
-        img_transorm (Compose): The series of transformations applied to input images during dataloading.
+        img_transform (Compose): The series of transformations applied to input images during dataloading.
         seg_transform (Compose): The series of transformations applied to the segmentation labels during dataloading.
         shuffle (bool): Whether or not to shuffle the dataset.
         num_workers (int): The number of workers used by the DataLoader.
@@ -268,7 +268,7 @@ def get_dataloader(
        DataLoader: MONAI dataloader.
     """
     # Ignoring type of image_files because Sequence[Sequence[str]] is valid input
-    # list of files interpreted as multi-parametric sequnce. Supported by image loader:
+    # list of files interpreted as multi-parametric sequence. Supported by image loader:
     # https://docs.monai.io/en/stable/transforms.html#loadimage used by ImageDataset:
     # https://docs.monai.io/en/latest/data.html#monai.data.ImageDataset
     ds = ImageDataset(

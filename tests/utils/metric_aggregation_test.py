@@ -1,5 +1,3 @@
-from typing import List, Tuple
-
 from flwr.common.typing import Metrics
 
 from fl4health.utils.metric_aggregation import (
@@ -15,18 +13,18 @@ from fl4health.utils.metric_aggregation import (
 def test_metric_aggregation() -> None:
     n_clients = 10
     int_metric_counts = [10 for _ in range(n_clients)]
-    int_metric_vals: List[Metrics] = []
+    int_metric_vals: list[Metrics] = []
     for i in range(n_clients):
         metric: Metrics = {"score": 1} if i < 5 else {"score": 2}
         int_metric_vals.append(metric)
-    int_metrics: List[Tuple[int, Metrics]] = [(count, val) for count, val in zip(int_metric_counts, int_metric_vals)]
+    int_metrics: list[tuple[int, Metrics]] = [(count, val) for count, val in zip(int_metric_counts, int_metric_vals)]
     int_total_examples, int_aggregated_metrics = metric_aggregation(int_metrics)
     assert int_total_examples == sum(int_metric_counts)
     gt_int_metrics: Metrics = {"score": 150.0}
     assert int_aggregated_metrics == gt_int_metrics
 
     float_metric_counts = [20 for _ in range(n_clients)]
-    float_metric_vals: List[Metrics] = []
+    float_metric_vals: list[Metrics] = []
     for i in range(n_clients):
         float_metric: Metrics = {"score": float(i)}
         float_metric_vals.append(float_metric)
@@ -49,7 +47,7 @@ def test_normalize_metrics() -> None:
 def test_fit_metrics_aggregation_fn() -> None:
     n_clients = 10
     metric_counts = [10 for _ in range(n_clients)]
-    metric_vals: List[Metrics] = []
+    metric_vals: list[Metrics] = []
     for i in range(n_clients):
         metric: Metrics = {"score": float(i)}
         metric_vals.append(metric)
@@ -63,7 +61,7 @@ def test_fit_metrics_aggregation_fn() -> None:
 def test_evaluate_metrics_aggregation_fn() -> None:
     n_clients = 5
     metric_counts = [20 for _ in range(n_clients)]
-    metric_vals: List[Metrics] = []
+    metric_vals: list[Metrics] = []
     for i in range(n_clients):
         metric: Metrics = {"score": float(i)}
         metric_vals.append(metric)
@@ -76,7 +74,7 @@ def test_evaluate_metrics_aggregation_fn() -> None:
 def test_uniform_metric_aggregation() -> None:
     client_sample_counts = [100, 200, 100, 200, 100]
     vals = [5.0, 10.0, 20.0, 10.0, 10.0]
-    client_metric_vals: List[Tuple[int, Metrics]] = []
+    client_metric_vals: list[tuple[int, Metrics]] = []
     for count, val in zip(client_sample_counts, vals):
         client_metrics: Metrics = {"score": val}
         client_metric_vals.append((count, client_metrics))
@@ -89,7 +87,7 @@ def test_uniform_metric_aggregation() -> None:
 def test_uniform_evaluate_metrics_aggregation_fn() -> None:
     client_sample_counts = [100, 200, 100, 200, 100]
     vals = [5.0, 10.0, 20.0, 10.0, 10.0]
-    client_metric_vals: List[Tuple[int, Metrics]] = []
+    client_metric_vals: list[tuple[int, Metrics]] = []
     for count, val in zip(client_sample_counts, vals):
         client_metrics: Metrics = {"score": val}
         client_metric_vals.append((count, client_metrics))

@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import torch
 from torch.nn.modules.loss import _Loss
 
@@ -39,14 +37,14 @@ class VaeLoss(_Loss):
         kl_divergence_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
         return kl_divergence_loss
 
-    def unpack_model_output(self, preds: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def unpack_model_output(self, preds: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Unpacks the model output tensor.
 
         Args:
             preds (torch.Tensor): Model predictions.
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor, torch.Tensor]: Unpacked output containing predictions, mu, and logvar.
+            tuple[torch.Tensor, torch.Tensor, torch.Tensor]: Unpacked output containing predictions, mu, and logvar.
         """
         # This methods assumes "preds" are batch first, and preds are 2D dimensional (already flattened).
         assert (

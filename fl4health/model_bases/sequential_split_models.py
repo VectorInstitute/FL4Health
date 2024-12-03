@@ -1,5 +1,3 @@
-from typing import Dict, List, Tuple
-
 import torch
 import torch.nn as nn
 
@@ -39,7 +37,7 @@ class SequentiallySplitModel(nn.Module):
         """
         return features.reshape(len(features), -1)
 
-    def sequential_forward(self, input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def sequential_forward(self, input: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Run a forward pass using the sequentially split modules base_module -> head_module.
 
@@ -47,13 +45,13 @@ class SequentiallySplitModel(nn.Module):
             input (torch.Tensor): Input to the model forward pass. Expected to be of shape (batch_size, *)
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]: Returns the predictions and features tensor from the sequential forward
+            tuple[torch.Tensor, torch.Tensor]: Returns the predictions and features tensor from the sequential forward
         """
         features = self.base_module.forward(input)
         predictions = self.head_module.forward(features)
         return predictions, features
 
-    def forward(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    def forward(self, input: torch.Tensor) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]:
         """
         Run a forward pass using the sequentially split modules base_module -> head_module. Features from the
         base_module are stored either in their original shapes are flattened to be of shape (batch_size, -1) depending
@@ -63,7 +61,7 @@ class SequentiallySplitModel(nn.Module):
             input (torch.Tensor): Input to the model forward pass. Expected to be of shape (batch_size, *)
 
         Returns:
-            Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: Dictionaries of predictions and features
+            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: Dictionaries of predictions and features
         """
         predictions, features = self.sequential_forward(input)
         predictions_dict = {"prediction": predictions}
@@ -82,13 +80,13 @@ class SequentiallySplitExchangeBaseModel(SequentiallySplitModel, PartialLayerExc
     those belonging to the base_module.
     """
 
-    def layers_to_exchange(self) -> List[str]:
+    def layers_to_exchange(self) -> list[str]:
         """
         Names of the layers of the model to be exchanged with the server. For these models, we only exchange layers
         associated with the base_model.
 
         Returns:
-            List[str]: The names of the layers to be exchanged with the server. This is used by the FixedLayerExchanger
+            list[str]: The names of the layers to be exchanged with the server. This is used by the FixedLayerExchanger
             class
         """
         return [layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("base_module.")]

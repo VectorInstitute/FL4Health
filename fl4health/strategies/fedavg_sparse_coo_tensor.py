@@ -1,7 +1,7 @@
 from collections import defaultdict
+from collections.abc import Callable
 from functools import reduce
 from logging import WARNING
-from typing import Callable, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import torch
 from flwr.common import MetricsAggregationFn, NDArrays, Parameters, ndarrays_to_parameters
@@ -24,18 +24,15 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         min_fit_clients: int = 2,
         min_evaluate_clients: int = 2,
         min_available_clients: int = 2,
-        evaluate_fn: Optional[
-            Callable[
-                [int, NDArrays, Dict[str, Scalar]],
-                Optional[Tuple[float, Dict[str, Scalar]]],
-            ]
-        ] = None,
-        on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
-        on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
+        evaluate_fn: (
+            Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None
+        ) = None,
+        on_fit_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
+        on_evaluate_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
-        initial_parameters: Optional[Parameters] = None,
-        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        initial_parameters: Parameters | None = None,
+        fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
+        evaluate_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         weighted_aggregation: bool = True,
         weighted_eval_losses: bool = True,
     ) -> None:
@@ -61,20 +58,18 @@ class FedAvgSparseCooTensor(BasicFedAvg):
             min_fit_clients (int, optional): _description_. Defaults to 2.
             min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             min_available_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
-            evaluate_fn (Optional[
-                Callable[[int, NDArrays, Dict[str, Scalar]], Optional[Tuple[float, Dict[str, Scalar]]]]
-            ]):
+            evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
                 Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
                 Function used to configure client-side validation by providing a Config dictionary.
                 Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
-            initial_parameters (Optional[Parameters], optional): Initial global model parameters. Defaults to None.
-            fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+            initial_parameters (Parameters | None, optional): Initial global model parameters. Defaults to None.
+            fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
-            evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+            evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
             weighted_aggregation (bool, optional): Determines whether parameter aggregation is a linearly weighted
                 average or a uniform average. FedAvg default is weighted average by client dataset counts.
@@ -104,9 +99,9 @@ class FedAvgSparseCooTensor(BasicFedAvg):
     def aggregate_fit(
         self,
         server_round: int,
-        results: List[Tuple[ClientProxy, FitRes]],
-        failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-    ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
+        results: list[tuple[ClientProxy, FitRes]],
+        failures: list[tuple[ClientProxy, FitRes] | BaseException],
+    ) -> tuple[Parameters | None, dict[str, Scalar]]:
         """
         Aggregate the results from the federated fit round. The aggregation requires some special treatment, as the
         participating clients are allowed to exchange an arbitrary set of parameters. So before aggregation takes place
@@ -121,14 +116,14 @@ class FedAvgSparseCooTensor(BasicFedAvg):
 
         Args:
             server_round (int): Indicates the server round we're currently on.
-            results (List[Tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
+            results (list[tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
                 that need to be aggregated on the server-side. In this scheme, the clients pack the tensor names into
                 the results object along with the weight values to allow for alignment during aggregation.
-            failures (List[Union[Tuple[ClientProxy, FitRes], BaseException]]): These are the results and exceptions
+            failures (list[tuple[ClientProxy, FitRes] | BaseException]): These are the results and exceptions
                 from clients that experienced an issue during training, such as timeouts or exceptions.
 
         Returns:
-            Tuple[Optional[Parameters], Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
+            tuple[Parameters | None, dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
                 For sparse tensor exchange we also pack in the names of all of the tensors that were aggregated in this
                 phase to allow clients to insert the values into the proper areas of their models.
         """
@@ -178,14 +173,14 @@ class FedAvgSparseCooTensor(BasicFedAvg):
 
         return ndarrays_to_parameters(packed_parameters), metrics_aggregated
 
-    def aggregate(self, results: List[Tuple[NDArrays, int]]) -> Dict[str, Tensor]:
+    def aggregate(self, results: list[tuple[NDArrays, int]]) -> dict[str, Tensor]:
         """
         Aggregate the different tensors across clients that have contributed to a certain tensor.
         This aggregation may be weighted or unweighted.
         The called functions handle tensor alignment.
 
         Args:
-            results (List[Tuple[NDArrays, int]]): The weight results from each client's local training
+            results (list[tuple[NDArrays, int]]): The weight results from each client's local training
             that need to be aggregated on the server-side and the number of training samples
             held on each client.
 
@@ -193,7 +188,7 @@ class FedAvgSparseCooTensor(BasicFedAvg):
                 the weight values to allow for alignment during aggregation.
 
         Returns:
-            Dict[str, Tensor]: A dictionary mapping the name of the tensor that was aggregated to the aggregated
+            dict[str, Tensor]: A dictionary mapping the name of the tensor that was aggregated to the aggregated
                 weights.
         """
         if self.weighted_aggregation:
@@ -201,7 +196,7 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         else:
             return self.unweighted_aggregate(results)
 
-    def weighted_aggregate(self, results: List[Tuple[NDArrays, int]]) -> Dict[str, Tensor]:
+    def weighted_aggregate(self, results: list[tuple[NDArrays, int]]) -> dict[str, Tensor]:
         """
         "results" consist of four parts: the exchanged (nonzero) parameter values,
         their coordinates within the tensor to which they belong,
@@ -222,18 +217,18 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         Note: this method performs weighted averaging.
 
         Args:
-            results (List[Tuple[NDArrays, int]]): The weight results from each client's local training that need to be
+            results (list[tuple[NDArrays, int]]): The weight results from each client's local training that need to be
                 aggregated on the server-side and the number of training samples held on each client.
                 The weight results consist of four parts, as detailed above.
                 In this scheme, the clients pack the layer names into the results object along with the weight values
                 to allow for alignment during aggregation.
 
         Returns:
-            Dict[str, Tensor]: A dictionary mapping the name of the tensor that was aggregated to the aggregated
+            dict[str, Tensor]: A dictionary mapping the name of the tensor that was aggregated to the aggregated
                 weights.
         """
-        names_to_dense_tensors: DefaultDict[str, List[Tensor]] = defaultdict(list)
-        total_num_examples: DefaultDict[str, int] = defaultdict(int)
+        names_to_dense_tensors: defaultdict[str, list[Tensor]] = defaultdict(list)
+        total_num_examples: defaultdict[str, int] = defaultdict(int)
 
         for packed_parameters, num_examples in results:
             nonzero_parameter_values, additional_info = self.parameter_packer.unpack_parameters(packed_parameters)
@@ -263,7 +258,7 @@ class FedAvgSparseCooTensor(BasicFedAvg):
 
         return names_to_tensors_aggregated
 
-    def unweighted_aggregate(self, results: List[Tuple[NDArrays, int]]) -> Dict[str, Tensor]:
+    def unweighted_aggregate(self, results: list[tuple[NDArrays, int]]) -> dict[str, Tensor]:
         """
         "results" consist of four parts: the exchanged (nonzero) parameter values,
         their coordinates within the tensor to which they belong,
@@ -283,18 +278,18 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         Note: this method performs uniform averaging.
 
         Args:
-            results (List[Tuple[NDArrays, int]]): The weight results from each client's local training that need to be
+            results (list[tuple[NDArrays, int]]): The weight results from each client's local training that need to be
                 aggregated on the server-side and the number of training samples held on each client.
                 The weight results consist of four parts, as detailed above.
                 In this scheme, the clients pack the layer names into the results object along with the weight values
                 to allow for alignment during aggregation.
 
         Returns:
-            Dict[str, Tensor]: A dictionary mapping the name of the tensor that was aggregated to the aggregated
+            dict[str, Tensor]: A dictionary mapping the name of the tensor that was aggregated to the aggregated
                 weights.
         """
-        names_to_dense_tensors: DefaultDict[str, List[Tensor]] = defaultdict(list)
-        total_num_clients: DefaultDict[str, int] = defaultdict(int)
+        names_to_dense_tensors: defaultdict[str, list[Tensor]] = defaultdict(list)
+        total_num_clients: defaultdict[str, int] = defaultdict(int)
 
         for packed_parameters, _ in results:
             nonzero_parameter_values, additional_info = self.parameter_packer.unpack_parameters(packed_parameters)

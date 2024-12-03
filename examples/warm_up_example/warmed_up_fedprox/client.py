@@ -1,14 +1,14 @@
 import argparse
 import os
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Optional, Sequence
 
 import flwr as fl
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
-from flwr.common.typing import Config, NDArrays, Tuple
+from flwr.common.typing import Config, NDArrays
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -30,7 +30,7 @@ class MnistFedProxClient(FedProxClient):
         metrics: Sequence[Metric],
         device: torch.device,
         pretrained_model_dir: Path,
-        weights_mapping_path: Optional[Path],
+        weights_mapping_path: Path | None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -45,7 +45,7 @@ class MnistFedProxClient(FedProxClient):
             weights_mapping_path=weights_mapping_path,
         )
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
         batch_size = narrow_dict_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)

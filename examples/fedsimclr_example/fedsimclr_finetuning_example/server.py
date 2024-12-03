@@ -1,7 +1,7 @@
 import argparse
 from functools import partial
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import flwr as fl
 import torch.nn as nn
@@ -23,8 +23,8 @@ from fl4health.utils.parameter_extraction import get_all_model_parameters
 def fit_config(
     batch_size: int,
     current_server_round: int,
-    local_epochs: Optional[int] = None,
-    local_steps: Optional[int] = None,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
 ) -> Config:
     return {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
@@ -39,7 +39,7 @@ def load_model(
     return FedSimClrModel.load_pretrained_model(model_path)
 
 
-def main(config: Dict[str, Any]) -> None:
+def main(config: dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,

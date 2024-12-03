@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from functools import partial
-from typing import Callable, Optional, Tuple, Union
 
 import torch
 
@@ -9,8 +9,8 @@ from fl4health.utils.dataset import TensorDataset
 class DatasetConverter(TensorDataset):
     def __init__(
         self,
-        converter_function: Callable[[torch.Tensor, torch.Tensor], Tuple[torch.Tensor, torch.Tensor]],
-        dataset: Union[None, TensorDataset],
+        converter_function: Callable[[torch.Tensor, torch.Tensor], tuple[torch.Tensor, torch.Tensor]],
+        dataset: TensorDataset | None,
     ) -> None:
         """
         Dataset converter classes are designed to re-format any dataset for a given training task,
@@ -23,7 +23,7 @@ class DatasetConverter(TensorDataset):
         self.converter_function = converter_function
         self.dataset = dataset
 
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
         # Overriding this function from BaseDataset allows the converter to be compatible with the data transformers.
         # converter_function is applied after the transformers.
         assert self.dataset is not None, "Error: no dataset is set, use convert_dataset(your_dataset: TensorDataset)"
@@ -47,10 +47,10 @@ class DatasetConverter(TensorDataset):
 class AutoEncoderDatasetConverter(DatasetConverter):
     def __init__(
         self,
-        condition: Union[None, str, torch.Tensor] = None,
+        condition: str | torch.Tensor | None = None,
         do_one_hot_encoding: bool = False,
-        custom_converter_function: Optional[Callable] = None,
-        condition_vector_size: Optional[int] = None,
+        custom_converter_function: Callable | None = None,
+        condition_vector_size: int | None = None,
     ) -> None:
         """
         A dataset converter specific to formatting supervised data such as MNIST for
@@ -60,10 +60,10 @@ class AutoEncoderDatasetConverter(DatasetConverter):
         other converter functions can be added or passed to support other conditions.
 
         Args:
-            condition (Union[None, str, torch.Tensor]): Could be a fixed tensor used for all the data samples,
+            condition (str | torch.Tensor | None): Could be a fixed tensor used for all the data samples,
                 None for non-conditional models, or a name(str) passed for other custom conversions like 'label'.
             do_one_hot_encoding (bool, optional): Should converter perform one hot encoding on the condition or not.
-            custom_converter_function (Optional[Callable], optional): User can define a new converter function.
+            custom_converter_function (Callable | None, optional): User can define a new converter function.
         """
         self.condition = condition
         if isinstance(self.condition, torch.Tensor):
@@ -135,15 +135,15 @@ class AutoEncoderDatasetConverter(DatasetConverter):
         return converter_function
 
     def _only_replace_target_with_data(
-        self, data: torch.Tensor, target: Union[None, torch.Tensor]
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        self, data: torch.Tensor, target: torch.Tensor | None
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """The data converter function used for simple autoencoders or variational autoencoders."""
         # Target in self-supervised training for autoencoder is the data.
         return data, data
 
     def _cat_input_condition(
-        self, data: torch.Tensor, target: Union[None, torch.Tensor]
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        self, data: torch.Tensor, target: torch.Tensor | None
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """The data converter function used for conditional autoencoders.
         This converter is used when we have a torch tensor as condition for all the data samples.
         """
@@ -152,7 +152,7 @@ class AutoEncoderDatasetConverter(DatasetConverter):
         assert isinstance(self.condition, torch.Tensor), "Error: condition should be a torch tensor"
         return torch.cat([data.view(-1), self.condition]), data
 
-    def _cat_input_label(self, data: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def _cat_input_label(self, data: torch.Tensor, target: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """The data converter function used for conditional autoencoders.
         This converter is used when we want to condition each data sample on its label.
         """
@@ -163,7 +163,7 @@ class AutoEncoderDatasetConverter(DatasetConverter):
         # We can flatten the data since self.data_shape is already saved.
         return torch.cat([data.view(-1), target]), data
 
-    def get_unpacking_function(self) -> Callable[[torch.Tensor], Tuple[torch.Tensor, torch.Tensor]]:
+    def get_unpacking_function(self) -> Callable[[torch.Tensor], tuple[torch.Tensor, torch.Tensor]]:
         condition_vector_size = self.get_condition_vector_size()
         return partial(
             AutoEncoderDatasetConverter.unpack_input_condition,
@@ -174,7 +174,7 @@ class AutoEncoderDatasetConverter(DatasetConverter):
     @staticmethod
     def unpack_input_condition(
         packed_data: torch.Tensor, cond_vec_size: int, data_shape: torch.Size
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Unpacks model inputs (data and condition) from a tensor used in the training loop
         regardless of the converter function used to pack them. Unpacking relies on the size of the condition vector,
         and the original data shape which is saved before the packing process.
@@ -183,7 +183,7 @@ class AutoEncoderDatasetConverter(DatasetConverter):
             packed_data (torch.Tensor): Data tensor used in the training loop as the input to the model.
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]: Data in its original shape, and the condition vector
+            tuple[torch.Tensor, torch.Tensor]: Data in its original shape, and the condition vector
             to be fed into the model.
         """
         # We assume data is "batch first".

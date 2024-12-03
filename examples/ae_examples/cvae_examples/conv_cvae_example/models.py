@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -23,7 +21,7 @@ class ConvConditionalEncoder(nn.Module):
         self.fc_mu = nn.Linear(64, latent_dim)
         self.fc_logvar = nn.Linear(64, latent_dim)
 
-    def forward(self, input: torch.Tensor, condition: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, input: torch.Tensor, condition: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         x = self.conv(input)
         # Flatten the tensor
         x = x.view(x.size(0), -1)

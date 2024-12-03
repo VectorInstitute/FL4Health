@@ -1,8 +1,8 @@
 import argparse
 import os
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -34,14 +34,14 @@ class GeminiMoonClient(MoonClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        hospital_id: List[str],
+        hospital_id: list[str],
         learning_rate: float,
         learning_task: str,
         checkpoint_stub: str,
         run_name: str = "",
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         contrastive_weight: float = 10,
-        checkpointer: Optional[TorchModuleCheckpointer] = None,
+        checkpointer: TorchModuleCheckpointer | None = None,
     ) -> None:
         # Checkpointing: create a string of the names of the hospitals
         self.hospitals = hospital_id
@@ -66,7 +66,7 @@ class GeminiMoonClient(MoonClient):
 
         log(INFO, f"Client Name: {self.client_name} Client hospitals {self.hospitals}")
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_dict_type(config, "batch_size", int)
         if self.learning_task == "mortality":
             (

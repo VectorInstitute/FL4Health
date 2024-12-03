@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, Tuple
 
 import torch
 import torch.nn as nn
@@ -65,7 +64,7 @@ class ParallelSplitModel(nn.Module):
         self.second_feature_extractor = second_feature_extractor
         self.model_head = model_head
 
-    def forward(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    def forward(self, input: torch.Tensor) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]:
         first_output = self.first_feature_extractor.forward(input)
         second_output = self.second_feature_extractor.forward(input)
         preds = {"prediction": self.model_head.forward(first_output, second_output)}

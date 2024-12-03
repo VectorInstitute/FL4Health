@@ -1,6 +1,5 @@
 import pickle
 from pathlib import Path
-from typing import Dict, Tuple
 
 import numpy as np
 import pandas as pd
@@ -13,13 +12,13 @@ class Scaler:
     def __init__(self) -> None:
         self.scaler = MinMaxScaler()
 
-    def __call__(self, train_x: np.ndarray, val_x: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def __call__(self, train_x: np.ndarray, val_x: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         scaled_train_x = self.scaler.fit_transform(train_x)
         scaled_val_x = self.scaler.transform(val_x)
         return scaled_train_x, scaled_val_x
 
 
-def load_data(data_dir: Path, batch_size: int, scaler_bytes: bytes) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
+def load_data(data_dir: Path, batch_size: int, scaler_bytes: bytes) -> tuple[DataLoader, DataLoader, dict[str, int]]:
     data = pd.read_csv(data_dir, index_col=False)
     features = data.loc[:, data.columns != "label"].values
     labels = data["label"].values

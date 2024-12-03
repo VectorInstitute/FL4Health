@@ -1,6 +1,5 @@
 import argparse
 from pathlib import Path
-from typing import Tuple
 
 import flwr as fl
 import torch
@@ -22,7 +21,7 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class CifarDynamicLayerClient(PartialWeightExchangeClient):
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         sample_percentage = narrow_dict_type(config, "sample_percentage", float)
         beta = narrow_dict_type(config, "beta", float)

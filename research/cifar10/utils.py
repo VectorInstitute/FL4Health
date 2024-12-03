@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Sequence, Tuple
+from collections.abc import Sequence
 
 import numpy as np
 import torch
@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from fl4health.utils.metrics import Metric, MetricManager
 
 
-def get_all_run_folders(artifact_dir: str) -> List[str]:
+def get_all_run_folders(artifact_dir: str) -> list[str]:
     run_folder_names = [folder_name for folder_name in os.listdir(artifact_dir) if "Run" in folder_name]
     return [os.path.join(artifact_dir, run_folder_name) for run_folder_name in run_folder_names]
 
@@ -26,13 +26,13 @@ def load_last_global_model(run_folder_dir: str) -> nn.Module:
     return model
 
 
-def get_metric_avg_std(metrics: List[float]) -> Tuple[float, float]:
+def get_metric_avg_std(metrics: list[float]) -> tuple[float, float]:
     mean = float(np.mean(metrics))
     std = float(np.std(metrics, ddof=1))
     return mean, std
 
 
-def write_measurement_results(eval_write_path: str, results: Dict[str, float]) -> None:
+def write_measurement_results(eval_write_path: str, results: dict[str, float]) -> None:
     with open(eval_write_path, "w") as f:
         for key, metric_value in results.items():
             f.write(f"{key}: {metric_value}\n")

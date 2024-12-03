@@ -1,5 +1,3 @@
-from typing import List, Tuple
-
 from flwr.common.typing import Config, GetPropertiesIns
 from flwr.server.client_proxy import ClientProxy
 
@@ -23,7 +21,7 @@ def test_poll_clients() -> None:
     clients = [CustomClientProxy(cid, count) for cid, count in zip(client_ids, sample_counts)]
     config: Config = {"test": 0}
     ins = GetPropertiesIns(config=config)
-    clients_instructions: List[Tuple[ClientProxy, GetPropertiesIns]] = [(client, ins) for client in clients]
+    clients_instructions: list[tuple[ClientProxy, GetPropertiesIns]] = [(client, ins) for client in clients]
 
     results, _ = poll_clients(client_instructions=clients_instructions, max_workers=None, timeout=None)
 

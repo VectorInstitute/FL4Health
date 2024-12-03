@@ -17,7 +17,7 @@ from the FL4Health directory. The following arguments must be present in the spe
 * `n_server_rounds`: The number of rounds to run FL
 * `checkpoint_path`: path to save the best server model
 * `latent_dim`: size of the latent vector in the CVAE or VAE model
-* `cvae_model_path`: path to the saved CVAE model for dimesionality reduction
+* `cvae_model_path`: path to the saved CVAE model for dimensionality reduction
 
 **NOTE**: Instead of using a global CVAE for all the clients, you can pass personalized CVAE models to each client, but make sure that these models are previously trained in an FL setting, and are not very different, otherwise, that can lead the dimensionality reduction to map the data samples into different latent spaces which might increase the heterogeneity.
 

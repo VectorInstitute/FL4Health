@@ -1,4 +1,5 @@
-from typing import List, Optional, Set, Tuple, Type, TypeVar
+from collections.abc import Set
+from typing import TypeVar
 
 import torch
 import torch.nn as nn
@@ -13,7 +14,7 @@ TorchModule = TypeVar("TorchModule", bound=nn.Module)
 
 
 class FixedLayerExchanger(ParameterExchanger):
-    def __init__(self, layers_to_transfer: List[str]) -> None:
+    def __init__(self, layers_to_transfer: list[str]) -> None:
         self.layers_to_transfer = layers_to_transfer
 
     def apply_layer_filter(self, model: nn.Module) -> NDArrays:
@@ -22,11 +23,11 @@ class FixedLayerExchanger(ParameterExchanger):
         return [model_state_dict[layer_to_transfer].cpu().numpy() for layer_to_transfer in self.layers_to_transfer]
 
     def push_parameters(
-        self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
+        self, model: nn.Module, initial_model: nn.Module | None = None, config: Config | None = None
     ) -> NDArrays:
         return self.apply_layer_filter(model)
 
-    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Optional[Config] = None) -> None:
+    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Config | None = None) -> None:
         current_state = model.state_dict()
         # update the correct layers to new parameters
         for layer_name, layer_parameters in zip(self.layers_to_transfer, parameters):
@@ -40,7 +41,7 @@ class LayerExchangerWithExclusions(ParameterExchanger):
     is provided with the model in order to extract the proper layers to be exchanged based on the exclusion criteria
     """
 
-    def __init__(self, model: nn.Module, module_exclusions: Set[Type[TorchModule]]) -> None:
+    def __init__(self, model: nn.Module, module_exclusions: Set[type[TorchModule]]) -> None:
         # module_exclusion is a set of nn.Module types that should NOT be exchanged with the server.
         # {nn.BatchNorm1d}
         self.module_exclusions = module_exclusions
@@ -55,9 +56,9 @@ class LayerExchangerWithExclusions(ParameterExchanger):
         }
         # Needs to be an ordered collection to facilitate exchange consistency between server and client
         # NOTE: Layers here refers to a collection of parameters in the state dictionary
-        self.layers_to_transfer: List[str] = self.get_layers_to_transfer(model)
+        self.layers_to_transfer: list[str] = self.get_layers_to_transfer(model)
 
-    def should_module_be_excluded(self, module: Type[TorchModule]) -> bool:
+    def should_module_be_excluded(self, module: type[TorchModule]) -> bool:
         return type(module) in self.module_exclusions
 
     def should_layer_be_excluded(self, layer_name: str) -> bool:
@@ -68,7 +69,7 @@ class LayerExchangerWithExclusions(ParameterExchanger):
         # We filter out any parameters prefixed with the name of an excluded module, as stored in modules_to_filter
         return any([layer_name.startswith(module_to_filter) for module_to_filter in self.modules_to_filter])
 
-    def get_layers_to_transfer(self, model: nn.Module) -> List[str]:
+    def get_layers_to_transfer(self, model: nn.Module) -> list[str]:
         # We store the state dictionary keys that do not correspond to excluded modules as held in modules_to_filter
         return [name for name in model.state_dict().keys() if not self.should_layer_be_excluded(name)]
 
@@ -80,11 +81,11 @@ class LayerExchangerWithExclusions(ParameterExchanger):
         return [model_state_dict[layer_to_transfer].cpu().numpy() for layer_to_transfer in self.layers_to_transfer]
 
     def push_parameters(
-        self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
+        self, model: nn.Module, initial_model: nn.Module | None = None, config: Config | None = None
     ) -> NDArrays:
         return self.apply_layer_filter(model)
 
-    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Optional[Config] = None) -> None:
+    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Config | None = None) -> None:
         current_state = model.state_dict()
         # update the correct layers to new parameters. Assumes order of parameters is the same as in push_parameters
         for layer_name, layer_parameters in zip(self.layers_to_transfer, parameters):
@@ -92,7 +93,7 @@ class LayerExchangerWithExclusions(ParameterExchanger):
         model.load_state_dict(current_state, strict=True)
 
 
-class DynamicLayerExchanger(PartialParameterExchanger[List[str]]):
+class DynamicLayerExchanger(PartialParameterExchanger[list[str]]):
     def __init__(
         self,
         layer_selection_function: LayerSelectionFunction,
@@ -113,17 +114,17 @@ class DynamicLayerExchanger(PartialParameterExchanger[List[str]]):
         self.parameter_packer = ParameterPackerWithLayerNames()
 
     def select_parameters(
-        self, model: nn.Module, initial_model: Optional[nn.Module] = None
-    ) -> Tuple[NDArrays, List[str]]:
+        self, model: nn.Module, initial_model: nn.Module | None = None
+    ) -> tuple[NDArrays, list[str]]:
         return self.layer_selection_function(model, initial_model)
 
     def push_parameters(
-        self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
+        self, model: nn.Module, initial_model: nn.Module | None = None, config: Config | None = None
     ) -> NDArrays:
         layers_to_transfer, layer_names = self.select_parameters(model, initial_model)
         return self.pack_parameters(layers_to_transfer, layer_names)
 
-    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Optional[Config] = None) -> None:
+    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Config | None = None) -> None:
         current_state = model.state_dict()
         # update the correct layers to new parameters
         layer_params, layer_names = self.unpack_parameters(parameters)

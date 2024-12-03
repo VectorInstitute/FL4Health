@@ -10,7 +10,7 @@ class FocalLoss(_Loss):
         where the scaling factor decays to zero as the confidence in the correct class increases.
 
         Args:
-            alpha (float): The weight assocaited with the the positive class. Usually set inversely proportional
+            alpha (float): The weight associated with the the positive class. Usually set inversely proportional
                 to the amount of samples in a given class.
             gamma (float): The exponent to raise the residual between the predicted probability and and ground truth.
                 Higher values of gamma lead to emphasizing the contribution of harder examples in the loss.

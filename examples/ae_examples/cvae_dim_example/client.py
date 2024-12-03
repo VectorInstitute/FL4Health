@@ -1,6 +1,6 @@
 import argparse
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -26,7 +26,7 @@ class CvaeDimClient(BasicClient):
         super().__init__(data_path, metrics, device)
         self.condition = condition
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         cvae_model_path = Path(narrow_dict_type(config, "cvae_model_path", str))
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)

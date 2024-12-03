@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import torch
 import torch.nn as nn
 
@@ -24,7 +22,7 @@ class PerFclLoss(nn.Module):
         global_features: torch.Tensor,
         old_global_features: torch.Tensor,
         initial_global_features: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         PerFCL loss implemented based on https://www.sciencedirect.com/science/article/pii/S0031320323002078. This
         paper introduced two contrastive loss functions:
@@ -51,7 +49,7 @@ class PerFclLoss(nn.Module):
                 model at the start of client-side training. This feature extractor is the AGGREGATED weights across
                 clients. Shape (batch_size, n_features)
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]: Tuple containing the two components of the PerFCL loss function to
+            tuple[torch.Tensor, torch.Tensor]: Tuple containing the two components of the PerFCL loss function to
                 be weighted and summed. The first tensor corresponds to the global feature loss, the second is
                 associated with the local feature loss.
         """

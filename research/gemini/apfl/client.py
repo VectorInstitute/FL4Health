@@ -2,7 +2,6 @@ import argparse
 import os
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 import flwr as fl
 import torch
@@ -27,15 +26,15 @@ LocalPreds = torch.Tensor
 GlobalPreds = torch.Tensor
 PersonalPreds = torch.Tensor
 
-ApflTrainStepOutputs = Tuple[LocalLoss, GlobalLoss, PersonalLoss, LocalPreds, GlobalPreds, PersonalPreds]
+ApflTrainStepOutputs = tuple[LocalLoss, GlobalLoss, PersonalLoss, LocalPreds, GlobalPreds, PersonalPreds]
 
 
 class GeminiApflClient(ApflClient):
     def __init__(
         self,
         data_path: Path,
-        metrics: List[Metric],
-        hospitals_id: List[str],
+        metrics: list[Metric],
+        hospitals_id: list[str],
         device: torch.device,
         learning_task: str,
         learning_rate: float,
@@ -85,7 +84,7 @@ class GeminiApflClient(ApflClient):
 
         super().setup_client(config)
 
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+    def fit(self, parameters: NDArrays, config: Config) -> tuple[NDArrays, int, dict[str, Scalar]]:
         if not self.initialized:
             self.setup_client(config)
 
@@ -105,7 +104,7 @@ class GeminiApflClient(ApflClient):
             metric_values,
         )
 
-    def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
+    def evaluate(self, parameters: NDArrays, config: Config) -> tuple[float, int, dict[str, Scalar]]:
         if not self.initialized:
             self.setup_client(config)
 
@@ -135,7 +134,7 @@ class GeminiApflClient(ApflClient):
         global_loss.backward()
         self.global_optimizer.step()
 
-        # Make sure gradients are zero prior to foward passes of global and local model
+        # Make sure gradients are zero prior to forward passes of global and local model
         # to generate personalized predictions
         # NOTE: We zero the global optimizer grads because they are used (after the backward calculation below)
         # to update the scalar alpha (see update_alpha() where .grad is called.)
@@ -159,7 +158,7 @@ class GeminiApflClient(ApflClient):
 
     def train_by_epochs(
         self, epochs: int, global_meter: Meter, local_meter: Meter, personal_meter: Meter
-    ) -> Dict[str, Scalar]:
+    ) -> dict[str, Scalar]:
         self.model.train()
         for epoch in range(epochs):
             loss_dict = {"personal": 0.0, "local": 0.0, "global": 0.0}
@@ -192,14 +191,14 @@ class GeminiApflClient(ApflClient):
         global_metrics = global_meter.compute()
         local_metrics = local_meter.compute()
         personal_metrics = personal_meter.compute()
-        metrics: Dict[str, Scalar] = {**global_metrics, **local_metrics, **personal_metrics}
+        metrics: dict[str, Scalar] = {**global_metrics, **local_metrics, **personal_metrics}
         log(INFO, f"Performed {epochs} Epochs of Local training")
 
         return metrics
 
     def validate(
         self, global_meter: Meter, local_meter: Meter, personal_meter: Meter
-    ) -> Tuple[float, Dict[str, Scalar]]:
+    ) -> tuple[float, dict[str, Scalar]]:
         self.model.eval()
         loss_dict = {"global": 0.0, "personal": 0.0, "local": 0.0}
         global_meter.clear()
@@ -230,7 +229,7 @@ class GeminiApflClient(ApflClient):
         global_metrics = global_meter.compute()
         local_metrics = local_meter.compute()
         personal_metrics = personal_meter.compute()
-        metrics: Dict[str, Scalar] = {**global_metrics, **local_metrics, **personal_metrics}
+        metrics: dict[str, Scalar] = {**global_metrics, **local_metrics, **personal_metrics}
         self._maybe_checkpoint(loss_dict["personal"])
         return loss_dict["personal"], metrics
 

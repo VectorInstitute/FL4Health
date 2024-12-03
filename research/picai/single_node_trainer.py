@@ -1,7 +1,6 @@
 import os
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Tuple
 
 import torch
 import torch.nn as nn
@@ -55,14 +54,14 @@ class SingleNodeTrainer:
         ckpt = self.per_epoch_checkpointer.load_checkpoint(self.state_checkpoint_path)
         self.model, self.optimizer, self.epoch = ckpt["model"], ckpt["optimizer"], ckpt["epoch"]
 
-    def _maybe_checkpoint(self, loss: float, metrics: Dict[str, Scalar]) -> None:
+    def _maybe_checkpoint(self, loss: float, metrics: dict[str, Scalar]) -> None:
         if self.checkpointer:
             self.checkpointer.maybe_checkpoint(self.model, loss, metrics)
 
     def _handle_reporting(
         self,
         loss: float,
-        metrics_dict: Dict[str, Scalar],
+        metrics_dict: dict[str, Scalar],
         is_validation: bool = False,
     ) -> None:
         metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
@@ -72,7 +71,7 @@ class SingleNodeTrainer:
             f"Centralized {metric_prefix} Loss: {loss} \n" f"Centralized {metric_prefix} Metrics: {metric_string}",
         )
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         self.model.train()
         # forward pass on the model
         preds = self.model(input)

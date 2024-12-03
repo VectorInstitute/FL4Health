@@ -1,5 +1,3 @@
-from typing import Optional
-
 from flwr.common.typing import Config
 from flwr.server.client_manager import ClientManager
 from flwr.server.strategy import Strategy
@@ -14,7 +12,7 @@ class FullExchangeServer(FlServer):
         self,
         client_manager: ClientManager,
         fl_config: Config,
-        strategy: Optional[Strategy] = None,
+        strategy: Strategy | None = None,
         checkpoint_and_state_module: BaseServerCheckpointAndStateModule | None = None,
     ) -> None:
         super().__init__(

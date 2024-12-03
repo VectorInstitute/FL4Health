@@ -1,5 +1,4 @@
 from copy import deepcopy
-from typing import Dict, List, Tuple
 from unittest.mock import Mock
 
 import numpy as np
@@ -20,14 +19,14 @@ def test_configure_fit_and_evaluate_success() -> None:
     fixed_sampling_client_manager = _apply_mocks_to_client_manager(FixedSamplingClientManager())
     test_n_server_rounds = 3
 
-    def on_fit_config_fn(server_round: int) -> Dict[str, Scalar]:
+    def on_fit_config_fn(server_round: int) -> dict[str, Scalar]:
         return {
             "n_server_rounds": test_n_server_rounds,
             "evaluate_after_fit": True,
             "pack_losses_with_val_metrics": True,
         }
 
-    def on_evaluate_config_fn(server_round: int) -> Dict[str, Scalar]:
+    def on_evaluate_config_fn(server_round: int) -> dict[str, Scalar]:
         return {
             "n_server_rounds": test_n_server_rounds,
             "pack_losses_with_val_metrics": True,
@@ -60,7 +59,7 @@ def test_configure_fit_fail() -> None:
         strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
     # Fails with bad client manager type
-    def on_fit_config_fn(server_round: int) -> Dict[str, Scalar]:
+    def on_fit_config_fn(server_round: int) -> dict[str, Scalar]:
         return {
             "n_server_rounds": 2,
             "evaluate_after_fit": True,
@@ -72,7 +71,7 @@ def test_configure_fit_fail() -> None:
         strategy.configure_fit(1, Parameters([], ""), simple_client_manager)
 
     # Fail with no n_server_rounds
-    def on_fit_config_fn_1(server_round: int) -> Dict[str, Scalar]:
+    def on_fit_config_fn_1(server_round: int) -> dict[str, Scalar]:
         return {
             "foo": 123,
             "evaluate_after_fit": True,
@@ -86,7 +85,7 @@ def test_configure_fit_fail() -> None:
         strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
     # Fails with n_server_rounds not being an integer
-    def on_fit_config_fn_2(server_round: int) -> Dict[str, Scalar]:
+    def on_fit_config_fn_2(server_round: int) -> dict[str, Scalar]:
         return {
             "n_server_rounds": 1.1,
             "evaluate_after_fit": True,
@@ -100,7 +99,7 @@ def test_configure_fit_fail() -> None:
         strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
     # Fails with evaluate_after_fit not being set
-    def on_fit_config_fn_3(server_round: int) -> Dict[str, Scalar]:
+    def on_fit_config_fn_3(server_round: int) -> dict[str, Scalar]:
         return {
             "n_server_rounds": 2,
             "pack_losses_with_val_metrics": True,
@@ -111,7 +110,7 @@ def test_configure_fit_fail() -> None:
         strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
     # Fails with evaluate_after_fit not being True
-    def on_fit_config_fn_4(server_round: int) -> Dict[str, Scalar]:
+    def on_fit_config_fn_4(server_round: int) -> dict[str, Scalar]:
         return {
             "n_server_rounds": 2,
             "evaluate_after_fit": False,
@@ -123,7 +122,7 @@ def test_configure_fit_fail() -> None:
         strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
     # Fails with pack_losses_with_val_metrics not being there
-    def on_fit_config_fn_5(server_round: int) -> Dict[str, Scalar]:
+    def on_fit_config_fn_5(server_round: int) -> dict[str, Scalar]:
         return {
             "n_server_rounds": 2,
             "evaluate_after_fit": True,
@@ -134,7 +133,7 @@ def test_configure_fit_fail() -> None:
         strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
     # Fails with pack_losses_with_val_metrics not being True
-    def on_fit_config_fn_6(server_round: int) -> Dict[str, Scalar]:
+    def on_fit_config_fn_6(server_round: int) -> dict[str, Scalar]:
         return {
             "n_server_rounds": 2,
             "evaluate_after_fit": True,
@@ -156,7 +155,7 @@ def test_configure_evaluate_fail() -> None:
         strategy.configure_evaluate(1, Parameters([], ""), fixed_sampling_client_manager)
 
     # Fails with bad client manager type
-    def on_evaluate_config_fn(server_round: int) -> Dict[str, Scalar]:
+    def on_evaluate_config_fn(server_round: int) -> dict[str, Scalar]:
         return {
             "n_server_rounds": 2,
             "pack_losses_with_val_metrics": True,
@@ -169,7 +168,7 @@ def test_configure_evaluate_fail() -> None:
         strategy.configure_evaluate(1, Parameters([], ""), simple_client_manager)
 
     # Fail with no pack_losses_with_val_metrics
-    def on_evaluate_config_fn_1(server_round: int) -> Dict[str, Scalar]:
+    def on_evaluate_config_fn_1(server_round: int) -> dict[str, Scalar]:
         return {
             "foo": 123,
         }
@@ -181,7 +180,7 @@ def test_configure_evaluate_fail() -> None:
         strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
     # Fails with pack_losses_with_val_metrics not being True
-    def on_fit_config_fn_2(server_round: int) -> Dict[str, Scalar]:
+    def on_fit_config_fn_2(server_round: int) -> dict[str, Scalar]:
         return {
             "n_server_rounds": 1.1,
             "pack_losses_with_val_metrics": False,
@@ -391,12 +390,12 @@ def _apply_mocks_to_client_manager(client_manager: ClientManager) -> ClientManag
     return client_manager
 
 
-def _make_test_data() -> Tuple[List[Tuple[ClientProxy, FitRes]], List[Tuple[ClientProxy, EvaluateRes]]]:
+def _make_test_data() -> tuple[list[tuple[ClientProxy, FitRes]], list[tuple[ClientProxy, EvaluateRes]]]:
     test_val_loss_key = FairnessMetricType.LOSS.value
-    test_fit_metrics_1: Dict[str, Scalar] = {test_val_loss_key: 1.0}
-    test_fit_metrics_2: Dict[str, Scalar] = {test_val_loss_key: 2.0}
-    test_eval_metrics_1: Dict[str, Scalar] = {"metric-1": 1.0, test_val_loss_key: 1.2}
-    test_eval_metrics_2: Dict[str, Scalar] = {"metric-2": 2.0, test_val_loss_key: 2.2}
+    test_fit_metrics_1: dict[str, Scalar] = {test_val_loss_key: 1.0}
+    test_fit_metrics_2: dict[str, Scalar] = {test_val_loss_key: 2.0}
+    test_eval_metrics_1: dict[str, Scalar] = {"metric-1": 1.0, test_val_loss_key: 1.2}
+    test_eval_metrics_2: dict[str, Scalar] = {"metric-2": 2.0, test_val_loss_key: 2.2}
     test_parameters_1 = ndarrays_to_parameters([np.array([1.0, 1.1]), np.array(1.5)])
     test_parameters_2 = ndarrays_to_parameters([np.array([2.0, 2.1]), np.array(2.5)])
     test_fit_results = [

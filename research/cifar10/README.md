@@ -5,12 +5,12 @@ The CIFAR-10 dataset consists of 60,000 32x32 color images across 10 classes, wi
 To do so we should run the following script:
 
 ```bash
-python -m research.cifar10.preprocess --dataset_dir path_to_folder_for_dataset --save_dataset_dir path_to_save_partiotioned_dataset --seed seed --beta beta --num_clients num_clients
+python -m research.cifar10.preprocess --dataset_dir path_to_folder_for_dataset --save_dataset_dir path_to_save_partitioned_dataset --seed seed --beta beta --num_clients num_clients
 ```
 
 Where:
-- `path_to_folder_for_datasett` is the path to the CIFAR-10 dataset.
-- `path_to_save_partiotioned_dataset` is the path to save the partitioned dataset.
+- `path_to_folder_for_dataset` is the path to the CIFAR-10 dataset.
+- `path_to_save_partitioned_dataset` is the path to save the partitioned dataset.
 - `seed` is the seed to use for the random number generator to have reproducible splits.
 - `beta` is the heterogeneity level of the dataset. The lower the value, the more heterogeneity in the data distribution.
 - `num_clients` is the number of clients to partition the dataset into.
@@ -76,4 +76,4 @@ Where:
 - `--eval_best_global_model` tells the evaluation script to search for the saved best global model on the server side. It looks for a model named `server_best_model.pkl` and evaluates it across all clients' individual datasets.
 - `--eval_last_global_model` tells the evaluation script to search for the saved last global model on the server side. It looks for a model named `server_last_model.pkl` and evaluates it across all clients' individual datasets.
 - `--eval_over_aggregated_test_data` tells the evaluation script to evaluate any model from the previous steps on the pooled test data.
-- `--use_partitioned_data` tells the evaluation script to use preporcessed partitioned data for evaluation. If this flag is not set, the script will use the original CIFAR-10 dataset and partition a subset of data for each client based on a fixed seed.
+- `--use_partitioned_data` tells the evaluation script to use preprocessed partitioned data for evaluation. If this flag is not set, the script will use the original CIFAR-10 dataset and partition a subset of data for each client based on a fixed seed.

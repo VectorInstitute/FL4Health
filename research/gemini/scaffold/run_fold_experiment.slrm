@@ -37,7 +37,7 @@ fi
 
 
 
-# Create the artficat directory
+# Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
 
 RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )
@@ -59,7 +59,7 @@ for RUN_NAME in "${RUN_NAMES[@]}";
 do
     # create the run directory
     RUN_DIR="${ARTIFACT_DIR}${RUN_NAME}/"
-    echo "Starting Run and logging artifcats at ${RUN_DIR}"
+    echo "Starting Run and logging artifacts at ${RUN_DIR}"
     if [ -d "${RUN_DIR}" ]
     then
         # Directory already exists, we check if the done.out file exists

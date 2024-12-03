@@ -2,7 +2,7 @@ import argparse
 from functools import partial
 from logging import INFO
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import flwr as fl
 from flwr.common.logger import log
@@ -38,7 +38,7 @@ def fit_config(
     }
 
 
-def main(config: Dict[str, Any], server_address: str, n_clients: int, artifact_dir: str) -> None:
+def main(config: dict[str, Any], server_address: str, n_clients: int, artifact_dir: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,

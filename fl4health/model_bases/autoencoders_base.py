@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Optional, Tuple
+from collections.abc import Callable
 
 import torch
 import torch.nn as nn
@@ -58,7 +58,7 @@ class VariationalAe(AbstractAe):
         """
         super().__init__(encoder, decoder)
 
-    def encode(self, input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def encode(self, input: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         mu, logvar = self.encoder(input)
         return mu, logvar
 
@@ -88,28 +88,26 @@ class ConditionalVae(AbstractAe):
         self,
         encoder: nn.Module,
         decoder: nn.Module,
-        unpack_input_condition: Optional[Callable[[torch.Tensor], Tuple[torch.Tensor, torch.Tensor]]] = None,
+        unpack_input_condition: Callable[[torch.Tensor], tuple[torch.Tensor, torch.Tensor]] | None = None,
     ) -> None:
         """Conditional Variational Auto-Encoder model.
 
         Args:
             encoder (nn.Module): The encoder used to map input to latent space.
             decoder (nn.Module): The decoder used to reconstruct the input using a vector in latent space.
-            unpack_input_condition (Optional[Callable], optional): For unpacking the input and condition tensors.
+            unpack_input_condition (Callable | None, optional): For unpacking the input and condition tensors.
         """
 
         super().__init__(encoder, decoder)
         self.unpack_input_condition = unpack_input_condition
 
-    def encode(
-        self, input: torch.Tensor, condition: Optional[torch.Tensor] = None
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    def encode(self, input: torch.Tensor, condition: torch.Tensor | None = None) -> tuple[torch.Tensor, torch.Tensor]:
         # User can decide how to use the condition in the encoder,
         # ex: using the condition in the middle layers of encoder.
         mu, logvar = self.encoder(input, condition)
         return mu, logvar
 
-    def decode(self, latent_vector: torch.Tensor, condition: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def decode(self, latent_vector: torch.Tensor, condition: torch.Tensor | None = None) -> torch.Tensor:
         # User can decide how to use the condition in the decoder,
         # ex: using the condition in the middle layers of decoder, or not using it at all.
         output = self.decoder(latent_vector, condition)

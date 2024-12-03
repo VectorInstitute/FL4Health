@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from enum import Enum
-from typing import Union
 
 from flwr.common.typing import Scalar
 
@@ -11,7 +12,7 @@ class TabularType(str, Enum):
     STRING = "string"
 
     @staticmethod
-    def get_default_fill_value(tabular_type: Union["TabularType", str]) -> Scalar:
+    def get_default_fill_value(tabular_type: TabularType | str) -> Scalar:
         if tabular_type is TabularType.NUMERIC:
             return 0.0
         elif tabular_type is TabularType.BINARY:

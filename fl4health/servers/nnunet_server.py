@@ -2,7 +2,7 @@ import pickle
 import warnings
 from collections.abc import Callable, Sequence
 from logging import INFO
-from typing import Any, Dict, Optional, Tuple, Type, Union
+from typing import Any
 
 import torch.nn as nn
 from flwr.common import Parameters
@@ -25,9 +25,9 @@ with warnings.catch_warnings():
     from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
     from nnunetv2.utilities.plans_handling.plans_handler import PlansManager
 
-FIT_CFG_FN = Callable[[int, Parameters, ClientManager], list[Tuple[ClientProxy, FitIns]]]
-EVAL_CFG_FN = Callable[[int, Parameters, ClientManager], list[Tuple[ClientProxy, EvaluateIns]]]
-CFG_FN = Union[FIT_CFG_FN, EVAL_CFG_FN]
+FIT_CFG_FN = Callable[[int, Parameters, ClientManager], list[tuple[ClientProxy, FitIns]]]
+EVAL_CFG_FN = Callable[[int, Parameters, ClientManager], list[tuple[ClientProxy, EvaluateIns]]]
+CFG_FN = FIT_CFG_FN | EVAL_CFG_FN
 
 
 def add_items_to_config_fn(fn: CFG_FN, items: Config) -> CFG_FN:
@@ -60,13 +60,13 @@ class NnunetServer(FlServer):
         self,
         client_manager: ClientManager,
         fl_config: Config,
-        on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]],
+        on_init_parameters_config_fn: Callable[[int], dict[str, Scalar]],
         strategy: Strategy | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         checkpoint_and_state_module: NnUnetServerCheckpointAndStateModule | None = None,
         server_name: str | None = None,
         accept_failures: bool = True,
-        nnunet_trainer_class: Type[nnUNetTrainer] = nnUNetTrainer,
+        nnunet_trainer_class: type[nnUNetTrainer] = nnUNetTrainer,
     ) -> None:
         """
         A Basic FlServer with added functionality to ask a client to initialize the global nnunet plans if one was not
@@ -79,7 +79,7 @@ class NnunetServer(FlServer):
                 In most cases it should be the "source of truth" for how FL training/evaluation should proceed. For
                 example, the config used to produce the on_fit_config_fn and on_evaluate_config_fn for the strategy.
                 NOTE: This config is DISTINCT from the Flwr server config, which is extremely minimal.
-            on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]]): Function used to configure how one
+            on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]]): Function used to configure how one
                 asks a client to provide parameters from which to initialize all other clients by providing a
                 Config dictionary. For NnunetServers this is a required function to provide the additional information
                 necessary to a client for parameter initialization
@@ -100,7 +100,7 @@ class NnunetServer(FlServer):
             accept_failures (bool, optional): Determines whether the server should accept failures during training or
                 evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
                 and throw an exception. Defaults to True.
-            nnunet_trainer_class (Type[nnUNetTrainer]): nnUNetTrainer class.
+            nnunet_trainer_class (type[nnUNetTrainer]): nnUNetTrainer class.
                 Useful for passing custom nnUNetTrainer. Defaults to the standard nnUNetTrainer class.
                 Must match the nnunet_trainer_class passed to the NnunetClient.
         """
@@ -151,7 +151,7 @@ class NnunetServer(FlServer):
 
         self.checkpoint_and_state_module.model = model
 
-    def update_before_fit(self, num_rounds: int, timeout: Optional[float]) -> None:
+    def update_before_fit(self, num_rounds: int, timeout: float | None) -> None:
         """
         Hook method to allow the server to do some additional initialization prior to fitting. NunetServer
         uses this method to sample a client for properties which are required to initialize the server.
@@ -166,7 +166,7 @@ class NnunetServer(FlServer):
 
         Args:
             num_rounds (int): The number of server rounds of FL to be performed
-            timeout (Optional[float], optional): The server's timeout parameter. Useful if one is requesting
+            timeout (float | None, optional): The server's timeout parameter. Useful if one is requesting
                 information from a client. Defaults to None, which indicates indefinite timeout.
         """
 

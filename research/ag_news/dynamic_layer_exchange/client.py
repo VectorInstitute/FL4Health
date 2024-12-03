@@ -1,8 +1,8 @@
 import argparse
 import os
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -38,10 +38,10 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
         exchange_percentage: float,
         norm_threshold: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        client_name: Optional[str] = None,
+        client_name: str | None = None,
         store_initial_model: bool = True,
     ) -> None:
         super().__init__(
@@ -65,7 +65,7 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
         model = BertForSequenceClassification.from_pretrained("google-bert/bert-base-cased", num_labels=num_classes)
         return model.to(self.device)
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         sample_percentage = narrow_dict_type(config, "sample_percentage", float)
         beta = narrow_dict_type(config, "beta", float)
@@ -106,7 +106,7 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
         parameter_exchanger = DynamicLayerExchanger(layer_selection_function=layer_selection_function)
         return parameter_exchanger
 
-    def predict(self, input: TorchInputType) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    def predict(self, input: TorchInputType) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]:
         # Here the predict method is overwritten in order
         # to rename the key to match what comes with the hugging face datasets.
         outputs, features = super().predict(input)

@@ -3,7 +3,7 @@ import os
 from functools import partial
 from logging import INFO
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import flwr as fl
 from flwr.common.logger import log
@@ -20,10 +20,10 @@ from fl4health.utils.config import load_config
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 
 
-def metric_aggregation(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
+def metric_aggregation(all_client_metrics: list[tuple[int, Metrics]]) -> Metrics:
     total_preds = 0
     true_preds = 0
-    outcome_dict: Dict[str, Outcome] = {}
+    outcome_dict: dict[str, Outcome] = {}
     # Run through all of the metrics
     for _, client_metrics in all_client_metrics:
         for metric_name, metric_value in client_metrics.items():
@@ -93,7 +93,7 @@ def fit_config(
     )
 
 
-def pretrain_vocabulary(path: Path) -> Tuple[Vocabulary, LabelEncoder]:
+def pretrain_vocabulary(path: Path) -> tuple[Vocabulary, LabelEncoder]:
     df = get_local_data(path)
     # Drop 20% of the texts to artificially create some UNK tokens
     processed_df, _ = train_test_split(df, test_size=0.8)
@@ -103,7 +103,7 @@ def pretrain_vocabulary(path: Path) -> Tuple[Vocabulary, LabelEncoder]:
     return Vocabulary(None, headline_text + body_text), label_encoder
 
 
-def main(config: Dict[str, Any]) -> None:
+def main(config: dict[str, Any]) -> None:
     log(INFO, "Fitting vocabulary to a centralized text sample")
     data_path = Path(
         os.path.join(

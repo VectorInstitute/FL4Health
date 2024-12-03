@@ -5,7 +5,7 @@ average these weights and perform evaluation on the client side and the server s
 evaluation function. The server expects two clients to be spun up (i.e. it will wait until two clients
 report in before starting model merging and evaluation). For convenience, pre-trained models on the MNIST
 train set have been provided for each of the clients in `assets/checkpoints_for_examples/model_merge_example`
-under `0.pt` and `1.pt`. The model merging and subsequent evaluation can be perfomed with these weights
+under `0.pt` and `1.pt`. The model merging and subsequent evaluation can be performed with these weights
 out-of-the-box.
 
 ## Running the Example

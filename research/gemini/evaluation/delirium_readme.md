@@ -125,7 +125,7 @@ python -m evaluation.evaluate_on_holdout --artifact_dir "FedOpt/delirium_runs/hp
 ```
 
 
-## SCAFFODL
+## SCAFFOLD
 ### hyper-parameters
 ```
 python -m evaluation.find_best_hp --hp_sweep_dir "Scaffold/delirium_runs/hp_sweep_results"

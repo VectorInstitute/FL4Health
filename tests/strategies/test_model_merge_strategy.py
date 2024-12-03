@@ -1,5 +1,4 @@
 import random
-from typing import List, Tuple
 
 import numpy as np
 from flwr.common import (
@@ -33,7 +32,7 @@ client0_res = construct_fit_res([np.ones((3, 3)), np.ones((4, 4))], 0.1, 50)
 client1_res = construct_fit_res([np.ones((3, 3)), np.full((4, 4), 2)], 0.2, 50)
 client2_res = construct_fit_res([np.full((3, 3), 3), np.full((4, 4), 3)], 0.3, 100)
 client3_res = construct_fit_res([np.full((3, 3), 4), np.full((4, 4), 4)], 0.4, 200)
-clients_res: List[Tuple[ClientProxy, FitRes]] = [
+clients_res: list[tuple[ClientProxy, FitRes]] = [
     (CustomClientProxy("c0"), client0_res),
     (CustomClientProxy("c1"), client1_res),
     (CustomClientProxy("c2"), client2_res),
@@ -41,7 +40,7 @@ clients_res: List[Tuple[ClientProxy, FitRes]] = [
 ]
 
 
-def metrics_aggregation(to_aggregate: List[Tuple[int, Metrics]]) -> Metrics:
+def metrics_aggregation(to_aggregate: list[tuple[int, Metrics]]) -> Metrics:
     # Select last set of metrics (dummy for test)
     return to_aggregate[-1][1]
 
@@ -102,7 +101,7 @@ client0_eval_res = construct_evaluate_res(1.0, 0.1, 50)
 client1_eval_res = construct_evaluate_res(1.0, 0.2, 50)
 client2_eval_res = construct_evaluate_res(3.0, 0.3, 100)
 client3_eval_res = construct_evaluate_res(4.0, 0.4, 200)
-clients_eval_res: List[Tuple[ClientProxy, EvaluateRes]] = [
+clients_eval_res: list[tuple[ClientProxy, EvaluateRes]] = [
     (CustomClientProxy("c0"), client0_eval_res),
     (CustomClientProxy("c1"), client1_eval_res),
     (CustomClientProxy("c2"), client2_eval_res),

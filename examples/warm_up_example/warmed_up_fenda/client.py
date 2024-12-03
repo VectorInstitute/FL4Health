@@ -1,8 +1,8 @@
 import argparse
 import os
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -32,7 +32,7 @@ class MnistFendaClient(FendaClient):
         metrics: Sequence[Metric],
         device: torch.device,
         pretrained_model_dir: Path,
-        weights_mapping_path: Optional[Path],
+        weights_mapping_path: Path | None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -47,7 +47,7 @@ class MnistFendaClient(FendaClient):
             weights_mapping_path=weights_mapping_path,
         )
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
         batch_size = narrow_dict_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)

@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Dict
 
 import pytest
 import torch
@@ -72,7 +71,7 @@ def test_save_and_load_latest_checkpoint(tmp_path: Path) -> None:
     assert torch.equal(model_1.linear.weight, target_model.linear.weight)
 
 
-def score_function(loss: float, metrics: Dict[str, Scalar]) -> float:
+def score_function(loss: float, metrics: dict[str, Scalar]) -> float:
     accuracy = metrics["accuracy"]
     precision = metrics["precision"]
     assert isinstance(accuracy, float)
@@ -95,8 +94,8 @@ def test_save_and_load_function_checkpoint(tmp_path: Path) -> None:
 
     opacus_checkpointer = OpacusCheckpointer(str(checkpoint_dir), checkpoint_name, score_function, maximize=True)
     loss_1, loss_2 = 1.0, 0.9
-    metrics_1: Dict[str, Scalar] = {"accuracy": 0.87, "precision": 0.67, "f1": 0.76}
-    metrics_2: Dict[str, Scalar] = {"accuracy": 0.87, "precision": 0.90, "f1": 0.60}
+    metrics_1: dict[str, Scalar] = {"accuracy": 0.87, "precision": 0.67, "f1": 0.76}
+    metrics_2: dict[str, Scalar] = {"accuracy": 0.87, "precision": 0.90, "f1": 0.60}
     opacus_checkpointer.best_score = 0.85
 
     # model_1 should not be checkpointed because the model score is lower than the best score set above

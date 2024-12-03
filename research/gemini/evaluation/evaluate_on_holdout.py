@@ -1,7 +1,6 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List
 
 import torch
 from data.data import load_test_delirium, load_test_mortality
@@ -23,7 +22,7 @@ def main(
     dataset_dir: Path,
     eval_write_path: str,
     n_clients: int,
-    hospitals: List[str],
+    hospitals: list[str],
     learning_task: str,
     eval_global_model: bool,
     is_apfl: bool,
@@ -41,7 +40,7 @@ def main(
     # metrics = []
 
     for metric in metrics:
-        test_results: Dict[str, float] = {}
+        test_results: dict[str, float] = {}
         all_local_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
         all_server_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
 

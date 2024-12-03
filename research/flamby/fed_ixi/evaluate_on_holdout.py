@@ -1,6 +1,5 @@
 import argparse
 from logging import INFO
-from typing import Dict
 
 import torch
 from flamby.datasets.fed_ixi import BATCH_SIZE, NUM_CLIENTS, FedIXITiny
@@ -28,7 +27,7 @@ def main(
 ) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     all_run_folder_dir = get_all_run_folders(artifact_dir)
-    test_results: Dict[str, float] = {}
+    test_results: dict[str, float] = {}
     metrics = [BinarySoftDiceCoefficient("FedIXI_dice")]
 
     all_local_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}

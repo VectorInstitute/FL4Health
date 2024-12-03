@@ -1,6 +1,5 @@
 import copy
 from pathlib import Path
-from typing import Tuple
 
 import pytest
 import torch
@@ -28,7 +27,7 @@ class DummyDataset(BaseDataset):
     def __len__(self) -> int:
         return len(self.data)
 
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
         return self.data[index], self.targets[index]
 
 

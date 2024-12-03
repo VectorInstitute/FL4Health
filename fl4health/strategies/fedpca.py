@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from logging import INFO, WARNING
-from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from flwr.common import MetricsAggregationFn, NDArray, NDArrays, Parameters, ndarrays_to_parameters
@@ -20,18 +20,15 @@ class FedPCA(BasicFedAvg):
         min_fit_clients: int = 2,
         min_evaluate_clients: int = 2,
         min_available_clients: int = 2,
-        evaluate_fn: Optional[
-            Callable[
-                [int, NDArrays, Dict[str, Scalar]],
-                Optional[Tuple[float, Dict[str, Scalar]]],
-            ]
-        ] = None,
-        on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
-        on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
+        evaluate_fn: (
+            Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None
+        ) = None,
+        on_fit_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
+        on_evaluate_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
-        initial_parameters: Optional[Parameters] = None,
-        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        initial_parameters: Parameters | None = None,
+        fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
+        evaluate_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         weighted_aggregation: bool = True,
         weighted_eval_losses: bool = True,
         svd_merging: bool = True,
@@ -45,20 +42,18 @@ class FedPCA(BasicFedAvg):
             fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0. Defaults to 1.0.
             fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.
             min_available_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
-            evaluate_fn (Optional[
-                Callable[[int, NDArrays, Dict[str, Scalar]], Optional[Tuple[float, Dict[str, Scalar]]]]
-            ]):
+            evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
                 Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
                 Function used to configure client-side validation by providing a Config dictionary.
                 Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
-            initial_parameters (Optional[Parameters], optional): Initial global model parameters. Defaults to None.
-            fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+            initial_parameters (Parameters | None, optional): Initial global model parameters. Defaults to None.
+            fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
-            evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+            evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
             weighted_aggregation (bool, optional): Determines whether parameter aggregation is a linearly weighted
                 average or a uniform average. FedAvg default is weighted average by client dataset counts.
@@ -92,22 +87,22 @@ class FedPCA(BasicFedAvg):
     def aggregate_fit(
         self,
         server_round: int,
-        results: List[Tuple[ClientProxy, FitRes]],
-        failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-    ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
+        results: list[tuple[ClientProxy, FitRes]],
+        failures: list[tuple[ClientProxy, FitRes] | BaseException],
+    ) -> tuple[Parameters | None, dict[str, Scalar]]:
         """
         Aggregate client parameters. In this case, merge all clients' local principal components.
 
         Args:
             server_round (int): Indicates the server round we're currently on.
-            results (List[Tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
+            results (list[tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
                 that need to be aggregated on the server-side. In this scheme, the clients pack the layer weights into
                 the results object along with the weight values to allow for alignment during aggregation.
-            failures (List[Union[Tuple[ClientProxy, FitRes], BaseException]]): These are the results and exceptions
+            failures (list[tuple[ClientProxy, FitRes] | BaseException]): These are the results and exceptions
                 from clients that experienced an issue during training, such as timeouts or exceptions.
 
         Returns:
-            Tuple[Optional[Parameters], Dict[str, Scalar]]: The aggregated parameters and the metrics dictionary.
+            tuple[Parameters | None, dict[str, Scalar]]: The aggregated parameters and the metrics dictionary.
                 In this case, the parameters are the new singular vectors and their corresponding singular values.
         """
         if not results:
@@ -153,7 +148,7 @@ class FedPCA(BasicFedAvg):
 
     def merge_subspaces_svd(
         self, client_singular_vectors: NDArrays, client_singular_values: NDArrays
-    ) -> Tuple[NDArray, NDArray]:
+    ) -> tuple[NDArray, NDArray]:
         """
         Produce the principal components for all the data distributed across clients by merging
         the principal components belonging to each local dataset.
@@ -191,7 +186,7 @@ class FedPCA(BasicFedAvg):
             client_singular_values (NDArrays): Singular values corresponding to local PCs.
 
         Returns:
-            Tuple[NDArray, NDArray]: merged PCs and corresponding singular values.
+            tuple[NDArray, NDArray]: merged PCs and corresponding singular values.
 
         Note:
             This method assumes that the *columns* of U_i's are the local principal components.
@@ -213,7 +208,7 @@ class FedPCA(BasicFedAvg):
 
     def merge_subspaces_qr(
         self, client_singular_vectors: NDArrays, client_singular_values: NDArrays
-    ) -> Tuple[NDArray, NDArray]:
+    ) -> tuple[NDArray, NDArray]:
         """
         Produce the principal components (PCs) for all the data distributed across clients by merging the PCs
         belonging to each local dataset.
@@ -244,7 +239,7 @@ class FedPCA(BasicFedAvg):
             client_singular_values (NDArrays): Singular values corresponding to local PCs.
 
         Returns:
-            Tuple[NDArray, NDArray]: merged PCs and corresponding singular values.
+            tuple[NDArray, NDArray]: merged PCs and corresponding singular values.
 
         Note:
             Similar to merge_subspaces_svd, this method assumes that the *columns* of U_i's are
@@ -261,8 +256,8 @@ class FedPCA(BasicFedAvg):
             return self.merge_two_subspaces_qr((U, np.diag(S)), (U_last, np.diag(S_last)))
 
     def merge_two_subspaces_qr(
-        self, subspace1: Tuple[NDArray, NDArray], subspace2: Tuple[NDArray, NDArray]
-    ) -> Tuple[NDArray, NDArray]:
+        self, subspace1: tuple[NDArray, NDArray], subspace2: tuple[NDArray, NDArray]
+    ) -> tuple[NDArray, NDArray]:
         U1, S1 = subspace1
         U2, S2 = subspace2
 

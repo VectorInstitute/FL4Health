@@ -2,7 +2,6 @@ import argparse
 import os
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 import flwr as fl
 import torch
@@ -24,8 +23,8 @@ class GeminiFedProxClient(FedProxClient):
     def __init__(
         self,
         data_path: Path,
-        metrics: List[Metric],
-        hospitals_id: List[str],
+        metrics: list[Metric],
+        hospitals_id: list[str],
         device: torch.device,
         learning_task: str,
         learning_rate: float,
@@ -71,7 +70,7 @@ class GeminiFedProxClient(FedProxClient):
 
         super().setup_client(config)
 
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+    def fit(self, parameters: NDArrays, config: Config) -> tuple[NDArrays, int, dict[str, Scalar]]:
         if not self.initialized:
             self.setup_client(config)
 
@@ -88,7 +87,7 @@ class GeminiFedProxClient(FedProxClient):
             metric_values,
         )
 
-    def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
+    def evaluate(self, parameters: NDArrays, config: Config) -> tuple[float, int, dict[str, Scalar]]:
         if not self.initialized:
             self.setup_client(config)
 

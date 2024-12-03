@@ -1,6 +1,5 @@
 import math
 from abc import ABC, abstractmethod
-from typing import List, Tuple
 
 import torch
 import torch.nn.functional as F
@@ -84,12 +83,12 @@ class SyntheticFedProxDataset(ABC):
         samples = torch.multinomial(distributions, 1)
         return F.one_hot(samples, num_classes=self.output_dim).squeeze()
 
-    def generate(self) -> List[TensorDataset]:
+    def generate(self) -> list[TensorDataset]:
         """
         Based on the class parameters, generate a list of synthetic TensorDatasets, one for each client.
 
         Returns:
-            List[TensorDataset]: Synthetic datasets for each client.
+            list[TensorDataset]: Synthetic datasets for each client.
         """
         client_tensors = self.generate_client_tensors()
         assert (
@@ -99,14 +98,14 @@ class SyntheticFedProxDataset(ABC):
         return client_datasets
 
     @abstractmethod
-    def generate_client_tensors(self) -> List[Tuple[torch.Tensor, torch.Tensor]]:
+    def generate_client_tensors(self) -> list[tuple[torch.Tensor, torch.Tensor]]:
         """
         Method to be implemented determining how to generate the tensors in the subclasses. Each of the subclasses
         uses the affine mapping, but the parameters for how that affine mapping is setup are different and determined
         in this function.
 
         Returns:
-            List[Tuple[torch.Tensor, torch.Tensor]]: input and output tensors for each of the clients.
+            list[tuple[torch.Tensor, torch.Tensor]]: input and output tensors for each of the clients.
         """
         pass
 
@@ -165,7 +164,7 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
 
     def get_input_output_tensors(
         self, mu: float, v: torch.Tensor, sigma: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         This function takes values for the center of elements in the affine transformation elements (mu), the centers
         feature each of the input feature dimensions (v), and the covariance of those features (sigma) and produces
@@ -180,7 +179,7 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
                 diagonal matrix as well.
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]: X and Y for the clients synthetic dataset. Shape of X is
+            tuple[torch.Tensor, torch.Tensor]: X and Y for the clients synthetic dataset. Shape of X is
                 n_samples x input dimension. Shape of Y is n_samples x output_dim and is one-hot encoded
         """
 
@@ -193,7 +192,7 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
 
         return x, self.map_inputs_to_outputs(x, W, b)
 
-    def generate_client_tensors(self) -> List[Tuple[torch.Tensor, torch.Tensor]]:
+    def generate_client_tensors(self) -> list[tuple[torch.Tensor, torch.Tensor]]:
         """
         For the Non-IID synthetic generator, this function uses the values of alpha and beta to sample the parameters
         that will be used to generate the synthetic datasets on each client. For each client, beta is used to sample
@@ -202,9 +201,9 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
         the larger the variance in these values, implying higher probability of heterogeneity.
 
         Returns:
-            List[Tuple[torch.Tensor, torch.Tensor]]: Set of input and output tensors for each client.
+            list[tuple[torch.Tensor, torch.Tensor]]: Set of input and output tensors for each client.
         """
-        tensors_per_client: List[Tuple[torch.Tensor, torch.Tensor]] = []
+        tensors_per_client: list[tuple[torch.Tensor, torch.Tensor]] = []
         for _ in range(self.num_clients):
             B = torch.normal(0.0, self.beta, (1,))
             # v_k in the FedProx paper
@@ -267,13 +266,13 @@ class SyntheticIidFedProxDataset(SyntheticFedProxDataset):
             loc=torch.zeros(self.input_dim), covariance_matrix=self.input_covariance
         )
 
-    def get_input_output_tensors(self) -> Tuple[torch.Tensor, torch.Tensor]:
+    def get_input_output_tensors(self) -> tuple[torch.Tensor, torch.Tensor]:
         """
         As described in the original FedProx paper (Appendix C.1), the features are all sampled from a centered
         multidimensional normal distribution with diagonal covariance matrix shared across clients.
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]: X and Y for the clients synthetic dataset. Shape of X is
+            tuple[torch.Tensor, torch.Tensor]: X and Y for the clients synthetic dataset. Shape of X is
                 n_samples x input dimension. Shape of Y is n_samples x output_dim and is one-hot encoded
         """
         # size of x should be samples_per_client x input_dim
@@ -282,15 +281,15 @@ class SyntheticIidFedProxDataset(SyntheticFedProxDataset):
 
         return x, self.map_inputs_to_outputs(x, self.W, self.b)
 
-    def generate_client_tensors(self) -> List[Tuple[torch.Tensor, torch.Tensor]]:
+    def generate_client_tensors(self) -> list[tuple[torch.Tensor, torch.Tensor]]:
         """
         For IID generation, this function is simple, as we need not sample any parameters per client for use in
         generation, as these are all shared across clients.
 
         Returns:
-            List[Tuple[torch.Tensor, torch.Tensor]]: Set of input and output tensors for each client.
+            list[tuple[torch.Tensor, torch.Tensor]]: Set of input and output tensors for each client.
         """
-        tensors_per_client: List[Tuple[torch.Tensor, torch.Tensor]] = []
+        tensors_per_client: list[tuple[torch.Tensor, torch.Tensor]] = []
         for _ in range(self.num_clients):
             client_X, client_Y = self.get_input_output_tensors()
             tensors_per_client.append((client_X, client_Y))

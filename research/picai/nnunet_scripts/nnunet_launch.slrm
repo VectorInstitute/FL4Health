@@ -16,7 +16,7 @@ UNET_CONFIG=$2
 FOLD=$3
 VENV_PATH=$4
 PLANS_IDENTIFIER=${5:-'plans'} # Default value of plans string
-PRETAINED_WEIGHTS=${6:-''} # Default value of empty string
+PRETRAINED_WEIGHTS=${6:-''} # Default value of empty string
 
 # Set environment paths that nnUNet expects
 export nnUNet_raw="/ssd003/projects/aieng/public/PICAI/nnUNet/nnUNet_raw"

@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -18,7 +16,7 @@ class MnistVariationalEncoder(nn.Module):
         self.fc_mu = nn.Linear(256, latent_dim)
         self.fc_logvar = nn.Linear(256, latent_dim)
 
-    def forward(self, input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, input: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         x = F.relu(self.fc1(input))
         x = F.relu(self.fc2(x))
         return self.fc_mu(x), self.fc_logvar(x)

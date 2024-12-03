@@ -1,7 +1,7 @@
 import argparse
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -39,12 +39,12 @@ class PicaiFedAvgClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        client_name: Optional[str] = None,
+        client_name: str | None = None,
         overviews_dir: Path = Path("./"),
-        data_partition: Optional[int] = None,
+        data_partition: int | None = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -61,7 +61,7 @@ class PicaiFedAvgClient(BasicClient):
         self.overviews_dir = overviews_dir
         self.class_proportions: torch.Tensor
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         train_img_paths, train_seg_paths, class_proportions = get_img_and_seg_paths(
             self.overviews_dir, int(config["fold_id"]), True
         )

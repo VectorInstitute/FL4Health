@@ -1,5 +1,3 @@
-from typing import List, Tuple
-
 import numpy as np
 from flwr.common import Code, FitRes, Metrics, NDArrays, Status, ndarrays_to_parameters
 from flwr.server.client_proxy import ClientProxy
@@ -21,7 +19,7 @@ client0_res = construct_fit_res([np.ones((3, 3)), np.ones((4, 4))], 0.1, 50)
 client1_res = construct_fit_res([np.ones((3, 3)), np.full((4, 4), 2)], 0.2, 50)
 client2_res = construct_fit_res([np.full((3, 3), 3), np.full((4, 4), 3)], 0.3, 100)
 client3_res = construct_fit_res([np.full((3, 3), 4), np.full((4, 4), 4)], 0.4, 200)
-clients_res_1: List[Tuple[ClientProxy, FitRes]] = [
+clients_res_1: list[tuple[ClientProxy, FitRes]] = [
     (CustomClientProxy("c0"), client0_res),
     (CustomClientProxy("c1"), client1_res),
     (CustomClientProxy("c2"), client2_res),
@@ -32,7 +30,7 @@ client0_res = construct_fit_res([np.full((3, 3), 1.5), np.full((4, 4), 1.5)], 0.
 client1_res = construct_fit_res([np.full((3, 3), 2.5), np.full((4, 4), 2.5)], 0.25, 60)
 client2_res = construct_fit_res([np.full((3, 3), 3.5), np.full((4, 4), 3.5)], 0.35, 110)
 client3_res = construct_fit_res([np.full((3, 3), 4.5), np.full((4, 4), 4.5)], 0.45, 210)
-clients_res_2: List[Tuple[ClientProxy, FitRes]] = [
+clients_res_2: list[tuple[ClientProxy, FitRes]] = [
     (CustomClientProxy("c0"), client0_res),
     (CustomClientProxy("c1"), client1_res),
     (CustomClientProxy("c2"), client2_res),
@@ -40,7 +38,7 @@ clients_res_2: List[Tuple[ClientProxy, FitRes]] = [
 ]
 
 
-def metrics_aggregation(to_aggregate: List[Tuple[int, Metrics]]) -> Metrics:
+def metrics_aggregation(to_aggregate: list[tuple[int, Metrics]]) -> Metrics:
     # Select last set of metrics (dummy for test)
     return to_aggregate[-1][1]
 

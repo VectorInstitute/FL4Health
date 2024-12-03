@@ -9,12 +9,13 @@ Code: https://github.com/wns823/medical_federated.git
 
 import json
 import os
-from typing import Any, Callable, Dict, List
+from collections.abc import Callable
+from typing import Any
 
 import pandas as pd
 
 
-def save_to_json(data: Dict[str, Any], path: str) -> None:
+def save_to_json(data: dict[str, Any], path: str) -> None:
     """Saves a dictionary to a JSON file.
 
     Args:
@@ -31,8 +32,8 @@ def process_client_data(
     data_path: str,
     image_path_func: Callable[[pd.Series], str],
     label_map_func: Callable[[pd.Series], str],
-    original_columns: List[str],
-    official_columns: List[str],
+    original_columns: list[str],
+    official_columns: list[str],
 ) -> None:
     """Processes and saves the client-specific dataset.
 
@@ -45,7 +46,7 @@ def process_client_data(
         original_columns: The list of original columns for the dataset.
         official_columns: The list of official columns for the dataset.
     """
-    preprocessed_data: Dict[str, Any] = {
+    preprocessed_data: dict[str, Any] = {
         "columns": official_columns,
         "original_columns": original_columns,
         "data": [],
@@ -70,7 +71,7 @@ def process_client_data(
     save_to_json(preprocessed_data, os.path.join(data_path, f"{client_name}.json"))
 
 
-def preprocess_isic_2019(data_path: str, official_columns: List[str]) -> None:
+def preprocess_isic_2019(data_path: str, official_columns: list[str]) -> None:
     """Preprocesses the ISIC 2019 dataset.
 
     Args:
@@ -90,7 +91,7 @@ def preprocess_isic_2019(data_path: str, official_columns: List[str]) -> None:
     Isic_2019_data_path = os.path.join(data_path, "ISIC_2019", "ISIC_2019_Training_Input")
     Barcelona_df = pd.read_csv(os.path.join(Isic_2019_path, "ISIC_2019_core.csv"))
     Barcelona_new = Barcelona_df[["image"] + official_columns + ["UNK"]]
-    preprocessed_data: Dict[str, Any] = {
+    preprocessed_data: dict[str, Any] = {
         "columns": official_columns,
         "original_columns": official_columns,
         "data": [],
@@ -146,7 +147,7 @@ def ham_label_map_func(row: pd.Series) -> str:
     return Ham_labelmap[row["dx"]]
 
 
-def preprocess_ham10000(data_path: str, official_columns: List[str]) -> None:
+def preprocess_ham10000(data_path: str, official_columns: list[str]) -> None:
     """Preprocesses the HAM10000 dataset.
 
     Args:
@@ -216,7 +217,7 @@ def pad_label_map_func(row: pd.Series) -> str:
     return Pad_ufes_20_labelmap[row["diagnostic"]]
 
 
-def preprocess_pad_ufes_20(data_path: str, official_columns: List[str]) -> None:
+def preprocess_pad_ufes_20(data_path: str, official_columns: list[str]) -> None:
     """Preprocesses the PAD-UFES-20 dataset.
 
     Args:
@@ -286,7 +287,7 @@ def derm7pt_label_map_func(row: pd.Series) -> str:
     return Derm7pt_labelmap[row["diagnosis"]]
 
 
-def preprocess_derm7pt(data_path: str, official_columns: List[str]) -> None:
+def preprocess_derm7pt(data_path: str, official_columns: list[str]) -> None:
     """Preprocesses the Derm7pt dataset.
 
     Args:

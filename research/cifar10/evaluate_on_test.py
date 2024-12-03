@@ -2,7 +2,6 @@ import argparse
 import copy
 from logging import INFO
 from pathlib import Path
-from typing import Dict
 
 import torch
 from flwr.common.logger import log
@@ -46,7 +45,7 @@ def main(
 ) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     all_run_folder_dir = get_all_run_folders(artifact_dir)
-    test_results: Dict[str, float] = {}
+    test_results: dict[str, float] = {}
     metrics = [Accuracy("cifar10_accuracy")]
 
     all_pre_best_local_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}

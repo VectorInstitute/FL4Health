@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import torch
 from torch.utils.data import DataLoader
 
@@ -17,7 +15,7 @@ def test_dataset_converter() -> None:
     dummy_dataset = get_dummy_dataset()
 
     # Create a dummy converter function for testing
-    def dummy_converter(data: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def dummy_converter(data: torch.Tensor, target: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         return data, target
 
     # Test DatasetConverter

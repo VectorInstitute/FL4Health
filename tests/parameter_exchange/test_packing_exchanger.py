@@ -1,5 +1,4 @@
 import copy
-from typing import List
 
 import numpy as np
 import pytest
@@ -28,13 +27,13 @@ from tests.test_utils.models_for_test import ConstantConvNet, ToyConvNet
 
 
 @pytest.fixture
-def get_ndarrays(layer_sizes: List[List[int]]) -> NDArrays:
+def get_ndarrays(layer_sizes: list[list[int]]) -> NDArrays:
     ndarrays = [np.ones(tuple(size)) for size in layer_sizes]
     return ndarrays
 
 
 @pytest.fixture
-def get_sparse_tensors(num_tensors: int) -> List[Tensor]:
+def get_sparse_tensors(num_tensors: int) -> list[Tensor]:
     tensors = []
     for _ in range(num_tensors):
         x = torch.tensor([[1, 0, 0, 0], [0, 2, 0, 0], [0, 0, 3, 0], [0, 0, 0, 4], [5, 0, 0, 0]])
@@ -142,7 +141,7 @@ def test_parameter_packer_with_layer_names(get_ndarrays: NDArrays) -> None:  # n
 
 
 @pytest.mark.parametrize("num_tensors", [6])
-def test_sparse_coo_parameter_packer(get_sparse_tensors: List[Tensor]) -> None:
+def test_sparse_coo_parameter_packer(get_sparse_tensors: list[Tensor]) -> None:
     model_tensors = get_sparse_tensors
     tensor_names = ["tensor1", "tensor2", "tensor3", "tensor4", "tensor5", "tensor6"]
     parameter_nonzero_values = []

@@ -1,6 +1,6 @@
 import argparse
 from functools import partial
-from typing import Any, Dict
+from typing import Any
 
 import flwr as fl
 import torch.nn as nn
@@ -30,7 +30,7 @@ def fit_config(
     }
 
 
-def main(config: Dict[str, Any]) -> None:
+def main(config: dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -40,7 +40,7 @@ def main(config: Dict[str, Any]) -> None:
         config["n_server_rounds"],
     )
 
-    ensemble_models: Dict[str, nn.Module] = {
+    ensemble_models: dict[str, nn.Module] = {
         "model_0": ConfigurableMnistNet(out_channel_mult=1),
         "model_1": ConfigurableMnistNet(out_channel_mult=2),
         "model_2": ConfigurableMnistNet(out_channel_mult=3),

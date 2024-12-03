@@ -1,5 +1,3 @@
-from typing import Optional
-
 import torch
 import torch.nn as nn
 from efficientnet_pytorch import EfficientNet
@@ -49,7 +47,7 @@ class BaseEfficientNet(nn.Module):
     it is not used in the FedPer experiments.
     """
 
-    def __init__(self, frozen_blocks: Optional[int] = 13, turn_off_bn_tracking: bool = False):
+    def __init__(self, frozen_blocks: int | None = 13, turn_off_bn_tracking: bool = False):
         super().__init__()
         # include_top ensures that we just use feature extraction in the forward pass
         self.base_model = from_pretrained("efficientnet-b0", include_top=False)
@@ -60,7 +58,7 @@ class BaseEfficientNet(nn.Module):
 
     def freeze_layers(self, frozen_blocks: int) -> None:
         # We freeze the bottom layers of the network. We always freeze the _conv_stem module, the _bn0 module and then
-        # we iterate throught the blocks freezing the specified number up to 15 (all of them)
+        # we iterate through the blocks freezing the specified number up to 15 (all of them)
 
         # Freeze the first two layers
         self.base_model._modules["_conv_stem"].requires_grad_(False)
@@ -77,7 +75,7 @@ class BaseEfficientNet(nn.Module):
 
 
 class FedIsic2019FedPerModel(SequentiallySplitExchangeBaseModel):
-    def __init__(self, frozen_blocks: Optional[int] = None, turn_off_bn_tracking: bool = False) -> None:
+    def __init__(self, frozen_blocks: int | None = None, turn_off_bn_tracking: bool = False) -> None:
         base_module = BaseEfficientNet(frozen_blocks, turn_off_bn_tracking=turn_off_bn_tracking)
         head_module = HeadClassifier(1280)
         super().__init__(base_module, head_module)

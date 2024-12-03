@@ -1,7 +1,7 @@
 import datetime
 import timeit
+from collections.abc import Sequence
 from logging import INFO, WARNING
-from typing import Dict, Optional, Sequence, Tuple
 
 import torch.nn as nn
 from flwr.common.logger import log
@@ -25,12 +25,12 @@ class ModelMergeServer(Server):
         self,
         *,
         client_manager: ClientManager,
-        strategy: Optional[Strategy] = None,
-        server_model: Optional[nn.Module] = None,
-        checkpointer: Optional[LatestTorchModuleCheckpointer] = None,
-        parameter_exchanger: Optional[ParameterExchanger] = None,
+        strategy: Strategy | None = None,
+        server_model: nn.Module | None = None,
+        checkpointer: LatestTorchModuleCheckpointer | None = None,
+        parameter_exchanger: ParameterExchanger | None = None,
         reporters: Sequence[BaseReporter] | None = None,
-        server_name: Optional[str] = None,
+        server_name: str | None = None,
     ) -> None:
         """
         ModelMergeServer provides functionality to fetch client weights, perform a simple average,
@@ -38,21 +38,21 @@ class ModelMergeServer(Server):
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
-            strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle
+            strategy (Strategy | None, optional): The aggregation strategy to be used by the server to handle
                 client updates sent by the participating clients. Must be ModelMergeStrategy.
-            checkpointer (Optional[LatestTorchCheckpointer], optional): To be provided if the server should perform
+            checkpointer (LatestTorchCheckpointer | None, optional): To be provided if the server should perform
                 server side checkpointing on the merged model. If none, then no server-side checkpointing is
                 performed. Defaults to None.
-            server_model (Optional[nn.Module]): Optional model to be hydrated with parameters from model merge if doing
+            server_model (nn.Module | None): Optional model to be hydrated with parameters from model merge if doing
                 server side checkpointing. Must only be provided if checkpointer is also provided. Defaults to None.
-            parameter_exchanger (Optional[ExchangerType], optional): A parameter exchanger used to facilitate
+            parameter_exchanger (ExchangerType | None, optional): A parameter exchanger used to facilitate
                 server-side model checkpointing if a checkpointer has been defined. If not provided then checkpointing
                 will not be done unless the _hydrate_model_for_checkpointing function is overridden. Because the
                 server only sees numpy arrays, the parameter exchanger is used to insert the numpy arrays into a
                 provided model. Defaults to None.
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the server should
                 send data to before and after each round.
-            server_name (Optional[str]): An optional string name to uniquely identify server.
+            server_name (str | None): An optional string name to uniquely identify server.
         """
         assert isinstance(strategy, ModelMergeStrategy)
         assert (server_model is None and checkpointer is None and parameter_exchanger is None) or (
@@ -69,7 +69,7 @@ class ModelMergeServer(Server):
         self.reports_manager = ReportsManager(reporters)
         self.reports_manager.initialize(id=self.server_name)
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
+    def fit(self, num_rounds: int, timeout: float | None) -> tuple[History, float]:
         """
         Performs a fit round in which the local client weights are evaluated on their test set,
             uploaded to the server and averaged, then redistributed to clients for evaluation.
@@ -77,11 +77,11 @@ class ModelMergeServer(Server):
 
         Args:
             num_rounds (int): Not used.
-            timeout (Optional[float]): Timeout in seconds that the server should wait for the clients to respond.
+            timeout (float | None): Timeout in seconds that the server should wait for the clients to respond.
                 If none, then it will wait for the minimum number to respond indefinitely.
 
         Returns:
-            Tuple[History, float]: The first element of the tuple is a History object containing the aggregated
+            tuple[History, float]: The first element of the tuple is a History object containing the aggregated
                 metrics returned from the clients. Tuple also contains elapsed time in seconds for round.
         """
         self.reports_manager.report({"host_type": "server", "fit_start": datetime.datetime.now()})
@@ -162,7 +162,7 @@ class ModelMergeServer(Server):
         return self.server_model
 
     def _maybe_checkpoint(
-        self, loss_aggregated: float, metrics_aggregated: Dict[str, Scalar], server_round: int
+        self, loss_aggregated: float, metrics_aggregated: dict[str, Scalar], server_round: int
     ) -> None:
         """
         Method to checkpoint merged model on server side if the checkpointer, server_model and
@@ -170,7 +170,7 @@ class ModelMergeServer(Server):
 
         Args:
             loss_aggregated (float): Not used.
-            metrics_aggregated (Dict[str, Scalar]): Not used.
+            metrics_aggregated (dict[str, Scalar]): Not used.
             server_round (int): Not used.
         """
         if self.checkpointer and self.server_model and self.parameter_exchanger:

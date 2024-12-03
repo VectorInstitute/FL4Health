@@ -1,6 +1,5 @@
 import argparse
 from pathlib import Path
-from typing import Dict, Tuple
 
 import flwr as fl
 import torch
@@ -22,7 +21,7 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class MnistApflClient(ApflClient):
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75)
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
@@ -31,7 +30,7 @@ class MnistApflClient(ApflClient):
     def get_model(self, config: Config) -> nn.Module:
         return ApflModule(MnistNetWithBnAndFrozen()).to(self.device)
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
         local_optimizer = torch.optim.AdamW(self.model.local_model.parameters(), lr=0.01)
         global_optimizer = torch.optim.AdamW(self.model.global_model.parameters(), lr=0.01)
         return {"local": local_optimizer, "global": global_optimizer}
