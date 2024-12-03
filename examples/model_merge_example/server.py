@@ -12,7 +12,7 @@ from flwr.server.client_manager import SimpleClientManager
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
-from fl4health.checkpointing.checkpointer import LatestTorchCheckpointer
+from fl4health.checkpointing.checkpointer import LatestTorchModuleCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.model_merge_server import ModelMergeServer
 from fl4health.strategies.model_merge_strategy import ModelMergeStrategy
@@ -77,7 +77,7 @@ def main(config: Dict[str, Any], data_path: Path) -> None:
         evaluate_fn=server_side_evaluate_fn_partial,
     )
 
-    checkpointer = LatestTorchCheckpointer(checkpoint_dir=config["ckpt_path"], checkpoint_name="model_merge.pt")
+    checkpointer = LatestTorchModuleCheckpointer(checkpoint_dir=config["ckpt_path"], checkpoint_name="model_merge.pt")
 
     server = ModelMergeServer(
         client_manager=SimpleClientManager(),

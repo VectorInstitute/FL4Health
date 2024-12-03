@@ -22,6 +22,8 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.utils.functions import make_dict_with_epochs_or_steps
+from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
+from fl4health.checkpointing.server_module import NnUnetServerCheckpointAndStateModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.nnunet_server import NnunetServer
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
@@ -91,17 +93,22 @@ def main(
         initial_parameters=params,
     )
 
+    state_checkpointer = (
+        PerRoundStateCheckpointer(Path(intermediate_server_state_dir))
+        if intermediate_server_state_dir is not None
+        else None
+    )
+    checkpoint_and_state_module = NnUnetServerCheckpointAndStateModule(
+        model=None, parameter_exchanger=FullParameterExchanger(), state_checkpointer=state_checkpointer
+    )
+
     server = NnunetServer(
         client_manager=SimpleClientManager(),
         fl_config=config,
         # The fit_config_fn contains all of the necessary information for param initialization, so we reuse it here
         on_init_parameters_config_fn=fit_config_fn,
-        model=None,
-        parameter_exchanger=FullParameterExchanger(),
         strategy=strategy,
-        intermediate_server_state_dir=(
-            Path(intermediate_server_state_dir) if intermediate_server_state_dir is not None else None
-        ),
+        checkpoint_and_state_module=checkpoint_and_state_module,
         server_name=server_name,
     )
 

@@ -6,6 +6,9 @@ from logging import INFO
 from pathlib import Path
 from typing import Optional, Union
 
+from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
+
 with warnings.catch_warnings():
     # Silence deprecation warnings from sentry sdk due to flwr and wandb
     # https://github.com/adap/flower/issues/4086
@@ -58,6 +61,13 @@ def main(
 
     metrics = [dice1, dice2]  # Oddly each of these dice metrics is drastically different.
 
+    if intermediate_client_state_dir is not None:
+        checkpoint_and_state_module = ClientCheckpointAndStateModule(
+            state_checkpointer=PerRoundStateCheckpointer(Path(intermediate_client_state_dir))
+        )
+    else:
+        checkpoint_and_state_module = None
+
     # Create and start client
     client = NnunetClient(
         # Args specific to nnUNetClient
@@ -72,9 +82,7 @@ def main(
         device=device,
         metrics=metrics,
         progress_bar=verbose,
-        intermediate_client_state_dir=(
-            Path(intermediate_client_state_dir) if intermediate_client_state_dir is not None else None
-        ),
+        checkpoint_and_state_module=checkpoint_and_state_module,
         client_name=client_name,
     )
 

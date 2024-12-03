@@ -22,7 +22,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from utils.random import set_all_random_seeds
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchModuleCheckpointer
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 from research.gemini.metrics.metrics import Accuracy, Binary_F1, Binary_ROC_AUC
@@ -41,7 +41,7 @@ class GeminiMoonClient(MoonClient):
         run_name: str = "",
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         contrastive_weight: float = 10,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[TorchModuleCheckpointer] = None,
     ) -> None:
         # Checkpointing: create a string of the names of the hospitals
         self.hospitals = hospital_id

@@ -2,7 +2,7 @@ from typing import Dict
 
 from flwr.common.typing import Scalar
 
-from fl4health.checkpointing.checkpointer import FunctionTorchCheckpointer
+from fl4health.checkpointing.checkpointer import FunctionTorchModuleCheckpointer
 
 
 def score_function(_: float, metrics: Dict[str, Scalar]) -> float:
@@ -15,7 +15,7 @@ def score_function(_: float, metrics: Dict[str, Scalar]) -> float:
 
 
 def test_function_checkpointer() -> None:
-    function_checkpointer = FunctionTorchCheckpointer("", "", score_function, maximize=True)
+    function_checkpointer = FunctionTorchModuleCheckpointer("", "", score_function, maximize=True)
     loss_1, loss_2 = 1.0, 0.9
     metrics_1: Dict[str, Scalar] = {"accuracy": 0.87, "precision": 0.67, "f1": 0.76}
     metrics_2: Dict[str, Scalar] = {"accuracy": 0.87, "precision": 0.9, "f1": 0.6}

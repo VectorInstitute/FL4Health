@@ -17,7 +17,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from utils.random import set_all_random_seeds
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchModuleCheckpointer
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
@@ -41,7 +41,7 @@ class GeminiDittoClient(DittoClient):
         checkpoint_stub: str,
         run_name: str = "",
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[TorchModuleCheckpointer] = None,
     ) -> None:
         # Checkpointing: create a string of the names of the hospitals
         self.hospitals = hospital_id
