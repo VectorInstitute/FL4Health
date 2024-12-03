@@ -45,11 +45,12 @@ repos:
       - id: nbqa-check-ast
       - id: nbqa-flake8
       - id: nbqa-mypy
+
   - repo: local
     hooks:
       - id: mypy legacy type check
-        name: Mypy legacy type check
-        entry: ./mypy_disallow_legacy_types.py
+        name: mypy legacy type check
+        entry: python mypy_disallow_legacy_types.py
         language: python
         pass_filenames: true
 

@@ -5,9 +5,10 @@ import multiprocessing
 import os
 import time
 import warnings
+from collections.abc import Generator
 from logging import INFO
 from os.path import basename, isdir, join
-from typing import Any, Generator
+from typing import Any
 
 import numpy as np
 import torch
