@@ -18,6 +18,8 @@ disallowed_types = [
     "Hashable",
     "Generator",
     "Tuple",
+    "Mapping",
+    "Type",
 ]
 
 
@@ -34,7 +36,7 @@ def filter_files_to_ignore(file_paths: list[str]) -> list[str]:
 
 
 def construct_same_line_import_regex() -> str:
-    return rf"from typing import [^\n]*?({type_or})[^\n]*?\n$"
+    return rf"from typing import ([^\n]*?, )*({type_or})(\n|, [^\n]*?\n)"
 
 
 def construct_multi_line_import_regex() -> str:
