@@ -221,7 +221,10 @@ class NnunetServer(FlServer):
             self.num_input_channels = narrow_dict_type(properties, "num_input_channels", int)
             self.enable_deep_supervision = narrow_dict_type(properties, "enable_deep_supervision", bool)
 
-        if self.per_round_checkpointer is None or not self.per_round_checkpointer.checkpoint_exists():
+        if (
+            self.checkpoint_and_state_module.state_checkpointer is None
+            or not self.checkpoint_and_state_module.state_checkpointer.checkpoint_exists(self.state_checkpoint_name)
+        ):
             # If we're starting training from scratch, set the nnunet_config property and initialize the server model
             self.nnunet_config = NnunetConfig(self.fl_config["nnunet_config"])
             self.initialize_server_model()
