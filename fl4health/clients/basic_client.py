@@ -28,7 +28,6 @@ from fl4health.utils.client import (
     set_pack_losses_with_val_metrics,
 )
 from fl4health.utils.config import narrow_dict_type, narrow_dict_type_and_set_attribute
-from fl4health.utils.early_stopper import EarlyStopper
 from fl4health.utils.logging import LoggingMode
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric, MetricManager
@@ -48,7 +47,6 @@ class BasicClient(NumPyClient):
         progress_bar: bool = False,
         intermediate_client_state_dir: Optional[Path] = None,
         client_name: Optional[str] = None,
-        early_stopper: Optional[EarlyStopper] = None,
     ) -> None:
         """
         Base FL Client with functionality to train, evaluate, log, report and checkpoint.
@@ -97,8 +95,6 @@ class BasicClient(NumPyClient):
             )
         else:
             self.per_round_checkpointer = None
-
-        self.early_stopper = early_stopper
 
         # Initialize reporters with client information.
         self.reports_manager = ReportsManager(reporters)
@@ -645,7 +641,7 @@ class BasicClient(NumPyClient):
                 self.reports_manager.report(report_data, current_round, self.total_epochs, self.total_steps)
                 self.total_steps += 1
                 steps_this_round += 1
-                if self.early_stopper is not None:
+                if hasattr(self, "early_stopper"):
                     if self.total_steps % self.early_stopper.interval_steps == 0 and self.early_stopper.should_stop():
                         log(INFO, "Early stopping criterion met. Stopping training.")
                         break
@@ -717,7 +713,7 @@ class BasicClient(NumPyClient):
             report_data.update(self.get_client_specific_reports())
             self.reports_manager.report(report_data, current_round, None, self.total_steps)
             self.total_steps += 1
-            if self.early_stopper is not None:
+            if hasattr(self, "early_stopper"):
                 if self.total_steps % self.early_stopper.interval_steps == 0 and self.early_stopper.should_stop():
                     log(INFO, "Early stopping criterion met. Stopping training.")
                     break
@@ -866,8 +862,17 @@ class BasicClient(NumPyClient):
         self.parameter_exchanger = self.get_parameter_exchanger(config)
 
         self.reports_manager.report({"host_type": "client", "initialized": str(datetime.datetime.now())})
-
         self.initialized = True
+
+    def setup_early_stopper(
+        self,
+        patience: int = -1,
+        interval_steps: int = 5,
+        snapshot_dir: Optional[Path] = None,
+    ) -> None:
+        from fl4health.utils.early_stopper import EarlyStopper
+
+        self.early_stopper = EarlyStopper(self, patience, interval_steps, snapshot_dir)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         """
