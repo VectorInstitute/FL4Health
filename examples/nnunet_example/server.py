@@ -109,6 +109,7 @@ def main(
         strategy=strategy,
         checkpoint_and_state_module=checkpoint_and_state_module,
         server_name=server_name,
+        accept_failures=False,
     )
 
     fl.server.start_server(

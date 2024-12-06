@@ -62,7 +62,7 @@ def main(config: dict[str, Any]) -> None:
     )
 
     client_manager = SimpleClientManager()
-    server = DittoServer(client_manager=client_manager, fl_config=config, strategy=strategy)
+    server = DittoServer(client_manager=client_manager, fl_config=config, strategy=strategy, accept_failures=False)
 
     fl.server.start_server(
         server=server,

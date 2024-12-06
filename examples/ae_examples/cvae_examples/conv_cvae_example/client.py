@@ -17,7 +17,7 @@ from fl4health.model_bases.autoencoders_base import ConditionalVae
 from fl4health.preprocessing.autoencoders.loss import VaeLoss
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.dataset_converter import AutoEncoderDatasetConverter
-from fl4health.utils.load_data import load_mnist_data
+from fl4health.utils.load_data import ToNumpy, load_mnist_data
 from fl4health.utils.metrics import Metric
 from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
@@ -60,7 +60,7 @@ class CondConvAutoEncoderClient(BasicClient):
         batch_size = narrow_dict_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)
         # To make sure pixels stay in the range [0.0, 1.0].
-        transform = transforms.Compose([transforms.ToTensor()])
+        transform = transforms.Compose([ToNumpy(), transforms.ToTensor()])
         # To train an autoencoder-based model we need to set the data converter.
         train_loader, val_loader, _ = load_mnist_data(
             data_dir=self.data_path,

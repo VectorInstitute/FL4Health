@@ -4,7 +4,7 @@ a copy of the same architecture with different weights initialized via local pre
 average these weights and perform evaluation on the client side and the server side with the provided
 evaluation function. The server expects two clients to be spun up (i.e. it will wait until two clients
 report in before starting model merging and evaluation). For convenience, pre-trained models on the MNIST
-train set have been provided for each of the clients in `assets/checkpoints_for_examples/model_merge_example`
+train set have been provided for each of the clients in `/examples/assets/model_merge_example/`
 under `0.pt` and `1.pt`. The model merging and subsequent evaluation can be performed with these weights
 out-of-the-box.
 
@@ -15,8 +15,11 @@ In order to run the example, first ensure you have [installed the dependencies i
 
 The next step is to start the server by running:
 ```
-python -m examples.model_merge_example.server
+python -m examples.model_merge_example.server --config_path /path/to/config
 ```
+Optionally, you can provide a path to an evaluation dataset (`--data_path`) to evaluate the merged models on the
+server side.
+
 For a full list of arguments and their definitions: `python -m examples.model_merge_example.server --help`
 
 ## Starting Clients

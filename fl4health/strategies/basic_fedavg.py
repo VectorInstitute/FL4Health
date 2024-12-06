@@ -132,6 +132,8 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
             if self.on_fit_config_fn is not None:
                 # Custom fit config function provided
                 config = self.on_fit_config_fn(server_round)
+            else:
+                config = {"current_server_round": server_round}
             fit_ins = FitIns(parameters, config)
 
             # Sample clients
@@ -174,6 +176,8 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
             if self.on_evaluate_config_fn is not None:
                 # Custom evaluation config function provided
                 config = self.on_evaluate_config_fn(server_round)
+            else:
+                config = {"current_server_round": server_round}
             evaluate_ins = EvaluateIns(parameters, config)
 
             # Sample clients

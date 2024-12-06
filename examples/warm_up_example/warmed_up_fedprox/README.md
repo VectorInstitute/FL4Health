@@ -6,10 +6,6 @@ The server has some custom metrics aggregation and uses FedProx as its server-si
 
 After the warm-up training, clients can load their warmed-up models and continue training with the FedProx algorithm. To maintain consistency in the data loader between both runs, it is crucial to set a fixed seed for both clients and the server, ensuring uniformity in random data points across consecutive runs. Therefore, we ensure a fixed seed is set for these consecutive runs in both the `client.py` and `server.py` files. Additionally, to load the warmed-up models, it's important provide the path to the pretrained models based on client's unique name, ensuring that we can load the trained local model for each client from the previous example as a warmed-up model. Since models in the two runs can be different, loading weights from the pretrained model requires providing a mapping between the pretrained model and the model used in FL training. This mapping is accomplished through the `weights_mapping.json` file, which contains the names of the pretrained model's layers and the corresponding names of the layers in the model used in FL training.
 
-### Weights and Biases Reporting
-
-This example is also capable of logging results to your Weights and Biases account by setting `enabled` to `True` in the `config.yaml` under the `reporting_config` section. You'll also need to set the `entity` value to your Weights and Biases entity. Once those two things are set, you should be able to run the example and log the results to W and B directly.
-
 ### Running the Example
 
 In order to run the example, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.
@@ -31,7 +27,7 @@ from the FL4Health directory. The following arguments must be present in the spe
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the three
 clients. This is done by simply running (remembering to activate your environment)
 ```
-python -m examples.warm_up_example.warmed_up_fedprox.client --dataset_path /path/to/data --seed "SEED" --pretrained_model_dir /path/to/checkpointing/directory  --weights_mapping_path /path/to/weights/mapping/file
+python -m examples.warm_up_example.warmed_up_fedprox.client --dataset_path /path/to/data --seed "SEED" --pretrained_model_path /path/to/model_checkpoint  --weights_mapping_path /path/to/weights/mapping/file
 ```
 **NOTE**: The argument `dataset_path` has two functions, depending on whether the dataset exists locally or not. If the dataset already exists at the path specified, it will be loaded from there. Otherwise, the dataset will be automatically downloaded to the path specified and used in the run.
 

@@ -118,7 +118,7 @@ class WarmedUpModule:
                         f"state won't be loaded. Key {pretrained_key} not found in the pretrained model states.",
                     )
 
-        log(INFO, f"{len(matching_state)}/{len(target_model_state)} states got matched.")
+        log(INFO, f"{len(matching_state)}/{len(target_model_state)} states were matched.")
 
         target_model_state.update(matching_state)
         model.load_state_dict(target_model_state)

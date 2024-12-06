@@ -34,7 +34,6 @@ def get_transforms() -> tuple[Callable, Callable]:
 
     target_transform = transforms.Compose(
         [
-            ToNumpy(),
             transforms.ToPILImage(),
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.RandomApply([color_jitter], p=0.8),

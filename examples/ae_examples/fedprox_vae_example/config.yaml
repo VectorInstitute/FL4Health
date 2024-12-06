@@ -8,7 +8,7 @@ batch_size: 32 # The batch size for client training
 
 # FedProx variables
 adaptive_proximal_weight: False # Whether to use adaptive proximal weight or not
-proximal_weight : 0.1 # The proximal weight
+initial_proximal_weight : 0.1 # The proximal weight
 
 # Checkpointing
 checkpoint_path: "examples/ae_examples/fedprox_vae_example"

@@ -30,9 +30,11 @@ class MnistFedAvgClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         checkpoint_dir: str,
+        client_name: str,
     ) -> None:
+
         # Checkpointing is crucial for the warm up process
-        checkpoint_name = f"client_{self.client_name}_latest_model.pkl"
+        checkpoint_name = f"client_{client_name}_latest_model.pkl"
         post_aggregation_checkpointer = LatestTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
         checkpoint_and_state_module = ClientCheckpointAndStateModule(post_aggregation=post_aggregation_checkpointer)
 
@@ -41,6 +43,7 @@ class MnistFedAvgClient(BasicClient):
             metrics=metrics,
             device=device,
             checkpoint_and_state_module=checkpoint_and_state_module,
+            client_name=client_name,
         )
 
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
@@ -83,6 +86,13 @@ if __name__ == "__main__":
         help="Path to the directory where the checkpoints are stored",
         required=True,
     )
+    parser.add_argument(
+        "--client_name",
+        action="store",
+        type=str,
+        help="Name for the client, this will also be used to set the checkpoint name",
+        required=True,
+    )
     args = parser.parse_args()
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -94,7 +104,9 @@ if __name__ == "__main__":
     set_all_random_seeds(args.seed)
 
     # Start the client
-    client = MnistFedAvgClient(data_path, [Accuracy()], device, checkpoint_dir=args.checkpoint_dir)
+    client = MnistFedAvgClient(
+        data_path, [Accuracy()], device, checkpoint_dir=args.checkpoint_dir, client_name=args.client_name
+    )
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully

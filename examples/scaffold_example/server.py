@@ -58,6 +58,7 @@ def main(config: dict[str, Any]) -> None:
         strategy=strategy,
         warm_start=True,
         reporters=[JsonReporter()],
+        accept_failures=False,
     )
     fl.server.start_server(
         server=server,

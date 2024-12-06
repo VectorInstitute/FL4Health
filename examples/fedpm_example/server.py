@@ -65,6 +65,7 @@ def main(config: dict[str, Any]) -> None:
         initial_parameters=get_all_model_parameters(initial_model),
         # Perform Bayesian aggregation.
         bayesian_aggregation=True,
+        accept_failures=False,
     )
 
     client_manager = SimpleClientManager()

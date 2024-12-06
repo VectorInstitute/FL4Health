@@ -60,7 +60,7 @@ def main(config: dict[str, Any]) -> None:
         initial_parameters=get_all_model_parameters(initial_model),
     )
     client_manager = SimpleClientManager()
-    server = FlServer(client_manager=client_manager, fl_config=config, strategy=strategy)
+    server = FlServer(client_manager=client_manager, fl_config=config, strategy=strategy, accept_failures=False)
 
     fl.server.start_server(
         server=server,

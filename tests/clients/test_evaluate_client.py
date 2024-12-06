@@ -115,7 +115,6 @@ def test_metrics_reporter_evaluate() -> None:
     reporter = JsonReporter()
     evaluate_client = MockEvaluateClient(loss=test_loss, metrics=test_metrics, reporters=[reporter])
     evaluate_client.evaluate([], {})
-    print(reporter.metrics)
     metric_dict = {
         "host_type": "client",
         "initialized": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),

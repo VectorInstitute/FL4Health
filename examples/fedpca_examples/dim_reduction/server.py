@@ -72,6 +72,7 @@ def main(config: dict[str, Any]) -> None:
         fl_config=config,
         strategy=strategy,
         checkpoint_and_state_module=checkpoint_and_state_module,
+        accept_failures=False,
     )
 
     fl.server.start_server(

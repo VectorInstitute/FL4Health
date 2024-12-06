@@ -84,6 +84,7 @@ def main(config: dict[str, Any]) -> None:
         strategy=strategy,
         server_noise_multiplier=config["server_noise_multiplier"],
         num_server_rounds=config["n_server_rounds"],
+        accept_failures=False,
     )
 
     fl.server.start_server(

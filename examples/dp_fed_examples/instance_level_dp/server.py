@@ -106,6 +106,7 @@ def main(config: dict[str, Any]) -> None:
         batch_size=config["batch_size"],
         num_server_rounds=config["n_server_rounds"],
         checkpoint_and_state_module=checkpoint_and_state_module,
+        accept_failures=False,
     )
 
     fl.server.start_server(

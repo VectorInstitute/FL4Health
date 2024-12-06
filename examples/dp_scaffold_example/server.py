@@ -68,6 +68,7 @@ def main(config: dict[str, Any]) -> None:
         num_server_rounds=config["n_server_rounds"],
         strategy=strategy,
         warm_start=True,
+        accept_failures=False,
     )
 
     fl.server.start_server(
