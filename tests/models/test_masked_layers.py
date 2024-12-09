@@ -246,16 +246,22 @@ def test_masked_batch_norm_3d_from_pretrained() -> None:
 
 
 def test_convert_to_masked_model() -> None:
-    model = CompositeConvNet()
-    masked_model = convert_to_masked_model(original_model=model)
-    assert isinstance(masked_model.conv1d, MaskedConv1d)
-    assert isinstance(masked_model.conv2d, MaskedConv2d)
-    assert isinstance(masked_model.conv3d, MaskedConv3d)
-    assert isinstance(masked_model.linear, MaskedLinear)
-    assert isinstance(masked_model.conv_transpose1d, MaskedConvTranspose1d)
-    assert isinstance(masked_model.conv_transpose2d, MaskedConvTranspose2d)
-    assert isinstance(masked_model.conv_transpose3d, MaskedConvTranspose3d)
-    assert isinstance(masked_model.bn1d, MaskedBatchNorm1d)
-    assert isinstance(masked_model.bn2d, MaskedBatchNorm2d)
-    assert isinstance(masked_model.bn3d, MaskedBatchNorm3d)
-    assert isinstance(masked_model.layer_norm, MaskedLayerNorm)
+    model1 = CompositeConvNet()
+    masked_model1 = convert_to_masked_model(original_model=model1)
+    assert isinstance(masked_model1.conv1d, MaskedConv1d)
+    assert isinstance(masked_model1.conv2d, MaskedConv2d)
+    assert isinstance(masked_model1.conv3d, MaskedConv3d)
+    assert isinstance(masked_model1.linear, MaskedLinear)
+    assert isinstance(masked_model1.conv_transpose1d, MaskedConvTranspose1d)
+    assert isinstance(masked_model1.conv_transpose2d, MaskedConvTranspose2d)
+    assert isinstance(masked_model1.conv_transpose3d, MaskedConvTranspose3d)
+    assert isinstance(masked_model1.bn1d, MaskedBatchNorm1d)
+    assert isinstance(masked_model1.bn2d, MaskedBatchNorm2d)
+    assert isinstance(masked_model1.bn3d, MaskedBatchNorm3d)
+    assert isinstance(masked_model1.layer_norm, MaskedLayerNorm)
+
+    # Test that convert_to_masked_model properly added the score parameters
+    # to all relevant modules by trying to load state_dict.
+    model2 = CompositeConvNet()
+    masked_model2 = convert_to_masked_model(model2)
+    masked_model1.load_state_dict(masked_model2.state_dict(), strict=True)
