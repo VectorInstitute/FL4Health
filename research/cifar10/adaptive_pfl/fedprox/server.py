@@ -80,6 +80,7 @@ def main(
 
     server = FedProxServer(
         client_manager=client_manager,
+        fl_config=config,
         model=model,
         strategy=strategy,
         checkpointer=checkpointer,

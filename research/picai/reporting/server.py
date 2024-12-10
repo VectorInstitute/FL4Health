@@ -12,7 +12,7 @@ from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.reporting import WandBReporter
-from fl4health.servers.base_server import FlServerWithCheckpointing
+from fl4health.servers.base_server import FlServer
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
@@ -74,8 +74,9 @@ def main(config: Dict[str, Any]) -> None:
         job_type="server",
     )
     # reporter = JsonReporter()
-    server = FlServerWithCheckpointing(
+    server = FlServer(
         client_manager=SimpleClientManager(),
+        fl_config=config,
         parameter_exchanger=parameter_exchanger,
         model=model,
         reporters=[reporter],

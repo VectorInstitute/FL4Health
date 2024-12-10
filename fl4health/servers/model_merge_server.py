@@ -26,8 +26,8 @@ class ModelMergeServer(Server):
         *,
         client_manager: ClientManager,
         strategy: Optional[Strategy] = None,
-        checkpointer: Optional[LatestTorchCheckpointer] = None,
         server_model: Optional[nn.Module] = None,
+        checkpointer: Optional[LatestTorchCheckpointer] = None,
         parameter_exchanger: Optional[ParameterExchanger] = None,
         reporters: Sequence[BaseReporter] | None = None,
         server_name: Optional[str] = None,
@@ -45,8 +45,11 @@ class ModelMergeServer(Server):
                 performed. Defaults to None.
             server_model (Optional[nn.Module]): Optional model to be hydrated with parameters from model merge if doing
                 server side checkpointing. Must only be provided if checkpointer is also provided. Defaults to None.
-            parameter_exchanger (Optional[ExchangerType]): Optional parameter exchanger to be used to hydrate the
-                model. Only used if checkpointer and model are also not None. Defaults to None.
+            parameter_exchanger (Optional[ExchangerType], optional): A parameter exchanger used to facilitate
+                server-side model checkpointing if a checkpointer has been defined. If not provided then checkpointing
+                will not be done unless the _hydrate_model_for_checkpointing function is overridden. Because the
+                server only sees numpy arrays, the parameter exchanger is used to insert the numpy arrays into a
+                provided model. Defaults to None.
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the server should
                 send data to before and after each round.
             server_name (Optional[str]): An optional string name to uniquely identify server.
@@ -143,7 +146,17 @@ class ModelMergeServer(Server):
         Returns:
             nn.Module: Torch model to be checkpointed by a torch checkpointer.
         """
-        assert self.server_model is not None and self.parameter_exchanger is not None
+
+        assert self.server_model is not None, (
+            "Model hydration has been called but no server_model is defined to hydrate. The functionality of "
+            "_hydrate_model_for_checkpointing can be overridden if checkpointing without a torch architecture is "
+            "possible and desired"
+        )
+        assert self.parameter_exchanger is not None, (
+            "Model hydration has been called but no parameter_exchanger is defined to hydrate. The functionality of "
+            "_hydrate_model_for_checkpointing can be overridden if checkpointing without a parameter exchanger is "
+            "possible and desired"
+        )
         model_ndarrays = parameters_to_ndarrays(self.parameters)
         self.parameter_exchanger.pull_parameters(model_ndarrays, self.server_model)
         return self.server_model

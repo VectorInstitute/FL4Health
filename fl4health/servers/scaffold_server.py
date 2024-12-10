@@ -4,6 +4,7 @@ from typing import Optional, Tuple
 
 from flwr.common import Parameters, ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.logger import log
+from flwr.common.typing import Config
 from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
 from flwr.server.server import fit_clients
@@ -19,6 +20,7 @@ class ScaffoldServer(FlServer):
     def __init__(
         self,
         client_manager: ClientManager,
+        fl_config: Config,
         strategy: Scaffold,
         checkpointer: Optional[TorchCheckpointer] = None,
         reporters: Sequence[BaseReporter] | None = None,
@@ -32,6 +34,10 @@ class ScaffoldServer(FlServer):
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
+            fl_config (Config): This should be the configuration that was used to setup the federated training.
+                In most cases it should be the "source of truth" for how FL training/evaluation should proceed. For
+                example, the config used to produce the on_fit_config_fn and on_evaluate_config_fn for the strategy.
+                NOTE: This config is DISTINCT from the Flwr server config, which is extremely minimal.
             strategy (Scaffold): The aggregation strategy to be used by the server to handle client updates and
                 other information potentially sent by the participating clients. This strategy must be of SCAFFOLD
                 type.
@@ -51,6 +57,7 @@ class ScaffoldServer(FlServer):
         FlServer.__init__(
             self,
             client_manager=client_manager,
+            fl_config=fl_config,
             strategy=strategy,
             checkpointer=checkpointer,
             reporters=reporters,
@@ -157,6 +164,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
     def __init__(
         self,
         client_manager: ClientManager,
+        fl_config: Config,
         noise_multiplier: int,
         batch_size: int,
         num_server_rounds: int,
@@ -207,6 +215,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
         ScaffoldServer.__init__(
             self,
             client_manager=client_manager,
+            fl_config=fl_config,
             strategy=strategy,
             checkpointer=checkpointer,
             warm_start=warm_start,
@@ -215,6 +224,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
         InstanceLevelDpServer.__init__(
             self,
             client_manager=client_manager,
+            fl_config=fl_config,
             strategy=strategy,
             noise_multiplier=noise_multiplier,
             local_epochs=local_epochs,

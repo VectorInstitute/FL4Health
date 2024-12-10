@@ -48,7 +48,9 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
         initial_loss_weight=mu,
     )
 
-    server = FedProxServer(client_manager=client_manager, strategy=strategy, model=model, checkpointer=checkpointer)
+    server = FedProxServer(
+        client_manager=client_manager, fl_config=config, strategy=strategy, model=model, checkpointer=checkpointer
+    )
 
     fl.server.start_server(
         server=server,

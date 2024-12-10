@@ -54,6 +54,7 @@ def main(config: Dict[str, Any]) -> None:
 
     server = ScaffoldServer(
         client_manager=client_manager,
+        fl_config=config,
         strategy=strategy,
         warm_start=True,
         reporters=[JsonReporter()],

@@ -61,6 +61,7 @@ def main(config: Dict[str, Any]) -> None:
     client_manager = PoissonSamplingClientManager()
     server = DPScaffoldServer(
         client_manager=client_manager,
+        fl_config=config,
         noise_multiplier=config["noise_multiplier"],
         batch_size=config["batch_size"],
         local_steps=config["local_steps"],

@@ -70,7 +70,7 @@ def main(config: Dict[str, Any]) -> None:
     # will return the same sampling until it is told to reset, which in FedDgGaStrategy
     # is done right before fit_round.
     client_manager = FixedSamplingClientManager()
-    server = FlServer(strategy=strategy, client_manager=client_manager, reporters=[JsonReporter()])
+    server = FlServer(client_manager=client_manager, fl_config=config, strategy=strategy, reporters=[JsonReporter()])
 
     fl.server.start_server(
         server=server,

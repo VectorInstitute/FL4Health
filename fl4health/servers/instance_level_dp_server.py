@@ -3,7 +3,9 @@ from logging import INFO
 from math import ceil
 from typing import List, Optional, Tuple
 
+import torch.nn as nn
 from flwr.common.logger import log
+from flwr.common.typing import Config
 from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
 
@@ -11,7 +13,7 @@ from fl4health.checkpointing.opacus_checkpointer import OpacusCheckpointer
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.privacy.fl_accountants import FlInstanceLevelAccountant
 from fl4health.reporting.base_reporter import BaseReporter
-from fl4health.servers.base_server import FlServer
+from fl4health.servers.base_server import ExchangerType, FlServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 
@@ -20,13 +22,16 @@ class InstanceLevelDpServer(FlServer):
     def __init__(
         self,
         client_manager: ClientManager,
+        fl_config: Config,
         noise_multiplier: float,
         batch_size: int,
         num_server_rounds: int,
         strategy: BasicFedAvg,
         local_epochs: Optional[int] = None,
         local_steps: Optional[int] = None,
+        model: nn.Module | None = None,
         checkpointer: Optional[OpacusCheckpointer] = None,
+        parameter_exchanger: ExchangerType | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         delta: Optional[float] = None,
         accept_failures: bool = True,
@@ -38,6 +43,10 @@ class InstanceLevelDpServer(FlServer):
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
+            fl_config (Config): This should be the configuration that was used to setup the federated training.
+                In most cases it should be the "source of truth" for how FL training/evaluation should proceed. For
+                example, the config used to produce the on_fit_config_fn and on_evaluate_config_fn for the strategy.
+                NOTE: This config is DISTINCT from the Flwr server config, which is extremely minimal.
             noise_multiplier (int): The amount of Gaussian noise to be added to the per sample gradient during
                 DP-SGD.
             batch_size (int): The batch size to be used in training on the client-side. Used in privacy accounting.
@@ -51,9 +60,17 @@ class InstanceLevelDpServer(FlServer):
             strategy (OpacusBasicFedAvg): The aggregation strategy to be used by the server to handle
                 client updates and other information potentially sent by the participating clients. this must be an
                 OpacusBasicFedAvg strategy to ensure proper treatment of the model in the Opacus framework
+            model (Optional[nn.Module]): This is the torch model to be checkpointed. It will be hydrated by the
+                _hydrate_model_for_checkpointing function so that it has the proper weights to be saved. If no model
+                is defined and checkpointing is attempted an error will throw. Defaults to None.
             checkpointer (Optional[OpacusCheckpointer], optional): To be provided if the server should perform
                 server side checkpointing based on some criteria. If none, then no server-side checkpointing is
                 performed. Defaults to None.
+            parameter_exchanger (Optional[ExchangerType], optional): A parameter exchanger used to facilitate
+                server-side model checkpointing if a checkpointer has been defined. If not provided then checkpointing
+                will not be done unless the _hydrate_model_for_checkpointing function is overridden. Because the
+                server only sees numpy arrays, the parameter exchanger is used to insert the numpy arrays into a
+                provided model. Defaults to None.
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
                 reporters which the client should send data to.
             delta (Optional[float], optional): The delta value for epsilon-delta DP accounting. If None it defaults to
@@ -64,8 +81,11 @@ class InstanceLevelDpServer(FlServer):
         """
         super().__init__(
             client_manager=client_manager,
+            fl_config=fl_config,
             strategy=strategy,
+            model=model,
             checkpointer=checkpointer,
+            parameter_exchanger=parameter_exchanger,
             reporters=reporters,
             accept_failures=accept_failures,
         )

@@ -79,7 +79,7 @@ def main(config: Dict[str, Any], server_address: str, lam: float, step_size: flo
         fairness_metric=fenda_ditto_fairness_metric,
     )
 
-    server = PersonalServer(client_manager=client_manager, strategy=strategy)
+    server = PersonalServer(client_manager=client_manager, fl_config=config, strategy=strategy)
 
     fl.server.start_server(
         server=server,

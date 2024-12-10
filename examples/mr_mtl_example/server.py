@@ -63,7 +63,7 @@ def main(config: Dict[str, Any]) -> None:
     )
 
     client_manager = SimpleClientManager()
-    server = MrMtlServer(client_manager=client_manager, strategy=strategy)
+    server = MrMtlServer(client_manager=client_manager, fl_config=config, strategy=strategy)
 
     fl.server.start_server(
         server=server,
