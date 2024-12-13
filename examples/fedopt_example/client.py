@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from examples.fedopt_example.client_data import LabelEncoder, Vocabulary, construct_dataloaders
 from examples.fedopt_example.metrics import CompoundMetric
 from examples.models.lstm_model import LSTM
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
@@ -27,9 +27,9 @@ class NewsClassifierClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
     ) -> None:
-        super().__init__(data_path, metrics, device, loss_meter_type, checkpointer)
+        super().__init__(data_path, metrics, device, loss_meter_type, checkpoint_and_state_module)
         self.weight_matrix: torch.Tensor
         self.vocabulary: Vocabulary
         self.label_encoder: LabelEncoder

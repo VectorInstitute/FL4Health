@@ -1,8 +1,8 @@
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 
 
 def test_best_metric_checkpointer() -> None:
-    best_loss_checkpointer = BestLossTorchCheckpointer("", "")
+    best_loss_checkpointer = BestLossTorchModuleCheckpointer("", "")
     # First checkpoint should happen since the best metric is None
     none_checkpoint = best_loss_checkpointer._should_checkpoint(0.95)
     assert none_checkpoint

@@ -43,7 +43,7 @@ def main(config: Dict[str, Any]) -> None:
         local_steps=config.get("local_steps"),
     )
 
-    initial_model = ApflModule(MnistNetWithBnAndFrozen())
+    model = ApflModule(MnistNetWithBnAndFrozen())
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -56,7 +56,7 @@ def main(config: Dict[str, Any]) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_all_model_parameters(initial_model),
+        initial_parameters=get_all_model_parameters(model),
     )
 
     client_manager = SimpleClientManager()

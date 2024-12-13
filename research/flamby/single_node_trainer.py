@@ -9,7 +9,7 @@ from flwr.common.typing import Scalar
 from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.utils.metrics import MetricManager
 
 
@@ -25,7 +25,7 @@ class SingleNodeTrainer:
         checkpoint_dir = os.path.join(checkpoint_stub, run_name)
         # This is called the "server model" so that it can be found by the evaluate_on_holdout.py script
         checkpoint_name = "server_best_model.pkl"
-        self.checkpointer = BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
+        self.checkpointer = BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
         self.dataset_dir = dataset_dir
         self.model: nn.Module
         self.criterion: _Loss

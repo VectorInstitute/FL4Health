@@ -9,7 +9,8 @@ from flamby.datasets.fed_ixi import Baseline
 from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
+from fl4health.checkpointing.server_module import AdaptiveConstraintServerCheckpointAndStateModule
 from fl4health.servers.adaptive_constraint_servers.fedprox_server import FedProxServer
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
@@ -26,23 +27,27 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
         config["n_server_rounds"],
     )
 
-    checkpoint_dir = os.path.join(checkpoint_stub, run_name)
-    checkpoint_name = "server_best_model.pkl"
-    federated_checkpointing: bool = config.get("federated_checkpointing", True)
-    log(INFO, f"Performing Federated Checkpointing: {federated_checkpointing}")
-    checkpointer = (
-        BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
-        if federated_checkpointing
-        else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
-    )
-
-    client_manager = SimpleClientManager()
-
     # NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size of
     # the baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA
     # and APFL
     model = Baseline(out_channels_first_layer=12)
     summarize_model_info(model)
+
+    checkpoint_dir = os.path.join(checkpoint_stub, run_name)
+    checkpoint_name = "server_best_model.pkl"
+    federated_checkpointing: bool = config.get("federated_checkpointing", True)
+    log(INFO, f"Performing Federated Checkpointing: {federated_checkpointing}")
+    checkpointer = (
+        BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
+        if federated_checkpointing
+        else LatestTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
+    )
+
+    checkpoint_and_state_module = AdaptiveConstraintServerCheckpointAndStateModule(
+        model=model, model_checkpointers=checkpointer
+    )
+
+    client_manager = SimpleClientManager()
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvgWithAdaptiveConstraint(
@@ -60,7 +65,10 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
     )
 
     server = FedProxServer(
-        client_manager=client_manager, fl_config=config, strategy=strategy, model=model, checkpointer=checkpointer
+        client_manager=client_manager,
+        fl_config=config,
+        strategy=strategy,
+        checkpoint_and_state_module=checkpoint_and_state_module,
     )
 
     fl.server.start_server(
@@ -70,7 +78,7 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
     )
 
     if federated_checkpointing:
-        assert isinstance(checkpointer, BestLossTorchCheckpointer)
+        assert isinstance(checkpointer, BestLossTorchModuleCheckpointer)
         log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_score}")
 
     # Shutdown the server gracefully

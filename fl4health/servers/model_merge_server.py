@@ -12,7 +12,7 @@ from flwr.server.history import History
 from flwr.server.server import Server
 from flwr.server.strategy import Strategy
 
-from fl4health.checkpointing.checkpointer import LatestTorchCheckpointer
+from fl4health.checkpointing.checkpointer import LatestTorchModuleCheckpointer
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.reporting.reports_manager import ReportsManager
@@ -27,7 +27,7 @@ class ModelMergeServer(Server):
         client_manager: ClientManager,
         strategy: Optional[Strategy] = None,
         server_model: Optional[nn.Module] = None,
-        checkpointer: Optional[LatestTorchCheckpointer] = None,
+        checkpointer: Optional[LatestTorchModuleCheckpointer] = None,
         parameter_exchanger: Optional[ParameterExchanger] = None,
         reporters: Sequence[BaseReporter] | None = None,
         server_name: Optional[str] = None,
