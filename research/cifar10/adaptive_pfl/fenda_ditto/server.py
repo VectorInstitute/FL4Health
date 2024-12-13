@@ -62,7 +62,7 @@ def main(config: Dict[str, Any], server_address: str, lam: float, adapt_loss_wei
         adapt_loss_weight=adapt_loss_weight,
     )
 
-    server = PersonalServer(client_manager=client_manager, strategy=strategy)
+    server = PersonalServer(client_manager=client_manager, fl_config=config, strategy=strategy)
 
     fl.server.start_server(
         server=server,

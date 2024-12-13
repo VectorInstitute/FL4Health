@@ -49,7 +49,9 @@ def main(
         eta=server_learning_rate,
     )
 
-    server = FullExchangeServer(client_manager, model, strategy, checkpointer=checkpointer)
+    server = FullExchangeServer(
+        client_manager=client_manager, fl_config=config, model=model, strategy=strategy, checkpointer=checkpointer
+    )
 
     fl.server.start_server(
         server=server,
