@@ -128,6 +128,8 @@ class BasicClient(NumPyClient):
         self.learning_rate: Optional[float] = None
         # Config can contain max_num_validation_steps key, which determines an upper bound
         # for the validation steps taken. If not specified, no upper bound will be enforced.
+        # By specifying this in the config we cannot guarantee the validation set is the same
+        # accross rounds for clients.
         self.max_num_validation_steps: int | None = None
 
     def _maybe_checkpoint(self, loss: float, metrics: dict[str, Scalar], checkpoint_mode: CheckpointMode) -> None:
@@ -839,6 +841,14 @@ class BasicClient(NumPyClient):
         self.test_loader = self.get_test_data_loader(config)
 
         if "max_num_validation_steps" in config:
+            log(
+                INFO,
+                """
+                    max_num_validation_steps specified in config. Only a random subset of batches will \
+                    be sampled from the validation set if max_num_validation_steps is greater \
+                    than the number of batches in the validation dataloader.
+                    """,
+            )
             self.max_num_validation_steps = narrow_dict_type(config, "max_num_validation_steps", int)
         else:
             self.max_num_validation_steps = None
