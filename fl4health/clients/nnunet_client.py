@@ -189,7 +189,7 @@ class NnunetClient(BasicClient):
         # Used to redirect stdout to logger
         self.stream2debug = StreamToLogger(FLOWER_LOGGER, DEBUG)
 
-        # Used to scale gradients if using mized precision training (true if device is cuda)
+        # Used to scale gradients if using mixed precision training (true if device is cuda)
         self.grad_scaler: GradScaler | None = GradScaler() if self.device.type == "cuda" else None
 
         # nnunet specific attributes to be initialized in setup_client
