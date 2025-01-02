@@ -645,7 +645,7 @@ class BasicClient(NumPyClient):
                 self.reports_manager.report(report_data, current_round, self.total_epochs, self.total_steps)
                 self.total_steps += 1
                 steps_this_round += 1
-                if self.early_stopper is not None:
+                if hasattr(self, "early_stopper"):
                     if self.total_steps % self.early_stopper.interval_steps == 0 and self.early_stopper.should_stop():
                         log(INFO, "Early stopping criterion met. Stopping training.")
                         break
@@ -717,7 +717,7 @@ class BasicClient(NumPyClient):
             report_data.update(self.get_client_specific_reports())
             self.reports_manager.report(report_data, current_round, None, self.total_steps)
             self.total_steps += 1
-            if self.early_stopper is not None:
+            if hasattr(self, "early_stopper"):
                 if self.total_steps % self.early_stopper.interval_steps == 0 and self.early_stopper.should_stop():
                     log(INFO, "Early stopping criterion met. Stopping training.")
                     break
@@ -866,8 +866,17 @@ class BasicClient(NumPyClient):
         self.parameter_exchanger = self.get_parameter_exchanger(config)
 
         self.reports_manager.report({"host_type": "client", "initialized": str(datetime.datetime.now())})
-
         self.initialized = True
+
+    def setup_early_stopper(
+        self,
+        patience: int = -1,
+        interval_steps: int = 5,
+        snapshot_dir: Optional[Path] = None,
+    ) -> None:
+        from fl4health.utils.early_stopper import EarlyStopper
+
+        self.early_stopper = EarlyStopper(self, patience, interval_steps, snapshot_dir)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         """
