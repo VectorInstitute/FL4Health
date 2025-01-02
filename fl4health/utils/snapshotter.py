@@ -8,7 +8,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 
 from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting.reports_manager import ReportsManager
-from fl4health.utils.losses import TrainingLosses
+from fl4health.utils.losses import LossMeter
 from fl4health.utils.metrics import MetricManager
 
 T = TypeVar("T")
@@ -101,15 +101,15 @@ class TorchModuleSnapshotter(Snapshotter[nn.Module]):
             model.load_state_dict(attribute_ckpt[key])
 
 
-class SerizableObjectSnapshotter(Snapshotter[MetricManager | TrainingLosses | ReportsManager]):
-    def save_attribute(self, attribute: dict[str, MetricManager | TrainingLosses | ReportsManager]) -> dict[str, Any]:
+class SerizableObjectSnapshotter(Snapshotter[MetricManager | LossMeter | ReportsManager]):
+    def save_attribute(self, attribute: dict[str, MetricManager | LossMeter | ReportsManager]) -> dict[str, Any]:
         """
         Save the state of the optimizers (either single or dictionary of them).
         """
         return attribute
 
     def load_attribute(
-        self, attribute_ckpt: dict[str, Any], attribute: dict[str, MetricManager | TrainingLosses | ReportsManager]
+        self, attribute_ckpt: dict[str, Any], attribute: dict[str, MetricManager | LossMeter | ReportsManager]
     ) -> None:
         for key in attribute:
             attribute[key] = attribute_ckpt[key]
