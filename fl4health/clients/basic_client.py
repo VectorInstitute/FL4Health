@@ -28,7 +28,6 @@ from fl4health.utils.client import (
     set_pack_losses_with_val_metrics,
 )
 from fl4health.utils.config import narrow_dict_type, narrow_dict_type_and_set_attribute
-from fl4health.utils.early_stopper import EarlyStopper
 from fl4health.utils.logging import LoggingMode
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric, MetricManager
@@ -48,7 +47,6 @@ class BasicClient(NumPyClient):
         progress_bar: bool = False,
         intermediate_client_state_dir: Optional[Path] = None,
         client_name: Optional[str] = None,
-        early_stopper: Optional[EarlyStopper] = None,
     ) -> None:
         """
         Base FL Client with functionality to train, evaluate, log, report and checkpoint.
@@ -97,8 +95,6 @@ class BasicClient(NumPyClient):
             )
         else:
             self.per_round_checkpointer = None
-
-        self.early_stopper = early_stopper
 
         # Initialize reporters with client information.
         self.reports_manager = ReportsManager(reporters)
