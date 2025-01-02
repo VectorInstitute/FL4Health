@@ -68,7 +68,9 @@ def main(config: Dict[str, Any]) -> None:
     )
 
     client_manager = SimpleClientManager()
-    server = FedPmServer(client_manager, strategy, reset_frequency=config["priors_reset_frequency"])
+    server = FedPmServer(
+        client_manager, fl_config=config, strategy=strategy, reset_frequency=config["priors_reset_frequency"]
+    )
 
     fl.server.start_server(
         server=server,

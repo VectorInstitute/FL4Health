@@ -70,7 +70,7 @@ def main(config: Dict[str, Any]) -> None:
     )
 
     client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy)
+    server = FlServer(client_manager=client_manager, fl_config=config, strategy=strategy)
 
     fl.server.start_server(
         server=server,

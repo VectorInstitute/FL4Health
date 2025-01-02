@@ -60,7 +60,7 @@ def main(config: Dict[str, Any]) -> None:
     )
 
     client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy, reporters=[JsonReporter()])
+    server = FlServer(client_manager=client_manager, fl_config=config, strategy=strategy, reporters=[JsonReporter()])
 
     fl.server.start_server(
         server=server,
