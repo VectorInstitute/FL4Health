@@ -1,3 +1,4 @@
+import copy
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Dict, Optional
@@ -7,27 +8,26 @@ import torch
 from flwr.common import Scalar
 
 from fl4health.clients.basic_client import BasicClient
+from fl4health.reporting import JsonReporter
 from fl4health.reporting.base_reporter import BaseReporter
+from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.utils.client import fold_loss_dict_into_metrics
 from fl4health.utils.logging import LoggingMode
-from tests.test_utils.assert_metrics_dict import assert_metrics_dict
-from fl4health.reporting.reports_manager import ReportsManager
-from fl4health.utils.losses import TrainingLosses, LossMeter
+from fl4health.utils.losses import LossMeter, TrainingLosses
 from fl4health.utils.metrics import MetricManager
-from fl4health.reporting import JsonReporter
 from fl4health.utils.snapshotter import SerizableObjectSnapshotter
-import copy
+from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 
 
 def test_loss_meter_snapshotter() -> None:
     metrics: Dict[str, Scalar] = {"test_metric": 1234}
     reporter = JsonReporter()
-    fl_client = MockBasicClient(metrics=metrics,reporters=[reporter])
+    fl_client = MockBasicClient(metrics=metrics, reporters=[reporter])
     ckpt = {}
 
-    fl_client.train_loss_meter.update( TrainingLosses(backward=torch.Tensor([35]), additional_losses=None))
+    fl_client.train_loss_meter.update(TrainingLosses(backward=torch.Tensor([35]), additional_losses=None))
     snapshotter = SerizableObjectSnapshotter(fl_client)
-    ckpt['train_loss_meter'] = snapshotter.save("train_loss_meter", LossMeter)
+    ckpt["train_loss_meter"] = snapshotter.save("train_loss_meter", LossMeter)
     old_loss_meter = copy.deepcopy(fl_client.train_loss_meter)
     fl_client.train_loss_meter.update(TrainingLosses(backward=torch.Tensor([10]), additional_losses=None))
     assert len(old_loss_meter.losses_list) != len(fl_client.train_loss_meter.losses_list)
@@ -37,23 +37,28 @@ def test_loss_meter_snapshotter() -> None:
     assert len(old_loss_meter.losses_list) == len(fl_client.train_loss_meter.losses_list)
     for i in range(len(fl_client.train_loss_meter.losses_list)):
         assert old_loss_meter.losses_list[i].backward == fl_client.train_loss_meter.losses_list[i].backward
-        assert old_loss_meter.losses_list[i].additional_losses == fl_client.train_loss_meter.losses_list[i].additional_losses
+        assert (
+            old_loss_meter.losses_list[i].additional_losses
+            == fl_client.train_loss_meter.losses_list[i].additional_losses
+        )
+
 
 def test_reports_manager_snapshotter() -> None:
     metrics: Dict[str, Scalar] = {"test_metric": 1234}
     reporter = JsonReporter()
-    fl_client = MockBasicClient(metrics=metrics,reporters=[reporter])
+    fl_client = MockBasicClient(metrics=metrics, reporters=[reporter])
     ckpt = {}
 
     fl_client.reports_manager.report({"start": "2012-12-12 12:12:10"})
     snapshotter = SerizableObjectSnapshotter(fl_client)
-    ckpt['reports_manager'] = snapshotter.save("reports_manager", ReportsManager)
+    ckpt["reports_manager"] = snapshotter.save("reports_manager", ReportsManager)
     old_reports_manager = copy.deepcopy(fl_client.reports_manager)
     fl_client.reports_manager.report({"shutdown": "2012-12-12 12:12:12"})
     assert old_reports_manager.reporters[0].metrics != fl_client.reports_manager.reporters[0].metrics
 
     snapshotter.load(ckpt, "reports_manager", ReportsManager)
     assert old_reports_manager.reporters[0].metrics == fl_client.reports_manager.reporters[0].metrics
+
 
 ## LEFT OFF HERE
 # def test_metric_manager_snapshotter() -> None:
