@@ -8,7 +8,7 @@ from flwr.common.typing import Scalar
 
 from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer, TorchModuleCheckpointer
 
-CheckpointModuleInput = Union[TorchModuleCheckpointer, Sequence[TorchModuleCheckpointer]] | None
+ModelCheckpointers = Union[TorchModuleCheckpointer, Sequence[TorchModuleCheckpointer]] | None
 
 
 class CheckpointMode(Enum):
@@ -19,8 +19,8 @@ class CheckpointMode(Enum):
 class ClientCheckpointAndStateModule:
     def __init__(
         self,
-        pre_aggregation: CheckpointModuleInput = None,
-        post_aggregation: CheckpointModuleInput = None,
+        pre_aggregation: ModelCheckpointers = None,
+        post_aggregation: ModelCheckpointers = None,
         state_checkpointer: PerRoundStateCheckpointer | None = None,
     ) -> None:
         """
@@ -37,10 +37,10 @@ class ClientCheckpointAndStateModule:
         That's because the target model for these methods is never globally aggregated. That is, they remain local
 
         Args:
-            pre_aggregation (CheckpointModuleInput, optional): If defined, this checkpointer (or sequence of
+            pre_aggregation (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of
                 checkpointers) is used to checkpoint models based on their validation metrics/losses **BEFORE**
                 server-side aggregation. Defaults to None.
-            post_aggregation (CheckpointModuleInput, optional): If defined, this checkpointer (or sequence
+            post_aggregation (ModelCheckpointers, optional): If defined, this checkpointer (or sequence
                 of checkpointers) is used to checkpoint models based on their validation metrics/losses **AFTER**
                 server-side aggregation. Defaults to None.
             state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer is used to
