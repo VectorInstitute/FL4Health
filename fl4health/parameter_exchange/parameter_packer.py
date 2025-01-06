@@ -41,8 +41,8 @@ class ParameterPackerWithClippingBit(ParameterPacker[float]):
         # The last entry in the parameters list is assumed to be a clipping bound (even if we're evaluating)
         split_size = len(packed_parameters) - 1
         model_parameters = packed_parameters[:split_size]
-        clipping_bound = float(packed_parameters[split_size:][0])
-        return model_parameters, clipping_bound
+        clipping_bound = packed_parameters[split_size:][0]
+        return model_parameters, clipping_bound.item()
 
 
 class ParameterPackerAdaptiveConstraint(ParameterPacker[float]):

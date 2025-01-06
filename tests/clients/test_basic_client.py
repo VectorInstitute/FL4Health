@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 import freezegun
 import torch
 from flwr.common import Scalar
+from flwr.common.typing import Config
 from freezegun import freeze_time
 
 from fl4health.clients.basic_client import BasicClient
@@ -82,7 +83,7 @@ def test_metrics_reporter_evaluate() -> None:
         "testing_metric": 1234,
         "val - checkpoint": 123.123,
         "test - checkpoint": 123.123,
-        "test - num_examples": 0,
+        "test - num_examples": 32,
     }
     reporter = JsonReporter()
     fl_client = MockBasicClient(
@@ -136,6 +137,19 @@ def test_evaluate_after_fit_disabled() -> None:
     fl_client.validate.assert_not_called()  # type: ignore
 
 
+def test_num_val_samples_correct() -> None:
+    fl_client_no_max = MockBasicClient()
+    fl_client_no_max.setup_client({})
+    assert fl_client_no_max.max_num_validation_steps is None
+    assert fl_client_no_max.num_val_samples == 32
+
+    fl_client_max = MockBasicClient()
+    config: Config = {"max_num_validation_steps": 2}
+    fl_client_max.setup_client(config)
+    assert fl_client_max.max_num_validation_steps == 2
+    assert fl_client_max.num_val_samples == 8
+
+
 class MockBasicClient(BasicClient):
     def __init__(
         self,
@@ -164,6 +178,7 @@ class MockBasicClient(BasicClient):
         self.test_loader = MagicMock()
         self.num_train_samples = 0
         self.num_val_samples = 0
+        self.max_num_validation_steps = None
 
         # Mocking methods
         self.set_parameters = MagicMock()  # type: ignore
@@ -175,7 +190,8 @@ class MockBasicClient(BasicClient):
         self.get_model = MagicMock()  # type: ignore
         self.get_data_loaders = MagicMock()  # type: ignore
         mock_data_loader = MagicMock()  # type: ignore
-        mock_data_loader.dataset = []
+        mock_data_loader.batch_size = 4
+        mock_data_loader.dataset = [None] * 32
         self.get_data_loaders.return_value = mock_data_loader, mock_data_loader
         self.get_test_data_loader = MagicMock()  # type: ignore
         self.get_test_data_loader.return_value = mock_data_loader

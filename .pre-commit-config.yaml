@@ -30,7 +30,7 @@ repos:
       - id: isort
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.13.0
+    rev: v1.14.0
     hooks:
       - id: mypy
         name: mypy
@@ -45,6 +45,14 @@ repos:
       - id: nbqa-check-ast
       - id: nbqa-flake8
       - id: nbqa-mypy
+
+  - repo: local
+    hooks:
+      - id: mypy legacy type check
+        name: mypy legacy type check
+        entry: python mypy_disallow_legacy_types.py
+        language: python
+        pass_filenames: true
 
 ci:
     autofix_commit_msg: |
