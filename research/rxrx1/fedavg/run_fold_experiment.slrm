@@ -22,8 +22,7 @@
 #   path_to_folder_for_dataset/ \
 #   path_to_desired_venv/ \
 #   client_side_learning_rate_value \
-#   server_address\
-#   client_beta
+#   server_address
 #
 # Example:
 # sbatch research/rxrx1/fedavg/run_fold_experiment.slrm \
@@ -32,8 +31,7 @@
 #   /datasets/rxrx1 \
 #   /h/demerson/vector_repositories/fl4health_env/ \
 #   0.0001 \
-#   0.0.0.0:8080\
-#   0.1
+#   0.0.0.0:8080
 #
 # Notes:
 # 1) The sbatch command above should be run from the top level directory of the repository.
@@ -66,7 +64,6 @@ DATASET_DIR=$3
 VENV_PATH=$4
 CLIENT_LR=$5
 SERVER_ADDRESS=$6
-CLIENT_BETA=$7
 
 # Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
@@ -149,7 +146,6 @@ do
             --learning_rate ${CLIENT_LR} \
             --server_address ${SERVER_ADDRESS} \
             --seed ${SEED} \
-            --beta ${CLIENT_BETA} \
             --use_partitioned_data \
             > ${CLIENT_LOG_PATH} 2>&1 &
     done

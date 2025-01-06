@@ -26,7 +26,6 @@ DATASET_DIR=$3
 VENV_PATH=$4
 
 LR_VALUES=( 0.00001 0.0001 0.001 0.01 0.1 )
-BETA_VALUES=( 0.1 0.5 5.0 )
 
 SERVER_PORT=8100
 
@@ -35,29 +34,24 @@ SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results"
 echo "Creating sweep folder at ${SWEEP_DIRECTORY}"
 mkdir ${SWEEP_DIRECTORY}
 
-for BETA_VALUE in "${BETA_VALUES[@]}"; do
-  echo "Creating folder for beta ${BETA_VALUE}"
-  mkdir "${SWEEP_DIRECTORY}/beta_${BETA_VALUE}"
-  for LR_VALUE in "${LR_VALUES[@]}";
-  do
-    EXPERIMENT_NAME="lr_${LR_VALUE}_beta_${BETA_VALUE}"
-    echo "Beginning Experiment ${EXPERIMENT_NAME}"
-    EXPERIMENT_DIRECTORY="${SWEEP_DIRECTORY}/beta_${BETA_VALUE}/${EXPERIMENT_NAME}/"
-    echo "Creating experiment folder ${EXPERIMENT_DIRECTORY}"
-    mkdir "${EXPERIMENT_DIRECTORY}"
-    SERVER_ADDRESS="0.0.0.0:${SERVER_PORT}"
-    echo "Server Address: ${SERVER_ADDRESS}"
-    SBATCH_COMMAND="research/rxrx1/fedavg/run_fold_experiment.slrm \
-      ${SERVER_CONFIG_PATH} \
-      ${EXPERIMENT_DIRECTORY} \
-      ${DATASET_DIR} \
-      ${VENV_PATH} \
-      ${LR_VALUE} \
-      ${SERVER_ADDRESS}\
-      ${BETA_VALUE}"
-    echo "Running sbatch command ${SBATCH_COMMAND}"
-    sbatch ${SBATCH_COMMAND}
-    ((SERVER_PORT=SERVER_PORT+1))
-  done
+for LR_VALUE in "${LR_VALUES[@]}";
+do
+  EXPERIMENT_NAME="lr_${LR_VALUE}"
+  echo "Beginning Experiment ${EXPERIMENT_NAME}"
+  EXPERIMENT_DIRECTORY="${SWEEP_DIRECTORY}/${EXPERIMENT_NAME}/"
+  echo "Creating experiment folder ${EXPERIMENT_DIRECTORY}"
+  mkdir "${EXPERIMENT_DIRECTORY}"
+  SERVER_ADDRESS="0.0.0.0:${SERVER_PORT}"
+  echo "Server Address: ${SERVER_ADDRESS}"
+  SBATCH_COMMAND="research/rxrx1/fedavg/run_fold_experiment.slrm \
+    ${SERVER_CONFIG_PATH} \
+    ${EXPERIMENT_DIRECTORY} \
+    ${DATASET_DIR} \
+    ${VENV_PATH} \
+    ${LR_VALUE} \
+    ${SERVER_ADDRESS}"
+  echo "Running sbatch command ${SBATCH_COMMAND}"
+  sbatch ${SBATCH_COMMAND}
+  ((SERVER_PORT=SERVER_PORT+1))
 done
 echo Experiments Launched
