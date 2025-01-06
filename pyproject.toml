@@ -37,7 +37,7 @@ scikit-learn = "1.5.0" # Pin as it was causing issues with nnunet
 tornado = ">=6.4.2"
 
 [tool.poetry.group.dev.dependencies]
-# locked the 2.13 version because of restrictions with tensorflow-io
+# locked the 2.15 version because of restrictions with tensorflow-io
 # (see https://pypi.org/project/tensorflow-io/ section "TensorFlow Version Compatibility")
 tensorflow = "2.15"
 nltk = "^3.8.0"
