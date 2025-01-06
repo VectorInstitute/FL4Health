@@ -44,8 +44,7 @@ class Rxrx1Dataset(Dataset):
             images.append(image)
 
         concatenated_image = torch.cat(images, dim=0)
-        print(concatenated_image.shape)
-        return concatenated_image, label, row["sirna_id"]
+        return concatenated_image, label
 
     def load_image(self, path: str) -> torch.Tensor:
         if not Path(path).exists():
