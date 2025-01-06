@@ -126,8 +126,6 @@ if __name__ == "__main__":
         required=False,
     )
     args = parser.parse_args()
-    if args.use_partitioned_data:
-        log(INFO, "Using preprocessed partitioned data for training, validation and testing")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log(INFO, f"Device to be used: {device}")
