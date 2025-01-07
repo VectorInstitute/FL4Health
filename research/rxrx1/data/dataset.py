@@ -28,7 +28,7 @@ class Rxrx1Dataset(Dataset):
     def __len__(self) -> int:
         return len(self.metadata)
 
-    def __getitem__(self, idx: int) -> tuple[torch.Tensor, int, int]:
+    def __getitem__(self, idx: int) -> tuple[torch.Tensor, int]:
         row = self.metadata.iloc[idx]
         experiment = row["experiment"]
         plate = row["plate"]
