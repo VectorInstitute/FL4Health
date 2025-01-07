@@ -166,11 +166,11 @@ class BaseServerCheckpointAndStateModule:
         """
         if self.state_checkpointer is not None:
             self._hydrate_model_for_checkpointing(server_parameters)
-            if "model" not in other_state:
-                other_state["model"] = self.model
-            else:
+            if "model" in other_state:
                 raise ValueError("Key 'model' already exists in the other_state dictionary.")
-            self.state_checkpointer.save_checkpoint(state_checkpoint_name, checkpoint_dict=other_state)
+
+            checkpoint_dict = other_state | {"model": self.model}
+            self.state_checkpointer.save_checkpoint(state_checkpoint_name, checkpoint_dict=checkpoint_dict)
         else:
             raise ValueError("Attempting to save state but no state checkpointer is specified")
 
