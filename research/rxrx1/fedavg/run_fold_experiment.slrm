@@ -132,7 +132,7 @@ do
     sleep 20
 
     # Start n number of clients and divert the outputs to their own files
-    n_clients=5
+    n_clients=4
     for (( c=0; c<${n_clients}; c++ ))
     do
         CLIENT_NAME="client_${c}"
