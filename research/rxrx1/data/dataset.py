@@ -23,7 +23,6 @@ class Rxrx1Dataset(Dataset):
         self.transform = transform if transform else ToTensor()
 
         self.label_map = {label: idx for idx, label in enumerate(sorted(self.metadata["sirna_id"].unique()))}
-        print(self.label_map)
         self.metadata["mapped_label"] = self.metadata["sirna_id"].map(self.label_map)
 
     def __len__(self) -> int:
