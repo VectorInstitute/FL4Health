@@ -1,28 +1,21 @@
 import copy
-from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Optional
-from unittest.mock import MagicMock
 
 import torch
-from flwr.common import Scalar
 
 from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting import JsonReporter
-from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.reporting.reports_manager import ReportsManager
-from fl4health.utils.client import fold_loss_dict_into_metrics
-from fl4health.utils.logging import LoggingMode
 from fl4health.utils.losses import LossMeter, TrainingLosses
-from fl4health.utils.metrics import MetricManager
+from fl4health.utils.metrics import Accuracy, MetricManager
 from fl4health.utils.snapshotter import SerizableObjectSnapshotter
-from tests.test_utils.assert_metrics_dict import assert_metrics_dict
+from fl4health.utils.typing import TorchPredType, TorchTargetType
 
 
 def test_loss_meter_snapshotter() -> None:
-    metrics: Dict[str, Scalar] = {"test_metric": 1234}
+    metrics = [Accuracy("accuracy")]
     reporter = JsonReporter()
-    fl_client = MockBasicClient(metrics=metrics, reporters=[reporter])
+    fl_client = BasicClient(data_path=Path(""), metrics=metrics, device=torch.device(0), reporters=[reporter])
     ckpt = {}
 
     fl_client.train_loss_meter.update(TrainingLosses(backward=torch.Tensor([35]), additional_losses=None))
@@ -44,9 +37,9 @@ def test_loss_meter_snapshotter() -> None:
 
 
 def test_reports_manager_snapshotter() -> None:
-    metrics: Dict[str, Scalar] = {"test_metric": 1234}
+    metrics = [Accuracy("accuracy")]
     reporter = JsonReporter()
-    fl_client = MockBasicClient(metrics=metrics, reporters=[reporter])
+    fl_client = BasicClient(data_path=Path(""), metrics=metrics, device=torch.device(0), reporters=[reporter])
     ckpt = {}
 
     fl_client.reports_manager.report({"start": "2012-12-12 12:12:10"})
@@ -54,88 +47,56 @@ def test_reports_manager_snapshotter() -> None:
     ckpt["reports_manager"] = snapshotter.save("reports_manager", ReportsManager)
     old_reports_manager = copy.deepcopy(fl_client.reports_manager)
     fl_client.reports_manager.report({"shutdown": "2012-12-12 12:12:12"})
+
+    assert isinstance(old_reports_manager.reporters[0], JsonReporter) and isinstance(
+        fl_client.reports_manager.reporters[0], JsonReporter
+    )
+
     assert old_reports_manager.reporters[0].metrics != fl_client.reports_manager.reporters[0].metrics
 
     snapshotter.load(ckpt, "reports_manager", ReportsManager)
     assert old_reports_manager.reporters[0].metrics == fl_client.reports_manager.reporters[0].metrics
 
 
-## LEFT OFF HERE
-# def test_metric_manager_snapshotter() -> None:
-#     metrics: Dict[str, Scalar] = {"test_metric": 1234}
-#     reporter = JsonReporter()
-#     fl_client = MockBasicClient(metrics=metrics,reporters=[reporter])
-#     ckpt = {}
+def test_metric_manager_snapshotter() -> None:
+    metrics = [Accuracy("accuracy")]
+    reporter = JsonReporter()
+    fl_client = BasicClient(data_path=Path(""), metrics=metrics, device=torch.device(0), reporters=[reporter])
+    ckpt = {}
+    preds: TorchPredType = {
+        "1": torch.tensor([0.7369, 0.5121, 0.2674, 0.5847, 0.4032, 0.7458, 0.9274, 0.3258, 0.7095, 0.0513])
+    }
+    target: TorchTargetType = {"1": torch.tensor([0, 1, 0, 1, 1, 0, 1, 1, 0, 1])}
 
-#     fl_client.reports_manager.report({"start": "2012-12-12 12:12:10"})
-#     snapshotter = SerizableObjectSnapshotter(fl_client)
-#     ckpt['reports_manager'] = snapshotter.save("reports_manager", ReportsManager)
-#     old_reports_manager = copy.deepcopy(fl_client.reports_manager)
-#     fl_client.reports_manager.report({"shutdown": "2012-12-12 12:12:12"})
-#     assert old_reports_manager.reporters[0].metrics != fl_client.reports_manager.reporters[0].metrics
+    fl_client.train_metric_manager.update(preds, target)
+    snapshotter = SerizableObjectSnapshotter(fl_client)
+    ckpt["train_metric_manager"] = snapshotter.save("train_metric_manager", MetricManager)
+    old_train_metric_manager = copy.deepcopy(fl_client.train_metric_manager)
+    fl_client.train_metric_manager.update(preds, target)
+    assert isinstance(fl_client.train_metric_manager.metrics_per_prediction_type["1"][0], Accuracy) and isinstance(
+        old_train_metric_manager.metrics_per_prediction_type["1"][0], Accuracy
+    )
+    assert len(fl_client.train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_inputs) != len(
+        old_train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_inputs
+    )
+    assert len(fl_client.train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_targets) != len(
+        old_train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_targets
+    )
 
-#     snapshotter.load(ckpt, "reports_manager", ReportsManager)
-#     assert old_reports_manager.reporters[0].metrics == fl_client.reports_manager.reporters[0].metrics
+    snapshotter.load(ckpt, "train_metric_manager", MetricManager)
+    assert len(fl_client.train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_inputs) == len(
+        old_train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_inputs
+    )
+    assert len(fl_client.train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_targets) == len(
+        old_train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_targets
+    )
 
-
-class MockBasicClient(BasicClient):
-    def __init__(
-        self,
-        loss_dict: Optional[Dict[str, float]] = None,
-        metrics: Optional[Dict[str, Scalar]] = None,
-        test_set_metrics: Optional[Dict[str, Scalar]] = None,
-        loss: Optional[float] = 0,
-        reporters: Sequence[BaseReporter] | None = None,
-    ):
-        super().__init__(Path(""), [], torch.device(0), reporters=reporters)
-
-        self.mock_loss_dict = loss_dict
-        if self.mock_loss_dict is None:
-            self.mock_loss_dict = {}
-
-        self.mock_metrics = metrics
-        if self.mock_metrics is None:
-            self.mock_metrics = {}
-
-        self.mock_metrics_test = test_set_metrics
-
-        self.mock_loss = loss
-
-        # Mocking attributes
-        self.train_loader = MagicMock()
-        self.test_loader = MagicMock()
-        self.num_train_samples = 0
-        self.num_val_samples = 0
-        self.max_num_validation_steps = None
-
-        # Mocking methods
-        self.set_parameters = MagicMock()  # type: ignore
-        self.get_parameters = MagicMock()  # type: ignore
-        self.train_by_epochs = MagicMock()  # type: ignore
-        self.train_by_epochs.return_value = self.mock_loss_dict, self.mock_metrics
-        self.train_by_steps = MagicMock()  # type: ignore
-        self.train_by_steps.return_value = self.mock_loss_dict, self.mock_metrics
-        self.get_model = MagicMock()  # type: ignore
-        self.get_data_loaders = MagicMock()  # type: ignore
-        mock_data_loader = MagicMock()  # type: ignore
-        mock_data_loader.batch_size = 4
-        mock_data_loader.dataset = [None] * 32
-        self.get_data_loaders.return_value = mock_data_loader, mock_data_loader
-        self.get_test_data_loader = MagicMock()  # type: ignore
-        self.get_test_data_loader.return_value = mock_data_loader
-        self.get_optimizer = MagicMock()  # type: ignore
-        self.get_criterion = MagicMock()  # type: ignore
-
-        self._validate_or_test = MagicMock()  # type: ignore
-        self._validate_or_test.side_effect = self.mock_validate_or_test
-
-    def mock_validate_or_test(  # type: ignore
-        self, loader, loss_meter, metric_manager, logging_mode=LoggingMode.VALIDATION, include_losses_in_metrics=False
-    ):
-        if include_losses_in_metrics:
-            assert self.mock_loss_dict is not None and self.mock_metrics is not None
-            fold_loss_dict_into_metrics(self.mock_metrics, self.mock_loss_dict, logging_mode)
-        if logging_mode == LoggingMode.VALIDATION:
-            return self.mock_loss, self.mock_metrics
-        else:
-            return self.mock_loss, self.mock_metrics_test
+    for i in range(len(fl_client.train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_inputs)):
+        assert torch.all(
+            fl_client.train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_inputs[i]
+            == old_train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_inputs[i]
+        )
+        assert torch.all(
+            fl_client.train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_targets[i]
+            == old_train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_targets[i]
+        )
