@@ -1,5 +1,5 @@
 from logging import INFO, WARNING
-from typing import Any, Tuple
+from typing import Any
 
 import torch.nn as nn
 from flwr.common.logger import log
@@ -8,7 +8,7 @@ from opacus.grad_sample.utils import wrap_model
 from opacus.validators import ModuleValidator
 
 
-def privacy_validate_and_fix_modules(model: nn.Module) -> Tuple[nn.Module, bool]:
+def privacy_validate_and_fix_modules(model: nn.Module) -> tuple[nn.Module, bool]:
     """
     This function runs Opacus model validation to ensure that the provided models layers are compatible with the
     privacy mechanisms in Opacus. The function attempts to use Opacus to replace any incompatible layers if possible.
@@ -20,7 +20,7 @@ def privacy_validate_and_fix_modules(model: nn.Module) -> Tuple[nn.Module, bool]
         model (nn.Module): The model to be validated and potentially modified to be Opacus compliant.
 
     Returns:
-        Tuple[nn.Module, bool]: Returns a (possibly) modified pytorch model and a boolean indicating whether a
+        tuple[nn.Module, bool]: Returns a (possibly) modified pytorch model and a boolean indicating whether a
             reinitialization of any optimizers associated with the model will be required. Reinitialization of the
             optimizer parameters is required, for example, when the model layers are modified, yielding a mismatch
             in the optimizer parameters and the new model parameters.

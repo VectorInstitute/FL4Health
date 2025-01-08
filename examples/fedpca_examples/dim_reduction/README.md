@@ -1,7 +1,7 @@
 # PCA Dimensionality Reduction Example
 This example leverages federally computed principal components of the MNIST dataset to perform dimensionality reduction on the images, before proceeding with normal training.
 
-This example assumes that the principal components of MNIST have already been computed and saved (run the example in `exampes/fedpca_examples/perform_pca` to do this), and the user supplies a path to the saved principal components to perform dimensionality reduction.
+This example assumes that the principal components of MNIST have already been computed and saved (run the example in `examples/fedpca_examples/perform_pca` to do this), and the user supplies a path to the saved principal components to perform dimensionality reduction.
 
 Each client performs Dirichlet subsampling on the whole dataset to produce heterogeneous local datasets.
 

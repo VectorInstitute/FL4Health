@@ -1,7 +1,7 @@
 import random
 import uuid
 from logging import INFO
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import torch
@@ -9,7 +9,7 @@ from flwr.common.logger import log
 
 
 def set_all_random_seeds(
-    seed: Optional[int] = 42, use_deterministic_torch_algos: bool = False, disable_torch_benchmarking: bool = False
+    seed: int | None = 42, use_deterministic_torch_algos: bool = False, disable_torch_benchmarking: bool = False
 ) -> None:
     """
     Set seeds for python random, numpy random, and pytorch random. It also offers the option to force pytorch to use
@@ -24,7 +24,7 @@ def set_all_random_seeds(
     here: https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility
 
     Args:
-        seed (Optional[int], optional): The seed value to be used for random number generators. Default is 42. Seed
+        seed (int | None, optional): The seed value to be used for random number generators. Default is 42. Seed
             setting will no-op if the seed is explicitly set to None
         use_deterministic_torch_algos (bool, optional): Whether or not to set torch.use_deterministic_algorithms to
             True. Defaults to False.
@@ -60,13 +60,13 @@ def unset_all_random_seeds() -> None:
     torch.use_deterministic_algorithms(False)
 
 
-def save_random_state() -> Tuple[Tuple[Any, ...], Dict[str, Any], torch.Tensor]:
+def save_random_state() -> tuple[tuple[Any, ...], dict[str, Any], torch.Tensor]:
     """
     Save the state of the random number generators for Python, NumPy, and PyTorch. This will allow you to restore the
     state of the random number generators at a later time.
 
     Returns:
-        Tuple[Tuple[Any, ...], Dict[str, Any], torch.Tensor]: A tuple containing the state of the random number
+        tuple[tuple[Any, ...], dict[str, Any], torch.Tensor]: A tuple containing the state of the random number
             generators for Python, NumPy, and
     """
     log(INFO, "Saving random state.")
@@ -77,15 +77,15 @@ def save_random_state() -> Tuple[Tuple[Any, ...], Dict[str, Any], torch.Tensor]:
 
 
 def restore_random_state(
-    random_state: Tuple[Any, ...], numpy_state: Dict[str, Any], torch_state: torch.Tensor
+    random_state: tuple[Any, ...], numpy_state: dict[str, Any], torch_state: torch.Tensor
 ) -> None:
     """
     Restore the state of the random number generators for Python, NumPy, and PyTorch. This will allow you to restore
     the state of the random number generators to a previously saved state.
 
     Args:
-        random_state (Tuple[Any, ...]): The state of the Python random number generator
-        numpy_state (Dict[str, Any]): The state of the NumPy random number generator
+        random_state (tuple[Any, ...]): The state of the Python random number generator
+        numpy_state (dict[str, Any]): The state of the NumPy random number generator
         torch_state (torch.Tensor): The state of the PyTorch random number generator
     """
     log(INFO, "Restoring random state.")

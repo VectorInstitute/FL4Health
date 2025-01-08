@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from logging import INFO, WARNING
-from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from flwr.common import MetricsAggregationFn, NDArrays, Parameters, ndarrays_to_parameters, parameters_to_ndarrays
@@ -19,24 +19,21 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
         min_fit_clients: int = 2,
         min_evaluate_clients: int = 2,
         min_available_clients: int = 2,
-        evaluate_fn: Optional[
-            Callable[
-                [int, NDArrays, Dict[str, Scalar]],
-                Optional[Tuple[float, Dict[str, Scalar]]],
-            ]
-        ] = None,
-        on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
-        on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
+        evaluate_fn: (
+            Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None
+        ) = None,
+        on_fit_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
+        on_evaluate_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
         initial_parameters: Parameters,
-        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
+        evaluate_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         initial_loss_weight: float = 1.0,
         adapt_loss_weight: bool = False,
         loss_weight_delta: float = 0.1,
         loss_weight_patience: int = 5,
         weighted_train_losses: bool = False,
-        fairness_metric: Optional[FairnessMetric] = None,
+        fairness_metric: FairnessMetric | None = None,
         adjustment_weight_step_size: float = 0.2,
     ):
         """
@@ -50,21 +47,17 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
             min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2.
             min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             min_available_clients (int, optional): Minimum number of total clients in the system. Defaults to 2.
-            evaluate_fn :
-                Optional[
-                    Callable[[int, NDArrays, Dict[str, Scalar]],
-                    Optional[Tuple[float, Dict[str, Scalar]]]]
-                ]
+            evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
                 Optional function used for validation. Defaults to None.
-            on_fit_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional): Function used to configure
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
                 training. Defaults to None.
-            on_evaluate_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional): Function used to configure
+            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
                 validation. Defaults to None
             initial_parameters (Parameters): Initial global model parameters.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
-            fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional):
+            fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional):
                 Metrics aggregation function, Defaults to None.
-            evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional):
+            evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional):
                 Metrics aggregation function. Defaults to None.
             initial_loss_weight (float, optional): Initial penalty loss weight (mu in FedProx). If adaptivity is false,
                 then this is the constant weight used for all clients. Defaults to 1.0.
@@ -79,7 +72,7 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
             weighted_train_losses (bool, optional): Determines whether the training losses from the clients should be
                 aggregated using a weighted or unweighted average. These aggregated losses are used to adjust the
                 proximal weight in the adaptive setting. Defaults to False.
-            fairness_metric (Optional[FairnessMetric], optional): he metric to evaluate the local model of each
+            fairness_metric (FairnessMetric | None, optional): he metric to evaluate the local model of each
                 client against the global model in order to determine their adjustment weight for aggregation.
                 Can be set to any default metric in FairnessMetricType or set to use a custom metric.
                 Optional, default is FairnessMetric(FairnessMetricType.LOSS) when specified as None.
@@ -122,9 +115,9 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
     def aggregate_fit(
         self,
         server_round: int,
-        results: List[Tuple[ClientProxy, FitRes]],
-        failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-    ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
+        results: list[tuple[ClientProxy, FitRes]],
+        failures: list[tuple[ClientProxy, FitRes] | BaseException],
+    ) -> tuple[Parameters | None, dict[str, Scalar]]:
         """
         Aggregate fit results by weighing them against the adjustment weights and then summing them.
 
@@ -135,11 +128,11 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
 
         Args:
             server_round: (int) the current server round.
-            results: (List[Tuple[ClientProxy, FitRes]]) The clients' fit results.
-            failures: (List[Union[Tuple[ClientProxy, FitRes], BaseException]]) the clients' fit failures.
+            results: (list[tuple[ClientProxy, FitRes]]) The clients' fit results.
+            failures: (list[tuple[ClientProxy, FitRes] | BaseException]) the clients' fit failures.
 
         Returns:
-            (Tuple[Optional[Parameters], Dict[str, Scalar]]) A tuple containing the aggregated parameters
+            (tuple[Parameters | None, dict[str, Scalar]]) A tuple containing the aggregated parameters
                 and the aggregated fit metrics. For adaptive constraints, the server also packs a constraint weight
                 to be sent to the clients. This is sent even if adaptive constraint weights are turned off and
                 the value simply remains constant.
@@ -175,7 +168,7 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
         parameters = self.parameter_packer.pack_parameters(weights_aggregated, self.loss_weight)
         return ndarrays_to_parameters(parameters), metrics_aggregated
 
-    def _unpack_weights_and_losses(self, results: List[Tuple[ClientProxy, FitRes]]) -> List[Tuple[int, float]]:
+    def _unpack_weights_and_losses(self, results: list[tuple[ClientProxy, FitRes]]) -> list[tuple[int, float]]:
         """
         This function takes results returned from a fit round from each of the participating clients and unpacks the
         information into the appropriate objects. The parameters contained in the FitRes object are unpacked to
@@ -185,13 +178,13 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
         NOTE: The results that are passed to this function are MODIFIED IN-PLACE
 
         Args:
-            results (List[Tuple[ClientProxy, FitRes]]): The results produced in a fitting round by each of the clients
+            results (list[tuple[ClientProxy, FitRes]]): The results produced in a fitting round by each of the clients
                 these the FitRes object contains both model weights and training losses which need to be processed.
 
         Returns:
-            List[Tuple[int, float]]: A list of the training losses produced by client training
+            list[tuple[int, float]]: A list of the training losses produced by client training
         """
-        train_losses_and_counts: List[Tuple[int, float]] = []
+        train_losses_and_counts: list[tuple[int, float]] = []
         for _, fit_res in results:
             sample_count = fit_res.num_examples
             updated_weights, train_loss = self.parameter_packer.unpack_parameters(

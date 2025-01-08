@@ -1,7 +1,7 @@
 import datetime
 from abc import abstractmethod
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -26,8 +26,8 @@ class ModelMergeClient(NumPyClient):
         model_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        reporters: Optional[Sequence[BaseReporter]] = None,
-        client_name: Optional[str] = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        client_name: str | None = None,
     ) -> None:
         """
         ModelMergeClient to support functionality to simply perform model merging across client
@@ -112,7 +112,7 @@ class ModelMergeClient(NumPyClient):
         assert self.initialized
         self.parameter_exchanger.pull_parameters(parameters, self.model)
 
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+    def fit(self, parameters: NDArrays, config: Config) -> tuple[NDArrays, int, dict[str, Scalar]]:
         """
         Initializes client, validates local client model on local test data and returns parameters,
             test dataset length and test metrics. Importantly, parameters from Server, which is empty,
@@ -126,7 +126,7 @@ class ModelMergeClient(NumPyClient):
             config (NDArrays): The config from the server.
 
         Returns:
-            Tuple[NDArrays, int, Dict[str, Scalar]]: The local model parameters along with the
+            tuple[NDArrays, int, dict[str, Scalar]]: The local model parameters along with the
                 number of samples in the local test dataset and the computed metrics of the local model
                 on the local test dataset.
 
@@ -149,9 +149,7 @@ class ModelMergeClient(NumPyClient):
 
         return self.get_parameters(config), self.num_test_samples, val_metrics
 
-    def _move_data_to_device(
-        self, data: Union[TorchInputType, TorchTargetType]
-    ) -> Union[TorchTargetType, TorchInputType]:
+    def _move_data_to_device(self, data: TorchInputType | TorchTargetType) -> TorchTargetType | TorchInputType:
         """
         Moving data to self.device where data is intended to be either input to
         the model or the targets that the model is trying to achieve
@@ -165,7 +163,7 @@ class ModelMergeClient(NumPyClient):
                 TorchInputType or TorchTargetType
 
         Returns:
-            Union[TorchTargetType, TorchInputType]: The data argument except now it's been moved to self.device
+            TorchTargetType | TorchInputType: The data argument except now it's been moved to self.device
         """
         # Currently we expect both inputs and targets to be either tensors
         # or dictionaries of tensors
@@ -175,18 +173,18 @@ class ModelMergeClient(NumPyClient):
             return {key: value.to(self.device) for key, value in data.items()}
         else:
             raise TypeError(
-                "data must be of type torch.Tensor or Dict[str, torch.Tensor]. \
+                "data must be of type torch.Tensor or dict[str, torch.Tensor]. \
                     If definition of TorchInputType or TorchTargetType has \
                     changed this method might need to be updated or split into \
                     two"
             )
 
-    def validate(self) -> Dict[str, Scalar]:
+    def validate(self) -> dict[str, Scalar]:
         """
         Validate the model on the test dataset.
 
         Returns:
-            Tuple[float, Dict[str, Scalar]]: The loss and a dictionary of metrics
+            tuple[float, dict[str, Scalar]]: The loss and a dictionary of metrics
                 from test set.
         """
         self.model.eval()
@@ -200,7 +198,7 @@ class ModelMergeClient(NumPyClient):
 
         return self.test_metric_manager.compute()
 
-    def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
+    def evaluate(self, parameters: NDArrays, config: Config) -> tuple[float, int, dict[str, Scalar]]:
         """
         Evaluate the provided parameters using the locally held dataset.
 
@@ -209,7 +207,7 @@ class ModelMergeClient(NumPyClient):
             config (Config): Configuration object from the server.
 
         Returns:
-            Tuple[float, int, Dict[str, Scalar]: The float represents the
+            tuple[float, int, dict[str, Scalar]: The float represents the
                 loss which is assumed to be 0 for the ModelMergeClient.
                 The int represents the number of examples in the local test dataset and the
                 dictionary is the computed metrics on the test set.

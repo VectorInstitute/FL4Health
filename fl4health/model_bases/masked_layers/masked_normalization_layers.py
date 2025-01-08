@@ -1,5 +1,3 @@
-from typing import List, Optional, Union
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -9,7 +7,7 @@ from torch.nn.parameter import Parameter
 
 from fl4health.utils.functions import bernoulli_sample
 
-TorchShape = Union[int, List[int], torch.Size]
+TorchShape = int | list[int] | torch.Size
 
 
 class MaskedLayerNorm(nn.LayerNorm):
@@ -19,8 +17,8 @@ class MaskedLayerNorm(nn.LayerNorm):
         eps: float = 1e-5,
         elementwise_affine: bool = True,
         bias: bool = True,
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None,
     ) -> None:
         """
         Implementation of the masked Layer Normalization module. When elementwise_affine is True,
@@ -135,8 +133,8 @@ class _MaskedBatchNorm(_BatchNorm):
         momentum: float = 0.1,
         affine: bool = True,
         track_running_stats: bool = True,
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None,
     ) -> None:
         """
             Base class for masked batch normalization modules of various dimensions. When affine is True,

@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Generic, Tuple, TypeVar
+from typing import Generic, TypeVar
 
 import numpy as np
 import torch
-from flwr.common.typing import List, NDArray, NDArrays
+from flwr.common.typing import NDArray, NDArrays
 from torch import Tensor
 
 T = TypeVar("T")
@@ -15,7 +15,7 @@ class ParameterPacker(ABC, Generic[T]):
         raise NotImplementedError
 
     @abstractmethod
-    def unpack_parameters(self, packed_parameters: NDArrays) -> Tuple[NDArrays, T]:
+    def unpack_parameters(self, packed_parameters: NDArrays) -> tuple[NDArrays, T]:
         raise NotImplementedError
 
 
@@ -29,7 +29,7 @@ class ParameterPackerWithControlVariates(ParameterPacker[NDArrays]):
     def pack_parameters(self, model_weights: NDArrays, additional_parameters: NDArrays) -> NDArrays:
         return model_weights + additional_parameters
 
-    def unpack_parameters(self, packed_parameters: NDArrays) -> Tuple[NDArrays, NDArrays]:
+    def unpack_parameters(self, packed_parameters: NDArrays) -> tuple[NDArrays, NDArrays]:
         return packed_parameters[: self.size_of_model_params], packed_parameters[self.size_of_model_params :]
 
 
@@ -37,7 +37,7 @@ class ParameterPackerWithClippingBit(ParameterPacker[float]):
     def pack_parameters(self, model_weights: NDArrays, additional_parameters: float) -> NDArrays:
         return model_weights + [np.array(additional_parameters)]
 
-    def unpack_parameters(self, packed_parameters: NDArrays) -> Tuple[NDArrays, float]:
+    def unpack_parameters(self, packed_parameters: NDArrays) -> tuple[NDArrays, float]:
         # The last entry in the parameters list is assumed to be a clipping bound (even if we're evaluating)
         split_size = len(packed_parameters) - 1
         model_parameters = packed_parameters[:split_size]
@@ -49,7 +49,7 @@ class ParameterPackerAdaptiveConstraint(ParameterPacker[float]):
     def pack_parameters(self, model_weights: NDArrays, extra_adaptive_variable: float) -> NDArrays:
         return model_weights + [np.array(extra_adaptive_variable)]
 
-    def unpack_parameters(self, packed_parameters: NDArrays) -> Tuple[NDArrays, float]:
+    def unpack_parameters(self, packed_parameters: NDArrays) -> tuple[NDArrays, float]:
         # The last entry is an extra packed adaptive constraint variable (information to allow for adaptation)
         split_size = len(packed_parameters) - 1
         model_parameters = packed_parameters[:split_size]
@@ -60,11 +60,11 @@ class ParameterPackerAdaptiveConstraint(ParameterPacker[float]):
         return model_parameters, extra_adaptive_variable
 
 
-class ParameterPackerWithLayerNames(ParameterPacker[List[str]]):
-    def pack_parameters(self, model_weights: NDArrays, weights_names: List[str]) -> NDArrays:
+class ParameterPackerWithLayerNames(ParameterPacker[list[str]]):
+    def pack_parameters(self, model_weights: NDArrays, weights_names: list[str]) -> NDArrays:
         return model_weights + [np.array(weights_names)]
 
-    def unpack_parameters(self, packed_parameters: NDArrays) -> Tuple[NDArrays, List[str]]:
+    def unpack_parameters(self, packed_parameters: NDArrays) -> tuple[NDArrays, list[str]]:
         """
         Assumption: packed_parameters is a list containing model parameters followed by an NDArray that contains the
         corresponding names of those parameters.
@@ -75,7 +75,7 @@ class ParameterPackerWithLayerNames(ParameterPacker[List[str]]):
         return model_parameters, param_names
 
 
-class SparseCooParameterPacker(ParameterPacker[Tuple[NDArrays, NDArrays, List[str]]]):
+class SparseCooParameterPacker(ParameterPacker[tuple[NDArrays, NDArrays, list[str]]]):
     """
     This parameter packer is responsible for selecting an arbitrary set of parameters
     and then representing them in the sparse COO tensor format, which requires knowing
@@ -90,12 +90,12 @@ class SparseCooParameterPacker(ParameterPacker[Tuple[NDArrays, NDArrays, List[st
     """
 
     def pack_parameters(
-        self, model_parameters: NDArrays, additional_parameters: Tuple[NDArrays, NDArrays, List[str]]
+        self, model_parameters: NDArrays, additional_parameters: tuple[NDArrays, NDArrays, list[str]]
     ) -> NDArrays:
         parameter_indices, tensor_shapes, tensor_names = additional_parameters
         return model_parameters + parameter_indices + tensor_shapes + [np.array(tensor_names)]
 
-    def unpack_parameters(self, packed_parameters: NDArrays) -> Tuple[NDArrays, Tuple[NDArrays, NDArrays, List[str]]]:
+    def unpack_parameters(self, packed_parameters: NDArrays) -> tuple[NDArrays, tuple[NDArrays, NDArrays, list[str]]]:
         # The names of the tensors is wrapped in a list, which is then transformed into an NDArrays of length 1
         # before packing.
         assert len(packed_parameters) % 3 == 1
@@ -107,7 +107,7 @@ class SparseCooParameterPacker(ParameterPacker[Tuple[NDArrays, NDArrays, List[st
         return model_parameters, (parameter_indices, tensor_shapes, tensor_names)
 
     @staticmethod
-    def extract_coo_info_from_dense(x: Tensor) -> Tuple[NDArray, NDArray, NDArray]:
+    def extract_coo_info_from_dense(x: Tensor) -> tuple[NDArray, NDArray, NDArray]:
         """
         Take a dense tensor x and extract the information required
         (namely, its nonzero values, their indices within the tensor, and the shape of x)
@@ -119,7 +119,7 @@ class SparseCooParameterPacker(ParameterPacker[Tuple[NDArrays, NDArrays, List[st
             x (Tensor): Input dense tensor.
 
         Returns:
-            Tuple[NDArray, NDArray, NDArray]: The nonzero values of x,
+            tuple[NDArray, NDArray, NDArray]: The nonzero values of x,
             the indices of those values within x, and the shape of x.
         """
         selected_parameters = x[torch.nonzero(x, as_tuple=True)].cpu().numpy()

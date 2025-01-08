@@ -5,9 +5,10 @@ import multiprocessing
 import os
 import time
 import warnings
+from collections.abc import Generator
 from logging import INFO
 from os.path import basename, isdir, join
-from typing import Any, Dict, Generator, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import torch
@@ -17,7 +18,7 @@ from numpy.typing import NDArray
 
 with warnings.catch_warnings():
     # We get a bunch of scipy deprecation warnings from these packages
-    # Curiosly this only happens if flwr is imported first
+    # Curiously this only happens if flwr is imported first
     # Raised issue https://github.com/MIC-DKFZ/nnUNet/issues/2370
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     import nnunetv2
@@ -34,7 +35,7 @@ with warnings.catch_warnings():
 class MyNnUNetPredictor(nnUNetPredictor):
     def predict_from_data_iterator(
         self, data_iterator: Generator, return_probabilities: bool = False, num_processes: int = default_num_processes
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Override of the predict from data iterator class so that we can have
         it return the model outputs along with their output filenames and data
@@ -124,13 +125,13 @@ class MyNnUNetPredictor(nnUNetPredictor):
         return return_dict
 
 
-def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, plans: dict) -> nnUNetPredictor:
+def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, plans: dict) -> nnUNetPredictor:
     """
     Returns an initialized nnUNetPredictor for a set of nnunet models with the
     same config and architecture
 
     Args:
-        ckpt_list (List[str]): A list containing the paths to the checkpoint
+        ckpt_list (list[str]): A list containing the paths to the checkpoint
             files for the nnunet models
         nnunet_config (str): The nnunet config of the the models specific in
             ckpt_list.
@@ -148,12 +149,12 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
     """
 
     # Helper function to make code cleaner
-    def check_for_ckpt_info(model: dict) -> Tuple[str, bool]:
+    def check_for_ckpt_info(model: dict) -> tuple[str, bool]:
         """
         Checks model dict for trainer name and inference_allowed_mirroring_axes
 
         Returns:
-            Tuple[Optional[str], bool]: Tuple with elements trainer_name and
+            tuple[str | None, bool]: Tuple with elements trainer_name and
                 inference_allowed_mirroring_axes. Defaults to
                 ('nnUNetTrainer, False)
         """
@@ -166,7 +167,7 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
 
         return trainer_name, inference_allowed_mirror_axes
 
-    # Create unintialized predictor instance
+    # Create uninitialized predictor instance
     predictor = MyNnUNetPredictor(verbose=False, verbose_preprocessing=False, allow_tqdm=False)
 
     # Get parameters for each model and maybe some predictor init parameters
@@ -225,10 +226,10 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
 def predict(
     config_path: str,
     input_folder: str,
-    probs_folder: Optional[str] = None,
-    annotations_folder: Optional[str] = None,
+    probs_folder: str | None = None,
+    annotations_folder: str | None = None,
     verbose: bool = True,
-) -> Tuple[NDArray, NDArray, List[str]]:
+) -> tuple[NDArray, NDArray, list[str]]:
     """
     Uses multiprocessing to quickly do model inference for a single model, a
     group of models with the same nnunet config or an ensemble of different
@@ -248,16 +249,16 @@ def predict(
             create a new json yourself with the 'label' and 'file_ending' keys
             and their corresponding values as specified by nnunet
         input_folder (str): Path to the folder containing the raw input data
-            that has notbeen processed by nnunet yet. File names must follow the
+            that has not been processed by nnunet yet. File names must follow the
             nnunet convention where each channel modality is stored as a
-            seperate file.File names should be case-identifier_0000 where 0000
+            separate file.File names should be case-identifier_0000 where 0000
             is a 4 digit integer representing the channel/modality of the
             image. All cases must have the same number of channels N numbered
             from 0 to N.
-        preds_folder (Optional[str]): [OPTIONAL] Path to the output folder to
+        preds_folder (str | None): [OPTIONAL] Path to the output folder to
             save the model predicted probabilities. If not provided the
             probabilities are not saved
-        annotations_folder (Optional[str]): [OPTIONAL] Path to the output
+        annotations_folder (str | None): [OPTIONAL] Path to the output
             folder to save the model predicted annotations. If not provided the
             annotations are not saved
     Returns:
@@ -266,7 +267,7 @@ def predict(
         NDArray[int]: a numpy array with a single predicted annotation map for
             each input image. Unlike the predicted probabilities these are NOT
             one hot encoded. Shape: (num_samples, spatial_dims...)
-        List[str]: A list containing the unique case identifier for
+        list[str]: A list containing the unique case identifier for
             each prediction
     """
     t_start = time.time()
@@ -355,7 +356,7 @@ def predict(
         log(INFO, f"\tNum Classes: {shape[1]}")
         log(INFO, f"\tSpatial Dimensions {shape[2:]}")
 
-    # Save predicted probabilites if output_folder was provided
+    # Save predicted probabilities if output_folder was provided
     if probs_folder is not None:
         t = time.time()
         for pred, case in zip(final_probs, case_identifiers):
@@ -428,7 +429,7 @@ def main() -> None:
         type=str,
         help="""Path to the folder containing the raw input data that has not
             been processed by nnunet yet. File names must follow the nnunet
-            convention where each channel modality is stored as a seperate
+            convention where each channel modality is stored as a separate
             file. File names should be case-identifier_0000 where 0000 is a 4
             digit integer representing the channel/modality of the image. All
             cases must have the same N channels numbered from 0 to N.""",

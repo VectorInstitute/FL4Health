@@ -1,13 +1,14 @@
 import copy
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, List, Optional, Tuple, TypeVar, Union, cast
+from collections.abc import Callable
+from typing import TypeVar, cast
 
 import torch
 from torch.utils.data import Dataset
 
 
 class BaseDataset(ABC, Dataset):
-    def __init__(self, transform: Optional[Callable], target_transform: Optional[Callable]) -> None:
+    def __init__(self, transform: Callable | None, target_transform: Callable | None) -> None:
         self.transform = transform
         self.target_transform = target_transform
 
@@ -26,7 +27,7 @@ class BaseDataset(ABC, Dataset):
             self.target_transform = g
 
     @abstractmethod
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
         raise NotImplementedError
 
     @abstractmethod
@@ -38,15 +39,15 @@ class TensorDataset(BaseDataset):
     def __init__(
         self,
         data: torch.Tensor,
-        targets: Optional[torch.Tensor] = None,
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
+        targets: torch.Tensor | None = None,
+        transform: Callable | None = None,
+        target_transform: Callable | None = None,
     ) -> None:
         super().__init__(transform, target_transform)
         self.data = data
         self.targets = targets
 
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
         assert self.targets is not None
 
         data, target = self.data[index], self.targets[index]
@@ -67,15 +68,15 @@ class SslTensorDataset(TensorDataset):
     def __init__(
         self,
         data: torch.Tensor,
-        targets: Optional[torch.Tensor] = None,
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
+        targets: torch.Tensor | None = None,
+        transform: Callable | None = None,
+        target_transform: Callable | None = None,
     ) -> None:
         assert targets is not None, "SslTensorDataset targets must be None"
 
         super().__init__(data, targets, transform, target_transform)
 
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
         data = self.data[index]
 
         assert self.target_transform is not None, "Target transform cannot be None."
@@ -92,21 +93,21 @@ class SslTensorDataset(TensorDataset):
 
 
 class DictionaryDataset(Dataset):
-    def __init__(self, data: Dict[str, List[torch.Tensor]], targets: torch.Tensor) -> None:
+    def __init__(self, data: dict[str, list[torch.Tensor]], targets: torch.Tensor) -> None:
         """
         A torch dataset that supports a dictionary of input data rather than just a torch.Tensor. This kind of dataset
         is useful when dealing with non-trivial inputs to a model. For example, a language model may require token ids
         AND attention masks. This dataset supports that functionality.
 
         Args:
-            data (Dict[str, List[torch.Tensor]]): A set of data for model training/input in the form of a dictionary
+            data (dict[str, list[torch.Tensor]]): A set of data for model training/input in the form of a dictionary
                 of tensors.
             targets (torch.Tensor): Target tensor.
         """
         self.data = data
         self.targets = targets
 
-    def __getitem__(self, index: int) -> Tuple[Dict[str, torch.Tensor], torch.Tensor]:
+    def __getitem__(self, index: int) -> tuple[dict[str, torch.Tensor], torch.Tensor]:
         return {key: val[index] for key, val in self.data.items()}, self.targets[index]
 
     def __len__(self) -> int:
@@ -131,7 +132,7 @@ class SyntheticDataset(TensorDataset):
         self.data = data
         self.targets = targets
 
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
         assert self.targets is not None
 
         data, target = self.data[index], self.targets[index]
@@ -141,7 +142,7 @@ class SyntheticDataset(TensorDataset):
         return len(self.data)
 
 
-D = TypeVar("D", bound=Union[TensorDataset, DictionaryDataset])
+D = TypeVar("D", bound=TensorDataset | DictionaryDataset)
 
 
 def select_by_indices(dataset: D, selected_indices: torch.Tensor) -> D:
@@ -169,7 +170,7 @@ def select_by_indices(dataset: D, selected_indices: torch.Tensor) -> D:
         return cast(D, modified_dataset)
     elif isinstance(dataset, DictionaryDataset):
         new_targets = dataset.targets[selected_indices]
-        new_data: Dict[str, List[torch.Tensor]] = {}
+        new_data: dict[str, list[torch.Tensor]] = {}
         for key, val in dataset.data.items():
             # Since val is a list of tensors, we can't directly index into it
             # using selected_indices.

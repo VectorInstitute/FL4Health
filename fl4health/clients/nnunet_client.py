@@ -4,11 +4,12 @@ import os
 import pickle
 import time
 import warnings
+from collections.abc import Sequence
 from contextlib import redirect_stdout
 from logging import DEBUG, ERROR, INFO, WARNING
 from os.path import exists, join
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union
+from typing import Any
 
 import numpy as np
 import torch
@@ -64,22 +65,22 @@ class NnunetClient(BasicClient):
         self,
         device: torch.device,
         dataset_id: int,
-        fold: Union[int, str],
-        data_identifier: Optional[str] = None,
-        plans_identifier: Optional[str] = None,
+        fold: int | str,
+        data_identifier: str | None = None,
+        plans_identifier: str | None = None,
         compile: bool = True,
         always_preprocess: bool = False,
         max_grad_norm: float = 12,
-        n_dataload_processes: Optional[int] = None,
+        n_dataload_processes: int | None = None,
         verbose: bool = True,
-        metrics: Optional[Sequence[Metric]] = None,
+        metrics: Sequence[Metric] | None = None,
         progress_bar: bool = False,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
-        client_name: Optional[str] = None,
-        nnunet_trainer_class: Type[nnUNetTrainer] = nnUNetTrainer,
-        nnunet_trainer_class_kwargs: Optional[dict[str, Any]] = {},
+        client_name: str | None = None,
+        nnunet_trainer_class: type[nnUNetTrainer] = nnUNetTrainer,
+        nnunet_trainer_class_kwargs: dict[str, Any] | None = {},
     ) -> None:
         """
         A client for training nnunet models. Requires the nnunet environment variables to be set. Also requires the
@@ -91,14 +92,14 @@ class NnunetClient(BasicClient):
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
                 'cuda' or 'mps'
             dataset_id (int): The nnunet dataset id for the local client dataset to use for training and validation.
-            fold (Union[int, str]): Which fold of the local client dataset to use for validation. nnunet defaults to
+            fold (int | str): Which fold of the local client dataset to use for validation. nnunet defaults to
                 5 folds (0 to 4). Can also be set to 'all' to use all the data for both training and validation.
-            data_identifier (Optional[str], optional): The nnunet data identifier prefix to use. The final data
+            data_identifier (str | None, optional): The nnunet data identifier prefix to use. The final data
                 identifier will be {data_identifier}_config where 'config' is the nnunet config (eg. 2d, 3d_fullres,
                 etc.). If preprocessed data already exists can be used to specify which preprocessed data to use.
                 The default data_identifier prefix is the plans name used during training (see the plans_identifier
                 argument).
-            plans_identifier (Optional[str], optional): Specify what to save the client's local copy of the plans file
+            plans_identifier (str | None, optional): Specify what to save the client's local copy of the plans file
                 as. The client modifies the source plans json file sent from the server and makes a local copy.
                 If left as default None, the plans identifier will be set as 'FL_Dataset000_plansname' where 000 is
                 the dataset_id and plansname is the 'plans_name' value of the source plans file.
@@ -111,7 +112,7 @@ class NnunetClient(BasicClient):
                 the client.
             max_grad_norm (float, optional): The maximum gradient norm to use for gradient clipping. Defaults to 12
                 which is the nnunetv2 2.5.1 default.
-            n_dataload_processes (Optional[int], optional): The number of processes to spawn for each nnunet
+            n_dataload_processes (int | None, optional): The number of processes to spawn for each nnunet
                 dataloader. If left as None we use the nnunetv2 version 2.5.1 defaults for each config
             verbose (bool, optional): If True the client will log some extra INFO logs. Defaults to False unless
                 the log level is DEBUG or lower.
@@ -121,13 +122,13 @@ class NnunetClient(BasicClient):
                 to False
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over each
                 batch. Defaults to LossMeterType.AVERAGE.
-            checkpoint_and_state_module (Optional[ClientCheckpointAndStateModule], optional): A module meant to handle
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
                 No checkpointing (state or model) is done if not provided. Defaults to None.
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the client should
                 send data to.
-            nnunet_trainer_class (Type[nnUNetTrainer]): A nnUNetTrainer constructor. Useful for passing custom
+            nnunet_trainer_class (type[nnUNetTrainer]): A nnUNetTrainer constructor. Useful for passing custom
                 nnUNetTrainer. Defaults to the standard nnUNetTrainer class. Must match the nnunet_trainer_class
                 passed to the NnunetServer.
             nnunet_trainer_class_kwargs (dict[str, Any]): Additional kwargs to pass to nnunet_trainer_class. Defaults
@@ -189,7 +190,7 @@ class NnunetClient(BasicClient):
                 log(INFO, "Switching pytorch model jit compile to OFF")
             os.environ["nnUNet_compile"] = str("false")
 
-    def train_step(self, input: TorchInputType, target: TorchTargetType) -> Tuple[TrainingLosses, TorchPredType]:
+    def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
         """
         Given a single batch of input and target data, generate predictions, compute loss, update parameters and
             optionally update metrics if they exist. (ie backprop on a single batch of data).
@@ -242,7 +243,7 @@ class NnunetClient(BasicClient):
         return losses, preds
 
     @use_default_signal_handlers  # Dataloaders use multiprocessing
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         """
         Gets the nnunet dataloaders and wraps them in another class to make them
         pytorch iterators
@@ -251,7 +252,7 @@ class NnunetClient(BasicClient):
             config (Config): The config file from the server
 
         Returns:
-            Tuple[DataLoader, DataLoader]: A tuple of length two. The client
+            tuple[DataLoader, DataLoader]: A tuple of length two. The client
                 train and validation dataloaders as pytorch dataloaders
         """
         start_time = time.time()
@@ -350,7 +351,7 @@ class NnunetClient(BasicClient):
             max_steps=total_steps,
         )
 
-    def create_plans(self, config: Config) -> Dict[str, Any]:
+    def create_plans(self, config: Config) -> dict[str, Any]:
         """
         Modifies the provided plans file to work with the local client dataset
 
@@ -359,7 +360,7 @@ class NnunetClient(BasicClient):
                 'nnunet_plans' key with a pickled dictionary as the value
 
         Returns:
-            Dict[str, Any]: The modified nnunet plans for the client
+            dict[str, Any]: The modified nnunet plans for the client
         """
         # Get the nnunet plans specified by the server
         plans = pickle.loads(narrow_dict_type(config, "nnunet_plans", bytes))
@@ -549,7 +550,7 @@ class NnunetClient(BasicClient):
         # We have to call parent method after setting up nnunet trainer
         super().setup_client(config)
 
-    def predict(self, input: TorchInputType) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
+    def predict(self, input: TorchInputType) -> tuple[TorchPredType, dict[str, torch.Tensor]]:
         """
         Generate model outputs. Overridden because nnunets output lists when
             deep supervision is on so we have to reformat the output into dicts
@@ -559,7 +560,7 @@ class NnunetClient(BasicClient):
             input (TorchInputType): The model inputs
 
         Returns:
-            Tuple[TorchPredType, Dict[str, torch.Tensor]]: A tuple in which the
+            tuple[TorchPredType, dict[str, torch.Tensor]]: A tuple in which the
             first element model outputs indexed by name. The second element is
             unused by this subclass and therefore is always an empty dict
         """
@@ -589,9 +590,9 @@ class NnunetClient(BasicClient):
     def compute_loss_and_additional_losses(
         self,
         preds: TorchPredType,
-        features: Dict[str, torch.Tensor],
+        features: dict[str, torch.Tensor],
         target: TorchTargetType,
-    ) -> Tuple[torch.Tensor, Optional[Dict[str, torch.Tensor]]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor] | None]:
         """
         Checks the pred and target types and computes the loss.
             If device type is cuda, loss computed in mixed precision.
@@ -599,13 +600,13 @@ class NnunetClient(BasicClient):
         Args:
             preds (TorchPredType): Dictionary of model output tensors indexed
                 by name
-            features (Dict[str, torch.Tensor]): Not used by this subclass
+            features (dict[str, torch.Tensor]): Not used by this subclass
             target (TorchTargetType): The targets to evaluate the predictions
                 with. If multiple prediction tensors are given, target must be
                 a dictionary with the same number of tensors
 
         Returns:
-            Tuple[torch.Tensor, Optional[Dict[str, torch.Tensor]]]: A tuple
+            tuple[torch.Tensor, dict[str, torch.Tensor] | None]: A tuple
                 where the first element is the loss and the second element is an
                 optional additional loss
         """
@@ -635,7 +636,7 @@ class NnunetClient(BasicClient):
 
         return loss
 
-    def mask_data(self, pred: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def mask_data(self, pred: torch.Tensor, target: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Masks the pred and target tensors according to nnunet ignore_label.
         The number of classes in the input tensors should be at least 3
@@ -707,7 +708,7 @@ class NnunetClient(BasicClient):
             else:
                 m_target = list(target.values())[0]
         else:
-            raise TypeError("Was expecting target to be type Dict[str, torch.Tensor] or torch.Tensor")
+            raise TypeError("Was expecting target to be type dict[str, torch.Tensor] or torch.Tensor")
 
         # Check if target is one hot encoded. Prediction always is for nnunet
         # Add channel dimension if there isn't one
@@ -745,10 +746,10 @@ class NnunetClient(BasicClient):
 
     def get_client_specific_logs(
         self,
-        current_round: Optional[int],
-        current_epoch: Optional[int],
+        current_round: int | None,
+        current_epoch: int | None,
         logging_mode: LoggingMode,
-    ) -> Tuple[str, List[Tuple[LogLevel, str]]]:
+    ) -> tuple[str, list[tuple[LogLevel, str]]]:
         if logging_mode == LoggingMode.TRAIN:
             lr = float(self.optimizers["global"].param_groups[0]["lr"])
             if current_epoch is None:
@@ -759,11 +760,11 @@ class NnunetClient(BasicClient):
         else:
             return "", []
 
-    def get_client_specific_reports(self) -> Dict[str, Any]:
+    def get_client_specific_reports(self) -> dict[str, Any]:
         return {"learning_rate": float(self.optimizers["global"].param_groups[0]["lr"])}
 
     @use_default_signal_handlers  # Experiment planner spawns a process I think
-    def get_properties(self, config: Config) -> Dict[str, Scalar]:
+    def get_properties(self, config: Config) -> dict[str, Scalar]:
         """
         Return properties (sample counts and nnunet plans) of client.
 
@@ -775,7 +776,7 @@ class NnunetClient(BasicClient):
             config (Config): The config from the server
 
         Returns:
-            Dict[str, Scalar]: A dictionary containing the train and
+            dict[str, Scalar]: A dictionary containing the train and
                 validation sample counts as well as the serialized nnunet plans
         """
         # Check if nnunet plans have already been initialized
@@ -818,14 +819,14 @@ class NnunetClient(BasicClient):
         properties["enable_deep_supervision"] = self.nnunet_trainer.enable_deep_supervision
         return properties
 
-    def shutdown_dataloader(self, dataloader: Optional[DataLoader], dl_name: Optional[str] = None) -> None:
+    def shutdown_dataloader(self, dataloader: DataLoader | None, dl_name: str | None = None) -> None:
         """
         The nnunet dataloader/augmenter uses multiprocessing under the hood, so the
         shutdown method terminates the child processes gracefully
 
         Args:
             dataloader (DataLoader): The dataloader to shutdown
-            dl_name (Optional[str]): A string that identifies the dataloader
+            dl_name (str | None): A string that identifies the dataloader
                 to shutdown. Used for logging purposes. Defaults to None
         """
         if dataloader is not None and isinstance(dataloader, nnUNetDataLoaderWrapper):
@@ -865,6 +866,6 @@ class NnunetClient(BasicClient):
     def transform_gradients(self, losses: TrainingLosses) -> None:
         """
         Apply the gradient clipping performed by the default nnunet trainer. This is
-        the default behaviour for nnunet 2.5.1
+        the default behavior for nnunet 2.5.1
         """
         nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)

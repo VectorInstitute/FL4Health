@@ -6,7 +6,6 @@
 import argparse
 import os
 from os.path import join
-from typing import Dict, Optional
 
 import numpy as np
 import yaml
@@ -14,7 +13,7 @@ from batchgenerators.utilities.file_and_folder_operations import load_json, save
 from monai.apps.auto3dseg.auto_runner import AutoRunner
 
 
-def gen_dataset_list(data_dir: str, output_path: Optional[str] = None, ext: str = ".nii.gz") -> str:
+def gen_dataset_list(data_dir: str, output_path: str | None = None, ext: str = ".nii.gz") -> str:
     """
     Generates a MONAI dataset list for an nnUNet structured dataset
 
@@ -24,7 +23,7 @@ def gen_dataset_list(data_dir: str, output_path: Optional[str] = None, ext: str 
 
     Args:
         data_dir (str): Path to the nnUNet_raw dataset.
-        output_path (Optional[str]): Where and what to save the file as. Must be a json.
+        output_path (str | None): Where and what to save the file as. Must be a json.
             Default is to save as datalist.json in the data_dir
 
     Returns:
@@ -41,11 +40,11 @@ def gen_dataset_list(data_dir: str, output_path: Optional[str] = None, ext: str 
     # Initialize datalist
     # The values to the testing and training keys should be a list of dictionaries
     # where each dictionary contains information about a single case
-    datalist: Dict[str, list] = {"testing": [], "training": []}
+    datalist: dict[str, list] = {"testing": [], "training": []}
 
     # nnUNet datasets store images as unique-case-identifier_xxxx.ext
-    # xxxx is a 4 digit integer representing the channel/modaility.
-    # ext is the file extenstion
+    # xxxx is a 4 digit integer representing the channel/modality.
+    # ext is the file extention
     # Labels are stored as unique-case-identifier.ext as they do not have multiple channels
 
     if os.path.exists(test_dir):  # nnUNet Datasets do not always have test sets

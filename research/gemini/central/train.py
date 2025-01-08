@@ -2,7 +2,6 @@ import argparse
 import os
 from logging import INFO
 from pathlib import Path
-from typing import List
 
 import torch
 import torch.nn as nn
@@ -18,7 +17,7 @@ from research.gemini.mortality_models.NN import NN as mortality_model
 
 def main(
     data_path: Path,
-    metrics: List[Metric],
+    metrics: list[Metric],
     device: torch.device,
     learning_task: str,
     batch_size: int,

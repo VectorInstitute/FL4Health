@@ -1,6 +1,5 @@
 import argparse
 from pathlib import Path
-from typing import Dict, Tuple
 
 import flwr as fl
 import torch
@@ -23,7 +22,7 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class CifarFedRepClient(FedRepClient):
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         sample_percentage = narrow_dict_type(config, "sample_percentage", float)
         beta = narrow_dict_type(config, "beta", float)
@@ -39,7 +38,7 @@ class CifarFedRepClient(FedRepClient):
         ).to(self.device)
         return model
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
         # We have two optimizers that are used for the head and representation optimization stages respectively
         assert isinstance(self.model, FedRepModel)
         representation_optimizer = torch.optim.AdamW(self.model.base_module.parameters(), lr=0.001)

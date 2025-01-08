@@ -6,7 +6,7 @@ import SimpleITK as sitk
 
 def prepare_annotations(human_annotations_dir: str, ai_annotations_dir: str, annotations_write_dir: str) -> None:
     """
-    Copy seperate annotation sources (ie human and ai-derived annotations) to a central location.
+    Copy separate annotation sources (ie human and ai-derived annotations) to a central location.
 
     Args:
         human_annotations_dir (str): The path to the folder containing human annotations.

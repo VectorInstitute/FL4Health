@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import numpy as np
 import pytest
 import torch
@@ -11,7 +9,7 @@ from fl4health.utils.random import set_all_random_seeds, unset_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler, MinorityLabelBasedSampler
 
 
-def construct_synthetic_dataset() -> Tuple[SyntheticDataset, SyntheticDataset]:
+def construct_synthetic_dataset() -> tuple[SyntheticDataset, SyntheticDataset]:
     # set seed for creation
     torch.manual_seed(42)
     random_inputs = torch.rand((20000, 3, 3))

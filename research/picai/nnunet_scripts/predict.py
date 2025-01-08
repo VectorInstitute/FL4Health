@@ -7,7 +7,6 @@ import time
 import warnings
 from logging import INFO
 from os.path import basename, exists, isdir, join
-from typing import List, Tuple
 
 import numpy as np
 import torch
@@ -18,7 +17,7 @@ from research.picai.fl_nnunet.nnunet_utils import NnunetConfig
 
 with warnings.catch_warnings():
     # We get a bunch of scipy deprecation warnings from these packages
-    # Curiosly this only happens if flwr is imported first
+    # Curiously this only happens if flwr is imported first
     # Raised issue https://github.com/MIC-DKFZ/nnUNet/issues/2370
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     import nnunetv2
@@ -35,13 +34,13 @@ def yaml_join(loader: yaml.Loader, node: yaml.SequenceNode) -> str:
     return os.path.join(*seq)
 
 
-def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, plans: dict) -> nnUNetPredictor:
+def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, plans: dict) -> nnUNetPredictor:
     """
     Returns an initialized nnUNetPredictor for a set of nnunet models with the
     same config and architecture
 
     Args:
-        ckpt_list (List[str]): A list containing the paths to the checkpoint
+        ckpt_list (list[str]): A list containing the paths to the checkpoint
             files for the nnunet models
         nnunet_config (str): The nnunet config of the the models specific in
             ckpt_list.
@@ -57,12 +56,12 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
     """
 
     # Helper function to make code cleaner
-    def check_for_ckpt_info(model: dict) -> Tuple[str, bool]:
+    def check_for_ckpt_info(model: dict) -> tuple[str, bool]:
         """
         Checks model dict for trainer name and inference_allowed_mirroring_axes
 
         Returns:
-            Tuple[Optional[str], bool]: Tuple with elements trainer_name and
+            tuple[str | None, bool]: Tuple with elements trainer_name and
                 inference_allowed_mirroring_axes. Defaults to
                 ('nnUNetTrainer, False)
         """
@@ -75,7 +74,7 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
 
         return trainer_name, inference_allowed_mirror_axes
 
-    # Create unintialized predictor instance
+    # Create uninitialized predictor instance
     predictor = nnUNetPredictor(verbose=False, verbose_preprocessing=False, allow_tqdm=False)
 
     # Get parameters for each model and maybe some predictor init parameters
@@ -163,14 +162,14 @@ def predict(
                     base_path: &base_path /home/user/data
                     dataset_json: !join [*base_path, 'PICAI', 'dataset.json']
         input_folder (str): Path to the folder containing the raw input data
-            that has notbeen processed by nnunet yet. File names must follow the
+            that has not been processed by nnunet yet. File names must follow the
             nnunet convention where each channel modality is stored as a
-            seperate file.File names should be case-identifier_0000 where 0000
+            separate file.File names should be case-identifier_0000 where 0000
             is a 4 digit integer representing the channel/modality of the
             image. All cases must have the same number of channels N numbered
             from 0 to N.
         output_folder (str): Path to save the predicted probabilities and
-            predicted annotations. Each will be stored in a seperate
+            predicted annotations. Each will be stored in a separate
             subdirectory. Probabilities will be stored as .npz files.
             The NPZ file object will have the key 'probabilities'. The
             predicted annotations will be saved as the original input image
@@ -180,7 +179,7 @@ def predict(
         annotations_folder_name (str): What to name the folder within the
             output folder that the predicted annotations will be stored in
     """
-    # Note: I should split output folder into two seperate paths for model outputs
+    # Note: I should split output folder into two separate paths for model outputs
     t_start = time.time()
 
     # Add !join constructor to yaml so that config files can be more readable
@@ -342,7 +341,7 @@ def main() -> None:
         type=str,
         help="""Path to the folder containing the raw input data that has not
             been processed by nnunet yet. File names must follow the nnunet
-            convention where each channel modality is stored as a seperate
+            convention where each channel modality is stored as a separate
             file. File names should be case-identifier_0000 where 0000 is a 4
             digit integer representing the channel/modality of the image. All
             cases must have the same N channels numbered from 0 to N.""",
@@ -352,7 +351,7 @@ def main() -> None:
         required=True,
         type=str,
         help="""[OPTIONAL] Path to save the predicted probabilities and
-            predicted annotations. Each will be stored in a seperate
+            predicted annotations. Each will be stored in a separate
             subdirectory. Probabilities will be stored as .npz files.
             The NPZ file object will have the key 'probabilities'. The
             predicted annotations will be saved as the original input image

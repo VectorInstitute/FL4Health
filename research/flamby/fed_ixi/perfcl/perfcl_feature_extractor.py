@@ -1,5 +1,3 @@
-from typing import Optional
-
 import torch
 import torch.nn as nn
 from flamby.datasets.fed_ixi.model import Decoder, Encoder, EncodingBlock
@@ -21,15 +19,15 @@ class PerFclFeatureExtractor(nn.Module):
         dimensions: int = 3,
         num_encoding_blocks: int = 3,
         out_channels_first_layer: int = 8,
-        normalization: Optional[str] = "batch",
+        normalization: str | None = "batch",
         pooling_type: str = "max",
         upsampling_type: str = "linear",
         preactivation: bool = False,
         residual: bool = False,
         padding: int = 1,
         padding_mode: str = "zeros",
-        activation: Optional[str] = "PReLU",
-        initial_dilation: Optional[int] = None,
+        activation: str | None = "PReLU",
+        initial_dilation: int | None = None,
         dropout: float = 0,
     ):
         super().__init__()

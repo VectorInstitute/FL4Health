@@ -2,7 +2,7 @@ import os
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, cast
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -21,27 +21,27 @@ class DatasetPartitioner(ABC):
 
     @abstractmethod
     def partition_dataset(
-        self, n_partiions: int, label_column_name: Optional[str] = None, label_map: Optional[Dict[int, str]] = None
+        self, n_partitions: int, label_column_name: str | None = None, label_map: dict[int, str] | None = None
     ) -> None:
         pass
 
 
 class JsonToPandasDatasetPartitioner(DatasetPartitioner):
-    def __init__(self, dataset_path: Path, partition_dir: Path, config: Dict[str, str]) -> None:
+    def __init__(self, dataset_path: Path, partition_dir: Path, config: dict[str, str]) -> None:
         self._parse_config(config)
         super().__init__(dataset_path, partition_dir)
 
-    def _parse_config(self, config: Dict[str, str]) -> None:
+    def _parse_config(self, config: dict[str, str]) -> None:
         if "json_lines" in config:
             self.json_lines = config["json_lines"] == "True"
 
     def partition_dataset(
-        self, n_partitions: int, label_column_name: Optional[str] = None, label_map: Optional[Dict[int, str]] = None
+        self, n_partitions: int, label_column_name: str | None = None, label_map: dict[int, str] | None = None
     ) -> None:
         df = pd.read_json(self.dataset_path, lines=self.json_lines)
         # Shuffle the dataframe rows
         df = df.sample(frac=1).reset_index(drop=True)
-        paritioned_dfs = cast(List[pd.DataFrame], np.array_split(df, n_partitions))
+        paritioned_dfs = cast(list[pd.DataFrame], np.array_split(df, n_partitions))
 
         for chunk, df in enumerate(paritioned_dfs):
             df.to_json(
@@ -53,14 +53,14 @@ class JsonToPandasDatasetPartitioner(DatasetPartitioner):
 
 class CsvToPandasDatasetPartitioner(DatasetPartitioner):
     def partition_dataset(
-        self, n_partitions: int, label_column_name: Optional[str] = None, label_map: Optional[Dict[int, str]] = None
+        self, n_partitions: int, label_column_name: str | None = None, label_map: dict[int, str] | None = None
     ) -> None:
         df = pd.read_csv(self.dataset_path, names=["label", "title", "body"])
         # Shuffle the dataframe rows
         df = df.sample(frac=1).reset_index(drop=True)
         if label_column_name and label_map:
             df["category"] = df[label_column_name].map(label_map)
-        paritioned_dfs = cast(List[pd.DataFrame], np.array_split(df, n_partitions))
+        paritioned_dfs = cast(list[pd.DataFrame], np.array_split(df, n_partitions))
 
         for chunk, df in enumerate(paritioned_dfs):
             df.to_json(
@@ -71,7 +71,7 @@ class CsvToPandasDatasetPartitioner(DatasetPartitioner):
 
 
 def construct_dataset_partitioner(
-    dataset_path: Path, partition_dir: Path, config: Dict[str, str]
+    dataset_path: Path, partition_dir: Path, config: dict[str, str]
 ) -> DatasetPartitioner:
     data_loader_enum = DatasetPartitionerEnum(config["dataset_partitioner_type"])
     if data_loader_enum == DatasetPartitionerEnum.JSON_TO_PANDAS:

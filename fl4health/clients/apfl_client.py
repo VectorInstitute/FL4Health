@@ -1,5 +1,5 @@
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.typing import Config
@@ -22,10 +22,10 @@ class ApflClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        client_name: Optional[str] = None,
+        client_name: str | None = None,
     ) -> None:
         """
         Client specifically implementing the APFL Algorithm: https://arxiv.org/abs/2003.13461
@@ -40,7 +40,7 @@ class ApflClient(BasicClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpoint_and_state_module (Optional[ClientCheckpointAndStateModule], optional): A module meant to handle
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
                 No checkpointing (state or model) is done if not provided. Defaults to None.
@@ -48,7 +48,7 @@ class ApflClient(BasicClient):
                 should send data to. Defaults to None.
             progress_bar (bool, optional): Whether or not to display a progress bar during client training and
                 validation. Uses tqdm. Defaults to False
-            client_name (Optional[str], optional): An optional client name that uniquely identifies a client.
+            client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
         """
@@ -65,12 +65,12 @@ class ApflClient(BasicClient):
 
         self.model: ApflModule
         self.learning_rate: float
-        self.optimizers: Dict[str, torch.optim.Optimizer]
+        self.optimizers: dict[str, torch.optim.Optimizer]
 
     def is_start_of_local_training(self, step: int) -> bool:
         return step == 0
 
-    def update_after_step(self, step: int, current_round: Optional[int] = None) -> None:
+    def update_after_step(self, step: int, current_round: int | None = None) -> None:
         """
         Called after local train step on client. step is an integer that represents
         the local training step that was most recently completed.
@@ -78,7 +78,7 @@ class ApflClient(BasicClient):
         if self.is_start_of_local_training(step) and self.model.adaptive_alpha:
             self.model.update_alpha()
 
-    def train_step(self, input: TorchInputType, target: TorchTargetType) -> Tuple[TrainingLosses, TorchPredType]:
+    def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
         # Return preds value thats Dict of torch.Tensor containing personal, global and local predictions
 
         # Mechanics of training loop follow from original implementation
@@ -121,18 +121,18 @@ class ApflClient(BasicClient):
         preds: TorchPredType,
         features: TorchFeatureType,
         target: TorchTargetType,
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
         For APFL, the loss will be the personal loss and the additional losses are the global and local loss.
 
         Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
-            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+            tuple[torch.Tensor, dict[str, torch.Tensor]]; A tuple with:
                 - The tensor for the personal loss
                 - A dictionary of with `global_loss` and `local_loss` keys and their calculated values
         """
@@ -150,7 +150,7 @@ class ApflClient(BasicClient):
         assert isinstance(optimizers, dict) and set(("global", "local")) == set(optimizers.keys())
         self.optimizers = optimizers
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
         """
         Returns a dictionary with global and local optimizers with string keys 'global' and 'local' respectively.
         """

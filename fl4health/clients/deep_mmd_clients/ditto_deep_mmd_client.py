@@ -1,6 +1,6 @@
+from collections.abc import Sequence
 from logging import ERROR
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 import torch.nn as nn
@@ -26,14 +26,14 @@ class DittoDeepMmdClient(DittoClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        client_name: Optional[str] = None,
+        client_name: str | None = None,
         deep_mmd_loss_weight: float = 10.0,
-        feature_extraction_layers_with_size: Optional[Dict[str, int]] = None,
+        feature_extraction_layers_with_size: dict[str, int] | None = None,
         mmd_kernel_train_interval: int = 20,
-        num_accumulating_batches: Optional[int] = None,
+        num_accumulating_batches: int | None = None,
     ) -> None:
         """
         This client implements the Deep MMD loss function in the Ditto framework. The Deep MMD loss is a measure of
@@ -48,7 +48,7 @@ class DittoDeepMmdClient(DittoClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpoint_and_state_module (Optional[ClientCheckpointAndStateModule], optional): A module meant to handle
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
                 No checkpointing (state or model) is done if not provided. Defaults to None.
@@ -56,11 +56,11 @@ class DittoDeepMmdClient(DittoClient):
                 should send data to. Defaults to None.
             progress_bar (bool, optional): Whether or not to display a progress bar during client training and
                 validation. Uses tqdm. Defaults to False
-            client_name (Optional[str], optional): An optional client name that uniquely identifies a client.
+            client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
             deep_mmd_loss_weight (float, optional): weight applied to the Deep MMD loss. Defaults to 10.0.
-            feature_extraction_layers_with_size (Optional[Dict[str, int]], optional): Dictionary of layers to extract
+            feature_extraction_layers_with_size (dict[str, int] | None, optional): Dictionary of layers to extract
                 features from them and their respective feature size. Defaults to None.
             mmd_kernel_update_interval (int, optional): interval at which to train and update the Deep MMD kernel. If
                 set to above 0, the kernel will be train based on whole distribution of latent features of data with
@@ -91,7 +91,7 @@ class DittoDeepMmdClient(DittoClient):
         if feature_extraction_layers_with_size is None:
             feature_extraction_layers_with_size = {}
         self.flatten_feature_extraction_layers = {layer: True for layer in feature_extraction_layers_with_size.keys()}
-        self.deep_mmd_losses: Dict[str, DeepMmdLoss] = {}
+        self.deep_mmd_losses: dict[str, DeepMmdLoss] = {}
         # Save the random state to be restored after initializing the Deep MMD loss layers.
         random_state, numpy_state, torch_state = save_random_state()
         for layer, feature_size in feature_extraction_layers_with_size.items():
@@ -143,7 +143,7 @@ class DittoDeepMmdClient(DittoClient):
         weighted_deep_mmd_loss = self.deep_mmd_loss_weight != 0
         return step_at_interval and valid_components_present and weighted_deep_mmd_loss
 
-    def update_after_step(self, step: int, current_round: Optional[int] = None) -> None:
+    def update_after_step(self, step: int, current_round: int | None = None) -> None:
         if self.mmd_kernel_train_interval > 0 and self._should_optimize_betas(step):
             # Get the feature distribution of the local and initial global features with evaluation
             # mode
@@ -161,7 +161,7 @@ class DittoDeepMmdClient(DittoClient):
 
     def update_buffers(
         self, local_model: torch.nn.Module, initial_global_model: torch.nn.Module
-    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    ) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]:
         """
         Update the feature buffer of the local and global features.
 
@@ -170,7 +170,7 @@ class DittoDeepMmdClient(DittoClient):
             initial_global_model (torch.nn.Module): Initial global model to extract features from.
 
         Returns:
-            Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple containing the extracted
+            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple containing the extracted
             features using the local and initial global models.
         """
 
@@ -224,18 +224,18 @@ class DittoDeepMmdClient(DittoClient):
     def predict(
         self,
         input: TorchInputType,
-    ) -> Tuple[TorchPredType, TorchFeatureType]:
+    ) -> tuple[TorchPredType, TorchFeatureType]:
         """
          Computes the predictions for both the GLOBAL and LOCAL models and pack them into the prediction dictionary
 
          Args:
              input (TorchInputType): Inputs to be fed into the model. If input is
-                 of type Dict[str, torch.Tensor], it is assumed that the keys of
+                 of type dict[str, torch.Tensor], it is assumed that the keys of
                  input match the names of the keyword arguments of self.model.
                  forward().
 
          Returns:
-             Tuple[TorchPredType, TorchFeatureType]: A tuple in which the
+             tuple[TorchPredType, TorchFeatureType]: A tuple in which the
                  first element contains a dictionary of predictions indexed by
                  name and the second element contains intermediate activations
                  indexed by name. By passing features, we can compute all the
@@ -262,7 +262,7 @@ class DittoDeepMmdClient(DittoClient):
 
         return {"global": global_preds, "local": local_preds}, features
 
-    def _maybe_checkpoint(self, loss: float, metrics: Dict[str, Scalar], checkpoint_mode: CheckpointMode) -> None:
+    def _maybe_checkpoint(self, loss: float, metrics: dict[str, Scalar], checkpoint_mode: CheckpointMode) -> None:
         # Hooks need to be removed before checkpointing the model
         self.local_feature_extractor.remove_hooks()
         super()._maybe_checkpoint(loss=loss, metrics=metrics, checkpoint_mode=checkpoint_mode)
@@ -270,12 +270,12 @@ class DittoDeepMmdClient(DittoClient):
         # each time.
         self.local_feature_extractor._maybe_register_hooks()
 
-    def validate(self, include_losses_in_metrics: bool = False) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, include_losses_in_metrics: bool = False) -> tuple[float, dict[str, Scalar]]:
         """
         Validate the current model on the entire validation dataset.
 
         Returns:
-            Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
+            tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
         """
         for layer in self.flatten_feature_extraction_layers.keys():
             self.deep_mmd_losses[layer].training = False
@@ -358,7 +358,7 @@ class DittoDeepMmdClient(DittoClient):
 
     def compute_loss_and_additional_losses(
         self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
 
@@ -368,7 +368,7 @@ class DittoDeepMmdClient(DittoClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            Tuple[torch.Tensor, Dict[str, torch.Tensor]]: A tuple with:
+            tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
                 - The tensor for the loss
                 - A dictionary of additional losses with their names and values, or None if
                     there are no additional losses.

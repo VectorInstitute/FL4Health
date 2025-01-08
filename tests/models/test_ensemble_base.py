@@ -1,5 +1,3 @@
-from typing import Dict
-
 import mock
 import torch
 import torch.nn as nn
@@ -9,7 +7,7 @@ from tests.test_utils.models_for_test import SmallCnn
 
 
 def test_forward_average_mode() -> None:
-    models: Dict[str, nn.Module] = {"model_0": SmallCnn(), "model_1": SmallCnn()}
+    models: dict[str, nn.Module] = {"model_0": SmallCnn(), "model_1": SmallCnn()}
     ensemble_model = EnsembleModel(models, EnsembleAggregationMode.AVERAGE)
     data = torch.rand((64, 1, 28, 28))
     ensemble_predictions = ensemble_model(data)
@@ -23,7 +21,7 @@ def test_forward_average_mode() -> None:
 
 
 def test_forward_vote_mode() -> None:
-    models: Dict[str, nn.Module] = {"model_0": SmallCnn(), "model_1": SmallCnn()}
+    models: dict[str, nn.Module] = {"model_0": SmallCnn(), "model_1": SmallCnn()}
     ensemble_model = EnsembleModel(models, EnsembleAggregationMode.VOTE)
     data = torch.rand((64, 1, 28, 28))
     ensemble_predictions = ensemble_model(data)

@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from logging import WARNING
-from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from flwr.common import (
     EvaluateIns,
@@ -33,17 +33,18 @@ class ModelMergeStrategy(Strategy):
         min_fit_clients: int = 2,
         min_evaluate_clients: int = 2,
         min_available_clients: int = 2,
-        evaluate_fn: Optional[
+        evaluate_fn: (
             Callable[
-                [int, NDArrays, Dict[str, Scalar]],
-                Optional[Tuple[float, Dict[str, Scalar]]],
+                [int, NDArrays, dict[str, Scalar]],
+                tuple[float, dict[str, Scalar]] | None,
             ]
-        ] = None,
-        on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
-        on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
+            | None
+        ) = None,
+        on_fit_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
+        on_evaluate_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
-        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
+        evaluate_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         weighted_aggregation: bool = True
     ) -> None:
         """
@@ -61,19 +62,17 @@ class ModelMergeStrategy(Strategy):
             min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             min_available_clients (int, optional): Minimum number of total clients in the system.
                 Defaults to 2.
-            evaluate_fn (Optional[
-                Callable[[int, NDArrays, Dict[str, Scalar]], Optional[Tuple[float, Dict[str, Scalar]]]]
-            ]):
+            evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
                 Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
                 Function used to configure client-side validation by providing a Config dictionary.
                 Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
-            fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+            fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
-            evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+            evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
                 counts. Defaults to True.
             weighted_aggregation (bool, optional): Determines whether parameter aggregation is a linearly weighted
@@ -95,7 +94,7 @@ class ModelMergeStrategy(Strategy):
 
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
-    ) -> List[Tuple[ClientProxy, FitIns]]:
+    ) -> list[tuple[ClientProxy, FitIns]]:
         """
         Sample and configure clients for a fit round.
 
@@ -108,7 +107,7 @@ class ModelMergeStrategy(Strategy):
             client_manager (ClientManager): The manager used to sample from the available clients.
 
         Returns:
-            List[Tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
+            list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
                 be sent to each client (packaged as FitIns).
         """
         config = {}
@@ -129,7 +128,7 @@ class ModelMergeStrategy(Strategy):
 
     def configure_evaluate(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
-    ) -> List[Tuple[ClientProxy, EvaluateIns]]:
+    ) -> list[tuple[ClientProxy, EvaluateIns]]:
         """
         Sample and configure clients for a evaluation round.
 
@@ -140,7 +139,7 @@ class ModelMergeStrategy(Strategy):
             client_manager (ClientManager): The manager used to sample from the available clients.
 
         Returns:
-            List[Tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
+            list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
                 to be sent to each client (packaged as EvaluateIns).
         """
         # Do not configure federated evaluation if fraction eval is 0.
@@ -167,21 +166,21 @@ class ModelMergeStrategy(Strategy):
     def aggregate_fit(
         self,
         server_round: int,
-        results: List[Tuple[ClientProxy, FitRes]],
-        failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-    ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
+        results: list[tuple[ClientProxy, FitRes]],
+        failures: list[tuple[ClientProxy, FitRes] | BaseException],
+    ) -> tuple[Parameters | None, dict[str, Scalar]]:
         """
         Performs model merging by taking an unweighted average of client weights and metrics.
 
         Args:
             server_round (int): Indicates the server round we're currently on. Only one round for ModelMergeStrategy.
-            results (List[Tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local fit
+            results (list[tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local fit
                 that need to be aggregated on the server-side.
-            failures (List[Union[Tuple[ClientProxy, FitRes], BaseException]]): These are the results and exceptions
+            failures (list[tuple[ClientProxy, FitRes] | BaseException]): These are the results and exceptions
                 from clients that experienced an issue during fit, such as timeouts or exceptions.
 
         Returns:
-            Tuple[Optional[Parameters], Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
+            tuple[Parameters | None, dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
         """
         if not results:
             return None, {}
@@ -214,22 +213,22 @@ class ModelMergeStrategy(Strategy):
     def aggregate_evaluate(
         self,
         server_round: int,
-        results: List[Tuple[ClientProxy, EvaluateRes]],
-        failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]],
-    ) -> Tuple[Optional[float], Dict[str, Scalar]]:
+        results: list[tuple[ClientProxy, EvaluateRes]],
+        failures: list[tuple[ClientProxy, EvaluateRes] | BaseException],
+    ) -> tuple[float | None, dict[str, Scalar]]:
         """
         Aggregate the metrics returned from the clients as a result of the evaluation round.
             ModelMergeStrategy assumes only metrics will be computed on client and loss is set to None.
 
         Args:
-            results (List[Tuple[ClientProxy, EvaluateRes]]): The client identifiers and the results of their local
+            results (list[tuple[ClientProxy, EvaluateRes]]): The client identifiers and the results of their local
                 evaluation that need to be aggregated on the server-side. These results are loss values
                 (None in this case) and the metrics dictionary.
-            failures (List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]]): These are the results and
+            failures (list[tuple[ClientProxy, EvaluateRes] | BaseException]): These are the results and
                 exceptions from clients that experienced an issue during evaluation, such as timeouts or exceptions.
 
         Returns:
-            Tuple[Optional[float], Dict[str, Scalar]]: Aggregated loss values and the aggregated metrics. The metrics
+            tuple[float | None, dict[str, Scalar]]: Aggregated loss values and the aggregated metrics. The metrics
                 are aggregated according to evaluate_metrics_aggregation_fn.
         """
         if not results:
@@ -248,7 +247,7 @@ class ModelMergeStrategy(Strategy):
 
         return None, metrics_aggregated
 
-    def evaluate(self, server_round: int, parameters: Parameters) -> Optional[Tuple[float, Dict[str, Scalar]]]:
+    def evaluate(self, server_round: int, parameters: Parameters) -> tuple[float, dict[str, Scalar]] | None:
         """
         Evaluate the model parameters after the merging has occurred. This function can be used to perform centralized
             (i.e., server-side) evaluation of model parameters.
@@ -258,7 +257,7 @@ class ModelMergeStrategy(Strategy):
             parameters: Parameters The current model parameters after merging has occurred.
 
         Returns:
-            Optional[Tuple[float, Dict[str, Scalar]]]: A Tuple containing loss and a
+            tuple[float, dict[str, Scalar]] | None: A Tuple containing loss and a
                 dictionary containing task-specific metrics (e.g., accuracy).
         """
         if self.evaluate_fn is None:
@@ -271,7 +270,7 @@ class ModelMergeStrategy(Strategy):
         loss, metrics = eval_res
         return loss, metrics
 
-    def initialize_parameters(self, client_manager: ClientManager) -> Optional[Parameters]:
+    def initialize_parameters(self, client_manager: ClientManager) -> Parameters | None:
         """
         Required definition of parent class. ModelMergeStrategy does not support server side initialization.
             Parameters are always set to None

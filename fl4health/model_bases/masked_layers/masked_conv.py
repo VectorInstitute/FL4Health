@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import List, Optional, Union
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -20,13 +18,13 @@ class MaskedConv1d(nn.Conv1d):
         out_channels: int,
         kernel_size: _size_1_t,
         stride: _size_1_t = 1,
-        padding: Union[str, _size_1_t] = 0,
+        padding: str | _size_1_t = 0,
         dilation: _size_1_t = 1,
         groups: int = 1,
         bias: bool = True,
         padding_mode: str = "zeros",
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None,
     ) -> None:
         """
         Implementation of masked Conv1d layers.
@@ -105,7 +103,7 @@ class MaskedConv1d(nn.Conv1d):
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
-        # type Union[int, Tuple[int]] and kernel_size_ has type Tuple[int]
+        # type int | tuple[int] and kernel_size_ has type tuple[int]
         kernel_size_ = _single(conv_module.kernel_size)
         stride_ = _single(conv_module.stride)
         padding_ = conv_module.padding if isinstance(conv_module.padding, str) else _single(conv_module.padding)
@@ -137,13 +135,13 @@ class MaskedConv2d(nn.Conv2d):
         out_channels: int,
         kernel_size: _size_2_t,
         stride: _size_2_t = 1,
-        padding: Union[str, _size_2_t] = 0,
+        padding: str | _size_2_t = 0,
         dilation: _size_2_t = 1,
         groups: int = 1,
         bias: bool = True,
         padding_mode: str = "zeros",
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None,
     ) -> None:
         """
         Implementation of masked Conv2d layers.
@@ -251,13 +249,13 @@ class MaskedConv3d(nn.Conv3d):
         out_channels: int,
         kernel_size: _size_3_t,
         stride: _size_3_t = 1,
-        padding: Union[str, _size_3_t] = 0,
+        padding: str | _size_3_t = 0,
         dilation: _size_3_t = 1,
         groups: int = 1,
         bias: bool = True,
         padding_mode: str = "zeros",
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None,
     ) -> None:
         """
         Implementation of masked Conv2d layers.
@@ -369,8 +367,8 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
         bias: bool = True,
         dilation: _size_1_t = 1,
         padding_mode: str = "zeros",
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None,
     ) -> None:
         """
         Implementation of masked ConvTranspose1d layers. For more information on transposed convolution,
@@ -433,7 +431,7 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
         else:
             self.register_parameter("bias_scores", None)
 
-    def forward(self, input: Tensor, output_size: Optional[List[int]] = None) -> Tensor:
+    def forward(self, input: Tensor, output_size: list[int] | None = None) -> Tensor:
         # Note: the same check is already present in super().__init__
         if self.padding_mode != "zeros":
             raise ValueError("Only `zeros` padding mode is supported for ConvTranspose1d")
@@ -441,7 +439,7 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
 
         # (The type ignore below is just used to resolve some small typing issue.)
         # One cannot replace List by Tuple or Sequence in "_output_padding"
-        # because TorchScript does not support `Sequence[T]` or `Tuple[T, ...]`.
+        # because TorchScript does not support `Sequence[T]` or `tuple[T, ...]`.
         output_padding = self._output_padding(
             input,
             output_size,
@@ -473,7 +471,7 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
-        # type Union[int, Tuple[int]] and kernel_size_ has type Tuple[int]
+        # type int | tuple[int] and kernel_size_ has type tuple[int]
         kernel_size_ = _single(conv_module.kernel_size)
         stride_ = _single(conv_module.stride)
         padding_ = _single(conv_module.padding)
@@ -513,8 +511,8 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
         bias: bool = True,
         dilation: _size_2_t = 1,
         padding_mode: str = "zeros",
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None,
     ) -> None:
         """
         Implementation of masked ConvTranspose2d layers. For more information on transposed convolution,
@@ -576,7 +574,7 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
         else:
             self.register_parameter("bias_scores", None)
 
-    def forward(self, input: Tensor, output_size: Optional[List[int]] = None) -> Tensor:
+    def forward(self, input: Tensor, output_size: list[int] | None = None) -> Tensor:
         # Note: the same check is already present in super().__init__
         if self.padding_mode != "zeros":
             raise ValueError("Only `zeros` padding mode is supported for ConvTranspose1d")
@@ -613,7 +611,7 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
-        # type Union[int, Tuple[int]] and kernel_size_ has type Tuple[int]
+        # type int | tuple[int] and kernel_size_ has type tuple[int]
         kernel_size_ = _pair(conv_module.kernel_size)
         stride_ = _pair(conv_module.stride)
         padding_ = _pair(conv_module.padding)
@@ -653,8 +651,8 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
         bias: bool = True,
         dilation: _size_3_t = 1,
         padding_mode: str = "zeros",
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None,
     ) -> None:
         """
         Implementation of masked ConvTranspose3d layers. For more information on transposed convolution,
@@ -716,7 +714,7 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
         else:
             self.register_parameter("bias_scores", None)
 
-    def forward(self, input: Tensor, output_size: Optional[List[int]] = None) -> Tensor:
+    def forward(self, input: Tensor, output_size: list[int] | None = None) -> Tensor:
         # Note: the same check is already present in super().__init__
         if self.padding_mode != "zeros":
             raise ValueError("Only `zeros` padding mode is supported for ConvTranspose1d")
@@ -753,7 +751,7 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
-        # type Union[int, Tuple[int]] and kernel_size_ has type Tuple[int]
+        # type int | tuple[int] and kernel_size_ has type tuple[int]
         kernel_size_ = _triple(conv_module.kernel_size)
         stride_ = _triple(conv_module.stride)
         padding_ = _triple(conv_module.padding)

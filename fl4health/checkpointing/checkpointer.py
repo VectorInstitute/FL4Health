@@ -1,15 +1,16 @@
 import os
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from logging import ERROR, INFO, WARNING
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional
+from typing import Any
 
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Scalar
 
-CheckpointScoreFunctionType = Callable[[float, Dict[str, Scalar]], float]
+CheckpointScoreFunctionType = Callable[[float, dict[str, Scalar]], float]
 
 
 class TorchModuleCheckpointer(ABC):
@@ -25,7 +26,7 @@ class TorchModuleCheckpointer(ABC):
         self.checkpoint_path = os.path.join(checkpoint_dir, checkpoint_name)
 
     @abstractmethod
-    def maybe_checkpoint(self, model: nn.Module, loss: float, metrics: Dict[str, Scalar]) -> None:
+    def maybe_checkpoint(self, model: nn.Module, loss: float, metrics: dict[str, Scalar]) -> None:
         """
         Abstract method to be implemented by every TorchCheckpointer. Based on the loss and metrics provided it should
         determine whether to produce a checkpoint AND save it if applicable.
@@ -33,7 +34,7 @@ class TorchModuleCheckpointer(ABC):
         Args:
             model (nn.Module): Model to potentially save via the checkpointer
             loss (float): Computed loss associated with the model.
-            metrics (Dict[str, float]): Computed metrics associated with the model.
+            metrics (dict[str, float]): Computed metrics associated with the model.
 
         Raises:
             NotImplementedError: Must be implemented by the checkpointer
@@ -81,7 +82,7 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
                 by the scoring function. Defaults to False.
         """
         super().__init__(checkpoint_dir, checkpoint_name)
-        self.best_score: Optional[float] = None
+        self.best_score: float | None = None
         self.checkpoint_score_function = checkpoint_score_function
         # Whether we're looking to maximize (or minimize) the score produced by the checkpoint score function
         self.maximize = maximize
@@ -108,7 +109,7 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
         # If best score is none, then this is the first checkpoint
         return True
 
-    def maybe_checkpoint(self, model: nn.Module, loss: float, metrics: Dict[str, Scalar]) -> None:
+    def maybe_checkpoint(self, model: nn.Module, loss: float, metrics: dict[str, Scalar]) -> None:
         """
         Given the loss/metrics associated with the provided model, the checkpointer uses the scoring function to
         produce a score. This score will then be used to determine whether the model should be checkpointed or not.
@@ -117,7 +118,7 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
             model (nn.Module): Model that might be persisted if the scoring function determines it should be
             loss (float): Loss associated with the provided model. Will potentially contribute to checkpointing
                 decision, based on the score function.
-            metrics (Dict[str, Scalar]): Metrics associated with the provided model. Will potentially contribute to
+            metrics (dict[str, Scalar]): Metrics associated with the provided model. Will potentially contribute to
                 the checkpointing decision, based on the score function.
 
         Raises:
@@ -160,12 +161,12 @@ class LatestTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
         """
 
         # This function is required by the parent class, but not used in the LatestTorchCheckpointer
-        def null_score_function(loss: float, _: Dict[str, Scalar]) -> float:
+        def null_score_function(loss: float, _: dict[str, Scalar]) -> float:
             return 0.0
 
         super().__init__(checkpoint_dir, checkpoint_name, null_score_function, False)
 
-    def maybe_checkpoint(self, model: nn.Module, loss: float, _: Dict[str, Scalar]) -> None:
+    def maybe_checkpoint(self, model: nn.Module, loss: float, _: dict[str, Scalar]) -> None:
         """
         This function is essentially a pass through, as this class always checkpoints the provided model
 
@@ -173,7 +174,7 @@ class LatestTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
             model (nn.Module): Model to be checkpointed whenever this function is called
             loss (float): Loss associated with the provided model. Will potentially contribute to checkpointing
                 decision, based on the score function. NOT USED.
-            metrics (Dict[str, Scalar]): Metrics associated with the provided model. Will potentially contribute to
+            metrics (dict[str, Scalar]): Metrics associated with the provided model. Will potentially contribute to
                 the checkpointing decision, based on the score function. NOT USED.
 
         Raises:
@@ -204,14 +205,14 @@ class BestLossTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
 
         # The BestLossTorchCheckpointer just uses the provided loss to scoring checkpoints. More complicated
         # approaches may be used by other classes.
-        def loss_score_function(loss: float, _: Dict[str, Scalar]) -> float:
+        def loss_score_function(loss: float, _: dict[str, Scalar]) -> float:
             return loss
 
         super().__init__(
             checkpoint_dir, checkpoint_name, checkpoint_score_function=loss_score_function, maximize=False
         )
 
-    def maybe_checkpoint(self, model: nn.Module, loss: float, metrics: Dict[str, Scalar]) -> None:
+    def maybe_checkpoint(self, model: nn.Module, loss: float, metrics: dict[str, Scalar]) -> None:
         """
         This function will decide whether to checkpoint the provided model based on the loss argument. If the provided
         loss is better than any previous losses seen by this checkpointer, the model will be saved.
@@ -220,7 +221,7 @@ class BestLossTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
             model (nn.Module): Model that might be persisted if the scoring function determines it should be
             loss (float): Loss associated with the provided model. This value is used to determine whether to save the
                 model or not.
-            metrics (Dict[str, Scalar]): Metrics associated with the provided model. Will not be used by this
+            metrics (dict[str, Scalar]): Metrics associated with the provided model. Will not be used by this
                 checkpointer.
 
         Raises:
@@ -266,7 +267,7 @@ class PerRoundStateCheckpointer:
         )
         self.checkpoint_dir = checkpoint_dir
 
-    def save_checkpoint(self, checkpoint_name: str, checkpoint_dict: Dict[str, Any]) -> None:
+    def save_checkpoint(self, checkpoint_name: str, checkpoint_dict: dict[str, Any]) -> None:
         """
         Saves checkpoint_dict to checkpoint path form from this classes checkpointer dir and the provided checkpoint
         name.
@@ -274,7 +275,7 @@ class PerRoundStateCheckpointer:
 
         Args:
             checkpoint_name (str): Name of the state checkpoint file.
-            checkpoint_dict (Dict[str, Any]): A dictionary with string keys and values of type Any representing the
+            checkpoint_dict (dict[str, Any]): A dictionary with string keys and values of type Any representing the
                 state to checkpoint.
 
         Raises:
@@ -290,7 +291,7 @@ class PerRoundStateCheckpointer:
             log(ERROR, f"Encountered the following error while saving the checkpoint: {e}")
             raise e
 
-    def load_checkpoint(self, checkpoint_name: str) -> Dict[str, Any]:
+    def load_checkpoint(self, checkpoint_name: str) -> dict[str, Any]:
         """
         Loads and returns the checkpoint stored in checkpoint_dir under the provided name if it exists.
         If it doesn't exist, an assertion error will be thrown.
@@ -299,7 +300,7 @@ class PerRoundStateCheckpointer:
             checkpoint_name (str): Name of the state checkpoint to be loaded.
 
         Returns:
-            Dict[str, Any]: A dictionary representing the checkpointed state, as loaded by torch.load.
+            dict[str, Any]: A dictionary representing the checkpointed state, as loaded by torch.load.
         """
 
         checkpoint_path = os.path.join(self.checkpoint_dir, checkpoint_name)

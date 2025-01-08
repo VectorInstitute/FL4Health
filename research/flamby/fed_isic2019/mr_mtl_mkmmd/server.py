@@ -1,7 +1,7 @@
 import argparse
 from functools import partial
 from logging import INFO
-from typing import Any, Dict
+from typing import Any
 
 import flwr as fl
 from flamby.datasets.fed_isic2019 import Baseline
@@ -17,7 +17,7 @@ from research.flamby.flamby_servers.personal_server import PersonalServer
 from research.flamby.utils import fit_config, summarize_model_info
 
 
-def main(config: Dict[str, Any], server_address: str, lam: float) -> None:
+def main(config: dict[str, Any], server_address: str, lam: float) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,

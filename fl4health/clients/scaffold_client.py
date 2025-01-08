@@ -1,7 +1,7 @@
 import copy
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.logger import log
@@ -19,7 +19,7 @@ from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 
-ScaffoldTrainStepOutput = Tuple[torch.Tensor, torch.Tensor]
+ScaffoldTrainStepOutput = tuple[torch.Tensor, torch.Tensor]
 
 
 class ScaffoldClient(BasicClient):
@@ -29,10 +29,10 @@ class ScaffoldClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        client_name: Optional[str] = None,
+        client_name: str | None = None,
     ) -> None:
         """
         Federated Learning Client for Scaffold strategy.
@@ -46,7 +46,7 @@ class ScaffoldClient(BasicClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpoint_and_state_module (Optional[ClientCheckpointAndStateModule], optional): A module meant to handle
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
                 No checkpointing (state or model) is done if not provided. Defaults to None.
@@ -54,7 +54,7 @@ class ScaffoldClient(BasicClient):
                 should send data to. Defaults to None.
             progress_bar (bool, optional): Whether or not to display a progress bar during client training and
                 validation. Uses tqdm. Defaults to False
-            client_name (Optional[str], optional): An optional client name that uniquely identifies a client.
+            client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
         """
@@ -69,13 +69,13 @@ class ScaffoldClient(BasicClient):
             client_name=client_name,
         )
         self.learning_rate: float  # eta_l in paper
-        self.client_control_variates: Optional[NDArrays] = None  # c_i in paper
-        self.client_control_variates_updates: Optional[NDArrays] = None  # delta_c_i in paper
-        self.server_control_variates: Optional[NDArrays] = None  # c in paper
+        self.client_control_variates: NDArrays | None = None  # c_i in paper
+        self.client_control_variates_updates: NDArrays | None = None  # delta_c_i in paper
+        self.server_control_variates: NDArrays | None = None  # c in paper
         # Scaffold require vanilla SGD as optimizer, will assert during setup_client
-        self.optimizers: Dict[str, torch.optim.Optimizer]
+        self.optimizers: dict[str, torch.optim.Optimizer]
 
-        self.server_model_weights: Optional[NDArrays] = None  # x in paper
+        self.server_model_weights: NDArrays | None = None  # x in paper
         self.parameter_exchanger: FullParameterExchangerWithPacking[NDArrays]
 
     def get_parameters(self, config: Config) -> NDArrays:
@@ -242,7 +242,7 @@ class ScaffoldClient(BasicClient):
         parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
         return parameter_exchanger
 
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
         """
         Called after training with the number of local_steps performed over the FL round and
         the corresponding loss dictionary.
@@ -279,10 +279,10 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelDpClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        client_name: Optional[str] = None,
+        client_name: str | None = None,
     ) -> None:
         ScaffoldClient.__init__(
             self,

@@ -5,7 +5,7 @@ In order to run the demo, first ensure that Docker Desktop is running. Instructi
 ```
 docker compose up
 ```
-This will initiate the services specified in the file `docker-compose.yml`. Namely, the fl_server and fl_client services are built and run according to the Dockerfiles in the `fl_server` and `fl_client` directories, respectively. Each of these directories also include a `requirement.txt` file seperate from the `requirement.txt` in the root of the repository. These files include the python packages required to run the respective containers.
+This will initiate the services specified in the file `docker-compose.yml`. Namely, the fl_server and fl_client services are built and run according to the Dockerfiles in the `fl_server` and `fl_client` directories, respectively. Each of these directories also include a `requirement.txt` file separate from the `requirement.txt` in the root of the repository. These files include the python packages required to run the respective containers.
 
 A config.yaml must be present in the root of this directory with the following arguments:
 * `n_clients`: number of clients the server waits for in order to run the FL training

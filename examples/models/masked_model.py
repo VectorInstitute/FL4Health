@@ -1,5 +1,3 @@
-from typing import Optional
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -9,7 +7,7 @@ from fl4health.model_bases.masked_layers.masked_linear import MaskedLinear
 
 
 class Masked4Cnn(nn.Module):
-    def __init__(self, device: Optional[torch.device] = None) -> None:
+    def __init__(self, device: torch.device | None = None) -> None:
         super().__init__()
         self.conv1 = MaskedConv2d(
             in_channels=1, out_channels=64, kernel_size=3, stride=1, padding="same", device=device

@@ -1,6 +1,5 @@
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from logging import DEBUG, ERROR, INFO
-from typing import Callable, Dict, Optional, Tuple
 
 from flwr.common import Parameters, ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.logger import log
@@ -27,7 +26,7 @@ class ScaffoldServer(FlServer):
         strategy: Scaffold,
         reporters: Sequence[BaseReporter] | None = None,
         checkpoint_and_state_module: ScaffoldServerCheckpointAndStateModule | None = None,
-        on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_init_parameters_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         server_name: str | None = None,
         accept_failures: bool = True,
         warm_start: bool = False,
@@ -53,7 +52,7 @@ class ScaffoldServer(FlServer):
                 artifacts to be used or evaluated after training. The latter is used to preserve training state
                 (including models) such that if FL training is interrupted, the process may be restarted. If no
                 module is provided, no checkpointing or state preservation will happen. Defaults to None.
-            on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional): Function used to
+            on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to
                 configure how one asks a client to provide parameters from which to initialize all other clients by
                 providing a Config dictionary. If this is none, then a blank config is sent with the parameter request
                 (which is default behavior for flower servers). Defaults to None.
@@ -85,7 +84,7 @@ class ScaffoldServer(FlServer):
         )
         self.warm_start = warm_start
 
-    def _get_initial_parameters(self, server_round: int, timeout: Optional[float]) -> Parameters:
+    def _get_initial_parameters(self, server_round: int, timeout: float | None) -> Parameters:
         """
         Overrides the _get_initial_parameters in the flwr server base class to strap on the possibility of a
         warm_start for SCAFFOLD. Initializes parameters (models weights and control variates) of the server.
@@ -95,7 +94,7 @@ class ScaffoldServer(FlServer):
 
         Args:
             server_round (int): The current server round.
-            timeout (Optional[float]): If the server strategy object does not have a server-side initial parameters
+            timeout (float | None): If the server strategy object does not have a server-side initial parameters
                 function defined, then one of the clients is polled and their model parameters are returned in order to
                 initialize the models of all clients. Timeout defines how long to wait for a response.
 
@@ -160,19 +159,19 @@ class ScaffoldServer(FlServer):
 
         return initial_parameters
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
+    def fit(self, num_rounds: int, timeout: float | None) -> tuple[History, float]:
         """
         Run the SCAFFOLD FL algorithm for a fixed number of rounds. This overrides the base server fit class just to
         ensure that the provided strategy is a Scaffold strategy object before proceeding.
 
         Args:
             num_rounds (int): Number of rounds of FL to perform (i.e. server rounds).
-            timeout (Optional[float]): Timeout associated with queries to the clients in seconds. The server waits for
+            timeout (float | None): Timeout associated with queries to the clients in seconds. The server waits for
                 timeout seconds before moving on without any unresponsive clients. If None, there is no timeout and the
                 server waits for the minimum number of clients to be available set in the strategy.
 
         Returns:
-            Tuple[History, float]: The first element of the tuple is a history object containing the full set of
+            tuple[History, float]: The first element of the tuple is a history object containing the full set of
                 FL training results, including things like aggregated loss and metrics.
                 Tuple also includes elapsed time in seconds for round.
         """
@@ -189,13 +188,13 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
         batch_size: int,
         num_server_rounds: int,
         strategy: OpacusScaffold,
-        local_epochs: Optional[int] = None,
-        local_steps: Optional[int] = None,
-        delta: Optional[float] = None,
+        local_epochs: int | None = None,
+        local_steps: int | None = None,
+        delta: float | None = None,
         checkpoint_and_state_module: DpScaffoldServerCheckpointAndStateModule | None = None,
         warm_start: bool = False,
         reporters: Sequence[BaseReporter] | None = None,
-        on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_init_parameters_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         server_name: str | None = None,
         accept_failures: bool = True,
     ) -> None:
@@ -214,10 +213,10 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
                 DP-SGD.
             batch_size (int): The batch size to be used in training on the client-side. Used in privacy accounting.
             num_server_rounds (int): The number of server rounds to be done in FL training. Used in privacy accounting
-            local_epochs (Optional[int], optional): Number of local epochs to be performed on the client-side. This is
+            local_epochs (int | None, optional): Number of local epochs to be performed on the client-side. This is
                 used in privacy accounting. One of local_epochs or local_steps should be defined, but not both.
                 Defaults to None.
-            local_steps (Optional[int], optional): Number of local steps to be performed on the client-side. This is
+            local_steps (int | None, optional): Number of local steps to be performed on the client-side. This is
                 used in privacy accounting. One of local_epochs or local_steps should be defined, but not both.
                 Defaults to None.
             strategy (Scaffold): The aggregation strategy to be used by the server to handle client updates and
@@ -232,11 +231,11 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
                 gradients. The clients will perform a training pass (without updating the weights) in order to provide
                 a "warm" estimate of the SCAFFOLD control variates. If false, variates are initialized to 0.
                 Defaults to False.
-            delta (Optional[float], optional): The delta value for epsilon-delta DP accounting. If None it defaults to
+            delta (float | None, optional): The delta value for epsilon-delta DP accounting. If None it defaults to
                 being 1/total_samples in the FL run. Defaults to None.
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
                 reporters which the client should send data to.
-            on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional): Function used to
+            on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to
                 configure how one asks a client to provide parameters from which to initialize all other clients by
                 providing a Config dictionary. If this is none, then a blank config is sent with the parameter request
                 (which is default behavior for flower servers). Defaults to None.
@@ -276,18 +275,18 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
             accept_failures=accept_failures,
         )
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
+    def fit(self, num_rounds: int, timeout: float | None) -> tuple[History, float]:
         """
         Run DP Scaffold algorithm for the specified number of rounds.
 
         Args:
             num_rounds (int): Number of rounds of FL to perform (i.e. server rounds).
-            timeout (Optional[float]): Timeout associated with queries to the clients in seconds. The server waits for
+            timeout (float | None): Timeout associated with queries to the clients in seconds. The server waits for
                 timeout seconds before moving on without any unresponsive clients. If None, there is no timeout and the
                 server waits for the minimum number of clients to be available set in the strategy.
 
         Returns:
-            Tuple[History, float]: First element of tuple is history object containing the full set of FL
+            tuple[History, float]: First element of tuple is history object containing the full set of FL
                 training results, including aggregated loss and metrics.
                 Tuple also includes the elapsed time in seconds for round.
         """
