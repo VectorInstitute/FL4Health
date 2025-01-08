@@ -57,7 +57,7 @@ class Rxrx1DittoClient(DittoDeepMmdClient):
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
-        
+
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
     def setup_client(self, config: Config) -> None:

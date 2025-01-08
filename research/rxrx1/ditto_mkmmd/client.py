@@ -23,7 +23,7 @@ from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
 from research.rxrx1.data.data_utils import load_rxrx1_data, load_rxrx1_test_data
 
-BASELINE_LAYERS = ["layer1","layer2", "layer3", "layer4", "avgpool"]
+BASELINE_LAYERS = ["layer1", "layer2", "layer3", "layer4", "avgpool"]
 
 
 class Rxrx1DittoClient(DittoMkMmdClient):
@@ -54,7 +54,7 @@ class Rxrx1DittoClient(DittoMkMmdClient):
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
-        
+
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
         # Number of batches to accumulate before updating the global model
