@@ -61,7 +61,7 @@ class InstanceLevelDpServer(FlServer):
                 Defaults to None.
             checkpoint_and_state_module (OpacusServerCheckpointAndStateModule | None, optional): This module is used
                 to handle both model checkpointing and state checkpointing. The former is aimed at saving model
-                artifacts to be used or evaluated after training. The later is used to preserve training state
+                artifacts to be used or evaluated after training. The latter is used to preserve training state
                 (including models) such that if FL training is interrupted, the process may be restarted. If no
                 module is provided, no checkpointing or state preservation will happen. Defaults to None.
             reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health
