@@ -9,7 +9,8 @@ from flamby.datasets.fed_isic2019 import Baseline
 from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
+from fl4health.checkpointing.server_module import AdaptiveConstraintServerCheckpointAndStateModule
 from fl4health.servers.adaptive_constraint_servers.fedprox_server import FedProxServer
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
@@ -26,12 +27,17 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
         config["n_server_rounds"],
     )
 
+    model = Baseline()
+
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
     checkpoint_name = "server_best_model.pkl"
-    checkpointer = BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
+    checkpointer = BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
+
+    checkpoint_and_state_module = AdaptiveConstraintServerCheckpointAndStateModule(
+        model=model, model_checkpointers=checkpointer
+    )
 
     client_manager = SimpleClientManager()
-    model = Baseline()
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvgWithAdaptiveConstraint(
@@ -49,7 +55,10 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
     )
 
     server = FedProxServer(
-        client_manager=client_manager, fl_config=config, strategy=strategy, model=model, checkpointer=checkpointer
+        client_manager=client_manager,
+        fl_config=config,
+        strategy=strategy,
+        checkpoint_and_state_module=checkpoint_and_state_module,
     )
 
     fl.server.start_server(

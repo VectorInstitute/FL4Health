@@ -6,6 +6,9 @@ from functools import partial
 from pathlib import Path
 from typing import Optional
 
+from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
+from fl4health.checkpointing.server_module import NnUnetServerCheckpointAndStateModule
+
 with warnings.catch_warnings():
     # Silence deprecation warnings from sentry sdk due to flwr and wandb
     # https://github.com/adap/flower/issues/4086
@@ -92,17 +95,23 @@ def main(
         initial_parameters=params,
     )
 
+    checkpoint_and_state_model: NnUnetServerCheckpointAndStateModule | None
+    if intermediate_server_state_dir is None:
+        checkpoint_and_state_model = None
+    else:
+        checkpoint_and_state_model = NnUnetServerCheckpointAndStateModule(
+            model=None,
+            parameter_exchanger=FullParameterExchanger(),
+            state_checkpointer=PerRoundStateCheckpointer(Path(intermediate_server_state_dir)),
+        )
+
     server = NnunetServer(
         client_manager=SimpleClientManager(),
         fl_config=config,
         # The fit_config_fn contains all of the necessary information for param initialization, so we reuse it here
         on_init_parameters_config_fn=fit_config_fn,
-        parameter_exchanger=FullParameterExchanger(),
-        model=None,
         strategy=strategy,
-        intermediate_server_state_dir=(
-            Path(intermediate_server_state_dir) if intermediate_server_state_dir is not None else None
-        ),
+        checkpoint_and_state_module=checkpoint_and_state_model,
         server_name=server_name,
     )
 

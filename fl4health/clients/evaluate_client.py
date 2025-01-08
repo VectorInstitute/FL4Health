@@ -21,13 +21,6 @@ from fl4health.utils.random import generate_hash
 
 
 class EvaluateClient(BasicClient):
-    """
-    This client implements an evaluation only flow. That is, there is no expectation of parameter exchange with the
-    server past the model initialization stage. The implementing client should instantiate a global model if one is
-    expected from the server, which will be loaded using the passed parameters. If a model checkpoint path is provided
-    the client attempts to load a local model from the specified path.
-    """
-
     def __init__(
         self,
         data_path: Path,
@@ -36,10 +29,30 @@ class EvaluateClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         model_checkpoint_path: Optional[Path] = None,
         reporters: Sequence[BaseReporter] | None = None,
+        client_name: Optional[str] = None,
     ) -> None:
+        """
+        This client implements an evaluation only flow. That is, there is no expectation of parameter exchange with
+        the server past the model initialization stage. The implementing client should instantiate a global model if
+        one is expected from the server, which will be loaded using the passed parameters. If a model checkpoint path
+        is provided the client attempts to load a local model from the specified path.
+
+        Args:
+            data_path (Path): path to the data to be used to load the data for client-side training
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
+                'cuda'
+            loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
+                each batch. Defaults to LossMeterType.AVERAGE.
+            model_checkpoint_path (Optional[Path], optional): _description_. Defaults to None.
+            reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
+                should send data to. Defaults to None.
+            client_name (Optional[str], optional): An optional client name that uniquely identifies a client.
+                If not passed, a hash is randomly generated. Defaults to None.
+        """
         # EvaluateClient does not call BasicClient constructor and sets attributes
         # in a custom way to account for the fact it does not involve any training
-        self.client_name = generate_hash()
+        self.client_name = generate_hash() if client_name is None else client_name
         self.data_path = data_path
         self.device = device
         self.model_checkpoint_path = model_checkpoint_path

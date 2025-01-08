@@ -1,14 +1,14 @@
 from enum import Enum
 from logging import INFO
-from typing import Dict, Optional, Sequence, Union
+from typing import Any, Dict, Sequence, Union
 
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Scalar
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer, TorchModuleCheckpointer
 
-CheckpointModuleInput = Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]]
+ModelCheckpointers = Union[TorchModuleCheckpointer, Sequence[TorchModuleCheckpointer]] | None
 
 
 class CheckpointMode(Enum):
@@ -16,49 +16,61 @@ class CheckpointMode(Enum):
     POST_AGGREGATION = "post_aggregation"
 
 
-class ClientCheckpointModule:
+class ClientCheckpointAndStateModule:
     def __init__(
-        self, pre_aggregation: CheckpointModuleInput = None, post_aggregation: CheckpointModuleInput = None
+        self,
+        pre_aggregation: ModelCheckpointers = None,
+        post_aggregation: ModelCheckpointers = None,
+        state_checkpointer: PerRoundStateCheckpointer | None = None,
     ) -> None:
         """
-        This module is meant to hold up to two distinct client-side checkpointers.
-        The first checkpointer, if defined, is used to checkpoint local models BEFORE server-side aggregation.
-        **NOTE**: This is akin to "further fine-tuning" approaches for global models.
-        The second checkpointer, if defined, is used to checkpoint local models AFTER server-side aggregation
-        **NOTE**: This is the "traditional" mechanism for global models.
+        This module is meant to hold up three major components that determine how clients handle model and state
+        checkpointing, where state checkpointing is meant to allow clients to restart if FL training is interrupted.
+        For model checkpointing, there are two distinct types.
+            The first type, if defined, is used to checkpoint local models BEFORE server-side aggregation, but
+            after local training. **NOTE**: This is akin to "further fine-tuning" approaches for global models.
+
+            The second type, if defined, is used to checkpoint local models AFTER server-side aggregation, but
+            before local training **NOTE**: This is the "traditional" mechanism for global models.
 
         As a final note, for some methods, such as Ditto or MR-MTL, these checkpoints will actually be identical.
         That's because the target model for these methods is never globally aggregated. That is, they remain local
 
         Args:
-            pre_aggregation (CheckpointModuleInput, optional): If defined, this checkpointer (or sequence of
+            pre_aggregation (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of
                 checkpointers) is used to checkpoint models based on their validation metrics/losses **BEFORE**
                 server-side aggregation. Defaults to None.
-            post_aggregation (CheckpointModuleInput, optional], optional): If defined, this checkpointer (or sequence
+            post_aggregation (ModelCheckpointers, optional): If defined, this checkpointer (or sequence
                 of checkpointers) is used to checkpoint models based on their validation metrics/losses **AFTER**
                 server-side aggregation. Defaults to None.
+            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer is used to
+                preserve client state (not just models), in the event one wants to restart federated training.
+                Defaults to None.
         """
-        self.pre_aggregation = [pre_aggregation] if isinstance(pre_aggregation, TorchCheckpointer) else pre_aggregation
+        self.pre_aggregation = (
+            [pre_aggregation] if isinstance(pre_aggregation, TorchModuleCheckpointer) else pre_aggregation
+        )
         self.post_aggregation = (
-            [post_aggregation] if isinstance(post_aggregation, TorchCheckpointer) else post_aggregation
+            [post_aggregation] if isinstance(post_aggregation, TorchModuleCheckpointer) else post_aggregation
         )
         self._check_if_shared_checkpoint_names()
+        self.state_checkpointer = state_checkpointer
 
     def _check_if_shared_checkpoint_names(self) -> None:
         """
-        This function is meant to throw an exception if there is an overlap in the paths to which their checkpointers
-        will save checkpoints to avoid accidental overwriting.
+        This function checks whether there is overlap in the paths to which the checkpointers of this module are
+        supposed to write. This is to ensure that there isn't any accidental overwriting of checkpoints that is
+        unintended.
+
+        Raises:
+            ValueError: If any of the pre- or post-aggregation model checkpointer paths are not unique.
         """
 
         pre_aggregation_paths = (
-            [checkpointer.best_checkpoint_path for checkpointer in self.pre_aggregation]
-            if self.pre_aggregation
-            else []
+            [checkpointer.checkpoint_path for checkpointer in self.pre_aggregation] if self.pre_aggregation else []
         )
         post_aggregation_paths = (
-            [checkpointer.best_checkpoint_path for checkpointer in self.post_aggregation]
-            if self.post_aggregation
-            else []
+            [checkpointer.checkpoint_path for checkpointer in self.post_aggregation] if self.post_aggregation else []
         )
 
         all_paths = pre_aggregation_paths + post_aggregation_paths
@@ -75,24 +87,21 @@ class ClientCheckpointModule:
         self, model: nn.Module, loss: float, metrics: Dict[str, Scalar], mode: CheckpointMode
     ) -> None:
         """
-        If checkpointer or checkpoints indicated by the checkpoint mode exists, maybe checkpoint model based on the
-        model metrics or loss
-
-        Args:
-            loss (float): The metric value obtained by the current model.
-                Used by checkpointer to decide whether to checkpoint the model.
-            mode (CheckpointMode): Determines which of the checkpointers to use.
+        Performs model checkpointing for a particular mode (either pre- or post-aggregation) if any checkpointers are
+        provided for that particular mode in this module. If present, the various checkpointers will decide whether
+        or not to checkpoint based on their internal criterion and the loss/metrics provided.
 
         Args:
             model (nn.Module): The model that might be checkpointed by the checkpointers.
-            loss (float): The loss value obtained by the current model. Potentially used by checkpointer to decide
+            loss (float): The metric value obtained by the provided model. Used by the checkpointer(s) to decide
                 whether to checkpoint the model.
-            metrics (Dict[str, Scalar]): The metrics obtained by the current model. Potentially used by checkpointer
+            metrics (Dict[str, Scalar]): The metrics obtained by the provided model. Potentially used by checkpointer
                 to decide whether to checkpoint the model.
-            mode (CheckpointMode): Determines which of the checkpointers to use.
+            mode (CheckpointMode): Determines which of the types of checkpointers to use. Currently, the only modes
+                available are pre- and post-aggregation.
 
         Raises:
-            ValueError: Thrown if the model provided is not recognized.
+            ValueError: Thrown if the model checkpointing mode is not recognized.
         """
         if mode == CheckpointMode.PRE_AGGREGATION:
             if self.pre_aggregation is not None:
@@ -108,3 +117,52 @@ class ClientCheckpointModule:
                 log(INFO, "No Post-aggregation checkpoint specified. Skipping.")
         else:
             raise ValueError(f"Unrecognized mode for checkpointing: {str(mode)}")
+
+    def save_state(self, state_checkpoint_name: str, state: Dict[str, Any]) -> None:
+        """
+        This function is meant to facilitate saving state required to restart an FL process on the client side. This
+        function will simply save whatever information is passed in the state variable using the file name in
+        state_checkpoint_name. This function should only be called if a state_checkpointer exists in this module
+
+        Args:
+            state_checkpoint_name (str): Name of the state checkpoint file. The checkpointer itself will have a
+                directory to which state will be saved.
+            state (Dict[str, Any]): State to be saved so that training might be resumed on the client if federated
+                training is interrupted. For example, this might contain things like optimizer states, learning rate
+                scheduler states, etc.
+
+        Raises:
+            ValueError: Throws an error if this function is called, but no state checkpointer has been provided
+        """
+
+        if self.state_checkpointer is not None:
+            self.state_checkpointer.save_checkpoint(state_checkpoint_name, state)
+        else:
+            raise ValueError("Attempting to save state but no state checkpointer is specified")
+
+    def maybe_load_state(self, state_checkpoint_name: str) -> Dict[str, Any] | None:
+        """
+        This function facilitates loading of any pre-existing state (with the name state_checkpoint_name) in the
+        directory of the state_checkpointer. If the state already exists at the proper path, the state is loaded
+        and returned. If it doesn't exist, we return None.
+
+        Args:
+            state_checkpoint_name (str): Name of the state checkpoint file. The checkpointer itself will have a
+                directory from which state will be loaded (if it exists).
+
+        Raises:
+            ValueError: Throws an error if this function is called, but no state checkpointer has been provided
+
+        Returns:
+            Dict[str, Any] | None: If the state checkpoint properly exists and is loaded correctly, this dictionary
+                carries that state. Otherwise, we return a None (or throw an exception).
+        """
+
+        if self.state_checkpointer is not None:
+            if self.state_checkpointer.checkpoint_exists(state_checkpoint_name):
+                return self.state_checkpointer.load_checkpoint(state_checkpoint_name)
+            else:
+                log(INFO, "State checkpointer is defined but no state checkpoint exists.")
+                return None
+        else:
+            raise ValueError("Attempting to load state, but no state checkpointer is specified")
