@@ -44,14 +44,15 @@ class TorchModuleCheckpointer(ABC):
     def load_checkpoint(self, path_to_checkpoint: str | None = None) -> nn.Module:
         """
         Checkpointer with the option to either specify a checkpoint path or fall back on the internal path of the
-        checkpointer
+        checkpointer. The flexibility to specify a load path is useful, for example, if you are not overwriting
+        checkpoints when saving and need to load a specific past checkpoint for whatever reason.
 
         Args:
             path_to_checkpoint (str | None, optional): If provided, the checkpoint will be loaded from this path.
                 If not specified, the checkpointer will load from self.checkpoint_path. Defaults to None.
 
         Returns:
-            nn.Module: _description_
+            nn.Module: Returns a torch module loaded from the proper checkpoint path.
         """
         if path_to_checkpoint is None:
             return torch.load(self.checkpoint_path)

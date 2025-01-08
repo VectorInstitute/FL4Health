@@ -167,11 +167,11 @@ class BaseServerCheckpointAndStateModule:
         """
         if self.state_checkpointer is not None:
             self._hydrate_model_for_checkpointing(server_parameters)
-            if "model" not in other_state:
-                other_state["model"] = self.model
-            else:
+            if "model" in other_state:
                 raise ValueError("Key 'model' already exists in the other_state dictionary.")
-            self.state_checkpointer.save_checkpoint(state_checkpoint_name, checkpoint_dict=other_state)
+
+            checkpoint_dict = other_state | {"model": self.model}
+            self.state_checkpointer.save_checkpoint(state_checkpoint_name, checkpoint_dict=checkpoint_dict)
         else:
             raise ValueError("Attempting to save state but no state checkpointer is specified")
 
@@ -524,20 +524,15 @@ class NnUnetServerCheckpointAndStateModule(BaseServerCheckpointAndStateModule):
                 used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
                 checkpointer will save much more than just the model being trained. Defaults to None.
         """
-        self.model = model
-        self.parameter_exchanger = parameter_exchanger
-        self.model_checkpointers = (
-            [model_checkpointers] if isinstance(model_checkpointers, TorchModuleCheckpointer) else model_checkpointers
+        super().__init__(model, parameter_exchanger, model_checkpointers, state_checkpointer)
+
+    def _validate_model_checkpointer_components(self) -> None:
+        # NOTE: We only check if the parameter exchanger is present. Model may be set later.
+        assert self.parameter_exchanger is not None, (
+            "Checkpointer(s) is (are) defined but no parameter_exchanger is defined to hydrate. The functionality of "
+            "this class can be overridden in a child class if checkpointing without a parameter exchanger is "
+            "possible and desired"
         )
-        self.state_checkpointer = state_checkpointer
-        if self.model_checkpointers is not None and len(self.model_checkpointers):
-            # NOTE: We only check if the parameter exchanger is present. Model may be set later.
-            assert self.parameter_exchanger is not None, (
-                "Checkpointer(s) is (are) defined but no parameter_exchanger is defined to hydrate. The functionality "
-                "of this class can be overridden in a child class if checkpointing without a parameter exchanger is "
-                "possible and desired"
-            )
-        self._check_if_shared_checkpoint_names()
 
 
 class DpScaffoldServerCheckpointAndStateModule(ScaffoldServerCheckpointAndStateModule):

@@ -40,7 +40,7 @@ class FedProxServer(FlServer):
                 should send data to before and after each round. Defaults to None.
             checkpoint_and_state_module (AdaptiveConstraintServerCheckpointAndStateModule | None, optional): This
                 module is used to handle both model checkpointing and state checkpointing. The former is aimed at
-                saving model artifacts to be used or evaluated after training. The later is used to preserve training
+                saving model artifacts to be used or evaluated after training. The latter is used to preserve training
                 state (including models) such that if FL training is interrupted, the process may be restarted. If no
                 module is provided, no checkpointing or state preservation will happen. Defaults to None.
             on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to
