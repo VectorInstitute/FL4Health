@@ -159,6 +159,9 @@ class BasicClient(NumPyClient):
             # Need all parameters even if normally exchanging partial
             return FullParameterExchanger().push_parameters(self.model, config=config)
         else:
+            if hasattr(self, "early_stopper") and self.early_stopper.patience == 0:
+                log(INFO, "Loading save best model state before sending model to server.")
+                self.early_stopper.load_snapshot(["model"])
             assert self.model is not None and self.parameter_exchanger is not None
             return self.parameter_exchanger.push_parameters(self.model, config=config)
 
@@ -893,7 +896,7 @@ class BasicClient(NumPyClient):
         self,
         patience: int = -1,
         interval_steps: int = 5,
-        snapshot_dir: Optional[Path] = None,
+        snapshot_dir: Path | None = None,
     ) -> None:
         from fl4health.utils.early_stopper import EarlyStopper
 

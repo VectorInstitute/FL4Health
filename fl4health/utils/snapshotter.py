@@ -1,6 +1,6 @@
 import copy
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Type, TypeVar
+from typing import Any, Generic, TypeVar
 
 import torch.nn as nn
 from torch.optim import Optimizer
@@ -18,7 +18,7 @@ class Snapshotter(ABC, Generic[T]):
     def __init__(self, client: BasicClient) -> None:
         self.client = client
 
-    def dict_wrap_attr(self, name: str, expected_type: Type[T]) -> dict[str, T]:
+    def dict_wrap_attr(self, name: str, expected_type: type[T]) -> dict[str, T]:
         attribute = copy.deepcopy(getattr(self.client, name))
         if isinstance(attribute, expected_type):
             return {"None": attribute}
@@ -30,11 +30,11 @@ class Snapshotter(ABC, Generic[T]):
         else:
             raise ValueError(f"Uncompatible type of attribute {type(attribute)}")
 
-    def save(self, name: str, expected_type: Type[T]) -> Any:
+    def save(self, name: str, expected_type: type[T]) -> Any:
         attribute = self.dict_wrap_attr(name, expected_type)
         return self.save_attribute(attribute)
 
-    def load(self, ckpt: dict[str, Any], name: str, expected_type: Type[T]) -> None:
+    def load(self, ckpt: dict[str, Any], name: str, expected_type: type[T]) -> None:
         attribute = self.dict_wrap_attr(name, expected_type)
         self.load_attribute(ckpt[name], attribute)
         if list(attribute.keys()) == ["None"]:

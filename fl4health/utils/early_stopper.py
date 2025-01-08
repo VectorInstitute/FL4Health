@@ -1,6 +1,7 @@
+from collections.abc import Callable
 from logging import INFO
 from pathlib import Path
-from typing import Any, Callable, Optional, Type
+from typing import Any
 
 import torch.nn as nn
 from flwr.common.logger import log
@@ -28,10 +29,25 @@ class EarlyStopper:
     def __init__(
         self,
         client: BasicClient,
-        patience: int = -1,
+        patience: int = 0,
         interval_steps: int = 5,
-        snapshot_dir: Optional[Path] = None,
+        snapshot_dir: Path | None = None,
     ) -> None:
+        """
+        Early stopping class is an plugin for the client that allows to stop local training based on the validation
+        loss. At each training step this class saves the best state of the client and restores it if the client is
+        stopped. If the client starts to overfit, the early stopper will stop the training process and restore the best
+        state of the client before sending the model to the server.
+
+        Args:
+            client (BasicClient): The client to be monitored.
+            patience (int, optional): Number of steps to wait before stopping the training. If it is equal to 0 client
+                never stops, but still loads the best state before sending the model to the server. Defaults to 0.
+            interval_steps (int, optional): Determins how often the early stopper should check the validation loss.
+                Defaults to 5.
+            snapshot_dir (Path | None, optional): Rather than keeping best state in the memory we can checkpoint it to
+                the given directory. If it is not given, the best state is kept in the memory. Defaults to None.
+        """
 
         self.client = client
 
@@ -39,7 +55,7 @@ class EarlyStopper:
         self.counte_down = patience
         self.interval_steps = interval_steps
 
-        self.best_score: Optional[float] = None
+        self.best_score: float | None = None
         self.snapshot_ckpt: dict[str, Any] = {}
 
         self.default_snapshot_args: dict = {
@@ -70,7 +86,7 @@ class EarlyStopper:
             self.checkpointer = PerRoundStateCheckpointer(snapshot_dir)
 
     def add_default_snapshot_arg(
-        self, name: str, snapshot_class: Callable[[BasicClient], Snapshotter], input_type: Type[T]
+        self, name: str, snapshot_class: Callable[[BasicClient], Snapshotter], input_type: type[T]
     ) -> None:
         self.default_snapshot_args.update({name: (snapshot_class(self.client), input_type)})
 
@@ -94,7 +110,7 @@ class EarlyStopper:
             f"Saving client temp best state to checkpoint at {self.checkpointer.checkpoint_dir}",
         )
 
-    def load_snapshot(self) -> None:
+    def load_snapshot(self, args: list[str]) -> None:
         """
         Load checkpoint dict consisting of client name, total steps, lr schedulers, metrics
             reporter and optimizers state. Method can be overridden to augment loaded checkpointed state.
@@ -106,7 +122,8 @@ class EarlyStopper:
         if self.checkpointer.checkpoint_exists(f"temp_{self.client.client_name}.pt"):
             self.snapshot_ckpt = self.checkpointer.load_checkpoint(f"temp_{self.client.client_name}.pt")
 
-        for arg, (snapshotter_function, expected_type) in self.default_snapshot_args.items():
+        for arg in args:
+            snapshotter_function, expected_type = self.default_snapshot_args[arg]
             snapshotter_function.load(self.snapshot_ckpt, arg, expected_type)
 
     def should_stop(self) -> bool:
@@ -139,7 +156,7 @@ class EarlyStopper:
         # Reduce patience counter and check for early stopping
         self.count_down -= 1
         if self.count_down == 0:
-            self.load_snapshot()
+            self.load_snapshot(list(self.default_snapshot_args.keys()))
             return True
 
         return False
