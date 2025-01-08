@@ -7,7 +7,7 @@ from flwr.common.logger import log
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 
-from fl4health.checkpointing.checkpointer import PerRoundCheckpointer
+from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.utils.logging import LoggingMode
@@ -67,7 +67,7 @@ class EarlyStopper:
         }
 
         if snapshot_dir is not None:
-            self.checkpointer = PerRoundCheckpointer(snapshot_dir, Path(f"temp_{self.client.client_name}.pt"))
+            self.checkpointer = PerRoundStateCheckpointer(snapshot_dir)
 
     def add_default_snapshot_arg(
         self, name: str, snapshot_class: Callable[[BasicClient], Snapshotter], input_type: Type[T]
@@ -86,12 +86,12 @@ class EarlyStopper:
             self.snapshot_ckpt[arg] = snapshotter_function.save(arg, expected_type)
 
         if self.checkpointer is not None:
-            self.checkpointer.save_checkpoint(self.snapshot_ckpt)
+            self.checkpointer.save_checkpoint(f"temp_{self.client.client_name}.pt", self.snapshot_ckpt)
             self.snapshot_ckpt.clear()
 
         log(
             INFO,
-            f"Saving client temp best state to checkpoint at {self.checkpointer.checkpoint_path}",
+            f"Saving client temp best state to checkpoint at {self.checkpointer.checkpoint_dir}",
         )
 
     def load_snapshot(self) -> None:
@@ -99,10 +99,12 @@ class EarlyStopper:
         Load checkpoint dict consisting of client name, total steps, lr schedulers, metrics
             reporter and optimizers state. Method can be overridden to augment loaded checkpointed state.
         """
-        assert self.checkpointer.checkpoint_exists() or self.snapshot_ckpt != {}, "No checkpoint to load"
+        assert (
+            self.checkpointer.checkpoint_exists(f"temp_{self.client.client_name}.pt") or self.snapshot_ckpt != {}
+        ), "No checkpoint to load"
 
-        if self.checkpointer.checkpoint_exists():
-            self.snapshot_ckpt = self.checkpointer.load_checkpoint()
+        if self.checkpointer.checkpoint_exists(f"temp_{self.client.client_name}.pt"):
+            self.snapshot_ckpt = self.checkpointer.load_checkpoint(f"temp_{self.client.client_name}.pt")
 
         for arg, (snapshotter_function, expected_type) in self.default_snapshot_args.items():
             snapshotter_function.load(self.snapshot_ckpt, arg, expected_type)
