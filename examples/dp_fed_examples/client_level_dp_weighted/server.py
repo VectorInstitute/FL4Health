@@ -80,6 +80,7 @@ def main(config: dict[str, Any]) -> None:
         clipping_noise_multiplier=config["clipping_bit_noise_multiplier"],
         beta=config["server_momentum"],
         weighted_aggregation=config["weighted_averaging"],
+        accept_failures=False,
     )
 
     server = ClientLevelDPFedAvgServer(

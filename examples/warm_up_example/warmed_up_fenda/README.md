@@ -25,7 +25,7 @@ from the FL4Health directory. The following arguments must be present in the spe
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the three
 clients. This is done by simply running (remembering to activate your environment)
 ```
-python -m examples.warm_up_example.warmed_up_fenda.client --dataset_path /path/to/data --seed "SEED" --pretrained_model_dir /path/to/checkpointing/directory  --weights_mapping_path /path/to/weights/mapping/file
+python -m examples.warm_up_example.warmed_up_fenda.client --dataset_path /path/to/data --seed "SEED" --pretrained_model_path /path/to/model_checkpoint --weights_mapping_path /path/to/weights/mapping/file
 ```
 **NOTE**: The argument `dataset_path` has two functions, depending on whether the dataset exists locally or not. If the dataset already exists at the path specified, it will be loaded from there. Otherwise, the dataset will be automatically downloaded to the path specified and used in the run.
 

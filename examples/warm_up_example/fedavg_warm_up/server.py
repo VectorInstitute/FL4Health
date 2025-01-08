@@ -10,7 +10,6 @@ from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import MnistNet
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.reporting import WandBReporter
 from fl4health.servers.base_server import FlServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config
@@ -22,9 +21,6 @@ from fl4health.utils.random import set_all_random_seeds
 def fit_config(
     batch_size: int,
     n_server_rounds: int,
-    project: str,
-    group: str,
-    entity: str,
     current_round: int,
     local_epochs: int | None = None,
     local_steps: int | None = None,
@@ -34,9 +30,6 @@ def fit_config(
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
-        "project": project,
-        "group": group,
-        "entity": entity,
     }
 
 
@@ -46,10 +39,6 @@ def main(config: dict[str, Any], server_address: str) -> None:
         fit_config,
         config["batch_size"],
         config["n_server_rounds"],
-        # NOTE: that name is not included, it will be set in the clients
-        config["reporting_config"].get("project", ""),
-        config["reporting_config"].get("group", ""),
-        config["reporting_config"].get("entity", ""),
         local_epochs=config.get("local_epochs"),
         local_steps=config.get("local_steps"),
     )
@@ -71,13 +60,8 @@ def main(config: dict[str, Any], server_address: str) -> None:
     )
 
     client_manager = SimpleClientManager()
-    if "reporting_config" in config:
-        wandb_reporter = WandBReporter("round", **config["reporting_config"])
-        reporters = [wandb_reporter]
-    else:
-        reporters = []
 
-    server = FlServer(client_manager=client_manager, fl_config=config, strategy=strategy, reporters=reporters)
+    server = FlServer(client_manager=client_manager, fl_config=config, strategy=strategy, accept_failures=False)
 
     fl.server.start_server(
         server=server,

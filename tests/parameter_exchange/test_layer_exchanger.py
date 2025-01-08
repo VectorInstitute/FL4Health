@@ -99,7 +99,6 @@ def test_fedpm_exchange() -> None:
     # Test that selection function works when the direct child modules are masked modules.
     masks, score_names = select_scores_and_sample_masks(masked_model, masked_model)
     assert len(masks) == len(score_names)
-    print(score_names)
     assert score_names == [
         "conv1d.weight_scores",
         "conv1d.bias_scores",

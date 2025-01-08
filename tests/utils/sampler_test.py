@@ -249,16 +249,12 @@ def test_dirichlet_sampler_with_hash_key() -> None:
 
     train_probs = np.array([i / sum(samples_per_class) for i in samples_per_class])
     test_probs = np.array([i / sum(test_samples_per_class) for i in test_samples_per_class])
-    print(train_probs)
-    print(test_probs)
     # Assert that the original train and test distributions are same
     # atol is set to 1e-2 because there might be some rounding noise due to set fixed number of samples
     assert np.allclose(train_probs, test_probs, rtol=0.0, atol=1e-2)
 
     new_train_probs = np.array([i / sum(new_samples_per_class_1) for i in new_samples_per_class_1])
     new_test_probs = np.array([i / sum(new_test_samples_per_class_1) for i in new_test_samples_per_class_1])
-    print(new_train_probs)
-    print(new_test_probs)
     # Assert that the new train and test distributions with sampler_1 are same due to same hash_key
     # atol is set to 1e-2 because there might be some rounding noise due to set fixed number of samples
     assert np.allclose(new_train_probs, new_test_probs, rtol=0.0, atol=1e-2)

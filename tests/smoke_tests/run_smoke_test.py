@@ -74,7 +74,7 @@ async def run_smoke_test(
                 client_python_path="examples.federated_eval_example.client",
                 config_path="tests/smoke_tests/federated_eval_config.yaml",
                 dataset_path="examples/datasets/cifar_data/",
-                checkpoint_path="examples/assets/best_checkpoint_fczjmljm.pkl",
+                checkpoint_path="examples/assets/fed_eval_example/best_checkpoint_fczjmljm.pkl",
                 assert_evaluation_logs=True,
                 seed=42,
                 server_metrics={
@@ -756,7 +756,7 @@ if __name__ == "__main__":
             client_python_path="examples.federated_eval_example.client",
             config_path="tests/smoke_tests/federated_eval_config.yaml",
             dataset_path="examples/datasets/cifar_data/",
-            checkpoint_path="examples/assets/best_checkpoint_fczjmljm.pkl",
+            checkpoint_path="examples/assets/fed_eval_example/best_checkpoint_fczjmljm.pkl",
             assert_evaluation_logs=True,
         )
     )

@@ -62,6 +62,7 @@ def main(config: dict[str, Any]) -> None:
         initialize_parameters=get_initial_model_parameters,
         strategy=strategy,
         tabular_features_source_of_truth=tab_feature_info_encoder_hospital1,
+        accept_failures=False,
     )
 
     fl.server.start_server(
