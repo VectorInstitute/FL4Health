@@ -2,7 +2,7 @@
 
 The following instructions outline training and validating a simple U-Net model on the Preprocessed Dataset described in the [PICAI Documentation](/research/picai/README.md) using a centralized setup. Running the centralized example out of the box is as simple as executing the command below.
 
-An example of the usage is below. Note that the script needs to be run from the top level of the FL4Health repository. Moreover, a python environment with the required libraries must already exist.  See the main PICAI documentation Cluster [PICAI Documentation](/research/picai/README.md) for instructions on creating and activating the environment required to exectute the following code. The commands below should be run from the top level directory:
+An example of the usage is below. Note that the script needs to be run from the top level of the FL4Health repository. Moreover, a python environment with the required libraries must already exist.  See the main PICAI documentation Cluster [PICAI Documentation](/research/picai/README.md) for instructions on creating and activating the environment required to execute the following code. The commands below should be run from the top level directory:
 
 ```bash
 python research/picai/central/train.py --overviews_dir /path/to/overviews_dir --fold <fold_num> --run_name <run_name>

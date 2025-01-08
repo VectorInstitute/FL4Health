@@ -1,5 +1,5 @@
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.typing import Config
@@ -24,10 +24,10 @@ class PerFclClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        client_name: Optional[str] = None,
+        client_name: str | None = None,
         global_feature_loss_temperature: float = 0.5,
         local_feature_loss_temperature: float = 0.5,
         global_feature_contrastive_loss_weight: float = 1.0,
@@ -47,7 +47,7 @@ class PerFclClient(BasicClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpoint_and_state_module (Optional[ClientCheckpointAndStateModule], optional): A module meant to handle
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
                 No checkpointing (state or model) is done if not provided. Defaults to None.
@@ -55,7 +55,7 @@ class PerFclClient(BasicClient):
                 should send data to. Defaults to None.
             progress_bar (bool, optional): Whether or not to display a progress bar during client training and
                 validation. Uses tqdm. Defaults to False
-            client_name (Optional[str], optional): An optional client name that uniquely identifies a client.
+            client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
             global_feature_loss_temperature (float, optional): Temperature to be used in the contrastive loss
@@ -86,9 +86,9 @@ class PerFclClient(BasicClient):
         # In order to compute the PerFCL losses, we need to save final local module and global modules from the
         # previous iteration of client-side training and initial global module passed to the client after server-side
         # aggregation at each communication round
-        self.old_local_module: Optional[torch.nn.Module] = None
-        self.old_global_module: Optional[torch.nn.Module] = None
-        self.initial_global_module: Optional[torch.nn.Module] = None
+        self.old_local_module: torch.nn.Module | None = None
+        self.old_global_module: torch.nn.Module | None = None
+        self.initial_global_module: torch.nn.Module | None = None
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         """
@@ -134,16 +134,16 @@ class PerFclClient(BasicClient):
             and self.initial_global_module is not None
         )
 
-    def predict(self, input: TorchInputType) -> Tuple[TorchPredType, TorchFeatureType]:
+    def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the prediction(s) and features of the model(s) given the input.
 
         Args:
             input (TorchInputType): Inputs to be fed into the model. TorchInputType is simply an alias
-            for the union of torch.Tensor and Dict[str, torch.Tensor].
+            for the union of torch.Tensor and dict[str, torch.Tensor].
 
         Returns:
-            Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
+            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple in which the first element
             contains predictions indexed by name and the second element contains intermediate activations
             index by name. Specifically the features of the model, features of the global model and features of
             the old model are returned. All predictions included in dictionary will be used to compute metrics.
@@ -165,14 +165,14 @@ class PerFclClient(BasicClient):
 
         return preds, features
 
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
         """
         This function is called after client-side training concludes. In this case, it is used to save the local
         and global feature extraction weights/modules to be used in the next round of client-side training.
 
         Args:
             local_steps (int): Number of steps performed during training
-            loss_dict (Dict[str, float]): Losses computed during training.
+            loss_dict (dict[str, float]): Losses computed during training.
             config (Config): The config from the server
         """
         assert isinstance(self.model, PerFclModel)
@@ -204,19 +204,19 @@ class PerFclClient(BasicClient):
         preds: TorchPredType,
         features: TorchFeatureType,
         target: TorchTargetType,
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
         For PerFCL, the total loss is the standard criterion loss provided by the user and the PerFCL contrastive
         losses aimed at manipulating the local and global feature extractor latent spaces.
 
         Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
-            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+            tuple[torch.Tensor, dict[str, torch.Tensor]]; A tuple with:
                 - The tensor for the total loss
                 - A dictionary with `loss`, `total_loss`, `global_feature_contrastive_loss`, and
                     `local_feature_contrastive_loss` representing the various and relevant pieces of the loss
@@ -263,9 +263,9 @@ class PerFclClient(BasicClient):
         additional loss components associated with the PerFCL loss function.
 
         Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
                 All predictions included in dictionary will be used to compute metrics.
-            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            features: (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:

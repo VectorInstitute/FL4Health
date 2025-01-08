@@ -1,5 +1,3 @@
-from typing import Dict
-
 import mock
 import pytest
 import torch
@@ -148,14 +146,14 @@ def test_dictionary_modification_and_config_extraction(get_client: FedRepClient)
     torch.seed()  # resetting the seed at the end, just to be safe
 
 
-def get_optimizer_patch_1(self: FedRepClient, config: Config) -> Dict[str, Optimizer]:
+def get_optimizer_patch_1(self: FedRepClient, config: Config) -> dict[str, Optimizer]:
     assert isinstance(self.model, FedRepModel)
     head_optimizer = torch.optim.AdamW(self.model.head_module.parameters(), lr=0.01)
     rep_optimizer = torch.optim.AdamW(self.model.base_module.parameters(), lr=0.01)
     return {"head": head_optimizer, "representation": rep_optimizer}
 
 
-def get_optimizer_patch_2(self: FedRepClient, config: Config) -> Dict[str, Optimizer]:
+def get_optimizer_patch_2(self: FedRepClient, config: Config) -> dict[str, Optimizer]:
     assert isinstance(self.model, FedRepModel)
     head_optimizer = torch.optim.AdamW(self.model.head_module.parameters(), lr=0.01)
     rep_optimizer = torch.optim.AdamW(self.model.base_module.parameters(), lr=0.01)

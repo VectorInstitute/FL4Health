@@ -1,6 +1,6 @@
 import argparse
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -44,7 +44,7 @@ class CondAutoEncoderClient(BasicClient):
         assert isinstance(self.model, ConditionalVae)
         self.model.unpack_input_condition = self.autoencoder_converter.get_unpacking_function()
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)
         # ToTensor transform is used to make sure pixels stay in the range [0.0, 1.0].

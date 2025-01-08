@@ -1,6 +1,5 @@
 import argparse
 from pathlib import Path
-from typing import Tuple
 
 import flwr as fl
 import torch
@@ -21,7 +20,7 @@ class HospitalClient(NumpyClippingClient):
     def get_model(self, config: Config) -> nn.Module:
         return LogisticRegression(input_dim=31, output_dim=1).to(self.device)
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         scaler_bytes = narrow_dict_type(config, "scaler", bytes)
         train_loader, val_loader, _ = load_data(self.data_path, batch_size, scaler_bytes)

@@ -4,7 +4,7 @@ import torch.nn as nn
 from fl4health.model_bases.fedper_base import FedPerModel
 
 
-class FedPerGloalFeatureExtractor(nn.Module):
+class FedPerGlobalFeatureExtractor(nn.Module):
     def __init__(self, input_dim: int) -> None:
         super().__init__()
         self.fc1 = nn.Linear(input_dim, 256 * 4)
@@ -28,7 +28,7 @@ class FedPerGloalFeatureExtractor(nn.Module):
         return x
 
 
-class FedPerGloalFeatureExtractor_het(nn.Module):
+class FedPerGlobalFeatureExtractor_het(nn.Module):
     def __init__(self, input_dim: int) -> None:
         super().__init__()
         self.fc1 = nn.Linear(input_dim, 256 * 2)
@@ -65,6 +65,6 @@ class FedPerLocalPredictionHead(nn.Module):
 
 class DeliriumFedPerModel(FedPerModel):
     def __init__(self, input_dim: int, output_dim: int) -> None:
-        base_module = FedPerGloalFeatureExtractor_het(input_dim)
+        base_module = FedPerGlobalFeatureExtractor_het(input_dim)
         head_module = FedPerLocalPredictionHead(output_dim)
         super().__init__(base_module, head_module)

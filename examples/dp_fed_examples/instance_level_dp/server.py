@@ -2,7 +2,7 @@ import argparse
 import string
 from functools import partial
 from random import choices
-from typing import Any, Dict, Optional
+from typing import Any
 
 import flwr as fl
 from flwr.common.typing import Config
@@ -25,8 +25,8 @@ def construct_config(
     batch_size: int,
     noise_multiplier: float,
     clipping_bound: float,
-    local_epochs: Optional[int] = None,
-    local_steps: Optional[int] = None,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
 ) -> Config:
     # NOTE: a new client is created in each round
     # NOTE: The omitted variable is server_round which allows for dynamically changing the config each round
@@ -44,8 +44,8 @@ def fit_config(
     noise_multiplier: float,
     clipping_bound: float,
     current_round: int,
-    local_epochs: Optional[int] = None,
-    local_steps: Optional[int] = None,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
 ) -> Config:
     return construct_config(
         current_round,
@@ -57,7 +57,7 @@ def fit_config(
     )
 
 
-def main(config: Dict[str, Any]) -> None:
+def main(config: dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,

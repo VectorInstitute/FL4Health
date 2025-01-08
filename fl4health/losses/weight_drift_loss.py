@@ -1,5 +1,3 @@
-from typing import List
-
 import torch
 import torch.nn as nn
 
@@ -15,7 +13,7 @@ class WeightDriftLoss(nn.Module):
     def _compute_weight_difference_inner_product(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         return torch.pow(torch.linalg.norm(x - y), 2.0)
 
-    def forward(self, target_model: nn.Module, constraint_tensors: List[torch.Tensor], weight: float) -> torch.Tensor:
+    def forward(self, target_model: nn.Module, constraint_tensors: list[torch.Tensor], weight: float) -> torch.Tensor:
         # move model and tensors to device if needed
         target_model = target_model.to(self.device)
         constraint_tensors = [constraint_tensor.to(self.device) for constraint_tensor in constraint_tensors]
@@ -24,7 +22,7 @@ class WeightDriftLoss(nn.Module):
         assert len(constraint_tensors) == len(model_weights)
         assert len(model_weights) > 0
 
-        layer_inner_products: List[torch.Tensor] = [
+        layer_inner_products: list[torch.Tensor] = [
             self._compute_weight_difference_inner_product(constraint_layer_weights, model_layer_weights)
             for constraint_layer_weights, model_layer_weights in zip(constraint_tensors, model_weights)
         ]

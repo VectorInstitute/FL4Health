@@ -1,7 +1,6 @@
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from logging import INFO
 from math import ceil
-from typing import Callable, Dict, List, Optional, Tuple
 
 from flwr.common.logger import log
 from flwr.common.typing import Config, Scalar
@@ -31,8 +30,8 @@ class ClientLevelDPFedAvgServer(FlServer):
         num_server_rounds: int,
         reporters: Sequence[BaseReporter] | None = None,
         checkpoint_and_state_module: ClippingBitServerCheckpointAndStateModule | None = None,
-        delta: Optional[int] = None,
-        on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        delta: int | None = None,
+        on_init_parameters_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         server_name: str | None = None,
         accept_failures: bool = True,
     ) -> None:
@@ -57,9 +56,9 @@ class ClientLevelDPFedAvgServer(FlServer):
                 artifacts to be used or evaluated after training. The latter is used to preserve training state
                 (including models) such that if FL training is interrupted, the process may be restarted. If no
                 module is provided, no checkpointing or state preservation will happen. Defaults to None.
-            delta (Optional[float], optional): The delta value for epsilon-delta DP accounting. If None it defaults to
+            delta (float | None, optional): The delta value for epsilon-delta DP accounting. If None it defaults to
                 being 1/total_samples in the FL run. Defaults to None.
-            on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional): Function used to
+            on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to
                 configure how one asks a client to provide parameters from which to initialize all other clients by
                 providing a Config dictionary. If this is none, then a blank config is sent with the parameter request
                 (which is default behavior for flower servers). Defaults to None.
@@ -89,17 +88,17 @@ class ClientLevelDPFedAvgServer(FlServer):
         self.num_server_rounds = num_server_rounds
         self.delta = delta
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
+    def fit(self, num_rounds: int, timeout: float | None) -> tuple[History, float]:
         """
         Run federated averaging for a number of rounds.
 
         Args:
             num_rounds (int): Number of server rounds to run.
-            timeout (Optional[float]): The amount of time in seconds that the server will wait for results from the
+            timeout (float | None): The amount of time in seconds that the server will wait for results from the
                 clients selected to participate in federated training.
 
         Returns:
-            Tuple[History, float]: The first element of the tuple is a history object containing the full set of
+            tuple[History, float]: The first element of the tuple is a history object containing the full set of
                 FL training results, including things like aggregated loss and metrics.
                 Tuple also contains the elapsed time in seconds for the round.
         """
@@ -116,12 +115,12 @@ class ClientLevelDPFedAvgServer(FlServer):
 
         return super().fit(num_rounds=num_rounds, timeout=timeout)
 
-    def setup_privacy_accountant(self, sample_counts: List[int]) -> None:
+    def setup_privacy_accountant(self, sample_counts: list[int]) -> None:
         """
         Sets up FL Accountant and computes privacy loss based on class attributes and retrieved sample counts.
 
         Args:
-            sample_counts (List[int]): These should be the total number of training examples fetched from all clients
+            sample_counts (list[int]): These should be the total number of training examples fetched from all clients
                 during the sample polling process.
         """
         assert isinstance(self.strategy, ClientLevelDPFedAvgM)

@@ -1,6 +1,6 @@
 import argparse
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -30,10 +30,10 @@ class CifarClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        client_name: Optional[str] = None,
+        client_name: str | None = None,
         seed: int = 42,
     ) -> None:
         super().__init__(
@@ -48,12 +48,12 @@ class CifarClient(BasicClient):
         )
         self.seed = seed
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
         return train_loader, val_loader
 
-    def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
+    def get_test_data_loader(self, config: Config) -> DataLoader | None:
         batch_size = narrow_dict_type(config, "batch_size", int)
         test_loader, _ = load_cifar10_test_data(self.data_path, batch_size)
         return test_loader
@@ -67,7 +67,7 @@ class CifarClient(BasicClient):
     def get_model(self, config: Config) -> nn.Module:
         return Net().to(self.device)
 
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+    def fit(self, parameters: NDArrays, config: Config) -> tuple[NDArrays, int, dict[str, Scalar]]:
         set_all_random_seeds(self.seed)
         return super().fit(parameters, config)
 

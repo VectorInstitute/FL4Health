@@ -4,7 +4,7 @@ import json
 import logging
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
 from flwr.common.typing import Config
@@ -26,14 +26,14 @@ async def run_smoke_test(
     client_python_path: str,
     config_path: str,
     dataset_path: str,
-    checkpoint_path: Optional[str] = None,
-    assert_evaluation_logs: Optional[bool] = False,
+    checkpoint_path: str | None = None,
+    assert_evaluation_logs: bool | None = False,
     # The param below exists to work around an issue with some clients
     # not printing the "Current FL Round" log message reliably
-    skip_assert_client_fl_rounds: Optional[bool] = False,
-    seed: Optional[int] = None,
-    server_metrics: Optional[Dict[str, Any]] = None,
-    client_metrics: Optional[Dict[str, Any]] = None,
+    skip_assert_client_fl_rounds: bool | None = False,
+    seed: int | None = None,
+    server_metrics: dict[str, Any] | None = None,
+    client_metrics: dict[str, Any] | None = None,
 ) -> None:
     """Runs a smoke test for a given server, client, and dataset configuration.
 
@@ -111,18 +111,18 @@ async def run_smoke_test(
             `batch_size`: the size of the batch, to be used by the dataset preloader
         dataset_path (str): the path of the dataset. Depending on which dataset is being used, it will ty to preload it
             to avoid problems when running on different runtimes.
-        checkpoint_path (Optional[str]): Optional, default None. If set, it will send that path as a checkpoint model
+        checkpoint_path (str | None): Optional, default None. If set, it will send that path as a checkpoint model
             to the client.
-        assert_evaluation_logs (Optional[bool]): Optional, default `False`. Set this to `True` if testing an
+        assert_evaluation_logs (bool | None): Optional, default `False`. Set this to `True` if testing an
             evaluation model, which produces different log outputs.
-        skip_assert_client_fl_rounds (Optional[str]): Optional, default `False`. If set to `True`, will skip the
+        skip_assert_client_fl_rounds (str | None): Optional, default `False`. If set to `True`, will skip the
             assertion of the "Current FL Round" message on the clients' logs. This is necessary because some clients
             (namely client_level_dp, client_level_dp_weighted, instance_level_dp) do not reliably print that message.
-        seed (Optional[int]): The random seed to be passed in to both the client and the server.
-        server_metrics (Optional[Dict[str, Any]]): A dictionary of metrics to be checked against the metrics file
+        seed (int | None): The random seed to be passed in to both the client and the server.
+        server_metrics (dict[str, Any] | None): A dictionary of metrics to be checked against the metrics file
             saved by the server. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
             Default is None.
-        client_metrics (Optional[Dict[str, Any]]): A dictionary of metrics to be checked against the metrics file
+        client_metrics (dict[str, Any] | None): A dictionary of metrics to be checked against the metrics file
             saved by the clients. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
             Default is None.
     """
@@ -296,9 +296,9 @@ async def run_fault_tolerance_smoke_test(
     config_path: str,
     partial_config_path: str,
     dataset_path: str,
-    server_metrics: Dict[str, Any],
-    client_metrics: Dict[str, Any],
-    seed: Optional[int] = None,
+    server_metrics: dict[str, Any],
+    client_metrics: dict[str, Any],
+    seed: int | None = None,
     intermediate_checkpoint_dir: str = "./",
     server_name: str = "server",
 ) -> None:
@@ -323,10 +323,10 @@ async def run_fault_tolerance_smoke_test(
         dataset_path (str): the path of the dataset. Depending on which dataset is being used, it will ty to preload it
             to avoid problems when running on different runtimes.
         intermediate_checkpoint_dir (str): Path to store intermediate checkpoints for server and client.
-        seed (Optional[int]): The random seed to be passed in to both the client and the server.
-        server_metrics (Dict[str, Any]): A dictionary of metrics to be checked against the metrics file
+        seed (int | None): The random seed to be passed in to both the client and the server.
+        server_metrics (dict[str, Any]): A dictionary of metrics to be checked against the metrics file
             saved by the server. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
-        client_metrics (Dict[str, Any]): A dictionary of metrics to be checked against the metrics file
+        client_metrics (dict[str, Any]): A dictionary of metrics to be checked against the metrics file
             saved by the clients. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
     """
     clear_metrics_folder()
@@ -454,7 +454,7 @@ async def run_fault_tolerance_smoke_test(
     logger.info("All checks passed. Test finished.")
 
 
-def _preload_dataset(dataset_path: str, config: Config, seed: Optional[int] = None) -> None:
+def _preload_dataset(dataset_path: str, config: Config, seed: int | None = None) -> None:
     if "mnist" in dataset_path:
         logger.info("Preloading MNIST dataset...")
 
@@ -538,8 +538,8 @@ DEFAULT_METRICS_FOLDER = Path("metrics")
 DEFAULT_TOLERANCE = 0.0005
 
 
-def _assert_metrics(metric_type: MetricType, metrics_to_assert: Optional[Dict[str, Any]] = None) -> List[str]:
-    errors: List[str] = []
+def _assert_metrics(metric_type: MetricType, metrics_to_assert: dict[str, Any] | None = None) -> list[str]:
+    errors: list[str] = []
     if metrics_to_assert is None:
         return errors
 
@@ -563,10 +563,10 @@ def _assert_metrics(metric_type: MetricType, metrics_to_assert: Optional[Dict[st
     return errors
 
 
-def _assert_metrics_dict(metrics_to_assert: Dict[str, Any], metrics_saved: Dict[str, Any]) -> List[str]:
+def _assert_metrics_dict(metrics_to_assert: dict[str, Any], metrics_saved: dict[str, Any]) -> list[str]:
     errors = []
 
-    def _assert(value: Any, saved_value: Any) -> Optional[str]:
+    def _assert(value: Any, saved_value: Any) -> str | None:
         # helper function to avoid code repetition
         tolerance = DEFAULT_TOLERANCE
         if isinstance(value, dict):
@@ -620,7 +620,7 @@ def clear_metrics_folder() -> None:
             f.unlink()
 
 
-def load_metrics_from_file(file_path: str) -> Dict[str, Any]:
+def load_metrics_from_file(file_path: str) -> dict[str, Any]:
     with open(file_path, "r") as f:
         return json.load(f)
 

@@ -1,8 +1,8 @@
 import argparse
 import os
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -43,10 +43,10 @@ class CifarDittoClient(DittoMkMmdClient):
         feature_l2_norm_weight: float = 1,
         mkmmd_loss_depth: int = 1,
         beta_global_update_interval: int = 20,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        client_name: Optional[str] = None,
+        client_name: str | None = None,
         use_partitioned_data: bool = False,
     ) -> None:
         super().__init__(
@@ -76,7 +76,7 @@ class CifarDittoClient(DittoMkMmdClient):
         assert 0 <= self.client_number < num_clients
         super().setup_client(config)
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         # The partitioned data should be generated prior to running the clients via preprocess_data function
         # in the research/cifar10/preprocess.py file
@@ -104,7 +104,7 @@ class CifarDittoClient(DittoMkMmdClient):
             )
         return train_loader, val_loader
 
-    def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
+    def get_test_data_loader(self, config: Config) -> DataLoader | None:
         batch_size = narrow_dict_type(config, "batch_size", int)
         # The partitioned data should be generated prior to running the clients via preprocess_data function
         # in the research/cifar10/preprocess.py file
@@ -129,7 +129,7 @@ class CifarDittoClient(DittoMkMmdClient):
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
         # Following the implementation in pFL-Bench : A Comprehensive Benchmark for Personalized
         # Federated Learning (https://arxiv.org/pdf/2405.17724) for cifar10 dataset we use SGD optimizer
         global_optimizer = torch.optim.SGD(self.global_model.parameters(), lr=self.learning_rate, momentum=0.9)

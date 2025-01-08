@@ -4,7 +4,6 @@ import time
 import warnings
 from logging import INFO
 from os.path import exists, join
-from typing import Optional
 
 import numpy as np
 from flwr.common.logger import log
@@ -21,7 +20,7 @@ def pred_and_eval(
     config_path: str,
     inputs_folder: str,
     labels_folder: str,
-    output_folder: Optional[str] = None,
+    output_folder: str | None = None,
     save_probability_maps: bool = False,
     save_detection_maps: bool = False,
     save_annotations: bool = False,
@@ -48,13 +47,13 @@ def pred_and_eval(
         inputs_folder (str): Path to the folder containing the raw input data
             that has not been processed by nnunet yet. File names must follow
             the nnunet convention where each channel modality is stored as a
-            seperate file. File names should be case-identifier_0000 where
+            separate file. File names should be case-identifier_0000 where
             0000 is a 4 digit integer representing the channel/modality of the
             image. All cases must have the same N channels numbered from 0 to
             N.
         labels_folder (str): Path to the folder containing the ground truth
             annotation maps. File names must match the case identifiers of the input images
-        output_folder (Optional[str], optional): Path to the output folder. By
+        output_folder (str | None, optional): Path to the output folder. By
             default the only output is a 'metrics.json' file containing the
             evaluation results. If left as none then nothing is saved.
             Defaults to None.
@@ -194,7 +193,7 @@ def main() -> None:
         type=str,
         help="""Path to the folder containing the raw input data that has not
             been processed by nnunet yet. File names must follow the nnunet
-            convention where each channel modality is stored as a seperate
+            convention where each channel modality is stored as a separate
             file. File names should be case-identifier_0000 where 0000 is a 4
             digit integer representing the channel/modality of the image. All
             cases must have the same N channels numbered from 0 to N.""",

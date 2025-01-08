@@ -1,7 +1,7 @@
 import argparse
 from functools import partial
 from logging import INFO
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import flwr as fl
 import torch.nn as nn
@@ -23,18 +23,18 @@ class GeminiAPFLServer(FlServer):
     def __init__(
         self,
         client_manager: ClientManager,
-        strategy: Optional[Strategy] = None,
+        strategy: Strategy | None = None,
     ) -> None:
         # APFL doesn't train a "server" model. Rather, each client trains a client specific model with some globally
         # shared weights. So we don't checkpoint a global model
         super().__init__(client_manager, strategy, checkpointer=None)
-        self.best_aggregated_loss: Optional[float] = None
+        self.best_aggregated_loss: float | None = None
 
     def evaluate_round(
         self,
         server_round: int,
-        timeout: Optional[float],
-    ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
+        timeout: float | None,
+    ) -> tuple[float | None, dict[str, Scalar], EvaluateResultsAndFailures] | None:
         # loss_aggregated is the aggregated validation per step loss
         # aggregated over each client (weighted by num examples)
         eval_round_results = super().evaluate_round(server_round, timeout)
@@ -63,14 +63,14 @@ class GeminiAPFLServer(FlServer):
         return loss_aggregated, metrics_aggregated, (results, failures)
 
 
-def fit_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
+def fit_metrics_aggregation_fn(all_client_metrics: list[tuple[int, Metrics]]) -> Metrics:
     # This function is run by the server to aggregate metrics returned by each clients fit function
     # NOTE: The first value of the tuple is number of examples for FedAvg
     total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
     return normalize_metrics(total_examples, aggregated_metrics)
 
 
-def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
+def evaluate_metrics_aggregation_fn(all_client_metrics: list[tuple[int, Metrics]]) -> Metrics:
     # This function is run by the server to aggregate metrics returned by each clients evaluate function
     # NOTE: The first value of the tuple is number of examples for FedAvg
     total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
@@ -96,7 +96,7 @@ def fit_config(
     }
 
 
-def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
+def main(config: dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
 
     # mappings = get_mappings(Path(ENCOUNTERS_FILE))

@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from collections.abc import Callable
 
 import numpy as np
 from flwr.common import (
@@ -24,18 +24,15 @@ class Flash(BasicFedAvg):
         min_fit_clients: int = 2,
         min_evaluate_clients: int = 2,
         min_available_clients: int = 2,
-        evaluate_fn: Optional[
-            Callable[
-                [int, NDArrays, Dict[str, Scalar]],
-                Optional[Tuple[float, Dict[str, Scalar]]],
-            ]
-        ] = None,
-        on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
-        on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
+        evaluate_fn: (
+            Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None
+        ) = None,
+        on_fit_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
+        on_evaluate_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
         initial_parameters: Parameters,
-        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
+        evaluate_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         eta: float = 1e-1,
         eta_l: float = 1e-1,
         beta_1: float = 0.9,
@@ -59,20 +56,20 @@ class Flash(BasicFedAvg):
                 Minimum number of clients used during validation. Defaults to 2.
             min_available_clients : int, optional
                 Minimum number of total clients in the system. Defaults to 2.
-            evaluate_fn : Optional[Callable[[int, NDArrays, Dict[str, Scalar]],
-                          Optional[Tuple[float, Dict[str, Scalar]]]]]
+            evaluate_fn : Callable[[int, NDArrays, dict[str, Scalar] | None,
+                          tuple[float, dict[str, Scalar]]]] | None
                 Optional function used for validation. Defaults to None.
-            on_fit_config_fn : Callable[[int], Dict[str, Scalar]], optional
+            on_fit_config_fn : Callable[[int], dict[str, Scalar]], optional
                 Function used to configure training. Defaults to None.
-            on_evaluate_config_fn : Callable[[int], Dict[str, Scalar]], optional
+            on_evaluate_config_fn : Callable[[int], dict[str, Scalar]], optional
                 Function used to configure validation. Defaults to None.
             accept_failures : bool, optional
                 Whether or not accept rounds containing failures. Defaults to True.
             initial_parameters : Parameters
                 Initial global model parameters.
-            fit_metrics_aggregation_fn : Optional[MetricsAggregationFn]
+            fit_metrics_aggregation_fn : MetricsAggregationFn | None
                 Metrics aggregation function, optional.
-            evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn]
+            evaluate_metrics_aggregation_fn: MetricsAggregationFn | None
                 Metrics aggregation function, optional.
             eta : float, optional
                 Server-side learning rate. Defaults to 1e-1.
@@ -145,9 +142,9 @@ class Flash(BasicFedAvg):
     def aggregate_fit(
         self,
         server_round: int,
-        results: List[Tuple[ClientProxy, FitRes]],
-        failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-    ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
+        results: list[tuple[ClientProxy, FitRes]],
+        failures: list[tuple[ClientProxy, FitRes] | BaseException],
+    ) -> tuple[Parameters | None, dict[str, Scalar]]:
         """Aggregate fit results using the Flash method."""
 
         fedavg_parameters_aggregated, metrics_aggregated = super().aggregate_fit(

@@ -2,7 +2,7 @@ import argparse
 import os
 from functools import partial
 from logging import INFO
-from typing import Any, Dict
+from typing import Any
 
 import flwr as fl
 from flwr.common.logger import log
@@ -37,7 +37,7 @@ def fit_config(
 
 
 def main(
-    config: Dict[str, Any],
+    config: dict[str, Any],
     server_address: str,
     checkpoint_stub: str,
     run_name: str,

@@ -1,8 +1,8 @@
 import argparse
 import os
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -35,10 +35,10 @@ class CifarFedProxClient(FedProxClient):
         learning_rate: float,
         heterogeneity_level: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        client_name: Optional[str] = None,
+        client_name: str | None = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -56,7 +56,7 @@ class CifarFedProxClient(FedProxClient):
 
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         train_loader, val_loader, _ = get_preprocessed_data(
             self.data_path, self.client_number, batch_size, self.heterogeneity_level

@@ -1,6 +1,6 @@
 """Base Class for Reporters.
 
-Super simple for now but keeping it in a seperate file in case we add more base methods.
+Super simple for now but keeping it in a separate file in case we add more base methods.
 """
 
 from typing import Any

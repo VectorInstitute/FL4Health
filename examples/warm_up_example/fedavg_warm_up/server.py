@@ -1,7 +1,7 @@
 import argparse
 from functools import partial
 from logging import INFO
-from typing import Any, Dict, Optional
+from typing import Any
 
 import flwr as fl
 from flwr.common.logger import log
@@ -26,8 +26,8 @@ def fit_config(
     group: str,
     entity: str,
     current_round: int,
-    local_epochs: Optional[int] = None,
-    local_steps: Optional[int] = None,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
 ) -> Config:
     return {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
@@ -40,7 +40,7 @@ def fit_config(
     }
 
 
-def main(config: Dict[str, Any], server_address: str) -> None:
+def main(config: dict[str, Any], server_address: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,

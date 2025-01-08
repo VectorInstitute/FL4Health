@@ -1,11 +1,11 @@
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Sequence, Union
 
 import pandas as pd
 import torch
 from flwr.common.logger import log
-from flwr.common.typing import Config, NDArray, Optional, Scalar
+from flwr.common.typing import Config, NDArray, Scalar
 from sklearn.pipeline import Pipeline
 
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
@@ -26,12 +26,12 @@ class TabularDataClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         id_column: str,
-        targets: Union[str, List[str]],
+        targets: str | list[str],
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        client_name: Optional[str] = None,
+        client_name: str | None = None,
     ) -> None:
         """
         Client to facilitate federated feature space alignment, specifically for tabular data, and then perform
@@ -44,11 +44,11 @@ class TabularDataClient(BasicClient):
                 'cuda'
             id_column (str): ID column. This is required for tabular encoding in cyclops, which we leverage. It should
                 be unique per row, but need not necessarily be a meaningful identifier (i.e. could be row number)
-            targets (Union[str, List[str]]): The target column or columns name. This allows for multiple targets to
+            targets (str | list[str]): The target column or columns name. This allows for multiple targets to
                 be specified if desired.
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpoint_and_state_module (Optional[ClientCheckpointAndStateModule], optional): A module meant to handle
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
                 No checkpointing (state or model) is done if not provided. Defaults to None.
@@ -56,7 +56,7 @@ class TabularDataClient(BasicClient):
                 should send data to. Defaults to None.
             progress_bar (bool, optional): Whether or not to display a progress bar during client training and
                 validation. Uses tqdm. Defaults to False
-            client_name (Optional[str], optional): An optional client name that uniquely identifies a client.
+            client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
         """
@@ -80,7 +80,7 @@ class TabularDataClient(BasicClient):
         # The aligned data and targets, which are used to construct dataloaders.
         self.aligned_features: NDArray
         self.aligned_targets: NDArray
-        self.feature_specific_pipelines: Dict[str, Pipeline] = {}
+        self.feature_specific_pipelines: dict[str, Pipeline] = {}
 
     def setup_client(self, config: Config) -> None:
         """
@@ -143,7 +143,7 @@ class TabularDataClient(BasicClient):
         """
         raise NotImplementedError
 
-    def get_properties(self, config: Config) -> Dict[str, Scalar]:
+    def get_properties(self, config: Config) -> dict[str, Scalar]:
         """
         Return properties of client to be sent to the server.
         Depending on whether the server has communicated the information

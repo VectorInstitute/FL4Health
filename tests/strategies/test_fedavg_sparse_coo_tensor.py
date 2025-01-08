@@ -1,5 +1,3 @@
-from typing import List, Tuple
-
 import numpy as np
 import torch
 from flwr.common import NDArray, NDArrays
@@ -13,7 +11,7 @@ client_train_sizes = [25, 75, 100]
 total_train_size = sum(client_train_sizes)
 
 
-def create_coo_tensor_diagonal(n: int, all_ones: bool) -> Tuple[NDArray, NDArray, NDArray]:
+def create_coo_tensor_diagonal(n: int, all_ones: bool) -> tuple[NDArray, NDArray, NDArray]:
     if all_ones:
         parameters = np.array([1 for _ in range(1, n + 1)])
     else:
@@ -25,8 +23,8 @@ def create_coo_tensor_diagonal(n: int, all_ones: bool) -> Tuple[NDArray, NDArray
 
 
 def create_client_parameters(
-    num_tensors: int, sizes: List[int], all_ones_lst: List[bool]
-) -> Tuple[NDArrays, NDArrays, NDArrays]:
+    num_tensors: int, sizes: list[int], all_ones_lst: list[bool]
+) -> tuple[NDArrays, NDArrays, NDArrays]:
     assert len(sizes) == num_tensors and len(sizes) == len(all_ones_lst)
     client_parameters = []
     client_indices = []

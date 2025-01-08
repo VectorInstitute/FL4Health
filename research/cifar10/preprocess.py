@@ -2,7 +2,6 @@ import argparse
 import os
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 import numpy as np
 import torch
@@ -18,7 +17,7 @@ from fl4health.utils.random import set_all_random_seeds
 
 def get_preprocessed_data(
     dataset_dir: Path, client_num: int, batch_size: int, beta: float
-) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
+) -> tuple[DataLoader, DataLoader, dict[str, int]]:
     transform = transforms.Compose(
         [
             ToNumpy(),
@@ -58,7 +57,7 @@ def get_preprocessed_data(
 
 def get_test_preprocessed_data(
     dataset_dir: Path, client_num: int, batch_size: int, beta: float
-) -> Tuple[DataLoader, Dict[str, int]]:
+) -> tuple[DataLoader, dict[str, int]]:
     transform = transforms.Compose(
         [
             ToNumpy(),
@@ -82,7 +81,7 @@ def get_test_preprocessed_data(
 
 def preprocess_data(
     dataset_dir: Path, num_clients: int, beta: float
-) -> Tuple[List[TensorDataset], List[TensorDataset], List[TensorDataset]]:
+) -> tuple[list[TensorDataset], list[TensorDataset], list[TensorDataset]]:
     # Get raw data
     data, targets = get_cifar10_data_and_target_tensors(dataset_dir, True)
 
@@ -119,7 +118,7 @@ def preprocess_data(
 
 
 def save_preprocessed_data(
-    save_dataset_dir: Path, partitioned_datasets: List[TensorDataset], beta: float, mode: str
+    save_dataset_dir: Path, partitioned_datasets: list[TensorDataset], beta: float, mode: str
 ) -> None:
     save_dir_path = f"{save_dataset_dir}/beta_{beta}"
     os.makedirs(save_dir_path, exist_ok=True)

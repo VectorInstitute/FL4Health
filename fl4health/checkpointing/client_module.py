@@ -1,6 +1,7 @@
+from collections.abc import Sequence
 from enum import Enum
 from logging import INFO
-from typing import Any, Dict, Sequence, Union
+from typing import Any
 
 import torch.nn as nn
 from flwr.common.logger import log
@@ -8,7 +9,7 @@ from flwr.common.typing import Scalar
 
 from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer, TorchModuleCheckpointer
 
-ModelCheckpointers = Union[TorchModuleCheckpointer, Sequence[TorchModuleCheckpointer]] | None
+ModelCheckpointers = TorchModuleCheckpointer | Sequence[TorchModuleCheckpointer] | None
 
 
 class CheckpointMode(Enum):
@@ -84,7 +85,7 @@ class ClientCheckpointAndStateModule:
             )
 
     def maybe_checkpoint(
-        self, model: nn.Module, loss: float, metrics: Dict[str, Scalar], mode: CheckpointMode
+        self, model: nn.Module, loss: float, metrics: dict[str, Scalar], mode: CheckpointMode
     ) -> None:
         """
         Performs model checkpointing for a particular mode (either pre- or post-aggregation) if any checkpointers are
@@ -95,7 +96,7 @@ class ClientCheckpointAndStateModule:
             model (nn.Module): The model that might be checkpointed by the checkpointers.
             loss (float): The metric value obtained by the provided model. Used by the checkpointer(s) to decide
                 whether to checkpoint the model.
-            metrics (Dict[str, Scalar]): The metrics obtained by the provided model. Potentially used by checkpointer
+            metrics (dict[str, Scalar]): The metrics obtained by the provided model. Potentially used by checkpointer
                 to decide whether to checkpoint the model.
             mode (CheckpointMode): Determines which of the types of checkpointers to use. Currently, the only modes
                 available are pre- and post-aggregation.
@@ -118,7 +119,7 @@ class ClientCheckpointAndStateModule:
         else:
             raise ValueError(f"Unrecognized mode for checkpointing: {str(mode)}")
 
-    def save_state(self, state_checkpoint_name: str, state: Dict[str, Any]) -> None:
+    def save_state(self, state_checkpoint_name: str, state: dict[str, Any]) -> None:
         """
         This function is meant to facilitate saving state required to restart an FL process on the client side. This
         function will simply save whatever information is passed in the state variable using the file name in
@@ -127,7 +128,7 @@ class ClientCheckpointAndStateModule:
         Args:
             state_checkpoint_name (str): Name of the state checkpoint file. The checkpointer itself will have a
                 directory to which state will be saved.
-            state (Dict[str, Any]): State to be saved so that training might be resumed on the client if federated
+            state (dict[str, Any]): State to be saved so that training might be resumed on the client if federated
                 training is interrupted. For example, this might contain things like optimizer states, learning rate
                 scheduler states, etc.
 
@@ -140,7 +141,7 @@ class ClientCheckpointAndStateModule:
         else:
             raise ValueError("Attempting to save state but no state checkpointer is specified")
 
-    def maybe_load_state(self, state_checkpoint_name: str) -> Dict[str, Any] | None:
+    def maybe_load_state(self, state_checkpoint_name: str) -> dict[str, Any] | None:
         """
         This function facilitates loading of any pre-existing state (with the name state_checkpoint_name) in the
         directory of the state_checkpointer. If the state already exists at the proper path, the state is loaded
@@ -154,7 +155,7 @@ class ClientCheckpointAndStateModule:
             ValueError: Throws an error if this function is called, but no state checkpointer has been provided
 
         Returns:
-            Dict[str, Any] | None: If the state checkpoint properly exists and is loaded correctly, this dictionary
+            dict[str, Any] | None: If the state checkpoint properly exists and is loaded correctly, this dictionary
                 carries that state. Otherwise, we return a None (or throw an exception).
         """
 

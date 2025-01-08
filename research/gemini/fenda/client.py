@@ -2,7 +2,6 @@ import argparse
 import os
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 import flwr as fl
 import torch
@@ -30,8 +29,8 @@ class GeminiFendaClient(NumpyFlClient):
     def __init__(
         self,
         data_path: Path,
-        metrics: List[Metric],
-        hospitals_id: List[str],
+        metrics: list[Metric],
+        hospitals_id: list[str],
         device: torch.device,
         learning_task: str,
         learning_rate: float,
@@ -79,7 +78,7 @@ class GeminiFendaClient(NumpyFlClient):
 
         super().setup_client(config)
 
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+    def fit(self, parameters: NDArrays, config: Config) -> tuple[NDArrays, int, dict[str, Scalar]]:
         if not self.initialized:
             self.setup_client(config)
 
@@ -98,7 +97,7 @@ class GeminiFendaClient(NumpyFlClient):
             metric_values,
         )
 
-    def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
+    def evaluate(self, parameters: NDArrays, config: Config) -> tuple[float, int, dict[str, Scalar]]:
         if not self.initialized:
             self.setup_client(config)
 
@@ -119,7 +118,7 @@ class GeminiFendaClient(NumpyFlClient):
         current_server_round: int,
         epochs: int,
         meter: Meter,
-    ) -> Dict[str, Scalar]:
+    ) -> dict[str, Scalar]:
         self.model.train()
         for local_epoch in range(epochs):
             meter.clear()
@@ -140,7 +139,7 @@ class GeminiFendaClient(NumpyFlClient):
         # Return final training metrics
         return metrics
 
-    def validate(self, current_server_round: int, meter: Meter) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, current_server_round: int, meter: Meter) -> tuple[float, dict[str, Scalar]]:
         self.model.eval()
         val_loss_sum = 0
         with torch.no_grad():
