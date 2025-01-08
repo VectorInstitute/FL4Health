@@ -8,7 +8,8 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.ae_examples.cvae_examples.conv_cvae_example.models import ConvConditionalDecoder, ConvConditionalEncoder
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
+from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.model_bases.autoencoders_base import ConditionalVae
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.base_server import FlServer
@@ -48,7 +49,10 @@ def main(config: Dict[str, Any]) -> None:
 
     # To facilitate checkpointing
     parameter_exchanger = FullParameterExchanger()
-    checkpointer = BestLossTorchCheckpointer(config["checkpoint_path"], model_checkpoint_name)
+    checkpointer = BestLossTorchModuleCheckpointer(config["checkpoint_path"], model_checkpoint_name)
+    checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
+        model=model, parameter_exchanger=parameter_exchanger, model_checkpointers=checkpointer
+    )
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -67,10 +71,8 @@ def main(config: Dict[str, Any]) -> None:
     server = FlServer(
         client_manager=SimpleClientManager(),
         fl_config=config,
-        parameter_exchanger=parameter_exchanger,
-        model=model,
         strategy=strategy,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
     )
 
     fl.server.start_server(

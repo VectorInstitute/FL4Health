@@ -1,6 +1,6 @@
 import datetime
 from collections.abc import Sequence
-from logging import INFO, WARNING
+from logging import INFO
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Union
 
@@ -14,8 +14,7 @@ from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import PerRoundCheckpointer
-from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointModule
+from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointAndStateModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
@@ -42,10 +41,9 @@ class BasicClient(NumPyClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        intermediate_client_state_dir: Optional[Path] = None,
         client_name: Optional[str] = None,
     ) -> None:
         """
@@ -60,40 +58,33 @@ class BasicClient(NumPyClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
-                do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
-                None.
-            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
-                reporters which the client should send data to.
-            progress_bar (bool): Whether or not to display a progress bar
-                during client training and validation. Uses tqdm. Defaults to
-                False
-            intermediate_client_state_dir (Optional[Path]): An optional path to store per round
-                checkpoints.
-            client_name (str): An optional client name that uniquely identifies a client.
-                If not passed, a hash is randomly generated.
+            checkpoint_and_state_module (Optional[ClientCheckpointAndStateModule], optional): A module meant to handle
+                both checkpointing and state saving. The module, and its underlying model and state checkpointing
+                components will determine when and how to do checkpointing during client-side training.
+                No checkpointing (state or model) is done if not provided. Defaults to None.
+            reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
+                should send data to. Defaults to None.
+            progress_bar (bool, optional): Whether or not to display a progress bar during client training and
+                validation. Uses tqdm. Defaults to False
+            client_name (Optional[str], optional): An optional client name that uniquely identifies a client.
+                If not passed, a hash is randomly generated. Client state will use this as part of its state file
+                name. Defaults to None.
         """
 
         self.data_path = data_path
         self.device = device
         self.metrics = metrics
-        self.checkpointer = checkpointer
         self.progress_bar = progress_bar
         self.client_name = client_name if client_name is not None else generate_hash()
+        self.state_checkpoint_name = f"client_{self.client_name}_state.pt"
 
-        self.per_round_checkpointer: Union[None, PerRoundCheckpointer]
-
-        if intermediate_client_state_dir is not None:
-            log(
-                WARNING,
-                "intermediate_client_state_dir is not None. Creating PerRoundCheckpointer. This functionality is "
-                "still experimental and only supported with the base FlServer and NnunetServers at the moment",
-            )
-            self.per_round_checkpointer = PerRoundCheckpointer(
-                intermediate_client_state_dir, Path(f"client_{self.client_name}.pt")
-            )
+        if checkpoint_and_state_module is not None:
+            self.checkpoint_and_state_module = checkpoint_and_state_module
         else:
-            self.per_round_checkpointer = None
+            # Define a default module that does nothing.
+            self.checkpoint_and_state_module = ClientCheckpointAndStateModule(
+                pre_aggregation=None, post_aggregation=None, state_checkpointer=None
+            )
 
         # Initialize reporters with client information.
         self.reports_manager = ReportsManager(reporters)
@@ -140,8 +131,7 @@ class BasicClient(NumPyClient):
             loss (float): validation loss to potentially be used for checkpointing
             metrics (dict[str, float]): validation metrics to potentially be used for checkpointing
         """
-        if self.checkpointer:
-            self.checkpointer.maybe_checkpoint(self.model, loss, metrics, checkpoint_mode)
+        self.checkpoint_and_state_module.maybe_checkpoint(self.model, loss, metrics, checkpoint_mode)
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
@@ -283,10 +273,15 @@ class BasicClient(NumPyClient):
         if not self.initialized:
             self.setup_client(config)
 
-            # If per_round_checkpointer not None and checkpoint exists load it and set attributes.
-            # Model not updated because FL restarted from most recent FL round (redo preempted round)
-            if self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists():
-                self.load_client_state()
+            if self.checkpoint_and_state_module.state_checkpointer is not None:
+                # If this is the first time the client is being setup, we also attempt to load any existing state
+                # If no state exists, we assume this is a fresh run. State is useful, for example, in restarting FL
+                # training that was interrupted or failed part way through.
+                state_load_success = self._load_client_state()
+                if state_load_success:
+                    log(INFO, "Successfully loaded client state.")
+                else:
+                    log(INFO, "Client state was not loaded.")
 
         self.set_parameters(parameters, config, fitting_round=True)
 
@@ -335,10 +330,9 @@ class BasicClient(NumPyClient):
             current_server_round,
         )
 
-        # After local client training has finished, checkpoint client state
-        # if per_round_checkpointer is not None
-        if self.per_round_checkpointer is not None:
-            self.save_client_state()
+        # After local client training has finished, checkpoint client state if a state checkpointer is defined
+        if self.checkpoint_and_state_module.state_checkpointer is not None:
+            self._save_client_state()
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
@@ -413,7 +407,8 @@ class BasicClient(NumPyClient):
             bool: Whether to perform an evaluation on the client validation set after fitting.
         """
         pre_aggregation_checkpointing_enabled = (
-            self.checkpointer is not None and self.checkpointer.pre_aggregation is not None
+            self.checkpoint_and_state_module is not None
+            and self.checkpoint_and_state_module.pre_aggregation is not None
         )
         return evaluate_after_fit or pre_aggregation_checkpointing_enabled
 
@@ -1223,15 +1218,13 @@ class BasicClient(NumPyClient):
         """
         pass
 
-    def save_client_state(self) -> None:
+    def _save_client_state(self) -> None:
         """
         Saves checkpoint dict consisting of client name, total steps, lr schedulers,
-            metrics reporter and optimizers state. Method can be overridden to augment saved checkpointed state.
+        metrics reporter and optimizers state. Method can be overridden to augment saved checkpointed state.
         """
 
-        assert self.per_round_checkpointer is not None
-
-        ckpt = {
+        state = {
             "lr_schedulers_state": {key: scheduler.state_dict() for key, scheduler in self.lr_schedulers.items()},
             "total_steps": self.total_steps,
             "client_name": self.client_name,
@@ -1239,34 +1232,30 @@ class BasicClient(NumPyClient):
             "optimizers_state": {key: optimizer.state_dict()["state"] for key, optimizer in self.optimizers.items()},
         }
 
-        self.per_round_checkpointer.save_checkpoint(ckpt)
+        self.checkpoint_and_state_module.save_state(self.state_checkpoint_name, state)
 
-        log(
-            INFO,
-            f"Saving client state to checkpoint at {self.per_round_checkpointer.checkpoint_path}",
-        )
-
-    def load_client_state(self) -> None:
+    def _load_client_state(self) -> bool:
         """
         Load checkpoint dict consisting of client name, total steps, lr schedulers, metrics
-            reporter and optimizers state. Method can be overridden to augment loaded checkpointed state.
+        reporter and optimizers state. Method can be overridden to augment loaded checkpointed state.
         """
-        assert self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists()
+        client_state = self.checkpoint_and_state_module.maybe_load_state(self.state_checkpoint_name)
 
-        ckpt = self.per_round_checkpointer.load_checkpoint()
+        if client_state is None:
+            return False
 
-        narrow_dict_type_and_set_attribute(self, ckpt, "client_name", "client_name", str)
-        narrow_dict_type_and_set_attribute(self, ckpt, "total_steps", "total_steps", int)
-        narrow_dict_type_and_set_attribute(self, ckpt, "reports_manager", "reports_manager", ReportsManager)
+        narrow_dict_type_and_set_attribute(self, client_state, "client_name", "client_name", str)
+        narrow_dict_type_and_set_attribute(self, client_state, "total_steps", "total_steps", int)
+        narrow_dict_type_and_set_attribute(self, client_state, "reports_manager", "reports_manager", ReportsManager)
 
-        assert "lr_schedulers_state" in ckpt and isinstance(ckpt["lr_schedulers_state"], dict)
-        assert "optimizers_state" in ckpt and isinstance(ckpt["optimizers_state"], dict)
+        assert "lr_schedulers_state" in client_state and isinstance(client_state["lr_schedulers_state"], dict)
+        assert "optimizers_state" in client_state and isinstance(client_state["optimizers_state"], dict)
 
         # Optimizer is updated in setup_client to reference model weights from server
         # Thus, only optimizer state (per parameter values such as momentum)
         # should be loaded
         for key, optimizer in self.optimizers.items():
-            optimizer_state = ckpt["optimizers_state"][key]
+            optimizer_state = client_state["optimizers_state"][key]
             optimizer_state_dict = optimizer.state_dict()
             optimizer_state_dict["state"] = optimizer_state
             optimizer.load_state_dict(optimizer_state_dict)
@@ -1274,4 +1263,6 @@ class BasicClient(NumPyClient):
         # Schedulers initialized in setup_client to reference correct optimizers
         # Here we load in all other aspects of the scheduler state
         for key in self.lr_schedulers:
-            self.lr_schedulers[key].load_state_dict(ckpt["lr_schedulers_state"][key])
+            self.lr_schedulers[key].load_state_dict(client_state["lr_schedulers_state"][key])
+
+        return True

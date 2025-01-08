@@ -14,8 +14,8 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from transformers import BertForSequenceClassification
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import TorchInputType
 from fl4health.clients.partial_weight_exchange_client import PartialWeightExchangeClient
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -37,8 +37,10 @@ class BertSparseTensorExchangeClient(PartialWeightExchangeClient):
         learning_rate: float,
         sparsity_level: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
         reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: Optional[str] = None,
         store_initial_model: bool = True,
     ) -> None:
         super().__init__(
@@ -46,8 +48,10 @@ class BertSparseTensorExchangeClient(PartialWeightExchangeClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
             reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
             store_initial_model=store_initial_model,
         )
         self.sparsity_level = sparsity_level
@@ -149,7 +153,9 @@ if __name__ == "__main__":
     # Checkpointing
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = ClientCheckpointModule(post_aggregation=BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name))
+    checkpoint_and_state_module = ClientCheckpointAndStateModule(
+        post_aggregation=BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
+    )
 
     client = BertSparseTensorExchangeClient(
         data_path,
@@ -157,7 +163,7 @@ if __name__ == "__main__":
         device,
         learning_rate=args.learning_rate,
         sparsity_level=args.sparsity_level,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
     )
     # grpc_max_message_length is reset here so the entire model can be exchanged between the server and clients.
     # Note that the server must be started with the same grpc_max_message_length. Otherwise communication

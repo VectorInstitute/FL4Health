@@ -1,15 +1,18 @@
 from collections.abc import Sequence
 from logging import DEBUG, ERROR, INFO
-from typing import Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple
 
 from flwr.common import Parameters, ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.logger import log
-from flwr.common.typing import Config
+from flwr.common.typing import Config, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
 from flwr.server.server import fit_clients
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.server_module import (
+    DpScaffoldServerCheckpointAndStateModule,
+    ScaffoldServerCheckpointAndStateModule,
+)
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.servers.base_server import FlServer
 from fl4health.servers.instance_level_dp_server import InstanceLevelDpServer
@@ -22,10 +25,12 @@ class ScaffoldServer(FlServer):
         client_manager: ClientManager,
         fl_config: Config,
         strategy: Scaffold,
-        checkpointer: Optional[TorchCheckpointer] = None,
         reporters: Sequence[BaseReporter] | None = None,
-        warm_start: bool = False,
+        checkpoint_and_state_module: ScaffoldServerCheckpointAndStateModule | None = None,
+        on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        server_name: str | None = None,
         accept_failures: bool = True,
+        warm_start: bool = False,
     ) -> None:
         """
         Custom FL Server for scaffold algorithm to handle warm initialization of control variates as specified in
@@ -41,26 +46,41 @@ class ScaffoldServer(FlServer):
             strategy (Scaffold): The aggregation strategy to be used by the server to handle client updates and
                 other information potentially sent by the participating clients. This strategy must be of SCAFFOLD
                 type.
-            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform server
-                side checkpointing based on some criteria. If none, then no server-side checkpointing is performed.
-                Defaults to None.
-            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the server should
-                send data to before and after each round.
-            warm_start (bool, optional): Whether or not to initialize control variates of each client as local
-                gradients. The clients will perform a training pass (without updating the weights) in order to provide
-                a "warm" estimate of the SCAFFOLD control variates. If false, variates are initialized to 0.
-                Defaults to False.
+            reporters (Sequence[BaseReporter] | None, optional): sequence of FL4Health reporters which the server
+                should send data to before and after each round. Defaults to None.
+            checkpoint_and_state_module (ScaffoldServerCheckpointAndStateModule | None, optional): This module is used
+                to handle both model checkpointing and state checkpointing. The former is aimed at saving model
+                artifacts to be used or evaluated after training. The latter is used to preserve training state
+                (including models) such that if FL training is interrupted, the process may be restarted. If no
+                module is provided, no checkpointing or state preservation will happen. Defaults to None.
+            on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional): Function used to
+                configure how one asks a client to provide parameters from which to initialize all other clients by
+                providing a Config dictionary. If this is none, then a blank config is sent with the parameter request
+                (which is default behavior for flower servers). Defaults to None.
+            server_name (str | None, optional): An optional string name to uniquely identify server. This name is also
+                used as part of any state checkpointing done by the server. Defaults to None.
             accept_failures (bool, optional): Determines whether the server should accept failures during training or
                 evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
                 and throw an exception. Defaults to True.
+            warm_start (bool, optional):  Whether or not to initialize control variates of each client as local
+                gradients. The clients will perform a training pass (without updating the weights) in order to provide
+                a "warm" estimate of the SCAFFOLD control variates. If false, variates are initialized to 0.
+                Defaults to False.
         """
+        if checkpoint_and_state_module is not None:
+            assert isinstance(
+                checkpoint_and_state_module,
+                ScaffoldServerCheckpointAndStateModule,
+            ), "checkpoint_and_state_module must have type ScaffoldServerCheckpointAndStateModule"
         FlServer.__init__(
             self,
             client_manager=client_manager,
             fl_config=fl_config,
             strategy=strategy,
-            checkpointer=checkpointer,
             reporters=reporters,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            on_init_parameters_config_fn=on_init_parameters_config_fn,
+            server_name=server_name,
             accept_failures=accept_failures,
         )
         self.warm_start = warm_start
@@ -172,9 +192,12 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
         local_epochs: Optional[int] = None,
         local_steps: Optional[int] = None,
         delta: Optional[float] = None,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpoint_and_state_module: DpScaffoldServerCheckpointAndStateModule | None = None,
         warm_start: bool = False,
         reporters: Sequence[BaseReporter] | None = None,
+        on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        server_name: str | None = None,
+        accept_failures: bool = True,
     ) -> None:
         """
         Custom FL Server for Instance Level Differentially Private Scaffold algorithm as specified in
@@ -183,6 +206,10 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
+            fl_config (Config): This should be the configuration that was used to setup the federated training.
+                In most cases it should be the "source of truth" for how FL training/evaluation should proceed. For
+                example, the config used to produce the on_fit_config_fn and on_evaluate_config_fn for the strategy.
+                NOTE: This config is DISTINCT from the Flwr server config, which is extremely minimal.
             noise_multiplier (int): The amount of Gaussian noise to be added to the per sample gradient during
                 DP-SGD.
             batch_size (int): The batch size to be used in training on the client-side. Used in privacy accounting.
@@ -196,17 +223,26 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
             strategy (Scaffold): The aggregation strategy to be used by the server to handle client updates and
                 other information potentially sent by the participating clients. This strategy must be of SCAFFOLD
                 type.
-            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
-                server side checkpointing based on some criteria. If none, then no server-side checkpointing is
-                performed. Defaults to None.
-            warm_start (bool, optional): Whether or not to initialize control variates of each client as
-                local gradients. The clients will perform a training pass (without updating the weights) in order to
-                provide a "warm" estimate of the SCAFFOLD control variates. If false, variates are initialized to 0.
+            checkpoint_and_state_module (DpScaffoldServerCheckpointAndStateModule | None, optional): This module is
+                used to handle both model checkpointing and state checkpointing. The former is aimed at saving model
+                artifacts to be used or evaluated after training. The latter is used to preserve training state
+                (including models) such that if FL training is interrupted, the process may be restarted. If no
+                module is provided, no checkpointing or state preservation will happen. Defaults to None.
+            warm_start (bool, optional): Whether or not to initialize control variates of each client as local
+                gradients. The clients will perform a training pass (without updating the weights) in order to provide
+                a "warm" estimate of the SCAFFOLD control variates. If false, variates are initialized to 0.
                 Defaults to False.
             delta (Optional[float], optional): The delta value for epsilon-delta DP accounting. If None it defaults to
                 being 1/total_samples in the FL run. Defaults to None.
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
                 reporters which the client should send data to.
+            on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional): Function used to
+                configure how one asks a client to provide parameters from which to initialize all other clients by
+                providing a Config dictionary. If this is none, then a blank config is sent with the parameter request
+                (which is default behavior for flower servers). Defaults to None.
+            server_name (str | None, optional): An optional string name to uniquely identify server. This name is also
+                used as part of any state checkpointing done by the server. Defaults to None.
+            accept_failures (bool, optional): Determines whether the server should accept
         """
         # Require the strategy to be an  OpacusStrategy to handle the Opacus model conversion etc.
         assert isinstance(
@@ -217,21 +253,27 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
             client_manager=client_manager,
             fl_config=fl_config,
             strategy=strategy,
-            checkpointer=checkpointer,
             warm_start=warm_start,
             reporters=reporters,
+            on_init_parameters_config_fn=on_init_parameters_config_fn,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            server_name=server_name,
+            accept_failures=accept_failures,
         )
         InstanceLevelDpServer.__init__(
             self,
             client_manager=client_manager,
             fl_config=fl_config,
-            strategy=strategy,
             noise_multiplier=noise_multiplier,
+            num_server_rounds=num_server_rounds,
+            batch_size=batch_size,
+            strategy=strategy,
             local_epochs=local_epochs,
             local_steps=local_steps,
-            batch_size=batch_size,
             delta=delta,
-            num_server_rounds=num_server_rounds,
+            on_init_parameters_config_fn=on_init_parameters_config_fn,
+            server_name=server_name,
+            accept_failures=accept_failures,
         )
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:

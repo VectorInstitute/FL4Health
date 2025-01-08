@@ -20,6 +20,12 @@ class FedPCAClient(NumPyClient):
     def __init__(self, data_path: Path, device: torch.device, model_save_path: Path) -> None:
         """
         Client that facilitates the execution of federated PCA.
+
+        Args:
+            data_path (Path): path to the data to be used to load the data for client-side training
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
+                'cuda'
+            model_save_path (Path): Path to save the PCA components for use later, perhaps in dimensionality reduction
         """
         self.client_name = self.generate_hash()
         self.model: PcaModule

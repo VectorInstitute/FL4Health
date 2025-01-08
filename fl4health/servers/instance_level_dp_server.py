@@ -1,19 +1,18 @@
 from collections.abc import Sequence
 from logging import INFO
 from math import ceil
-from typing import List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
-import torch.nn as nn
 from flwr.common.logger import log
-from flwr.common.typing import Config
+from flwr.common.typing import Config, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
 
-from fl4health.checkpointing.opacus_checkpointer import OpacusCheckpointer
+from fl4health.checkpointing.server_module import OpacusServerCheckpointAndStateModule
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.privacy.fl_accountants import FlInstanceLevelAccountant
 from fl4health.reporting.base_reporter import BaseReporter
-from fl4health.servers.base_server import ExchangerType, FlServer
+from fl4health.servers.base_server import FlServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 
@@ -29,11 +28,11 @@ class InstanceLevelDpServer(FlServer):
         strategy: BasicFedAvg,
         local_epochs: Optional[int] = None,
         local_steps: Optional[int] = None,
-        model: nn.Module | None = None,
-        checkpointer: Optional[OpacusCheckpointer] = None,
-        parameter_exchanger: ExchangerType | None = None,
+        checkpoint_and_state_module: OpacusServerCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         delta: Optional[float] = None,
+        on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        server_name: str | None = None,
         accept_failures: bool = True,
     ) -> None:
         """
@@ -47,46 +46,51 @@ class InstanceLevelDpServer(FlServer):
                 In most cases it should be the "source of truth" for how FL training/evaluation should proceed. For
                 example, the config used to produce the on_fit_config_fn and on_evaluate_config_fn for the strategy.
                 NOTE: This config is DISTINCT from the Flwr server config, which is extremely minimal.
-            noise_multiplier (int): The amount of Gaussian noise to be added to the per sample gradient during
+            noise_multiplier (float): The amount of Gaussian noise to be added to the per sample gradient during
                 DP-SGD.
             batch_size (int): The batch size to be used in training on the client-side. Used in privacy accounting.
             num_server_rounds (int): The number of server rounds to be done in FL training. Used in privacy accounting
+            strategy (BasicFedAvg): The aggregation strategy to be used by the server to handle
+                client updates and other information potentially sent by the participating clients. this must be an
+                OpacusBasicFedAvg strategy to ensure proper treatment of the model in the Opacus framework
             local_epochs (Optional[int], optional): Number of local epochs to be performed on the client-side. This is
                 used in privacy accounting. One of local_epochs or local_steps should be defined, but not both.
                 Defaults to None.
             local_steps (Optional[int], optional): Number of local steps to be performed on the client-side. This is
                 used in privacy accounting. One of local_epochs or local_steps should be defined, but not both.
                 Defaults to None.
-            strategy (OpacusBasicFedAvg): The aggregation strategy to be used by the server to handle
-                client updates and other information potentially sent by the participating clients. this must be an
-                OpacusBasicFedAvg strategy to ensure proper treatment of the model in the Opacus framework
-            model (Optional[nn.Module]): This is the torch model to be checkpointed. It will be hydrated by the
-                _hydrate_model_for_checkpointing function so that it has the proper weights to be saved. If no model
-                is defined and checkpointing is attempted an error will throw. Defaults to None.
-            checkpointer (Optional[OpacusCheckpointer], optional): To be provided if the server should perform
-                server side checkpointing based on some criteria. If none, then no server-side checkpointing is
-                performed. Defaults to None.
-            parameter_exchanger (Optional[ExchangerType], optional): A parameter exchanger used to facilitate
-                server-side model checkpointing if a checkpointer has been defined. If not provided then checkpointing
-                will not be done unless the _hydrate_model_for_checkpointing function is overridden. Because the
-                server only sees numpy arrays, the parameter exchanger is used to insert the numpy arrays into a
-                provided model. Defaults to None.
-            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+            checkpoint_and_state_module (OpacusServerCheckpointAndStateModule | None, optional): This module is used
+                to handle both model checkpointing and state checkpointing. The former is aimed at saving model
+                artifacts to be used or evaluated after training. The latter is used to preserve training state
+                (including models) such that if FL training is interrupted, the process may be restarted. If no
+                module is provided, no checkpointing or state preservation will happen. Defaults to None.
+            reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health
                 reporters which the client should send data to.
             delta (Optional[float], optional): The delta value for epsilon-delta DP accounting. If None it defaults to
                 being 1/total_samples in the FL run. Defaults to None.
+            on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional): Function used to
+                configure how one asks a client to provide parameters from which to initialize all other clients by
+                providing a Config dictionary. If this is none, then a blank config is sent with the parameter request
+                (which is default behavior for flower servers). Defaults to None.
+            server_name (str | None, optional): An optional string name to uniquely identify server. This name is also
+                used as part of any state checkpointing done by the server. Defaults to None.
             accept_failures (bool, optional): Determines whether the server should accept failures during training or
                 evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
                 and throw an exception. Defaults to True.
         """
+        if checkpoint_and_state_module is not None:
+            assert isinstance(
+                checkpoint_and_state_module,
+                OpacusServerCheckpointAndStateModule,
+            ), "checkpoint_and_state_module must have type OpacusServerCheckpointAndStateModule"
         super().__init__(
             client_manager=client_manager,
             fl_config=fl_config,
             strategy=strategy,
-            model=model,
-            checkpointer=checkpointer,
-            parameter_exchanger=parameter_exchanger,
+            checkpoint_and_state_module=checkpoint_and_state_module,
             reporters=reporters,
+            on_init_parameters_config_fn=on_init_parameters_config_fn,
+            server_name=server_name,
             accept_failures=accept_failures,
         )
 

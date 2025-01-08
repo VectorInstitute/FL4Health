@@ -5,7 +5,7 @@ import pytest
 import torch
 from flwr.common.typing import Scalar
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.checkpointing.opacus_checkpointer import (
     BestLossOpacusCheckpointer,
     LatestOpacusCheckpointer,
@@ -37,7 +37,7 @@ def test_save_and_load_best_loss_checkpoint(tmp_path: Path) -> None:
 
     # Should throw a not implemented error
     with pytest.raises(NotImplementedError):
-        _ = checkpointer.load_best_checkpoint()
+        _ = checkpointer.load_checkpoint()
 
     checkpointer.load_best_checkpoint_into_model(target_model)
 
@@ -64,7 +64,7 @@ def test_save_and_load_latest_checkpoint(tmp_path: Path) -> None:
 
     # Should throw a not implemented error
     with pytest.raises(NotImplementedError):
-        _ = checkpointer.load_best_checkpoint()
+        _ = checkpointer.load_checkpoint()
 
     checkpointer.load_best_checkpoint_into_model(target_model)
     assert isinstance(target_model, LinearTransform)
@@ -109,7 +109,7 @@ def test_save_and_load_function_checkpoint(tmp_path: Path) -> None:
 
     # Should throw a not implemented error
     with pytest.raises(NotImplementedError):
-        _ = opacus_checkpointer.load_best_checkpoint()
+        _ = opacus_checkpointer.load_checkpoint()
 
     opacus_checkpointer.load_best_checkpoint_into_model(target_model)
     assert isinstance(target_model, LinearTransform)
@@ -143,7 +143,7 @@ def test_fix_of_loss_stateless_model_exception(tmp_path: Path) -> None:
     model = create_opacus_model_via_functorch(model)
     opacus_target_model = convert_model_to_opacus_model(opacus_target_model)
 
-    torch_checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), checkpoint_name)
+    torch_checkpointer = BestLossTorchModuleCheckpointer(str(checkpoint_dir), checkpoint_name)
     # This should throw an error along the lines of
     # AttributeError: Can't pickle local object 'vmap.<locals>.wrapped'
     with pytest.raises(AttributeError) as attribute_exception:

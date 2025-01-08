@@ -64,7 +64,7 @@ class ModelMergeClient(NumPyClient):
     def setup_client(self, config: Config) -> None:
         """
         Sets up Merge Client by initializing model, dataloader and parameter exchanger
-            with user defined methods. Subsquently, sets initialized attribute to True.
+            with user defined methods. Subsequently, sets initialized attribute to True.
 
         Args:
             config (Config): The configuration from the server.
@@ -223,7 +223,7 @@ class ModelMergeClient(NumPyClient):
         Parameter exchange is assumed to always be full for model merging clients. However, this functionality
         may be overridden if a different exchanger is needed.
 
-        Used in non-standard way for ModelMergClient as set_parameters is only called for evaluate as
+        Used in non-standard way for ModelMergeClient as set_parameters is only called for evaluate as
             parameters should initially be set to the parameters in the nn.Module returned by get_model.
 
         Args:

@@ -29,7 +29,9 @@ class PersonalServer(FlServer):
     ) -> None:
         # Personal approaches don't train a "server" model. Rather, each client trains a client specific model with
         # some globally shared weights. So we don't checkpoint a global model
-        super().__init__(client_manager=client_manager, fl_config=fl_config, strategy=strategy, checkpointer=None)
+        super().__init__(
+            client_manager=client_manager, fl_config=fl_config, strategy=strategy, checkpoint_and_state_module=None
+        )
         self.best_aggregated_loss: Optional[float] = None
 
     def evaluate_round(
