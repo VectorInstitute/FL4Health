@@ -72,7 +72,7 @@ class SslTensorDataset(TensorDataset):
         transform: Callable | None = None,
         target_transform: Callable | None = None,
     ) -> None:
-        assert targets is not None, "SslTensorDataset targets must be None"
+        assert targets is None, "SslTensorDataset targets must be None"
 
         super().__init__(data, targets, transform, target_transform)
 

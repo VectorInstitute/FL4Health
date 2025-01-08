@@ -147,10 +147,11 @@ def main(config: dict[str, Any]) -> None:
         on_evaluate_config_fn=fit_config_fn,
         # Server side weight initialization
         initial_parameters=get_all_model_parameters(initial_model),
+        accept_failures=False,
     )
 
     client_manager = SimpleClientManager()
-    server = FlServer(client_manager=client_manager, fl_config=config, strategy=strategy)
+    server = FlServer(client_manager=client_manager, fl_config=config, strategy=strategy, accept_failures=False)
 
     fl.server.start_server(
         server_address=config["server_address"],
