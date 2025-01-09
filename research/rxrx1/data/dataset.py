@@ -1,6 +1,6 @@
 import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
 import pandas as pd
 import torch
@@ -10,7 +10,7 @@ from torchvision.transforms import ToTensor
 
 
 class Rxrx1Dataset(Dataset):
-    def __init__(self, metadata: pd.DataFrame, root: Path, dataset_type: str, transform: Optional[Callable] = None):
+    def __init__(self, metadata: pd.DataFrame, root: Path, dataset_type: str, transform: Callable | None = None):
         """
         Args:
             metadata (DataFrame): A DataFrame containing image metadata.

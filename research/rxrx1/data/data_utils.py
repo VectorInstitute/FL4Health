@@ -1,6 +1,5 @@
 from collections import defaultdict
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -32,7 +31,7 @@ def label_frequency(dataset: Rxrx1Dataset | Subset) -> None:
 
 
 def create_splits(
-    dataset: Rxrx1Dataset, seed: Optional[int] = None, train_fraction: float = 0.8
+    dataset: Rxrx1Dataset, seed: int | None = None, train_fraction: float = 0.8
 ) -> tuple[Subset, Subset]:
     """
     Splits the dataset into training and validation sets.
@@ -70,7 +69,7 @@ def create_splits(
 
 
 def load_rxrx1_data(
-    data_path: Path, client_num: int, batch_size: int, seed: Optional[int] = None, train_val_split: float = 0.8
+    data_path: Path, client_num: int, batch_size: int, seed: int | None = None, train_val_split: float = 0.8
 ) -> tuple[DataLoader, DataLoader, dict[str, int]]:
 
     # Read the CSV file

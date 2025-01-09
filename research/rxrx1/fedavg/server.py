@@ -2,7 +2,7 @@ import argparse
 import os
 from functools import partial
 from logging import INFO
-from typing import Any, Dict
+from typing import Any
 
 import flwr as fl
 from flwr.common.logger import log
@@ -11,7 +11,8 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 from torchvision import models
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
+from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.base_server import FlServer
 from fl4health.utils.config import load_config
@@ -36,7 +37,7 @@ def fit_config(
     }
 
 
-def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
+def main(config: dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -45,17 +46,22 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         config["n_server_rounds"],
         config["n_clients"],
     )
-    checkpoint_dir = os.path.join(checkpoint_stub, run_name)
-    best_checkpoint_name = "server_best_model.pkl"
-    last_checkpoint_name = "server_last_model.pkl"
-    checkpointer = [
-        BestLossTorchCheckpointer(checkpoint_dir, best_checkpoint_name),
-        LatestTorchCheckpointer(checkpoint_dir, last_checkpoint_name),
-    ]
-    client_manager = SimpleClientManager()
     # Initializing the model on the server side
     model = models.resnet18(pretrained=True)
     parameter_exchanger = FullParameterExchanger()
+    checkpoint_dir = os.path.join(checkpoint_stub, run_name)
+    best_checkpoint_name = "server_best_model.pkl"
+    last_checkpoint_name = "server_last_model.pkl"
+    checkpointers = [
+        BestLossTorchModuleCheckpointer(checkpoint_dir, best_checkpoint_name),
+        LatestTorchModuleCheckpointer(checkpoint_dir, last_checkpoint_name),
+    ]
+
+    checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
+        model=model, parameter_exchanger=parameter_exchanger, model_checkpointers=checkpointers
+    )
+
+    client_manager = SimpleClientManager()
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
         min_fit_clients=config["n_clients"],
@@ -72,10 +78,8 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     server = FlServer(
         client_manager=client_manager,
         fl_config=config,
-        parameter_exchanger=parameter_exchanger,
-        model=model,
         strategy=strategy,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
     )
 
     fl.server.start_server(
@@ -84,8 +88,8 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
 
-    assert isinstance(checkpointer[0], BestLossTorchCheckpointer)
-    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer[0].best_score}")
+    assert isinstance(checkpointers[0], BestLossTorchModuleCheckpointer)
+    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointers[0].best_score}")
 
     # Shutdown the server gracefully
     server.shutdown()
