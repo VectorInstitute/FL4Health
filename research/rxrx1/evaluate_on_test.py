@@ -74,7 +74,9 @@ def main(
                 meta_data = pd.concat([meta_data, test_loader.dataset.metadata])
             test_loader.dataset.metadata = meta_data
 
-        aggregated_test_loader = torch.utils.data.DataLoader(test_loader.dataset, batch_size=BATCH_SIZE, shuffle=False)
+        aggregated_test_loader = torch.utils.data.DataLoader(
+            test_loader.dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0, pin_memory=True
+        )
         aggregated_num_examples = len(meta_data)
 
     for client_number in range(NUM_CLIENTS):

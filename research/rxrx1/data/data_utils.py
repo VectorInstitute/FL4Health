@@ -69,7 +69,12 @@ def create_splits(
 
 
 def load_rxrx1_data(
-    data_path: Path, client_num: int, batch_size: int, seed: int | None = None, train_val_split: float = 0.8
+    data_path: Path,
+    client_num: int,
+    batch_size: int,
+    seed: int | None = None,
+    train_val_split: float = 0.8,
+    num_workers: int = 0,
 ) -> tuple[DataLoader, DataLoader, dict[str, int]]:
 
     # Read the CSV file
@@ -79,7 +84,7 @@ def load_rxrx1_data(
 
     train_set, validation_set = create_splits(dataset, seed=seed, train_fraction=train_val_split)
 
-    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
     validation_loader = DataLoader(validation_set, batch_size=batch_size)
     num_examples = {
         "train_set": len(train_set),
@@ -89,13 +94,17 @@ def load_rxrx1_data(
     return train_loader, validation_loader, num_examples
 
 
-def load_rxrx1_test_data(data_path: Path, client_num: int, batch_size: int) -> tuple[DataLoader, dict[str, int]]:
+def load_rxrx1_test_data(
+    data_path: Path, client_num: int, batch_size: int, num_workers: int = 0
+) -> tuple[DataLoader, dict[str, int]]:
 
     # Read the CSV file
     data = pd.read_csv(f"{data_path}/clients/meta_data_{client_num+1}.csv")
 
     evaluation_set = Rxrx1Dataset(metadata=data, root=data_path, dataset_type="test", transform=None)
 
-    evaluation_loader = DataLoader(evaluation_set, batch_size=batch_size, shuffle=False)
+    evaluation_loader = DataLoader(
+        evaluation_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True
+    )
     num_examples = {"eval_set": len(evaluation_set)}
     return evaluation_loader, num_examples
