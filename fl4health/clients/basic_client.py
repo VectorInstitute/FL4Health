@@ -160,7 +160,7 @@ class BasicClient(NumPyClient):
             return FullParameterExchanger().push_parameters(self.model, config=config)
         else:
             if hasattr(self, "early_stopper") and self.early_stopper.patience == 0:
-                log(INFO, "Loading save best model state before sending model to server.")
+                log(INFO, "Loading saved best model's state before sending model to server.")
                 self.early_stopper.load_snapshot(["model"])
             assert self.model is not None and self.parameter_exchanger is not None
             return self.parameter_exchanger.push_parameters(self.model, config=config)
@@ -906,10 +906,9 @@ class BasicClient(NumPyClient):
         set self.early_stopper to an instance of EarlyStopper. The EarlyStopper class is defined in
         fl4health.early_stopping. Example implementation:
 
-        ⁠ python
         from fl4health.utils.early_stopper import EarlyStopper
         self.early_stopper = EarlyStopper(client=self, patience=3, interval_steps=100)
-         ⁠
+
         """
         raise NotImplementedError
 
