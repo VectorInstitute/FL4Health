@@ -1,14 +1,15 @@
+from collections.abc import Sequence
 from logging import WARNING
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.logger import log
 
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient, Config
 from fl4health.losses.contrastive_loss import MoonContrastiveLoss
 from fl4health.model_bases.sequential_split_models import SequentiallySplitModel
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.client import clone_and_freeze_model
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
@@ -22,7 +23,10 @@ class MoonClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: str | None = None,
         temperature: float = 0.5,
         contrastive_weight: float = 1.0,
         len_old_models_buffer: int = 1,
@@ -33,14 +37,23 @@ class MoonClient(BasicClient):
         loss to constrain the local training of individual parties in the non-IID setting.
 
         Args:
-            data_path (Path): Path to the data directory.
-            metrics (Sequence[Metric]): List of metrics to be used for evaluation.
-            device (torch.device): Device to be used for training.
-            loss_meter_type (LossMeterType, optional): Type of loss meter to be used. Defaults to
-                LossMeterType.AVERAGE.
-            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
-                do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
-                None.
+            data_path (Path): path to the data to be used to load the data for client-side training
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
+                'cuda'
+            loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
+                each batch. Defaults to LossMeterType.AVERAGE.
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
+                both checkpointing and state saving. The module, and its underlying model and state checkpointing
+                components will determine when and how to do checkpointing during client-side training.
+                No checkpointing (state or model) is done if not provided. Defaults to None.
+            reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
+                should send data to. Defaults to None.
+            progress_bar (bool, optional): Whether or not to display a progress bar during client training and
+                validation. Uses tqdm. Defaults to False
+            client_name (str | None, optional): An optional client name that uniquely identifies a client.
+                If not passed, a hash is randomly generated. Client state will use this as part of its state file
+                name. Defaults to None.
             temperature (float, optional): Temperature used in the calculation of the contrastive loss.
                 Defaults to 0.5.
             contrastive_weight (float, optional): Weight placed on the contrastive loss function. Referred to as mu
@@ -53,7 +66,10 @@ class MoonClient(BasicClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
         )
         self.temperature = temperature
         self.contrastive_weight = contrastive_weight
@@ -64,9 +80,9 @@ class MoonClient(BasicClient):
         # Saving previous local models and a global model at each communication round to compute contrastive loss
         self.len_old_models_buffer = len_old_models_buffer
         self.old_models_list: list[torch.nn.Module] = []
-        self.global_model: Optional[torch.nn.Module] = None
+        self.global_model: torch.nn.Module | None = None
 
-    def predict(self, input: TorchInputType) -> Tuple[TorchPredType, TorchFeatureType]:
+    def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the prediction(s) and features of the model(s) given the input. This function also produces the
         necessary features from the global_model (aggregated model from server) and old_models (previous client-side
@@ -74,11 +90,11 @@ class MoonClient(BasicClient):
 
         Args:
             input (TorchInputType): Inputs to be fed into the model. TorchInputType is simply an alias
-            for the union of torch.Tensor and Dict[str, torch.Tensor]. Here, the MOON models require input to
+            for the union of torch.Tensor and dict[str, torch.Tensor]. Here, the MOON models require input to
             simply be of type torch.Tensor
 
         Returns:
-            Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
+            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple in which the first element
             contains predictions indexed by name and the second element contains intermediate activations
             index by name. Specifically the features of the model, features of the global model and features of
             the old model are returned. All predictions included in dictionary will be used to compute metrics.
@@ -101,14 +117,14 @@ class MoonClient(BasicClient):
             features.update({"global_features": global_model_features["features"]})
         return preds, features
 
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
         """
         This function is called immediately after client-side training has completed. This function saves the final
         trained model to the list of old models to be used in subsequent server rounds
 
         Args:
             local_steps (int): Number of local steps performed during training
-            loss_dict (Dict[str, float]): Loss dictionary associated with training.
+            loss_dict (dict[str, float]): Loss dictionary associated with training.
             config (Config): The config from the server
         """
         assert isinstance(self.model, SequentiallySplitModel)
@@ -141,19 +157,19 @@ class MoonClient(BasicClient):
         preds: TorchPredType,
         features: TorchFeatureType,
         target: TorchTargetType,
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
         For MOON, the loss is the total loss (criterion and weighted contrastive loss) and the additional losses are
         the loss, (unweighted) contrastive loss, and total loss.
 
         Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
-            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+            tuple[torch.Tensor, dict[str, torch.Tensor]]; A tuple with:
                 - The tensor for the total loss
                 - A dictionary with `loss`, `contrastive_loss` and `total_loss` keys and their calculated values.
         """
@@ -186,9 +202,9 @@ class MoonClient(BasicClient):
         base loss plus a model contrastive loss.
 
         Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
                 All predictions included in dictionary will be used to compute metrics.
-            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            features: (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
@@ -218,9 +234,9 @@ class MoonClient(BasicClient):
         base loss plus a model contrastive loss.
 
         Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
                 All predictions included in dictionary will be used to compute metrics.
-            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            features: (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:

@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Tuple
 
 import torch
 import torch.nn as nn
@@ -15,7 +14,7 @@ from tests.test_utils.models_for_test import LinearModel
 
 
 class ClientForTest(BasicClient):
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         train_loader = DataLoader(TensorDataset(torch.ones((4, 4)), torch.ones((4))))
         val_loader = DataLoader(TensorDataset(torch.ones((4, 4)), torch.ones((4))))
         return train_loader, val_loader

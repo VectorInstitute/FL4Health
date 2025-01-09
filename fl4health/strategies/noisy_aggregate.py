@@ -1,5 +1,4 @@
 from functools import reduce
-from typing import List, Tuple
 
 import numpy as np
 from flwr.common import NDArray, NDArrays
@@ -22,13 +21,13 @@ def add_noise_to_array(layer: NDArray, noise_std_dev: float, denominator: int) -
     return (1.0 / denominator) * (layer + layer_noise)
 
 
-def add_noise_to_ndarrays(client_model_updates: List[NDArrays], sigma: float, n_clients: int) -> NDArrays:
+def add_noise_to_ndarrays(client_model_updates: list[NDArrays], sigma: float, n_clients: int) -> NDArrays:
     """
     This function adds centered gaussian noise (with standard deviation sigma) to the uniform average  of the list
     of the numpy arrays provided.
 
     Args:
-        client_model_updates (List[NDArrays]): List of lists of numpy arrays. Each member of the list represents a
+        client_model_updates (list[NDArrays]): List of lists of numpy arrays. Each member of the list represents a
             set of numpy arrays, each of which should be averaged element-wise with the corresponding array from the
             other lists. These will have centered gaussian noise added.
         sigma (float): The standard deviation of the centered gaussian noise to be added to each element.
@@ -46,13 +45,13 @@ def add_noise_to_ndarrays(client_model_updates: List[NDArrays], sigma: float, n_
 
 
 def gaussian_noisy_unweighted_aggregate(
-    results: List[Tuple[NDArrays, int]], noise_multiplier: float, clipping_bound: float
+    results: list[tuple[NDArrays, int]], noise_multiplier: float, clipping_bound: float
 ) -> NDArrays:
     """
     Compute unweighted average of weights. Apply gaussian noise to the sum of these weights prior to normalizing.
 
     Args:
-        results (List[Tuple[NDArrays, int]]): List of tuples containing the model updates and the number of samples
+        results (list[tuple[NDArrays, int]]): List of tuples containing the model updates and the number of samples
             for each client.
         noise_multiplier (float): The multiplier on the clipping bound to determine the std of noise applied to weight
             updates.
@@ -70,7 +69,7 @@ def gaussian_noisy_unweighted_aggregate(
 
 
 def gaussian_noisy_weighted_aggregate(
-    results: List[Tuple[NDArrays, int]],
+    results: list[tuple[NDArrays, int]],
     noise_multiplier: float,
     clipping_bound: float,
     fraction_fit: float,
@@ -84,7 +83,7 @@ def gaussian_noisy_weighted_aggregate(
 
 
     Args:
-        results (List[Tuple[NDArrays, int]]): List of tuples containing the model updates and the number of samples
+        results (list[tuple[NDArrays, int]]): List of tuples containing the model updates and the number of samples
             for each client.
         noise_multiplier (float): The multiplier on the clipping bound to determine the std of noise applied to weight
             updates.
@@ -97,8 +96,8 @@ def gaussian_noisy_weighted_aggregate(
         NDArrays: Noised model update for a given round.
     """
     n_clients = len(results)
-    client_model_updates: List[NDArrays] = []
-    client_n_points: List[int] = []
+    client_model_updates: list[NDArrays] = []
+    client_n_points: list[int] = []
     for weights, n_points in results:
         client_model_updates.append(weights)
         client_n_points.append(n_points)

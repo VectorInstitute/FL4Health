@@ -1,10 +1,14 @@
 import argparse
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 import flwr as fl
 import torch
+import torch.nn as nn
 from flwr.common.typing import Config
+from torch.nn.modules.loss import _Loss
+from torch.optim import Optimizer
+from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
 from fl4health.clients.basic_client import BasicClient
@@ -20,17 +24,19 @@ class CifarClient(BasicClient):
         self.model = Net()
         self.parameter_exchanger = FullParameterExchanger()
 
-    def setup_client(self, config: Config) -> None:
-        super().setup_client(config)
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
-        train_loader, validation_loader, num_examples = load_cifar10_data(self.data_path, batch_size)
+        train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
+        return train_loader, val_loader
 
-        self.train_loader = train_loader
-        self.val_loader = validation_loader
-        self.num_examples = num_examples
+    def get_criterion(self, config: Config) -> _Loss:
+        return torch.nn.CrossEntropyLoss()
 
-        self.criterion = torch.nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
+    def get_optimizer(self, config: Config) -> Optimizer:
+        return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
+
+    def get_model(self, config: Config) -> nn.Module:
+        return Net().to(self.device)
 
 
 if __name__ == "__main__":

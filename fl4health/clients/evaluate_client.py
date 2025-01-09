@@ -1,7 +1,7 @@
 import datetime
+from collections.abc import Sequence
 from logging import INFO, WARNING
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 import torch.nn as nn
@@ -21,25 +21,38 @@ from fl4health.utils.random import generate_hash
 
 
 class EvaluateClient(BasicClient):
-    """
-    This client implements an evaluation only flow. That is, there is no expectation of parameter exchange with the
-    server past the model initialization stage. The implementing client should instantiate a global model if one is
-    expected from the server, which will be loaded using the passed parameters. If a model checkpoint path is provided
-    the client attempts to load a local model from the specified path.
-    """
-
     def __init__(
         self,
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        model_checkpoint_path: Optional[Path] = None,
+        model_checkpoint_path: Path | None = None,
         reporters: Sequence[BaseReporter] | None = None,
+        client_name: str | None = None,
     ) -> None:
+        """
+        This client implements an evaluation only flow. That is, there is no expectation of parameter exchange with
+        the server past the model initialization stage. The implementing client should instantiate a global model if
+        one is expected from the server, which will be loaded using the passed parameters. If a model checkpoint path
+        is provided the client attempts to load a local model from the specified path.
+
+        Args:
+            data_path (Path): path to the data to be used to load the data for client-side training
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
+                'cuda'
+            loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
+                each batch. Defaults to LossMeterType.AVERAGE.
+            model_checkpoint_path (Path | None, optional): _description_. Defaults to None.
+            reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
+                should send data to. Defaults to None.
+            client_name (str | None, optional): An optional client name that uniquely identifies a client.
+                If not passed, a hash is randomly generated. Defaults to None.
+        """
         # EvaluateClient does not call BasicClient constructor and sets attributes
         # in a custom way to account for the fact it does not involve any training
-        self.client_name = generate_hash()
+        self.client_name = generate_hash() if client_name is None else client_name
         self.data_path = data_path
         self.device = device
         self.model_checkpoint_path = model_checkpoint_path
@@ -61,13 +74,13 @@ class EvaluateClient(BasicClient):
         # if they exist, to be evaluated on the client's dataset.
         self.data_loader: DataLoader
         self.criterion: _Loss
-        self.local_model: Optional[nn.Module] = None
-        self.global_model: Optional[nn.Module] = None
+        self.local_model: nn.Module | None = None
+        self.global_model: nn.Module | None = None
 
-    def get_parameters(self, config: Dict[str, Scalar]) -> NDArrays:
+    def get_parameters(self, config: dict[str, Scalar]) -> NDArrays:
         raise ValueError("Get Parameters is not implemented for an Evaluation-Only Client")
 
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+    def fit(self, parameters: NDArrays, config: Config) -> tuple[NDArrays, int, dict[str, Scalar]]:
         raise ValueError("Fit is not implemented for an Evaluation-Only Client")
 
     def setup_client(self, config: Config) -> None:
@@ -93,7 +106,7 @@ class EvaluateClient(BasicClient):
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         assert not fitting_round
-        # Sets the global model parameters transfered from the server using a parameter exchanger to coordinate how
+        # Sets the global model parameters transferred from the server using a parameter exchanger to coordinate how
         # parameters are set
         if len(parameters) > 0:
             # If a non-empty set of parameters are passed, then they are inserted into a global model to be evaluated.
@@ -105,7 +118,7 @@ class EvaluateClient(BasicClient):
             # be initialized with trained weights.
             self.global_model = None
 
-    def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
+    def evaluate(self, parameters: NDArrays, config: Config) -> tuple[float, int, dict[str, Scalar]]:
         if not self.initialized:
             self.setup_client(config)
 
@@ -138,7 +151,7 @@ class EvaluateClient(BasicClient):
         )
 
     def _handle_logging(  # type: ignore
-        self, losses: EvaluationLosses, metrics_dict: Dict[str, Scalar], is_global: bool
+        self, losses: EvaluationLosses, metrics_dict: dict[str, Scalar], is_global: bool
     ) -> None:
         metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
         loss_string = "\t".join([f"{key}: {str(val)}" for key, val in losses.as_dict().items()])
@@ -155,7 +168,7 @@ class EvaluateClient(BasicClient):
         metric_meter: MetricManager,
         loss_meter: LossMeter,
         is_global: bool,
-    ) -> Tuple[EvaluationLosses, Dict[str, Scalar]]:
+    ) -> tuple[EvaluationLosses, dict[str, Scalar]]:
         model.eval()
         metric_meter.clear()
         loss_meter.clear()
@@ -175,12 +188,12 @@ class EvaluateClient(BasicClient):
         self._handle_logging(losses, metrics, is_global)
         return losses, metrics
 
-    def validate(self, include_loss_in_metrics: bool = False) -> Tuple[float, Dict[str, Scalar]]:
-        local_loss: Optional[EvaluationLosses] = None
-        local_metrics: Optional[Dict[str, Scalar]] = None
+    def validate(self, include_loss_in_metrics: bool = False) -> tuple[float, dict[str, Scalar]]:
+        local_loss: EvaluationLosses | None = None
+        local_metrics: dict[str, Scalar] | None = None
 
-        global_loss: Optional[EvaluationLosses] = None
-        global_metrics: Optional[Dict[str, Scalar]] = None
+        global_loss: EvaluationLosses | None = None
+        global_metrics: dict[str, Scalar] | None = None
 
         if self.local_model:
             log(INFO, "Performing evaluation on local model")
@@ -212,9 +225,9 @@ class EvaluateClient(BasicClient):
 
     @staticmethod
     def merge_metrics(
-        global_metrics: Optional[Dict[str, Scalar]],
-        local_metrics: Optional[Dict[str, Scalar]],
-    ) -> Dict[str, Scalar]:
+        global_metrics: dict[str, Scalar] | None,
+        local_metrics: dict[str, Scalar] | None,
+    ) -> dict[str, Scalar]:
         # Merge metrics if necessary
         if global_metrics:
             metrics = global_metrics
@@ -243,20 +256,20 @@ class EvaluateClient(BasicClient):
         """
         return FullParameterExchanger()
 
-    def get_data_loader(self, config: Config) -> Tuple[DataLoader]:
+    def get_data_loader(self, config: Config) -> tuple[DataLoader]:
         """
         User defined method that returns a PyTorch DataLoader for validation
         """
         raise NotImplementedError
 
-    def initialize_global_model(self, config: Config) -> Optional[nn.Module]:
+    def initialize_global_model(self, config: Config) -> nn.Module | None:
         """
         User defined method that to initializes a global model to potentially be hydrated by parameters sent by the
         server, by default, no global model is assumed to exist unless specified by the user
         """
         return None
 
-    def get_local_model(self, config: Config) -> Optional[nn.Module]:
+    def get_local_model(self, config: Config) -> nn.Module | None:
         """
         Functionality for initializing a model from a local checkpoint. This can be overridden for custom behavior
         """

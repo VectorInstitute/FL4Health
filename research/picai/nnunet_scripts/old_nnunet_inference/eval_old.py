@@ -3,8 +3,9 @@ import contextlib
 import os
 import warnings
 from collections import defaultdict
+from collections.abc import Iterable
 from os.path import join
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -20,21 +21,21 @@ warnings.simplefilter("ignore", category=FutureWarning)
 
 def load_images_from_folder(
     folder: str,
-    case_identifiers: List[str],
-    postfixes: Optional[List[str]] = None,
-    extensions: List[str] = [".nii.gz", ".nii", ".mha", ".mhd", ".npz", ".npy"],
+    case_identifiers: list[str],
+    postfixes: list[str] | None = None,
+    extensions: list[str] = [".nii.gz", ".nii", ".mha", ".mhd", ".npz", ".npy"],
 ) -> NDArray:
     """
     Loads images from a folder given a list of case identifiers
 
     Args:
         folder (str): The folder containing the images
-        case_identifiers (List[str]): A list of case identifiers for each
+        case_identifiers (list[str]): A list of case identifiers for each
             file. Typically just the filenames without the extension
-        postfixes (Optional[List[str]], optional): A list of strings to append
+        postfixes (list[str] | None, optional): A list of strings to append
             to the case identifiers when looking for files. For example
             '_labels'. Defaults to None.
-        extensions (List[str], optional): A list of possible image extensions.
+        extensions (list[str], optional): A list of possible image extensions.
             Defaults to [".nii.gz", ".nii", ".mha", ".mhd", ".npz", ".npy"].
 
     Returns:
@@ -86,7 +87,7 @@ def get_detection_maps(probability_maps: NDArray) -> NDArray:
 def get_picai_metrics(
     detection_maps: NDArray,
     ground_truth_annotations: NDArray,
-    case_identifiers: Optional[Iterable[str]] = None,
+    case_identifiers: Iterable[str] | None = None,
     **kwargs: Any
 ) -> PicaiEvalMetrics:
     """
@@ -102,7 +103,7 @@ def get_picai_metrics(
             have shape (num_samples, num_classes or num_lesion_classes, ...).
             If num_classes is provided, the function will attempt to remove
             the background class from index 0 for you
-        case_identifiers (Optional[Iterable[str]], optional): A list of case
+        case_identifiers (Iterable[str] | None, optional): A list of case
             identifiers. If not provided the subjects will be identified by
             their index Defaults to None.
         **kwargs: Keyword arguments for the picai_eval.evaluate function
@@ -129,9 +130,9 @@ def get_picai_metrics(
             detection_maps.shape == ground_truth_annotations.shape
         ), "Got unexpected shapes for detection maps and ground truth annotations"
 
-    # Evaluation must be calculated seperately for each class
+    # Evaluation must be calculated separately for each class
     num_classes = detection_maps.shape[1]
-    metrics: List[PicaiEvalMetrics] = []
+    metrics: list[PicaiEvalMetrics] = []
     for cls in range(num_classes):
         metrics.append(
             evaluate(
@@ -144,10 +145,10 @@ def get_picai_metrics(
 
     subject_list = metrics[0].subject_list
     assert isinstance(subject_list, list), "Got unexpected subject list from picai eval metrics object"
-    lesion_results: Dict[Any, list] = defaultdict(list)
-    lesion_weights: Dict[Any, list] = defaultdict(list)
-    case_targets: Dict[Any, int] = defaultdict(int)
-    case_preds: Dict[Any, float] = defaultdict(float)
+    lesion_results: dict[Any, list] = defaultdict(list)
+    lesion_weights: dict[Any, list] = defaultdict(list)
+    case_targets: dict[Any, int] = defaultdict(int)
+    case_preds: dict[Any, float] = defaultdict(float)
     for s in subject_list:
         # Ignoring mypy errors here for now because i don't know how to get around them
         [lesion_results[s].extend(m.lesion_results[s]) for m in metrics]  # type: ignore

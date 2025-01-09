@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from typing import Dict, List, Optional, Union
 
 import pandas as pd
 from cyclops.data.df.feature import TabularFeatures
@@ -18,37 +17,37 @@ class TabularFeaturesInfoEncoder:
     alignment on tabular datasets.
 
     Args:
-        tabular_features (List[TabularFeature]): List of all tabular features.
-        tabular_targets (List[TabularFeature]): List of all targets.
+        tabular_features (list[TabularFeature]): List of all tabular features.
+        tabular_targets (list[TabularFeature]): List of all targets.
         (Note: targets are not included in tabular_features)
     """
 
-    def __init__(self, tabular_features: List[TabularFeature], tabular_targets: List[TabularFeature]) -> None:
+    def __init__(self, tabular_features: list[TabularFeature], tabular_targets: list[TabularFeature]) -> None:
         self.tabular_features = sorted(tabular_features, key=TabularFeature.get_feature_name)
         self.tabular_targets = sorted(tabular_targets, key=TabularFeature.get_feature_name)
 
-    def get_tabular_features(self) -> List[TabularFeature]:
+    def get_tabular_features(self) -> list[TabularFeature]:
         return self.tabular_features
 
-    def get_tabular_targets(self) -> List[TabularFeature]:
+    def get_tabular_targets(self) -> list[TabularFeature]:
         return self.tabular_targets
 
-    def get_feature_columns(self) -> List[str]:
+    def get_feature_columns(self) -> list[str]:
         return sorted([feature.get_feature_name() for feature in self.tabular_features])
 
-    def get_target_columns(self) -> List[str]:
+    def get_target_columns(self) -> list[str]:
         return sorted([target.get_feature_name() for target in self.tabular_targets])
 
-    def features_by_type(self, tabular_type: TabularType) -> List[TabularFeature]:
+    def features_by_type(self, tabular_type: TabularType) -> list[TabularFeature]:
         return sorted(
             [feature for feature in self.tabular_features if feature.get_feature_type() == tabular_type],
             key=TabularFeature.get_feature_name,
         )
 
-    def type_to_features(self) -> Dict[TabularType, List[TabularFeature]]:
+    def type_to_features(self) -> dict[TabularType, list[TabularFeature]]:
         return {tabular_type: self.features_by_type(tabular_type) for tabular_type in TabularType}
 
-    def get_categories_list(self) -> List[MetaData]:
+    def get_categories_list(self) -> list[MetaData]:
         return [cat_feature.get_metadata() for cat_feature in self.features_by_type(TabularType.ORDINAL)]
 
     def get_target_dimension(self) -> int:
@@ -63,7 +62,7 @@ class TabularFeaturesInfoEncoder:
         df: pd.DataFrame,
         feature_name: str,
         feature_type: TabularType,
-        fill_values: Optional[Dict[str, Scalar]],
+        fill_values: dict[str, Scalar] | None,
     ) -> TabularFeature:
         if fill_values is None or feature_name not in fill_values:
             fill_value = TabularType.get_default_fill_value(feature_type)
@@ -87,8 +86,8 @@ class TabularFeaturesInfoEncoder:
     def encoder_from_dataframe(
         df: pd.DataFrame,
         id_column: str,
-        target_columns: Union[str, List[str]],
-        fill_values: Optional[Dict[str, Scalar]] = None,
+        target_columns: str | list[str],
+        fill_values: dict[str, Scalar] | None = None,
     ) -> TabularFeaturesInfoEncoder:
         features_list = sorted(df.columns.values.tolist())
         features_list.remove(id_column)

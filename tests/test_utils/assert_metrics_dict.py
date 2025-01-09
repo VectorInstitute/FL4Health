@@ -1,11 +1,11 @@
-from typing import Any, Optional
+from typing import Any
 
 from pytest import approx
 
 DEFAULT_TOLERANCE = 0.0005
 
 
-def _assert(value: Any, saved_value: Any, metric_key: str, tolerance: float = DEFAULT_TOLERANCE) -> Optional[str]:
+def _assert(value: Any, saved_value: Any, metric_key: str, tolerance: float = DEFAULT_TOLERANCE) -> str | None:
     # helper function to avoid code repetition
     if isinstance(value, dict):
         # if the value is a dictionary, extract the target value and the custom tolerance

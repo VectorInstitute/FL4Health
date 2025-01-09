@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from logging import INFO
-from typing import Callable, Dict, List
 
 import torch
 import torch.nn as nn
@@ -8,7 +8,7 @@ from torch.utils.hooks import RemovableHandle
 
 
 class FeatureExtractorBuffer:
-    def __init__(self, model: nn.Module, flatten_feature_extraction_layers: Dict[str, bool]) -> None:
+    def __init__(self, model: nn.Module, flatten_feature_extraction_layers: dict[str, bool]) -> None:
         """
         This class is used to extract features from the intermediate layers of a neural network model and store them in
         a buffer. The features are extracted using additional hooks that are registered to the model. The extracted
@@ -17,24 +17,24 @@ class FeatureExtractorBuffer:
 
         Args:
             model (nn.Module): The neural network model.
-            flatten_feature_extraction_layers (Dict[str, bool]): Dictionary of layers to extract features from them and
+            flatten_feature_extraction_layers (dict[str, bool]): Dictionary of layers to extract features from them and
             whether to flatten them. Keys are the layer names that are extracted from the named_modules and values are
             boolean.
         Attributes:
             model (nn.Module): The neural network model.
-            flatten_feature_extraction_layers (Dict[str, bool]): A dictionary specifying whether to flatten the feature
+            flatten_feature_extraction_layers (dict[str, bool]): A dictionary specifying whether to flatten the feature
                 extraction layers.
-            fhooks (List[RemovableHandle]): A list to store the handles for removing hooks.
+            fhooks (list[RemovableHandle]): A list to store the handles for removing hooks.
             accumulate_features (bool): A flag indicating whether to accumulate features.
-            extracted_features_buffers (Dict[str, List[torch.Tensor]]): A dictionary to store the extracted features
+            extracted_features_buffers (dict[str, list[torch.Tensor]]): A dictionary to store the extracted features
                 for each layer.
         """
         self.model = model
         self.flatten_feature_extraction_layers = flatten_feature_extraction_layers
-        self.fhooks: List[RemovableHandle] = []
+        self.fhooks: list[RemovableHandle] = []
 
         self.accumulate_features: bool = False
-        self.extracted_features_buffers: Dict[str, List[torch.Tensor]] = {
+        self.extracted_features_buffers: dict[str, list[torch.Tensor]] = {
             layer: [] for layer in flatten_feature_extraction_layers.keys()
         }
 
@@ -63,14 +63,14 @@ class FeatureExtractorBuffer:
         """
         self.extracted_features_buffers = {layer: [] for layer in self.flatten_feature_extraction_layers.keys()}
 
-    def get_hierarchical_attr(self, module: nn.Module, layer_hierarchy: List[str]) -> nn.Module:
+    def get_hierarchical_attr(self, module: nn.Module, layer_hierarchy: list[str]) -> nn.Module:
         """
         Traverse the hierarchical attributes of the module to get the desired attribute. Hooks should be
         registered to specific layers of the model, not to nn.Sequential or nn.ModuleList.
 
         Args:
             module (nn.Module): The nn.Module object to traverse.
-            layer_hierarchy (List[str]): The hierarchical list of name of desired layer.
+            layer_hierarchy (list[str]): The hierarchical list of name of desired layer.
 
         Returns:
             nn.Module: The desired layer of the model.
@@ -80,14 +80,14 @@ class FeatureExtractorBuffer:
         else:
             return self.get_hierarchical_attr(getattr(module, layer_hierarchy[0]), layer_hierarchy[1:])
 
-    def find_last_common_prefix(self, prefix: str, layers_name: List[str]) -> str:
+    def find_last_common_prefix(self, prefix: str, layers_name: list[str]) -> str:
         """
         Check the model's list of named modules to filter any layer that starts with the given prefix and
         return the last one.
 
         Args:
             prefix (str): The prefix of the layer name for registering the hook.
-            layers_name (List[str]): The list of named modules of the model. The assumption is that list of
+            layers_name (list[str]): The list of named modules of the model. The assumption is that list of
             named modules is sorted in the order of the model's forward pass with depth-first traversal. This
             will allow the user to specify the generic name of the layer instead of the full hierarchical name.
 
@@ -112,9 +112,9 @@ class FeatureExtractorBuffer:
                 # Find the last specific layer under a given generic name
                 specific_layer = self.find_last_common_prefix(layer, named_layers)
                 # Split the specific layer name by '.' to get the hierarchical attribute
-                layer_hierarchicy_list = specific_layer.split(".")
+                layer_hierarchy_list = specific_layer.split(".")
                 self.fhooks.append(
-                    self.get_hierarchical_attr(self.model, layer_hierarchicy_list).register_forward_hook(
+                    self.get_hierarchical_attr(self.model, layer_hierarchy_list).register_forward_hook(
                         self.forward_hook(layer)
                     )
                 )
@@ -166,12 +166,12 @@ class FeatureExtractorBuffer:
 
         return features.reshape(len(features), -1)
 
-    def get_extracted_features(self) -> Dict[str, torch.Tensor]:
+    def get_extracted_features(self) -> dict[str, torch.Tensor]:
         """
         Returns a dictionary of extracted features.
 
         Returns:
-            features (Dict[str, torch.Tensor]): A dictionary where the keys are the layer names and the values are
+            features (dict[str, torch.Tensor]): A dictionary where the keys are the layer names and the values are
                 the extracted features as torch Tensors.
         """
         features = {}

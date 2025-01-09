@@ -1,8 +1,6 @@
-from typing import Union
-
 from sklearn.feature_extraction.text import CountVectorizer, HashingVectorizer, TfidfTransformer, TfidfVectorizer
 
-TextFeatureTransformer = Union[CountVectorizer, TfidfTransformer, TfidfVectorizer, HashingVectorizer]
+TextFeatureTransformer = CountVectorizer | TfidfTransformer | TfidfVectorizer | HashingVectorizer
 
 # constants used in config for communication between
 # the server and clients.

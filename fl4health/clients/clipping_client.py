@@ -1,6 +1,6 @@
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
 
 import torch
 from flwr.common import NDArrays
@@ -8,48 +8,73 @@ from flwr.common.logger import log
 from flwr.common.typing import Config
 from numpy import linalg
 
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithClippingBit
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
 
 class NumpyClippingClient(BasicClient):
-    """
-    Client that clips updates being sent to the server where noise is added.
-    Used to obtain Client Level Differential Privacy in FL setting.
-    """
-
     def __init__(
         self,
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: str | None = None,
     ) -> None:
+        """
+        Client that clips updates being sent to the server where noise is added. Used to obtain Client Level
+        Differential Privacy in FL setting.
+
+        Args:
+            data_path (Path): path to the data to be used to load the data for client-side training
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
+                'cuda'
+            loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
+                each batch. Defaults to LossMeterType.AVERAGE.
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
+                both checkpointing and state saving. The module, and its underlying model and state checkpointing
+                components will determine when and how to do checkpointing during client-side training.
+                No checkpointing (state or model) is done if not provided. Defaults to None.
+            reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
+                should send data to. Defaults to None.
+            progress_bar (bool, optional): Whether or not to display a progress bar during client training and
+                validation. Uses tqdm. Defaults to False
+            client_name (str | None, optional): An optional client name that uniquely identifies a client.
+                If not passed, a hash is randomly generated. Client state will use this as part of its state file
+                name. Defaults to None.
+        """
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
         )
         self.parameter_exchanger: FullParameterExchangerWithPacking[float]
-        self.clipping_bound: Optional[float] = None
-        self.adaptive_clipping: Optional[bool] = None
+        self.clipping_bound: float | None = None
+        self.adaptive_clipping: bool | None = None
 
     def calculate_parameters_norm(self, parameters: NDArrays) -> float:
         layer_inner_products = [pow(linalg.norm(layer_weights), 2) for layer_weights in parameters]
         # network Frobenius norm
         return pow(sum(layer_inner_products), 0.5)
 
-    def clip_parameters(self, parameters: NDArrays) -> Tuple[NDArrays, float]:
+    def clip_parameters(self, parameters: NDArrays) -> tuple[NDArrays, float]:
         assert self.clipping_bound is not None
         assert self.adaptive_clipping is not None
         # performs flat clipping (i.e. parameters * min(1, C/||parameters||_2))
@@ -64,7 +89,7 @@ class NumpyClippingClient(BasicClient):
         # parameters and clipping bit
         return [layer_weights * clip_scalar for layer_weights in parameters], 0.0
 
-    def compute_weight_update_and_clip(self, parameters: NDArrays) -> Tuple[NDArrays, float]:
+    def compute_weight_update_and_clip(self, parameters: NDArrays) -> tuple[NDArrays, float]:
         assert self.initial_weights is not None
         assert len(parameters) == len(self.initial_weights)
         weight_update: NDArrays = [

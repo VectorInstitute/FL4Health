@@ -1,6 +1,6 @@
 import argparse
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -15,7 +15,7 @@ from examples.models.mnist_model import MnistNet
 from fl4health.clients.basic_client import BasicClient
 from fl4health.preprocessing.autoencoders.dim_reduction import CvaeFixedConditionProcessor
 from fl4health.utils.config import narrow_dict_type
-from fl4health.utils.load_data import load_mnist_data
+from fl4health.utils.load_data import ToNumpy, load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
@@ -26,11 +26,11 @@ class CvaeDimClient(BasicClient):
         super().__init__(data_path, metrics, device)
         self.condition = condition
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         cvae_model_path = Path(narrow_dict_type(config, "cvae_model_path", str))
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)
-        transform = transforms.Compose([transforms.ToTensor(), transforms.Lambda(torch.flatten)])
+        transform = transforms.Compose([ToNumpy(), transforms.ToTensor(), transforms.Lambda(torch.flatten)])
         # CvaeFixedConditionProcessor is added to the data transform pipeline to encode the data samples
         train_loader, val_loader, _ = load_mnist_data(
             data_dir=self.data_path,

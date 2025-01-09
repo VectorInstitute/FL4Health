@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 import torch
 
 from fl4health.losses.contrastive_loss import MoonContrastiveLoss
@@ -36,9 +34,9 @@ class MoonContrastiveLossContainer:
 class ConstrainedFendaLossContainer:
     def __init__(
         self,
-        perfcl_loss_config: Optional[PerFclLossContainer],
-        cosine_similarity_loss_config: Optional[CosineSimilarityLossContainer],
-        contrastive_loss_config: Optional[MoonContrastiveLossContainer],
+        perfcl_loss_config: PerFclLossContainer | None,
+        cosine_similarity_loss_config: CosineSimilarityLossContainer | None,
+        contrastive_loss_config: MoonContrastiveLossContainer | None,
     ) -> None:
         self.perfcl_loss_config = perfcl_loss_config
         self.cos_sim_loss_config = cosine_similarity_loss_config
@@ -76,7 +74,7 @@ class ConstrainedFendaLossContainer:
         global_features: torch.Tensor,
         old_global_features: torch.Tensor,
         initial_global_features: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         assert self.perfcl_loss_config is not None
         global_feature_contrastive_loss, local_feature_contrastive_loss = self.perfcl_loss_config.perfcl_loss_function(
             local_features, old_local_features, global_features, old_global_features, initial_global_features

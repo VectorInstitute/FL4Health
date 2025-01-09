@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, List
+from typing import Any
 
 
 class MultiAttributeEnum(Enum):
@@ -51,7 +51,7 @@ class MultiAttributeEnum(Enum):
                 Cat = ['Felis Catus', True, 0.25]
 
         Args:
-            attributes (Union[Dict[str, Any], List]): A list or dictionary of
+            attributes (dict[str, Any] | List): A list or dictionary of
                 attribute values for the enum member. If a list is given then
                 self.get_attribute_keys must be defined so that the class
                 knows what to name the attributes.
@@ -64,9 +64,9 @@ class MultiAttributeEnum(Enum):
             for key, value in zip(attribute_keys, attributes):
                 setattr(self, key, value)
 
-        # Creat attributes that will be assigned for each member seperately
-        self.attribute_keys: List[str]
-        self.attribute_values: List[Any]
+        # Creat attributes that will be assigned for each member separately
+        self.attribute_keys: list[str]
+        self.attribute_values: list[Any]
 
     def __new__(cls, attributes: Any) -> Enum:  # type: ignore
         """
@@ -97,17 +97,17 @@ class MultiAttributeEnum(Enum):
 
         return obj  # Return member
 
-    def keys(self) -> List[str]:
+    def keys(self) -> list[str]:
         """
         Returns:
-            List[str]: a list containing the names of the attributes for this member
+            list[str]: a list containing the names of the attributes for this member
         """
         return self.attribute_keys  # These are set in __new__ for each member
 
-    def values(self) -> List[Any]:
+    def values(self) -> list[Any]:
         """
         Returns:
-            List[Any]: A list of the attribute values for this member
+            list[Any]: A list of the attribute values for this member
         """
         return self.attribute_values
 
@@ -148,7 +148,7 @@ class MultiAttributeEnum(Enum):
         elif isinstance(attributes, list):
             return attributes[0]
 
-    def get_attribute_keys(self, attributes: List) -> List[str]:
+    def get_attribute_keys(self, attributes: list) -> list[str]:
         raise NotImplementedError(
             "Received a list of attributes but the self.get_attribute_keys class method was not implemented"
         )

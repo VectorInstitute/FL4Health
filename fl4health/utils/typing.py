@@ -1,7 +1,6 @@
 import logging
 from collections.abc import Callable
 from enum import Enum
-from typing import List, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -16,8 +15,8 @@ TorchFeatureType = dict[str, torch.Tensor]
 TorchTransformFunction = Callable[[torch.Tensor], torch.Tensor]
 LayerSelectionFunction = Callable[[nn.Module, nn.Module | None], tuple[NDArrays, list[str]]]
 
-FitFailures = List[Union[Tuple[ClientProxy, FitRes], BaseException]]
-EvaluateFailures = List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]]
+FitFailures = list[tuple[ClientProxy, FitRes] | BaseException]
+EvaluateFailures = list[tuple[ClientProxy, EvaluateRes] | BaseException]
 
 
 class LogLevel(Enum):

@@ -1,5 +1,4 @@
 import copy
-from typing import Dict, List
 
 import torch
 import torch.nn as nn
@@ -29,7 +28,7 @@ class ApflModule(PartialLayerExchangeModel):
     def local_forward(self, input: torch.Tensor) -> torch.Tensor:
         return self.local_model(input)
 
-    def forward(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
+    def forward(self, input: torch.Tensor) -> dict[str, torch.Tensor]:
         # Forward return dictionary because APFL has multiple different prediction types
         global_logits = self.global_forward(input)
         local_logits = self.local_forward(input)
@@ -70,8 +69,8 @@ class ApflModule(PartialLayerExchangeModel):
         alpha = max(min(alpha, 1), 0)
         self.alpha = alpha
 
-    def layers_to_exchange(self) -> List[str]:
-        layers_to_exchange: List[str] = [
+    def layers_to_exchange(self) -> list[str]:
+        layers_to_exchange: list[str] = [
             layer for layer in self.state_dict().keys() if layer.startswith("global_model.")
         ]
         return layers_to_exchange

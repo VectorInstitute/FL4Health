@@ -1,7 +1,7 @@
 import argparse
 from functools import partial
 from logging import INFO
-from typing import Any, Dict, Optional
+from typing import Any
 
 import flwr as fl
 from flwr.common.logger import log
@@ -23,9 +23,9 @@ def fit_config(
     batch_size: int,
     n_server_rounds: int,
     current_round: int,
-    reporting_config: Optional[Dict[str, str]] = None,
-    local_epochs: Optional[int] = None,
-    local_steps: Optional[int] = None,
+    reporting_config: dict[str, str] | None = None,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
 ) -> Config:
     base_config: Config = {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
@@ -42,7 +42,7 @@ def fit_config(
     return base_config
 
 
-def main(config: Dict[str, Any], server_address: str) -> None:
+def main(config: dict[str, Any], server_address: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -82,7 +82,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     else:
         reporters = [json_reporter]
     server = FedProxServer(
-        client_manager=client_manager, fl_config=config, strategy=strategy, model=None, reporters=reporters
+        client_manager=client_manager, fl_config=config, strategy=strategy, reporters=reporters, accept_failures=False
     )
 
     fl.server.start_server(

@@ -1,6 +1,6 @@
 import argparse
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -11,7 +11,8 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting import JsonReporter
 from fl4health.reporting.base_reporter import BaseReporter
@@ -29,32 +30,30 @@ class CifarClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        intermediate_client_state_dir: Optional[Path] = None,
-        client_name: Optional[str] = None,
+        client_name: str | None = None,
         seed: int = 42,
     ) -> None:
         super().__init__(
-            data_path,
-            metrics,
-            device,
-            loss_meter_type,
-            checkpointer,
-            reporters,
-            progress_bar,
-            intermediate_client_state_dir,
-            client_name,
+            data_path=data_path,
+            metrics=metrics,
+            device=device,
+            loss_meter_type=loss_meter_type,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
         )
         self.seed = seed
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
         return train_loader, val_loader
 
-    def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
+    def get_test_data_loader(self, config: Config) -> DataLoader | None:
         batch_size = narrow_dict_type(config, "batch_size", int)
         test_loader, _ = load_cifar10_test_data(self.data_path, batch_size)
         return test_loader
@@ -68,7 +67,7 @@ class CifarClient(BasicClient):
     def get_model(self, config: Config) -> nn.Module:
         return Net().to(self.device)
 
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+    def fit(self, parameters: NDArrays, config: Config) -> tuple[NDArrays, int, dict[str, Scalar]]:
         set_all_random_seeds(self.seed)
         return super().fit(parameters, config)
 
@@ -104,11 +103,19 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
+    checkpoint_and_state_module: ClientCheckpointAndStateModule | None
+    if args.intermediate_client_state_dir is not None:
+        checkpoint_and_state_module = ClientCheckpointAndStateModule(
+            state_checkpointer=PerRoundStateCheckpointer(Path(args.intermediate_client_state_dir))
+        )
+    else:
+        checkpoint_and_state_module = None
+
     client = CifarClient(
         data_path,
         [Accuracy("accuracy")],
         device,
-        intermediate_client_state_dir=args.intermediate_client_state_dir,
+        checkpoint_and_state_module=checkpoint_and_state_module,
         client_name=args.client_name,
         seed=args.seed,
         reporters=[JsonReporter()],

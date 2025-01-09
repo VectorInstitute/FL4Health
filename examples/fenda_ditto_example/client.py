@@ -1,12 +1,11 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Dict
 
 import flwr as fl
 import torch
 from flwr.common.logger import log
-from flwr.common.typing import Config, Tuple
+from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -16,8 +15,8 @@ from examples.models.sequential_split_models import (
     SequentialGlobalFeatureExtractorMnist,
     SequentialLocalPredictionHeadMnist,
 )
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.fenda_ditto_client import FendaDittoClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode
@@ -31,7 +30,7 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class MnistFendaDittoClient(FendaDittoClient):
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
         batch_size = narrow_dict_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
@@ -50,7 +49,7 @@ class MnistFendaDittoClient(FendaDittoClient):
             ParallelSplitHeadClassifier(ParallelFeatureJoinMode.CONCATENATE),
         ).to(self.device)
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
         global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=0.01)
         local_optimizer = torch.optim.AdamW(self.model.parameters(), lr=0.01)
         return {"global": global_optimizer, "local": local_optimizer}
@@ -106,15 +105,15 @@ if __name__ == "__main__":
     post_aggregation_checkpointer = None
 
     if args.checkpointer_type in ["pre", "both"]:
-        pre_aggregation_checkpointer = BestLossTorchCheckpointer(
+        pre_aggregation_checkpointer = BestLossTorchModuleCheckpointer(
             args.checkpoint_path, "fenda_ditto_client_pre_agg.pkl"
         )
     if args.checkpointer_type in ["post", "both"]:
-        post_aggregation_checkpointer = BestLossTorchCheckpointer(
+        post_aggregation_checkpointer = BestLossTorchModuleCheckpointer(
             args.checkpoint_path, "fenda_ditto_client_post_agg.pkl"
         )
 
-    checkpointer = ClientCheckpointModule(
+    checkpoint_and_state_module = ClientCheckpointAndStateModule(
         pre_aggregation=pre_aggregation_checkpointer,
         post_aggregation=post_aggregation_checkpointer,
     )
@@ -123,7 +122,7 @@ if __name__ == "__main__":
         [Accuracy()],
         device,
         args.checkpoint_path,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
         reporters=[JsonReporter()],
     )
     fl.client.start_client(server_address=args.server_address, client=client.to_client())

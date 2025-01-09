@@ -1,7 +1,7 @@
 import argparse
 from functools import partial
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import flwr as fl
 import torch.nn as nn
@@ -10,7 +10,8 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
+from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.model_bases.fedsimclr_base import FedSimClrModel
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.base_server import FlServer
@@ -22,8 +23,8 @@ from fl4health.utils.parameter_extraction import get_all_model_parameters
 def fit_config(
     batch_size: int,
     current_server_round: int,
-    local_epochs: Optional[int] = None,
-    local_steps: Optional[int] = None,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
 ) -> Config:
     return {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
@@ -38,7 +39,7 @@ def load_model(
     return FedSimClrModel.load_pretrained_model(model_path)
 
 
-def main(config: Dict[str, Any]) -> None:
+def main(config: dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -51,7 +52,10 @@ def main(config: Dict[str, Any]) -> None:
     model = load_model()
     # To facilitate checkpointing
     parameter_exchanger = FullParameterExchanger()
-    checkpointer = BestLossTorchCheckpointer(config["checkpoint_path"], "best_model.pkl")
+    checkpointer = BestLossTorchModuleCheckpointer(config["checkpoint_path"], "best_model.pkl")
+    checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
+        model=model, parameter_exchanger=parameter_exchanger, model_checkpointers=checkpointer
+    )
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -70,10 +74,9 @@ def main(config: Dict[str, Any]) -> None:
     server = FlServer(
         client_manager=SimpleClientManager(),
         fl_config=config,
-        parameter_exchanger=parameter_exchanger,
-        model=model,
         strategy=strategy,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
+        accept_failures=False,
     )
 
     fl.server.start_server(

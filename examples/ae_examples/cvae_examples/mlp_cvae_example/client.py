@@ -1,6 +1,6 @@
 import argparse
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -17,7 +17,7 @@ from fl4health.model_bases.autoencoders_base import ConditionalVae
 from fl4health.preprocessing.autoencoders.loss import VaeLoss
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.dataset_converter import AutoEncoderDatasetConverter
-from fl4health.utils.load_data import load_mnist_data
+from fl4health.utils.load_data import ToNumpy, load_mnist_data
 from fl4health.utils.metrics import Metric
 from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
@@ -44,13 +44,13 @@ class CondAutoEncoderClient(BasicClient):
         assert isinstance(self.model, ConditionalVae)
         self.model.unpack_input_condition = self.autoencoder_converter.get_unpacking_function()
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)
         # ToTensor transform is used to make sure pixels stay in the range [0.0, 1.0].
         # Flattening the image data to match the input shape of the model.
         flatten_transform = transforms.Lambda(lambda x: torch.flatten(x))
-        transform = transforms.Compose([transforms.ToTensor(), flatten_transform])
+        transform = transforms.Compose([ToNumpy(), transforms.ToTensor(), flatten_transform])
         train_loader, val_loader, _ = load_mnist_data(
             data_dir=self.data_path,
             batch_size=batch_size,

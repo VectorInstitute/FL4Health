@@ -1,6 +1,5 @@
 import os
 from logging import INFO
-from typing import Dict, Tuple
 
 import torch
 import torch.nn as nn
@@ -9,7 +8,7 @@ from flwr.common.typing import Scalar
 from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.utils.metrics import MetricManager
 
 
@@ -25,7 +24,7 @@ class SingleNodeTrainer:
         checkpoint_dir = os.path.join(checkpoint_stub, run_name)
         # This is called the "server model" so that it can be found by the evaluate_on_holdout.py script
         checkpoint_name = "server_best_model.pkl"
-        self.checkpointer = BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
+        self.checkpointer = BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
         self.dataset_dir = dataset_dir
         self.model: nn.Module
         self.criterion: _Loss
@@ -33,14 +32,14 @@ class SingleNodeTrainer:
         self.train_loader: DataLoader
         self.val_loader: DataLoader
 
-    def _maybe_checkpoint(self, loss: float, metrics: Dict[str, Scalar]) -> None:
+    def _maybe_checkpoint(self, loss: float, metrics: dict[str, Scalar]) -> None:
         if self.checkpointer:
             self.checkpointer.maybe_checkpoint(self.model, loss, metrics)
 
     def _handle_reporting(
         self,
         loss: float,
-        metrics_dict: Dict[str, Scalar],
+        metrics_dict: dict[str, Scalar],
         is_validation: bool = False,
     ) -> None:
         metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
@@ -50,7 +49,7 @@ class SingleNodeTrainer:
             f"Centralized {metric_prefix} Loss: {loss} \n" f"Centralized {metric_prefix} Metrics: {metric_string}",
         )
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         # forward pass on the model
         preds = self.model(input)
         loss = self.criterion(preds, target)

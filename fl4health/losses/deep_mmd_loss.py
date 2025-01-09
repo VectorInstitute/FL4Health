@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 import numpy as np
 import torch
 
@@ -103,7 +101,7 @@ class DeepMmdLoss(torch.nn.Module):
         # Set the model to training mode if required to train the Deep Kernel
         self.training = False
 
-    def pairwise_distiance_squared(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
+    def pairwise_distance_squared(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
         """
         Compute the paired distance between x and y.
 
@@ -126,7 +124,7 @@ class DeepMmdLoss(torch.nn.Module):
         k_y: torch.Tensor,
         k_xy: torch.Tensor,
         is_var_computed: bool,
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
         """
         Compute value of MMD and std of MMD using kernel matrix.
 
@@ -137,7 +135,7 @@ class DeepMmdLoss(torch.nn.Module):
             is_var_computed (bool): Whether to compute the variance of the MMD.
 
         Returns:
-            Tuple[torch.Tensor, Optional[torch.Tensor]]: The value of MMD and the variance of MMD
+            tuple[torch.Tensor, torch.Tensor | None]: The value of MMD and the variance of MMD
                 if required to compute.
         """
         nx = k_x.shape[0]
@@ -176,7 +174,7 @@ class DeepMmdLoss(torch.nn.Module):
         epsilon: torch.Tensor,
         is_smooth: bool = True,
         is_var_computed: bool = True,
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
         """
         Compute value of deep-kernel MMD and std of deep-kernel MMD using merged data.
 
@@ -193,21 +191,21 @@ class DeepMmdLoss(torch.nn.Module):
                 Defaults to True.
 
         Returns:
-            Tuple[torch.Tensor, Optional[torch.Tensor]]: The value of MMD and the variance of MMD
+            tuple[torch.Tensor, torch.Tensor | None]: The value of MMD and the variance of MMD
                 if required to compute.
         """
         x = features[0:len_s, :]  # fetch the sample 1 (features of deep networks)
         y = features[len_s:, :]  # fetch the sample 2 (features of deep networks)
-        distance_xx = self.pairwise_distiance_squared(x, x)
-        distance_yy = self.pairwise_distiance_squared(y, y)
-        distance_xy = self.pairwise_distiance_squared(x, y)
+        distance_xx = self.pairwise_distance_squared(x, x)
+        distance_yy = self.pairwise_distance_squared(y, y)
+        distance_xy = self.pairwise_distance_squared(x, y)
 
         if is_smooth:
             x_original = features_org[0:len_s, :]  # fetch the original sample 1
             y_original = features_org[len_s:, :]  # fetch the original sample 2
-            distance_xx_original = self.pairwise_distiance_squared(x_original, x_original)
-            distance_yy_original = self.pairwise_distiance_squared(y_original, y_original)
-            distance_xy_original = self.pairwise_distiance_squared(x_original, y_original)
+            distance_xx_original = self.pairwise_distance_squared(x_original, x_original)
+            distance_yy_original = self.pairwise_distance_squared(y_original, y_original)
+            distance_xy_original = self.pairwise_distance_squared(x_original, y_original)
 
             kernel_x = (1 - epsilon) * torch.exp(
                 -((distance_xx / sigma_phi) ** self.gaussian_degree) - distance_xx_original / sigma_q
@@ -224,7 +222,7 @@ class DeepMmdLoss(torch.nn.Module):
             kernel_y = torch.exp(-distance_yy / sigma_phi)
             kernel_xy = torch.exp(-distance_xy / sigma_phi)
 
-        # kernel_x reprsents k_w(x_i, x_j), kernel_y represents k_w(y_i, y_j), kernel_xy represents
+        # kernel_x represents k_w(x_i, x_j), kernel_y represents k_w(y_i, y_j), kernel_xy represents
         # k_w(x_i, y_j) for all i, j in the sample X and sample Y defined in Equation (1) of the paper
         return self.h1_mean_var_gram(kernel_x, kernel_y, kernel_xy, is_var_computed)
 

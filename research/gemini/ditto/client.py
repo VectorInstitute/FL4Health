@@ -1,8 +1,8 @@
 import argparse
 import os
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -17,7 +17,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from utils.random import set_all_random_seeds
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchModuleCheckpointer
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
@@ -34,14 +34,14 @@ class GeminiDittoClient(DittoClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        hospital_id: List[str],
+        hospital_id: list[str],
         learning_rate: float,
         learning_task: str,
         lam: float,
         checkpoint_stub: str,
         run_name: str = "",
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: TorchModuleCheckpointer | None = None,
     ) -> None:
         # Checkpointing: create a string of the names of the hospitals
         self.hospitals = hospital_id
@@ -66,7 +66,7 @@ class GeminiDittoClient(DittoClient):
 
         log(INFO, f"Client Name: {self.client_name} Client hospitals {self.hospitals}")
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_dict_type(config, "batch_size", int)
         if self.learning_task == "mortality":
             (
@@ -85,7 +85,7 @@ class GeminiDittoClient(DittoClient):
             model: nn.Module = delirium_model(input_dim=8093, output_dim=1).to(self.device)
         return model
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
         # Note that the global optimizer operates on self.global_model.parameters() and
         global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=self.learning_rate)
         local_optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)

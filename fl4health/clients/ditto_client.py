@@ -1,6 +1,6 @@
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 import torch.nn as nn
@@ -8,7 +8,7 @@ from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.optim import Optimizer
 
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.adaptive_drift_constraint_client import AdaptiveDriftConstraintClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
@@ -25,9 +25,10 @@ class DittoClient(AdaptiveDriftConstraintClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
+        client_name: str | None = None,
     ) -> None:
         """
         This client implements the Ditto algorithm from Ditto: Fair and Robust Federated Learning Through
@@ -40,34 +41,37 @@ class DittoClient(AdaptiveDriftConstraintClient):
         corresponding strategy used by the server
 
         Args:
-            data_path (Path): path to the data to be used to load the data for
-                client-side training
-            metrics (Sequence[Metric]): Metrics to be computed based on the labels and
-                predictions of the client model
-            device (torch.device): Device indicator for where to send the model,
-                batches, labels etc. Often 'cpu' or 'cuda'
-            loss_meter_type (LossMeterType, optional): Type of meter used to track and
-                compute the losses over each batch. Defaults to LossMeterType.AVERAGE.
-            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer
-                module defining when and how to do checkpointing during client-side
-                training. No checkpointing is done if not provided. Defaults to None.
-            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
-                reporters which the client should send data to.
-            progress_bar (bool): Whether or not to display a progress bar during client training and validation.
-                Uses tqdm. Defaults to False
+            data_path (Path): path to the data to be used to load the data for client-side training
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
+                'cuda'
+            loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
+                each batch. Defaults to LossMeterType.AVERAGE.
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
+                both checkpointing and state saving. The module, and its underlying model and state checkpointing
+                components will determine when and how to do checkpointing during client-side training.
+                No checkpointing (state or model) is done if not provided. Defaults to None.
+            reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
+                should send data to. Defaults to None.
+            progress_bar (bool, optional): Whether or not to display a progress bar during client training and
+                validation. Uses tqdm. Defaults to False
+            client_name (str | None, optional): An optional client name that uniquely identifies a client.
+                If not passed, a hash is randomly generated. Client state will use this as part of its state file
+                name. Defaults to None.
         """
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
             reporters=reporters,
             progress_bar=progress_bar,
+            client_name=client_name,
         )
         self.global_model: nn.Module
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
         """
         Returns a dictionary with global and local optimizers with string keys 'global' and 'local' respectively.
 
@@ -75,7 +79,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
             config (Config): The config from the server.
         """
         raise NotImplementedError(
-            "User Clients must define a function that returns a Dict[str, Optimizer] with keys 'global' and 'local' "
+            "User Clients must define a function that returns a dict[str, Optimizer] with keys 'global' and 'local' "
             "defining separate optimizers for the global and local models of Ditto."
         )
 
@@ -212,7 +216,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
 
         super().update_before_train(current_server_round)
 
-    def train_step(self, input: TorchInputType, target: TorchTargetType) -> Tuple[TrainingLosses, TorchPredType]:
+    def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
         """
         Mechanics of training loop follow from original Ditto implementation: https://github.com/litian96/ditto
         As in the implementation there, steps of the global and local models are done in tandem and for the same
@@ -220,11 +224,11 @@ class DittoClient(AdaptiveDriftConstraintClient):
 
         Args:
             input (TorchInputType): input tensor to be run through both the global and local models. Here,
-                TorchInputType is simply an alias for the union of torch.Tensor and Dict[str, torch.Tensor].
+                TorchInputType is simply an alias for the union of torch.Tensor and dict[str, torch.Tensor].
             target (TorchTargetType): target tensor to be used to compute a loss given each models outputs.
 
         Returns:
-            Tuple[TrainingLosses, TorchPredType]: Returns relevant loss values from both the global and local
+            tuple[TrainingLosses, TorchPredType]: Returns relevant loss values from both the global and local
                 model optimization steps. The prediction dictionary contains predictions indexed a "global" and "local"
                 corresponding to predictions from the global and local Ditto models for metric evaluations.
         """
@@ -254,7 +258,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
     def predict(
         self,
         input: TorchInputType,
-    ) -> Tuple[TorchPredType, TorchFeatureType]:
+    ) -> tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the predictions for both the GLOBAL and LOCAL models and pack them into the prediction dictionary
 
@@ -262,7 +266,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
             input (TorchInputType): Inputs to be fed into both models.
 
         Returns:
-            Tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element
+            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element
             contains predictions indexed by name and the second element contains intermediate activations
             index by name. For Ditto, we only need the predictions, so the second dictionary is simply empty.
 
@@ -291,7 +295,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
         preds: TorchPredType,
         features: TorchFeatureType,
         target: TorchTargetType,
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Computes the local model loss and the global Ditto model loss (stored in additional losses) for reporting and
         training of the global model
@@ -301,7 +305,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
             features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
             target (TorchTargetType): Ground truth data to evaluate predictions against.
         Returns:
-            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+            tuple[torch.Tensor, dict[str, torch.Tensor]]; A tuple with:
                 - The tensor for the model loss
                 - A dictionary with `local_loss`, `global_loss` as additionally reported loss values.
         """
@@ -358,12 +362,12 @@ class DittoClient(AdaptiveDriftConstraintClient):
 
         return TrainingLosses(backward=loss + penalty_loss, additional_losses=additional_losses)
 
-    def validate(self, include_losses_in_metrics: bool = False) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, include_losses_in_metrics: bool = False) -> tuple[float, dict[str, Scalar]]:
         """
         Validate the current model on the entire validation dataset.
 
         Returns:
-            Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
+            tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
         """
         # Set the global model to evaluate mode
         self.global_model.eval()

@@ -2,7 +2,6 @@ import argparse
 import os
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List
 
 import torch
 import torch.nn as nn
@@ -20,15 +19,15 @@ def load_centralized_model(run_folder_dir: str) -> nn.Module:
     return model
 
 
-def write_measurement_results(eval_write_path: str, metric, results: Dict[str, float]) -> None:
+def write_measurement_results(eval_write_path: str, metric, results: dict[str, float]) -> None:
     metric_write_path = os.path.join(eval_write_path, f"{metric.name}_metric.txt")
     with open(metric_write_path, "w") as f:
-        for key, metric_vaue in results.items():
-            f.write(f"{key}: {metric_vaue}\n")
+        for key, metric_value in results.items():
+            f.write(f"{key}: {metric_value}\n")
 
 
 def main(
-    data_path: Path, artifact_dir: str, eval_write_path: str, n_clients: int, hospitals: List[str], learning_task: str
+    data_path: Path, artifact_dir: str, eval_write_path: str, n_clients: int, hospitals: list[str], learning_task: str
 ) -> None:
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     all_run_folder_dir = get_all_run_folders(artifact_dir)
@@ -45,7 +44,7 @@ def main(
         pooled_test_loader = load_test_delirium(data_path, 64)
 
     for metric in metrics:
-        test_results: Dict[str, float] = {}
+        test_results: dict[str, float] = {}
         all_clients_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
         client_test_metrics = {client_id: [] for client_id in range(n_clients)}
 

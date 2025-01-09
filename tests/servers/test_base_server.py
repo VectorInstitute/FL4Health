@@ -1,6 +1,5 @@
 import datetime
 from pathlib import Path
-from typing import List, Tuple, Union
 from unittest.mock import Mock, patch
 
 import pytest
@@ -12,7 +11,8 @@ from flwr.server.history import History
 from flwr.server.strategy import FedAvg
 from freezegun import freeze_time
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, PerRoundStateCheckpointer
+from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.client_managers.base_sampling_manager import SimpleClientManager
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
@@ -21,6 +21,7 @@ from fl4health.servers.base_server import FlServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, MetricPrefix
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 from tests.test_utils.models_for_test import LinearTransform
@@ -28,66 +29,69 @@ from tests.test_utils.models_for_test import LinearTransform
 model = LinearTransform()
 
 
-class DummyFLServer(FlServer):
-    def _hydrate_model_for_checkpointing(self) -> None:
-        self.server_model = model
-
-
 def test_hydration_no_model_with_checkpointer(tmp_path: Path) -> None:
     # Temporary path to write pkl to, will be cleaned up at the end of the test.
     checkpoint_dir = tmp_path.joinpath("resources")
     checkpoint_dir.mkdir()
-    checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), "best_model.pkl")
-
+    checkpointer = BestLossTorchModuleCheckpointer(str(checkpoint_dir), "best_model.pkl")
+    state_checkpointer = PerRoundStateCheckpointer(checkpoint_dir=checkpoint_dir)
     # Checkpointer is defined but there is no server-side model defined to produce a model from the server state.
     # An assertion error should be throw stating this
-    fl_server_no_hydration = FlServer(
-        client_manager=PoissonSamplingClientManager(), fl_config={}, checkpointer=checkpointer
-    )
     with pytest.raises(AssertionError) as assertion_error:
-        fl_server_no_hydration._maybe_checkpoint(1.0, {}, server_round=1)
-    assert "Model hydration has been called but no server_model is defined to hydrate" in str(assertion_error.value)
+        BaseServerCheckpointAndStateModule(
+            model=None,
+            parameter_exchanger=None,
+            model_checkpointers=checkpointer,
+            state_checkpointer=state_checkpointer,
+        )
+    assert "Checkpointer(s) is (are) defined but no model is defined to hydrate" in str(assertion_error.value)
 
 
 def test_hydration_no_exchanger_with_checkpointer(tmp_path: Path) -> None:
     # Temporary path to write pkl to, will be cleaned up at the end of the test.
     checkpoint_dir = tmp_path.joinpath("resources")
     checkpoint_dir.mkdir()
-    checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), "best_model.pkl")
-
+    checkpointer = BestLossTorchModuleCheckpointer(str(checkpoint_dir), "best_model.pkl")
     # Checkpointer is defined but there is no parameter exchanger defined to produce a model from the server state.
     # An assertion error should be throw stating this
-    fl_server_no_hydration = FlServer(
-        client_manager=PoissonSamplingClientManager(), fl_config={}, model=model, checkpointer=checkpointer
-    )
     with pytest.raises(AssertionError) as assertion_error:
-        fl_server_no_hydration._maybe_checkpoint(1.0, {}, server_round=1)
-    assert "Model hydration has been called but no parameter_exchanger is defined to hydrate." in str(
+        BaseServerCheckpointAndStateModule(model=model, parameter_exchanger=None, model_checkpointers=checkpointer)
+    assert "Checkpointer(s) is (are) defined but no parameter_exchanger is defined to hydrate." in str(
         assertion_error.value
     )
 
 
 def test_no_checkpointer_maybe_checkpoint(caplog: pytest.LogCaptureFixture) -> None:
-    fl_server_no_checkpointer = FlServer(client_manager=PoissonSamplingClientManager(), fl_config={})
+    fl_server_no_checkpointer = FlServer(
+        client_manager=PoissonSamplingClientManager(), fl_config={}, checkpoint_and_state_module=None
+    )
 
     # Neither checkpointing nor hydration is defined, we'll have no server-side checkpointing for the FL run.
     fl_server_no_checkpointer._maybe_checkpoint(1.0, {}, server_round=1)
-    assert "No checkpointer present. Models will not be checkpointed on server-side." in caplog.text
+    assert "No model checkpointers specified. Skipping any checkpointing." in caplog.text
 
 
 def test_hydration_and_checkpointer(tmp_path: Path) -> None:
     # Temporary path to write pkl to, will be cleaned up at the end of the test.
     checkpoint_dir = tmp_path.joinpath("resources")
     checkpoint_dir.mkdir()
-    checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), "best_model.pkl")
+    checkpointer = BestLossTorchModuleCheckpointer(str(checkpoint_dir), "best_model.pkl")
+    checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
+        model=model, parameter_exchanger=FullParameterExchanger(), model_checkpointers=checkpointer
+    )
 
     # Server-side hydration to convert server state to model and checkpointing behavior are both defined, a model
     # should be saved and be loaded successfully.
-    fl_server_both = DummyFLServer(
-        client_manager=PoissonSamplingClientManager(), fl_config={}, checkpointer=checkpointer
+    fl_server_both = FlServer(
+        client_manager=PoissonSamplingClientManager(),
+        fl_config={},
+        checkpoint_and_state_module=checkpoint_and_state_module,
     )
+    # Need to mock set the parameters as no FL or exchange is happening.
+    fl_server_both.parameters = get_all_model_parameters(model)
+
     fl_server_both._maybe_checkpoint(1.0, {}, server_round=5)
-    loaded_model = checkpointer.load_best_checkpoint()
+    loaded_model = checkpointer.load_checkpoint()
     assert isinstance(loaded_model, LinearTransform)
     # Correct loading tensors of the saved model
     assert torch.equal(model.linear.weight, loaded_model.linear.weight)
@@ -97,26 +101,27 @@ def test_fl_server_with_checkpointing(tmp_path: Path) -> None:
     # Temporary path to write pkl to, will be cleaned up at the end of the test.
     checkpoint_dir = tmp_path.joinpath("resources")
     checkpoint_dir.mkdir()
-    checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), "best_model.pkl")
+    checkpointer = BestLossTorchModuleCheckpointer(str(checkpoint_dir), "best_model.pkl")
     # Initial model held by server
     initial_model = LinearTransform()
     # represents the model computed by the clients aggregation
     updated_model = LinearTransform()
     parameter_exchanger = FullParameterExchanger()
+    checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
+        model=initial_model, parameter_exchanger=parameter_exchanger, model_checkpointers=checkpointer
+    )
 
     server = FlServer(
         client_manager=PoissonSamplingClientManager(),
         fl_config={},
-        parameter_exchanger=parameter_exchanger,
-        model=initial_model,
         strategy=None,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
     )
     # Parameters after aggregation (i.e. the updated server-side model)
     server.parameters = ndarrays_to_parameters(parameter_exchanger.push_parameters(updated_model))
 
     server._maybe_checkpoint(1.0, {}, server_round=5)
-    loaded_model = checkpointer.load_best_checkpoint()
+    loaded_model = checkpointer.load_checkpoint()
     assert isinstance(loaded_model, LinearTransform)
     # Correct loading tensors of the saved model
     assert torch.equal(updated_model.linear.weight, loaded_model.linear.weight)
@@ -193,7 +198,7 @@ def test_unpack_metrics() -> None:
         },
     )
 
-    results: List[Tuple[ClientProxy, EvaluateRes]] = [(client_proxy, eval_res)]
+    results: list[tuple[ClientProxy, EvaluateRes]] = [(client_proxy, eval_res)]
 
     val_results, test_results = fl_server._unpack_metrics(results)
 
@@ -238,11 +243,11 @@ def test_handle_result_aggregation() -> None:
         },
     )
 
-    results: List[Tuple[ClientProxy, EvaluateRes]] = [
+    results: list[tuple[ClientProxy, EvaluateRes]] = [
         (client_proxy1, eval_res1),
         (client_proxy2, eval_res2),
     ]
-    failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]] = []
+    failures: list[tuple[ClientProxy, EvaluateRes] | BaseException] = []
 
     server_round = 1
     _, val_metrics_aggregated = fl_server._handle_result_aggregation(server_round, results, failures)

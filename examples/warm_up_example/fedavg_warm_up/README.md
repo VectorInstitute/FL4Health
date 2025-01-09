@@ -6,10 +6,6 @@ The server has some custom metrics aggregation and uses Federated Averaging as i
 
 As this is a warm-up training for consecutive runs with different Federated Learning (FL) algorithms, it is crucial to set a fixed seed for both clients and the server to ensure uniformity in random data points across these runs. Therefore, we make sure to set a fixed seed for these consecutive runs in both the `client.py` and `server.py` files. Additionally, it is important to establish a checkpointing strategy for the clients using their randomly generated unique client names. This allows us to load each client's warmed-up model from this example in further instances. In this particular scenario, we set the checkpointing strategy to save the latest model. This ensures that we can load the trained local model for each client from this example in subsequent runs as a warmed-up model.
 
-### Weights and Biases Reporting
-
-This example is also capable of logging results to your Weights and Biases account by setting `enabled` to `True` in the `config.yaml` under the `reporting_config` section. You'll also need to set the `entity` value to your Weights and Biases entity. Once those two things are set, you should be able to run the example and log the results to W and B directly.
-
 ### Running the Example
 
 In order to run the example, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.

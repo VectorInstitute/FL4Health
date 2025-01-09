@@ -1,7 +1,7 @@
 import argparse
 import pickle
 from functools import partial
-from typing import Any, Dict, Optional
+from typing import Any
 
 import flwr as fl
 from flwr.common.typing import Config
@@ -21,8 +21,8 @@ def construct_config(
     current_round: int,
     batch_size: int,
     adaptive_clipping: bool,
-    local_epochs: Optional[int] = None,
-    local_steps: Optional[int] = None,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
 ) -> Config:
     # NOTE: The omitted variable is server_round which allows for dynamically changing the config each round
     return {
@@ -38,13 +38,13 @@ def fit_config(
     batch_size: int,
     adaptive_clipping: bool,
     server_round: int,
-    local_epochs: Optional[int] = None,
-    local_steps: Optional[int] = None,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
 ) -> Config:
     return construct_config(server_round, batch_size, adaptive_clipping, local_epochs, local_steps)
 
 
-def main(config: Dict[str, Any]) -> None:
+def main(config: dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -80,6 +80,7 @@ def main(config: Dict[str, Any]) -> None:
         clipping_noise_multiplier=config["clipping_bit_noise_multiplier"],
         beta=config["server_momentum"],
         weighted_aggregation=config["weighted_averaging"],
+        accept_failures=False,
     )
 
     server = ClientLevelDPFedAvgServer(

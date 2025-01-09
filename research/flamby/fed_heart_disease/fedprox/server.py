@@ -2,14 +2,15 @@ import argparse
 import os
 from functools import partial
 from logging import INFO
-from typing import Any, Dict
+from typing import Any
 
 import flwr as fl
 from flamby.datasets.fed_heart_disease import Baseline
 from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
+from fl4health.checkpointing.server_module import AdaptiveConstraintServerCheckpointAndStateModule
 from fl4health.servers.adaptive_constraint_servers.fedprox_server import FedProxServer
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
@@ -18,7 +19,7 @@ from fl4health.utils.parameter_extraction import get_all_model_parameters
 from research.flamby.utils import fit_config, summarize_model_info
 
 
-def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub: str, run_name: str) -> None:
+def main(config: dict[str, Any], server_address: str, mu: float, checkpoint_stub: str, run_name: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -26,19 +27,23 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
         config["n_server_rounds"],
     )
 
+    model = Baseline()
+    summarize_model_info(model)
+
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
     checkpoint_name = "server_best_model.pkl"
     federated_checkpointing: bool = config.get("federated_checkpointing", True)
     log(INFO, f"Performing Federated Checkpointing: {federated_checkpointing}")
     checkpointer = (
-        BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
+        BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
         if federated_checkpointing
-        else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
+        else LatestTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
+    )
+    checkpoint_and_state_module = AdaptiveConstraintServerCheckpointAndStateModule(
+        model=model, model_checkpointers=checkpointer
     )
 
     client_manager = SimpleClientManager()
-    model = Baseline()
-    summarize_model_info(model)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvgWithAdaptiveConstraint(
@@ -56,7 +61,10 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
     )
 
     server = FedProxServer(
-        client_manager=client_manager, fl_config=config, strategy=strategy, model=model, checkpointer=checkpointer
+        client_manager=client_manager,
+        fl_config=config,
+        strategy=strategy,
+        checkpoint_and_state_module=checkpoint_and_state_module,
     )
 
     fl.server.start_server(
@@ -66,7 +74,7 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
     )
 
     if federated_checkpointing:
-        assert isinstance(checkpointer, BestLossTorchCheckpointer)
+        assert isinstance(checkpointer, BestLossTorchModuleCheckpointer)
         log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_score}")
 
     # Shutdown the server gracefully

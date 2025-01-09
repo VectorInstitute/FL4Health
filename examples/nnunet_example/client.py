@@ -4,7 +4,9 @@ import warnings
 from logging import DEBUG, INFO
 from os.path import exists, join
 from pathlib import Path
-from typing import Optional, Union
+
+from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 
 with warnings.catch_warnings():
     # Silence deprecation warnings from sentry sdk due to flwr and wandb
@@ -29,12 +31,12 @@ def main(
     dataset_path: Path,
     msd_dataset_name: str,
     server_address: str,
-    fold: Union[int, str],
+    fold: int | str,
     always_preprocess: bool = False,
     verbose: bool = True,
     compile: bool = True,
-    intermediate_client_state_dir: Optional[str] = None,
-    client_name: Optional[str] = None,
+    intermediate_client_state_dir: str | None = None,
+    client_name: str | None = None,
 ) -> None:
     # Log device and server address
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -68,6 +70,13 @@ def main(
         pred_transforms=[torch.sigmoid, get_segs_from_probs],
     )
 
+    if intermediate_client_state_dir is not None:
+        checkpoint_and_state_module = ClientCheckpointAndStateModule(
+            state_checkpointer=PerRoundStateCheckpointer(Path(intermediate_client_state_dir))
+        )
+    else:
+        checkpoint_and_state_module = None
+
     # Create client
     client = NnunetClient(
         # Args specific to nnUNetClient
@@ -80,9 +89,7 @@ def main(
         device=device,
         metrics=[dice],
         progress_bar=verbose,
-        intermediate_client_state_dir=(
-            Path(intermediate_client_state_dir) if intermediate_client_state_dir is not None else None
-        ),
+        checkpoint_and_state_module=checkpoint_and_state_module,
         client_name=client_name,
     )
 
@@ -200,7 +207,7 @@ if __name__ == "__main__":
     )
 
     # Check fold argument and start main method
-    fold: Union[int, str] = "all" if args.fold == "all" else int(args.fold)
+    fold: int | str = "all" if args.fold == "all" else int(args.fold)
     main(
         dataset_path=Path(args.dataset_path),
         msd_dataset_name=args.msd_dataset_name,

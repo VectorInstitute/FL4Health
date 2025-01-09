@@ -51,8 +51,6 @@ def test_forward() -> None:
         output = deep_mmd_loss_1(X, Y)
         val_outputs_1.append(output)
 
-    print(train_outputs_1[0].item())
-
     # The output of the DeepMmdLoss in training mode should be different for each optimization step
     # as values are updated in each step
     assert pytest.approx(train_outputs_1[0].item(), abs=0.001) == 0.0573

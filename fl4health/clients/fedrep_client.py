@@ -1,15 +1,15 @@
 import datetime
+from collections.abc import Sequence
 from enum import Enum
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.optim import Optimizer
 
-from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointModule
+from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.fedrep_base import FedRepModel
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
@@ -21,7 +21,7 @@ from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
 
-EpochsAndStepsTuple = Tuple[Optional[int], Optional[int], Optional[int], Optional[int]]
+EpochsAndStepsTuple = tuple[int | None, int | None, int | None, int | None]
 
 
 class FedRepTrainMode(Enum):
@@ -36,10 +36,47 @@ class FedRepClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: str | None = None,
     ) -> None:
-        super().__init__(data_path, metrics, device, loss_meter_type, checkpointer, reporters)
+        """
+        Client implementing the training of FedRep (https://arxiv.org/abs/2303.05206).
+        Similar to FedPer, FedRep trains a global feature extractor shared by all clients through FedAvg and a
+        private classifier that is unique to each client. However, FedRep breaks up the client-side training of
+        these components into two phases. First the local classifier is trained with the feature extractor frozen.
+        Next, the classifier is frozen and the feature extractor is trained.
+
+        Args:
+            data_path (Path): path to the data to be used to load the data for client-side training
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
+                'cuda'
+            loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
+                each batch. Defaults to LossMeterType.AVERAGE.
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
+                both checkpointing and state saving. The module, and its underlying model and state checkpointing
+                components will determine when and how to do checkpointing during client-side training.
+                No checkpointing (state or model) is done if not provided. Defaults to None.
+            reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
+                should send data to. Defaults to None.
+            progress_bar (bool, optional): Whether or not to display a progress bar during client training and
+                validation. Uses tqdm. Defaults to False
+            client_name (str | None, optional): An optional client name that uniquely identifies a client.
+                If not passed, a hash is randomly generated. Client state will use this as part of its state file
+                name. Defaults to None.
+        """
+        super().__init__(
+            data_path=data_path,
+            metrics=metrics,
+            device=device,
+            loss_meter_type=loss_meter_type,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
+        )
         self.fedrep_train_mode = FedRepTrainMode.HEAD
 
     def _prepare_train_representations(self) -> None:
@@ -69,7 +106,7 @@ class FedRepClient(BasicClient):
         self.model.freeze_base_module()
 
     def _prefix_loss_and_metrics_dictionaries(
-        self, prefix: str, loss_dict: Dict[str, float], metrics_dict: Dict[str, Scalar]
+        self, prefix: str, loss_dict: dict[str, float], metrics_dict: dict[str, Scalar]
     ) -> None:
         """
         This method is used to added the provided prefix string to the keys of both the loss_dict and the metrics_dict
@@ -78,8 +115,8 @@ class FedRepClient(BasicClient):
 
         Args:
             prefix (str): Prefix to be attached to all keys of the provided dictionaries.
-            loss_dict (Dict[str, float]): Dictionary of loss values obtained during training.
-            metrics (Dict[str, Scalar]): Dictionary of metrics values measured during training
+            loss_dict (dict[str, float]): Dictionary of loss values obtained during training.
+            metrics (dict[str, Scalar]): Dictionary of metrics values measured during training
         """
         for loss_key in list(loss_dict):
             loss_dict[f"{prefix}_{loss_key}"] = loss_dict.pop(loss_key)
@@ -135,11 +172,11 @@ class FedRepClient(BasicClient):
         else:
             raise ValueError(
                 "Either configuration keys not properly present or a mix of steps and epochs based training was "
-                "specified and is not admissable. Keys should be one of {local_head_epochs, local_rep_epochs} or "
+                "specified and is not admissible. Keys should be one of {local_head_epochs, local_rep_epochs} or "
                 "{local_head_steps, local_rep_steps}"
             )
 
-    def process_fed_rep_config(self, config: Config) -> Tuple[EpochsAndStepsTuple, int, bool]:
+    def process_fed_rep_config(self, config: Config) -> tuple[EpochsAndStepsTuple, int, bool]:
         """
         Method to ensure the required keys are present in config and extracts values to be returned. We override this
         functionality from the BasicClient, because FedRep has slightly different requirements. That is, one needs
@@ -149,7 +186,7 @@ class FedRepClient(BasicClient):
             config (Config): The config from the server.
 
         Returns:
-            Tuple[Union[int, None], Union[int, None], int, bool]: Returns the local_epochs, local_steps,
+            tuple[int | None, int | None, int | None, int | None, int, bool]: Returns the local_epochs, local_steps,
                 current_server_round and evaluate_after_fit. Ensures only one of local_epochs and local_steps
                 is defined in the config and sets the one that is not to None.
 
@@ -168,7 +205,7 @@ class FedRepClient(BasicClient):
         # Either local epochs or local steps is none based on what key is passed in the config
         return steps_or_epochs_tuple, current_server_round, evaluate_after_fit
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
         """
         Returns a dictionary with global and local optimizers with string keys 'representation' and 'head'
         respectively.
@@ -194,7 +231,7 @@ class FedRepClient(BasicClient):
         assert isinstance(self.model, SequentiallySplitExchangeBaseModel)
         return FixedLayerExchanger(self.model.layers_to_exchange())
 
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+    def fit(self, parameters: NDArrays, config: Config) -> tuple[NDArrays, int, dict[str, Scalar]]:
         """
         Processes config, initializes client (if first round) and performs training based on the passed config.
         For FedRep, this coordinates calling the right training functions based on the passed steps. We need to
@@ -206,7 +243,7 @@ class FedRepClient(BasicClient):
             config (NDArrays): The config from the server.
 
         Returns:
-            Tuple[NDArrays, int, Dict[str, Scalar]]: The parameters following the local training along with the
+            tuple[NDArrays, int, dict[str, Scalar]]: The parameters following the local training along with the
             number of samples in the local training dataset and the computed metrics throughout the fit.
 
         Raises:
@@ -268,17 +305,17 @@ class FedRepClient(BasicClient):
         )
 
     def train_fedrep_by_epochs(
-        self, head_epochs: int, rep_epochs: int, current_round: Optional[int] = None
-    ) -> Tuple[Dict[str, float], Dict[str, Scalar]]:
+        self, head_epochs: int, rep_epochs: int, current_round: int | None = None
+    ) -> tuple[dict[str, float], dict[str, Scalar]]:
         """
         Train locally for the specified number of epochs.
 
         Args:
             epochs (int): The number of epochs for local training.
-            current_round (Optional[int]): The current FL round.
+            current_round (int | None): The current FL round.
 
         Returns:
-            Tuple[Dict[str, float], Dict[str, Scalar]]: The loss and metrics dictionary from the local training.
+            tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
                 Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         # First we train the head module for head_epochs with the representations frozen in place
@@ -307,8 +344,8 @@ class FedRepClient(BasicClient):
         return loss_dict_head, metrics_dict_head
 
     def train_fedrep_by_steps(
-        self, head_steps: int, rep_steps: int, current_round: Optional[int] = None
-    ) -> Tuple[Dict[str, float], Dict[str, Scalar]]:
+        self, head_steps: int, rep_steps: int, current_round: int | None = None
+    ) -> tuple[dict[str, float], dict[str, Scalar]]:
         """
         Train locally for the specified number of steps.
 
@@ -316,7 +353,7 @@ class FedRepClient(BasicClient):
             steps (int): The number of steps to train locally.
 
         Returns:
-            Tuple[Dict[str, float], Dict[str, Scalar]]: The loss and metrics dictionary from the local training.
+            tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
                 Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         assert isinstance(self.model, FedRepModel)
@@ -345,7 +382,7 @@ class FedRepClient(BasicClient):
         metrics_dict_head.update(metrics_dict_rep)
         return loss_dict_head, metrics_dict_head
 
-    def train_step(self, input: TorchInputType, target: TorchTargetType) -> Tuple[TrainingLosses, TorchPredType]:
+    def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
         """
         Mechanics of training loop follow the FedRep paper: https://arxiv.org/pdf/2102.07078.pdf
         In order to reuse the train_step functionality, we switch between the appropriate optimizers depending on the
@@ -353,11 +390,11 @@ class FedRepClient(BasicClient):
 
         Args:
             input (TorchInputType): input tensor to be run through the model. Here, TorchInputType is simply an alias
-                for the union of torch.Tensor and Dict[str, torch.Tensor].
+                for the union of torch.Tensor and dict[str, torch.Tensor].
             target (torch.Tensor): target tensor to be used to compute a loss given the model's outputs.
 
         Returns:
-            Tuple[TrainingLosses, Dict[str, torch.Tensor]]: The losses object from the train step along with
+            tuple[TrainingLosses, dict[str, torch.Tensor]]: The losses object from the train step along with
                 a dictionary of any predictions produced by the model.
         """
 

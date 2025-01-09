@@ -45,7 +45,7 @@ for RUN_NAME in "${RUN_NAMES[@]}";
 do
     # create the run directory
     RUN_DIR="${EXPERIMENT_DIRECTORY}${RUN_NAME}/"
-    echo "Starting Run and logging artifcats at ${RUN_DIR}"
+    echo "Starting Run and logging artifacts at ${RUN_DIR}"
 
     if [ -d "${RUN_DIR}" ]
     then
@@ -65,7 +65,7 @@ do
 
 # RUN_NAME="Run1"
 # RUN_DIR="${EXPERIMENT_DIRECTORY}${RUN_NAME}/"
-# echo "Starting Run and logging artifcats at ${RUN_DIR}"
+# echo "Starting Run and logging artifacts at ${RUN_DIR}"
 # mkdir "${RUN_DIR}"
 
 # OUTPUT_FILE="${RUN_DIR}output.out"

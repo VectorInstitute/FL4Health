@@ -1,11 +1,10 @@
 from pathlib import Path
-from typing import Dict
 
 import pytest
 import torch
 from flwr.common.typing import Scalar
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.checkpointing.opacus_checkpointer import (
     BestLossOpacusCheckpointer,
     LatestOpacusCheckpointer,
@@ -37,7 +36,7 @@ def test_save_and_load_best_loss_checkpoint(tmp_path: Path) -> None:
 
     # Should throw a not implemented error
     with pytest.raises(NotImplementedError):
-        _ = checkpointer.load_best_checkpoint()
+        _ = checkpointer.load_checkpoint()
 
     checkpointer.load_best_checkpoint_into_model(target_model)
 
@@ -64,7 +63,7 @@ def test_save_and_load_latest_checkpoint(tmp_path: Path) -> None:
 
     # Should throw a not implemented error
     with pytest.raises(NotImplementedError):
-        _ = checkpointer.load_best_checkpoint()
+        _ = checkpointer.load_checkpoint()
 
     checkpointer.load_best_checkpoint_into_model(target_model)
     assert isinstance(target_model, LinearTransform)
@@ -72,7 +71,7 @@ def test_save_and_load_latest_checkpoint(tmp_path: Path) -> None:
     assert torch.equal(model_1.linear.weight, target_model.linear.weight)
 
 
-def score_function(loss: float, metrics: Dict[str, Scalar]) -> float:
+def score_function(loss: float, metrics: dict[str, Scalar]) -> float:
     accuracy = metrics["accuracy"]
     precision = metrics["precision"]
     assert isinstance(accuracy, float)
@@ -95,8 +94,8 @@ def test_save_and_load_function_checkpoint(tmp_path: Path) -> None:
 
     opacus_checkpointer = OpacusCheckpointer(str(checkpoint_dir), checkpoint_name, score_function, maximize=True)
     loss_1, loss_2 = 1.0, 0.9
-    metrics_1: Dict[str, Scalar] = {"accuracy": 0.87, "precision": 0.67, "f1": 0.76}
-    metrics_2: Dict[str, Scalar] = {"accuracy": 0.87, "precision": 0.90, "f1": 0.60}
+    metrics_1: dict[str, Scalar] = {"accuracy": 0.87, "precision": 0.67, "f1": 0.76}
+    metrics_2: dict[str, Scalar] = {"accuracy": 0.87, "precision": 0.90, "f1": 0.60}
     opacus_checkpointer.best_score = 0.85
 
     # model_1 should not be checkpointed because the model score is lower than the best score set above
@@ -109,7 +108,7 @@ def test_save_and_load_function_checkpoint(tmp_path: Path) -> None:
 
     # Should throw a not implemented error
     with pytest.raises(NotImplementedError):
-        _ = opacus_checkpointer.load_best_checkpoint()
+        _ = opacus_checkpointer.load_checkpoint()
 
     opacus_checkpointer.load_best_checkpoint_into_model(target_model)
     assert isinstance(target_model, LinearTransform)
@@ -143,7 +142,7 @@ def test_fix_of_loss_stateless_model_exception(tmp_path: Path) -> None:
     model = create_opacus_model_via_functorch(model)
     opacus_target_model = convert_model_to_opacus_model(opacus_target_model)
 
-    torch_checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), checkpoint_name)
+    torch_checkpointer = BestLossTorchModuleCheckpointer(str(checkpoint_dir), checkpoint_name)
     # This should throw an error along the lines of
     # AttributeError: Can't pickle local object 'vmap.<locals>.wrapped'
     with pytest.raises(AttributeError) as attribute_exception:

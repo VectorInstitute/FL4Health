@@ -4,7 +4,9 @@ import warnings
 from functools import partial
 from logging import INFO
 from pathlib import Path
-from typing import Optional, Union
+
+from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 
 with warnings.catch_warnings():
     # Silence deprecation warnings from sentry sdk due to flwr and wandb
@@ -25,15 +27,15 @@ from fl4health.utils.nnunet_utils import collapse_one_hot_tensor, get_segs_from_
 
 def main(
     dataset_id: int,
-    data_identifier: Optional[str],
-    plans_identifier: Optional[str],
+    data_identifier: str | None,
+    plans_identifier: str | None,
     always_preprocess: bool,
     server_address: str,
-    fold: Union[str, int],
+    fold: str | int,
     verbose: bool,
     compile: bool,
-    intermediate_client_state_dir: Optional[str] = None,
-    client_name: Optional[str] = None,
+    intermediate_client_state_dir: str | None = None,
+    client_name: str | None = None,
 ) -> None:
 
     # Log device and server address
@@ -58,6 +60,13 @@ def main(
 
     metrics = [dice1, dice2]  # Oddly each of these dice metrics is drastically different.
 
+    if intermediate_client_state_dir is not None:
+        checkpoint_and_state_module = ClientCheckpointAndStateModule(
+            state_checkpointer=PerRoundStateCheckpointer(Path(intermediate_client_state_dir))
+        )
+    else:
+        checkpoint_and_state_module = None
+
     # Create and start client
     client = NnunetClient(
         # Args specific to nnUNetClient
@@ -72,9 +81,7 @@ def main(
         device=device,
         metrics=metrics,
         progress_bar=verbose,
-        intermediate_client_state_dir=(
-            Path(intermediate_client_state_dir) if intermediate_client_state_dir is not None else None
-        ),
+        checkpoint_and_state_module=checkpoint_and_state_module,
         client_name=client_name,
     )
 
@@ -173,7 +180,7 @@ if __name__ == "__main__":
     update_console_handler(level=args.logLevel)
 
     # Convert fold to an integer if it is not 'all'
-    fold: Union[int, str] = "all" if args.fold == "all" else int(args.fold)
+    fold: int | str = "all" if args.fold == "all" else int(args.fold)
 
     main(
         dataset_id=args.dataset_id,

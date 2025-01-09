@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import os
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from functools import partial, reduce
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 import SimpleITK as sitk
@@ -20,9 +20,9 @@ class PreprocessingSettings:
         self,
         scans_write_dir: Path,
         annotation_write_dir: Path,
-        size: Optional[Tuple[int, int, int]],
-        physical_size: Optional[Tuple[float, float, float]],
-        spacing: Optional[Tuple[float, float, float]],
+        size: tuple[int, int, int] | None,
+        physical_size: tuple[float, float, float] | None,
+        spacing: tuple[float, float, float] | None,
     ) -> None:
         """
         Dataclass encapsulating parameters of preprocessing.
@@ -30,13 +30,13 @@ class PreprocessingSettings:
         Args:
             scans_write_dir (Path): The directory to write the preprocessed scans.
             annotation_write_dir (Path): The directory to write the preprocessed annotation.
-            size (Optional[Tuple[int, int, int]]): Tuple of 3 int representing size of scan in voxels.
+            size (tuple[int, int, int] | None): Tuple of 3 int representing size of scan in voxels.
                 In the format of Depth x Height x Width. If None, preprocessed scans and annotations retain
                 their original size.
-            physical_size (Optional[Tuple[float, float, float]]): Tuple of 3 float representing actual scan size in mm.
+            physical_size (tuple[float, float, float] | None): Tuple of 3 float representing actual scan size in mm.
                 In the format of Depth x Height x Width. If None and size and spacing are not None,
                 physical_size will be inferred.
-            spacing (Optional[Tuple[float, float, float]]): Tuple of 3 float representing spacing between voxels
+            spacing (tuple[float, float, float] | None): Tuple of 3 float representing spacing between voxels
                 of scan in mm/voxel. In the format of Depth x Height x Width. If None,
                 preprocessed scans and annotations retain their original spacing.
         """
@@ -79,7 +79,7 @@ class Case(ABC):
         self.annotations_path = annotations_path
         self.settings = settings
 
-        self.scans: List[sitk.Image]
+        self.scans: list[sitk.Image]
         self.annotation: sitk.Image
 
     @abstractmethod
@@ -94,13 +94,13 @@ class Case(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def write(self) -> Tuple[Sequence[Path], Path]:
+    def write(self) -> tuple[Sequence[Path], Path]:
         """
         Abstract method to be implemented by children that writes the preprocessed scans and annotation
         to their destination and returns the file paths.
 
         Returns:
-            Tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths
+            tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths
                 for the scans and the second entry is the file path to the corresponding annotation.
 
         Raises:
@@ -141,7 +141,7 @@ class PicaiCase(Case):
         self.scans = [sitk.ReadImage(path) for path in self.scan_paths]
         self.annotation = sitk.ReadImage(self.annotations_path)
 
-    def write(self) -> Tuple[Sequence[Path], Path]:
+    def write(self) -> tuple[Sequence[Path], Path]:
         """
         Writes preprocessed scans and annotations from PICAI dataset to disk
         and returns the scan file paths and annotation file path in a tuple.
@@ -154,7 +154,7 @@ class PicaiCase(Case):
         below.
 
         Returns:
-            Tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths
+            tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths
                 for the scans and the second entry is the file path to the corresponding annotation.
         """
         modality_suffix_map = {"t2w": "0000", "adc": "0001", "hbv": "0002"}
@@ -335,7 +335,7 @@ class BinarizeAnnotation(PreprocessingTransform):
         return case
 
 
-def apply_transform(case: Case, transforms: Sequence[PreprocessingTransform]) -> Tuple[Sequence[Path], Path]:
+def apply_transform(case: Case, transforms: Sequence[PreprocessingTransform]) -> tuple[Sequence[Path], Path]:
     """
     Reads in scans and annotation, applies sequence of transformations, and writes resulting case to disk.
     Returns tuple with scan paths and corresponding annotation path.
@@ -345,7 +345,7 @@ def apply_transform(case: Case, transforms: Sequence[PreprocessingTransform]) ->
         transforms (Sequence[PreprocessingTransform]): The sequence of transformation to be applied.
 
     Returns:
-        Tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths
+        tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths
             for the scans and the second entry is the file path to the corresponding annotation.
 
     Raises:
@@ -361,18 +361,18 @@ def apply_transform(case: Case, transforms: Sequence[PreprocessingTransform]) ->
 
 
 def preprocess(
-    cases: List[Case], transforms: Sequence[PreprocessingTransform], num_threads: int = 4
-) -> Sequence[Tuple[Sequence[Path], Path]]:
+    cases: list[Case], transforms: Sequence[PreprocessingTransform], num_threads: int = 4
+) -> Sequence[tuple[Sequence[Path], Path]]:
     """
     Preprocesses a list of cases according to the specified transformations.
 
     Args:
-        cases (List[Case]): A list of cases to be preprocessed.
+        cases (list[Case]): A list of cases to be preprocessed.
         transforms (Sequence[PreprocessingTransform]): The sequence of transformation to be applied.
         nums_threads (int): The number of threads to use for preprocessing.
 
     Returns:
-        Sequence[Tuple[Sequence[Path], Path]]: A sequence of tuples in which the first entry is a sequence of
+        Sequence[tuple[Sequence[Path], Path]]: A sequence of tuples in which the first entry is a sequence of
         file paths for the scans and the second entry is the file path to the corresponding annotation.
 
     Raises:

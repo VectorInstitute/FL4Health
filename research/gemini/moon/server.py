@@ -2,7 +2,7 @@ import argparse
 import os
 from functools import partial
 from logging import INFO
-from typing import Any, Dict
+from typing import Any
 
 import flwr as fl
 import torch.nn as nn
@@ -18,7 +18,7 @@ from mortality_models.moon_model import MortalityMoonModel
 from servers.full_exchange_server import FullExchangeServer
 from utils.random import set_all_random_seeds
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, LatestTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.utils.config import load_config
 from research.gemini.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 
@@ -42,7 +42,7 @@ def fit_config(
     }
 
 
-def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
+def main(config: dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -58,7 +58,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     checkpointer = (
         BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
         if federated_checkpointing
-        else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
+        else LatestTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
     )
 
     client_manager = SimpleClientManager()

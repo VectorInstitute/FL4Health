@@ -1,8 +1,8 @@
 import argparse
 import json
 import os
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import SimpleITK as sitk
@@ -28,13 +28,13 @@ DEFAULT_TRANSFORMS = [
 ]
 
 
-def get_labels(paths_for_each_sample: Sequence[Tuple[Sequence[Path], Path]]) -> Sequence[float]:
+def get_labels(paths_for_each_sample: Sequence[tuple[Sequence[Path], Path]]) -> Sequence[float]:
     """
     Get the label of each sample. The label is negative if no foreground objects exist, as per annotation,
     else positive.
 
     Args:
-        paths_for_each_sample (Sequence[Tuple[Sequence[Path], Path]]): A sequence in which each member
+        paths_for_each_sample (Sequence[tuple[Sequence[Path], Path]]): A sequence in which each member
             is tuple where the first entry is a list of scan paths and the second in the annotation path.
 
     Returns:
@@ -52,33 +52,33 @@ def get_labels(paths_for_each_sample: Sequence[Tuple[Sequence[Path], Path]]) -> 
 
 
 def filter_split_on_subject_id(
-    scan_annotation_label_list: Sequence[Tuple[Sequence[str], str, float]],
-    split: Dict[str, Sequence[str]],
+    scan_annotation_label_list: Sequence[tuple[Sequence[str], str, float]],
+    split: dict[str, Sequence[str]],
     train: bool,
-) -> Dict[str, Union[Sequence[float], Sequence[str]]]:
+) -> dict[str, Sequence[float] | Sequence[str]]:
     """
     Filters the scan_annotation_label_list to only include samples with a subject_id apart of split.
     Returns Dict with image paths, label paths and case labels
 
     Args:
-        scan_annotation_label_list (Sequence[Tuple[List[str], str, float]]): A sequence where each member
+        scan_annotation_label_list (Sequence[tuple[list[str], str, float]]): A sequence where each member
             is a tuple where the first entry is a list of scan paths, the second entry is the annotation
             path and the third entry is the label of the sample.
-        split (Dict[str, Sequence[str]]): A Dict of sequences of subject_ids included in the current split.
+        split (dict[str, Sequence[str]]): A Dict of sequences of subject_ids included in the current split.
             Dict contains two keys: train and val.
         train (bool): Whether to use the train or the test split.
 
     Returns:
-        Dict[str, Union[Sequence[float], Sequence[str]]]: A Dict containing image_paths, label_paths
+        dict[str, Sequence[float] | Sequence[str]]: A Dict containing image_paths, label_paths
             and case_label for each sample part of the split.
     """
     train_or_val_string = "train" if train else "val"
-    filtered_scan_annotation_label_list: Sequence[Tuple[Sequence[str], str, float]] = [
+    filtered_scan_annotation_label_list: Sequence[tuple[Sequence[str], str, float]] = [
         (scan_paths, annotation_path, label)
         for (scan_paths, annotation_path, label) in scan_annotation_label_list
         if any([subject_id in annotation_path for subject_id in split[train_or_val_string]])
     ]
-    labeled_data: Dict[str, Union[Sequence[float], Sequence[str]]] = {}
+    labeled_data: dict[str, Sequence[float] | Sequence[str]] = {}
     labeled_data["image_paths"], labeled_data["label_paths"], labeled_data["case_label"] = zip(
         *filtered_scan_annotation_label_list
     )
@@ -86,9 +86,9 @@ def filter_split_on_subject_id(
 
 
 def generate_dataset_json(
-    paths_for_each_sample: Sequence[Tuple[Sequence[Path], Path]],
+    paths_for_each_sample: Sequence[tuple[Sequence[Path], Path]],
     write_dir: Path,
-    splits_path: Optional[Path] = None,
+    splits_path: Path | None = None,
 ) -> None:
     """
     Generates JSON file(s) that include the image_paths, label_paths and case_labels.
@@ -96,10 +96,10 @@ def generate_dataset_json(
     If no splits_path is supplied, a single JSON file will be created with all of the samples.
 
     Args:
-        paths_for_each_sample (Sequence[Tuple[Sequence[Path], Path]]): A sequence in which each member
+        paths_for_each_sample (Sequence[tuple[Sequence[Path], Path]]): A sequence in which each member
             is tuple where the first entry is a list of scan paths and the second in the annotation path.
         write_dir (Path): The directory to write the dataset file(s).
-        splits_path (Optional[Path]): The path to the desired spits. JSON file with key for each split.
+        splits_path (Path | None): The path to the desired spits. JSON file with key for each split.
             Each key contains nested keys train and val. Inside the nested keys are lists of subject_id
             strings to be included in the split.
     """
@@ -114,7 +114,7 @@ def generate_dataset_json(
 
     if splits_path is None:
         # If splits_path is None, create a singe dataset overview
-        labeled_data: Dict[str, Union[Sequence[str], Sequence[float]]] = {}
+        labeled_data: dict[str, Sequence[str] | Sequence[float]] = {}
         labeled_data["image_paths"], labeled_data["label_paths"], labeled_data["case_label"] = zip(
             *scan_annotation_label_list
         )
@@ -143,19 +143,19 @@ def generate_dataset_json(
                 json.dump(val_labeled_data, f)
 
 
-def preprare_data(
+def prepare_data(
     scans_read_dir: Path,
     annotation_read_dir: Path,
     scans_write_dir: Path,
     annotation_write_dir: Path,
     overview_write_dir: Path,
-    size: Optional[Tuple[int, int, int]] = None,
-    physical_size: Optional[Tuple[float, float, float]] = None,
-    spacing: Optional[Tuple[float, float, float]] = None,
+    size: tuple[int, int, int] | None = None,
+    physical_size: tuple[float, float, float] | None = None,
+    spacing: tuple[float, float, float] | None = None,
     scan_extension: str = "mha",
     annotation_extension: str = ".nii.gz",
     num_threads: int = 4,
-    splits_path: Optional[Path] = None,
+    splits_path: Path | None = None,
 ) -> None:
     """
     Runs preprocessing on data with specified settings.
@@ -170,17 +170,17 @@ def preprare_data(
             All annotations are written into same directory.
         overviews_write_dir (Path): The path where the dataset json files are located. For each split 1-5,
             there is a train and validation file with scan paths, label paths and case labels.
-        size (Optional[Tuple[int, int, int]]): Desired dimensions of preprocessed scans in voxels.
+        size (tuple[int, int, int] | None): Desired dimensions of preprocessed scans in voxels.
             Triplet of the form: Depth x Height x Width.
-        physical_size (Optional[Tuple[float, float, float]]): Desired dimensions of preprocessed scans in mm.
+        physical_size (tuple[float, float, float] | None): Desired dimensions of preprocessed scans in mm.
             Simply the product of the number of voxels by the spacing along a particular
             dimension: Triplet of the form: Depth x Height x Width.
-        spacing (Optional[Tuple[float, float, float]]): Desired spacing of preprocessed scans in in mm/voxel.
+        spacing (tuple[float, float, float] | None): Desired spacing of preprocessed scans in in mm/voxel.
             Triplet of the form: Depth x Height x Width.
         scan_extension (str): The expected extension of scan file paths.
         annotation_extension (str): The expected extension of annotation file paths.
         num_threads (str): The number of threads to use during preprocessing.
-        splits_path (Optional[Path]): The path to the file containing the splits.
+        splits_path (Path | None): The path to the file containing the splits.
     """
     settings = PreprocessingSettings(
         scans_write_dir,
@@ -191,7 +191,7 @@ def preprare_data(
     )
     valid_annotation_filenames = [f for f in os.listdir(annotation_read_dir) if f.endswith(annotation_extension)]
 
-    samples: List[Case] = []
+    samples: list[Case] = []
     for annotation_filename in valid_annotation_filenames:
         # Annotation filename is subject id (ie patient_id study_id)
         # We use it to get the corresponding scan paths
@@ -292,7 +292,7 @@ def main() -> None:
         raise ValueError("Argument spacing must have length 3")
     spacing = (float(args.spacing[0]), float(args.spacing[1]), float(args.spacing[2])) if args.spacing else None
 
-    preprare_data(
+    prepare_data(
         args.scans_read_dir,
         args.annotation_read_dir,
         args.scans_write_dir,

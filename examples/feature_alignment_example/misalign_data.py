@@ -1,13 +1,12 @@
 import random
 from logging import INFO
 from pathlib import Path
-from typing import List
 
 import pandas as pd
 from flwr.common.logger import log
 
 
-def random_split_data(df: pd.DataFrame, n: int) -> List[pd.DataFrame]:
+def random_split_data(df: pd.DataFrame, n: int) -> list[pd.DataFrame]:
     df_rand = df.sample(frac=1.0, random_state=42)
     num_rows_per_df = len(df_rand) // n
     smaller_dfs = [df_rand.iloc[i * num_rows_per_df : (i + 1) * num_rows_per_df] for i in range(n - 1)]

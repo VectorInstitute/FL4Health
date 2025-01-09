@@ -1,13 +1,14 @@
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.typing import Config
 from torch.optim import Optimizer
 
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.ensemble_base import EnsembleModel
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
@@ -20,7 +21,10 @@ class EnsembleClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: str | None = None,
     ) -> None:
         """
         This client enables the training of ensemble models in a federated manner.
@@ -32,16 +36,27 @@ class EnsembleClient(BasicClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
-                do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
-                None.
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
+                both checkpointing and state saving. The module, and its underlying model and state checkpointing
+                components will determine when and how to do checkpointing during client-side training.
+                No checkpointing (state or model) is done if not provided. Defaults to None.
+            reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
+                should send data to. Defaults to None.
+            progress_bar (bool, optional): Whether or not to display a progress bar during client training and
+                validation. Uses tqdm. Defaults to False
+            client_name (str | None, optional): An optional client name that uniquely identifies a client.
+                If not passed, a hash is randomly generated. Client state will use this as part of its state file
+                name. Defaults to None.
         """
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
         )
 
         self.model: EnsembleModel
@@ -75,22 +90,22 @@ class EnsembleClient(BasicClient):
         assert isinstance(optimizers, dict)
         self.optimizers = optimizers
 
-    def train_step(self, input: TorchInputType, target: TorchTargetType) -> Tuple[TrainingLosses, TorchPredType]:
+    def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
         """
         Given a single batch of input and target data, generate predictions
         (both individual models and ensemble prediction), compute loss, update parameters and
-        optionally update metrics if they exist. (ie backprop on a single batch of data).
+        optionally update metrics if they exist. (ie backpropagation on a single batch of data).
         Assumes self.model is in train mode already. Differs from parent method in that, there are multiple losses
         that we have to do backward passes on and multiple optimizers to update parameters each train step.
 
         Args:
             input (TorchInputType): The input to be fed into the model.
             TorchInputType is simply an alias for the union of torch.Tensor and
-            Dict[str, torch.Tensor].
+            dict[str, torch.Tensor].
             target (torch.Tensor): The target corresponding to the input.
 
         Returns:
-            Tuple[TrainingLosses, Dict[str, torch.Tensor]]: The losses object from the train step along with
+            tuple[TrainingLosses, dict[str, torch.Tensor]]: The losses object from the train step along with
                 a dictionary of any predictions produced by the model.
         """
         assert isinstance(input, torch.Tensor)
@@ -121,9 +136,9 @@ class EnsembleClient(BasicClient):
         Since the ensemble client has more than one model, there are multiple backward losses that exist.
 
         Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
+            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
                 in preds will be used to compute metrics.
-            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            features: (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
@@ -148,9 +163,9 @@ class EnsembleClient(BasicClient):
         Since the ensemble client has more than one model, there are multiple backward losses that exist.
 
         Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
+            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
                 in preds will be used to compute metrics.
-            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            features: (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
@@ -164,7 +179,7 @@ class EnsembleClient(BasicClient):
         checkpoint_loss = loss_dict["ensemble-pred"]
         return EvaluationLosses(checkpoint=checkpoint_loss)
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
         """
         Method to be defined by user that returns dictionary of optimizers with keys corresponding to the
         keys of the models in EnsembleModel that the optimizer applies too.
@@ -173,7 +188,7 @@ class EnsembleClient(BasicClient):
             config (Config): The config sent from the server.
 
         Returns:
-            Dict[str, Optimizer]: An optimizer or dictionary of optimizers to
+            dict[str, Optimizer]: An optimizer or dictionary of optimizers to
             train model.
 
         Raises:

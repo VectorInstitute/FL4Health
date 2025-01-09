@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import flwr as fl
 import pandas as pd
@@ -34,7 +34,7 @@ def construct_tab_feature_info_encoder(
     return TabularFeaturesInfoEncoder.encoder_from_dataframe(df, id_column, target_column)
 
 
-def main(config: Dict[str, Any]) -> None:
+def main(config: dict[str, Any]) -> None:
     client_manager = PoissonSamplingClientManager()
     strategy = BasicFedAvg(
         min_fit_clients=config["n_clients"],
@@ -62,6 +62,7 @@ def main(config: Dict[str, Any]) -> None:
         initialize_parameters=get_initial_model_parameters,
         strategy=strategy,
         tabular_features_source_of_truth=tab_feature_info_encoder_hospital1,
+        accept_failures=False,
     )
 
     fl.server.start_server(

@@ -2,29 +2,29 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, Generic, List, Optional, TypeVar, Union
+from typing import Generic, TypeVar
 
 import torch
 
 
 class Losses(ABC):
-    def __init__(self, additional_losses: Optional[Dict[str, torch.Tensor]] = None) -> None:
+    def __init__(self, additional_losses: dict[str, torch.Tensor] | None = None) -> None:
         """
         An abstract class to store the losses
 
         Args:
-            additional_losses (Optional[Dict[str, torch.Tensor]]): Optional dictionary of additional losses.
+            additional_losses (dict[str, torch.Tensor] | None): Optional dictionary of additional losses.
         """
         self.additional_losses = additional_losses if additional_losses else {}
 
-    def as_dict(self) -> Dict[str, float]:
+    def as_dict(self) -> dict[str, float]:
         """
         Produces a dictionary representation of the object with all of the losses.
 
         Returns:
-            Dict[str, float]: A dictionary with the additional losses if they exist.
+            dict[str, float]: A dictionary with the additional losses if they exist.
         """
-        loss_dict: Dict[str, float] = {}
+        loss_dict: dict[str, float] = {}
 
         if self.additional_losses is not None:
             for key, val in self.additional_losses.items():
@@ -48,24 +48,24 @@ class Losses(ABC):
 
 
 class EvaluationLosses(Losses):
-    def __init__(self, checkpoint: torch.Tensor, additional_losses: Optional[Dict[str, torch.Tensor]] = None) -> None:
+    def __init__(self, checkpoint: torch.Tensor, additional_losses: dict[str, torch.Tensor] | None = None) -> None:
         """
         A class to store the checkpoint and additional_losses of a model
         along with a method to return a dictionary representation.
 
         Args:
             checkpoint (torch.Tensor): The loss used to checkpoint model (if checkpointing is enabled).
-            additional_losses (Optional[Dict[str, torch.Tensor]]): Optional dictionary of additional losses.
+            additional_losses (dict[str, torch.Tensor] | None): Optional dictionary of additional losses.
         """
         super().__init__(additional_losses)
         self.checkpoint = checkpoint
 
-    def as_dict(self) -> Dict[str, float]:
+    def as_dict(self) -> dict[str, float]:
         """
         Produces a dictionary representation of the object with all of the losses.
 
         Returns:
-            Dict[str, float]: A dictionary with the checkpoint loss, plus each one of the keys in
+            dict[str, float]: A dictionary with the checkpoint loss, plus each one of the keys in
                 additional losses if they exist.
         """
         loss_dict = super().as_dict()
@@ -98,28 +98,28 @@ class EvaluationLosses(Losses):
 class TrainingLosses(Losses):
     def __init__(
         self,
-        backward: Union[torch.Tensor, Dict[str, torch.Tensor]],
-        additional_losses: Optional[Dict[str, torch.Tensor]] = None,
+        backward: torch.Tensor | dict[str, torch.Tensor],
+        additional_losses: dict[str, torch.Tensor] | None = None,
     ) -> None:
         """
         A class to store the backward and additional_losses of a model
         along with a method to return a dictionary representation.
 
         Args:
-            backward (Union[torch.Tensor, Dict[str, torch.Tensor]]): The backward loss or
+            backward (torch.Tensor | dict[str, torch.Tensor]): The backward loss or
                 losses to optimize. In the normal case, backward is a Tensor corresponding to the
                 loss of a model. In the case of an ensemble_model, backward is dictionary of losses.
-            additional_losses (Optional[Dict[str, torch.Tensor]]): Optional dictionary of additional losses.
+            additional_losses (dict[str, torch.Tensor] | None): Optional dictionary of additional losses.
         """
         super().__init__(additional_losses)
         self.backward = backward if isinstance(backward, dict) else {"backward": backward}
 
-    def as_dict(self) -> Dict[str, float]:
+    def as_dict(self) -> dict[str, float]:
         """
         Produces a dictionary representation of the object with all of the losses.
 
         Returns:
-            Dict[str, float]: A dictionary where each key represents one of the  backward losses,
+            dict[str, float]: A dictionary where each key represents one of the  backward losses,
                 plus additional losses if they exist.
         """
         loss_dict = super().as_dict()
@@ -176,7 +176,7 @@ class LossMeter(Generic[LossesType]):
                 of the subclasses of Losses
 
         """
-        self.losses_list: List[LossesType] = []
+        self.losses_list: list[LossesType] = []
         self.loss_meter_type = loss_meter_type
         self.losses_type = losses_type
 
@@ -207,25 +207,25 @@ class LossMeter(Generic[LossesType]):
 
     @staticmethod
     def aggregate_losses_dict(
-        loss_list: List[Dict[str, torch.Tensor]],
+        loss_list: list[dict[str, torch.Tensor]],
         loss_meter_type: LossMeterType,
-    ) -> Dict[str, torch.Tensor]:
+    ) -> dict[str, torch.Tensor]:
         """
         Aggregates a list of losses dictionaries into a single dictionary according to the loss meter aggregation type
 
         Args:
-            loss_list (List[Dict[str, torch.Tensor]]): A list of loss dictionaries
+            loss_list (list[dict[str, torch.Tensor]]): A list of loss dictionaries
             loss_meter_type (LossMeterType): The type of the loss meter to perform the aggregation
 
         Returns:
-            Dict[str, torch.Tensor]: A single dictionary with the aggregated losses according to the given loss
+            dict[str, torch.Tensor]: A single dictionary with the aggregated losses according to the given loss
                 meter type
         """
         # We don't know the keys of the dict (backward or additional losses) beforehand. We don't obtain them
         # from the first entry because losses can have different keys. We get list of all the keys from
         # all the losses.
         loss_keys = set(key for loss_dict_ in loss_list for key in loss_dict_.keys())
-        loss_dict: Dict[str, torch.Tensor] = {}
+        loss_dict: dict[str, torch.Tensor] = {}
         for key in loss_keys:
             if loss_meter_type == LossMeterType.AVERAGE:
                 loss = torch.mean(torch.FloatTensor([loss[key] for loss in loss_list if key in loss]))

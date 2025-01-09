@@ -1,18 +1,17 @@
 import argparse
 import os
 from logging import INFO
-from typing import List, Optional
 
 import numpy as np
 from flwr.common.logger import log
 
 
-def get_hp_folders(hp_sweep_dir: str) -> List[str]:
+def get_hp_folders(hp_sweep_dir: str) -> list[str]:
     paths_in_hp_sweep_dir = [os.path.join(hp_sweep_dir, contents) for contents in os.listdir(hp_sweep_dir)]
     return [hp_folder for hp_folder in paths_in_hp_sweep_dir if os.path.isdir(hp_folder)]
 
 
-def get_run_folders(hp_dir: str) -> List[str]:
+def get_run_folders(hp_dir: str) -> list[str]:
     run_folder_names = [folder_name for folder_name in os.listdir(hp_dir) if "Run" in folder_name]
     return [os.path.join(hp_dir, run_folder_name) for run_folder_name in run_folder_names]
 
@@ -39,7 +38,7 @@ def get_weighted_loss_from_server_log(
 
 def main(hp_sweep_dir: str, experiment_name: str, is_partial_efficient_net: bool) -> None:
     hp_folders = get_hp_folders(hp_sweep_dir)
-    best_avg_loss: Optional[float] = None
+    best_avg_loss: float | None = None
     best_folder = ""
     for hp_folder in hp_folders:
         run_folders = get_run_folders(hp_folder)

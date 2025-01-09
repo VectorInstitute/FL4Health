@@ -1,7 +1,6 @@
 import os
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Tuple
 
 import torch
 import torch.nn as nn
@@ -11,7 +10,7 @@ from monai.data.dataloader import DataLoader
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, PerRoundCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, PerRoundStateCheckpointer
 from fl4health.utils.metrics import MetricManager
 
 
@@ -33,10 +32,11 @@ class SingleNodeTrainer:
         if not os.path.exists(checkpoint_dir):
             os.mkdir(checkpoint_dir)
 
-        per_round_checkpoint_name = "ckpt.pkl"
-        self.per_epoch_checkpointer = PerRoundCheckpointer(Path(checkpoint_dir), Path(per_round_checkpoint_name))
+        self.state_checkpoint_name = "ckpt.pkl"
+        self.state_checkpoint_path = os.path.join(checkpoint_dir, self.state_checkpoint_name)
+        self.per_epoch_checkpointer = PerRoundStateCheckpointer(Path(checkpoint_dir))
         best_metric_checkpoint_name = "best_ckpt.pkl"
-        self.checkpointer = BestLossTorchCheckpointer(checkpoint_dir, best_metric_checkpoint_name)
+        self.checkpointer = BestLossTorchModuleCheckpointer(checkpoint_dir, best_metric_checkpoint_name)
 
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -46,20 +46,22 @@ class SingleNodeTrainer:
         self.device = device
         self.epoch: int
 
-        if not self.per_epoch_checkpointer.checkpoint_exists():
-            self.per_epoch_checkpointer.save_checkpoint({"model": self.model, "optimizer": self.optimizer, "epoch": 0})
+        if not self.per_epoch_checkpointer.checkpoint_exists(self.state_checkpoint_path):
+            self.per_epoch_checkpointer.save_checkpoint(
+                self.state_checkpoint_name, {"model": self.model, "optimizer": self.optimizer, "epoch": 0}
+            )
 
-        ckpt = self.per_epoch_checkpointer.load_checkpoint()
+        ckpt = self.per_epoch_checkpointer.load_checkpoint(self.state_checkpoint_path)
         self.model, self.optimizer, self.epoch = ckpt["model"], ckpt["optimizer"], ckpt["epoch"]
 
-    def _maybe_checkpoint(self, loss: float, metrics: Dict[str, Scalar]) -> None:
+    def _maybe_checkpoint(self, loss: float, metrics: dict[str, Scalar]) -> None:
         if self.checkpointer:
             self.checkpointer.maybe_checkpoint(self.model, loss, metrics)
 
     def _handle_reporting(
         self,
         loss: float,
-        metrics_dict: Dict[str, Scalar],
+        metrics_dict: dict[str, Scalar],
         is_validation: bool = False,
     ) -> None:
         metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
@@ -69,7 +71,7 @@ class SingleNodeTrainer:
             f"Centralized {metric_prefix} Loss: {loss} \n" f"Centralized {metric_prefix} Metrics: {metric_string}",
         )
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         self.model.train()
         # forward pass on the model
         preds = self.model(input)
@@ -103,7 +105,7 @@ class SingleNodeTrainer:
 
             # Save checkpoint in case run gets pre-empted
             self.per_epoch_checkpointer.save_checkpoint(
-                {"model": self.model, "optimizer": self.optimizer, "epoch": epoch + 1}
+                self.state_checkpoint_name, {"model": self.model, "optimizer": self.optimizer, "epoch": epoch + 1}
             )
 
     def validate(self, val_metric_mngr: MetricManager) -> None:

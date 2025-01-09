@@ -1,8 +1,8 @@
 import argparse
 import os
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -14,9 +14,10 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.mkmmd_clients.ditto_mkmmd_client import DittoMkMmdClient
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
@@ -37,18 +38,24 @@ class FedIsic2019DittoClient(DittoMkMmdClient):
         client_number: int,
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: str | None = None,
         mkmmd_loss_weight: float = 10,
         feature_l2_norm_weight: float = 1,
         mkmmd_loss_depth: int = 1,
         beta_global_update_interval: int = 20,
-        checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
             mkmmd_loss_weight=mkmmd_loss_weight,
             feature_extraction_layers=FED_ISIC2019_BASELINE_LAYERS[-1 * mkmmd_loss_depth :],
             feature_l2_norm_weight=feature_l2_norm_weight,
@@ -60,7 +67,7 @@ class FedIsic2019DittoClient(DittoMkMmdClient):
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
             self.client_number, str(self.data_path)
         )
@@ -72,7 +79,7 @@ class FedIsic2019DittoClient(DittoMkMmdClient):
         model: nn.Module = Baseline().to(self.device)
         return model
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
         # Note that the global optimizer operates on self.global_model.parameters() and local optimizer operates on
         # self.model.parameters().
         global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=self.learning_rate)
@@ -175,7 +182,9 @@ if __name__ == "__main__":
 
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = ClientCheckpointModule(post_aggregation=BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name))
+    checkpoint_and_state_module = ClientCheckpointAndStateModule(
+        post_aggregation=BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
+    )
 
     client = FedIsic2019DittoClient(
         data_path=Path(args.dataset_dir),
@@ -183,7 +192,7 @@ if __name__ == "__main__":
         device=device,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
         feature_l2_norm_weight=args.l2,
         mkmmd_loss_depth=args.mkmmd_loss_depth,
         mkmmd_loss_weight=args.mu,

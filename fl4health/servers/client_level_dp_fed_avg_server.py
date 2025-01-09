@@ -1,14 +1,13 @@
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from logging import INFO
 from math import ceil
-from typing import List, Optional, Tuple
 
 from flwr.common.logger import log
-from flwr.common.typing import Config
+from flwr.common.typing import Config, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.server_module import ClippingBitServerCheckpointAndStateModule
 from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingByFractionClientManager
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.privacy.fl_accountants import (
@@ -29,9 +28,11 @@ class ClientLevelDPFedAvgServer(FlServer):
         strategy: ClientLevelDPFedAvgM,
         server_noise_multiplier: float,
         num_server_rounds: int,
-        checkpointer: Optional[TorchCheckpointer] = None,
         reporters: Sequence[BaseReporter] | None = None,
-        delta: Optional[int] = None,
+        checkpoint_and_state_module: ClippingBitServerCheckpointAndStateModule | None = None,
+        delta: int | None = None,
+        on_init_parameters_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
+        server_name: str | None = None,
         accept_failures: bool = True,
     ) -> None:
         """
@@ -48,23 +49,38 @@ class ClientLevelDPFedAvgServer(FlServer):
                 client updates and other information potentially sent by the participating clients.
             server_noise_multiplier (float): Magnitude of noise added to the weights aggregation process by the server.
             num_server_rounds (int): Number of rounds of FL training carried out by the server.
-            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
-                server side checkpointing based on some criteria. If none, then no server-side checkpointing is
-                performed. Defaults to None.
-            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
-                reporters which the server should send data to before and after each round.
-            delta (Optional[float], optional): The delta value for epsilon-delta DP accounting. If None it defaults to
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the server should
+                send data to before and after each round.
+            checkpoint_and_state_module (BaseServerCheckpointAndStateModule | None, optional): This module is used
+                to handle both model checkpointing and state checkpointing. The former is aimed at saving model
+                artifacts to be used or evaluated after training. The latter is used to preserve training state
+                (including models) such that if FL training is interrupted, the process may be restarted. If no
+                module is provided, no checkpointing or state preservation will happen. Defaults to None.
+            delta (float | None, optional): The delta value for epsilon-delta DP accounting. If None it defaults to
                 being 1/total_samples in the FL run. Defaults to None.
+            on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to
+                configure how one asks a client to provide parameters from which to initialize all other clients by
+                providing a Config dictionary. If this is none, then a blank config is sent with the parameter request
+                (which is default behavior for flower servers). Defaults to None.
+            server_name (str | None, optional): An optional string name to uniquely identify server. This name is also
+                used as part of any state checkpointing done by the server. Defaults to None.
             accept_failures (bool, optional): Determines whether the server should accept failures during training or
                 evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
                 and throw an exception. Defaults to True.
         """
+        if checkpoint_and_state_module is not None:
+            assert isinstance(
+                checkpoint_and_state_module,
+                ClippingBitServerCheckpointAndStateModule,
+            ), "checkpoint_and_state_module must have type ClippingBitServerCheckpointAndStateModule"
         super().__init__(
             client_manager=client_manager,
             fl_config=fl_config,
             strategy=strategy,
-            checkpointer=checkpointer,
             reporters=reporters,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            on_init_parameters_config_fn=on_init_parameters_config_fn,
+            server_name=server_name,
             accept_failures=accept_failures,
         )
         self.accountant: ClientLevelAccountant
@@ -72,17 +88,17 @@ class ClientLevelDPFedAvgServer(FlServer):
         self.num_server_rounds = num_server_rounds
         self.delta = delta
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
+    def fit(self, num_rounds: int, timeout: float | None) -> tuple[History, float]:
         """
         Run federated averaging for a number of rounds.
 
         Args:
             num_rounds (int): Number of server rounds to run.
-            timeout (Optional[float]): The amount of time in seconds that the server will wait for results from the
+            timeout (float | None): The amount of time in seconds that the server will wait for results from the
                 clients selected to participate in federated training.
 
         Returns:
-            Tuple[History, float]: The first element of the tuple is a history object containing the full set of
+            tuple[History, float]: The first element of the tuple is a history object containing the full set of
                 FL training results, including things like aggregated loss and metrics.
                 Tuple also contains the elapsed time in seconds for the round.
         """
@@ -99,12 +115,12 @@ class ClientLevelDPFedAvgServer(FlServer):
 
         return super().fit(num_rounds=num_rounds, timeout=timeout)
 
-    def setup_privacy_accountant(self, sample_counts: List[int]) -> None:
+    def setup_privacy_accountant(self, sample_counts: list[int]) -> None:
         """
         Sets up FL Accountant and computes privacy loss based on class attributes and retrieved sample counts.
 
         Args:
-            sample_counts (List[int]): These should be the total number of training examples fetched from all clients
+            sample_counts (list[int]): These should be the total number of training examples fetched from all clients
                 during the sample polling process.
         """
         assert isinstance(self.strategy, ClientLevelDPFedAvgM)

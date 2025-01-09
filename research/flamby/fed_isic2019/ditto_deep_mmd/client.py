@@ -1,9 +1,9 @@
 import argparse
 import os
 from collections import OrderedDict
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -15,9 +15,10 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client import DittoDeepMmdClient
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
@@ -40,7 +41,10 @@ class FedIsic2019DittoClient(DittoDeepMmdClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         deep_mmd_loss_weight: float = 10,
         deep_mmd_loss_depth: int = 1,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: str | None = None,
     ) -> None:
         feature_extraction_layers_with_size = OrderedDict(
             list(FED_ISIC2019_BASELINE_LAYERS.items())[-1 * deep_mmd_loss_depth :]
@@ -50,7 +54,10 @@ class FedIsic2019DittoClient(DittoDeepMmdClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
             deep_mmd_loss_weight=deep_mmd_loss_weight,
             feature_extraction_layers_with_size=feature_extraction_layers_with_size,
         )
@@ -60,7 +67,7 @@ class FedIsic2019DittoClient(DittoDeepMmdClient):
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
             self.client_number, str(self.data_path)
         )
@@ -72,7 +79,7 @@ class FedIsic2019DittoClient(DittoDeepMmdClient):
         model: nn.Module = Baseline().to(self.device)
         return model
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
         # Note that the global optimizer operates on self.global_model.parameters() and local optimizer operates on
         # self.model.parameters().
         global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=self.learning_rate)
@@ -158,7 +165,9 @@ if __name__ == "__main__":
 
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = ClientCheckpointModule(post_aggregation=BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name))
+    checkpoint_and_state_module = ClientCheckpointAndStateModule(
+        post_aggregation=BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
+    )
 
     client = FedIsic2019DittoClient(
         data_path=Path(args.dataset_dir),
@@ -166,7 +175,7 @@ if __name__ == "__main__":
         device=device,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
         deep_mmd_loss_depth=args.deep_mmd_loss_depth,
         deep_mmd_loss_weight=args.mu,
     )

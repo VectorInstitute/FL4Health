@@ -1,8 +1,8 @@
 import argparse
 import os
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -14,9 +14,10 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.fed_prox_client import FedProxClient
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
@@ -31,14 +32,20 @@ class FedIsic2019FedProxClient(FedProxClient):
         client_number: int,
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: str | None = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
@@ -46,7 +53,7 @@ class FedIsic2019FedProxClient(FedProxClient):
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
             self.client_number, str(self.data_path)
         )
@@ -113,7 +120,9 @@ if __name__ == "__main__":
 
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = ClientCheckpointModule(post_aggregation=BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name))
+    checkpoint_and_state_module = ClientCheckpointAndStateModule(
+        post_aggregation=BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
+    )
 
     client = FedIsic2019FedProxClient(
         data_path=Path(args.dataset_dir),
@@ -121,7 +130,7 @@ if __name__ == "__main__":
         device=device,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
     )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())

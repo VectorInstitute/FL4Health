@@ -1,15 +1,15 @@
 import argparse
 from functools import partial
-from typing import Any, Dict
+from typing import Any
 
 import flwr as fl
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 
 from examples.ae_examples.fedprox_vae_example.models import MnistVariationalDecoder, MnistVariationalEncoder
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
+from fl4health.checkpointing.server_module import AdaptiveConstraintServerCheckpointAndStateModule
 from fl4health.model_bases.autoencoders_base import VariationalAe
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.base_server import FlServer
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
@@ -31,7 +31,7 @@ def fit_config(
     }
 
 
-def main(config: Dict[str, Any]) -> None:
+def main(config: dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -47,8 +47,11 @@ def main(config: Dict[str, Any]) -> None:
     model_checkpoint_name = "best_VAE_model.pkl"
 
     # To facilitate checkpointing
-    parameter_exchanger = FullParameterExchanger()
-    checkpointer = BestLossTorchCheckpointer(config["checkpoint_path"], model_checkpoint_name)
+    checkpointer = BestLossTorchModuleCheckpointer(config["checkpoint_path"], model_checkpoint_name)
+
+    checkpoint_and_state_module = AdaptiveConstraintServerCheckpointAndStateModule(
+        model=model, model_checkpointers=checkpointer
+    )
 
     # Server performs simple FedAveraging as its server-side optimization strategy and potentially adapts the
     # FedProx proximal weight mu
@@ -63,17 +66,16 @@ def main(config: Dict[str, Any]) -> None:
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_all_model_parameters(model),
-        adapt_loss_weight=config["adapt_proximal_weight"],
+        adapt_loss_weight=config["adaptive_proximal_weight"],
         initial_loss_weight=config["initial_proximal_weight"],
     )
 
     server = FlServer(
         client_manager=SimpleClientManager(),
         fl_config=config,
-        parameter_exchanger=parameter_exchanger,
-        model=model,
         strategy=strategy,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
+        accept_failures=False,
     )
 
     fl.server.start_server(

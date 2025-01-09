@@ -1,13 +1,14 @@
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, Union
 
 import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, Scalar
 
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.client import check_if_batch_is_empty_and_verify_input, move_data_to_device
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
@@ -21,7 +22,10 @@ class FlashClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: str | None = None,
     ) -> None:
         """
         This client is used to perform client-side training associated with the Flash method described in
@@ -30,25 +34,38 @@ class FlashClient(BasicClient):
         drift-aware adaptive optimization.
 
         Args:
-            data_path (Path): Path to the data directory.
-            metrics (Sequence[Metric]): List of metrics to be used for evaluation.
-            device (torch.device): Device to be used for training.
-            loss_meter_type (LossMeterType, optional):
-                Type of loss meter to be used. Defaults to LossMeterType.AVERAGE.
-            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to do
-                checkpointing during client-side training. No checkpointing is done if not provided. Defaults to None.
+            data_path (Path): path to the data to be used to load the data for client-side training
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
+                'cuda'
+            loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
+                each batch. Defaults to LossMeterType.AVERAGE.
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
+                both checkpointing and state saving. The module, and its underlying model and state checkpointing
+                components will determine when and how to do checkpointing during client-side training.
+                No checkpointing (state or model) is done if not provided. Defaults to None.
+            reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
+                should send data to. Defaults to None.
+            progress_bar (bool, optional): Whether or not to display a progress bar during client training and
+                validation. Uses tqdm. Defaults to False
+            client_name (str | None, optional): An optional client name that uniquely identifies a client.
+                If not passed, a hash is randomly generated. Client state will use this as part of its state file
+                name. Defaults to None.
         """
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
         )
         # gamma: Threshold for early stopping based on the change in validation loss.
-        self.gamma: Optional[float] = None
+        self.gamma: float | None = None
 
-    def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int, bool, bool]:
+    def process_config(self, config: Config) -> tuple[int | None, int | None, int, bool, bool]:
         local_epochs, local_steps, current_server_round, evaluate_after_fit, pack_losses_with_val_metrics = (
             super().process_config(config)
         )
@@ -60,8 +77,8 @@ class FlashClient(BasicClient):
         return local_epochs, local_steps, current_server_round, evaluate_after_fit, pack_losses_with_val_metrics
 
     def train_by_epochs(
-        self, epochs: int, current_round: Optional[int] = None
-    ) -> Tuple[Dict[str, float], Dict[str, Scalar]]:
+        self, epochs: int, current_round: int | None = None
+    ) -> tuple[dict[str, float], dict[str, Scalar]]:
         self.model.train()
         local_step = 0
         previous_loss = float("inf")

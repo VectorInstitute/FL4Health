@@ -1,6 +1,6 @@
 import argparse
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from examples.fedopt_example.client_data import LabelEncoder, Vocabulary, construct_dataloaders
 from examples.fedopt_example.metrics import CompoundMetric
 from examples.models.lstm_model import LSTM
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
@@ -27,15 +27,15 @@ class NewsClassifierClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
     ) -> None:
-        super().__init__(data_path, metrics, device, loss_meter_type, checkpointer)
+        super().__init__(data_path, metrics, device, loss_meter_type, checkpoint_and_state_module)
         self.weight_matrix: torch.Tensor
         self.vocabulary: Vocabulary
         self.label_encoder: LabelEncoder
         self.batch_size: int
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         sequence_length = narrow_dict_type(config, "sequence_length", int)
         self.batch_size = narrow_dict_type(config, "batch_size", int)
         # NOTE: self.vocabulary and self.label_encoder are initialized in setup_client before the call to
@@ -61,7 +61,7 @@ class NewsClassifierClient(BasicClient):
     def setup_client(self, config: Config) -> None:
         self.vocabulary = Vocabulary.from_json(narrow_dict_type(config, "vocabulary", str))
         self.label_encoder = LabelEncoder.from_json(narrow_dict_type(config, "label_encoder", str))
-        # Since the label_encoder is required for CompundMetric but it is not available until after we receive
+        # Since the label_encoder is required for CompoundMetric but it is not available until after we receive
         # it from the Server, we pass it to the CompoundMetric through the CompoundMetric._setup method once its
         # available
         for metric in self.metrics:
@@ -72,13 +72,13 @@ class NewsClassifierClient(BasicClient):
     def predict(
         self,
         input: TorchInputType,
-    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    ) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]:
         """
         Computes the prediction(s), and potentially features, of the model(s) given the input.
 
         Args:
             input (TorchInputType): the input to self.model's forward pass. TorchInputType is simply an alias
-            for the union of torch.Tensor and Dict[str, torch.Tensor].
+            for the union of torch.Tensor and dict[str, torch.Tensor].
         """
         # While this isn't optimal, this is a good example of a custom predict function to manipulate the predictions
         assert isinstance(self.model, LSTM) and isinstance(input, torch.Tensor)

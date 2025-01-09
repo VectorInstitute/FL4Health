@@ -1,12 +1,10 @@
 import datetime
+from collections.abc import Callable, Sequence
 from logging import DEBUG, ERROR, INFO, WARNING
-from pathlib import Path
-from typing import Callable, Dict, List, Optional, Sequence, Tuple, TypeVar, Union
 
 import torch.nn as nn
 from flwr.common import EvaluateRes, Parameters
 from flwr.common.logger import log
-from flwr.common.parameter import parameters_to_ndarrays
 from flwr.common.typing import Code, Config, GetParametersIns, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
@@ -14,8 +12,7 @@ from flwr.server.history import History
 from flwr.server.server import EvaluateResultsAndFailures, FitResultsAndFailures, Server, evaluate_clients
 from flwr.server.strategy import Strategy
 
-from fl4health.checkpointing.checkpointer import PerRoundCheckpointer, TorchCheckpointer
-from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
+from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.servers.polling import poll_clients
@@ -26,21 +23,16 @@ from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import generate_hash
 from fl4health.utils.typing import EvaluateFailures, FitFailures
 
-ExchangerType = TypeVar("ExchangerType", bound=ParameterExchanger)
-
 
 class FlServer(Server):
     def __init__(
         self,
         client_manager: ClientManager,
         fl_config: Config,
-        strategy: Optional[Strategy] = None,
+        strategy: Strategy | None = None,
         reporters: Sequence[BaseReporter] | None = None,
-        model: nn.Module | None = None,
-        checkpointer: Union[TorchCheckpointer, Sequence[TorchCheckpointer]] | None = None,
-        parameter_exchanger: ExchangerType | None = None,
-        intermediate_server_state_dir: Path | None = None,
-        on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        checkpoint_and_state_module: BaseServerCheckpointAndStateModule | None = None,
+        on_init_parameters_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         server_name: str | None = None,
         accept_failures: bool = True,
     ) -> None:
@@ -54,34 +46,22 @@ class FlServer(Server):
                 In most cases it should be the "source of truth" for how FL training/evaluation should proceed. For
                 example, the config used to produce the on_fit_config_fn and on_evaluate_config_fn for the strategy.
                 NOTE: This config is DISTINCT from the Flwr server config, which is extremely minimal.
-            strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle.
+            strategy (Strategy | None, optional): The aggregation strategy to be used by the server to handle.
                 client updates and other information potentially sent by the participating clients. If None the
                 strategy is FedAvg as set by the flwr Server. Defaults to None.
-            reporters (Sequence[BaseReporter] | None, optional):  sequence of FL4Health reporters which the server
+            reporters (Sequence[BaseReporter] | None, optional): sequence of FL4Health reporters which the server
                 should send data to before and after each round. Defaults to None.
-            model (Optional[nn.Module]): This is the torch model to be checkpointed. It will be hydrated by the
-                _hydrate_model_for_checkpointing function so that it has the proper weights to be saved. If no model
-                is defined and checkpointing is attempted an error will throw. Defaults to None.
-            checkpointer (Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]], optional): To be provided
-                if the server should perform server side checkpointing based on some criteria. If none, then no
-                server-side checkpointing is performed. Multiple checkpointers can also be passed in a sequence to
-                checkpointer based on multiple criterion. Ensure checkpoint names are different for each checkpoint or
-                they will overwrite on another. Defaults to None.
-            parameter_exchanger (Optional[ExchangerType], optional): A parameter exchanger used to facilitate
-                server-side model checkpointing if a checkpointer has been defined. If not provided then checkpointing
-                will not be done unless the _hydrate_model_for_checkpointing function is overridden. Because the
-                server only sees numpy arrays, the parameter exchanger is used to insert the numpy arrays into a
-                provided model. Defaults to None.
-            intermediate_server_state_dir (Path): A directory to store and load state from for the server
-                during an FL experiment. This allows for the saving of server state in case federated training is
-                interrupted and needs to be restarted from the same point. If none, then no state is saved during each
-                server round. Defaults to None.
-            on_init_parameters_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
-                Function used to configure how one asks a client to provide parameters from which to initialize all
-                other clients by providing a Config dictionary. If this is none, then a blank config is sent with the
-                parameter request (which is default behavior for flower servers). Defaults to None.
-            server_name (Optional[str], optional): An optional string name to uniquely identify server.
-                Defaults to None.
+            checkpoint_and_state_module (BaseServerCheckpointAndStateModule | None, optional): This module is used
+                to handle both model checkpointing and state checkpointing. The former is aimed at saving model
+                artifacts to be used or evaluated after training. The latter is used to preserve training state
+                (including models) such that if FL training is interrupted, the process may be restarted. If no
+                module is provided, no checkpointing or state preservation will happen. Defaults to None.
+            on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to
+                configure how one asks a client to provide parameters from which to initialize all other clients by
+                providing a Config dictionary. If this is none, then a blank config is sent with the parameter request
+                (which is default behavior for flower servers). Defaults to None.
+            server_name (str | None, optional): An optional string name to uniquely identify server. This name is also
+                used as part of any state checkpointing done by the server. Defaults to None.
             accept_failures (bool, optional): Determines whether the server should accept failures during training or
                 evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
                 and throw an exception. Defaults to True.
@@ -89,27 +69,17 @@ class FlServer(Server):
 
         super().__init__(client_manager=client_manager, strategy=strategy)
         self.fl_config = fl_config
-        self.server_model = model
-        self.on_init_parameters_config_fn = on_init_parameters_config_fn
-        self.checkpointer = [checkpointer] if isinstance(checkpointer, TorchCheckpointer) else checkpointer
-        # To facilitate model rehydration from server-side state for checkpointing
-        self.parameter_exchanger = parameter_exchanger
-        self.server_name = server_name if server_name is not None else generate_hash()
-        self.accept_failures = accept_failures
-
-        self.per_round_checkpointer: PerRoundCheckpointer | None
-
-        if intermediate_server_state_dir is not None:
-            log(
-                WARNING,
-                "intermediate_server_state_dir is not None. Creating PerRoundCheckpointer. This functionality is "
-                "still experimental and only supported for BasicClient and NnunetClient currently.",
-            )
-            self.per_round_checkpointer = PerRoundCheckpointer(
-                intermediate_server_state_dir, Path(f"{self.server_name}.ckpt")
-            )
+        if checkpoint_and_state_module is not None:
+            self.checkpoint_and_state_module = checkpoint_and_state_module
         else:
-            self.per_round_checkpointer = None
+            # Define a default module that does nothing.
+            self.checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
+                model=None, parameter_exchanger=None, model_checkpointers=None, state_checkpointer=None
+            )
+        self.on_init_parameters_config_fn = on_init_parameters_config_fn
+        self.server_name = server_name if server_name is not None else generate_hash()
+        self.state_checkpoint_name = f"server_{self.server_name}_state.pt"
+        self.accept_failures = accept_failures
 
         self.current_round: int
         self.history: History
@@ -119,7 +89,7 @@ class FlServer(Server):
         self.reports_manager.initialize(id=self.server_name)
         self._log_fl_config()
 
-    def update_before_fit(self, num_rounds: int, timeout: Optional[float]) -> None:
+    def update_before_fit(self, num_rounds: int, timeout: float | None) -> None:
         """
         Hook method to allow the server to do some work before starting the fit process. In the base server, it is a
         no-op function, but it can be overridden in child classes for custom functionality. For example, the
@@ -128,7 +98,7 @@ class FlServer(Server):
 
         Args:
             num_rounds (int): The number of server rounds of FL to be performed
-            timeout (Optional[float], optional): The server's timeout parameter. Useful if one is requesting
+            timeout (float | None, optional): The server's timeout parameter. Useful if one is requesting
                 information from a client. Defaults to None, which indicates indefinite timeout.
         """
         pass
@@ -148,7 +118,7 @@ class FlServer(Server):
                 round_metrics.update({metric: vals[round][1]})
             self.reports_manager.report({"eval_round_metrics_centralized": round_metrics}, round + 1)
 
-    def fit_with_per_round_checkpointing(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
+    def fit_with_per_round_checkpointing(self, num_rounds: int, timeout: float | None) -> tuple[History, float]:
         """
         Runs federated learning for a number of rounds. Heavily based on the fit method from the base
         server provided by flower (flwr.server.server.Server) except that it is resilient to preemptions.
@@ -157,23 +127,21 @@ class FlServer(Server):
 
         Args:
             num_rounds (int): The number of rounds to perform federated learning.
-            timeout (Optional[float]): The timeout for clients to return results in a given FL round.
+            timeout (float | None): The timeout for clients to return results in a given FL round.
 
         Returns:
-            Tuple[History, float]: The first element of the tuple is a history object containing the losses and
+            tuple[History, float]: The first element of the tuple is a history object containing the losses and
                 metrics computed during training and validation. The second element of the tuple is
                 the elapsed time in seconds.
         """
-        # Initialize parameters
-        log(INFO, "Initializing global parameters")
 
-        assert self.per_round_checkpointer is not None
-
-        # if checkpoint exists, update history, server round and model accordingly
-        if self.per_round_checkpointer.checkpoint_exists():
-            self._load_server_state()
+        # Attempt to load the server state if it exists. If the state checkpoint exists, update history, server
+        # round and model accordingly
+        state_load_success = self._load_server_state()
+        if state_load_success:
+            log(INFO, "Server state checkpoint successfully loaded.")
         else:
-            log(INFO, "Initializing server state")
+            log(INFO, "Initializing server state and global parameters")
             self.parameters = self._get_initial_parameters(server_round=0, timeout=timeout)
             self.history = History()
             self.current_round = 1
@@ -231,7 +199,6 @@ class FlServer(Server):
             self.current_round += 1
 
             # Save checkpoint after training and testing
-            self._hydrate_model_for_checkpointing()
             self._save_server_state()
 
         # Bookkeeping
@@ -240,7 +207,7 @@ class FlServer(Server):
         log(INFO, "FL finished in %s", str(elapsed_time))
         return self.history, elapsed_time.total_seconds()
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
+    def fit(self, num_rounds: int, timeout: float | None) -> tuple[History, float]:
         """
         Run federated learning for a number of rounds. This function also allows the server to perform some operations
         prior to fitting starting. This is useful, for example, if you need to communicate with the clients to
@@ -248,11 +215,11 @@ class FlServer(Server):
 
         Args:
             num_rounds (int): Number of server rounds to run.
-            timeout (Optional[float]): The amount of time in seconds that the server will wait for results from the
+            timeout (float | None): The amount of time in seconds that the server will wait for results from the
                 clients selected to participate in federated training.
 
         Returns:
-            Tuple[History, float]: The first element of the tuple is a history object containing the full set of
+            tuple[History, float]: The first element of the tuple is a history object containing the full set of
                 FL training results, including things like aggregated loss and metrics.
                 Tuple also contains the elapsed time in seconds for the round.
         """
@@ -266,7 +233,7 @@ class FlServer(Server):
 
         self.update_before_fit(num_rounds, timeout)
 
-        if self.per_round_checkpointer is not None:
+        if self.checkpoint_and_state_module.state_checkpointer is not None:
             history, elapsed_time = self.fit_with_per_round_checkpointing(num_rounds, timeout)
         else:
             history, elapsed_time = super().fit(num_rounds, timeout)
@@ -288,8 +255,8 @@ class FlServer(Server):
     def fit_round(
         self,
         server_round: int,
-        timeout: Optional[float],
-    ) -> Optional[Tuple[Optional[Parameters], Dict[str, Scalar], FitResultsAndFailures]]:
+        timeout: float | None,
+    ) -> tuple[Parameters | None, dict[str, Scalar], FitResultsAndFailures] | None:
         """
         This function is called at each round of federated training. The flow is generally the same as a flower
         server, where clients are sampled and client side training is requested from the clients that are chosen.
@@ -297,11 +264,11 @@ class FlServer(Server):
 
         Args:
             server_round (int): Current round number of the FL training. Begins at 1
-            timeout (Optional[float]): Time that the server should wait (in seconds) for responses from the clients.
+            timeout (float | None): Time that the server should wait (in seconds) for responses from the clients.
                 Defaults to None, which indicates indefinite timeout.
 
         Returns:
-            Optional[Tuple[Optional[Parameters], Dict[str, Scalar], FitResultsAndFailures]]: The results of training
+            tuple[Parameters | None, dict[str, Scalar], FitResultsAndFailures] | None: The results of training
                 on the client sit. The first set of parameters are the AGGREGATED parameters from the strategy. The
                 second is a dictionary of AGGREGATED metrics. The third component holds the individual (non-aggregated)
                 parameters, loss, and metrics for successful and unsuccessful client-side training.
@@ -337,17 +304,17 @@ class FlServer(Server):
         self.reports_manager.report({"shutdown": str(datetime.datetime.now())})
         self.reports_manager.shutdown()
 
-    def poll_clients_for_sample_counts(self, timeout: Optional[float]) -> List[int]:
+    def poll_clients_for_sample_counts(self, timeout: float | None) -> list[int]:
         """
         Poll clients for sample counts from their training set, if you want to use this functionality your strategy
         needs to inherit from the StrategyWithPolling ABC and implement a configure_poll function.
 
         Args:
-            timeout (Optional[float]): Timeout for how long the server will wait for clients to report counts. If none
+            timeout (float | None): Timeout for how long the server will wait for clients to report counts. If none
                 then the server waits indefinitely.
 
         Returns:
-            List[int]: The number of training samples held by each client in the pool of available clients.
+            list[int]: The number of training samples held by each client in the pool of available clients.
         """
         # Poll clients for sample counts, if you want to use this functionality your strategy needs to inherit from
         # the StrategyWithPolling ABC and implement a configure_poll function
@@ -360,7 +327,7 @@ class FlServer(Server):
             timeout=timeout,
         )
 
-        sample_counts: List[int] = [
+        sample_counts: list[int] = [
             int(get_properties_res.properties["num_train_samples"]) for (_, get_properties_res) in results
         ]
         log(INFO, f"Polling complete: Retrieved {len(sample_counts)} sample counts")
@@ -370,8 +337,8 @@ class FlServer(Server):
     def evaluate_round(
         self,
         server_round: int,
-        timeout: Optional[float],
-    ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
+        timeout: float | None,
+    ) -> tuple[float | None, dict[str, Scalar], EvaluateResultsAndFailures] | None:
         # By default the checkpointing works off of the aggregated evaluation loss from each of the clients
         # NOTE: parameter aggregation occurs **before** evaluation, so the parameters held by the server have been
         # updated prior to this function being called.
@@ -415,74 +382,51 @@ class FlServer(Server):
             if not isinstance(config_value, bytes):
                 log(INFO, f"Key: {config_key} Value: {config_value!r}")
 
-    def _hydrate_model_for_checkpointing(self) -> None:
-        """
-        This function is used as a means of saving the server-side model after aggregation in the FL training
-        trajectory. In the current implementation, the server only holds numpy arrays. Without knowledge of a model
-        architecture to which the arrays correspond. Thus, in the default implementation, we require that a torch
-        architecture have been provided (self.server_model) and a parameter exchanger (self.parameter_exchanger) be
-        provided which handles mapping these numpy arrays into the architecture properly.
-
-        This function may be overridden if different behavior is desired.
-
-        NOTE: This function stores the weights directly in the self.server_model attribute
-        """
-
-        assert self.server_model is not None, (
-            "Model hydration has been called but no server_model is defined to hydrate. The functionality of "
-            "_hydrate_model_for_checkpointing can be overridden if checkpointing without a torch architecture is "
-            "possible and desired"
-        )
-        assert self.parameter_exchanger is not None, (
-            "Model hydration has been called but no parameter_exchanger is defined to hydrate. The functionality of "
-            "_hydrate_model_for_checkpointing can be overridden if checkpointing without a parameter exchanger is "
-            "possible and desired"
-        )
-        model_ndarrays = parameters_to_ndarrays(self.parameters)
-        self.parameter_exchanger.pull_parameters(model_ndarrays, self.server_model)
-
     def _save_server_state(self) -> None:
         """
         Save server checkpoint consisting of model, history, server round, metrics reporter and server name. This
-        method can be overridden to add any necessary state to the checkpoint.
+        method can be overridden to add any necessary state to the checkpoint. The model will be injected into the
+        ckpt state by the checkpoint module
         """
-
-        assert self.per_round_checkpointer is not None
-
-        ckpt = {
-            "model": self.server_model,
+        other_state_to_save = {
             "history": self.history,
             "current_round": self.current_round,
             "reports_manager": self.reports_manager,
             "server_name": self.server_name,
         }
 
-        self.per_round_checkpointer.save_checkpoint(ckpt)
+        self.checkpoint_and_state_module.save_state(
+            state_checkpoint_name=self.state_checkpoint_name,
+            server_parameters=self.parameters,
+            other_state=other_state_to_save,
+        )
 
-        log(INFO, f"Saving server state to checkpoint at {self.per_round_checkpointer.checkpoint_path}")
-
-    def _load_server_state(self) -> None:
+    def _load_server_state(self) -> bool:
         """
         Load server checkpoint consisting of model, history, server name, current round and metrics reporter.
         The method can be overridden to add any necessary state when loading the checkpoint.
         """
-        assert self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists()
 
-        ckpt = self.per_round_checkpointer.load_checkpoint()
+        # Attempt to load the server state if it exists. This variable will be None if it does not.
+        server_state = self.checkpoint_and_state_module.maybe_load_state(self.state_checkpoint_name)
 
-        log(INFO, f"Loading server state from checkpoint at {self.per_round_checkpointer.checkpoint_path}")
+        if server_state is None:
+            return False
 
-        narrow_dict_type_and_set_attribute(self, ckpt, "server_name", "server_name", str)
-        narrow_dict_type_and_set_attribute(self, ckpt, "current_round", "current_round", int)
-        narrow_dict_type_and_set_attribute(self, ckpt, "reports_manager", "reports_manager", ReportsManager)
-        narrow_dict_type_and_set_attribute(self, ckpt, "history", "history", History)
-        narrow_dict_type_and_set_attribute(self, ckpt, "model", "parameters", nn.Module, func=get_all_model_parameters)
+        narrow_dict_type_and_set_attribute(self, server_state, "server_name", "server_name", str)
+        narrow_dict_type_and_set_attribute(self, server_state, "current_round", "current_round", int)
+        narrow_dict_type_and_set_attribute(self, server_state, "reports_manager", "reports_manager", ReportsManager)
+        narrow_dict_type_and_set_attribute(self, server_state, "history", "history", History)
+        narrow_dict_type_and_set_attribute(
+            self, server_state, "model", "parameters", nn.Module, func=get_all_model_parameters
+        )
         # Needed for when _hydrate_model_for_checkpointing is called
-        narrow_dict_type_and_set_attribute(self, ckpt, "model", "server_model", nn.Module)
+        narrow_dict_type_and_set_attribute(self, server_state, "model", "server_model", nn.Module)
 
-        self.parameters = get_all_model_parameters(ckpt["model"])
+        self.parameters = get_all_model_parameters(server_state["model"])
+        return True
 
-    def _terminate_after_unacceptable_failures(self, timeout: Optional[float]) -> None:
+    def _terminate_after_unacceptable_failures(self, timeout: float | None) -> None:
         assert not self.accept_failures
         # First we shutdown all clients involved in the FL training/evaluation if they can be.
         self.disconnect_all_clients(timeout=timeout)
@@ -516,34 +460,21 @@ class FlServer(Server):
     def _maybe_checkpoint(
         self,
         loss_aggregated: float,
-        metrics_aggregated: Dict[str, Scalar],
+        metrics_aggregated: dict[str, Scalar],
         server_round: int,
     ) -> None:
         """
-        This function will run through any provided checkpointers to save the server-side model. If no checkpointers
-        are present, this function simply logs that no server-side checkpointing is performed.
-
-        NOTE: The proper components for model hydration need to be in place for this implementation. If they are
-        not an exception will be thrown.
+        This function simply runs the maybe_checkpoint functionality of the checkpoint_and_state_module. If additional
+        functionality is desired, this function may be overridden.
 
         Args:
             loss_aggregated (float): aggregated loss value that can be used to determine whether to checkpoint
-            metrics_aggregated (Dict[str, Scalar]): aggregated metrics from each of the clients for checkpointing
+            metrics_aggregated (dict[str, Scalar]): aggregated metrics from each of the clients for checkpointing
             server_round (int): What round of federated training we're on. This is just for logging purposes.
         """
-        if self.checkpointer:
-            self._hydrate_model_for_checkpointing()
-            assert self.server_model is not None
-            for checkpointer in self.checkpointer:
-                checkpointer.maybe_checkpoint(self.server_model, loss_aggregated, metrics_aggregated)
-        elif server_round == 1:
-            # No checkpointer, just log message on the first round
-            log(
-                INFO,
-                "No checkpointer present. Models will not be checkpointed on server-side.",
-            )
+        self.checkpoint_and_state_module.maybe_checkpoint(self.parameters, loss_aggregated, metrics_aggregated)
 
-    def _get_initial_parameters(self, server_round: int, timeout: Optional[float]) -> Parameters:
+    def _get_initial_parameters(self, server_round: int, timeout: float | None) -> Parameters:
         """
         Get initial parameters from one of the available clients. This function is the same as the parent function
         in the flower server class except that we make use of the on_parameter_initialization_config_fn to provide
@@ -551,10 +482,10 @@ class FlServer(Server):
 
         NOTE: The default behavior of flower servers is to simply send over a blank config, but this is insufficient
         for certain uses, where the client requires additional information from the server. This is needed, for example
-        in nnUnet based Servers. An issue has been logged with flower: https://github.com/adap/flower/issues/3770
+        in nnUnet-based Servers. An issue has been logged with flower: https://github.com/adap/flower/issues/3770
         """
         # Server-side parameter initialization
-        parameters: Optional[Parameters] = self.strategy.initialize_parameters(client_manager=self._client_manager)
+        parameters: Parameters | None = self.strategy.initialize_parameters(client_manager=self._client_manager)
         if parameters is not None:
             log(INFO, "Using initial global parameters provided by strategy")
             return parameters
@@ -578,8 +509,8 @@ class FlServer(Server):
         return get_parameters_res.parameters
 
     def _unpack_metrics(
-        self, results: List[Tuple[ClientProxy, EvaluateRes]]
-    ) -> Tuple[List[Tuple[ClientProxy, EvaluateRes]], List[Tuple[ClientProxy, EvaluateRes]]]:
+        self, results: list[tuple[ClientProxy, EvaluateRes]]
+    ) -> tuple[list[tuple[ClientProxy, EvaluateRes]], list[tuple[ClientProxy, EvaluateRes]]]:
         val_results = []
         test_results = []
 
@@ -608,23 +539,23 @@ class FlServer(Server):
     def _handle_result_aggregation(
         self,
         server_round: int,
-        results: List[Tuple[ClientProxy, EvaluateRes]],
-        failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]],
-    ) -> Tuple[Optional[float], Dict[str, Scalar]]:
+        results: list[tuple[ClientProxy, EvaluateRes]],
+        failures: list[tuple[ClientProxy, EvaluateRes] | BaseException],
+    ) -> tuple[float | None, dict[str, Scalar]]:
         val_results, test_results = self._unpack_metrics(results)
 
         # Aggregate the validation results
-        val_aggregated_result: Tuple[
-            Optional[float],
-            Dict[str, Scalar],
+        val_aggregated_result: tuple[
+            float | None,
+            dict[str, Scalar],
         ] = self.strategy.aggregate_evaluate(server_round, val_results, failures)
         val_loss_aggregated, val_metrics_aggregated = val_aggregated_result
 
         # Aggregate the test results if they are present
         if len(test_results) > 0:
-            test_aggregated_result: Tuple[
-                Optional[float],
-                Dict[str, Scalar],
+            test_aggregated_result: tuple[
+                float | None,
+                dict[str, Scalar],
             ] = self.strategy.aggregate_evaluate(server_round, test_results, failures)
             test_loss_aggregated, test_metrics_aggregated = test_aggregated_result
 
@@ -638,8 +569,8 @@ class FlServer(Server):
     def _evaluate_round(
         self,
         server_round: int,
-        timeout: Optional[float],
-    ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
+        timeout: float | None,
+    ) -> tuple[float | None, dict[str, Scalar], EvaluateResultsAndFailures] | None:
         """Validate current global model on a number of clients."""
         # Get clients and their respective instructions from strategy
         client_instructions = self.strategy.configure_evaluate(

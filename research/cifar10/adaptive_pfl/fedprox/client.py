@@ -1,8 +1,8 @@
 import argparse
 import os
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -13,9 +13,10 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.fed_prox_client import FedProxClient
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import F1, Accuracy, Metric
@@ -34,14 +35,20 @@ class CifarFedProxClient(FedProxClient):
         learning_rate: float,
         heterogeneity_level: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: str | None = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
         )
         self.client_number = client_number
         self.heterogeneity_level = heterogeneity_level
@@ -49,7 +56,7 @@ class CifarFedProxClient(FedProxClient):
 
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         train_loader, val_loader, _ = get_preprocessed_data(
             self.data_path, self.client_number, batch_size, self.heterogeneity_level
@@ -142,14 +149,14 @@ if __name__ == "__main__":
     pre_aggregation_last_checkpoint_name = f"pre_aggregation_client_{args.client_number}_last_model.pkl"
     post_aggregation_best_checkpoint_name = f"post_aggregation_client_{args.client_number}_best_model.pkl"
     post_aggregation_last_checkpoint_name = f"post_aggregation_client_{args.client_number}_last_model.pkl"
-    checkpointer = ClientCheckpointModule(
+    checkpoint_and_state_module = ClientCheckpointAndStateModule(
         pre_aggregation=[
-            BestLossTorchCheckpointer(checkpoint_dir, pre_aggregation_best_checkpoint_name),
-            LatestTorchCheckpointer(checkpoint_dir, pre_aggregation_last_checkpoint_name),
+            BestLossTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_best_checkpoint_name),
+            LatestTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_last_checkpoint_name),
         ],
         post_aggregation=[
-            BestLossTorchCheckpointer(checkpoint_dir, post_aggregation_best_checkpoint_name),
-            LatestTorchCheckpointer(checkpoint_dir, post_aggregation_last_checkpoint_name),
+            BestLossTorchModuleCheckpointer(checkpoint_dir, post_aggregation_best_checkpoint_name),
+            LatestTorchModuleCheckpointer(checkpoint_dir, post_aggregation_last_checkpoint_name),
         ],
     )
 
@@ -165,7 +172,7 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         heterogeneity_level=args.beta,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
     )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())

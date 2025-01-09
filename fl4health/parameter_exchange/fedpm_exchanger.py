@@ -1,5 +1,3 @@
-from typing import Optional
-
 import torch
 import torch.nn as nn
 from flwr.common.typing import Config, NDArrays
@@ -13,7 +11,7 @@ class FedPmExchanger(DynamicLayerExchanger):
     def __init__(self) -> None:
         super().__init__(select_scores_and_sample_masks)
 
-    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Optional[Config] = None) -> None:
+    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Config | None = None) -> None:
         current_state = model.state_dict()
         layer_params, layer_names = self.unpack_parameters(parameters)
         for layer_name, layer_param in zip(layer_names, layer_params):

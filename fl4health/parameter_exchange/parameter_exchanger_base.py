@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import TypeVar
 
 import torch.nn as nn
 from flwr.common.typing import Config, NDArrays
@@ -8,10 +8,13 @@ from flwr.common.typing import Config, NDArrays
 class ParameterExchanger(ABC):
     @abstractmethod
     def push_parameters(
-        self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
+        self, model: nn.Module, initial_model: nn.Module | None = None, config: Config | None = None
     ) -> NDArrays:
         raise NotImplementedError
 
     @abstractmethod
-    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Optional[Config] = None) -> None:
+    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Config | None = None) -> None:
         raise NotImplementedError
+
+
+ExchangerType = TypeVar("ExchangerType", bound=ParameterExchanger)

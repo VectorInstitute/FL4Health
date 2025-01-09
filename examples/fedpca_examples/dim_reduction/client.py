@@ -1,6 +1,5 @@
 import argparse
 from pathlib import Path
-from typing import Tuple
 
 import flwr as fl
 import torch
@@ -15,14 +14,14 @@ from examples.models.mnist_model import MnistNet
 from fl4health.clients.basic_client import BasicClient
 from fl4health.preprocessing.pca_preprocessor import PcaPreprocessor
 from fl4health.utils.config import narrow_dict_type
-from fl4health.utils.load_data import get_train_and_val_mnist_datasets
+from fl4health.utils.load_data import ToNumpy, get_train_and_val_mnist_datasets
 from fl4health.utils.metrics import Accuracy
 from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class MnistFedPcaClient(BasicClient):
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         pca_path = Path(narrow_dict_type(config, "pca_path", str))
         new_dimension = narrow_dict_type(config, "new_dimension", int)
@@ -32,6 +31,7 @@ class MnistFedPcaClient(BasicClient):
         # Get training and validation datasets.
         transform = transforms.Compose(
             [
+                ToNumpy(),
                 transforms.ToTensor(),
                 transforms.Normalize((0.5), (0.5)),
             ]
