@@ -171,7 +171,7 @@ class TorchModuleSnapshotter(Snapshotter[nn.Module]):
 
         Args:
             attribute (dict[str, nn.Module]): The nn.Modules to be saved.
-        
+
         Returns:
             dict[str, Any]: A dictionary containing the state of the nn.Modules.
         """
@@ -199,7 +199,7 @@ class SerizableObjectSnapshotter(Snapshotter[MetricManager | LossMeter | Reports
 
         Args:
             attribute (dict[str, MetricManager | LossMeter | ReportsManager]): The serializable objects to be saved.
-            
+
         Returns:
             dict[str, Any]: A dictionary containing the state of the serializable objects.
         """
