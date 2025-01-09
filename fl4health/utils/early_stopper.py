@@ -58,48 +58,47 @@ class EarlyStopper:
         self.best_score: float | None = None
         self.snapshot_ckpt: dict[str, Any] = {}
 
-        self.default_snapshot_args: dict = {
-            "model": (TorchModuleSnapshotter(self.client), nn.Module),  # for nn.Module we only need state_dict
-            "optimizers": (OptimizerSnapshotter(self.client), Optimizer),  # dict of optimizers we only need state_dict
+        self.default_snapshot_attrs: dict = {
+            "model": (TorchModuleSnapshotter(self.client), nn.Module),
+            "optimizers": (OptimizerSnapshotter(self.client), Optimizer),
             "lr_schedulers": (
                 LRSchedulerSnapshotter(self.client),
                 LRScheduler,
-            ),  # dict of schedulers we only need state_dict
-            "learning_rate": (NumberSnapshotter(self.client), float),  # number we can copy
-            "total_steps": (NumberSnapshotter(self.client), int),  # number we can copy
-            "total_epochs": (NumberSnapshotter(self.client), int),  # number we can copy
+            ),
+            "learning_rate": (NumberSnapshotter(self.client), float),
+            "total_steps": (NumberSnapshotter(self.client), int),
+            "total_epochs": (NumberSnapshotter(self.client), int),
             "reports_manager": (
                 SerizableObjectSnapshotter(self.client),
                 ReportsManager,
-            ),  # Class of objects we can copy
+            ),
             "train_loss_meter": (
                 SerizableObjectSnapshotter(self.client),
                 TrainingLosses,
-            ),  # Class of objects we can copy
+            ),
             "train_metric_manager": (
                 SerizableObjectSnapshotter(self.client),
                 MetricManager,
-            ),  # Class of objects we can copy
+            ),
         }
 
         if snapshot_dir is not None:
             self.checkpointer = PerRoundStateCheckpointer(snapshot_dir)
 
-    def add_default_snapshot_arg(
+    def add_default_snapshot_attr(
         self, name: str, snapshot_class: Callable[[BasicClient], Snapshotter], input_type: type[T]
     ) -> None:
-        self.default_snapshot_args.update({name: (snapshot_class(self.client), input_type)})
+        self.default_snapshot_attrs.update({name: (snapshot_class(self.client), input_type)})
 
-    def delete_default_snapshot_arg(self, name: str) -> None:
-        del self.default_snapshot_args[name]
+    def delete_default_snapshot_attr(self, name: str) -> None:
+        del self.default_snapshot_attrs[name]
 
     def save_snapshot(self) -> None:
         """
-        Saves checkpoint dict consisting of client name, total steps, lr schedulers,
-            metrics reporter and optimizers state. Method can be overridden to augment saved checkpointed state.
+        Creats a snapshot of the client state and if snapshot_ckpt is given, saves it to the checkpoint.
         """
-        for arg, (snapshotter_function, expected_type) in self.default_snapshot_args.items():
-            self.snapshot_ckpt.update(snapshotter_function.save(arg, expected_type))
+        for attr, (snapshotter_function, expected_type) in self.default_snapshot_attrs.items():
+            self.snapshot_ckpt.update(snapshotter_function.save(attr, expected_type))
 
         if self.checkpointer is not None:
             self.checkpointer.save_checkpoint(f"temp_{self.client.client_name}.pt", self.snapshot_ckpt)
@@ -107,13 +106,16 @@ class EarlyStopper:
 
         log(
             INFO,
-            f"Saving client temp best state to checkpoint at {self.checkpointer.checkpoint_dir}",
+            f"""Saving client best state to checkpoint at {self.checkpointer.checkpoint_dir}
+            with name temp_{self.client.client_name}.pt""",
         )
 
-    def load_snapshot(self, args: list[str]) -> None:
+    def load_snapshot(self, attrs: list[str]) -> None:
         """
-        Load checkpoint dict consisting of client name, total steps, lr schedulers, metrics
-            reporter and optimizers state. Method can be overridden to augment loaded checkpointed state.
+        Load checkpointed snapshot dict consisting to the respective model attributes.
+
+        Args:
+            args (list[str]): List of attributes to load from the checkpoint.
         """
         assert (
             self.checkpointer.checkpoint_exists(f"temp_{self.client.client_name}.pt") or self.snapshot_ckpt != {}
@@ -122,9 +124,9 @@ class EarlyStopper:
         if self.checkpointer.checkpoint_exists(f"temp_{self.client.client_name}.pt"):
             self.snapshot_ckpt = self.checkpointer.load_checkpoint(f"temp_{self.client.client_name}.pt")
 
-        for arg in args:
-            snapshotter_function, expected_type = self.default_snapshot_args[arg]
-            snapshotter_function.load(self.snapshot_ckpt, arg, expected_type)
+        for attr in attrs:
+            snapshotter_function, expected_type = self.default_snapshot_attrs[attr]
+            snapshotter_function.load(self.snapshot_ckpt, attr, expected_type)
 
     def should_stop(self) -> bool:
         """
@@ -133,30 +135,28 @@ class EarlyStopper:
         Returns:
             bool: True if training should stop, otherwise False.
         """
-        # Perform validation or testing and retrieve validation loss and metrics
+
         val_loss, _ = self.client._validate_or_test(
             loader=self.client.val_loader,
             loss_meter=self.client.val_loss_meter,
             metric_manager=self.client.val_metric_manager,
             logging_mode=LoggingMode.EARLY_STOP_VALIDATION,
-            include_losses_in_metrics=False,  # TODO: Confirm this behavior
+            include_losses_in_metrics=False,
         )
 
-        # If validation loss is not available, continue training
         if val_loss is None:
             return False
 
-        # Update best score if it's the first evaluation
         if self.best_score is None or val_loss < self.best_score:
             self.best_score = val_loss
-            self.count_down = self.patience  # Reset patience counter
+
+            self.count_down = self.patience
             self.save_snapshot()
             return False
 
-        # Reduce patience counter and check for early stopping
         self.count_down -= 1
         if self.count_down == 0:
-            self.load_snapshot(list(self.default_snapshot_args.keys()))
+            self.load_snapshot(list(self.default_snapshot_attrs.keys()))
             return True
 
         return False

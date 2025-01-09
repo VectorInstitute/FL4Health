@@ -40,8 +40,8 @@ def test_optimizer_scheduler_model_snapshotter() -> None:
     fl_client.model = SingleLayerWithSeed()
     fl_client.criterion = torch.nn.CrossEntropyLoss()
 
-    input_data = torch.randn(32, 100)  # Batch size = 32, Input size = 10
-    target_data = torch.randn(32, 2)  # Batch size = 32, Target size = 1
+    input_data = torch.randn(32, 100)
+    target_data = torch.randn(32, 2)
 
     fl_client.optimizers = {"global": torch.optim.SGD(fl_client.model.parameters(), lr=0.001)}
     fl_client.lr_schedulers = {
@@ -62,7 +62,7 @@ def test_optimizer_scheduler_model_snapshotter() -> None:
 
     fl_client.train_step(input_data, target_data)
 
-    fl_client.optimizers["global"].step()  # Update model weights
+    fl_client.optimizers["global"].step()
     fl_client.lr_schedulers["global"].step()
 
     for key, value in fl_client.model.state_dict().items():
