@@ -73,8 +73,9 @@ def main(
             else:
                 meta_data = pd.concat([meta_data, test_loader.dataset.metadata])
 
-        aggregated_dataset = Rxrx1Dataset(metadata=meta_data, root=Path(dataset_dir), dataset_type="test", transform=None)
-
+        aggregated_dataset = Rxrx1Dataset(
+            metadata=meta_data, root=Path(dataset_dir), dataset_type="test", transform=None
+        )
 
         aggregated_test_loader = torch.utils.data.DataLoader(
             aggregated_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0, pin_memory=True
