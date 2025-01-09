@@ -4,7 +4,7 @@ from typing import Any, Generic, TypeVar
 
 import torch.nn as nn
 from torch.optim import Optimizer
-from torch.optim.lr_scheduler import _LRScheduler
+from torch.optim.lr_scheduler import LRScheduler
 
 from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting.reports_manager import ReportsManager
@@ -30,9 +30,9 @@ class Snapshotter(ABC, Generic[T]):
         else:
             raise ValueError(f"Uncompatible type of attribute {type(attribute)}")
 
-    def save(self, name: str, expected_type: type[T]) -> Any:
+    def save(self, name: str, expected_type: type[T]) -> dict[str, Any]:
         attribute = self.dict_wrap_attr(name, expected_type)
-        return self.save_attribute(attribute)
+        return {name: self.save_attribute(attribute)}
 
     def load(self, ckpt: dict[str, Any], name: str, expected_type: type[T]) -> None:
         attribute = self.dict_wrap_attr(name, expected_type)
@@ -69,9 +69,9 @@ class OptimizerSnapshotter(Snapshotter[Optimizer]):
             optimizer.load_state_dict(optimizer_state_dict)
 
 
-class LRSchedulerSnapshotter(Snapshotter[_LRScheduler]):
+class LRSchedulerSnapshotter(Snapshotter[LRScheduler]):
 
-    def save_attribute(self, attribute: dict[str, _LRScheduler]) -> dict[str, Any]:
+    def save_attribute(self, attribute: dict[str, LRScheduler]) -> dict[str, Any]:
         """
         Save the state of the optimizers (either single or dictionary of them).
         """
@@ -80,7 +80,7 @@ class LRSchedulerSnapshotter(Snapshotter[_LRScheduler]):
             output[key] = lr_scheduler.state_dict()
         return output
 
-    def load_attribute(self, attribute_ckpt: dict[str, Any], attribute: dict[str, _LRScheduler]) -> None:
+    def load_attribute(self, attribute_ckpt: dict[str, Any], attribute: dict[str, LRScheduler]) -> None:
         for key, lr_scheduler in attribute.items():
             lr_scheduler.load_state_dict(attribute_ckpt[key])
 

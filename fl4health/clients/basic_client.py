@@ -11,7 +11,7 @@ from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
-from torch.optim.lr_scheduler import _LRScheduler
+from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointAndStateModule
@@ -890,17 +890,28 @@ class BasicClient(NumPyClient):
         self.parameter_exchanger = self.get_parameter_exchanger(config)
 
         self.reports_manager.report({"host_type": "client", "initialized": str(datetime.datetime.now())})
+        try:
+            self.set_early_stopper()
+        except NotImplementedError:
+            log(
+                INFO,
+                """Early stopping not implemented for this client.
+                Override set_early_stopper to activate early stopper.""",
+            )
         self.initialized = True
 
-    def setup_early_stopper(
-        self,
-        patience: int = -1,
-        interval_steps: int = 5,
-        snapshot_dir: Path | None = None,
-    ) -> None:
-        from fl4health.utils.early_stopper import EarlyStopper
+    def set_early_stopper(self) -> None:
+        """
+        User defined method that sets the early stopper for the client. To override this method, the user must
+        set self.early_stopper to an instance of EarlyStopper. The EarlyStopper class is defined in
+        fl4health.early_stopping. Example implementation:
 
-        self.early_stopper = EarlyStopper(self, patience, interval_steps, snapshot_dir)
+        ⁠ python
+        from fl4health.utils.early_stopper import EarlyStopper
+        self.early_stopper = EarlyStopper(client=self, patience=3, interval_steps=100)
+         ⁠
+        """
+        raise NotImplementedError
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         """
@@ -1133,7 +1144,7 @@ class BasicClient(NumPyClient):
         """
         raise NotImplementedError
 
-    def get_lr_scheduler(self, optimizer_key: str, config: Config) -> _LRScheduler | None:
+    def get_lr_scheduler(self, optimizer_key: str, config: Config) -> LRScheduler | None:
         """
         Optional user defined method that returns learning rate scheduler
         to be used throughout training for the given optimizer. Defaults to None.
@@ -1145,7 +1156,7 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            _LRScheduler | None: Client learning rate schedulers.
+            LRScheduler | None: Client learning rate schedulers.
         """
         return None
 

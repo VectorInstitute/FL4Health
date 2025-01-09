@@ -6,7 +6,7 @@ from typing import Any
 import torch.nn as nn
 from flwr.common.logger import log
 from torch.optim import Optimizer
-from torch.optim.lr_scheduler import _LRScheduler
+from torch.optim.lr_scheduler import LRScheduler
 
 from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.clients.basic_client import BasicClient
@@ -63,7 +63,7 @@ class EarlyStopper:
             "optimizers": (OptimizerSnapshotter(self.client), Optimizer),  # dict of optimizers we only need state_dict
             "lr_schedulers": (
                 LRSchedulerSnapshotter(self.client),
-                _LRScheduler,
+                LRScheduler,
             ),  # dict of schedulers we only need state_dict
             "learning_rate": (NumberSnapshotter(self.client), float),  # number we can copy
             "total_steps": (NumberSnapshotter(self.client), int),  # number we can copy
@@ -99,7 +99,7 @@ class EarlyStopper:
             metrics reporter and optimizers state. Method can be overridden to augment saved checkpointed state.
         """
         for arg, (snapshotter_function, expected_type) in self.default_snapshot_args.items():
-            self.snapshot_ckpt[arg] = snapshotter_function.save(arg, expected_type)
+            self.snapshot_ckpt.update(snapshotter_function.save(arg, expected_type))
 
         if self.checkpointer is not None:
             self.checkpointer.save_checkpoint(f"temp_{self.client.client_name}.pt", self.snapshot_ckpt)
