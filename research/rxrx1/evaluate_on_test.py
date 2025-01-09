@@ -72,10 +72,12 @@ def main(
                 meta_data = test_loader.dataset.metadata
             else:
                 meta_data = pd.concat([meta_data, test_loader.dataset.metadata])
-            test_loader.dataset.metadata = meta_data
+
+        aggregated_dataset = Rxrx1Dataset(metadata=meta_data, root=Path(dataset_dir), dataset_type="test", transform=None)
+
 
         aggregated_test_loader = torch.utils.data.DataLoader(
-            test_loader.dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0, pin_memory=True
+            aggregated_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0, pin_memory=True
         )
         aggregated_num_examples = len(meta_data)
 
