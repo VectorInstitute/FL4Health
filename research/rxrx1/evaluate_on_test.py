@@ -6,9 +6,9 @@ import pandas as pd
 import torch
 from flwr.common.logger import log
 
+from fl4health.datasets.rxrx1.dataset import Rxrx1Dataset
+from fl4health.datasets.rxrx1.load_data import load_rxrx1_test_data
 from fl4health.utils.metrics import Accuracy
-from research.rxrx1.data.data_utils import load_rxrx1_test_data
-from research.rxrx1.data.dataset import Rxrx1Dataset
 from research.rxrx1.utils import (
     evaluate_rxrx1_model,
     get_all_run_folders,
@@ -37,7 +37,6 @@ def main(
     eval_best_global_model: bool,
     eval_last_global_model: bool,
     eval_over_aggregated_test_data: bool,
-    is_apfl: bool,
 ) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     all_run_folder_dir = get_all_run_folders(artifact_dir)
@@ -105,7 +104,7 @@ def main(
         for run_folder_dir in all_run_folder_dir:
             if eval_best_pre_aggregation_local_models:
                 local_model = load_eval_best_pre_aggregation_local_model(run_folder_dir, client_number)
-                local_run_metric = evaluate_rxrx1_model(local_model, test_loader, metrics, device, is_apfl)
+                local_run_metric = evaluate_rxrx1_model(local_model, test_loader, metrics, device)
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -119,9 +118,7 @@ def main(
                 )
                 if eval_over_aggregated_test_data:
 
-                    agg_local_run_metric = evaluate_rxrx1_model(
-                        local_model, aggregated_test_loader, metrics, device, is_apfl
-                    )
+                    agg_local_run_metric = evaluate_rxrx1_model(local_model, aggregated_test_loader, metrics, device)
                     log(
                         INFO,
                         f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -132,7 +129,7 @@ def main(
 
             if eval_last_pre_aggregation_local_models:
                 local_model = load_eval_last_pre_aggregation_local_model(run_folder_dir, client_number)
-                local_run_metric = evaluate_rxrx1_model(local_model, test_loader, metrics, device, is_apfl)
+                local_run_metric = evaluate_rxrx1_model(local_model, test_loader, metrics, device)
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -147,9 +144,7 @@ def main(
 
                 if eval_over_aggregated_test_data:
 
-                    agg_local_run_metric = evaluate_rxrx1_model(
-                        local_model, aggregated_test_loader, metrics, device, is_apfl
-                    )
+                    agg_local_run_metric = evaluate_rxrx1_model(local_model, aggregated_test_loader, metrics, device)
                     log(
                         INFO,
                         f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -160,7 +155,7 @@ def main(
 
             if eval_best_post_aggregation_local_models:
                 local_model = load_eval_best_post_aggregation_local_model(run_folder_dir, client_number)
-                local_run_metric = evaluate_rxrx1_model(local_model, test_loader, metrics, device, is_apfl)
+                local_run_metric = evaluate_rxrx1_model(local_model, test_loader, metrics, device)
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -175,9 +170,7 @@ def main(
 
                 if eval_over_aggregated_test_data:
 
-                    agg_local_run_metric = evaluate_rxrx1_model(
-                        local_model, aggregated_test_loader, metrics, device, is_apfl
-                    )
+                    agg_local_run_metric = evaluate_rxrx1_model(local_model, aggregated_test_loader, metrics, device)
                     log(
                         INFO,
                         f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -188,7 +181,7 @@ def main(
 
             if eval_last_post_aggregation_local_models:
                 local_model = load_eval_last_post_aggregation_local_model(run_folder_dir, client_number)
-                local_run_metric = evaluate_rxrx1_model(local_model, test_loader, metrics, device, is_apfl)
+                local_run_metric = evaluate_rxrx1_model(local_model, test_loader, metrics, device)
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -203,9 +196,7 @@ def main(
 
                 if eval_over_aggregated_test_data:
 
-                    agg_local_run_metric = evaluate_rxrx1_model(
-                        local_model, aggregated_test_loader, metrics, device, is_apfl
-                    )
+                    agg_local_run_metric = evaluate_rxrx1_model(local_model, aggregated_test_loader, metrics, device)
                     log(
                         INFO,
                         f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -216,7 +207,7 @@ def main(
 
             if eval_best_global_model:
                 server_model = load_best_global_model(run_folder_dir)
-                server_run_metric = evaluate_rxrx1_model(server_model, test_loader, metrics, device, is_apfl)
+                server_run_metric = evaluate_rxrx1_model(server_model, test_loader, metrics, device)
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -231,9 +222,7 @@ def main(
 
                 if eval_over_aggregated_test_data:
 
-                    agg_server_run_metric = evaluate_rxrx1_model(
-                        server_model, aggregated_test_loader, metrics, device, is_apfl
-                    )
+                    agg_server_run_metric = evaluate_rxrx1_model(server_model, aggregated_test_loader, metrics, device)
                     log(
                         INFO,
                         f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -244,7 +233,7 @@ def main(
 
             if eval_last_global_model:
                 server_model = load_last_global_model(run_folder_dir)
-                server_run_metric = evaluate_rxrx1_model(server_model, test_loader, metrics, device, is_apfl)
+                server_run_metric = evaluate_rxrx1_model(server_model, test_loader, metrics, device)
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -259,9 +248,7 @@ def main(
 
                 if eval_over_aggregated_test_data:
 
-                    agg_server_run_metric = evaluate_rxrx1_model(
-                        server_model, aggregated_test_loader, metrics, device, is_apfl
-                    )
+                    agg_server_run_metric = evaluate_rxrx1_model(server_model, aggregated_test_loader, metrics, device)
                     log(
                         INFO,
                         f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -627,14 +614,8 @@ if __name__ == "__main__":
         "--dataset_dir",
         action="store",
         type=str,
-        help="Path to the preprocessed Cifar10 Dataset (ex. path/to/cifar10)",
+        help="Path to the preprocessed Rxrx1 Dataset (ex. path/to/rxrx1)",
         required=True,
-    )
-    parser.add_argument(
-        "--use_partitioned_data",
-        action="store_true",
-        help="Use preprocessed partitioned data for training, validation and testing",
-        default=True,
     )
     parser.add_argument(
         "--eval_write_path",
@@ -684,12 +665,6 @@ if __name__ == "__main__":
           client specific data""",
     )
 
-    parser.add_argument(
-        "--is_apfl",
-        action="store_true",
-        help="boolean to indicate whether we're evaluating an APFL model or not, as those model have special args",
-    )
-
     args = parser.parse_args()
     log(INFO, f"Artifact Directory: {args.artifact_dir}")
     log(INFO, f"Dataset Directory: {args.dataset_dir}")
@@ -702,8 +677,6 @@ if __name__ == "__main__":
     log(INFO, f"Run Best Post-aggregation Local Model: {args.eval_best_post_aggregation_local_models}")
     log(INFO, f"Run Last Post-aggregation Local Model: {args.eval_last_post_aggregation_local_models}")
     log(INFO, f"Run Eval Over Aggregated Test Data: {args.eval_over_aggregated_test_data}")
-
-    log(INFO, f"Is APFL Run: {args.is_apfl}")
 
     assert (
         args.eval_best_global_model
@@ -724,5 +697,4 @@ if __name__ == "__main__":
         args.eval_best_global_model,
         args.eval_last_global_model,
         args.eval_over_aggregated_test_data,
-        args.is_apfl,
     )

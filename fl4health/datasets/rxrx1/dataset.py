@@ -22,13 +22,14 @@ class Rxrx1Dataset(Dataset):
         """
         Args:
             metadata (DataFrame): A DataFrame containing image metadata.
-            root (str): Root directory for the image data.
+            root (str): Root directory which the image data should be loaded.
             dataset_type (str): 'train' or 'test' to specify dataset type.
             transform (callable, optional): Optional transformation to apply to the images.
+            cache_images (bool): Whether to cache images in memory or load them on the fly.
         """
         self.metadata = metadata[metadata["dataset"] == dataset_type]
         self.root = root
-        self.transform = transform if transform else None
+        self.transform = transform
 
         self.label_map = {label: idx for idx, label in enumerate(sorted(self.metadata["sirna_id"].unique()))}
         self.metadata["mapped_label"] = self.metadata["sirna_id"].map(self.label_map)

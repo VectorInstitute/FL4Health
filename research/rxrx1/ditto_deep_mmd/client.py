@@ -18,12 +18,12 @@ from torchvision import models
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client import DittoDeepMmdClient
+from fl4health.datasets.rxrx1.load_data import load_rxrx1_data, load_rxrx1_test_data
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
-from research.rxrx1.data.data_utils import load_rxrx1_data, load_rxrx1_test_data
 
 BASELINE_LAYERS: OrderedDict[str, int] = OrderedDict()
 BASELINE_LAYERS["layer1"] = 1048576
@@ -93,10 +93,8 @@ class Rxrx1DittoClient(DittoDeepMmdClient):
         return torch.nn.CrossEntropyLoss()
 
     def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
-        # Following the implementation in pFL-Bench : A Comprehensive Benchmark for Personalized
-        # Federated Learning (https://arxiv.org/pdf/2405.17724) for cifar10 dataset we use SGD optimizer
-        global_optimizer = torch.optim.SGD(self.global_model.parameters(), lr=self.learning_rate, momentum=0.9)
-        local_optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9)
+        global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=self.learning_rate)
+        local_optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
         return {"global": global_optimizer, "local": local_optimizer}
 
     def get_model(self, config: Config) -> nn.Module:

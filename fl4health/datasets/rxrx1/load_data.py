@@ -1,11 +1,13 @@
 from collections import defaultdict
+from logging import INFO
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from flwr.common.logger import log
 from torch.utils.data import DataLoader, Subset
 
-from research.rxrx1.data.dataset import Rxrx1Dataset
+from fl4health.datasets.rxrx1.dataset import Rxrx1Dataset
 
 
 def label_frequency(dataset: Rxrx1Dataset | Subset) -> None:
@@ -24,10 +26,10 @@ def label_frequency(dataset: Rxrx1Dataset | Subset) -> None:
     # Count label frequencies
     label_counts = metadata["mapped_label"].value_counts()
 
-    # Print frequency with original labels
+    # Print frequency of labels their names
     for label, count in label_counts.items():
         original_label = next((k for k, v in label_map.items() if v == label), "Unknown")
-        print(f"Label {label} (original: {original_label}): {count} samples")
+        log(INFO, f"Label {label} (original: {original_label}): {count} samples")
 
 
 def create_splits(
@@ -60,6 +62,8 @@ def create_splits(
         split_point = int(len(indices) * train_fraction)
         train_indices.extend(indices[:split_point])
         val_indices.extend(indices[split_point:])
+        if len(val_indices) == 0:
+            log(INFO, "Warning: Validation set is empty. Consider changing the train_fraction parameter.")
 
     # Create subsets
     train_subset = Subset(dataset, train_indices)

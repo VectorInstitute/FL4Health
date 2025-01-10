@@ -39,9 +39,9 @@ def write_measurement_results(eval_write_path: str, results: dict[str, float]) -
 
 
 def evaluate_rxrx1_model(
-    model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device, is_apfl: bool
+    model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device
 ) -> float:
-    meter = evaluate_model_on_dataset(model, dataset, metrics, device, is_apfl)
+    meter = evaluate_model_on_dataset(model, dataset, metrics, device)
 
     computed_metrics = meter.compute()
     assert "test_meter - prediction - rxrx1_accuracy" in computed_metrics
@@ -75,7 +75,7 @@ def load_eval_last_post_aggregation_local_model(run_folder_dir: str, client_numb
 
 
 def evaluate_model_on_dataset(
-    model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device, is_apfl: bool
+    model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device
 ) -> MetricManager:
     model.to(device).eval()
     meter = MetricManager(metrics, "test_meter")
@@ -83,12 +83,9 @@ def evaluate_model_on_dataset(
     with torch.no_grad():
         for input, target in dataset:
             input, target = input.to(device), target.to(device)
-            if is_apfl:
-                preds = model(input)["personal"]
-            else:
-                preds = model(input)
-                if isinstance(preds, tuple):
-                    preds = preds[0]
+            preds = model(input)
+            if isinstance(preds, tuple):
+                preds = preds[0]
             preds = preds if isinstance(preds, dict) else {"prediction": preds}
             meter.update(preds, target)
     return meter
