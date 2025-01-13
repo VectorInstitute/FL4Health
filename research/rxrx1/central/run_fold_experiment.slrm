@@ -15,15 +15,15 @@
 ###############################################
 # Usage:
 #
-# sbatch research/flamby/fed_isic2019/central/run_fold_experiment.slrm \
+# sbatch research/rxrx1/central/run_fold_experiment.slrm \
 #   path_to_folder_for_artifacts/ \
 #   path_to_folder_for_dataset/ \
 #   path_to_desired_venv/
 #
 # Example:
-# sbatch research/flamby/fed_isic2019/central/run_fold_experiment.slrm \
-#   research/flamby/fed_isic2019/central/results/ \
-#   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
+# sbatch research/rxrx1/central/run_fold_experiment.slrm \
+#   research/rxrx1/central/results/ \
+#   /projects//fl4health/datasets/rxrx1_v1.0 \
 #   /h/demerson/vector_repositories/fl4health_env/
 #
 # Notes:
@@ -54,6 +54,7 @@ fi
 ARTIFACT_DIR=$1
 DATASET_DIR=$2
 VENV_PATH=$3
+LR=$4
 
 # Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
@@ -105,10 +106,11 @@ do
     echo "Trainer logging at: ${OUTPUT_FILE}"
     echo "Launching Trainer"
 
-    nohup python -m research.flamby.fed_isic2019.central.train \
+    nohup python -m research.rxrx1.central.train \
         --artifact_dir ${ARTIFACT_DIR} \
         --run_name ${RUN_NAME} \
         --dataset_dir ${DATASET_DIR} \
+        --lr ${LR} \
         > ${OUTPUT_FILE} 2>&1 &
 
     echo "Centralized Training Running"
