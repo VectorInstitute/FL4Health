@@ -11,6 +11,7 @@
 #SBATCH --job-name=central_five_fold_exp
 #SBATCH --output=%j_%x.out
 #SBATCH --error=%j_%x.err
+#SBATCH --time=12:00:00
 
 ###############################################
 # Usage:
