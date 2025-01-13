@@ -48,9 +48,11 @@ class Rxrx1CentralizedTrainer(SingleNodeTrainer):
         aggregated_train_dataset = Rxrx1Dataset(
             metadata=meta_data_train, root=Path(dataset_dir), dataset_type="train", transform=None
         )
+        log(INFO, f"Aggregated train dataset size: {len(meta_data_train)}")
         aggregated_val_dataset = Rxrx1Dataset(
             metadata=meta_data_val, root=Path(dataset_dir), dataset_type="train", transform=None
         )
+        log(INFO, f"Aggregated val dataset size: {len(meta_data_val)}")
 
         self.train_loader = DataLoader(aggregated_train_dataset, batch_size=32, shuffle=True)
         self.val_loader = DataLoader(aggregated_val_dataset, batch_size=32, shuffle=False)
