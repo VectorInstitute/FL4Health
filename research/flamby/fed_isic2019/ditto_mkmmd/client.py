@@ -14,7 +14,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.mkmmd_clients.ditto_mkmmd_client import DittoMkMmdClient
 from fl4health.reporting.base_reporter import BaseReporter
@@ -38,14 +38,14 @@ class FedIsic2019DittoClient(DittoMkMmdClient):
         client_number: int,
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
-        reporters: Sequence[BaseReporter] | None = None,
-        progress_bar: bool = False,
-        client_name: str | None = None,
         mkmmd_loss_weight: float = 10,
         feature_l2_norm_weight: float = 1,
         mkmmd_loss_depth: int = 1,
         beta_global_update_interval: int = 20,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: str | None = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -66,6 +66,8 @@ class FedIsic2019DittoClient(DittoMkMmdClient):
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
+        # Number of batches to accumulate before updating the global model
+        self.num_accumulating_batches = 50
 
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
@@ -179,11 +181,16 @@ if __name__ == "__main__":
 
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
-
+    # Adding extensive checkpointing for the client
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
-    checkpoint_name = f"client_{args.client_number}_best_model.pkl"
+    pre_aggregation_best_checkpoint_name = f"pre_aggregation_client_{args.client_number}_best_model.pkl"
+    pre_aggregation_last_checkpoint_name = f"pre_aggregation_client_{args.client_number}_last_model.pkl"
     checkpoint_and_state_module = ClientCheckpointAndStateModule(
-        post_aggregation=BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
+        pre_aggregation=[
+            BestLossTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_best_checkpoint_name),
+            LatestTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_last_checkpoint_name),
+        ]
+
     )
 
     client = FedIsic2019DittoClient(
