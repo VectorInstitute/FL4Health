@@ -16,10 +16,13 @@ def label_frequency(dataset: Rxrx1Dataset | Subset) -> None:
     """
     # Extract metadata and label map
     if isinstance(dataset, Rxrx1Dataset):
-        metadata, label_map = dataset.metadata, dataset.label_map
+        metadata, original_label_map = dataset.metadata, dataset.original_label_map
     elif isinstance(dataset, Subset):
         assert isinstance(dataset.dataset, Rxrx1Dataset), "Subset dataset must be an Rxrx1Dataset instance."
-        metadata, label_map = dataset.dataset.metadata.iloc[list(dataset.indices)], dataset.dataset.label_map
+        metadata, original_label_map = (
+            dataset.dataset.metadata.iloc[list(dataset.indices)],
+            dataset.dataset.original_label_map,
+        )
     else:
         raise TypeError("Dataset must be of type Rxrx1Dataset or Subset containing an Rxrx1Dataset.")
 
@@ -28,7 +31,8 @@ def label_frequency(dataset: Rxrx1Dataset | Subset) -> None:
 
     # Print frequency of labels their names
     for label, count in label_counts.items():
-        original_label = next((k for k, v in label_map.items() if v == label), "Unknown")
+        assert isinstance(label, int)
+        original_label = original_label_map.get(label)
         log(INFO, f"Label {label} (original: {original_label}): {count} samples")
 
 

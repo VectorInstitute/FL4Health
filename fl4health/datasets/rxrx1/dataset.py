@@ -1,3 +1,4 @@
+import gc
 import os
 from collections.abc import Callable
 from pathlib import Path
@@ -31,11 +32,11 @@ class Rxrx1Dataset(Dataset):
         self.root = root
         self.transform = transform
 
-        self.label_map = {label: idx for idx, label in enumerate(sorted(self.metadata["sirna_id"].unique()))}
-        self.metadata["mapped_label"] = self.metadata["sirna_id"].map(self.label_map)
+        label_map = {label: idx for idx, label in enumerate(sorted(self.metadata["sirna_id"].unique()))}
+        self.original_label_map = {new_label: original_label for original_label, new_label in label_map.items()}
+        self.metadata["mapped_label"] = self.metadata["sirna_id"].map(label_map)
 
-        if cache_images:
-            self.images = [self.load_image(dict(row)) for _, row in self.metadata.iterrows()]
+        self.cache_images = cache_images
 
     def __len__(self) -> int:
         return len(self.metadata)
@@ -51,6 +52,15 @@ class Rxrx1Dataset(Dataset):
 
         return image, label
 
+    def load_cache(self) -> None:
+        if self.cache_images:
+            self.images = [self.load_image(dict(row)) for _, row in self.metadata.iterrows()]
+
+    def unload_cache(self) -> None:
+        if self.cache_images:
+            del self.images
+            gc.collect()
+
     def load_image(self, row: dict[str, Any]) -> torch.Tensor:
         experiment = row["experiment"]
         plate = row["plate"]
@@ -62,6 +72,6 @@ class Rxrx1Dataset(Dataset):
             image_path = os.path.join(self.root, f"images/{experiment}/Plate{plate}/{well}_s{site}_w{channel}.png")
             if not Path(image_path).exists():
                 raise FileNotFoundError(f"Image not found at {image_path}")
-            image = ToTensor(Image.open(image_path).convert("L"))
+            image = ToTensor()(Image.open(image_path).convert("L"))
             images.append(image)
         return torch.cat(images, dim=0)
