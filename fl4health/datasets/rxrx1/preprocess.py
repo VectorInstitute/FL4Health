@@ -3,17 +3,27 @@ import os
 import pickle
 from pathlib import Path
 from typing import Any
+from logging import INFO
 
 import pandas as pd
 import torch
 from PIL import Image
 from torchvision.transforms import ToTensor
+from flwr.common.logger import log
 
 
-def filter_and_save_data(data: pd.DataFrame, top_sirna_ids: list[int], cell_type: str, output_path: Path) -> None:
-    """Filters data for the given cell type and saves it to a CSV file."""
-    filtered_data = data[(data["sirna_id"].isin(top_sirna_ids)) & (data["cell_type"] == cell_type)]
-    filtered_data.to_csv(output_path, index=False)
+def filter_and_save_data(metadata: pd.DataFrame, top_sirna_ids: list[int], cell_type: str, output_path: Path) -> None:
+    """
+    Filters data for the given cell type and frequency of their sirna_id and saves it to a CSV file.
+    
+    Args:
+        metadata (pd.DataFrame): Metadata containing information about all images.
+        top_sirna_ids (list[int]): Top sirna_id values to filter by.
+        cell_type (str): Cell type to filter by.
+        output_path (Path): Path to save the filtered metadata.
+    """
+    filtered_metadata = metadata[(metadata["sirna_id"].isin(top_sirna_ids)) & (metadata["cell_type"] == cell_type)]
+    filtered_metadata.to_csv(output_path, index=False)
 
 
 def load_image(row: dict[str, Any], root: Path) -> torch.Tensor:
@@ -22,7 +32,7 @@ def load_image(row: dict[str, Any], root: Path) -> torch.Tensor:
 
     Args:
         row (dict[str, Any]): A row of metadata containing experiment, plate, well, and site information.
-        root (str): Root directory containing the image files.
+        root (Path): Root directory containing the image files.
 
     Returns:
         torch.Tensor: The loaded image tensor.
@@ -50,7 +60,7 @@ def process_data(metadata: pd.DataFrame, root: Path) -> torch.Tensor:
 
     Args:
         metadata (pd.DataFrame): Metadata containing information about all images.
-        root (str): Root directory containing the image files.
+        root (Path): Root directory containing the image files.
 
     Returns:
         torch.Tensor: A single tensor containing all processed images.
@@ -69,12 +79,12 @@ def save_to_pkl(data: torch.Tensor, output_path: str) -> None:
     Save data to a pickle file.
 
     Args:
-        data: Data to save.
+        data (torch.Tensor): Data to save.
         output_path (str): Path to the output pickle file.
     """
     with open(output_path, "wb") as f:
         pickle.dump(data, f)
-    print(f"Saved data to {output_path}")
+    log(INFO, f"Data saved to {output_path}")
 
 
 def main(dataset_dir: Path) -> None:
