@@ -9,16 +9,14 @@ import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config
-from pympler.asizeof import asizeof
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 from torchvision import models
 
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.mkmmd_clients.ditto_mkmmd_client import DittoMkMmdClient
-from fl4health.datasets.rxrx1.dataset import Rxrx1Dataset
 from fl4health.datasets.rxrx1.load_data import load_rxrx1_data, load_rxrx1_test_data
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
@@ -90,28 +88,6 @@ class Rxrx1DittoClient(DittoMkMmdClient):
         )
 
         return test_loader
-
-    def update_before_train(self, current_server_round: int) -> None:
-        # Load train dataset cache and profiling the size of it before and after loading the cache
-        log(INFO, f"Size of train loader {asizeof(self.train_loader)}")
-        assert isinstance(self.train_loader.dataset, Subset)
-        assert isinstance(self.train_loader.dataset.dataset, Rxrx1Dataset)
-        self.train_loader.dataset.dataset.load_cache()
-        log(INFO, f"Size of train loader after loading cache {asizeof(self.train_loader)}")
-
-        super().update_before_train(current_server_round)
-
-    def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
-        super().update_after_train(local_steps, loss_dict, config)
-
-        # Unload train dataset cache and profiling the size of it before and after unloading the cache
-        log(INFO, f"Size of train loader {asizeof(self.train_loader)}")
-
-        assert isinstance(self.train_loader.dataset, Subset)
-        assert isinstance(self.train_loader.dataset.dataset, Rxrx1Dataset)
-        self.train_loader.dataset.dataset.unload_cache()
-
-        log(INFO, f"Size of train loader after unloading {asizeof(self.train_loader)}")
 
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()

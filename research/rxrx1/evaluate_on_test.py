@@ -1,13 +1,13 @@
 import argparse
+import copy
 from logging import INFO
 from pathlib import Path
 
-import pandas as pd
 import torch
 from flwr.common.logger import log
 
-from fl4health.datasets.rxrx1.dataset import Rxrx1Dataset
 from fl4health.datasets.rxrx1.load_data import load_rxrx1_test_data
+from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.metrics import Accuracy
 from research.rxrx1.utils import (
     evaluate_rxrx1_model,
@@ -65,21 +65,18 @@ def main(
             test_loader, num_examples = load_rxrx1_test_data(
                 data_path=Path(dataset_dir), client_num=client_number, batch_size=BATCH_SIZE
             )
-            assert isinstance(test_loader.dataset, Rxrx1Dataset), "Expected Rxrx1Dataset."
+            assert isinstance(test_loader.dataset, TensorDataset), "Expected TensorDataset."
 
             if client_number == 0:
-                meta_data = test_loader.dataset.metadata
+                aggregated_dataset = copy.deepcopy(test_loader.dataset)
             else:
-                meta_data = pd.concat([meta_data, test_loader.dataset.metadata])
+                assert aggregated_dataset.data is not None and test_loader.dataset.data is not None
+                aggregated_dataset.data = torch.cat((aggregated_dataset.data, test_loader.dataset.data))
+                assert aggregated_dataset.targets is not None and test_loader.dataset.targets is not None
+                aggregated_dataset.targets = torch.cat((aggregated_dataset.targets, test_loader.dataset.targets))
 
-        aggregated_dataset = Rxrx1Dataset(
-            metadata=meta_data, root=Path(dataset_dir), dataset_type="test", transform=None
-        )
-
-        aggregated_test_loader = torch.utils.data.DataLoader(
-            aggregated_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0, pin_memory=True
-        )
-        aggregated_num_examples = len(meta_data)
+        aggregated_test_loader = torch.utils.data.DataLoader(aggregated_dataset, batch_size=BATCH_SIZE, shuffle=False)
+        aggregated_num_examples = len(aggregated_dataset)
 
     for client_number in range(NUM_CLIENTS):
         test_loader, _ = load_rxrx1_test_data(

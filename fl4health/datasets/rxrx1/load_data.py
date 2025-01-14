@@ -1,44 +1,85 @@
+import copy
+import os
+import pickle
 from collections import defaultdict
+from collections.abc import Callable
 from logging import INFO
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import torch
 from flwr.common.logger import log
 from torch.utils.data import DataLoader, Subset
 
-from fl4health.datasets.rxrx1.dataset import Rxrx1Dataset
+from fl4health.utils.dataset import TensorDataset
 
 
-def label_frequency(dataset: Rxrx1Dataset | Subset) -> None:
+def construct_rxrx1_tensor_dataset(
+    metadata: pd.DataFrame,
+    data_path: Path,
+    client_num: int,
+    dataset_type: str,
+    transform: Callable | None = None,
+) -> tuple[TensorDataset, dict[int, int]]:
+    """
+    Construct a TensorDataset for rxrx1 data.
+
+    Args:
+        metadata (DataFrame): A DataFrame containing image metadata.
+        data_path (Path): Root directory which the image data should be loaded.
+        client_num (int): Client number to load data for.
+        dataset_type (str): 'train' or 'test' to specify dataset type.
+        transform (Callable | None): Transformation function to apply to the images. Defaults to None.
+
+    Returns:
+        tuple[TensorDataset, dict[int, int]]: A TensorDataset containing the processed images and label map.
+
+    """
+
+    label_map = {label: idx for idx, label in enumerate(sorted(metadata["sirna_id"].unique()))}
+    original_label_map = {new_label: original_label for original_label, new_label in label_map.items()}
+    with open(os.path.join(data_path, f"clients/{dataset_type}_data_{client_num+1}.pkl"), "rb") as file:
+        data_tensor = torch.Tensor(pickle.load(file))
+    targets_tensor = torch.Tensor(metadata["sirna_id"].map(label_map))
+
+    return TensorDataset(data_tensor, targets_tensor, transform), original_label_map
+
+
+def label_frequency(dataset: TensorDataset | Subset, original_label_map: dict[int, int]) -> None:
     """
     Prints the frequency of each label in the dataset.
+
+    Args:
+        dataset (TensorDataset | Subset): The dataset to analyze.
+        original_label_map (dict[int, int]): A mapping of the original labels to their new labels.
+
     """
     # Extract metadata and label map
-    if isinstance(dataset, Rxrx1Dataset):
-        metadata, original_label_map = dataset.metadata, dataset.original_label_map
+    if isinstance(dataset, TensorDataset):
+        targets = dataset.targets
     elif isinstance(dataset, Subset):
-        assert isinstance(dataset.dataset, Rxrx1Dataset), "Subset dataset must be an Rxrx1Dataset instance."
-        metadata, original_label_map = (
-            dataset.dataset.metadata.iloc[list(dataset.indices)],
-            dataset.dataset.original_label_map,
-        )
+        assert isinstance(dataset.dataset, TensorDataset), "Subset dataset must be an TensorDataset instance."
+        targets = dataset.dataset.targets
     else:
-        raise TypeError("Dataset must be of type Rxrx1Dataset or Subset containing an Rxrx1Dataset.")
+        raise TypeError("Dataset must be of type TensorDataset or Subset containing an TensorDataset.")
 
     # Count label frequencies
-    label_counts = metadata["mapped_label"].value_counts()
+    label_to_indices = defaultdict(list)
+    assert isinstance(targets, torch.Tensor)
+    for idx, label in enumerate(targets):  # Assumes dataset[idx] returns (data, label)
+        label_to_indices[label].append(idx)
 
     # Print frequency of labels their names
-    for label, count in label_counts.items():
+    for label, count in label_to_indices.items():
         assert isinstance(label, int)
         original_label = original_label_map.get(label)
-        log(INFO, f"Label {label} (original: {original_label}): {count} samples")
+        log(INFO, f"Label {label} (original: {original_label}): {len(count)} samples")
 
 
 def create_splits(
-    dataset: Rxrx1Dataset, seed: int | None = None, train_fraction: float = 0.8
-) -> tuple[Subset, Subset]:
+    dataset: TensorDataset, seed: int | None = None, train_fraction: float = 0.8
+) -> tuple[list[int], list[int]]:
     """
     Splits the dataset into training and validation sets.
 
@@ -52,7 +93,8 @@ def create_splits(
 
     # Group indices by label
     label_to_indices = defaultdict(list)
-    for idx, label in enumerate(dataset.metadata["mapped_label"]):  # Assumes dataset[idx] returns (data, label)
+    assert isinstance(dataset.targets, torch.Tensor)
+    for idx, label in enumerate(dataset.targets):  # Assumes dataset[idx] returns (data, label)
         label_to_indices[label].append(idx)
 
     # Stratified splitting
@@ -69,11 +111,7 @@ def create_splits(
         if len(val_indices) == 0:
             log(INFO, "Warning: Validation set is empty. Consider changing the train_fraction parameter.")
 
-    # Create subsets
-    train_subset = Subset(dataset, train_indices)
-    val_subset = Subset(dataset, val_indices)
-
-    return train_subset, val_subset
+    return train_indices, val_indices
 
 
 def load_rxrx1_data(
@@ -88,15 +126,21 @@ def load_rxrx1_data(
     # Read the CSV file
     data = pd.read_csv(f"{data_path}/clients/meta_data_{client_num+1}.csv")
 
-    dataset = Rxrx1Dataset(metadata=data, root=data_path, dataset_type="train", transform=None)
-
-    train_set, validation_set = create_splits(dataset, seed=seed, train_fraction=train_val_split)
+    dataset, _ = construct_rxrx1_tensor_dataset(data, data_path, client_num, "train")
+    assert dataset.targets is not None
+    train_indices, val_indices = create_splits(dataset, seed=seed, train_fraction=train_val_split)
+    train_set = copy.deepcopy(dataset)
+    train_set.data = dataset.data[train_indices]
+    train_set.targets = dataset.targets[train_indices]
+    validation_set = copy.deepcopy(dataset)
+    validation_set.data = dataset.data[val_indices]
+    validation_set.targets = dataset.targets[val_indices]
 
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
     validation_loader = DataLoader(validation_set, batch_size=batch_size)
     num_examples = {
-        "train_set": len(train_set),
-        "validation_set": len(validation_set),
+        "train_set": len(train_set.data),
+        "validation_set": len(validation_set.data),
     }
 
     return train_loader, validation_loader, num_examples
@@ -109,10 +153,10 @@ def load_rxrx1_test_data(
     # Read the CSV file
     data = pd.read_csv(f"{data_path}/clients/meta_data_{client_num+1}.csv")
 
-    evaluation_set = Rxrx1Dataset(metadata=data, root=data_path, dataset_type="test", transform=None)
+    dataset, _ = construct_rxrx1_tensor_dataset(data, data_path, client_num, "test")
 
     evaluation_loader = DataLoader(
-        evaluation_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True
+        dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True
     )
-    num_examples = {"eval_set": len(evaluation_set)}
+    num_examples = {"eval_set": len(dataset.data)}
     return evaluation_loader, num_examples

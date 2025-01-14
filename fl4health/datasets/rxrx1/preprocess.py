@@ -1,15 +1,80 @@
 import argparse
 import os
+import pickle
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
+import torch
+from PIL import Image
+from torchvision.transforms import ToTensor
 
 
-# Function to filter data based on `sirna_id` and `cell_type`
 def filter_and_save_data(data: pd.DataFrame, top_sirna_ids: list[int], cell_type: str, output_path: Path) -> None:
     """Filters data for the given cell type and saves it to a CSV file."""
     filtered_data = data[(data["sirna_id"].isin(top_sirna_ids)) & (data["cell_type"] == cell_type)]
     filtered_data.to_csv(output_path, index=False)
+
+
+def load_image(row: dict[str, Any], root: Path) -> torch.Tensor:
+    """
+    Load an image tensor for a given row of metadata.
+
+    Args:
+        row (dict[str, Any]): A row of metadata containing experiment, plate, well, and site information.
+        root (str): Root directory containing the image files.
+
+    Returns:
+        torch.Tensor: The loaded image tensor.
+    """
+    experiment = row["experiment"]
+    plate = row["plate"]
+    well = row["well"]
+    site = row["site"]
+
+    images = []
+    for channel in range(1, 4):
+        image_path = os.path.join(root, f"images/{experiment}/Plate{plate}/{well}_s{site}_w{channel}.png")
+        if not Path(image_path).exists():
+            raise FileNotFoundError(f"Image not found at {image_path}")
+        image = ToTensor()(Image.open(image_path).convert("L"))
+        images.append(image)
+
+    # Concatenate the three channels into one tensor
+    return torch.cat(images, dim=0)
+
+
+def process_data(metadata: pd.DataFrame, root: Path) -> torch.Tensor:
+    """
+    Process the entire dataset, loading image tensors for each row.
+
+    Args:
+        metadata (pd.DataFrame): Metadata containing information about all images.
+        root (str): Root directory containing the image files.
+
+    Returns:
+        torch.Tensor: A single tensor containing all processed images.
+    """
+    all_tensors = []
+    for _, row in metadata.iterrows():
+        image_tensor = load_image(row.to_dict(), Path(root))
+        all_tensors.append(image_tensor)
+
+    # Stack all tensors into a single tensor
+    return torch.stack(all_tensors)
+
+
+def save_to_pkl(data: torch.Tensor, output_path: str) -> None:
+    """
+    Save data to a pickle file.
+
+    Args:
+        data: Data to save.
+        output_path (str): Path to the output pickle file.
+    """
+    with open(output_path, "wb") as f:
+        pickle.dump(data, f)
+    print(f"Saved data to {output_path}")
 
 
 def main(dataset_dir: Path) -> None:
@@ -30,6 +95,19 @@ def main(dataset_dir: Path) -> None:
     # Filter and save data for each client
     for cell_type, output_path in zip(cell_types, output_files):
         filter_and_save_data(data, top_sirna_ids, cell_type, Path(output_path))
+
+    for i, metadata_path in enumerate(output_files):
+        metadata = pd.read_csv(metadata_path)
+
+        # Split the metadata into train and test datasets
+        train_metadata = metadata[metadata["dataset"] == "train"]
+        test_metadata = metadata[metadata["dataset"] == "test"]
+
+        train_tensor = process_data(train_metadata, dataset_dir)
+        save_to_pkl(train_tensor, os.path.join(output_dir, f"train_data_{i+1}.pkl"))
+
+        test_tensor = process_data(test_metadata, dataset_dir)
+        save_to_pkl(test_tensor, os.path.join(output_dir, f"test_data_{i+1}.pkl"))
 
 
 if __name__ == "__main__":

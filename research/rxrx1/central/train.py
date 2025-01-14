@@ -1,16 +1,16 @@
 import argparse
+import copy
 from logging import INFO
 from pathlib import Path
 
-import pandas as pd
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader
 from torchvision import models
 
-from fl4health.datasets.rxrx1.dataset import Rxrx1Dataset
 from fl4health.datasets.rxrx1.load_data import load_rxrx1_data
+from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.metrics import Accuracy, MetricManager
 from research.rxrx1.single_node_trainer import SingleNodeTrainer
 
@@ -33,26 +33,29 @@ class Rxrx1CentralizedTrainer(SingleNodeTrainer):
             train_loader, val_loader, num_examples = load_rxrx1_data(
                 data_path=Path(dataset_dir), client_num=client_number, batch_size=32
             )
-            assert isinstance(train_loader.dataset, Subset), "Expected Subset."
-            assert isinstance(val_loader.dataset, Subset), "Expected Subset."
-            assert isinstance(train_loader.dataset.dataset, Rxrx1Dataset), "Expected Rxrx1Dataset."
-            assert isinstance(val_loader.dataset.dataset, Rxrx1Dataset), "Expected Rxrx1Dataset."
+            assert isinstance(train_loader.dataset, TensorDataset), "Expected TensorDataset."
+            assert isinstance(val_loader.dataset, TensorDataset), "Expected TensorDataset."
 
             if client_number == 0:
-                meta_data_train = train_loader.dataset.dataset.metadata
-                meta_data_val = val_loader.dataset.dataset.metadata
+                aggregated_train_dataset = copy.deepcopy(train_loader.dataset)
+                aggregated_val_dataset = copy.deepcopy(val_loader.dataset)
             else:
-                meta_data_train = pd.concat([meta_data_train, train_loader.dataset.dataset.metadata])
-                meta_data_val = pd.concat([meta_data_val, val_loader.dataset.dataset.metadata])
+                assert aggregated_train_dataset.data is not None
+                aggregated_train_dataset.data = torch.cat((aggregated_train_dataset.data, train_loader.dataset.data))
+                assert train_loader.dataset.targets is not None and aggregated_train_dataset.targets is not None
+                aggregated_train_dataset.targets = torch.cat(
+                    (aggregated_train_dataset.targets, train_loader.dataset.targets)
+                )
 
-        aggregated_train_dataset = Rxrx1Dataset(
-            metadata=meta_data_train, root=Path(dataset_dir), dataset_type="train", transform=None
-        )
-        log(INFO, f"Aggregated train dataset size: {len(meta_data_train)}")
-        aggregated_val_dataset = Rxrx1Dataset(
-            metadata=meta_data_val, root=Path(dataset_dir), dataset_type="train", transform=None
-        )
-        log(INFO, f"Aggregated val dataset size: {len(meta_data_val)}")
+                assert aggregated_val_dataset.data is not None
+                aggregated_val_dataset.data = torch.cat((aggregated_val_dataset.data, val_loader.dataset.data))
+                assert val_loader.dataset.targets is not None and aggregated_val_dataset.targets is not None
+                aggregated_val_dataset.targets = torch.cat(
+                    (aggregated_val_dataset.targets, val_loader.dataset.targets)
+                )
+
+            log(INFO, f"Aggregated train dataset size: {len(aggregated_train_dataset.data)}")
+            log(INFO, f"Aggregated val dataset size: {len(aggregated_val_dataset.data)}")
 
         self.train_loader = DataLoader(aggregated_train_dataset, batch_size=32, shuffle=True)
         self.val_loader = DataLoader(aggregated_val_dataset, batch_size=32, shuffle=False)
