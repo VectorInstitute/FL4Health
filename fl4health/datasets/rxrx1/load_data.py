@@ -128,7 +128,7 @@ def load_rxrx1_data(
 
     dataset, _ = construct_rxrx1_tensor_dataset(data, data_path, client_num, "train")
     assert dataset.targets is not None
-    
+
     train_indices, val_indices = create_splits(dataset, seed=seed, train_fraction=train_val_split)
     train_set = copy.deepcopy(dataset)
     train_set.data = dataset.data[train_indices]

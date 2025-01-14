@@ -1,21 +1,21 @@
 import argparse
 import os
 import pickle
+from logging import INFO
 from pathlib import Path
 from typing import Any
-from logging import INFO
 
 import pandas as pd
 import torch
+from flwr.common.logger import log
 from PIL import Image
 from torchvision.transforms import ToTensor
-from flwr.common.logger import log
 
 
 def filter_and_save_data(metadata: pd.DataFrame, top_sirna_ids: list[int], cell_type: str, output_path: Path) -> None:
     """
     Filters data for the given cell type and frequency of their sirna_id and saves it to a CSV file.
-    
+
     Args:
         metadata (pd.DataFrame): Metadata containing information about all images.
         top_sirna_ids (list[int]): Top sirna_id values to filter by.
