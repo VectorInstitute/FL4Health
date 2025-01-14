@@ -44,4 +44,6 @@ jobs:
         run: poetry install --with "dev, test"
 
       - name: Run Script
-        run: poetry run pytest -v -m "smoketest"
+        run: |
+          source .venv/bin/activate
+          pytest -v -m "smoketest"
