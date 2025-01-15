@@ -1,13 +1,11 @@
 import argparse
 import os
 import pickle
-from logging import INFO
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 import torch
-from flwr.common.logger import log
 from PIL import Image
 from torchvision.transforms import ToTensor
 
@@ -54,24 +52,20 @@ def load_image(row: dict[str, Any], root: Path) -> torch.Tensor:
     return torch.cat(images, dim=0)
 
 
-def process_data(metadata: pd.DataFrame, root: Path) -> torch.Tensor:
+def process_data(metadata: pd.DataFrame, input_dir: Path, output_dir: Path, client_num: int, type_data: str) -> None:
     """
     Process the entire dataset, loading image tensors for each row.
 
     Args:
         metadata (pd.DataFrame): Metadata containing information about all images.
-        root (Path): Root directory containing the image files.
-
-    Returns:
-        torch.Tensor: A single tensor containing all processed images.
+        input_dir (Path): Input directory containing the image files.
+        output_dir (Path): Output directory containing the image files.
+        client_num (int): Client number to load data for.
+        type_data (str): 'train' or 'test' to specify dataset type.
     """
-    all_tensors = []
-    for _, row in metadata.iterrows():
-        image_tensor = load_image(row.to_dict(), Path(root))
-        all_tensors.append(image_tensor)
-
-    # Stack all tensors into a single tensor
-    return torch.stack(all_tensors)
+    for i, row in metadata.iterrows():
+        image_tensor = load_image(row.to_dict(), Path(input_dir))
+        save_to_pkl(image_tensor, os.path.join(output_dir, f"{type_data}_data_{client_num+1}", f"image_{i}.pkl"))
 
 
 def save_to_pkl(data: torch.Tensor, output_path: str) -> None:
@@ -84,7 +78,6 @@ def save_to_pkl(data: torch.Tensor, output_path: str) -> None:
     """
     with open(output_path, "wb") as f:
         pickle.dump(data, f)
-    log(INFO, f"Data saved to {output_path}")
 
 
 def main(dataset_dir: Path) -> None:
@@ -113,11 +106,8 @@ def main(dataset_dir: Path) -> None:
         train_metadata = metadata[metadata["dataset"] == "train"]
         test_metadata = metadata[metadata["dataset"] == "test"]
 
-        train_tensor = process_data(train_metadata, dataset_dir)
-        save_to_pkl(train_tensor, os.path.join(output_dir, f"train_data_{i+1}.pkl"))
-
-        test_tensor = process_data(test_metadata, dataset_dir)
-        save_to_pkl(test_tensor, os.path.join(output_dir, f"test_data_{i+1}.pkl"))
+        process_data(train_metadata, dataset_dir, Path(output_dir), i, "train")
+        process_data(test_metadata, dataset_dir, Path(output_dir), i, "test")
 
 
 if __name__ == "__main__":
