@@ -6,7 +6,6 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-import torch
 import yaml
 from flwr.common.typing import Config
 from pytest import approx
@@ -537,14 +536,6 @@ class MetricType(Enum):
 
 DEFAULT_METRICS_FOLDER = Path("metrics")
 DEFAULT_TOLERANCE = 0.0005
-DEFAULT_TOLERANCE_WITH_GPU = 0.005
-
-
-def _get_default_tolerance() -> float:
-    if torch.cuda.is_available():
-        return DEFAULT_TOLERANCE_WITH_GPU
-    else:
-        return DEFAULT_TOLERANCE
 
 
 def _assert_metrics(metric_type: MetricType, metrics_to_assert: dict[str, Any] | None = None) -> list[str]:
@@ -577,7 +568,7 @@ def _assert_metrics_dict(metrics_to_assert: dict[str, Any], metrics_saved: dict[
 
     def _assert(value: Any, saved_value: Any) -> str | None:
         # helper function to avoid code repetition
-        tolerance = _get_default_tolerance()
+        tolerance = DEFAULT_TOLERANCE
         if isinstance(value, dict):
             # if the value is a dictionary, extract the target value and the custom tolerance
             tolerance = value["custom_tolerance"]
