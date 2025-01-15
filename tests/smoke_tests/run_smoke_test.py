@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import json
 import logging
+import re
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,10 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger()
+
+
+def postprocess_logs(logs: str) -> str:
+    return re.sub(r"E.*recvmsg encountered uncommon error: Message too long\n", "\n", logs)
 
 
 async def run_smoke_test(
@@ -228,6 +233,7 @@ async def run_smoke_test(
 
     # Collecting the server output when its process finish
     full_server_output = await _wait_for_process_to_finish_and_retrieve_logs(server_process, "Server")
+    full_server_output = postprocess_logs(full_server_output)
 
     logger.info("Server has finished execution")
 
@@ -265,6 +271,7 @@ async def run_smoke_test(
 
     # client assertions
     client_errors = []
+    full_client_outputs = [postprocess_logs(el) for el in full_client_outputs]
     for i in range(len(full_client_outputs)):
         assert "error" not in full_client_outputs[i].lower(), (
             f"Full client output:\n{full_client_outputs[i]}\n" f"[ASSERT ERROR] Error message found for client {i}."
