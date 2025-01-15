@@ -542,9 +542,9 @@ DEFAULT_TOLERANCE_WITH_GPU = 0.005
 
 def _get_default_tolerance() -> float:
     if torch.cuda.is_available():
-        return DEFAULT_TOLERANCE
-    else:
         return DEFAULT_TOLERANCE_WITH_GPU
+    else:
+        return DEFAULT_TOLERANCE
 
 
 def _assert_metrics(metric_type: MetricType, metrics_to_assert: dict[str, Any] | None = None) -> list[str]:
