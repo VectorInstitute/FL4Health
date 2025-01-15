@@ -46,4 +46,4 @@ jobs:
       - name: Run Script
         run: |
           source .venv/bin/activate
-          pytest -m "smoketest" -n 10
+          pytest -m "smoketest"
