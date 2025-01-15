@@ -39,10 +39,13 @@ def construct_rxrx1_tensor_dataset(
 
     label_map = {label: idx for idx, label in enumerate(sorted(metadata["sirna_id"].unique()))}
     original_label_map = {new_label: original_label for original_label, new_label in label_map.items()}
-    with open(os.path.join(data_path, f"clients/{dataset_type}_data_{client_num+1}.pkl"), "rb") as file:
-        data_tensor = torch.Tensor(pickle.load(file))
     metadata = metadata[metadata["dataset"] == dataset_type]
     targets_tensor = torch.Tensor(list(metadata["sirna_id"].map(label_map)))
+    data_list = []
+    for index in range(len(targets_tensor)):
+        with open(os.path.join(data_path, f"clients/{dataset_type}_data_{client_num+1}/image_{index}.pkl"), "rb") as file:
+            data_list.append(torch.Tensor(pickle.load(file)))
+    data_tensor = torch.cat(data_list)
 
     return TensorDataset(data_tensor, targets_tensor, transform), original_label_map
 
