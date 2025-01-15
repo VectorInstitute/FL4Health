@@ -46,7 +46,7 @@ def construct_rxrx1_tensor_dataset(
         with open(
             os.path.join(data_path, f"clients/{dataset_type}_data_{client_num+1}/image_{index}.pkl"), "rb"
         ) as file:
-            data_list.append(torch.Tensor(pickle.load(file)))
+            data_list.append(torch.Tensor(pickle.load(file)).unsqueeze(0))
     data_tensor = torch.cat(data_list)
     return TensorDataset(data_tensor, targets_tensor, transform), original_label_map
 
