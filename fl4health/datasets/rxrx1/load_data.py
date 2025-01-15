@@ -40,7 +40,7 @@ def construct_rxrx1_tensor_dataset(
     label_map = {label: idx for idx, label in enumerate(sorted(metadata["sirna_id"].unique()))}
     original_label_map = {new_label: original_label for original_label, new_label in label_map.items()}
     metadata = metadata[metadata["dataset"] == dataset_type]
-    targets_tensor = torch.Tensor(list(metadata["sirna_id"].map(label_map)))
+    targets_tensor = torch.Tensor(list(metadata["sirna_id"].map(label_map))).type(torch.long)
     data_list = []
     for index in range(len(targets_tensor)):
         with open(
