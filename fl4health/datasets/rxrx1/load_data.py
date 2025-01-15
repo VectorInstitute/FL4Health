@@ -41,7 +41,8 @@ def construct_rxrx1_tensor_dataset(
     original_label_map = {new_label: original_label for original_label, new_label in label_map.items()}
     with open(os.path.join(data_path, f"clients/{dataset_type}_data_{client_num+1}.pkl"), "rb") as file:
         data_tensor = torch.Tensor(pickle.load(file))
-    targets_tensor = torch.Tensor(metadata["sirna_id"].map(label_map))
+    metadata = metadata[metadata["dataset"] == dataset_type]
+    targets_tensor = torch.Tensor(list(metadata["sirna_id"].map(label_map)))
 
     return TensorDataset(data_tensor, targets_tensor, transform), original_label_map
 
@@ -95,7 +96,7 @@ def create_splits(
     label_to_indices = defaultdict(list)
     assert isinstance(dataset.targets, torch.Tensor)
     for idx, label in enumerate(dataset.targets):  # Assumes dataset[idx] returns (data, label)
-        label_to_indices[label].append(idx)
+        label_to_indices[label.item()].append(idx)
 
     # Stratified splitting
     train_indices, val_indices = [], []
@@ -127,16 +128,17 @@ def load_rxrx1_data(
     data = pd.read_csv(f"{data_path}/clients/meta_data_{client_num+1}.csv")
 
     dataset, _ = construct_rxrx1_tensor_dataset(data, data_path, client_num, "train")
-    assert dataset.targets is not None
 
     train_indices, val_indices = create_splits(dataset, seed=seed, train_fraction=train_val_split)
     train_set = copy.deepcopy(dataset)
-    train_set.data = dataset.data[train_indices]
-    train_set.targets = dataset.targets[train_indices]
+    train_set.data = train_set.data[train_indices]
+    assert train_set.targets is not None
+    train_set.targets = train_set.targets[train_indices]
 
     validation_set = copy.deepcopy(dataset)
-    validation_set.data = dataset.data[val_indices]
-    validation_set.targets = dataset.targets[val_indices]
+    validation_set.data = validation_set.data[val_indices]
+    assert validation_set.targets is not None
+    validation_set.targets = validation_set.targets[val_indices]
 
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True)
     validation_loader = DataLoader(validation_set, batch_size=batch_size)
