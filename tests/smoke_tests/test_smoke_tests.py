@@ -14,7 +14,7 @@ logger = logging.getLogger()
 
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
-async def test_basic_server_client_cifar() -> None:
+async def test_basic_server_client_cifar(test_checkpoint_dirname: str) -> None:
     await run_fault_tolerance_smoke_test(
         server_python_path="tests.smoke_tests.load_from_checkpoint_example.server",
         client_python_path="tests.smoke_tests.load_from_checkpoint_example.client",
@@ -24,6 +24,7 @@ async def test_basic_server_client_cifar() -> None:
         seed=42,
         server_metrics=load_metrics_from_file("tests/smoke_tests/basic_server_metrics.json"),
         client_metrics=load_metrics_from_file("tests/smoke_tests/basic_client_metrics.json"),
+        intermediate_checkpoint_dir=test_checkpoint_dirname,
     )
 
 
