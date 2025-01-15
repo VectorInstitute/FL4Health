@@ -12,7 +12,7 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 
-@pytest.mark.smoktest
+@pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_basic_server_client_cifar() -> None:
     await run_fault_tolerance_smoke_test(
