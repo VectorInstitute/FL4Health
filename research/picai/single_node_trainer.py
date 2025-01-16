@@ -46,7 +46,7 @@ class SingleNodeTrainer:
         self.device = device
         self.epoch: int
 
-        if not self.per_epoch_checkpointer.checkpoint_exists(self.state_checkpoint_path):
+        if not self.per_epoch_checkpointer.checkpoint_exists(self.state_checkpoint_name):
             self.per_epoch_checkpointer.save_checkpoint(
                 self.state_checkpoint_name, {"model": self.model, "optimizer": self.optimizer, "epoch": 0}
             )

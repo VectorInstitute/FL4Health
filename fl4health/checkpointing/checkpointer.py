@@ -303,17 +303,18 @@ class PerRoundStateCheckpointer:
             dict[str, Any]: A dictionary representing the checkpointed state, as loaded by torch.load.
         """
 
+        assert self.checkpoint_exists(checkpoint_name)
         checkpoint_path = os.path.join(self.checkpoint_dir, checkpoint_name)
         log(INFO, f"Loading state from checkpoint at {checkpoint_path}")
-        assert self.checkpoint_exists(checkpoint_path)
 
         return torch.load(checkpoint_path)
 
-    def checkpoint_exists(self, checkpoint_path: str) -> bool:
+    def checkpoint_exists(self, checkpoint_name: str) -> bool:
         """
         Checks if a checkpoint exists at the checkpoint_path constructed at initialization.
 
         Returns:
             bool: Whether or not a checkpoint exists.
         """
+        checkpoint_path = os.path.join(self.checkpoint_dir, checkpoint_name)
         return os.path.exists(checkpoint_path)
