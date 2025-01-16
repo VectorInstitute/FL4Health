@@ -33,7 +33,6 @@ class SingleNodeTrainer:
             os.mkdir(checkpoint_dir)
 
         self.state_checkpoint_name = "ckpt.pkl"
-        self.state_checkpoint_path = os.path.join(checkpoint_dir, self.state_checkpoint_name)
         self.per_epoch_checkpointer = PerRoundStateCheckpointer(Path(checkpoint_dir))
         best_metric_checkpoint_name = "best_ckpt.pkl"
         self.checkpointer = BestLossTorchModuleCheckpointer(checkpoint_dir, best_metric_checkpoint_name)
@@ -51,7 +50,7 @@ class SingleNodeTrainer:
                 self.state_checkpoint_name, {"model": self.model, "optimizer": self.optimizer, "epoch": 0}
             )
 
-        ckpt = self.per_epoch_checkpointer.load_checkpoint(self.state_checkpoint_path)
+        ckpt = self.per_epoch_checkpointer.load_checkpoint(self.state_checkpoint_name)
         self.model, self.optimizer, self.epoch = ckpt["model"], ckpt["optimizer"], ckpt["epoch"]
 
     def _maybe_checkpoint(self, loss: float, metrics: dict[str, Scalar]) -> None:
