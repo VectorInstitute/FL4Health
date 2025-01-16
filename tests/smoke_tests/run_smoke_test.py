@@ -396,22 +396,28 @@ async def run_fault_tolerance_smoke_test(
     )
 
     # Start n number of clients and capture their process objects
-    client_processes = []
+    client_tasks = []
     for i in range(config["n_clients"]):
         logger.info(f"Starting client {i}")
 
         curr_client_args = client_args + ["--client_name", str(i)]
 
-        client_process = await asyncio.create_subprocess_exec(
-            "python",
-            *curr_client_args,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.STDOUT,
+        client_tasks.append(
+            asyncio.create_subprocess_exec(
+                "python",
+                *curr_client_args,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
+            )
         )
-        client_processes.append(client_process)
 
+    client_processes = await asyncio.gather(*client_tasks)
+
+    client_output_tasks = []
     for i in range(len(client_processes)):
-        await _wait_for_process_to_finish_and_retrieve_logs(client_processes[i], f"Client {i}")
+        client_output_tasks.append(_wait_for_process_to_finish_and_retrieve_logs(client_processes[i], f"Client {i}"))
+
+    _ = await asyncio.gather(*client_output_tasks)
 
     logger.info("All clients finished execution")
 

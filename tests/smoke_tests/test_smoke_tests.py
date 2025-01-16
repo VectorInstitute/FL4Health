@@ -39,7 +39,6 @@ async def test_nnunet_config_2d() -> None:
     )
 
 
-@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_nnunet_config_3d() -> None:
@@ -51,7 +50,6 @@ async def test_nnunet_config_3d() -> None:
     )
 
 
-@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_scaffold() -> None:
@@ -66,7 +64,6 @@ async def test_scaffold() -> None:
     )
 
 
-@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_apfl() -> None:
@@ -81,7 +78,6 @@ async def test_apfl() -> None:
     )
 
 
-@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_feddg_ga() -> None:
@@ -96,7 +92,6 @@ async def test_feddg_ga() -> None:
     )
 
 
-@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_basic() -> None:
@@ -108,7 +103,6 @@ async def test_basic() -> None:
     )
 
 
-@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_client_level_dp_cifar() -> None:
