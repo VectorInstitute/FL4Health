@@ -17,7 +17,7 @@ sh fl4health/datasets/rxrx1/download.sh
 
 ### Preprocessing the Datasets
 
-Once the datasets are downloaded, preprocess them to generate the required metadata file and prepare the training and testing tensors for each client participating in the federated learning experiments. The preprocessing script will create the following files:
+Once the datasets are downloaded, preprocess them to generate the required metadata file and prepare the training and testing tensors for each client participating in the federated learning experiments. The following command preprocesses the RxRx1 datasets:
 
 ```sh
 python fl4health/datasets/rxrx1/preprocess.py --data_dir <path_to_rxrx1_data>

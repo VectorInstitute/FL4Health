@@ -41,6 +41,8 @@ def load_image(row: dict[str, Any], root: Path) -> torch.Tensor:
     site = row["site"]
 
     images = []
+    # Rxrx1 originally consists of 6 channels, but to reduce the computational cost, we only use 3 channels
+    # following previous works such as https://github.com/p-lambda/wildYe.
     for channel in range(1, 4):
         image_path = os.path.join(root, f"images/{experiment}/Plate{plate}/{well}_s{site}_w{channel}.png")
         if not Path(image_path).exists():

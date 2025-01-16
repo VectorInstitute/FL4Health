@@ -80,7 +80,7 @@ if __name__ == "__main__":
         "--dataset_dir",
         action="store",
         type=str,
-        help="Path to the preprocessed FedIsic2019 Dataset (ex. path/to/fedisic2019)",
+        help="Path to the preprocessed Rxrx1 Dataset",
         required=True,
     )
     parser.add_argument(
