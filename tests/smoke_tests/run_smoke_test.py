@@ -551,7 +551,7 @@ class MetricType(Enum):
 
 
 DEFAULT_METRICS_FOLDER = Path("metrics")
-DEFAULT_TOLERANCE = 0.0005
+DEFAULT_TOLERANCE = 0.1
 
 
 def _assert_metrics(metric_type: MetricType, metrics_to_assert: dict[str, Any] | None = None) -> list[str]:

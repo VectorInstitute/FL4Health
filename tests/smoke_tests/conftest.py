@@ -4,7 +4,7 @@ from typing import Iterator
 import pytest
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def test_checkpoint_dirname() -> Iterator[str]:
     tempdir = tempfile.TemporaryDirectory()
     yield tempdir.name

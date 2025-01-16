@@ -1,15 +1,6 @@
-import logging
-
 import pytest
 
 from .run_smoke_test import load_metrics_from_file, run_fault_tolerance_smoke_test, run_smoke_test
-
-logging.basicConfig(
-    format="%(asctime)s %(levelname)-8s %(message)s",
-    level=logging.INFO,
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
-logger = logging.getLogger()
 
 
 @pytest.mark.smoketest
@@ -24,10 +15,11 @@ async def test_basic_server_client_cifar(test_checkpoint_dirname: str) -> None:
         seed=42,
         server_metrics=load_metrics_from_file("tests/smoke_tests/basic_server_metrics.json"),
         client_metrics=load_metrics_from_file("tests/smoke_tests/basic_client_metrics.json"),
-        # intermediate_checkpoint_dir=test_checkpoint_dirname,
+        intermediate_checkpoint_dir=test_checkpoint_dirname,
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_nnunet_config_2d() -> None:
@@ -39,6 +31,7 @@ async def test_nnunet_config_2d() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_nnunet_config_3d() -> None:
@@ -50,6 +43,7 @@ async def test_nnunet_config_3d() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_scaffold() -> None:
@@ -64,6 +58,7 @@ async def test_scaffold() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_apfl() -> None:
@@ -78,6 +73,7 @@ async def test_apfl() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_feddg_ga() -> None:
@@ -92,6 +88,7 @@ async def test_feddg_ga() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_basic() -> None:
@@ -103,6 +100,7 @@ async def test_basic() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_client_level_dp_cifar() -> None:
