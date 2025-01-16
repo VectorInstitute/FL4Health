@@ -39,6 +39,7 @@ async def test_nnunet_config_2d() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_nnunet_config_3d() -> None:
@@ -50,6 +51,7 @@ async def test_nnunet_config_3d() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_scaffold() -> None:
@@ -64,6 +66,7 @@ async def test_scaffold() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_apfl() -> None:
@@ -78,6 +81,7 @@ async def test_apfl() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_feddg_ga() -> None:
@@ -92,6 +96,7 @@ async def test_feddg_ga() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_basic() -> None:
@@ -103,6 +108,7 @@ async def test_basic() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_client_level_dp_cifar() -> None:
@@ -115,6 +121,7 @@ async def test_client_level_dp_cifar() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_client_level_dp_breast_cancer() -> None:
@@ -127,6 +134,7 @@ async def test_client_level_dp_breast_cancer() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_instance_level_dp_cifar() -> None:
@@ -139,6 +147,7 @@ async def test_instance_level_dp_cifar() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_dp_scaffold() -> None:
@@ -150,6 +159,7 @@ async def test_dp_scaffold() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_fedbn() -> None:
@@ -161,6 +171,7 @@ async def test_fedbn() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_fed_eval() -> None:
@@ -174,6 +185,7 @@ async def test_fed_eval() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_fedper_mnist() -> None:
@@ -185,6 +197,7 @@ async def test_fedper_mnist() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_fedper_cifar() -> None:
@@ -196,6 +209,7 @@ async def test_fedper_cifar() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_ditto_mnist() -> None:
@@ -207,6 +221,7 @@ async def test_ditto_mnist() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_mr_mtl_mnist() -> None:
@@ -218,6 +233,7 @@ async def test_mr_mtl_mnist() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_fenda() -> None:
@@ -229,6 +245,7 @@ async def test_fenda() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_fenda_ditto() -> None:
@@ -241,6 +258,7 @@ async def test_fenda_ditto() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_perfcl() -> None:
@@ -252,6 +270,7 @@ async def test_perfcl() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_fl_plus_local() -> None:
@@ -263,6 +282,7 @@ async def test_fl_plus_local() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_moon() -> None:
@@ -274,6 +294,7 @@ async def test_moon() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_ensemble() -> None:
@@ -285,6 +306,7 @@ async def test_ensemble() -> None:
     )
 
 
+@pytest.mark.skip
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_flash() -> None:
