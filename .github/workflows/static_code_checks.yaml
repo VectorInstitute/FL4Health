@@ -44,8 +44,10 @@ jobs:
           # Ignoring vulnerability in cryptography
           # Fix is 43.0.1 but flwr 1.9 depends on < 43
           # GHSA-cjgq-5qmw-rcj6 is a Keras vulnerability that has no fix yet
+          # PYSEC-2024-161 Temporarily ignoring this vulnerability, as cyclops doesn't allow a pyarrow upgrade
           ignore-vulns: |
             GHSA-h4gh-qq45-vh27
             GHSA-q34m-jh98-gwm2
             GHSA-f9vj-2wh5-fj8j
             GHSA-cjgq-5qmw-rcj6
+            PYSEC-2024-161
