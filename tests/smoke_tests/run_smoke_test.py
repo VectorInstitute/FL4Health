@@ -204,7 +204,7 @@ async def run_smoke_test(
     logger.info("Server started")
 
     # Start n number of clients and capture their process objects
-    client_processes = []
+    client_tasks = []
     for i in range(config["n_clients"]):
         logger.info(f"Starting client {i}")
 
@@ -214,21 +214,24 @@ async def run_smoke_test(
         if seed is not None:
             client_args.extend(["--seed", str(seed)])
 
-        client_process = await asyncio.create_subprocess_exec(
-            "python",
-            *client_args,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.STDOUT,
+        task = asyncio.create_task(
+            asyncio.create_subprocess_exec(
+                "python",
+                *client_args,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
+            )
         )
-        client_processes.append(client_process)
+        client_tasks.append(task)
+
+    client_processes = await asyncio.gather(*client_tasks)
 
     # Collecting the clients output when their processes finish
-    full_client_outputs = []
-    for i in range(len(client_processes)):
-        full_client_outputs.append(
-            await _wait_for_process_to_finish_and_retrieve_logs(client_processes[i], f"Client {i}")
-        )
+    client_result_tasks = []
+    for i, client_process in enumerate(client_processes):
+        client_result_tasks.append(_wait_for_process_to_finish_and_retrieve_logs(client_process, f"Client {i}"))
 
+    full_client_outputs = await asyncio.gather(*client_result_tasks)
     logger.info("All clients finished execution")
 
     # Collecting the server output when its process finish

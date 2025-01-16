@@ -24,7 +24,7 @@ async def test_basic_server_client_cifar(test_checkpoint_dirname: str) -> None:
         seed=42,
         server_metrics=load_metrics_from_file("tests/smoke_tests/basic_server_metrics.json"),
         client_metrics=load_metrics_from_file("tests/smoke_tests/basic_client_metrics.json"),
-        intermediate_checkpoint_dir=test_checkpoint_dirname,
+        # intermediate_checkpoint_dir=test_checkpoint_dirname,
     )
 
 
