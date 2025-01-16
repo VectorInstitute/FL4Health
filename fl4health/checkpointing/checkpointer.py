@@ -311,7 +311,7 @@ class PerRoundStateCheckpointer:
 
     def checkpoint_exists(self, checkpoint_name: str) -> bool:
         """
-        Checks if a checkpoint exists at the checkpoint_path constructed at initialization.
+        Checks if a checkpoint exists at the checkpoint_dir + checkpoint_name constructed at initialization.
 
         Returns:
             bool: Whether or not a checkpoint exists.
