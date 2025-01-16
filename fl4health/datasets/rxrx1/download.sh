@@ -2,7 +2,7 @@ echo "RxRx1 dataset download."
 # Define the URL and the target directory and file name
 URL="https://storage.googleapis.com/rxrx/rxrx1"
 METADATA_URL="https://storage.googleapis.com/rxrx/rxrx1/rxrx1-metadata.zip"
-DIRECTORY="/Users/david/Desktop/VectorRepositories/FL4Health/fl4health/datasets/rxrx1/rxrx1_v1.0/"
+DIRECTORY="/projects/fl4health/datasets/rxrx1_v1.0/"
 IMAGE_FILE_NAME="rxrx1-images.zip"
 METADATA_FILE="rxrx1-metadata.zip"
 IMAGE_FILE_PATH=${DIRECTORY}${IMAGE_FILE_NAME}
