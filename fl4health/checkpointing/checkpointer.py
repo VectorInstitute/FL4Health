@@ -309,12 +309,17 @@ class PerRoundStateCheckpointer:
 
         return torch.load(checkpoint_path)
 
-    def checkpoint_exists(self, checkpoint_name: str) -> bool:
+    def checkpoint_exists(self, checkpoint_name: str, **kwargs: Any) -> bool:
         """
         Checks if a checkpoint exists at the checkpoint_dir constructed at initialization + checkpoint_name.
 
         Returns:
             bool: Whether or not a checkpoint exists.
         """
+        if "checkpoint_path" in kwargs:
+            raise ValueError(
+                "Previously this checkpoint supported sending a path, but it requires now requires a "
+                "checkpoint_name only"
+            )
         checkpoint_path = os.path.join(self.checkpoint_dir, checkpoint_name)
         return os.path.exists(checkpoint_path)
