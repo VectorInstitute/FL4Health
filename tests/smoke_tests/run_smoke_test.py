@@ -21,6 +21,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger()
 
+DEFAULT_TOLERANCE = 0.0005
+
 
 def postprocess_logs(logs: str) -> str:
     return re.sub(r"E.*recvmsg encountered uncommon error: Message too long\n", "\n", logs)
@@ -39,6 +41,8 @@ async def run_smoke_test(
     seed: int | None = None,
     server_metrics: dict[str, Any] | None = None,
     client_metrics: dict[str, Any] | None = None,
+    # assertion params
+    tolerance: float = DEFAULT_TOLERANCE,
 ) -> None:
     """Runs a smoke test for a given server, client, and dataset configuration.
 
@@ -269,7 +273,7 @@ async def run_smoke_test(
             message in full_server_output for message in ["History (metrics, distributed, evaluate):"]
         ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
 
-    server_errors = _assert_metrics(MetricType.SERVER, server_metrics)
+    server_errors = _assert_metrics(MetricType.SERVER, server_metrics, tolerance)
     assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
 
     # client assertions
@@ -294,7 +298,7 @@ async def run_smoke_test(
                 f"[ASSERT ERROR] Last FL round message not found for client {i}."
             )
 
-        client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics))
+        client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics, tolerance))
         assert len(client_errors) == 0, f"Client metrics check failed. Errors: {client_errors}"
 
     logger.info("All checks passed. Test finished.")
@@ -311,6 +315,7 @@ async def run_fault_tolerance_smoke_test(
     seed: int | None = None,
     intermediate_checkpoint_dir: str = "./",
     server_name: str = "server",
+    tolerance: float = DEFAULT_TOLERANCE,
 ) -> None:
     """Runs a smoke test for a given server, client, and dataset configuration.
 
@@ -458,13 +463,13 @@ async def run_fault_tolerance_smoke_test(
 
     logger.info("Server has finished execution")
 
-    server_errors = _assert_metrics(MetricType.SERVER, server_metrics)
+    server_errors = _assert_metrics(MetricType.SERVER, server_metrics, tolerance)
     assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
 
     # client assertions
     client_errors = []
     for i in range(len(client_processes)):
-        client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics))
+        client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics, tolerance))
         assert len(client_errors) == 0, f"Client metrics check failed. Errors: {client_errors}"
 
     logger.info("All checks passed. Test finished.")
@@ -551,10 +556,11 @@ class MetricType(Enum):
 
 
 DEFAULT_METRICS_FOLDER = Path("metrics")
-DEFAULT_TOLERANCE = 0.0005
 
 
-def _assert_metrics(metric_type: MetricType, metrics_to_assert: dict[str, Any] | None = None) -> list[str]:
+def _assert_metrics(
+    metric_type: MetricType, metrics_to_assert: dict[str, Any] | None = None, tolerance: float = DEFAULT_TOLERANCE
+) -> list[str]:
     errors: list[str] = []
     if metrics_to_assert is None:
         return errors
@@ -571,7 +577,7 @@ def _assert_metrics(metric_type: MetricType, metrics_to_assert: dict[str, Any] |
             continue
 
         metrics_found = True
-        errors.extend(_assert_metrics_dict(metrics_to_assert, metrics))
+        errors.extend(_assert_metrics_dict(metrics_to_assert, metrics, tolerance))
 
     if not metrics_found:
         errors.append(f"Metrics of type {metric_type.value} not found.")
@@ -579,12 +585,12 @@ def _assert_metrics(metric_type: MetricType, metrics_to_assert: dict[str, Any] |
     return errors
 
 
-def _assert_metrics_dict(metrics_to_assert: dict[str, Any], metrics_saved: dict[str, Any]) -> list[str]:
+def _assert_metrics_dict(
+    metrics_to_assert: dict[str, Any], metrics_saved: dict[str, Any], tolerance: float = DEFAULT_TOLERANCE
+) -> list[str]:
     errors = []
 
-    def _assert(value: Any, saved_value: Any) -> str | None:
-        # helper function to avoid code repetition
-        tolerance = DEFAULT_TOLERANCE
+    def _assert(value: Any, saved_value: Any, tolerance: float) -> str | None:
         if isinstance(value, dict):
             # if the value is a dictionary, extract the target value and the custom tolerance
             tolerance = value["custom_tolerance"]
@@ -616,13 +622,13 @@ def _assert_metrics_dict(metrics_to_assert: dict[str, Any], metrics_saved: dict[
         if isinstance(value_to_assert, list) and len(value_to_assert) > 0:
             # if it's a list, call an assertion for each element of the list
             for i in range(len(value_to_assert)):
-                error = _assert(value_to_assert[i], metrics_saved[metric_key][i])
+                error = _assert(value_to_assert[i], metrics_saved[metric_key][i], tolerance)
                 if error is not None:
                     errors.append(error)
             continue
 
         # if it's just a regular value, perform the assertion
-        error = _assert(value_to_assert, metrics_saved[metric_key])
+        error = _assert(value_to_assert, metrics_saved[metric_key], tolerance)
         if error is not None:
             errors.append(error)
 
