@@ -318,8 +318,7 @@ class PerRoundStateCheckpointer:
         """
         if "checkpoint_path" in kwargs:
             raise ValueError(
-                "Previously this checkpoint supported sending a path, but it requires now requires a "
-                "checkpoint_name only"
+                "Previously this checkpoint supported sending a path, but it now requires a checkpoint_name only"
             )
         checkpoint_path = os.path.join(self.checkpoint_dir, checkpoint_name)
         return os.path.exists(checkpoint_path)
