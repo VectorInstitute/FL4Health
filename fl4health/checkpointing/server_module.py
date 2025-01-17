@@ -194,6 +194,7 @@ class BaseServerCheckpointAndStateModule:
         """
         if self.state_checkpointer is not None:
             if self.state_checkpointer.checkpoint_exists(state_checkpoint_name):
+
                 return self.state_checkpointer.load_checkpoint(state_checkpoint_name)
             else:
                 log(INFO, "State checkpointer is defined but no state checkpoint exists.")
