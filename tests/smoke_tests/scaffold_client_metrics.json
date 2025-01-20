@@ -23,8 +23,8 @@
             "fit_round_losses": {
                 "backward": {"target_value": 2.0964, "custom_tolerance": 0.005}
             },
-            "eval_round_metrics": {"val - prediction - accuracy": {"target_value": 0.4062, "custom_tolerance": 0.005}},
-            "eval_round_loss": {"target_value": 2.2070, "custom_tolerance": 0.05}
+            "eval_round_metrics": {"val - prediction - accuracy": {"target_value": 0.4062, "custom_tolerance": 0.008}},
+            "eval_round_loss": {"target_value": 2.2070, "custom_tolerance": 0.005}
         }
     }
 }

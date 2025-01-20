@@ -53,7 +53,6 @@ async def test_nnunet_config_3d(tolerance: float) -> None:
     )
 
 
-@pytest.mark.skipif(not IN_GITHUB_ACTIONS, reason="Test doesn't work locally.")
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_scaffold(tolerance: float) -> None:
