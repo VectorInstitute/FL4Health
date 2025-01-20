@@ -262,7 +262,14 @@ class NnunetClient(BasicClient):
             # NOTE: The type: ignore here is to skip issues where a local operating system is not compatible
             # with sched_getaffinity (older versions of MacOS, for example). The code still won't run but mypy won't
             # complain. Workarounds like using os.cpu_count(), while not exactly the same, are possible.
-            self.n_dataload_proc = min(12, len(os.sched_getaffinity(0)) - 1)  # type: ignore
+            try:
+                self.n_dataload_proc = min(12, len(os.sched_getaffinity(0)) - 1)  # type: ignore
+            except AttributeError:
+                # TODO: this is pretty brittle
+                if cpu_count := os.cpu_count():
+                    self.n_dataload_proc = min(12, cpu_count - 2)
+                else:
+                    self.n_dataload_proc = 1
         os.environ["nnUNet_n_proc_DA"] = str(self.n_dataload_proc)
 
         # The batchgenerators package used under the hood by the dataloaders creates an
@@ -287,7 +294,7 @@ class NnunetClient(BasicClient):
         val_loader = nnUNetDataLoaderWrapper(nnunet_augmenter=val_loader, nnunet_config=self.nnunet_config)
 
         if self.verbose:
-            log(INFO, f"\tDataloaders initialized in {time.time()-start_time:.1f}s")
+            log(INFO, f"\tDataloaders initialized in {time.time() - start_time:.1f}s")
 
         return train_loader, val_loader
 
@@ -466,7 +473,7 @@ class NnunetClient(BasicClient):
                 if self.verbose:
                     log(
                         INFO,
-                        f"\tExtracted dataset fingerprint in {time.time()-start:.1f}s",
+                        f"\tExtracted dataset fingerprint in {time.time() - start:.1f}s",
                     )
             elif self.verbose:
                 log(
@@ -545,7 +552,7 @@ class NnunetClient(BasicClient):
             verify_npy=True,
         )
         if self.verbose:
-            log(INFO, f"\tUnpacked dataset in {time.time()-start:.1f}s")
+            log(INFO, f"\tUnpacked dataset in {time.time() - start:.1f}s")
 
         # We have to call parent method after setting up nnunet trainer
         super().setup_client(config)

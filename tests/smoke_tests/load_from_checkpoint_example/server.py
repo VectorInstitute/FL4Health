@@ -91,7 +91,8 @@ def main(config: dict[str, Any], intermediate_server_state_dir: str, server_name
         server_address="0.0.0.0:8080",
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
-
+    # disconnect all clients
+    server.disconnect_all_clients(timeout=10)
     server.shutdown()
 
 
