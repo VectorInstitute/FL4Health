@@ -1,11 +1,20 @@
+import os
+from pathlib import Path
+
 import pytest
 
 from .run_smoke_test import load_metrics_from_file, run_fault_tolerance_smoke_test, run_smoke_test
 
+# skip some tests that currently fail if running locallly
+IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
+
 
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
-async def test_basic_server_client_cifar(test_checkpoint_dirname: str, tolerance: float) -> None:
+async def test_basic_server_client_cifar(tolerance: float, tmp_path: Path) -> None:
+    checkpoint_dir = tmp_path / "checkpoints"
+    checkpoint_dir.mkdir(exist_ok=True)
+
     await run_fault_tolerance_smoke_test(
         server_python_path="tests.smoke_tests.load_from_checkpoint_example.server",
         client_python_path="tests.smoke_tests.load_from_checkpoint_example.client",
@@ -15,7 +24,7 @@ async def test_basic_server_client_cifar(test_checkpoint_dirname: str, tolerance
         seed=42,
         server_metrics=load_metrics_from_file("tests/smoke_tests/basic_server_metrics.json"),
         client_metrics=load_metrics_from_file("tests/smoke_tests/basic_client_metrics.json"),
-        intermediate_checkpoint_dir=test_checkpoint_dirname,
+        intermediate_checkpoint_dir=checkpoint_dir.as_posix(),
         tolerance=tolerance,
     )
 
@@ -44,6 +53,7 @@ async def test_nnunet_config_3d(tolerance: float) -> None:
     )
 
 
+@pytest.mark.skipif(not IN_GITHUB_ACTIONS, reason="Test doesn't work locally.")
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_scaffold(tolerance: float) -> None:
@@ -59,6 +69,7 @@ async def test_scaffold(tolerance: float) -> None:
     )
 
 
+@pytest.mark.skipif(not IN_GITHUB_ACTIONS, reason="Test doesn't work locally.")
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_apfl(tolerance: float) -> None:
@@ -74,6 +85,7 @@ async def test_apfl(tolerance: float) -> None:
     )
 
 
+@pytest.mark.skipif(not IN_GITHUB_ACTIONS, reason="Test doesn't work locally.")
 @pytest.mark.smoketest
 @pytest.mark.asyncio()
 async def test_feddg_ga(tolerance: float) -> None:

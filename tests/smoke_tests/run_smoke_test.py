@@ -25,6 +25,13 @@ DEFAULT_TOLERANCE = 0.0005
 
 
 def postprocess_logs(logs: str) -> str:
+    """Postprocess logs to remove spurious Errors.
+
+    This function removes a spurious 'error' that is sometimes thrown when
+    running smoke tests on certain machines from the tcp_posix.cc library.
+    It has been heavily investigated and doesn't not appear to actually affect
+    FL processes.
+    """
     return re.sub(r"E.*recvmsg encountered uncommon error: Message too long\n", "\n", logs)
 
 
@@ -278,23 +285,22 @@ async def run_smoke_test(
 
     # client assertions
     client_errors = []
-    full_client_outputs = [postprocess_logs(el) for el in full_client_outputs]
-    for i in range(len(full_client_outputs)):
-        assert "error" not in full_client_outputs[i].lower(), (
-            f"Full client output:\n{full_client_outputs[i]}\n" f"[ASSERT ERROR] Error message found for client {i}."
+    for i, full_client_output in enumerate(full_client_outputs):
+        full_client_output = postprocess_logs(full_client_output)
+        assert "error" not in full_client_output.lower(), (
+            f"Full client output:\n{full_client_output}\n" f"[ASSERT ERROR] Error message found for client {i}."
         )
-        assert "Disconnect and shut down" in full_client_outputs[i], (
-            f"Full client output:\n{full_client_outputs[i]}\n"
-            f"[ASSERT ERROR] Shutdown message not found for client {i}."
+        assert "Disconnect and shut down" in full_client_output, (
+            f"Full client output:\n{full_client_output}\n" f"[ASSERT ERROR] Shutdown message not found for client {i}."
         )
         if assert_evaluation_logs:
-            assert "Client Evaluation Local Model Metrics" in full_client_outputs[i], (
-                f"Full client output:\n{full_client_outputs[i]}\n"
+            assert "Client Evaluation Local Model Metrics" in full_client_output, (
+                f"Full client output:\n{full_client_output}\n"
                 f"[ASSERT ERROR] 'Client Evaluation Local Model Metrics' message not found for client {i}."
             )
         elif not skip_assert_client_fl_rounds:
-            assert f"Current FL Round: {config['n_server_rounds']}" in full_client_outputs[i], (
-                f"Full client output:\n{full_client_outputs[i]}\n"
+            assert f"Current FL Round: {config['n_server_rounds']}" in full_client_output, (
+                f"Full client output:\n{full_client_output}\n"
                 f"[ASSERT ERROR] Last FL round message not found for client {i}."
             )
 
@@ -616,7 +622,7 @@ def _assert_metrics_dict(
                 # if it's a dictionary, call this function recursively
                 # except when the dictionary has "target_value" and "custom_tolerance", which should
                 # be treated as a regular dictionary
-                errors.extend(_assert_metrics_dict(value_to_assert, metrics_saved[metric_key]))
+                errors.extend(_assert_metrics_dict(value_to_assert, metrics_saved[metric_key], tolerance))
                 continue
 
         if isinstance(value_to_assert, list) and len(value_to_assert) > 0:
