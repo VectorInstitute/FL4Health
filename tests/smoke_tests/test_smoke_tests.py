@@ -19,6 +19,15 @@ IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 pytestmark = pytest.mark.asyncio(loop_scope="module")
 
 
+def cleanup_cancelled_tasks(event_loop: asyncio.AbstractEventLoop) -> None:
+    """This helper function cleans up cancelled tasks."""
+    remaining_tasks = asyncio.all_tasks()
+    for t in remaining_tasks:
+        t.cancel()
+    if not event_loop.is_running():
+        event_loop.run_forever()  # give time for cancelled tasks to clear
+
+
 def assert_on_done_task(task: asyncio.Task, event_loop: asyncio.AbstractEventLoop) -> None:
     """This function takes a done task and makes assert if a result was returned.
 
@@ -36,8 +45,7 @@ def assert_on_done_task(task: asyncio.Task, event_loop: asyncio.AbstractEventLoo
             assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
             assert len(client_errors) == 0, f"Client metrics check failed. Errors: {client_errors}"
     except asyncio.exceptions.CancelledError:
-        if not event_loop.is_running():
-            event_loop.run_forever()
+        cleanup_cancelled_tasks(event_loop)
 
 
 # @pytest.mark.smoketest
@@ -218,6 +226,7 @@ async def test_client_level_dp_breast_cancer(tolerance: float) -> None:
     try:
         await task
     except asyncio.exceptions.TimeoutError:
+        cleanup_cancelled_tasks(event_loop)
         pytest.fail("Smoke test failed due to Timeout Error.")
     assert_on_done_task(task, event_loop)
 
