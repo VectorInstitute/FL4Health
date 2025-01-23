@@ -15,6 +15,16 @@ IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 pytestmark = pytest.mark.asyncio(loop_scope="module")
 
 
+# clean up
+async def cleanup_test(event_loop: asyncio.AbstractEventLoop) -> None:
+    lingering_tasks = asyncio.all_tasks()
+    if lingering_tasks:
+        if not event_loop.is_running():
+            # these are cancelled tasks and need to be cleared up before next test
+            event_loop.run_forever()
+        await asyncio.wait(lingering_tasks)
+
+
 # @pytest.mark.smoketest
 # async def test_basic_server_client_cifar(tolerance: float, tmp_path: Path) -> None:
 #     checkpoint_dir = tmp_path / "checkpoints"
@@ -184,11 +194,7 @@ async def test_client_level_dp_breast_cancer(tolerance: float) -> None:
             tolerance=tolerance,
         )
     except Exception as e:
-        # proper clean up of cancelled tasks before stopping event_loop
-        lingering_tasks = asyncio.all_tasks()
-        if lingering_tasks:
-            # these are cancelled tasks and need to be cleared up before next test
-            event_loop.run_forever()
+        await cleanup_test(event_loop)
         pytest.fail(f"Smoke test execution failed: {e}")
 
     assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
@@ -208,11 +214,7 @@ async def test_instance_level_dp_cifar(tolerance: float) -> None:
             tolerance=tolerance,
         )
     except Exception as e:
-        # proper clean up of cancelled tasks before stopping event_loop
-        lingering_tasks = asyncio.all_tasks()
-        if lingering_tasks:
-            # these are cancelled tasks and need to be cleared up before next test
-            event_loop.run_forever()
+        await cleanup_test(event_loop)
         pytest.fail(f"Smoke test execution failed: {e}")
 
     assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
@@ -231,11 +233,7 @@ async def test_dp_scaffold(tolerance: float) -> None:
             tolerance=tolerance,
         )
     except Exception as e:
-        # proper clean up of cancelled tasks before stopping event_loop
-        lingering_tasks = asyncio.all_tasks()
-        if lingering_tasks:
-            # these are cancelled tasks and need to be cleared up before next test
-            event_loop.run_forever()
+        await cleanup_test(event_loop)
         pytest.fail(f"Smoke test execution failed: {e}")
 
     assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
@@ -254,11 +252,7 @@ async def test_fedbn(tolerance: float) -> None:
             tolerance=tolerance,
         )
     except Exception as e:
-        # proper clean up of cancelled tasks before stopping event_loop
-        lingering_tasks = asyncio.all_tasks()
-        if lingering_tasks:
-            # these are cancelled tasks and need to be cleared up before next test
-            event_loop.run_forever()
+        await cleanup_test(event_loop)
         pytest.fail(f"Smoke test execution failed: {e}")
 
     assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
@@ -279,11 +273,7 @@ async def test_fed_eval(tolerance: float) -> None:
             tolerance=tolerance,
         )
     except Exception as e:
-        # proper clean up of cancelled tasks before stopping event_loop
-        lingering_tasks = asyncio.all_tasks()
-        if lingering_tasks:
-            # these are cancelled tasks and need to be cleared up before next test
-            event_loop.run_forever()
+        await cleanup_test(event_loop)
         pytest.fail(f"Smoke test execution failed: {e}")
 
     assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
@@ -302,11 +292,7 @@ async def test_fedper_mnist(tolerance: float) -> None:
             tolerance=tolerance,
         )
     except Exception as e:
-        # proper clean up of cancelled tasks before stopping event_loop
-        lingering_tasks = asyncio.all_tasks()
-        if lingering_tasks:
-            # these are cancelled tasks and need to be cleared up before next test
-            event_loop.run_forever()
+        await cleanup_test(event_loop)
         pytest.fail(f"Smoke test execution failed: {e}")
 
     assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
