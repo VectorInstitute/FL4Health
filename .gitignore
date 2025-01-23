@@ -155,6 +155,7 @@ settings.json
 **/datasets/nnunet_raw/**
 **/datasets/nnunet_preprocessed/**
 **/datasets/cifar_partitioned_data/**
+**/datasets/rxrx1/rxrx1_v1.0/**
 
 # logs
 
