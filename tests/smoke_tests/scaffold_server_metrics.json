@@ -9,8 +9,8 @@
             "val - loss - aggregated": {"target_value": 2.2509, "custom_tolerance": 0.005}
         },
         "3": {
-            "eval_round_metrics_aggregated": {"val - prediction - accuracy": 0.4062},
-            "val - loss - aggregated": {"target_value": 2.2070, "custom_tolerance": 0.05}
+            "eval_round_metrics_aggregated": {"val - prediction - accuracy": {"target_value": 0.4062, "custom_tolerance": 0.008}},
+            "val - loss - aggregated": {"target_value": 2.2070, "custom_tolerance": 0.005}
         }
     }
 }

@@ -18,7 +18,8 @@ pandas = "^2.0"
 flwr = "1.9.0"
 opacus = "^1.3.0"
 torch = "^2.3.0"
-pycyclops = "^0.2.5"
+pycyclops = "^0.2.12"
+pyarrow = "^17.0.0" # Pin as there is potential ACE with v0.14.2 that is resolved in v17.0
 dp-accounting = "^0.4.3"
 torchmetrics = "^1.3.0"
 aiohttp = "^3.9.3"
@@ -36,6 +37,7 @@ scikit-learn = "1.5.0" # Pin as it was causing issues with nnunet
 # See https://github.com/adap/flower/pull/3853
 # https://github.com/grpc/grpc/issues/37162
 tornado = ">=6.4.2"
+pympler = "^1.1"
 
 [tool.poetry.group.dev.dependencies]
 # locked the 2.15 version because of restrictions with tensorflow-io
@@ -55,10 +57,11 @@ transformers = "^4.37.2"
 datasets = "^2.17.1"
 
 [tool.poetry.group.test.dependencies]
-pytest = "^7.4.3"
+pytest = "^8.3.4"
 mock = "^5.1.0"
 pytest-cov = "^4.1.0"
 freezegun = "^1.4.0"
+pytest-asyncio = "^0.25.2"
 
 [tool.poetry.group.codestyle.dependencies]
 black = "^24.3.0"
@@ -66,8 +69,6 @@ flake8 = "^5.0.4"
 pyproject-flake8 = "5.0.4"
 isort = "5.11.5"
 pre-commit = "^3.0.1"
-pytest = "^7.2.1"
-pytest-cov = "^4.0.0"
 toml = "^0.10.2"
 types-requests = "^2.28.11.8"
 types-setuptools = "^65.7.0.3"
@@ -101,3 +102,10 @@ line_length = 119
 profile = "black"
 skip_gitignore = true
 known_third_party = ["wandb"]
+
+[tool.pytest.ini_options]
+markers = [
+    "smoketest: marks tests as smoke tests (deselect with '-m \"not smoketest\"')",
+]
+asyncio_default_fixture_loop_scope = "session"
+asyncio_mode = "auto"

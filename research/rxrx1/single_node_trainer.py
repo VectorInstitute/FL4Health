@@ -1,57 +1,36 @@
 import os
 from logging import INFO
-from pathlib import Path
 
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Scalar
-from monai.data.dataloader import DataLoader
 from torch.nn.modules.loss import _Loss
-from torch.optim import Optimizer
+from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, PerRoundStateCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.utils.metrics import MetricManager
 
 
 class SingleNodeTrainer:
     def __init__(
         self,
-        train_loader: DataLoader,
-        val_loader: DataLoader,
-        model: nn.Module,
-        criterion: _Loss,
-        optimizer: Optimizer,
         device: torch.device,
         checkpoint_stub: str,
-        run_name: str,
+        dataset_dir: str,
+        run_name: str = "",
     ) -> None:
         self.device = device
-        # Create checkpoint directory if it does not already exist.
         checkpoint_dir = os.path.join(checkpoint_stub, run_name)
-        if not os.path.exists(checkpoint_dir):
-            os.mkdir(checkpoint_dir)
-
-        self.state_checkpoint_name = "ckpt.pkl"
-        self.per_epoch_checkpointer = PerRoundStateCheckpointer(Path(checkpoint_dir))
-        best_metric_checkpoint_name = "best_ckpt.pkl"
-        self.checkpointer = BestLossTorchModuleCheckpointer(checkpoint_dir, best_metric_checkpoint_name)
-
-        self.train_loader = train_loader
-        self.val_loader = val_loader
-        self.model = model
-        self.criterion = criterion
-        self.optimizer = optimizer
-        self.device = device
-        self.epoch: int
-
-        if not self.per_epoch_checkpointer.checkpoint_exists(self.state_checkpoint_name):
-            self.per_epoch_checkpointer.save_checkpoint(
-                self.state_checkpoint_name, {"model": self.model, "optimizer": self.optimizer, "epoch": 0}
-            )
-
-        ckpt = self.per_epoch_checkpointer.load_checkpoint(self.state_checkpoint_name)
-        self.model, self.optimizer, self.epoch = ckpt["model"], ckpt["optimizer"], ckpt["epoch"]
+        # This is called the "server model" so that it can be found by the evaluate_on_holdout.py script
+        self.checkpointer = BestLossTorchModuleCheckpointer(checkpoint_dir, "server_best_model.pkl")
+        self.last_checkpointer = LatestTorchModuleCheckpointer(checkpoint_dir, "server_last_model.pkl")
+        self.dataset_dir = dataset_dir
+        self.model: nn.Module
+        self.criterion: _Loss
+        self.optimizer: torch.optim.Optimizer
+        self.train_loader: DataLoader
+        self.val_loader: DataLoader
 
     def _maybe_checkpoint(self, loss: float, metrics: dict[str, Scalar]) -> None:
         if self.checkpointer:
@@ -71,7 +50,6 @@ class SingleNodeTrainer:
         )
 
     def train_step(self, input: torch.Tensor, target: torch.Tensor) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        self.model.train()
         # forward pass on the model
         preds = self.model(input)
         loss = self.criterion(preds, target)
@@ -82,42 +60,46 @@ class SingleNodeTrainer:
 
         return loss, {"predictions": preds}
 
-    def train_by_epochs(self, epochs: int, train_metric_mngr: MetricManager, val_metric_mngr: MetricManager) -> None:
-        for epoch in range(self.epoch, epochs):
-            train_metric_mngr.clear()
-            val_metric_mngr.clear()
+    def train_by_epochs(
+        self,
+        epochs: int,
+        train_metric_mngr: MetricManager,
+        val_metric_mngr: MetricManager,
+    ) -> None:
+        self.model.train()
 
+        for local_epoch in range(epochs):
+            train_metric_mngr.clear()
             running_loss = 0.0
             for input, target in self.train_loader:
-                input, target = input.as_tensor().to(self.device), target.as_tensor().to(self.device)
+                input, target = input.to(self.device), target.to(self.device)
                 batch_loss, preds = self.train_step(input, target)
                 running_loss += batch_loss.item()
                 train_metric_mngr.update(preds, target)
 
-            log(INFO, f"Local Epoch: {str(epoch)}")
+            log(INFO, f"Local Epoch: {local_epoch}")
             running_loss = running_loss / len(self.train_loader)
             metrics = train_metric_mngr.compute()
             self._handle_reporting(running_loss, metrics)
 
             # After each epoch run a validation pass
             self.validate(val_metric_mngr)
-
-            # Save checkpoint in case run gets pre-empted
-            self.per_epoch_checkpointer.save_checkpoint(
-                self.state_checkpoint_name, {"model": self.model, "optimizer": self.optimizer, "epoch": epoch + 1}
-            )
+        # Checkpoint the model at the end of training
+        self.last_checkpointer.maybe_checkpoint(self.model, 0.0, {})
 
     def validate(self, val_metric_mngr: MetricManager) -> None:
         self.model.eval()
         running_loss = 0.0
+        val_metric_mngr.clear()
+
         with torch.no_grad():
             for input, target in self.val_loader:
-                input, target = input.as_tensor().to(self.device), target.as_tensor().to(self.device)
+                input, target = input.to(self.device), target.to(self.device)
 
-                preds = self.model(input)
-                batch_loss = self.criterion(preds, target)
+                preds = {"predictions": self.model(input)}
+                batch_loss = self.criterion(preds["predictions"], target)
                 running_loss += batch_loss.item()
-                val_metric_mngr.update({"predictions": preds}, target)
+                val_metric_mngr.update(preds, target)
 
         running_loss = running_loss / len(self.val_loader)
         metrics = val_metric_mngr.compute()

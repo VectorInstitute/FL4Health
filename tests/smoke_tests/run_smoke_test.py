@@ -2,6 +2,7 @@ import asyncio
 import datetime
 import json
 import logging
+import re
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -20,6 +21,19 @@ logging.basicConfig(
 )
 logger = logging.getLogger()
 
+DEFAULT_TOLERANCE = 0.0005
+
+
+def postprocess_logs(logs: str) -> str:
+    """Postprocess logs to remove spurious Errors.
+
+    This function removes a spurious 'error' that is sometimes thrown when
+    running smoke tests on certain machines from the tcp_posix.cc library.
+    It has been heavily investigated and doesn't not appear to actually affect
+    FL processes.
+    """
+    return re.sub(r"E.*recvmsg encountered uncommon error: Message too long\n", "\n", logs)
+
 
 async def run_smoke_test(
     server_python_path: str,
@@ -34,6 +48,8 @@ async def run_smoke_test(
     seed: int | None = None,
     server_metrics: dict[str, Any] | None = None,
     client_metrics: dict[str, Any] | None = None,
+    # assertion params
+    tolerance: float = DEFAULT_TOLERANCE,
 ) -> None:
     """Runs a smoke test for a given server, client, and dataset configuration.
 
@@ -199,7 +215,7 @@ async def run_smoke_test(
     logger.info("Server started")
 
     # Start n number of clients and capture their process objects
-    client_processes = []
+    client_tasks = []
     for i in range(config["n_clients"]):
         logger.info(f"Starting client {i}")
 
@@ -209,25 +225,29 @@ async def run_smoke_test(
         if seed is not None:
             client_args.extend(["--seed", str(seed)])
 
-        client_process = await asyncio.create_subprocess_exec(
-            "python",
-            *client_args,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.STDOUT,
+        task = asyncio.create_task(
+            asyncio.create_subprocess_exec(
+                "python",
+                *client_args,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
+            )
         )
-        client_processes.append(client_process)
+        client_tasks.append(task)
+
+    client_processes = await asyncio.gather(*client_tasks)
 
     # Collecting the clients output when their processes finish
-    full_client_outputs = []
-    for i in range(len(client_processes)):
-        full_client_outputs.append(
-            await _wait_for_process_to_finish_and_retrieve_logs(client_processes[i], f"Client {i}")
-        )
+    client_result_tasks = []
+    for i, client_process in enumerate(client_processes):
+        client_result_tasks.append(_wait_for_process_to_finish_and_retrieve_logs(client_process, f"Client {i}"))
 
+    full_client_outputs = await asyncio.gather(*client_result_tasks)
     logger.info("All clients finished execution")
 
     # Collecting the server output when its process finish
     full_server_output = await _wait_for_process_to_finish_and_retrieve_logs(server_process, "Server")
+    full_server_output = postprocess_logs(full_server_output)
 
     logger.info("Server has finished execution")
 
@@ -260,31 +280,31 @@ async def run_smoke_test(
             message in full_server_output for message in ["History (metrics, distributed, evaluate):"]
         ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
 
-    server_errors = _assert_metrics(MetricType.SERVER, server_metrics)
+    server_errors = _assert_metrics(MetricType.SERVER, server_metrics, tolerance)
     assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
 
     # client assertions
     client_errors = []
-    for i in range(len(full_client_outputs)):
-        assert "error" not in full_client_outputs[i].lower(), (
-            f"Full client output:\n{full_client_outputs[i]}\n" f"[ASSERT ERROR] Error message found for client {i}."
+    for i, full_client_output in enumerate(full_client_outputs):
+        full_client_output = postprocess_logs(full_client_output)
+        assert "error" not in full_client_output.lower(), (
+            f"Full client output:\n{full_client_output}\n" f"[ASSERT ERROR] Error message found for client {i}."
         )
-        assert "Disconnect and shut down" in full_client_outputs[i], (
-            f"Full client output:\n{full_client_outputs[i]}\n"
-            f"[ASSERT ERROR] Shutdown message not found for client {i}."
+        assert "Disconnect and shut down" in full_client_output, (
+            f"Full client output:\n{full_client_output}\n" f"[ASSERT ERROR] Shutdown message not found for client {i}."
         )
         if assert_evaluation_logs:
-            assert "Client Evaluation Local Model Metrics" in full_client_outputs[i], (
-                f"Full client output:\n{full_client_outputs[i]}\n"
+            assert "Client Evaluation Local Model Metrics" in full_client_output, (
+                f"Full client output:\n{full_client_output}\n"
                 f"[ASSERT ERROR] 'Client Evaluation Local Model Metrics' message not found for client {i}."
             )
         elif not skip_assert_client_fl_rounds:
-            assert f"Current FL Round: {config['n_server_rounds']}" in full_client_outputs[i], (
-                f"Full client output:\n{full_client_outputs[i]}\n"
+            assert f"Current FL Round: {config['n_server_rounds']}" in full_client_output, (
+                f"Full client output:\n{full_client_output}\n"
                 f"[ASSERT ERROR] Last FL round message not found for client {i}."
             )
 
-        client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics))
+        client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics, tolerance))
         assert len(client_errors) == 0, f"Client metrics check failed. Errors: {client_errors}"
 
     logger.info("All checks passed. Test finished.")
@@ -301,6 +321,7 @@ async def run_fault_tolerance_smoke_test(
     seed: int | None = None,
     intermediate_checkpoint_dir: str = "./",
     server_name: str = "server",
+    tolerance: float = DEFAULT_TOLERANCE,
 ) -> None:
     """Runs a smoke test for a given server, client, and dataset configuration.
 
@@ -386,22 +407,28 @@ async def run_fault_tolerance_smoke_test(
     )
 
     # Start n number of clients and capture their process objects
-    client_processes = []
+    client_tasks = []
     for i in range(config["n_clients"]):
         logger.info(f"Starting client {i}")
 
         curr_client_args = client_args + ["--client_name", str(i)]
 
-        client_process = await asyncio.create_subprocess_exec(
-            "python",
-            *curr_client_args,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.STDOUT,
+        client_tasks.append(
+            asyncio.create_subprocess_exec(
+                "python",
+                *curr_client_args,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
+            )
         )
-        client_processes.append(client_process)
 
+    client_processes = await asyncio.gather(*client_tasks)
+
+    client_output_tasks = []
     for i in range(len(client_processes)):
-        await _wait_for_process_to_finish_and_retrieve_logs(client_processes[i], f"Client {i}")
+        client_output_tasks.append(_wait_for_process_to_finish_and_retrieve_logs(client_processes[i], f"Client {i}"))
+
+    _ = await asyncio.gather(*client_output_tasks)
 
     logger.info("All clients finished execution")
 
@@ -442,13 +469,13 @@ async def run_fault_tolerance_smoke_test(
 
     logger.info("Server has finished execution")
 
-    server_errors = _assert_metrics(MetricType.SERVER, server_metrics)
+    server_errors = _assert_metrics(MetricType.SERVER, server_metrics, tolerance)
     assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
 
     # client assertions
     client_errors = []
     for i in range(len(client_processes)):
-        client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics))
+        client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics, tolerance))
         assert len(client_errors) == 0, f"Client metrics check failed. Errors: {client_errors}"
 
     logger.info("All checks passed. Test finished.")
@@ -535,10 +562,11 @@ class MetricType(Enum):
 
 
 DEFAULT_METRICS_FOLDER = Path("metrics")
-DEFAULT_TOLERANCE = 0.0005
 
 
-def _assert_metrics(metric_type: MetricType, metrics_to_assert: dict[str, Any] | None = None) -> list[str]:
+def _assert_metrics(
+    metric_type: MetricType, metrics_to_assert: dict[str, Any] | None = None, tolerance: float = DEFAULT_TOLERANCE
+) -> list[str]:
     errors: list[str] = []
     if metrics_to_assert is None:
         return errors
@@ -555,7 +583,7 @@ def _assert_metrics(metric_type: MetricType, metrics_to_assert: dict[str, Any] |
             continue
 
         metrics_found = True
-        errors.extend(_assert_metrics_dict(metrics_to_assert, metrics))
+        errors.extend(_assert_metrics_dict(metrics_to_assert, metrics, tolerance))
 
     if not metrics_found:
         errors.append(f"Metrics of type {metric_type.value} not found.")
@@ -563,12 +591,12 @@ def _assert_metrics(metric_type: MetricType, metrics_to_assert: dict[str, Any] |
     return errors
 
 
-def _assert_metrics_dict(metrics_to_assert: dict[str, Any], metrics_saved: dict[str, Any]) -> list[str]:
+def _assert_metrics_dict(
+    metrics_to_assert: dict[str, Any], metrics_saved: dict[str, Any], tolerance: float = DEFAULT_TOLERANCE
+) -> list[str]:
     errors = []
 
-    def _assert(value: Any, saved_value: Any) -> str | None:
-        # helper function to avoid code repetition
-        tolerance = DEFAULT_TOLERANCE
+    def _assert(value: Any, saved_value: Any, tolerance: float) -> str | None:
         if isinstance(value, dict):
             # if the value is a dictionary, extract the target value and the custom tolerance
             tolerance = value["custom_tolerance"]
@@ -594,19 +622,19 @@ def _assert_metrics_dict(metrics_to_assert: dict[str, Any], metrics_saved: dict[
                 # if it's a dictionary, call this function recursively
                 # except when the dictionary has "target_value" and "custom_tolerance", which should
                 # be treated as a regular dictionary
-                errors.extend(_assert_metrics_dict(value_to_assert, metrics_saved[metric_key]))
+                errors.extend(_assert_metrics_dict(value_to_assert, metrics_saved[metric_key], tolerance))
                 continue
 
         if isinstance(value_to_assert, list) and len(value_to_assert) > 0:
             # if it's a list, call an assertion for each element of the list
             for i in range(len(value_to_assert)):
-                error = _assert(value_to_assert[i], metrics_saved[metric_key][i])
+                error = _assert(value_to_assert[i], metrics_saved[metric_key][i], tolerance)
                 if error is not None:
                     errors.append(error)
             continue
 
         # if it's just a regular value, perform the assertion
-        error = _assert(value_to_assert, metrics_saved[metric_key])
+        error = _assert(value_to_assert, metrics_saved[metric_key], tolerance)
         if error is not None:
             errors.append(error)
 
@@ -623,230 +651,3 @@ def clear_metrics_folder() -> None:
 def load_metrics_from_file(file_path: str) -> dict[str, Any]:
     with open(file_path, "r") as f:
         return json.load(f)
-
-
-if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(
-        run_fault_tolerance_smoke_test(
-            server_python_path="tests.smoke_tests.load_from_checkpoint_example.server",
-            client_python_path="tests.smoke_tests.load_from_checkpoint_example.client",
-            config_path="tests/smoke_tests/load_from_checkpoint_example/config.yaml",
-            partial_config_path="tests/smoke_tests/load_from_checkpoint_example/partial_config.yaml",
-            dataset_path="examples/datasets/cifar_data/",
-            seed=42,
-            server_metrics=load_metrics_from_file("tests/smoke_tests/basic_server_metrics.json"),
-            client_metrics=load_metrics_from_file("tests/smoke_tests/basic_client_metrics.json"),
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(  # By default will use Task04_Hippocampus Dataset
-            server_python_path="examples.nnunet_example.server",
-            client_python_path="examples.nnunet_example.client",
-            config_path="tests/smoke_tests/nnunet_config_2d.yaml",
-            dataset_path="examples/datasets/nnunet",
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(  # By default will use Task04_Hippocampus Dataset
-            server_python_path="examples.nnunet_example.server",
-            client_python_path="examples.nnunet_example.client",
-            config_path="tests/smoke_tests/nnunet_config_3d.yaml",
-            dataset_path="examples/datasets/nnunet",
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.fedprox_example.server",
-            client_python_path="examples.fedprox_example.client",
-            config_path="tests/smoke_tests/fedprox_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
-            seed=42,
-            server_metrics=load_metrics_from_file("tests/smoke_tests/fedprox_server_metrics.json"),
-            client_metrics=load_metrics_from_file("tests/smoke_tests/fedprox_client_metrics.json"),
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.scaffold_example.server",
-            client_python_path="examples.scaffold_example.client",
-            config_path="tests/smoke_tests/scaffold_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
-            seed=42,
-            server_metrics=load_metrics_from_file("tests/smoke_tests/scaffold_server_metrics.json"),
-            client_metrics=load_metrics_from_file("tests/smoke_tests/scaffold_client_metrics.json"),
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.apfl_example.server",
-            client_python_path="examples.apfl_example.client",
-            config_path="tests/smoke_tests/apfl_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
-            seed=42,
-            server_metrics=load_metrics_from_file("tests/smoke_tests/apfl_server_metrics.json"),
-            client_metrics=load_metrics_from_file("tests/smoke_tests/apfl_client_metrics.json"),
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.feddg_ga_example.server",
-            client_python_path="examples.feddg_ga_example.client",
-            config_path="tests/smoke_tests/feddg_ga_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
-            seed=42,
-            server_metrics=load_metrics_from_file("tests/smoke_tests/feddg_ga_server_metrics.json"),
-            client_metrics=load_metrics_from_file("tests/smoke_tests/feddg_ga_client_metrics.json"),
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.basic_example.server",
-            client_python_path="examples.basic_example.client",
-            config_path="tests/smoke_tests/basic_config.yaml",
-            dataset_path="examples/datasets/cifar_data/",
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.dp_fed_examples.client_level_dp.server",
-            client_python_path="examples.dp_fed_examples.client_level_dp.client",
-            config_path="tests/smoke_tests/client_level_dp_config.yaml",
-            dataset_path="examples/datasets/cifar_data/",
-            skip_assert_client_fl_rounds=True,
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.dp_fed_examples.client_level_dp_weighted.server",
-            client_python_path="examples.dp_fed_examples.client_level_dp_weighted.client",
-            config_path="tests/smoke_tests/client_level_dp_weighted_config.yaml",
-            dataset_path="examples/datasets/breast_cancer_data/hospital_0.csv",
-            skip_assert_client_fl_rounds=True,
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.dp_fed_examples.instance_level_dp.server",
-            client_python_path="examples.dp_fed_examples.instance_level_dp.client",
-            config_path="tests/smoke_tests/instance_level_dp_config.yaml",
-            dataset_path="examples/datasets/cifar_data/",
-            skip_assert_client_fl_rounds=True,
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.dp_scaffold_example.server",
-            client_python_path="examples.dp_scaffold_example.client",
-            config_path="tests/smoke_tests/dp_scaffold_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.fedbn_example.server",
-            client_python_path="examples.fedbn_example.client",
-            config_path="tests/smoke_tests/fedbn_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.federated_eval_example.server",
-            client_python_path="examples.federated_eval_example.client",
-            config_path="tests/smoke_tests/federated_eval_config.yaml",
-            dataset_path="examples/datasets/cifar_data/",
-            checkpoint_path="examples/assets/fed_eval_example/best_checkpoint_fczjmljm.pkl",
-            assert_evaluation_logs=True,
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.fedper_example.server",
-            client_python_path="examples.fedper_example.client",
-            config_path="tests/smoke_tests/fedper_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.fedrep_example.server",
-            client_python_path="examples.fedrep_example.client",
-            config_path="tests/smoke_tests/fedrep_config.yaml",
-            dataset_path="examples/datasets/cifar_data/",
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.ditto_example.server",
-            client_python_path="examples.ditto_example.client",
-            config_path="tests/smoke_tests/ditto_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.mr_mtl_example.server",
-            client_python_path="examples.mr_mtl_example.client",
-            config_path="tests/smoke_tests/mr_mtl_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.fenda_example.server",
-            client_python_path="examples.fenda_example.client",
-            config_path="tests/smoke_tests/fenda_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.fenda_ditto_example.server",
-            client_python_path="examples.fenda_ditto_example.client",
-            config_path="tests/smoke_tests/fenda_ditto_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
-            checkpoint_path="examples/assets/",
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.perfcl_example.server",
-            client_python_path="examples.perfcl_example.client",
-            config_path="tests/smoke_tests/perfcl_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.fl_plus_local_ft_example.server",
-            client_python_path="examples.fl_plus_local_ft_example.client",
-            config_path="tests/smoke_tests/fl_plus_local_ft_config.yaml",
-            dataset_path="examples/datasets/cifar_data/",
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.moon_example.server",
-            client_python_path="examples.moon_example.client",
-            config_path="tests/smoke_tests/moon_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.ensemble_example.server",
-            client_python_path="examples.ensemble_example.client",
-            config_path="tests/smoke_tests/ensemble_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.flash_example.server",
-            client_python_path="examples.flash_example.client",
-            config_path="tests/smoke_tests/flash_config.yaml",
-            dataset_path="examples/datasets/cifar_data/",
-        )
-    )
-    loop.close()

@@ -17,14 +17,14 @@ def test_per_round_checkpointer() -> None:
         checkpoint_path = os.path.join(results_dir, checkpoint_name)
         checkpointer = PerRoundStateCheckpointer(checkpoint_dir=Path(results_dir))
 
-        assert not checkpointer.checkpoint_exists(checkpoint_path)
+        assert not checkpointer.checkpoint_exists(checkpoint_name)
 
         checkpointer.save_checkpoint(
             checkpoint_name=checkpoint_name,
             checkpoint_dict={"model": model, "optimizer": optimizer, "current_round": 0},
         )
 
-        assert checkpointer.checkpoint_exists(checkpoint_path)
+        assert checkpointer.checkpoint_exists(checkpoint_name)
 
         ckpt = checkpointer.load_checkpoint(checkpoint_path)
 
