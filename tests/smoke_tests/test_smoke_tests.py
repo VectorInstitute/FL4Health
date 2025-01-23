@@ -9,7 +9,7 @@ from .run_smoke_test import load_metrics_from_file, run_fault_tolerance_smoke_te
 IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 
 # Marks all test coroutines in this module
-pytestmark = pytest.mark.asyncio(loop_scope="session")
+pytestmark = pytest.mark.asyncio(loop_scope="module")
 
 
 @pytest.mark.smoketest
