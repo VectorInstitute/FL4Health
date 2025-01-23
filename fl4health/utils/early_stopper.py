@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from collections.abc import Callable
 from logging import INFO
 from pathlib import Path
@@ -32,7 +33,7 @@ if TYPE_CHECKING:
 class EarlyStopper:
     def __init__(
         self,
-        client: BasicClient,
+        client: "BasicClient",
         patience: int | None = 1,
         interval_steps: int = 5,
         snapshot_dir: Path | None = None,
@@ -109,6 +110,13 @@ class EarlyStopper:
         if self.checkpointer is not None:
             self.checkpointer.save_checkpoint(self.checkpoint_name, self.snapshot_ckpt)
             self.snapshot_ckpt.clear()
+        else:
+            log(
+                INFO,
+                "Checkpointing directory is not provided. The snapshot will be kept in the memory.",
+                "This can lead to more memory usage.",
+            )
+            self.snapshot_ckpt = copy.deepcopy(self.snapshot_ckpt)
 
         log(
             INFO,

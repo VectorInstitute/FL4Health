@@ -1,12 +1,15 @@
-import copy
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 import torch.nn as nn
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
 
-from fl4health.clients.basic_client import BasicClient
+if TYPE_CHECKING:
+    from fl4health.clients.basic_client import BasicClient
+
 from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.utils.losses import LossMeter
 from fl4health.utils.metrics import MetricManager
@@ -35,7 +38,7 @@ class AbstractSnapshotter(ABC, Generic[T]):
         Returns:
             dict[str, T]: Wrapped attribute as a dictionary.
         """
-        attribute = copy.deepcopy(getattr(self.client, name))
+        attribute = getattr(self.client, name)
         if isinstance(attribute, expected_type):
             return {"None": attribute}
         elif isinstance(attribute, dict):

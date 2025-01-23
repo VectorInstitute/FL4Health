@@ -59,6 +59,7 @@ def test_optimizer_scheduler_model_snapshotter() -> None:
     snapshots.update(optimizer_snapshotter.save("optimizers", torch.optim.Optimizer))
     snapshots.update(lr_scheduler_snapshotter.save("lr_schedulers", torch.optim.lr_scheduler.LRScheduler))
     snapshots.update(model_snapshotter.save("model", torch.nn.Module))
+    snapshots = copy.deepcopy(snapshots)
 
     fl_client.train_step(input_data, target_data)
 
@@ -97,6 +98,7 @@ def test_loss_meter_snapshotter() -> None:
     fl_client.train_loss_meter.update(TrainingLosses(backward=torch.Tensor([35]), additional_losses=None))
     snapshotter = SerializableObjectSnapshotter(fl_client)
     snapshots.update(snapshotter.save("train_loss_meter", LossMeter))
+    snapshots = copy.deepcopy(snapshots)
     old_loss_meter = copy.deepcopy(fl_client.train_loss_meter)
     fl_client.train_loss_meter.update(TrainingLosses(backward=torch.Tensor([10]), additional_losses=None))
     assert len(old_loss_meter.losses_list) != len(fl_client.train_loss_meter.losses_list)
@@ -121,6 +123,7 @@ def test_reports_manager_snapshotter() -> None:
     fl_client.reports_manager.report({"start": "2012-12-12 12:12:10"})
     snapshotter = SerializableObjectSnapshotter(fl_client)
     snapshots.update(snapshotter.save("reports_manager", ReportsManager))
+    snapshots = copy.deepcopy(snapshots)
     old_reports_manager = copy.deepcopy(fl_client.reports_manager)
     fl_client.reports_manager.report({"shutdown": "2012-12-12 12:12:12"})
 
@@ -147,6 +150,7 @@ def test_metric_manager_snapshotter() -> None:
     fl_client.train_metric_manager.update(preds, target)
     snapshotter = SerializableObjectSnapshotter(fl_client)
     snapshots.update(snapshotter.save("train_metric_manager", MetricManager))
+    snapshots = copy.deepcopy(snapshots)
     old_train_metric_manager = copy.deepcopy(fl_client.train_metric_manager)
     fl_client.train_metric_manager.update(preds, target)
     assert isinstance(fl_client.train_metric_manager.metrics_per_prediction_type["1"][0], Accuracy) and isinstance(
