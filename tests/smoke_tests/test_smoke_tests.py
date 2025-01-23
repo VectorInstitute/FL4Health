@@ -183,7 +183,8 @@ async def cleanup_test(event_loop: asyncio.AbstractEventLoop) -> None:
 
 @pytest.mark.smoketest
 async def test_client_level_dp_breast_cancer(tolerance: float) -> None:
-    smoke_test_coro = run_smoke_test(
+    event_loop = asyncio.get_event_loop()
+    coro = run_smoke_test(
         server_python_path="examples.dp_fed_examples.client_level_dp_weighted.server",
         client_python_path="examples.dp_fed_examples.client_level_dp_weighted.client",
         config_path="tests/smoke_tests/client_level_dp_weighted_config.yaml",
@@ -191,21 +192,22 @@ async def test_client_level_dp_breast_cancer(tolerance: float) -> None:
         skip_assert_client_fl_rounds=True,
         tolerance=tolerance,
     )
-    done, unfinished = await asyncio.wait([smoke_test_coro], return_when=asyncio.FIRST_EXCEPTION)
+    task = asyncio.create_task(coro)
+    await task
 
-    for task in done:
+    try:
         e = task.exception()
+        # at this point there is either an Exception or a Result and the task wasn't cancelled
         if e:
             pytest.fail(f"Smoke test execution failed: {e}")
         else:
             server_errors, client_errors = task.result()
             assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
             assert len(client_errors) == 0, f"Client metrics check failed. Errors: {client_errors}"
-
-    # cleanup
-    for task in unfinished:
-        task.cancel()
-    await asyncio.gather(*unfinished)
+    except asyncio.exceptions.CancelledError:
+        print("I was cancelled", flush=True)
+        if not event_loop.is_running():
+            event_loop.run_forever()  # give cancelled tasks a chance to clear
 
 
 @pytest.mark.smoketest
