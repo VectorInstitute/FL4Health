@@ -8,9 +8,11 @@ from .run_smoke_test import load_metrics_from_file, run_fault_tolerance_smoke_te
 # skip some tests that currently fail if running locallly
 IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 
+# Marks all test coroutines in this module
+pytestmark = pytest.mark.asyncio(loop_scope="session")
+
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_basic_server_client_cifar(tolerance: float, tmp_path: Path) -> None:
     checkpoint_dir = tmp_path / "checkpoints"
     checkpoint_dir.mkdir(exist_ok=True)
@@ -36,7 +38,6 @@ async def test_basic_server_client_cifar(tolerance: float, tmp_path: Path) -> No
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_nnunet_config_2d(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(  # By default will use Task04_Hippocampus Dataset
@@ -54,7 +55,6 @@ async def test_nnunet_config_2d(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_nnunet_config_3d(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(  # By default will use Task04_Hippocampus Dataset
@@ -72,7 +72,6 @@ async def test_nnunet_config_3d(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_scaffold(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -94,7 +93,6 @@ async def test_scaffold(tolerance: float) -> None:
 
 @pytest.mark.skipif(not IN_GITHUB_ACTIONS, reason="Test doesn't work locally.")
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_apfl(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -116,7 +114,6 @@ async def test_apfl(tolerance: float) -> None:
 
 @pytest.mark.skipif(not IN_GITHUB_ACTIONS, reason="Test doesn't work locally.")
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_feddg_ga(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -137,7 +134,6 @@ async def test_feddg_ga(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_basic(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -155,7 +151,6 @@ async def test_basic(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_client_level_dp_cifar(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -174,7 +169,6 @@ async def test_client_level_dp_cifar(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_client_level_dp_breast_cancer(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -193,7 +187,6 @@ async def test_client_level_dp_breast_cancer(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_instance_level_dp_cifar(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -212,7 +205,6 @@ async def test_instance_level_dp_cifar(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_dp_scaffold(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -230,7 +222,6 @@ async def test_dp_scaffold(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_fedbn(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -248,7 +239,6 @@ async def test_fedbn(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_fed_eval(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -268,7 +258,6 @@ async def test_fed_eval(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_fedper_mnist(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -286,7 +275,6 @@ async def test_fedper_mnist(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_fedper_cifar(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -304,7 +292,6 @@ async def test_fedper_cifar(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_ditto_mnist() -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -321,7 +308,6 @@ async def test_ditto_mnist() -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_mr_mtl_mnist(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -339,7 +325,6 @@ async def test_mr_mtl_mnist(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_fenda(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -357,7 +342,6 @@ async def test_fenda(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_fenda_ditto(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -376,7 +360,6 @@ async def test_fenda_ditto(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_perfcl(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -394,7 +377,6 @@ async def test_perfcl(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_fl_plus_local(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -412,7 +394,6 @@ async def test_fl_plus_local(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_moon(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -430,7 +411,6 @@ async def test_moon(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_ensemble(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
@@ -448,7 +428,6 @@ async def test_ensemble(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
-@pytest.mark.asyncio()
 async def test_flash(tolerance: float) -> None:
     try:
         server_errors, client_errors = await run_smoke_test(
