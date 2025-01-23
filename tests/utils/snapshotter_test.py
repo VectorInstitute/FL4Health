@@ -12,7 +12,7 @@ from fl4health.utils.snapshotter import (
     LRSchedulerSnapshotter,
     NumberSnapshotter,
     OptimizerSnapshotter,
-    SerizableObjectSnapshotter,
+    SerializableObjectSnapshotter,
     TorchModuleSnapshotter,
 )
 from fl4health.utils.typing import TorchPredType, TorchTargetType
@@ -95,7 +95,7 @@ def test_loss_meter_snapshotter() -> None:
     snapshots = {}
 
     fl_client.train_loss_meter.update(TrainingLosses(backward=torch.Tensor([35]), additional_losses=None))
-    snapshotter = SerizableObjectSnapshotter(fl_client)
+    snapshotter = SerializableObjectSnapshotter(fl_client)
     snapshots.update(snapshotter.save("train_loss_meter", LossMeter))
     old_loss_meter = copy.deepcopy(fl_client.train_loss_meter)
     fl_client.train_loss_meter.update(TrainingLosses(backward=torch.Tensor([10]), additional_losses=None))
@@ -119,7 +119,7 @@ def test_reports_manager_snapshotter() -> None:
     snapshots = {}
 
     fl_client.reports_manager.report({"start": "2012-12-12 12:12:10"})
-    snapshotter = SerizableObjectSnapshotter(fl_client)
+    snapshotter = SerializableObjectSnapshotter(fl_client)
     snapshots.update(snapshotter.save("reports_manager", ReportsManager))
     old_reports_manager = copy.deepcopy(fl_client.reports_manager)
     fl_client.reports_manager.report({"shutdown": "2012-12-12 12:12:12"})
@@ -145,7 +145,7 @@ def test_metric_manager_snapshotter() -> None:
     target: TorchTargetType = {"1": torch.tensor([0, 1, 0, 1, 1, 0, 1, 1, 0, 1])}
 
     fl_client.train_metric_manager.update(preds, target)
-    snapshotter = SerizableObjectSnapshotter(fl_client)
+    snapshotter = SerializableObjectSnapshotter(fl_client)
     snapshots.update(snapshotter.save("train_metric_manager", MetricManager))
     old_train_metric_manager = copy.deepcopy(fl_client.train_metric_manager)
     fl_client.train_metric_manager.update(preds, target)

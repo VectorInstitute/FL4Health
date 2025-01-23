@@ -14,7 +14,7 @@ from fl4health.utils.metrics import MetricManager
 T = TypeVar("T")
 
 
-class Snapshotter(ABC, Generic[T]):
+class AbstractSnapshotter(ABC, Generic[T]):
     def __init__(self, client: BasicClient) -> None:
         """
         Abstract class for saving and loading the state of the client's attributes.
@@ -41,10 +41,10 @@ class Snapshotter(ABC, Generic[T]):
         elif isinstance(attribute, dict):
             for key, value in attribute.items():
                 if not isinstance(value, expected_type):
-                    raise ValueError(f"Uncompatible type of attribute {type(attribute)} for key {key}")
+                    raise ValueError(f"Incompatible type of attribute {type(attribute)} for key {key}")
             return attribute
         else:
-            raise ValueError(f"Uncompatible type of attribute {type(attribute)}")
+            raise ValueError(f"Incompatible type of attribute {type(attribute)}")
 
     def save(self, name: str, expected_type: type[T]) -> dict[str, Any]:
         """
@@ -103,7 +103,7 @@ class Snapshotter(ABC, Generic[T]):
         raise NotImplementedError
 
 
-class OptimizerSnapshotter(Snapshotter[Optimizer]):
+class OptimizerSnapshotter(AbstractSnapshotter[Optimizer]):
 
     def save_attribute(self, attribute: dict[str, Optimizer]) -> dict[str, Any]:
         """
@@ -134,7 +134,7 @@ class OptimizerSnapshotter(Snapshotter[Optimizer]):
             optimizer.load_state_dict(optimizer_state_dict)
 
 
-class LRSchedulerSnapshotter(Snapshotter[LRScheduler]):
+class LRSchedulerSnapshotter(AbstractSnapshotter[LRScheduler]):
 
     def save_attribute(self, attribute: dict[str, LRScheduler]) -> dict[str, Any]:
         """
@@ -163,7 +163,7 @@ class LRSchedulerSnapshotter(Snapshotter[LRScheduler]):
             lr_scheduler.load_state_dict(attribute_snapshot[key])
 
 
-class TorchModuleSnapshotter(Snapshotter[nn.Module]):
+class TorchModuleSnapshotter(AbstractSnapshotter[nn.Module]):
 
     def save_attribute(self, attribute: dict[str, nn.Module]) -> dict[str, Any]:
         """
@@ -192,7 +192,7 @@ class TorchModuleSnapshotter(Snapshotter[nn.Module]):
             model.load_state_dict(attribute_snapshot[key])
 
 
-class SerizableObjectSnapshotter(Snapshotter[MetricManager | LossMeter | ReportsManager]):
+class SerializableObjectSnapshotter(AbstractSnapshotter[MetricManager | LossMeter | ReportsManager]):
     def save_attribute(self, attribute: dict[str, MetricManager | LossMeter | ReportsManager]) -> dict[str, Any]:
         """
         Save the state of the serializable objects (either single or dictionary of them).
@@ -219,7 +219,7 @@ class SerizableObjectSnapshotter(Snapshotter[MetricManager | LossMeter | Reports
             attribute[key] = attribute_snapshot[key]
 
 
-class NumberSnapshotter(Snapshotter[int | float]):
+class NumberSnapshotter(AbstractSnapshotter[int | float]):
     def save_attribute(self, attribute: dict[str, int | float]) -> dict[str, Any]:
         """
         Save the state of the numbers (either single or dictionary of them).
