@@ -50,7 +50,7 @@ async def run_smoke_test(
     client_metrics: dict[str, Any] | None = None,
     # assertion params
     tolerance: float = DEFAULT_TOLERANCE,
-) -> None:
+) -> tuple[list[str], list[str]]:
     """Runs a smoke test for a given server, client, and dataset configuration.
 
     Uses asyncio to kick off one server instance defined by the `server_python_path` module and N client instances
@@ -141,6 +141,10 @@ async def run_smoke_test(
         client_metrics (dict[str, Any] | None): A dictionary of metrics to be checked against the metrics file
             saved by the clients. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
             Default is None.
+
+    Returns:
+        (server_errors, client_errors): (list[str], list[str]): list of errors from server and client processes,
+            respectively.
     """
     clear_metrics_folder()
 
@@ -281,7 +285,6 @@ async def run_smoke_test(
         ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
 
     server_errors = _assert_metrics(MetricType.SERVER, server_metrics, tolerance)
-    assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
 
     # client assertions
     client_errors = []
@@ -305,9 +308,10 @@ async def run_smoke_test(
             )
 
         client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics, tolerance))
-        assert len(client_errors) == 0, f"Client metrics check failed. Errors: {client_errors}"
 
-    logger.info("All checks passed. Test finished.")
+    return server_errors, client_errors
+    # assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
+    # assert len(client_errors) == 0, f"Client metrics check failed. Errors: {client_errors}"
 
 
 async def run_fault_tolerance_smoke_test(
@@ -322,7 +326,7 @@ async def run_fault_tolerance_smoke_test(
     intermediate_checkpoint_dir: str = "./",
     server_name: str = "server",
     tolerance: float = DEFAULT_TOLERANCE,
-) -> None:
+) -> tuple[list[str], list[str]]:
     """Runs a smoke test for a given server, client, and dataset configuration.
 
     Args:
@@ -349,6 +353,10 @@ async def run_fault_tolerance_smoke_test(
             saved by the server. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
         client_metrics (dict[str, Any]): A dictionary of metrics to be checked against the metrics file
             saved by the clients. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
+
+    Returns:
+        (server_errors, client_errors): (list[str], list[str]): list of errors from server and client processes,
+            respectively.
     """
     clear_metrics_folder()
 
@@ -470,15 +478,16 @@ async def run_fault_tolerance_smoke_test(
     logger.info("Server has finished execution")
 
     server_errors = _assert_metrics(MetricType.SERVER, server_metrics, tolerance)
-    assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
 
     # client assertions
     client_errors = []
     for i in range(len(client_processes)):
         client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics, tolerance))
-        assert len(client_errors) == 0, f"Client metrics check failed. Errors: {client_errors}"
 
-    logger.info("All checks passed. Test finished.")
+    return server_errors, client_errors
+
+    # assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
+    # assert len(client_errors) == 0, f"Client metrics check failed. Errors: {client_errors}"
 
 
 def _preload_dataset(dataset_path: str, config: Config, seed: int | None = None) -> None:
