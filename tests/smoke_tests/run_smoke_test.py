@@ -24,6 +24,15 @@ logger = logging.getLogger()
 DEFAULT_TOLERANCE = 0.0005
 
 
+# Custom Errors
+class SmokeTestAssertError(Exception):
+    pass
+
+
+class SmokeTestExecutionError(Exception):
+    pass
+
+
 def postprocess_logs(logs: str) -> str:
     """Postprocess logs to remove spurious Errors.
 
@@ -195,7 +204,8 @@ async def run_smoke_test(
     output_found = False
     while not output_found:
         try:
-            assert server_process.stdout is not None, "Server's process stdout is None"
+            if not (server_process.stdout is not None):
+                raise SmokeTestExecutionError("Server's process stdout is None")
             server_output_in_bytes = await asyncio.wait_for(server_process.stdout.readline(), 20)
             server_output = server_output_in_bytes.decode()
             logger.debug(f"Server output: {server_output}")
@@ -205,16 +215,16 @@ async def run_smoke_test(
             break
 
         return_code = server_process.returncode
-        assert return_code is None or (return_code is not None and return_code == 0), (
-            f"Full output:\n{full_server_output}\n" f"[ASSERT ERROR] Server exited with code {return_code}."
-        )
+        if not (return_code is None or (return_code is not None and return_code == 0)):
+            msg = f"Full output:\n{full_server_output}\n" f"[ASSERT ERROR] Server exited with code {return_code}."
+            raise SmokeTestAssertError(msg)
 
         if any(startup_message in server_output for startup_message in startup_messages):
             output_found = True
 
-    assert output_found, (
-        f"Full output:\n{full_server_output}\n" f"[ASSERT_ERROR] Startup log message not found in server output."
-    )
+    if not output_found:
+        msg = f"Full output:\n{full_server_output}\n" f"[ASSERT_ERROR] Startup log message not found in server output."
+        raise SmokeTestAssertError(msg)
 
     logger.info("Server started")
 
@@ -256,33 +266,43 @@ async def run_smoke_test(
     logger.info("Server has finished execution")
 
     # server assertions
-    assert "error" not in full_server_output.lower(), (
-        f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] Error message found for server."
-    )
+    if not ("error" not in full_server_output.lower()):
+        msg = f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] Error message found for server."
+        raise SmokeTestAssertError(msg)
+
     if assert_evaluation_logs:
-        assert f"Federated Evaluation received {config['n_clients']} results and 0 failures" in full_server_output, (
-            f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] Last FL round message not found for server."
-        )
-        assert "Federated Evaluation Finished" in full_server_output, (
-            f"Full output:\n{full_server_output}\n"
-            "[ASSERT ERROR] Federated Evaluation Finished message not found for server."
-        )
+        if not (f"Federated Evaluation received {config['n_clients']} results and 0 failures" in full_server_output):
+            msg = f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] Last FL round message not found for server."
+            raise SmokeTestAssertError(msg)
+
+        if not ("Federated Evaluation Finished" in full_server_output):
+            msg = (
+                f"Full output:\n{full_server_output}\n"
+                "[ASSERT ERROR] Federated Evaluation Finished message not found for server."
+            )
+            raise SmokeTestAssertError(msg)
+
     else:
-        assert "[SUMMARY]" in full_server_output, (
-            f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] [SUMMARY] message not found for server."
-        )
+        if not ("[SUMMARY]" in full_server_output):
+            msg = f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] [SUMMARY] message not found for server."
+            raise SmokeTestAssertError(msg)
     if not assert_evaluation_logs:
-        assert all(
-            message in full_server_output
-            for message in [
-                "History (loss, distributed):",
-                "History (metrics, distributed, fit):",
-            ]
-        ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
+        if not (
+            all(
+                message in full_server_output
+                for message in [
+                    "History (loss, distributed):",
+                    "History (metrics, distributed, fit):",
+                ]
+            )
+        ):
+            msg = f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
+            raise SmokeTestAssertError(msg)
+
     else:
-        assert all(
-            message in full_server_output for message in ["History (metrics, distributed, evaluate):"]
-        ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
+        if not (all(message in full_server_output for message in ["History (metrics, distributed, evaluate):"])):
+            msg = f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
+            raise SmokeTestAssertError(msg)
 
     server_errors = _assert_metrics(MetricType.SERVER, server_metrics, tolerance)
 
@@ -290,28 +310,36 @@ async def run_smoke_test(
     client_errors = []
     for i, full_client_output in enumerate(full_client_outputs):
         full_client_output = postprocess_logs(full_client_output)
-        assert "error" not in full_client_output.lower(), (
-            f"Full client output:\n{full_client_output}\n" f"[ASSERT ERROR] Error message found for client {i}."
-        )
-        assert "Disconnect and shut down" in full_client_output, (
-            f"Full client output:\n{full_client_output}\n" f"[ASSERT ERROR] Shutdown message not found for client {i}."
-        )
+        if not ("error" not in full_client_output.lower()):
+            msg = f"Full client output:\n{full_client_output}\n" f"[ASSERT ERROR] Error message found for client {i}."
+            raise SmokeTestAssertError(msg)
+
+        if not ("Disconnect and shut down" in full_client_output):
+            msg = (
+                f"Full client output:\n{full_client_output}\n"
+                f"[ASSERT ERROR] Shutdown message not found for client {i}."
+            )
+            raise SmokeTestAssertError(msg)
+
         if assert_evaluation_logs:
-            assert "Client Evaluation Local Model Metrics" in full_client_output, (
-                f"Full client output:\n{full_client_output}\n"
-                f"[ASSERT ERROR] 'Client Evaluation Local Model Metrics' message not found for client {i}."
-            )
+            if not ("Client Evaluation Local Model Metrics" in full_client_output):
+                msg = (
+                    f"Full client output:\n{full_client_output}\n"
+                    f"[ASSERT ERROR] 'Client Evaluation Local Model Metrics' message not found for client {i}."
+                )
+                raise SmokeTestAssertError(msg)
+
         elif not skip_assert_client_fl_rounds:
-            assert f"Current FL Round: {config['n_server_rounds']}" in full_client_output, (
-                f"Full client output:\n{full_client_output}\n"
-                f"[ASSERT ERROR] Last FL round message not found for client {i}."
-            )
+            if not (f"Current FL Round: {config['n_server_rounds']}" in full_client_output):
+                msg = (
+                    f"Full client output:\n{full_client_output}\n"
+                    f"[ASSERT ERROR] Last FL round message not found for client {i}."
+                )
+                raise SmokeTestAssertError(msg)
 
         client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics, tolerance))
 
     return server_errors, client_errors
-    # assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
-    # assert len(client_errors) == 0, f"Client metrics check failed. Errors: {client_errors}"
 
 
 async def run_fault_tolerance_smoke_test(
@@ -486,9 +514,6 @@ async def run_fault_tolerance_smoke_test(
 
     return server_errors, client_errors
 
-    # assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
-    # assert len(client_errors) == 0, f"Client metrics check failed. Errors: {client_errors}"
-
 
 def _preload_dataset(dataset_path: str, config: Config, seed: int | None = None) -> None:
     if "mnist" in dataset_path:
@@ -533,7 +558,8 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
     logger.info(f"Collecting output for {process_name}...")
     full_output = ""
     try:
-        assert process.stdout
+        if not (process.stdout is not None):
+            raise SmokeTestExecutionError("Process stdout is None")
         start_time = datetime.datetime.now()
         while True:
             # giving a smaller timeout here just in case it hangs for a long time waiting for a single log line
@@ -558,9 +584,9 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
     logger.info(f"Output collected for {process_name}")
 
     # checking for clients with failure exit codes
-    assert return_code is None or (return_code is not None and return_code == 0), (
-        f"Full output:\n{full_output}\n" f"[ASSERT ERROR] {process_name} exited with code {return_code}."
-    )
+    if not (return_code is None or (return_code is not None and return_code == 0)):
+        msg = f"Full output:\n{full_output}\n" f"[ASSERT ERROR] {process_name} exited with code {return_code}."
+        raise SmokeTestAssertError(msg)
 
     return full_output
 
