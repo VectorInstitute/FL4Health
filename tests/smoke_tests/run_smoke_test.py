@@ -48,6 +48,15 @@ def postprocess_logs(logs: str) -> str:
     return re.sub(r"E.*recvmsg encountered uncommon error: Message too long\n", "\n", logs)
 
 
+def graceful_shutdown(processes: list[asyncio.subprocess.Process]) -> None:
+    """Graceful shutdown of subprocesses."""
+    for p in processes:
+        try:
+            p.terminate()
+        except ProcessLookupError:
+            pass
+
+
 async def run_smoke_test(
     server_python_path: str,
     client_python_path: str,
@@ -160,195 +169,214 @@ async def run_smoke_test(
         (server_errors, client_errors): (list[str], list[str]): list of errors from server and client processes,
             respectively.
     """
-    clear_metrics_folder()
+    try:
+        clear_metrics_folder()
 
-    logger.info("Running smoke tests with parameters:")
-    logger.info(f"\tServer : {server_python_path}")
-    logger.info(f"\tClient : {client_python_path}")
-    logger.info(f"\tConfig : {config_path}")
-    logger.info(f"\tDataset: {dataset_path}")
+        logger.info("Running smoke tests with parameters:")
+        logger.info(f"\tServer : {server_python_path}")
+        logger.info(f"\tClient : {client_python_path}")
+        logger.info(f"\tConfig : {config_path}")
+        logger.info(f"\tDataset: {dataset_path}")
 
-    with open(config_path, "r") as file:
-        config = yaml.safe_load(file)
+        with open(config_path, "r") as file:
+            config = yaml.safe_load(file)
 
-    _preload_dataset(dataset_path, config, seed)
+        _preload_dataset(dataset_path, config, seed)
 
-    # Start the server and capture its process object
-    logger.info("Starting server...")
-    server_args = ["-m", server_python_path, "--config_path", config_path]
-    if seed is not None:
-        server_args.extend(["--seed", str(seed)])
-
-    server_process = await asyncio.create_subprocess_exec(
-        "python",
-        *server_args,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.STDOUT,
-    )
-
-    # reads lines from the server output in search of the startup log message
-    # times out after 20s of inactivity if it doesn't find the log message
-    full_server_output = ""
-    startup_messages = [
-        # printed by fedprox, apfl, basic_example, fedbn, fedper, fedrep, and ditto, FENDA, fl_plus_local_ft and moon
-        # Update, this is no longer in output, examples are actually being triggered by the [ROUND 1] startup message
-        "FL starting",
-        # printed by scaffold
-        "Using Warm Start Strategy. Waiting for clients to be available for polling",
-        # printed by client_level_dp, client_level_dp_weighted, instance_level_dp and dp_scaffold
-        "Polling Clients for sample counts",
-        # printed by federated_eval
-        "Federated Evaluation Starting",
-        "[ROUND 1]",
-        # As far as I can tell this is printed by most servers that inherit from FlServer
-        "Flower ECE: gRPC server running ",
-        "gRPC server running",
-        "server running",
-    ]
-
-    output_found = False
-    while not output_found:
-        try:
-            if not (server_process.stdout is not None):
-                raise SmokeTestExecutionError("Server's process stdout is None")
-            server_output_in_bytes = await asyncio.wait_for(server_process.stdout.readline(), 20)
-            server_output = server_output_in_bytes.decode()
-            logger.debug(f"Server output: {server_output}")
-            full_server_output += server_output
-        except asyncio.TimeoutError:
-            logger.error("Timeout waiting for server startup messages")
-            break
-
-        return_code = server_process.returncode
-        if not (return_code is None or (return_code is not None and return_code == 0)):
-            msg = f"Full output:\n{full_server_output}\n" f"[ASSERT ERROR] Server exited with code {return_code}."
-            raise SmokeTestAssertError(msg)
-
-        if any(startup_message in server_output for startup_message in startup_messages):
-            output_found = True
-
-    if not output_found:
-        msg = f"Full output:\n{full_server_output}\n" f"[ASSERT_ERROR] Startup log message not found in server output."
-        raise SmokeTestAssertError(msg)
-
-    logger.info("Server started")
-
-    # Start n number of clients and capture their process objects
-    client_tasks = []
-    for i in range(config["n_clients"]):
-        logger.info(f"Starting client {i}")
-
-        client_args = ["-m", client_python_path, "--dataset_path", dataset_path]
-        if checkpoint_path is not None:
-            client_args.extend(["--checkpoint_path", checkpoint_path])
+        # Start the server and capture its process object
+        logger.info("Starting server...")
+        server_args = ["-m", server_python_path, "--config_path", config_path]
         if seed is not None:
-            client_args.extend(["--seed", str(seed)])
+            server_args.extend(["--seed", str(seed)])
 
-        task = asyncio.create_task(
-            asyncio.create_subprocess_exec(
-                "python",
-                *client_args,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.STDOUT,
-            )
-        )
-        client_tasks.append(task)
-
-    client_processes = await asyncio.gather(*client_tasks)
-
-    # Collecting the clients output when their processes finish
-    client_result_tasks = []
-    for i, client_process in enumerate(client_processes):
-        client_result_tasks.append(
-            _wait_for_process_to_finish_and_retrieve_logs(client_process, f"Client {i}", read_logs_timeout),
+        server_process = await asyncio.create_subprocess_exec(
+            "python",
+            *server_args,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
         )
 
-    full_client_outputs = await asyncio.gather(*client_result_tasks)
-    logger.info("All clients finished execution")
+        # reads lines from the server output in search of the startup log message
+        # times out after 20s of inactivity if it doesn't find the log message
+        full_server_output = ""
+        startup_messages = [
+            # printed by fedprox, apfl, basic_example, fedbn, fedper, fedrep, and ditto, FENDA, fl_plus_local_ft & moon
+            # Update this is no longer in output, examples are actually triggered by the [ROUND 1] startup message
+            "FL starting",
+            # printed by scaffold
+            "Using Warm Start Strategy. Waiting for clients to be available for polling",
+            # printed by client_level_dp, client_level_dp_weighted, instance_level_dp and dp_scaffold
+            "Polling Clients for sample counts",
+            # printed by federated_eval
+            "Federated Evaluation Starting",
+            "[ROUND 1]",
+            # As far as I can tell this is printed by most servers that inherit from FlServer
+            "Flower ECE: gRPC server running ",
+            "gRPC server running",
+            "server running",
+        ]
 
-    # Collecting the server output when its process finish
-    full_server_output = await _wait_for_process_to_finish_and_retrieve_logs(
-        server_process, "Server", read_logs_timeout
-    )
-    full_server_output = postprocess_logs(full_server_output)
+        output_found = False
+        while not output_found:
+            try:
+                if not (server_process.stdout is not None):
+                    raise SmokeTestExecutionError("Server's process stdout is None")
+                server_output_in_bytes = await asyncio.wait_for(server_process.stdout.readline(), 20)
+                server_output = server_output_in_bytes.decode()
+                logger.debug(f"Server output: {server_output}")
+                full_server_output += server_output
+            except asyncio.TimeoutError:
+                logger.error("Timeout waiting for server startup messages")
+                break
 
-    logger.info("Server has finished execution")
+            return_code = server_process.returncode
+            if not (return_code is None or (return_code is not None and return_code == 0)):
+                msg = f"Full output:\n{full_server_output}\n" f"[ASSERT ERROR] Server exited with code {return_code}."
+                raise SmokeTestAssertError(msg)
 
-    # server assertions
-    if not ("error" not in full_server_output.lower()):
-        msg = f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] Error message found for server."
-        raise SmokeTestAssertError(msg)
+            if any(startup_message in server_output for startup_message in startup_messages):
+                output_found = True
 
-    if assert_evaluation_logs:
-        if not (f"Federated Evaluation received {config['n_clients']} results and 0 failures" in full_server_output):
-            msg = f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] Last FL round message not found for server."
-            raise SmokeTestAssertError(msg)
-
-        if not ("Federated Evaluation Finished" in full_server_output):
+        if not output_found:
             msg = (
                 f"Full output:\n{full_server_output}\n"
-                "[ASSERT ERROR] Federated Evaluation Finished message not found for server."
+                f"[ASSERT_ERROR] Startup log message not found in server output."
             )
             raise SmokeTestAssertError(msg)
 
-    else:
-        if not ("[SUMMARY]" in full_server_output):
-            msg = f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] [SUMMARY] message not found for server."
-            raise SmokeTestAssertError(msg)
-    if not assert_evaluation_logs:
-        if not (
-            all(
-                message in full_server_output
-                for message in [
-                    "History (loss, distributed):",
-                    "History (metrics, distributed, fit):",
-                ]
+        logger.info("Server started")
+
+        # Start n number of clients and capture their process objects
+        client_tasks = []
+        for i in range(config["n_clients"]):
+            logger.info(f"Starting client {i}")
+
+            client_args = ["-m", client_python_path, "--dataset_path", dataset_path]
+            if checkpoint_path is not None:
+                client_args.extend(["--checkpoint_path", checkpoint_path])
+            if seed is not None:
+                client_args.extend(["--seed", str(seed)])
+
+            task = asyncio.create_task(
+                asyncio.create_subprocess_exec(
+                    "python",
+                    *client_args,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.STDOUT,
+                )
             )
-        ):
-            msg = f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
-            raise SmokeTestAssertError(msg)
+            client_tasks.append(task)
 
-    else:
-        if not (all(message in full_server_output for message in ["History (metrics, distributed, evaluate):"])):
-            msg = f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
-            raise SmokeTestAssertError(msg)
+        client_processes = await asyncio.gather(*client_tasks)
 
-    server_errors = _assert_metrics(MetricType.SERVER, server_metrics, tolerance)
-
-    # client assertions
-    client_errors = []
-    for i, full_client_output in enumerate(full_client_outputs):
-        full_client_output = postprocess_logs(full_client_output)
-        if not ("error" not in full_client_output.lower()):
-            msg = f"Full client output:\n{full_client_output}\n" f"[ASSERT ERROR] Error message found for client {i}."
-            raise SmokeTestAssertError(msg)
-
-        if not ("Disconnect and shut down" in full_client_output):
-            msg = (
-                f"Full client output:\n{full_client_output}\n"
-                f"[ASSERT ERROR] Shutdown message not found for client {i}."
+        # Collecting the clients output when their processes finish
+        client_result_tasks = []
+        for i, client_process in enumerate(client_processes):
+            client_result_tasks.append(
+                _wait_for_process_to_finish_and_retrieve_logs(client_process, f"Client {i}", read_logs_timeout),
             )
+
+        full_client_outputs = await asyncio.gather(*client_result_tasks)
+        logger.info("All clients finished execution")
+
+        # Collecting the server output when its process finish
+        full_server_output = await _wait_for_process_to_finish_and_retrieve_logs(
+            server_process, "Server", read_logs_timeout
+        )
+        full_server_output = postprocess_logs(full_server_output)
+
+        logger.info("Server has finished execution")
+
+        # server assertions
+        if not ("error" not in full_server_output.lower()):
+            msg = f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] Error message found for server."
             raise SmokeTestAssertError(msg)
 
         if assert_evaluation_logs:
-            if not ("Client Evaluation Local Model Metrics" in full_client_output):
+            if not (
+                f"Federated Evaluation received {config['n_clients']} results and 0 failures" in full_server_output
+            ):
                 msg = (
-                    f"Full client output:\n{full_client_output}\n"
-                    f"[ASSERT ERROR] 'Client Evaluation Local Model Metrics' message not found for client {i}."
+                    f"Full output:\n{full_server_output}\n"
+                    "[ASSERT ERROR] Last FL round message not found for server."
                 )
                 raise SmokeTestAssertError(msg)
 
-        elif not skip_assert_client_fl_rounds:
-            if not (f"Current FL Round: {config['n_server_rounds']}" in full_client_output):
+            if not ("Federated Evaluation Finished" in full_server_output):
                 msg = (
-                    f"Full client output:\n{full_client_output}\n"
-                    f"[ASSERT ERROR] Last FL round message not found for client {i}."
+                    f"Full output:\n{full_server_output}\n"
+                    "[ASSERT ERROR] Federated Evaluation Finished message not found for server."
                 )
                 raise SmokeTestAssertError(msg)
 
-        client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics, tolerance))
+        else:
+            if not ("[SUMMARY]" in full_server_output):
+                msg = f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] [SUMMARY] message not found for server."
+                raise SmokeTestAssertError(msg)
+        if not assert_evaluation_logs:
+            if not (
+                all(
+                    message in full_server_output
+                    for message in [
+                        "History (loss, distributed):",
+                        "History (metrics, distributed, fit):",
+                    ]
+                )
+            ):
+                msg = f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
+                raise SmokeTestAssertError(msg)
 
-    return server_errors, client_errors
+        else:
+            if not (all(message in full_server_output for message in ["History (metrics, distributed, evaluate):"])):
+                msg = f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
+                raise SmokeTestAssertError(msg)
+
+        server_errors = _assert_metrics(MetricType.SERVER, server_metrics, tolerance)
+
+        # client assertions
+        client_errors = []
+        for i, full_client_output in enumerate(full_client_outputs):
+            full_client_output = postprocess_logs(full_client_output)
+            if not ("error" not in full_client_output.lower()):
+                msg = (
+                    f"Full client output:\n{full_client_output}\n"
+                    f"[ASSERT ERROR] Error message found for client {i}."
+                )
+                raise SmokeTestAssertError(msg)
+
+            if not ("Disconnect and shut down" in full_client_output):
+                msg = (
+                    f"Full client output:\n{full_client_output}\n"
+                    f"[ASSERT ERROR] Shutdown message not found for client {i}."
+                )
+                raise SmokeTestAssertError(msg)
+
+            if assert_evaluation_logs:
+                if not ("Client Evaluation Local Model Metrics" in full_client_output):
+                    msg = (
+                        f"Full client output:\n{full_client_output}\n"
+                        f"[ASSERT ERROR] 'Client Evaluation Local Model Metrics' message not found for client {i}."
+                    )
+                    raise SmokeTestAssertError(msg)
+
+            elif not skip_assert_client_fl_rounds:
+                if not (f"Current FL Round: {config['n_server_rounds']}" in full_client_output):
+                    msg = (
+                        f"Full client output:\n{full_client_output}\n"
+                        f"[ASSERT ERROR] Last FL round message not found for client {i}."
+                    )
+                    raise SmokeTestAssertError(msg)
+
+            client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics, tolerance))
+
+        return server_errors, client_errors
+    except Exception:
+        raise
+    finally:
+        if server_process:
+            graceful_shutdown([server_process] + client_processes)
+        else:
+            graceful_shutdown(client_processes)
 
 
 async def run_fault_tolerance_smoke_test(
@@ -396,135 +424,143 @@ async def run_fault_tolerance_smoke_test(
         (server_errors, client_errors): (list[str], list[str]): list of errors from server and client processes,
             respectively.
     """
-    clear_metrics_folder()
+    try:
+        clear_metrics_folder()
 
-    logger.info("Running smoke tests with parameters:")
-    logger.info(f"\tServer : {server_python_path}")
-    logger.info(f"\tClient : {client_python_path}")
-    logger.info(f"\tConfig : {config_path}")
-    logger.info(f"\tDataset: {dataset_path}")
-    logger.info(f"\tCheckpoint Directory: {intermediate_checkpoint_dir}")
+        logger.info("Running smoke tests with parameters:")
+        logger.info(f"\tServer : {server_python_path}")
+        logger.info(f"\tClient : {client_python_path}")
+        logger.info(f"\tConfig : {config_path}")
+        logger.info(f"\tDataset: {dataset_path}")
+        logger.info(f"\tCheckpoint Directory: {intermediate_checkpoint_dir}")
 
-    with open(config_path, "r") as file:
-        config = yaml.safe_load(file)
+        with open(config_path, "r") as file:
+            config = yaml.safe_load(file)
 
-    _preload_dataset(dataset_path, config, seed)
+        _preload_dataset(dataset_path, config, seed)
 
-    # Start the server and capture its process object
-    logger.info("Starting server...")
-    partial_server_args = [
-        "-m",
-        server_python_path,
-        "--config_path",
-        partial_config_path,
-        "--intermediate_server_state_dir",
-        intermediate_checkpoint_dir,
-        "--server_name",
-        server_name,
-    ]
-    server_args = [
-        "-m",
-        server_python_path,
-        "--config_path",
-        config_path,
-        "--intermediate_server_state_dir",
-        intermediate_checkpoint_dir,
-        "--server_name",
-        server_name,
-    ]
-    client_args = [
-        "-m",
-        client_python_path,
-        "--dataset_path",
-        dataset_path,
-        "--intermediate_client_state_dir",
-        intermediate_checkpoint_dir,
-    ]
-    if seed is not None:
-        partial_server_args.extend(["--seed", str(seed)])
-        server_args.extend(["--seed", str(seed)])
-        client_args.extend(["--seed", str(seed)])
+        # Start the server and capture its process object
+        logger.info("Starting server...")
+        partial_server_args = [
+            "-m",
+            server_python_path,
+            "--config_path",
+            partial_config_path,
+            "--intermediate_server_state_dir",
+            intermediate_checkpoint_dir,
+            "--server_name",
+            server_name,
+        ]
+        server_args = [
+            "-m",
+            server_python_path,
+            "--config_path",
+            config_path,
+            "--intermediate_server_state_dir",
+            intermediate_checkpoint_dir,
+            "--server_name",
+            server_name,
+        ]
+        client_args = [
+            "-m",
+            client_python_path,
+            "--dataset_path",
+            dataset_path,
+            "--intermediate_client_state_dir",
+            intermediate_checkpoint_dir,
+        ]
+        if seed is not None:
+            partial_server_args.extend(["--seed", str(seed)])
+            server_args.extend(["--seed", str(seed)])
+            client_args.extend(["--seed", str(seed)])
 
-    server_process = await asyncio.create_subprocess_exec(
-        "python",
-        *partial_server_args,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.STDOUT,
-    )
+        server_process = await asyncio.create_subprocess_exec(
+            "python",
+            *partial_server_args,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+        )
 
-    # Start n number of clients and capture their process objects
-    client_tasks = []
-    for i in range(config["n_clients"]):
-        logger.info(f"Starting client {i}")
+        # Start n number of clients and capture their process objects
+        client_tasks = []
+        for i in range(config["n_clients"]):
+            logger.info(f"Starting client {i}")
 
-        curr_client_args = client_args + ["--client_name", str(i)]
+            curr_client_args = client_args + ["--client_name", str(i)]
 
-        client_tasks.append(
-            asyncio.create_subprocess_exec(
+            client_tasks.append(
+                asyncio.create_subprocess_exec(
+                    "python",
+                    *curr_client_args,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.STDOUT,
+                )
+            )
+
+        client_processes = await asyncio.gather(*client_tasks)
+
+        client_output_tasks = []
+        for i in range(len(client_processes)):
+            client_output_tasks.append(
+                _wait_for_process_to_finish_and_retrieve_logs(client_processes[i], f"Client {i}", read_logs_timeout),
+            )
+
+        _ = await asyncio.gather(*client_output_tasks)
+
+        logger.info("All clients finished execution")
+
+        await _wait_for_process_to_finish_and_retrieve_logs(server_process, "Server", read_logs_timeout)
+
+        logger.info("Server has finished execution")
+
+        server_process = await asyncio.create_subprocess_exec(
+            "python",
+            *server_args,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+        )
+
+        logger.info("Server started")
+
+        # Start n number of clients and capture their process objects
+        client_processes = []
+        for i in range(config["n_clients"]):
+            logger.info(f"Starting client {i}")
+
+            curr_client_args = client_args + ["--client_name", str(i)]
+
+            client_process = await asyncio.create_subprocess_exec(
                 "python",
                 *curr_client_args,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.STDOUT,
             )
-        )
+            client_processes.append(client_process)
 
-    client_processes = await asyncio.gather(*client_tasks)
+        for i in range(len(client_processes)):
+            await _wait_for_process_to_finish_and_retrieve_logs(client_processes[i], f"Client {i}", read_logs_timeout)
 
-    client_output_tasks = []
-    for i in range(len(client_processes)):
-        client_output_tasks.append(
-            _wait_for_process_to_finish_and_retrieve_logs(client_processes[i], f"Client {i}", read_logs_timeout),
-        )
+        logger.info("All clients finished execution")
 
-    _ = await asyncio.gather(*client_output_tasks)
+        await _wait_for_process_to_finish_and_retrieve_logs(server_process, "Server", read_logs_timeout)
 
-    logger.info("All clients finished execution")
+        logger.info("Server has finished execution")
 
-    await _wait_for_process_to_finish_and_retrieve_logs(server_process, "Server", read_logs_timeout)
+        server_errors = _assert_metrics(MetricType.SERVER, server_metrics, tolerance)
 
-    logger.info("Server has finished execution")
+        # client assertions
+        client_errors = []
+        for i in range(len(client_processes)):
+            client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics, tolerance))
 
-    server_process = await asyncio.create_subprocess_exec(
-        "python",
-        *server_args,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.STDOUT,
-    )
-
-    logger.info("Server started")
-
-    # Start n number of clients and capture their process objects
-    client_processes = []
-    for i in range(config["n_clients"]):
-        logger.info(f"Starting client {i}")
-
-        curr_client_args = client_args + ["--client_name", str(i)]
-
-        client_process = await asyncio.create_subprocess_exec(
-            "python",
-            *curr_client_args,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.STDOUT,
-        )
-        client_processes.append(client_process)
-
-    for i in range(len(client_processes)):
-        await _wait_for_process_to_finish_and_retrieve_logs(client_processes[i], f"Client {i}", read_logs_timeout)
-
-    logger.info("All clients finished execution")
-
-    await _wait_for_process_to_finish_and_retrieve_logs(server_process, "Server", read_logs_timeout)
-
-    logger.info("Server has finished execution")
-
-    server_errors = _assert_metrics(MetricType.SERVER, server_metrics, tolerance)
-
-    # client assertions
-    client_errors = []
-    for i in range(len(client_processes)):
-        client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics, tolerance))
-
-    return server_errors, client_errors
+        return server_errors, client_errors
+    except Exception:
+        raise
+    finally:
+        if server_process:
+            graceful_shutdown([server_process] + client_processes)
+        else:
+            graceful_shutdown(client_processes)
 
 
 def _preload_dataset(dataset_path: str, config: Config, seed: int | None = None) -> None:
