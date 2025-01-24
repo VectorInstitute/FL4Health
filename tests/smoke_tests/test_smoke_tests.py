@@ -18,7 +18,7 @@ IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 pytestmark = pytest.mark.asyncio(loop_scope="module")
 
 
-def assert_on_done_task(task: asyncio.Task, event_loop: asyncio.AbstractEventLoop) -> None:
+def assert_on_done_task(task: asyncio.Task) -> None:
     """This function takes a done task and makes assert if a result was returned.
 
     If an exception was returned, then it fails the pytest for proper shutdown.
@@ -52,14 +52,14 @@ async def test_basic_server_client_cifar(tolerance: float, tmp_path: Path) -> No
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -72,14 +72,14 @@ async def test_nnunet_config_2d(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -92,14 +92,14 @@ async def test_nnunet_config_3d(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -115,14 +115,14 @@ async def test_scaffold(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.skipif(not IN_GITHUB_ACTIONS, reason="Test doesn't work locally.")
@@ -139,14 +139,14 @@ async def test_apfl(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.skipif(not IN_GITHUB_ACTIONS, reason="Test doesn't work locally.")
@@ -163,14 +163,14 @@ async def test_feddg_ga(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -183,14 +183,14 @@ async def test_basic(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -204,19 +204,19 @@ async def test_client_level_dp_cifar(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
 async def test_client_level_dp_breast_cancer(tolerance: float) -> None:
-    event_loop = asyncio.get_event_loop()
+
     num_attempts = 2
     for attempt in range(num_attempts):
         try:
@@ -245,7 +245,7 @@ async def test_client_level_dp_breast_cancer(tolerance: float) -> None:
             await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
             pytest.fail(f"Smoke test failed due to error after {attempt + 1} attempts. {e}")
 
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -259,14 +259,14 @@ async def test_instance_level_dp_cifar(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -279,14 +279,14 @@ async def test_dp_scaffold(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -299,14 +299,14 @@ async def test_fedbn(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -321,14 +321,14 @@ async def test_fed_eval(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -341,14 +341,14 @@ async def test_fedper_mnist(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -361,14 +361,14 @@ async def test_fedper_cifar(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -380,14 +380,14 @@ async def test_ditto_mnist() -> None:
         dataset_path="examples/datasets/mnist_data/",
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -400,14 +400,14 @@ async def test_mr_mtl_mnist(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -420,14 +420,14 @@ async def test_fenda(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -441,14 +441,14 @@ async def test_fenda_ditto(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -461,14 +461,14 @@ async def test_perfcl(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -481,14 +481,14 @@ async def test_fl_plus_local(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -501,14 +501,14 @@ async def test_moon(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -521,14 +521,14 @@ async def test_ensemble(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
 
 
 @pytest.mark.smoketest
@@ -541,11 +541,11 @@ async def test_flash(tolerance: float) -> None:
         tolerance=tolerance,
     )
     task = asyncio.create_task(coro)
-    event_loop = asyncio.get_event_loop()
+
     try:
         await task
     except Exception as e:
         task.cancel()
         await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
-    assert_on_done_task(task, event_loop)
+    assert_on_done_task(task)
