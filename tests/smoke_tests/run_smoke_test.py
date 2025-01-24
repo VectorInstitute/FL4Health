@@ -33,6 +33,10 @@ class SmokeTestExecutionError(Exception):
     pass
 
 
+class SmokeTestTimeoutError(Exception):
+    pass
+
+
 def postprocess_logs(logs: str) -> str:
     """Postprocess logs to remove spurious Errors.
 
@@ -586,7 +590,7 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
             raise SmokeTestExecutionError("Process stdout is None")
         full_output, return_code = await asyncio.wait_for(get_output_from_stdout(process.stdout), timeout=timeout)
     except asyncio.exceptions.TimeoutError as e:
-        raise SmokeTestExecutionError("Timeout for reading logs reached.") from e
+        raise SmokeTestTimeoutError("Timeout for reading logs reached.") from e
     except Exception as ex:
         logger.exception(f"Error collecting {process_name} log messages:")
         raise ex
