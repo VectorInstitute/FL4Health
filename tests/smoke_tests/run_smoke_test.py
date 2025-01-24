@@ -1,5 +1,4 @@
 import asyncio
-import datetime
 import json
 import logging
 import re
@@ -555,15 +554,12 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
     process_name: str,
     timeout: int = 300,  # timeout for the whole process to complete
 ) -> str:
-    logger.info(f"Collecting output for {process_name}...")
-    full_output = ""
-    try:
-        if not (process.stdout is not None):
-            raise SmokeTestExecutionError("Process stdout is None")
-        start_time = datetime.datetime.now()
+
+    async def get_output_from_stdout(stream_reader: asyncio.streams.StreamReader) -> tuple[str, int | None]:
+        full_output = ""
         while True:
-            # giving a smaller timeout here just in case it hangs for a long time waiting for a single log line
-            output_in_bytes = await asyncio.wait_for(process.stdout.readline(), timeout=timeout)
+            output_in_bytes = await stream_reader.readline()
+            await asyncio.sleep(0)  # give control back to loop manager
             output = output_in_bytes.decode().replace("\\n", "\n")
             logger.debug(f"{process_name} output: {output}")
             full_output += output
@@ -572,12 +568,15 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
             if output == "" and return_code is not None:
                 break
 
-            elapsed_time = datetime.datetime.now() - start_time
-            if elapsed_time.seconds > timeout:
-                raise Exception(f"Timeout limit of {timeout}s exceeded waiting for {process_name} to finish execution")
+        return full_output, return_code
 
+    logger.info(f"Collecting output for {process_name}...")
+
+    try:
+        if not (process.stdout is not None):
+            raise SmokeTestExecutionError("Process stdout is None")
+        full_output, return_code = await asyncio.wait_for(get_output_from_stdout(process.stdout), timeout=timeout)
     except Exception as ex:
-        logger.error(f"{process_name} output:\n{full_output}")
         logger.exception(f"Error collecting {process_name} log messages:")
         raise ex
 
