@@ -656,14 +656,11 @@ class BasicClient(NumPyClient):
                 self.reports_manager.report(report_data, current_round, self.total_epochs, self.total_steps)
                 self.total_steps += 1
                 steps_this_round += 1
-                if self.early_stopper is not None and self.early_stopper.interval_steps is not None:
-                    if self.total_steps % self.early_stopper.interval_steps == 0 and self.early_stopper.should_stop():
-                        log(INFO, "Early stopping criterion met. Stopping training.")
-                        self.early_stopper.load_snapshot()
-                        continue_training = False
-                        break
-            if not continue_training:
-                break
+                if self.early_stopper is not None and self.early_stopper.should_stop(steps_this_round):
+                    log(INFO, "Early stopping criterion met. Stopping training.")
+                    self.early_stopper.load_snapshot()
+                    continue_training = False
+                    break
 
             # Log and report results
             metrics = self.train_metric_manager.compute()
@@ -675,6 +672,9 @@ class BasicClient(NumPyClient):
 
             # Update internal epoch counter
             self.total_epochs += 1
+
+            if not continue_training:
+                break
 
         # Return final training metrics
         return loss_dict, metrics
@@ -732,11 +732,10 @@ class BasicClient(NumPyClient):
             report_data.update(self.get_client_specific_reports())
             self.reports_manager.report(report_data, current_round, None, self.total_steps)
             self.total_steps += 1
-            if self.early_stopper is not None:
-                if self.total_steps % self.early_stopper.interval_steps == 0 and self.early_stopper.should_stop():
-                    log(INFO, "Early stopping criterion met. Stopping training.")
-                    self.early_stopper.load_snapshot()
-                    break
+            if self.early_stopper is not None and self.early_stopper.should_stop(step):
+                log(INFO, "Early stopping criterion met. Stopping training.")
+                self.early_stopper.load_snapshot()
+                break
 
         loss_dict = self.train_loss_meter.compute().as_dict()
         metrics = self.train_metric_manager.compute()

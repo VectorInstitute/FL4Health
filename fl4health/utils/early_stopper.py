@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 from collections.abc import Callable
-from logging import INFO
+from logging import INFO, WARNING
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -92,6 +92,8 @@ class EarlyStopper:
             # TODO: Move to generic checkpointer
             self.checkpointer = PerRoundStateCheckpointer(snapshot_dir)
             self.checkpoint_name = f"temp_{self.client.client_name}.pt"
+        else:
+            log(INFO, "Snapshot is being persisted in memory")
 
     def add_default_snapshot_attr(
         self, name: str, snapshot_class: Callable[[BasicClient], AbstractSnapshotter], input_type: type[T]
@@ -109,21 +111,20 @@ class EarlyStopper:
             self.snapshot_ckpt.update(snapshotter_function.save(attr, expected_type))
 
         if self.checkpointer is not None:
-            self.checkpointer.save_checkpoint(self.checkpoint_name, self.snapshot_ckpt)
-            self.snapshot_ckpt.clear()
-        else:
             log(
                 INFO,
-                "Checkpointing directory is not provided. The snapshot will be kept in the memory.",
-                "This can lead to more memory usage.",
+                f"Saving client best state to checkpoint at {self.checkpointer.checkpoint_dir} "
+                f"with name {self.checkpoint_name}.",
+            )
+            self.checkpointer.save_checkpoint(self.checkpoint_name, self.snapshot_ckpt)
+            self.snapshot_ckpt.clear()
+
+        else:
+            log(
+                WARNING,
+                "Checkpointing directory is not provided. Client best state will be kept in the memory.",
             )
             self.snapshot_ckpt = copy.deepcopy(self.snapshot_ckpt)
-
-        log(
-            INFO,
-            f"Saving client best state to checkpoint at {self.checkpointer.checkpoint_dir} "
-            f"with name {self.checkpoint_name}.",
-        )
 
     def load_snapshot(self, attributes: list[str] | None = None) -> None:
         """
@@ -149,13 +150,18 @@ class EarlyStopper:
             snapshotter, expected_type = self.snapshot_attrs[attr]
             snapshotter.load(self.snapshot_ckpt, attr, expected_type)
 
-    def should_stop(self) -> bool:
+    def should_stop(self, steps: int) -> bool:
         """
         Determine if the client should stop training based on early stopping criteria.
+
+        Args:
+            steps (int): Number of steps since the start of the training.
 
         Returns:
             bool: True if training should stop, otherwise False.
         """
+        if steps % self.interval_steps != 0:
+            return False
 
         val_loss, _ = self.client._validate_or_test(
             loader=self.client.val_loader,
