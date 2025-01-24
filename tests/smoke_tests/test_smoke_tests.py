@@ -52,7 +52,7 @@ async def test_basic_server_client_cifar(tolerance: float, tmp_path: Path) -> No
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -72,7 +72,7 @@ async def test_nnunet_config_2d(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -92,7 +92,7 @@ async def test_nnunet_config_3d(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -115,7 +115,7 @@ async def test_scaffold(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -139,7 +139,7 @@ async def test_apfl(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -163,7 +163,7 @@ async def test_feddg_ga(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -183,7 +183,7 @@ async def test_basic(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -204,7 +204,7 @@ async def test_client_level_dp_cifar(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -226,7 +226,7 @@ async def test_client_level_dp_breast_cancer(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -247,7 +247,7 @@ async def test_instance_level_dp_cifar(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -267,7 +267,7 @@ async def test_dp_scaffold(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -287,7 +287,7 @@ async def test_fedbn(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -309,7 +309,7 @@ async def test_fed_eval(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -329,7 +329,7 @@ async def test_fedper_mnist(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -349,7 +349,7 @@ async def test_fedper_cifar(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -368,7 +368,7 @@ async def test_ditto_mnist() -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -388,7 +388,7 @@ async def test_mr_mtl_mnist(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -408,7 +408,7 @@ async def test_fenda(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -429,7 +429,7 @@ async def test_fenda_ditto(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -449,7 +449,7 @@ async def test_perfcl(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -469,7 +469,7 @@ async def test_fl_plus_local(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -489,7 +489,7 @@ async def test_moon(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -509,7 +509,7 @@ async def test_ensemble(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
@@ -529,6 +529,6 @@ async def test_flash(tolerance: float) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(task, return_exceptions=True)
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
