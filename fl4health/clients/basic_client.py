@@ -657,10 +657,7 @@ class BasicClient(NumPyClient):
                 self.total_steps += 1
                 steps_this_round += 1
                 if self.early_stopper is not None and self.early_stopper.interval_steps is not None:
-                    if (
-                        self.total_steps % self.early_stopper.interval_steps == 0
-                        and self.early_stopper.should_stop()
-                    ):
+                    if self.total_steps % self.early_stopper.interval_steps == 0 and self.early_stopper.should_stop():
                         log(INFO, "Early stopping criterion met. Stopping training.")
                         self.early_stopper.load_snapshot()
                         continue_training = False
