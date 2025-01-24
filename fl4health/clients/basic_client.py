@@ -119,7 +119,7 @@ class BasicClient(NumPyClient):
         self.num_test_samples: int | None
         self.learning_rate: float | None
 
-        # User can sets the early stopper for the client, by instantiating the EarlyStopper class
+        # User can set the early stopper for the client by instantiating the EarlyStopper class
         # and setting the patience and interval_steps attributes. The early stopper will be used to
         # stop training if the validation loss does not improve for a certain number of steps.
         self.early_stopper: EarlyStopper | None = None
