@@ -15,7 +15,7 @@ from .run_smoke_test import (
 IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 
 # Marks all test coroutineutines in this module
-pytestmark = pytest.mark.asyncio(loop_scope="module")
+pytestmark = pytest.mark.asyncio(loop_scope="function")
 
 
 async def try_running_test_task(task: asyncio.Task) -> None:
