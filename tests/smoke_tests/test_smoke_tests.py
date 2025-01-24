@@ -13,15 +13,6 @@ IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 pytestmark = pytest.mark.asyncio(loop_scope="module")
 
 
-def cleanup_cancelled_tasks(event_loop: asyncio.AbstractEventLoop) -> None:
-    """This helper function cleans up cancelled tasks."""
-    remaining_tasks = asyncio.all_tasks()
-    for t in remaining_tasks:
-        t.cancel()
-    if not event_loop.is_running():
-        event_loop.run_forever()  # give time for cancelled tasks to clear
-
-
 def assert_on_done_task(task: asyncio.Task, event_loop: asyncio.AbstractEventLoop) -> None:
     """This function takes a done task and makes assert if a result was returned.
 
@@ -29,17 +20,14 @@ def assert_on_done_task(task: asyncio.Task, event_loop: asyncio.AbstractEventLoo
     Also, if the task was cancelled, then it cleans up the cancelled tasks so the
     next test doesn't get this hangover and fails as a result.
     """
-    try:
-        e = task.exception()
-        # at this point there is either an Exception or a Result and the task wasn't cancelled
-        if e:
-            pytest.fail(f"Smoke test execution failed: {e}")
-        else:
-            server_errors, client_errors = task.result()
-            assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
-            assert len(client_errors) == 0, f"Client metrics check failed. Errors: {client_errors}"
-    except asyncio.exceptions.CancelledError:
-        cleanup_cancelled_tasks(event_loop)
+    e = task.exception()  # handle TimeoutError / CancelledError above this func
+    # at this point there is either an Exception or a Result and the task wasn't cancelled
+    if e:
+        pytest.fail(f"Smoke test execution failed: {e}")
+    else:
+        server_errors, client_errors = task.result()
+        assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
+        assert len(client_errors) == 0, f"Client metrics check failed. Errors: {client_errors}"
 
 
 @pytest.mark.smoketest
@@ -62,9 +50,10 @@ async def test_basic_server_client_cifar(tolerance: float, tmp_path: Path) -> No
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -81,9 +70,10 @@ async def test_nnunet_config_2d(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -100,9 +90,10 @@ async def test_nnunet_config_3d(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -122,9 +113,10 @@ async def test_scaffold(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -145,9 +137,10 @@ async def test_apfl(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -168,9 +161,10 @@ async def test_feddg_ga(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -187,9 +181,10 @@ async def test_basic(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -207,9 +202,10 @@ async def test_client_level_dp_cifar(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -222,14 +218,16 @@ async def test_client_level_dp_breast_cancer(tolerance: float) -> None:
         dataset_path="examples/datasets/breast_cancer_data/hospital_0.csv",
         skip_assert_client_fl_rounds=True,
         tolerance=tolerance,
+        read_logs_timeout=1,
     )
     task = asyncio.create_task(coro)
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -247,9 +245,10 @@ async def test_instance_level_dp_cifar(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -266,9 +265,10 @@ async def test_dp_scaffold(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -285,9 +285,10 @@ async def test_fedbn(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -306,9 +307,10 @@ async def test_fed_eval(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -325,9 +327,10 @@ async def test_fedper_mnist(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -344,9 +347,10 @@ async def test_fedper_cifar(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -362,9 +366,10 @@ async def test_ditto_mnist() -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -381,9 +386,10 @@ async def test_mr_mtl_mnist(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -400,9 +406,10 @@ async def test_fenda(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -420,9 +427,10 @@ async def test_fenda_ditto(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -439,9 +447,10 @@ async def test_perfcl(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -458,9 +467,10 @@ async def test_fl_plus_local(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -477,9 +487,10 @@ async def test_moon(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -496,9 +507,10 @@ async def test_ensemble(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)
 
 
@@ -515,7 +527,8 @@ async def test_flash(tolerance: float) -> None:
     event_loop = asyncio.get_event_loop()
     try:
         await task
-    except asyncio.exceptions.TimeoutError:
-        cleanup_cancelled_tasks(event_loop)
-        pytest.fail("Smoke test failed due to Timeout Error.")
+    except Exception as e:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        pytest.fail(f"Smoke test failed due to error. {e}")
     assert_on_done_task(task, event_loop)

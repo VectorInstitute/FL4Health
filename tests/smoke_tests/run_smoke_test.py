@@ -21,6 +21,7 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 DEFAULT_TOLERANCE = 0.0005
+DEFAULT_READ_LOGS_TIMEOUT = 300
 
 
 # Custom Errors
@@ -58,6 +59,7 @@ async def run_smoke_test(
     client_metrics: dict[str, Any] | None = None,
     # assertion params
     tolerance: float = DEFAULT_TOLERANCE,
+    read_logs_timeout: int = DEFAULT_READ_LOGS_TIMEOUT,
 ) -> tuple[list[str], list[str]]:
     """Runs a smoke test for a given server, client, and dataset configuration.
 
@@ -253,13 +255,17 @@ async def run_smoke_test(
     # Collecting the clients output when their processes finish
     client_result_tasks = []
     for i, client_process in enumerate(client_processes):
-        client_result_tasks.append(_wait_for_process_to_finish_and_retrieve_logs(client_process, f"Client {i}"))
+        client_result_tasks.append(
+            _wait_for_process_to_finish_and_retrieve_logs(client_process, f"Client {i}", read_logs_timeout),
+        )
 
     full_client_outputs = await asyncio.gather(*client_result_tasks)
     logger.info("All clients finished execution")
 
     # Collecting the server output when its process finish
-    full_server_output = await _wait_for_process_to_finish_and_retrieve_logs(server_process, "Server")
+    full_server_output = await _wait_for_process_to_finish_and_retrieve_logs(
+        server_process, "Server", read_logs_timeout
+    )
     full_server_output = postprocess_logs(full_server_output)
 
     logger.info("Server has finished execution")
@@ -353,6 +359,7 @@ async def run_fault_tolerance_smoke_test(
     intermediate_checkpoint_dir: str = "./",
     server_name: str = "server",
     tolerance: float = DEFAULT_TOLERANCE,
+    read_logs_timeout: int = DEFAULT_READ_LOGS_TIMEOUT,
 ) -> tuple[list[str], list[str]]:
     """Runs a smoke test for a given server, client, and dataset configuration.
 
@@ -461,13 +468,15 @@ async def run_fault_tolerance_smoke_test(
 
     client_output_tasks = []
     for i in range(len(client_processes)):
-        client_output_tasks.append(_wait_for_process_to_finish_and_retrieve_logs(client_processes[i], f"Client {i}"))
+        client_output_tasks.append(
+            _wait_for_process_to_finish_and_retrieve_logs(client_processes[i], f"Client {i}", read_logs_timeout),
+        )
 
     _ = await asyncio.gather(*client_output_tasks)
 
     logger.info("All clients finished execution")
 
-    await _wait_for_process_to_finish_and_retrieve_logs(server_process, "Server")
+    await _wait_for_process_to_finish_and_retrieve_logs(server_process, "Server", read_logs_timeout)
 
     logger.info("Server has finished execution")
 
@@ -496,11 +505,11 @@ async def run_fault_tolerance_smoke_test(
         client_processes.append(client_process)
 
     for i in range(len(client_processes)):
-        await _wait_for_process_to_finish_and_retrieve_logs(client_processes[i], f"Client {i}")
+        await _wait_for_process_to_finish_and_retrieve_logs(client_processes[i], f"Client {i}", read_logs_timeout)
 
     logger.info("All clients finished execution")
 
-    await _wait_for_process_to_finish_and_retrieve_logs(server_process, "Server")
+    await _wait_for_process_to_finish_and_retrieve_logs(server_process, "Server", read_logs_timeout)
 
     logger.info("Server has finished execution")
 
@@ -576,6 +585,8 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
         if not (process.stdout is not None):
             raise SmokeTestExecutionError("Process stdout is None")
         full_output, return_code = await asyncio.wait_for(get_output_from_stdout(process.stdout), timeout=timeout)
+    except asyncio.exceptions.TimeoutError as e:
+        raise SmokeTestExecutionError("Timeout for reading logs reached.") from e
     except Exception as ex:
         logger.exception(f"Error collecting {process_name} log messages:")
         raise ex
