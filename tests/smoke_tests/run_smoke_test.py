@@ -605,6 +605,14 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
 ) -> str:
 
     async def get_output_from_stdout(stream_reader: asyncio.streams.StreamReader) -> tuple[str, int | None]:
+        """Reading from the stdout stream.
+
+        NOTE: In the initial implementation, we were invoking asyncio.wait_for()
+        with the coroutine stream_reader.readline() and with a timeout=timeout.
+        Outsourcing to this function now which we wrap this whole helper fn
+        with asyncio.wait_for() for improved readability and better error
+        handling, especially of the TimeoutError.
+        """
         full_output = ""
         while True:
             output_in_bytes = await stream_reader.readline()
