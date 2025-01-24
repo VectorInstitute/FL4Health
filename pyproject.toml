@@ -108,4 +108,3 @@ markers = [
     "smoketest: marks tests as smoke tests (deselect with '-m \"not smoketest\"')",
 ]
 asyncio_default_fixture_loop_scope = "session"
-asyncio_mode = "auto"
