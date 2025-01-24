@@ -182,7 +182,7 @@ async def test_client_level_dp_cifar(tolerance: float) -> None:
 @pytest.mark.smoketest
 async def test_client_level_dp_breast_cancer(tolerance: float) -> None:
 
-    num_attempts = 2
+    num_attempts = 3
     for attempt in range(num_attempts):
         try:
             coroutine = run_smoke_test(
@@ -198,7 +198,7 @@ async def test_client_level_dp_breast_cancer(tolerance: float) -> None:
         except SmokeTestTimeoutError as e:
             task.cancel()
             await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
-            if attempt == 0:
+            if attempt < num_attempts - 1:
                 # This test is a bit wonky and sometimes fails transiently where
                 # networking fails to communicate and timeout is reached. A simple
                 # retry should do the trick and so we do this automatically here
