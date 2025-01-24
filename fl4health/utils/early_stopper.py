@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 class EarlyStopper:
     def __init__(
         self,
-        client: "BasicClient",
+        client: BasicClient,
         patience: int | None = 1,
         interval_steps: int = 5,
         snapshot_dir: Path | None = None,
@@ -49,7 +49,7 @@ class EarlyStopper:
             patience (int, optional): Number of validation cycles to wait before stopping the training. If it is equal
                 to None client never stops, but still loads the best state before sending the model to the server.
                 Defaults to 1.
-            interval_steps (int, optional): Specifies the frequency, in terms of training intervals, at which the early
+            interval_steps (int): Specifies the frequency, in terms of training intervals, at which the early
                 stopping mechanism should evaluate the validation loss. Defaults to 5.
             snapshot_dir (Path | None, optional): Rather than keeping best state in the memory we can checkpoint it to
                 the given directory. If it is not given, the best state is kept in the memory. Defaults to None.
@@ -89,6 +89,7 @@ class EarlyStopper:
         }
 
         if snapshot_dir is not None:
+            # TODO: Move to generic checkpointer
             self.checkpointer = PerRoundStateCheckpointer(snapshot_dir)
             self.checkpoint_name = f"temp_{self.client.client_name}.pt"
 
@@ -120,29 +121,31 @@ class EarlyStopper:
 
         log(
             INFO,
-            f"Saving client best state to checkpoint at {self.checkpointer.checkpoint_dir}"
-            "with name temp_{self.client.client_name}.pt",
+            f"Saving client best state to checkpoint at {self.checkpointer.checkpoint_dir} "
+            f"with name {self.checkpoint_name}.",
         )
 
-    def load_snapshot(self, attrs: list[str] | None = None) -> None:
+    def load_snapshot(self, attributes: list[str] | None = None) -> None:
         """
         Load checkpointed snapshot dict consisting to the respective model attributes.
 
         Args:
-            args (list[str] | None): List of attributes to load from the checkpoint.
+            attributes (list[str] | None): List of attributes to load from the checkpoint.
                 If None, all attributes are loaded. Defaults to None.
         """
         assert (
             self.checkpointer.checkpoint_exists(self.checkpoint_name) or self.snapshot_ckpt != {}
         ), "No checkpoint to load"
 
-        if attrs is None:
-            attrs = list(self.snapshot_attrs.keys())
+        if attributes is None:
+            attributes = list(self.snapshot_attrs.keys())
+
+        log(INFO, f"Loading client best state {attributes} from checkpoint at {self.checkpointer.checkpoint_dir}")
 
         if self.checkpointer.checkpoint_exists(self.checkpoint_name):
             self.snapshot_ckpt = self.checkpointer.load_checkpoint(self.checkpoint_name)
 
-        for attr in attrs:
+        for attr in attributes:
             snapshotter, expected_type = self.snapshot_attrs[attr]
             snapshotter.load(self.snapshot_ckpt, attr, expected_type)
 

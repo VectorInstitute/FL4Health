@@ -91,7 +91,6 @@ class AbstractSnapshotter(ABC, Generic[T]):
         Returns:
             dict[str, Any]: A dictionary containing the state of the attribute.
         """
-        raise NotImplementedError
 
     @abstractmethod
     def load_attribute(self, attribute_snapshot: dict[str, Any], attribute: dict[str, T]) -> None:
@@ -103,7 +102,6 @@ class AbstractSnapshotter(ABC, Generic[T]):
             attribute_snapshot (dict[str, Any]): The snapshot containing the state of the attribute.
             attribute (dict[str, T]): The attribute to be loaded.
         """
-        raise NotImplementedError
 
 
 class OptimizerSnapshotter(AbstractSnapshotter[Optimizer]):
