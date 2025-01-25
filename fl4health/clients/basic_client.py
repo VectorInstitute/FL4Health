@@ -11,7 +11,7 @@ from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
-from torch.optim.lr_scheduler import _LRScheduler
+from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointAndStateModule
@@ -27,6 +27,7 @@ from fl4health.utils.client import (
     set_pack_losses_with_val_metrics,
 )
 from fl4health.utils.config import narrow_dict_type, narrow_dict_type_and_set_attribute
+from fl4health.utils.early_stopper import EarlyStopper
 from fl4health.utils.logging import LoggingMode
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric, MetricManager
@@ -117,6 +118,11 @@ class BasicClient(NumPyClient):
         self.num_val_samples: int
         self.num_test_samples: int | None
         self.learning_rate: float | None
+
+        # User can set the early stopper for the client by instantiating the EarlyStopper class
+        # and setting the patience and interval_steps attributes. The early stopper will be used to
+        # stop training if the validation loss does not improve for a certain number of steps.
+        self.early_stopper: EarlyStopper | None = None
         # Config can contain max_num_validation_steps key, which determines an upper bound
         # for the validation steps taken. If not specified, no upper bound will be enforced.
         # By specifying this in the config we cannot guarantee the validation set is the same
@@ -160,7 +166,15 @@ class BasicClient(NumPyClient):
             return FullParameterExchanger().push_parameters(self.model, config=config)
         else:
             assert self.model is not None and self.parameter_exchanger is not None
+            # If the client has early stopping module and the patience is None, we load the best saved state
+            # to send the best checkpointed local model's parameters to the server
+            self._maybe_load_saved_best_local_model_state()
             return self.parameter_exchanger.push_parameters(self.model, config=config)
+
+    def _maybe_load_saved_best_local_model_state(self) -> None:
+        if self.early_stopper is not None and self.early_stopper.patience is None:
+            log(INFO, "Loading saved best model's state before sending model to server.")
+            self.early_stopper.load_snapshot(["model"])
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
@@ -612,6 +626,7 @@ class BasicClient(NumPyClient):
         self.model.train()
         steps_this_round = 0  # Reset number of steps this round
         report_data: dict[str, Any] = {"round": current_round}
+        continue_training = True
         for local_epoch in range(epochs):
             self.train_metric_manager.clear()
             self.train_loss_meter.clear()
@@ -641,6 +656,11 @@ class BasicClient(NumPyClient):
                 self.reports_manager.report(report_data, current_round, self.total_epochs, self.total_steps)
                 self.total_steps += 1
                 steps_this_round += 1
+                if self.early_stopper is not None and self.early_stopper.should_stop(steps_this_round):
+                    log(INFO, "Early stopping criterion met. Stopping training.")
+                    self.early_stopper.load_snapshot()
+                    continue_training = False
+                    break
 
             # Log and report results
             metrics = self.train_metric_manager.compute()
@@ -652,6 +672,9 @@ class BasicClient(NumPyClient):
 
             # Update internal epoch counter
             self.total_epochs += 1
+
+            if not continue_training:
+                break
 
         # Return final training metrics
         return loss_dict, metrics
@@ -709,6 +732,10 @@ class BasicClient(NumPyClient):
             report_data.update(self.get_client_specific_reports())
             self.reports_manager.report(report_data, current_round, None, self.total_steps)
             self.total_steps += 1
+            if self.early_stopper is not None and self.early_stopper.should_stop(step):
+                log(INFO, "Early stopping criterion met. Stopping training.")
+                self.early_stopper.load_snapshot()
+                break
 
         loss_dict = self.train_loss_meter.compute().as_dict()
         metrics = self.train_metric_manager.compute()
@@ -879,7 +906,6 @@ class BasicClient(NumPyClient):
         self.parameter_exchanger = self.get_parameter_exchanger(config)
 
         self.reports_manager.report({"host_type": "client", "initialized": str(datetime.datetime.now())})
-
         self.initialized = True
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
@@ -1113,7 +1139,7 @@ class BasicClient(NumPyClient):
         """
         raise NotImplementedError
 
-    def get_lr_scheduler(self, optimizer_key: str, config: Config) -> _LRScheduler | None:
+    def get_lr_scheduler(self, optimizer_key: str, config: Config) -> LRScheduler | None:
         """
         Optional user defined method that returns learning rate scheduler
         to be used throughout training for the given optimizer. Defaults to None.
@@ -1125,7 +1151,7 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            _LRScheduler | None: Client learning rate schedulers.
+            LRScheduler | None: Client learning rate schedulers.
         """
         return None
 
