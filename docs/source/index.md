@@ -7,6 +7,10 @@ hide-toc: true
 ```{toctree}
 :hidden:
 
+intro
+installation_and_setup
+quickstart
+module_guides/index
 api
 
 ```

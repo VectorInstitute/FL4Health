@@ -17,6 +17,7 @@ Submodules
    fl4health.utils.data_generation
    fl4health.utils.dataset
    fl4health.utils.dataset_converter
+   fl4health.utils.early_stopper
    fl4health.utils.functions
    fl4health.utils.load_data
    fl4health.utils.logging
@@ -30,4 +31,5 @@ Submodules
    fl4health.utils.privacy_utilities
    fl4health.utils.random
    fl4health.utils.sampler
+   fl4health.utils.snapshotter
    fl4health.utils.typing
