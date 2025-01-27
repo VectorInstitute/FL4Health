@@ -1,0 +1,1422 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark">
+    <meta name="google-site-verification" content="i0qQRaR9OA3tSz_9tDocdcXGY27Ox_cy4FrvTHD2C_0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    
+      <meta name="description" content="aieng-template Python API documentation">
+    <link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="fl4health.clients.clipping_client module" href="fl4health.clients.clipping_client.html" /><link rel="prev" title="fl4health.clients.apfl_client module" href="fl4health.clients.apfl_client.html" />
+
+    <meta name="generator" content="sphinx-8.1.3, furo 2024.08.06"/>
+
+    
+    <meta name="msvalidate.01" content="8D2A5032F006424CAF54C0DDCD16F666" />
+      
+        <title>fl4health.clients.basic_client module - FL4Health</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=302659d7" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #faad1a;
+  --color-brand-content: #eb088a;
+  --color-foreground-secondary: #52c7de;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  --color-brand-primary: #faad1a;
+  --color-brand-content: #eb088a;
+  --color-foreground-secondary: #52c7de;
+  
+      }
+    }
+  }
+</style><script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/furo.js?v=5fa4622c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=ccdb6887"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../../_static/require.min.js?v=53367eec"></script>
+    <script src="../../_static/custom.js?v=c3ea0f6c"></script>
+    
+    <script src="https://kit.fontawesome.com/2c1f516901.js" crossorigin="anonymous"></script>
+
+  </head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../index.html"><div class="brand">FL4Health</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
+  
+  
+  <span class="sidebar-brand-text">FL4Health</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation_and_setup.html">Installation and Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../module_guides/index.html">Module Guides</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Module Guides</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../module_guides/checkpointing/index.html">Checkpointing</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="../../api.html">API Reference</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of API Reference</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 current has-children"><a class="reference internal" href="fl4health.html">fl4health package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of fl4health package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.checkpointing.html">fl4health.checkpointing package</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of fl4health.checkpointing package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.checkpointer.html">fl4health.checkpointing.checkpointer module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.client_module.html">fl4health.checkpointing.client_module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.opacus_checkpointer.html">fl4health.checkpointing.opacus_checkpointer module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.server_module.html">fl4health.checkpointing.server_module module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.client_managers.html">fl4health.client_managers package</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle navigation of fl4health.client_managers package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.client_managers.base_sampling_manager.html">fl4health.client_managers.base_sampling_manager module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.client_managers.fixed_sampling_client_manager.html">fl4health.client_managers.fixed_sampling_client_manager module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.client_managers.fixed_without_replacement_manager.html">fl4health.client_managers.fixed_without_replacement_manager module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.client_managers.poisson_sampling_manager.html">fl4health.client_managers.poisson_sampling_manager module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current has-children"><a class="reference internal" href="fl4health.clients.html">fl4health.clients package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of fl4health.clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.clients.deep_mmd_clients.html">fl4health.clients.deep_mmd_clients namespace</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle navigation of fl4health.clients.deep_mmd_clients namespace</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client.html">fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client module</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients namespace</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients namespace</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.clients.mkmmd_clients.ditto_mkmmd_client.html">fl4health.clients.mkmmd_clients.ditto_mkmmd_client module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client.html">fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.adaptive_drift_constraint_client.html">fl4health.clients.adaptive_drift_constraint_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.apfl_client.html">fl4health.clients.apfl_client module</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">fl4health.clients.basic_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.clipping_client.html">fl4health.clients.clipping_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.constrained_fenda_client.html">fl4health.clients.constrained_fenda_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.ditto_client.html">fl4health.clients.ditto_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.ensemble_client.html">fl4health.clients.ensemble_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.evaluate_client.html">fl4health.clients.evaluate_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.fed_pca_client.html">fl4health.clients.fed_pca_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.fed_prox_client.html">fl4health.clients.fed_prox_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.fedper_client.html">fl4health.clients.fedper_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.fedpm_client.html">fl4health.clients.fedpm_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.fedrep_client.html">fl4health.clients.fedrep_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.fenda_client.html">fl4health.clients.fenda_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.fenda_ditto_client.html">fl4health.clients.fenda_ditto_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.flash_client.html">fl4health.clients.flash_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.instance_level_dp_client.html">fl4health.clients.instance_level_dp_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.model_merge_client.html">fl4health.clients.model_merge_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.moon_client.html">fl4health.clients.moon_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.mr_mtl_client.html">fl4health.clients.mr_mtl_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.nnunet_client.html">fl4health.clients.nnunet_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.partial_weight_exchange_client.html">fl4health.clients.partial_weight_exchange_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.perfcl_client.html">fl4health.clients.perfcl_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.scaffold_client.html">fl4health.clients.scaffold_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.tabular_data_client.html">fl4health.clients.tabular_data_client module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.feature_alignment.html">fl4health.feature_alignment namespace</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.feature_alignment namespace</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.constants.html">fl4health.feature_alignment.constants module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.string_columns_transformer.html">fl4health.feature_alignment.string_columns_transformer module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html">fl4health.feature_alignment.tab_features_info_encoder module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html">fl4health.feature_alignment.tab_features_preprocessor module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.tabular_feature.html">fl4health.feature_alignment.tabular_feature module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.tabular_type.html">fl4health.feature_alignment.tabular_type module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.losses.html">fl4health.losses package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.losses package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.losses.contrastive_loss.html">fl4health.losses.contrastive_loss module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.losses.cosine_similarity_loss.html">fl4health.losses.cosine_similarity_loss module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.losses.deep_mmd_loss.html">fl4health.losses.deep_mmd_loss module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.losses.fenda_loss_config.html">fl4health.losses.fenda_loss_config module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.losses.mkmmd_loss.html">fl4health.losses.mkmmd_loss module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.losses.perfcl_loss.html">fl4health.losses.perfcl_loss module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.losses.weight_drift_loss.html">fl4health.losses.weight_drift_loss module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.model_bases.html">fl4health.model_bases package</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><div class="visually-hidden">Toggle navigation of fl4health.model_bases package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.model_bases.masked_layers.html">fl4health.model_bases.masked_layers namespace</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><div class="visually-hidden">Toggle navigation of fl4health.model_bases.masked_layers namespace</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.model_bases.masked_layers.masked_conv.html">fl4health.model_bases.masked_layers.masked_conv module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.model_bases.masked_layers.masked_layers_utils.html">fl4health.model_bases.masked_layers.masked_layers_utils module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.model_bases.masked_layers.masked_linear.html">fl4health.model_bases.masked_layers.masked_linear module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.model_bases.masked_layers.masked_normalization_layers.html">fl4health.model_bases.masked_layers.masked_normalization_layers module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.model_bases.apfl_base.html">fl4health.model_bases.apfl_base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.model_bases.autoencoders_base.html">fl4health.model_bases.autoencoders_base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.model_bases.ensemble_base.html">fl4health.model_bases.ensemble_base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.model_bases.feature_extractor_buffer.html">fl4health.model_bases.feature_extractor_buffer module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.model_bases.fedrep_base.html">fl4health.model_bases.fedrep_base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.model_bases.fedsimclr_base.html">fl4health.model_bases.fedsimclr_base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.model_bases.fenda_base.html">fl4health.model_bases.fenda_base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.model_bases.moon_base.html">fl4health.model_bases.moon_base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.model_bases.parallel_split_models.html">fl4health.model_bases.parallel_split_models module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.model_bases.partial_layer_exchange_model.html">fl4health.model_bases.partial_layer_exchange_model module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.model_bases.pca.html">fl4health.model_bases.pca module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.model_bases.perfcl_base.html">fl4health.model_bases.perfcl_base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.model_bases.sequential_split_models.html">fl4health.model_bases.sequential_split_models module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.parameter_exchange.html">fl4health.parameter_exchange package</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><div class="visually-hidden">Toggle navigation of fl4health.parameter_exchange package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.parameter_exchange.fedpm_exchanger.html">fl4health.parameter_exchange.fedpm_exchanger module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.parameter_exchange.full_exchanger.html">fl4health.parameter_exchange.full_exchanger module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.parameter_exchange.layer_exchanger.html">fl4health.parameter_exchange.layer_exchanger module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.parameter_exchange.packing_exchanger.html">fl4health.parameter_exchange.packing_exchanger module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.parameter_exchange.parameter_exchanger_base.html">fl4health.parameter_exchange.parameter_exchanger_base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.parameter_exchange.parameter_packer.html">fl4health.parameter_exchange.parameter_packer module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.parameter_exchange.parameter_selection_criteria.html">fl4health.parameter_exchange.parameter_selection_criteria module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.parameter_exchange.partial_parameter_exchanger.html">fl4health.parameter_exchange.partial_parameter_exchanger module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.parameter_exchange.sparse_coo_parameter_exchanger.html">fl4health.parameter_exchange.sparse_coo_parameter_exchanger module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.preprocessing.html">fl4health.preprocessing package</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle navigation of fl4health.preprocessing package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.preprocessing.autoencoders.html">fl4health.preprocessing.autoencoders package</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of fl4health.preprocessing.autoencoders package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.preprocessing.autoencoders.dim_reduction.html">fl4health.preprocessing.autoencoders.dim_reduction module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.preprocessing.autoencoders.loss.html">fl4health.preprocessing.autoencoders.loss module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.preprocessing.pca_preprocessor.html">fl4health.preprocessing.pca_preprocessor module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.preprocessing.warmed_up_module.html">fl4health.preprocessing.warmed_up_module module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.privacy.html">fl4health.privacy package</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" role="switch" type="checkbox"/><label for="toctree-checkbox-16"><div class="visually-hidden">Toggle navigation of fl4health.privacy package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.privacy.fl_accountants.html">fl4health.privacy.fl_accountants module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.privacy.moments_accountant.html">fl4health.privacy.moments_accountant module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.reporting.html">fl4health.reporting package</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" role="switch" type="checkbox"/><label for="toctree-checkbox-17"><div class="visually-hidden">Toggle navigation of fl4health.reporting package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.reporting.base_reporter.html">fl4health.reporting.base_reporter module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.reporting.json_reporter.html">fl4health.reporting.json_reporter module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.reporting.reports_manager.html">fl4health.reporting.reports_manager module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.reporting.wandb_reporter.html">fl4health.reporting.wandb_reporter module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.servers.html">fl4health.servers package</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" role="switch" type="checkbox"/><label for="toctree-checkbox-18"><div class="visually-hidden">Toggle navigation of fl4health.servers package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.servers.adaptive_constraint_servers.html">fl4health.servers.adaptive_constraint_servers package</a><input class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" role="switch" type="checkbox"/><label for="toctree-checkbox-19"><div class="visually-hidden">Toggle navigation of fl4health.servers.adaptive_constraint_servers package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.servers.adaptive_constraint_servers.ditto_server.html">fl4health.servers.adaptive_constraint_servers.ditto_server module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.servers.adaptive_constraint_servers.fedprox_server.html">fl4health.servers.adaptive_constraint_servers.fedprox_server module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.servers.adaptive_constraint_servers.mrmtl_server.html">fl4health.servers.adaptive_constraint_servers.mrmtl_server module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.servers.base_server.html">fl4health.servers.base_server module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.servers.client_level_dp_fed_avg_server.html">fl4health.servers.client_level_dp_fed_avg_server module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.servers.evaluate_server.html">fl4health.servers.evaluate_server module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.servers.fedpm_server.html">fl4health.servers.fedpm_server module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.servers.instance_level_dp_server.html">fl4health.servers.instance_level_dp_server module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.servers.model_merge_server.html">fl4health.servers.model_merge_server module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.servers.nnunet_server.html">fl4health.servers.nnunet_server module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.servers.polling.html">fl4health.servers.polling module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.servers.scaffold_server.html">fl4health.servers.scaffold_server module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.servers.tabular_feature_alignment_server.html">fl4health.servers.tabular_feature_alignment_server module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.strategies.html">fl4health.strategies package</a><input class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" role="switch" type="checkbox"/><label for="toctree-checkbox-20"><div class="visually-hidden">Toggle navigation of fl4health.strategies package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.aggregate_utils.html">fl4health.strategies.aggregate_utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.basic_fedavg.html">fl4health.strategies.basic_fedavg module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.client_dp_fedavgm.html">fl4health.strategies.client_dp_fedavgm module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.fedavg_dynamic_layer.html">fl4health.strategies.fedavg_dynamic_layer module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.fedavg_sparse_coo_tensor.html">fl4health.strategies.fedavg_sparse_coo_tensor module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.fedavg_with_adaptive_constraint.html">fl4health.strategies.fedavg_with_adaptive_constraint module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.feddg_ga.html">fl4health.strategies.feddg_ga module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.feddg_ga_with_adaptive_constraint.html">fl4health.strategies.feddg_ga_with_adaptive_constraint module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.fedpca.html">fl4health.strategies.fedpca module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.fedpm.html">fl4health.strategies.fedpm module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.flash.html">fl4health.strategies.flash module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.model_merge_strategy.html">fl4health.strategies.model_merge_strategy module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.noisy_aggregate.html">fl4health.strategies.noisy_aggregate module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.scaffold.html">fl4health.strategies.scaffold module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.strategy_with_poll.html">fl4health.strategies.strategy_with_poll module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.utils.html">fl4health.utils package</a><input class="toctree-checkbox" id="toctree-checkbox-21" name="toctree-checkbox-21" role="switch" type="checkbox"/><label for="toctree-checkbox-21"><div class="visually-hidden">Toggle navigation of fl4health.utils package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.client.html">fl4health.utils.client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.config.html">fl4health.utils.config module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.data_generation.html">fl4health.utils.data_generation module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.dataset.html">fl4health.utils.dataset module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.dataset_converter.html">fl4health.utils.dataset_converter module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.early_stopper.html">fl4health.utils.early_stopper module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.functions.html">fl4health.utils.functions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.load_data.html">fl4health.utils.load_data module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.logging.html">fl4health.utils.logging module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.losses.html">fl4health.utils.losses module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.metric_aggregation.html">fl4health.utils.metric_aggregation module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.metrics.html">fl4health.utils.metrics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.msd_dataset_sources.html">fl4health.utils.msd_dataset_sources module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.nnunet_utils.html">fl4health.utils.nnunet_utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.parameter_extraction.html">fl4health.utils.parameter_extraction module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.partitioners.html">fl4health.utils.partitioners module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.privacy_utilities.html">fl4health.utils.privacy_utilities module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.random.html">fl4health.utils.random module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.sampler.html">fl4health.utils.sampler module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.snapshotter.html">fl4health.utils.snapshotter module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.typing.html">fl4health.utils.typing module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="module-fl4health.clients.basic_client">
+<span id="fl4health-clients-basic-client-module"></span><h1>fl4health.clients.basic_client module<a class="headerlink" href="#module-fl4health.clients.basic_client" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BasicClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_meter_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">LossMeterType.AVERAGE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_and_state_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reporters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">NumPyClient</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_meter_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">LossMeterType.AVERAGE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_and_state_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reporters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Base FL Client with functionality to train, evaluate, log, report and checkpoint.
+User is responsible for implementing methods: get_model, get_optimizer, get_data_loaders, get_criterion
+Other methods can be overridden to achieve custom functionality.</p>
+<dl>
+<dt>Args:</dt><dd><p>data_path (Path): path to the data to be used to load the data for client-side training
+metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+device (torch.device): Device indicator for where to send the model, batches, labels etc. Often ‘cpu’ or</p>
+<blockquote>
+<div><p>‘cuda’</p>
+</div></blockquote>
+<dl class="simple">
+<dt>loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over</dt><dd><p>each batch. Defaults to LossMeterType.AVERAGE.</p>
+</dd>
+<dt>checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle</dt><dd><p>both checkpointing and state saving. The module, and its underlying model and state checkpointing
+components will determine when and how to do checkpointing during client-side training.
+No checkpointing (state or model) is done if not provided. Defaults to None.</p>
+</dd>
+<dt>reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client</dt><dd><p>should send data to. Defaults to None.</p>
+</dd>
+<dt>progress_bar (bool, optional): Whether or not to display a progress bar during client training and</dt><dd><p>validation. Uses tqdm. Defaults to False</p>
+</dd>
+<dt>client_name (str | None, optional): An optional client name that uniquely identifies a client.</dt><dd><p>If not passed, a hash is randomly generated. Client state will use this as part of its state file
+name. Defaults to None.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.compute_evaluation_loss">
+<span class="sig-name descname"><span class="pre">compute_evaluation_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.compute_evaluation_loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.compute_evaluation_loss" title="Link to this definition">¶</a></dt>
+<dd><p>Computes evaluation loss given predictions (and potentially features) of the model and ground truth data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.EvaluationLosses" title="fl4health.utils.losses.EvaluationLosses"><code class="xref py py-class docutils literal notranslate"><span class="pre">EvaluationLosses</span></code></a></span></p>
+</dd>
+</dl>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>preds (TorchPredType): Prediction(s) of the model(s) indexed by name. Anything stored</dt><dd><p>in preds will be used to compute metrics.</p>
+</dd>
+</dl>
+<p>features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+target: (TorchTargetType): Ground truth data to evaluate predictions against.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and additional losses</dt><dd><p>indexed by name.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.compute_loss_and_additional_losses">
+<span class="sig-name descname"><span class="pre">compute_loss_and_additional_losses</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.compute_loss_and_additional_losses"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.compute_loss_and_additional_losses" title="Link to this definition">¶</a></dt>
+<dd><p>Computes the loss and any additional losses given predictions of the model and ground truth data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#tuple" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>] | <a class="reference external" href="https://docs.python.org/3.9/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>]</span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>preds (TorchPredType): Prediction(s) of the model(s) indexed by name.
+features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+target (TorchTargetType): Ground truth data to evaluate predictions against.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple[torch.Tensor, dict[str, torch.Tensor] | None]; A tuple with:</dt><dd><ul class="simple">
+<li><p>The tensor for the loss</p></li>
+<li><dl class="simple">
+<dt>A dictionary of additional losses with their names and values, or None if</dt><dd><p>there are no additional losses.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.compute_training_loss">
+<span class="sig-name descname"><span class="pre">compute_training_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.compute_training_loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.compute_training_loss" title="Link to this definition">¶</a></dt>
+<dd><p>Computes training loss given predictions (and potentially features) of the model and ground truth data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.TrainingLosses" title="fl4health.utils.losses.TrainingLosses"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrainingLosses</span></code></a></span></p>
+</dd>
+</dl>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>preds (TorchPredType): Prediction(s) of the model(s) indexed by name. Anything stored</dt><dd><p>in preds will be used to compute metrics.</p>
+</dd>
+</dl>
+<p>features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+target: (TorchTargetType): Ground truth data to evaluate predictions against.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>TrainingLosses: an instance of TrainingLosses containing backward loss and additional losses</dt><dd><p>indexed by name.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.evaluate">
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.evaluate" title="Link to this definition">¶</a></dt>
+<dd><p>Evaluates the model on the validation set, and test set (if defined).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#tuple" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/typing.html#typing.Union" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#bytes" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]]</span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>parameters (NDArrays): The parameters of the model to be evaluated.
+config (NDArrays): The config object from the server.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple[float, int, dict[str, Scalar]]: A loss associated with the evaluation, the number of samples in the</dt><dd><p>validation/test set and the metric_values associated with evaluation.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.fit" title="Link to this definition">¶</a></dt>
+<dd><p>Processes config, initializes client (if first round) and performs training based on the passed config.
+If per_round_checkpointer is not None, on initialization the client checks if a checkpointed client state
+exists to load and at the end of each round the client state is saved.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#tuple" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/typing.html#typing.List" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<a class="reference external" href="https://docs.python.org/3.9/library/typing.html#typing.Any" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<a class="reference external" href="https://docs.python.org/3.9/library/typing.html#typing.Any" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]]], <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/typing.html#typing.Union" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#bytes" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]]</span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>parameters (NDArrays): The parameters of the model to be used in fit.
+config (NDArrays): The config from the server.</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple[NDArrays, int, dict[str, Scalar]]: The parameters following the local training along with the
+number of samples in the local training dataset and the computed metrics throughout the fit.</p>
+</dd>
+<dt>Raises:</dt><dd><p>ValueError: If local_steps or local_epochs is not specified in config.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.get_client_specific_logs">
+<span class="sig-name descname"><span class="pre">get_client_specific_logs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current_round</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_epoch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logging_mode</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.get_client_specific_logs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.get_client_specific_logs" title="Link to this definition">¶</a></dt>
+<dd><p>This function can be overridden to provide any client specific
+information to the basic client logging. For example, perhaps a client
+uses an LR scheduler and wants the LR to be logged each epoch. Called at the
+beginning and end of each server round or local epoch. Also called at the end
+of validation/testing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#tuple" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#tuple" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference internal" href="fl4health.utils.typing.html#fl4health.utils.typing.LogLevel" title="fl4health.utils.typing.LogLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">LogLevel</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]]</span></p>
+</dd>
+</dl>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>current_round (int | None): The current FL round (i.e., current</dt><dd><p>server round).</p>
+</dd>
+</dl>
+<p>current_epoch (int | None): The current epoch of local training.
+logging_mode (LoggingMode): The logging mode (Training,</p>
+<blockquote>
+<div><p>Validation, or Testing).</p>
+</div></blockquote>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>str | None: A string to append to the header log string that</dt><dd><p>typically announces the current server round and current epoch at the
+beginning of each round or local epoch.</p>
+</dd>
+<dt>list[tuple[LogLevel, str]]] | None: A list of tuples where the</dt><dd><p>first element is a LogLevel as defined in fl4health.utils.
+typing and the second element is a string message. Each item
+in the list will be logged at the end of each server round or epoch.
+Elements will also be logged at the end of validation/testing.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.get_client_specific_reports">
+<span class="sig-name descname"><span class="pre">get_client_specific_reports</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.get_client_specific_reports"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.get_client_specific_reports" title="Link to this definition">¶</a></dt>
+<dd><p>This function can be overridden by an inheriting client to report
+additional client specific information to the wandb_reporter</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/typing.html#typing.Any" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]</span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>dict[str, Any]: A dictionary of things to report</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.get_criterion">
+<span class="sig-name descname"><span class="pre">get_criterion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.get_criterion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.get_criterion" title="Link to this definition">¶</a></dt>
+<dd><p>User defined method that returns PyTorch loss to train model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">_Loss</span></code></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>config (Config): The config from the server.</p>
+</dd>
+<dt>Raises:</dt><dd><p>NotImplementedError: To be defined in child class.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.get_data_loaders">
+<span class="sig-name descname"><span class="pre">get_data_loaders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.get_data_loaders"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.get_data_loaders" title="Link to this definition">¶</a></dt>
+<dd><p>User defined method that returns a PyTorch Train DataLoader
+and a PyTorch Validation DataLoader</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#tuple" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code>, <a class="reference external" href="https://docs.python.org/3.9/library/constants.html#Ellipsis" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">...</span></code></a>]</span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>config (Config): The config from the server.</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple[DataLoader, …]: Tuple of length 2. The client train and validation loader.</p>
+</dd>
+<dt>Raises:</dt><dd><p>NotImplementedError: To be defined in child class.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.get_lr_scheduler">
+<span class="sig-name descname"><span class="pre">get_lr_scheduler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimizer_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.get_lr_scheduler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.get_lr_scheduler" title="Link to this definition">¶</a></dt>
+<dd><p>Optional user defined method that returns learning rate scheduler
+to be used throughout training for the given optimizer. Defaults to None.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">LRScheduler</span></code> | <a class="reference external" href="https://docs.python.org/3.9/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>optimizer_key (str): The key in the optimizer dict corresponding</dt><dd><p>to the optimizer we are optionally defining a learning rate
+scheduler for.</p>
+</dd>
+</dl>
+<p>config (Config): The config from the server.</p>
+</dd>
+<dt>Returns:</dt><dd><p>LRScheduler | None: Client learning rate schedulers.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.get_model">
+<span class="sig-name descname"><span class="pre">get_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.get_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.get_model" title="Link to this definition">¶</a></dt>
+<dd><p>User defined method that returns PyTorch model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>config (Config): The config from the server.</p>
+</dd>
+<dt>Returns:</dt><dd><p>nn.Module: The client model.</p>
+</dd>
+<dt>Raises:</dt><dd><p>NotImplementedError: To be defined in child class.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.get_optimizer">
+<span class="sig-name descname"><span class="pre">get_optimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.get_optimizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.get_optimizer" title="Link to this definition">¶</a></dt>
+<dd><p>Method to be defined by user that returns the PyTorch optimizer used to train models locally
+Return value can be a single torch optimizer or a dictionary of string and torch optimizer.
+Returning multiple optimizers is useful in methods like APFL which has a different optimizer
+for the local and global models.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code> | <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>]</span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>config (Config): The config sent from the server.</p>
+</dd>
+<dt>Returns:</dt><dd><p>Optimizer | dict[str, Optimizer]: An optimizer or dictionary of optimizers to
+train model.</p>
+</dd>
+<dt>Raises:</dt><dd><p>NotImplementedError: To be defined in child class.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.get_parameter_exchanger">
+<span class="sig-name descname"><span class="pre">get_parameter_exchanger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.get_parameter_exchanger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.get_parameter_exchanger" title="Link to this definition">¶</a></dt>
+<dd><p>Returns Full Parameter Exchangers. Subclasses that require custom Parameter Exchangers can override this.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="fl4health.parameter_exchange.parameter_exchanger_base.html#fl4health.parameter_exchange.parameter_exchanger_base.ParameterExchanger" title="fl4health.parameter_exchange.parameter_exchanger_base.ParameterExchanger"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterExchanger</span></code></a></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>config (Config): The config from server.</p>
+</dd>
+<dt>Returns:</dt><dd><p>ParameterExchanger: Used to exchange parameters between server and client.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.get_parameters">
+<span class="sig-name descname"><span class="pre">get_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.get_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.get_parameters" title="Link to this definition">¶</a></dt>
+<dd><p>Determines which parameters are sent back to the server for aggregation. This uses a parameter exchanger to
+determine parameters sent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/typing.html#typing.List" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<a class="reference external" href="https://docs.python.org/3.9/library/typing.html#typing.Any" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<a class="reference external" href="https://docs.python.org/3.9/library/typing.html#typing.Any" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]]]</span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>config (Config): The config is sent by the FL server to allow for customization in the function if desired.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>NDArrays: These are the parameters to be sent to the server. At minimum they represent the relevant model</dt><dd><p>parameters to be aggregated, but can contain more information.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.get_properties">
+<span class="sig-name descname"><span class="pre">get_properties</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.get_properties"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.get_properties" title="Link to this definition">¶</a></dt>
+<dd><p>Return properties (train and validation dataset sample counts) of client.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/typing.html#typing.Union" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#bytes" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]</span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>config (Config): The config from the server.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>dict[str, Scalar]: A dictionary with two entries corresponding to the sample counts in</dt><dd><p>the train and validation set.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.get_test_data_loader">
+<span class="sig-name descname"><span class="pre">get_test_data_loader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.get_test_data_loader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.get_test_data_loader" title="Link to this definition">¶</a></dt>
+<dd><p>User defined method that returns a PyTorch Test DataLoader.
+:rtype: <span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code> | <a class="reference external" href="https://docs.python.org/3.9/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+<p>By default, this function returns None, assuming that there is no test dataset to be used.
+If the user would like to load and evaluate a dataset,</p>
+<blockquote>
+<div><p>they need only override this function in their client class.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Args:</dt><dd><p>config (Config): The config from the server.</p>
+</dd>
+<dt>Returns:</dt><dd><p>DataLoader | None. The optional client test loader. Returns None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.initialize_all_model_weights">
+<span class="sig-name descname"><span class="pre">initialize_all_model_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.initialize_all_model_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.initialize_all_model_weights" title="Link to this definition">¶</a></dt>
+<dd><p>If this is the first time we’re initializing the model weights, we use the FullParameterExchanger to
+initialize all model components.
+Subclasses that require custom model initialization can override this.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>parameters (NDArrays): Model parameters to be injected into the client model
+config (Config): The config is sent by the FL server to allow for customization in the function if desired.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.predict">
+<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.predict" title="Link to this definition">¶</a></dt>
+<dd><p>Computes the prediction(s), and potentially features, of the model(s) given the input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#tuple" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>], <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]</span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>input (TorchInputType): Inputs to be fed into the model. If input is</dt><dd><p>of type dict[str, torch.Tensor], it is assumed that the keys of
+input match the names of the keyword arguments of self.model.
+forward().</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple[TorchPredType, TorchFeatureType]: A tuple in which the</dt><dd><p>first element contains a dictionary of predictions indexed by
+name and the second element contains intermediate activations
+indexed by name. By passing features, we can compute losses
+such as the contrastive loss in MOON. All predictions
+included in dictionary will by default be used to compute
+metrics separately.</p>
+</dd>
+</dl>
+</dd>
+<dt>Raises:</dt><dd><p>TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model’s
+forward method.
+ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
+forward.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.process_config">
+<span class="sig-name descname"><span class="pre">process_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.process_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.process_config" title="Link to this definition">¶</a></dt>
+<dd><p>Method to ensure the required keys are present in config and extracts values to be returned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#tuple" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> | <a class="reference external" href="https://docs.python.org/3.9/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> | <a class="reference external" href="https://docs.python.org/3.9/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>]</span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>config (Config): The config from the server.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple[int | None, int | None, int, bool, bool]: Returns the local_epochs, local_steps,</dt><dd><p>current_server_round, evaluate_after_fit and pack_losses_with_val_metrics. Ensures only one of
+local_epochs and local_steps is defined in the config and sets the one that is not to None.</p>
+</dd>
+</dl>
+</dd>
+<dt>Raises:</dt><dd><dl class="simple">
+<dt>ValueError: If the config contains both local_steps and local epochs or if local_steps, local_epochs or</dt><dd><p>current_server_round is of the wrong type (int).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.set_optimizer">
+<span class="sig-name descname"><span class="pre">set_optimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.set_optimizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.set_optimizer" title="Link to this definition">¶</a></dt>
+<dd><p>Method called in the the setup_client method to set optimizer attribute returned by used-defined get_optimizer.
+In the simplest case, get_optimizer returns an optimizer. For more advanced use cases where a dictionary of
+string and optimizer are returned (ie APFL), the user must override this method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>config (Config): The config from the server.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.set_parameters">
+<span class="sig-name descname"><span class="pre">set_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fitting_round</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.set_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.set_parameters" title="Link to this definition">¶</a></dt>
+<dd><p>Sets the local model parameters transferred from the server using a parameter exchanger to coordinate how
+parameters are set. In the first fitting round, we assume the full model is being
+initialized and use the FullParameterExchanger() to set all model weights.
+Otherwise, we use the appropriate parameter exchanger defined by the user depending on the
+federated learning algorithm being used.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>parameters (NDArrays): Parameters have information about model state to be added to the relevant client</dt><dd><p>model but may contain more information than that.</p>
+</dd>
+</dl>
+<p>config (Config): The config is sent by the FL server to allow for customization in the function if desired.
+fitting_round (bool): Boolean that indicates whether the current federated learning round is a</p>
+<blockquote>
+<div><p>fitting round or an evaluation round.
+This is used to help determine which parameter exchange should be used for pulling parameters.
+A full parameter exchanger is only used if the current federated learning round is the very
+first fitting round.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.setup_client">
+<span class="sig-name descname"><span class="pre">setup_client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.setup_client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.setup_client" title="Link to this definition">¶</a></dt>
+<dd><p>Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
+Then set initialized attribute to True.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>config (Config): The config from the server.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.shutdown">
+<span class="sig-name descname"><span class="pre">shutdown</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.shutdown"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.shutdown" title="Link to this definition">¶</a></dt>
+<dd><p>Shuts down the client. Involves shutting down W&amp;B reporter if one exists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.train_by_epochs">
+<span class="sig-name descname"><span class="pre">train_by_epochs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epochs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_round</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.train_by_epochs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.train_by_epochs" title="Link to this definition">¶</a></dt>
+<dd><p>Train locally for the specified number of epochs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#tuple" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>], <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/typing.html#typing.Union" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#bytes" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]]</span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>epochs (int): The number of epochs for local training.
+current_round (int | None, optional): The current FL round.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.</dt><dd><p>Loss is a dictionary of one or more losses that represent the different components of the loss.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.train_by_steps">
+<span class="sig-name descname"><span class="pre">train_by_steps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_round</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.train_by_steps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.train_by_steps" title="Link to this definition">¶</a></dt>
+<dd><p>Train locally for the specified number of steps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#tuple" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>], <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/typing.html#typing.Union" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#bytes" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]]</span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>steps (int): The number of steps to train locally.
+current_round (int | None, optional): The current FL round</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.</dt><dd><p>Loss is a dictionary of one or more losses that represent the different components of the loss.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.train_step">
+<span class="sig-name descname"><span class="pre">train_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.train_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.train_step" title="Link to this definition">¶</a></dt>
+<dd><p>Given a single batch of input and target data, generate predictions, compute loss, update parameters and
+optionally update metrics if they exist. (ie backprop on a single batch of data).
+Assumes self.model is in train mode already.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#tuple" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.TrainingLosses" title="fl4health.utils.losses.TrainingLosses"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrainingLosses</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]</span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>input (TorchInputType): The input to be fed into the model.
+target (TorchTargetType): The target corresponding to the input.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with</dt><dd><p>a dictionary of any predictions produced by the model.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.transform_gradients">
+<span class="sig-name descname"><span class="pre">transform_gradients</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">losses</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.transform_gradients"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.transform_gradients" title="Link to this definition">¶</a></dt>
+<dd><p>Hook function for model training only called after backwards pass but before
+optimizer step. Useful for transforming the gradients (such as with gradient
+clipping) before they are applied to the model weights.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>losses (TrainingLosses): The losses object from the train step</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.transform_target">
+<span class="sig-name descname"><span class="pre">transform_target</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.transform_target"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.transform_target" title="Link to this definition">¶</a></dt>
+<dd><p>Method that users can extend to specify an arbitrary transformation to apply to
+the target prior to the loss being computed. Defaults to the identity transform.</p>
+<p>Overriding this method can be useful in a variety of scenarios such as Self Supervised
+Learning where the target is derived from the input sample itself. For example, the FedSimClr
+reference implementation overrides this method to extract features from the target, which
+is a transformed version of the input image itself.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code> | <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>target (TorchTargetType): The target or label used to compute the loss.</p>
+</dd>
+<dt>Returns:</dt><dd><p>TorchTargetType: Identical to target.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.update_after_step">
+<span class="sig-name descname"><span class="pre">update_after_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_round</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.update_after_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.update_after_step" title="Link to this definition">¶</a></dt>
+<dd><p>Hook method called after local train step on client. step is an integer that represents
+the local training step that was most recently completed. For example, used by the APFL
+method to update the alpha value after a training a step. Also used by the MOON, FENDA
+and Ditto to update optimized beta value for MK-MMD loss after n steps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>step (int): The step number in local training that was most recently</dt><dd><p>completed. Resets only at the end of the round.</p>
+</dd>
+</dl>
+<p>current_round (int | None, optional): The current FL server round</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.update_after_train">
+<span class="sig-name descname"><span class="pre">update_after_train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.update_after_train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.update_after_train" title="Link to this definition">¶</a></dt>
+<dd><p>Hook method called after training with the number of local_steps performed over the FL round and
+the corresponding loss dictionary. For example, used by Scaffold to update the control variates
+after a local round of training. Also used by FedProx to update the current loss based on the loss
+returned during training. Also used by MOON and FENDA to save trained modules weights before
+aggregation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>local_steps (int): The number of steps so far in the round in the local</dt><dd><p>training.</p>
+</dd>
+</dl>
+<p>loss_dict (dict[str, float]): A dictionary of losses from local training.
+config (Config): The config from the server</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.update_before_epoch">
+<span class="sig-name descname"><span class="pre">update_before_epoch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epoch</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.update_before_epoch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.update_before_epoch" title="Link to this definition">¶</a></dt>
+<dd><p>Hook method called before local epoch on client. Only called if client
+is being trained by epochs (ie. using local_epochs key instead of local
+steps in the server config file)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>epoch (int): Integer representing the epoch about to begin</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.update_before_step">
+<span class="sig-name descname"><span class="pre">update_before_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_round</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.update_before_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.update_before_step" title="Link to this definition">¶</a></dt>
+<dd><p>Hook method called before local train step.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>step (int): The local training step that was most recently</dt><dd><p>completed. Resets only at the end of the round.</p>
+</dd>
+</dl>
+<p>current_round (int | None, optional): The current FL server round</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.update_before_train">
+<span class="sig-name descname"><span class="pre">update_before_train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current_server_round</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.update_before_train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.update_before_train" title="Link to this definition">¶</a></dt>
+<dd><p>Hook method called before training with the number of current server rounds performed.
+NOTE: This method is called immediately AFTER the aggregated parameters are received from the server.
+For example, used by MOON and FENDA to save global modules after aggregation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>current_server_round (int): The number of current server round.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.update_lr_schedulers">
+<span class="sig-name descname"><span class="pre">update_lr_schedulers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.update_lr_schedulers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.update_lr_schedulers" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Updates any schedulers that exist. Can be overridden to customize update logic based on client state</dt><dd><p>(ie self.total_steps).</p>
+</dd>
+<dt>Args:</dt><dd><p>step (int | None): If using local_steps, current step of this round. Otherwise None.
+epoch (int | None): If using local_epochs current epoch of this round. Otherwise None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.update_metric_manager">
+<span class="sig-name descname"><span class="pre">update_metric_manager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_manager</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.update_metric_manager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.update_metric_manager" title="Link to this definition">¶</a></dt>
+<dd><p>Updates a metric manager with the provided model predictions and
+targets. Can be overridden to modify pred and target inputs to the
+metric manager. This is useful in cases where the preds and targets
+needed to compute the loss are different than what is needed to compute
+metrics.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/constants.html#None" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>preds (TorchPredType): The output predictions from the model</dt><dd><p>returned by self.predict</p>
+</dd>
+<dt>target (TorchTargetType): The targets generated by the dataloader to</dt><dd><p>to evaluate the predictions with</p>
+</dd>
+</dl>
+<p>metric_manager (MetricManager): The metric manager to update</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.val_step">
+<span class="sig-name descname"><span class="pre">val_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.val_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.val_step" title="Link to this definition">¶</a></dt>
+<dd><p>Given input and target, compute loss, update loss and metrics.
+Assumes self.model is in eval mode already.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#tuple" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.EvaluationLosses" title="fl4health.utils.losses.EvaluationLosses"><code class="xref py py-class docutils literal notranslate"><span class="pre">EvaluationLosses</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]</span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Args:</dt><dd><p>input (TorchInputType): The input to be fed into the model.
+target (TorchTargetType): The target corresponding to the input.</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple[EvaluationLosses, TorchPredType]: The losses object from the val step along with
+a dictionary of the predictions produced by the model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_losses_in_metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.validate" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#tuple" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/typing.html#typing.Union" title="(in Python v3.9)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#bytes" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]]</span></p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Validate the current model on the entire validation</dt><dd><p>and potentially an entire test dataset if it has been defined.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics</dt><dd><p>from validation (and test if present).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="fl4health.clients.clipping_client.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">fl4health.clients.clipping_client module</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="fl4health.clients.apfl_client.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">fl4health.clients.apfl_client module</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2025, Vector AI Engineering
+            </div>
+            <!--
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+            -->
+          </div>
+          <div class="right-details">
+            <div class="icons">
+              <a class="muted-link " href="https://github.com/VectorInstitute/aieng-template-uv" aria-label="GitHub">
+                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>  # noqa: E501
+                </svg>
+            </a>
+              
+            </div>
+          </div>
+        </div>
+        <div class="footer-container" style="text-align: center;">
+          <div class="logo">
+            <a class="logo" href="https://vectorinstitute.ai/">
+              <span class="logo"></span>
+              <img alt="Logo of the Vector Institute" style="width:90px; max-width:90px;" src="../../_static/logos/vector_logo.png" />
+            </a>
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">fl4health.clients.basic_client module</a><ul>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient"><code class="docutils literal notranslate"><span class="pre">BasicClient</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.__init__"><code class="docutils literal notranslate"><span class="pre">BasicClient.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.compute_evaluation_loss"><code class="docutils literal notranslate"><span class="pre">BasicClient.compute_evaluation_loss()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.compute_loss_and_additional_losses"><code class="docutils literal notranslate"><span class="pre">BasicClient.compute_loss_and_additional_losses()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.compute_training_loss"><code class="docutils literal notranslate"><span class="pre">BasicClient.compute_training_loss()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.evaluate"><code class="docutils literal notranslate"><span class="pre">BasicClient.evaluate()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.fit"><code class="docutils literal notranslate"><span class="pre">BasicClient.fit()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.get_client_specific_logs"><code class="docutils literal notranslate"><span class="pre">BasicClient.get_client_specific_logs()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.get_client_specific_reports"><code class="docutils literal notranslate"><span class="pre">BasicClient.get_client_specific_reports()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.get_criterion"><code class="docutils literal notranslate"><span class="pre">BasicClient.get_criterion()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.get_data_loaders"><code class="docutils literal notranslate"><span class="pre">BasicClient.get_data_loaders()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.get_lr_scheduler"><code class="docutils literal notranslate"><span class="pre">BasicClient.get_lr_scheduler()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.get_model"><code class="docutils literal notranslate"><span class="pre">BasicClient.get_model()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.get_optimizer"><code class="docutils literal notranslate"><span class="pre">BasicClient.get_optimizer()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.get_parameter_exchanger"><code class="docutils literal notranslate"><span class="pre">BasicClient.get_parameter_exchanger()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.get_parameters"><code class="docutils literal notranslate"><span class="pre">BasicClient.get_parameters()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.get_properties"><code class="docutils literal notranslate"><span class="pre">BasicClient.get_properties()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.get_test_data_loader"><code class="docutils literal notranslate"><span class="pre">BasicClient.get_test_data_loader()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.initialize_all_model_weights"><code class="docutils literal notranslate"><span class="pre">BasicClient.initialize_all_model_weights()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.predict"><code class="docutils literal notranslate"><span class="pre">BasicClient.predict()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.process_config"><code class="docutils literal notranslate"><span class="pre">BasicClient.process_config()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.set_optimizer"><code class="docutils literal notranslate"><span class="pre">BasicClient.set_optimizer()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.set_parameters"><code class="docutils literal notranslate"><span class="pre">BasicClient.set_parameters()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.setup_client"><code class="docutils literal notranslate"><span class="pre">BasicClient.setup_client()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.shutdown"><code class="docutils literal notranslate"><span class="pre">BasicClient.shutdown()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.train_by_epochs"><code class="docutils literal notranslate"><span class="pre">BasicClient.train_by_epochs()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.train_by_steps"><code class="docutils literal notranslate"><span class="pre">BasicClient.train_by_steps()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.train_step"><code class="docutils literal notranslate"><span class="pre">BasicClient.train_step()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.transform_gradients"><code class="docutils literal notranslate"><span class="pre">BasicClient.transform_gradients()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.transform_target"><code class="docutils literal notranslate"><span class="pre">BasicClient.transform_target()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.update_after_step"><code class="docutils literal notranslate"><span class="pre">BasicClient.update_after_step()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.update_after_train"><code class="docutils literal notranslate"><span class="pre">BasicClient.update_after_train()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.update_before_epoch"><code class="docutils literal notranslate"><span class="pre">BasicClient.update_before_epoch()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.update_before_step"><code class="docutils literal notranslate"><span class="pre">BasicClient.update_before_step()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.update_before_train"><code class="docutils literal notranslate"><span class="pre">BasicClient.update_before_train()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.update_lr_schedulers"><code class="docutils literal notranslate"><span class="pre">BasicClient.update_lr_schedulers()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.update_metric_manager"><code class="docutils literal notranslate"><span class="pre">BasicClient.update_metric_manager()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.val_step"><code class="docutils literal notranslate"><span class="pre">BasicClient.val_step()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.basic_client.BasicClient.validate"><code class="docutils literal notranslate"><span class="pre">BasicClient.validate()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div></body>
+</html>
