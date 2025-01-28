@@ -22,6 +22,7 @@ from fl4health.utils.nnunet_utils import NnunetConfig
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 
 with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
     from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
     from nnunetv2.utilities.plans_handling.plans_handler import PlansManager
 

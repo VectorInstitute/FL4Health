@@ -135,9 +135,9 @@ class BaseServerCheckpointAndStateModule:
             checkpointed.
         """
         assert self.model is not None, "Hydrate model for checkpoint called but self.model is None"
-        assert (
-            self.parameter_exchanger is not None
-        ), "Hydrate model for checkpoint called but self.parameter_exchanger is None"
+        assert self.parameter_exchanger is not None, (
+            "Hydrate model for checkpoint called but self.parameter_exchanger is None"
+        )
         model_ndarrays = parameters_to_ndarrays(server_parameters)
         self.parameter_exchanger.pull_parameters(model_ndarrays, self.model)
 
@@ -194,7 +194,6 @@ class BaseServerCheckpointAndStateModule:
         """
         if self.state_checkpointer is not None:
             if self.state_checkpointer.checkpoint_exists(state_checkpoint_name):
-
                 return self.state_checkpointer.load_checkpoint(state_checkpoint_name)
             else:
                 log(INFO, "State checkpointer is defined but no state checkpoint exists.")
@@ -236,9 +235,9 @@ class PackingServerCheckpointAndAndStateModule(BaseServerCheckpointAndStateModul
                 checkpointer will save much more than just the model being trained. Defaults to None.
         """
         if parameter_exchanger is not None:
-            assert isinstance(
-                parameter_exchanger, FullParameterExchangerWithPacking
-            ), "Parameter exchanger must be of based type FullParameterExchangerWithPacking"
+            assert isinstance(parameter_exchanger, FullParameterExchangerWithPacking), (
+                "Parameter exchanger must be of based type FullParameterExchangerWithPacking"
+            )
         super().__init__(model, parameter_exchanger, model_checkpointers, state_checkpointer)
 
     def _hydrate_model_for_checkpointing(self, server_parameters: Parameters) -> None:
@@ -258,9 +257,9 @@ class PackingServerCheckpointAndAndStateModule(BaseServerCheckpointAndStateModul
             checkpointed.
         """
         assert self.model is not None, "Hydrate model for checkpoint called but self.model is None"
-        assert (
-            self.parameter_exchanger is not None
-        ), "Hydrate model for checkpoint called but self.parameter_exchanger is None"
+        assert self.parameter_exchanger is not None, (
+            "Hydrate model for checkpoint called but self.parameter_exchanger is None"
+        )
         packed_parameters = parameters_to_ndarrays(server_parameters)
         assert isinstance(self.parameter_exchanger, FullParameterExchangerWithPacking)
         # Use the unpacking function of the parameter exchange to handle extraction of model parameters
@@ -483,9 +482,9 @@ class OpacusServerCheckpointAndStateModule(BaseServerCheckpointAndStateModule):
         """
         if self.model_checkpointers is not None:
             for checkpointer in self.model_checkpointers:
-                assert isinstance(
-                    checkpointer, OpacusCheckpointer
-                ), "Provided checkpointers must have base class OpacusCheckpointer"
+                assert isinstance(checkpointer, OpacusCheckpointer), (
+                    "Provided checkpointers must have base class OpacusCheckpointer"
+                )
 
 
 class NnUnetServerCheckpointAndStateModule(BaseServerCheckpointAndStateModule):
@@ -572,6 +571,6 @@ class DpScaffoldServerCheckpointAndStateModule(ScaffoldServerCheckpointAndStateM
         """
         if self.model_checkpointers is not None:
             for checkpointer in self.model_checkpointers:
-                assert isinstance(
-                    checkpointer, OpacusCheckpointer
-                ), "Provided checkpointers must have base class OpacusCheckpointer"
+                assert isinstance(checkpointer, OpacusCheckpointer), (
+                    "Provided checkpointers must have base class OpacusCheckpointer"
+                )
