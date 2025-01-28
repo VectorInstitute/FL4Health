@@ -14,8 +14,16 @@ In order to build the docs, go into the `docs` directory and run the command
 below:
 
 ```sh
-make html
+cd docs/
+make serve
 ```
+
+The above command will build the docs as well as serve them locally, watching
+for changes and presenting them in real-time, which is great for development!
+
+Building the docs will take a couple of minutes, but once completed they will be
+served on `http://127.0.0.1:8000`. Enter this address in your browser of choice
+to see the docs.
 
 > [!NOTE]
 > We use sphinx to build our docs and api reference. Adjustments to style and
