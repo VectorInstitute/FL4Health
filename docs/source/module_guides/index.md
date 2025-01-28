@@ -1,3 +1,5 @@
+(module-guides)=
+
 # Module Guides
 
 ```{toctree}
