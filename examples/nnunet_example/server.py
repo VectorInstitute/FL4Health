@@ -4,9 +4,9 @@ import pickle
 from functools import partial
 from pathlib import Path
 
-import yaml
 import flwr as fl
 import torch
+import yaml
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager

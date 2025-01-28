@@ -2,11 +2,9 @@ import pickle
 from logging import INFO, getLogger
 from typing import Any
 
-
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Scalar
-
 from opacus import GradSampleModule
 
 from fl4health.checkpointing.checkpointer import FunctionTorchModuleCheckpointer
@@ -35,9 +33,9 @@ class OpacusCheckpointer(FunctionTorchModuleCheckpointer):
             loss (float): Loss value associated with the model to be used in checkpointing decisions.
             metrics (dict[str, Scalar]): Metrics associated with the model to be used in checkpointing decisions.
         """
-        assert isinstance(model, GradSampleModule), (
-            f"Model is of type: {type(model)}. This checkpointer need only be used to checkpoint Opacus modules"
-        )
+        assert isinstance(
+            model, GradSampleModule
+        ), f"Model is of type: {type(model)}. This checkpointer need only be used to checkpoint Opacus modules"
         comparison_score = self.checkpoint_score_function(loss, metrics)
         if self._should_checkpoint(comparison_score):
             log(
@@ -127,9 +125,9 @@ class LatestOpacusCheckpointer(OpacusCheckpointer):
         super().__init__(checkpoint_dir, checkpoint_name, latest_score_function, False)
 
     def maybe_checkpoint(self, model: GradSampleModule, loss: float, _: dict[str, Scalar]) -> None:
-        assert isinstance(model, GradSampleModule), (
-            f"Model is of type: {type(model)}. This checkpointer need only be used to checkpoint Opacus modules"
-        )
+        assert isinstance(
+            model, GradSampleModule
+        ), f"Model is of type: {type(model)}. This checkpointer need only be used to checkpoint Opacus modules"
         # Always checkpoint the latest model
         log(INFO, "Saving latest checkpoint with LatestTorchCheckpointer")
         self._extract_and_save_state(model)
@@ -157,9 +155,9 @@ class BestLossOpacusCheckpointer(OpacusCheckpointer):
         )
 
     def maybe_checkpoint(self, model: GradSampleModule, loss: float, metrics: dict[str, Scalar]) -> None:
-        assert isinstance(model, GradSampleModule), (
-            f"Model is of type: {type(model)}. This checkpointer need only be used to checkpoint Opacus modules"
-        )
+        assert isinstance(
+            model, GradSampleModule
+        ), f"Model is of type: {type(model)}. This checkpointer need only be used to checkpoint Opacus modules"
         # First we use the provided scoring function to produce a score
         comparison_score = self.checkpoint_score_function(loss, metrics)
         if self._should_checkpoint(comparison_score):

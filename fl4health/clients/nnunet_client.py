@@ -52,12 +52,12 @@ with warnings.catch_warnings():
     from nnunetv2.experiment_planning.experiment_planners.default_experiment_planner import ExperimentPlanner
     from nnunetv2.experiment_planning.plan_and_preprocess_api import extract_fingerprints, preprocess_dataset
     from nnunetv2.paths import nnUNet_preprocessed, nnUNet_raw
+    from nnunetv2.preprocessing.resampling.default_resampling import compute_new_shape
     from nnunetv2.training.dataloading.utils import unpack_dataset
     from nnunetv2.training.loss.deep_supervision import DeepSupervisionWrapper
     from nnunetv2.training.lr_scheduler.polylr import PolyLRScheduler
     from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
     from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
-    from nnunetv2.preprocessing.resampling.default_resampling import compute_new_shape
 
 # grpcio currently has a log spamming bug that seems to be triggered by multithreading/multiprocessing
 # Issue: https://github.com/grpc/grpc/issues/37642
@@ -658,9 +658,9 @@ class NnunetClient(BasicClient):
         loss_targets = prepare_loss_arg(target)
 
         # Ensure we have the same number of predictions and targets
-        assert isinstance(loss_preds, type(loss_targets)), (
-            f"Got unexpected types for preds and targets: {type(loss_preds)} and {type(loss_targets)}"
-        )
+        assert isinstance(
+            loss_preds, type(loss_targets)
+        ), f"Got unexpected types for preds and targets: {type(loss_preds)} and {type(loss_targets)}"
 
         if isinstance(loss_preds, list):
             assert len(loss_preds) == len(loss_targets), (
