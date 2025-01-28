@@ -38,8 +38,8 @@ extensions = [
 ]
 numpydoc_show_inherited_class_members = False
 numpydoc_show_class_members = False
-napoleon_google_docstring = False
-napoleon_numpy_docstring = True
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
 napoleon_include_init_with_doc = True
 add_module_names = False
 autosectionlabel_prefix_document = True
@@ -53,7 +53,7 @@ apidoc_separate_modules = True
 apidoc_extra_args = ["-f", "-M", "-T", "--implicit-namespaces"]
 
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/3.9/", None),
+    "python": ("https://docs.python.org/3.10/", None),
 }
 
 # Add any paths that contain templates here, relative to this directory.
