@@ -8,6 +8,7 @@
 installation_and_setup
 quickstart
 module_guides/index
+examples/index
 api
 
 ```
@@ -233,6 +234,9 @@ Get started with simple federated system in a few lines of code.
 
 - {ref}`module-guides`\
 Explore the various modules of `fl4health`!
+
+- {ref}`examples`\
+A wide-ranging set of FL example tasks.
 
 - {ref}`api-reference`\
 Thorough documentation of our classes.
