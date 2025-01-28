@@ -38,7 +38,6 @@ from fl4health.utils.nnunet_utils import (
     StreamToLogger,
     convert_deep_supervision_dict_to_list,
     convert_deep_supervision_list_to_dict,
-    get_dataset_n_voxels,
     nnUNetDataLoaderWrapper,
     prepare_loss_arg,
     use_default_signal_handlers,
@@ -58,6 +57,12 @@ with warnings.catch_warnings():
     from nnunetv2.training.lr_scheduler.polylr import PolyLRScheduler
     from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
     from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
+    from nnunetv2.preprocessing.resampling.default_resampling import compute_new_shape
+
+# grpcio currently has a log spamming bug that seems to be triggered by multithreading/multiprocessing
+# Issue: https://github.com/grpc/grpc/issues/37642
+# I tested versions 1.69.0 and 1.70.0 both exhibited log spams. Here is current workaround
+os.environ["GRPC_VERBOSITY"] = "NONE"
 
 
 class NnunetClient(BasicClient):
@@ -97,12 +102,12 @@ class NnunetClient(BasicClient):
             data_identifier (str | None, optional): The nnunet data identifier prefix to use. The final data
                 identifier will be {data_identifier}_config where 'config' is the nnunet config (eg. 2d, 3d_fullres,
                 etc.). If preprocessed data already exists can be used to specify which preprocessed data to use.
-                The default data_identifier prefix is the plans name used during training (see the plans_identifier
-                argument).
+                By default, the plans_identifier is used as the data_identifier.
             plans_identifier (str | None, optional): Specify what to save the client's local copy of the plans file
-                as. The client modifies the source plans json file sent from the server and makes a local copy.
-                If left as default None, the plans identifier will be set as 'FL_Dataset000_plansname' where 000 is
-                the dataset_id and plansname is the 'plans_name' value of the source plans file.
+                as. The client makes a local modified copy of the global source plans file sent by the server. If left
+                as default None, the plans identifier will be set as 'FL-plansname-000local' where 000 is the
+                dataset_id and plansname is the 'plans_name' value of the source plans file. The original plans will be
+                saved under the source_plans_name key in the modified plans file.
             compile (bool, optional): If True, the client will jit compile the pytorch model. This requires some
                 overhead time at the beginning of training to compile the model, but results in faster training times.
                 Defaults to True
@@ -272,19 +277,18 @@ class NnunetClient(BasicClient):
                     self.n_dataload_proc = 1
         os.environ["nnUNet_n_proc_DA"] = str(self.n_dataload_proc)
 
-        # The batchgenerators package used under the hood by the dataloaders creates an
-        # additional stream handler for the root logger Therefore all logs get printed
-        # twice. First we stop the flwr logger from passing logs to the root logger
-        # Issue: https://github.com/MIC-DKFZ/batchgenerators/issues/123
-        # PR: https://github.com/MIC-DKFZ/batchgenerators/pull/124
+        # The batchgenerators package used under the hood by the dataloaders creates an additional stream handler for
+        # the root logger Therefore all logs get printed twice. First stop flwr logger from propagating logs to root.
+        # Issue: https://github.com/MIC-DKFZ/batchgenerators/issues/123 PR:
+        # https://github.com/MIC-DKFZ/batchgenerators/pull/124
         FLOWER_LOGGER.propagate = False
 
-        # Redirect nnunet output to flwr logger at DEBUG level
+        # Redirect nnunet output to flwr logger at DEBUG level.
         with redirect_stdout(self.stream2debug):
             # Get the nnunet dataloader iterators. (Technically augmenter classes)
             train_loader, val_loader = self.nnunet_trainer.get_dataloaders()
 
-        # Now clear the root handler that was create and turn propagate back to true
+        # Now clear root handler that was created when get_dataloaders was called and reset flwr logger propagate
         root_logger = logging.getLogger()
         root_logger.handlers.clear()
         FLOWER_LOGGER.propagate = True
@@ -360,21 +364,36 @@ class NnunetClient(BasicClient):
 
     def create_plans(self, config: Config) -> dict[str, Any]:
         """
-        Modifies the provided plans file to work with the local client dataset
+        Modifies the provided plans file to work with the local client dataset and then saves it to disk. Requires the
+        local dataset_fingerprint.json to exist, the local dataset_name, plans_name, data_identifier and dataset_json.
+
+        The following fields are modified:
+            - plans_name
+            - dataset_name
+            - original_median_shape_after_transp
+            - original_median_spacing_after_transp
+            - configurations.{config}.data_identifier
+            - configurations.{config}.batch_size
+            - configurations.{config}.median_image_size_in_voxels
+            - foreground_intensity_properties_per_channel
 
         Args:
-            config (Config): The config provided by the server. Expects the
-                'nnunet_plans' key with a pickled dictionary as the value
+            config (Config): The config provided by the server. Expects the 'nnunet_plans' key with a pickled
+                dictionary as the value
 
         Returns:
             dict[str, Any]: The modified nnunet plans for the client
+
+        TODO:
+            - Make this an external function or part of another class and explicitly accept the required arguments
+              rather than using class attributes.
         """
-        # Get the nnunet plans specified by the server
+        # Get the source nnunet plans specified by the server
         plans = pickle.loads(narrow_dict_type(config, "nnunet_plans", bytes))
 
         # Change plans name.
         if self.plans_name is None:
-            self.plans_name = "FL_source-" + plans["plans_name"]
+            self.plans_name = "FL-" + plans["plans_name"] + f"-{self.dataset_id}local"
 
         plans["source_plans_name"] = plans["plans_name"]
         plans["plans_name"] = self.plans_name
@@ -382,39 +401,56 @@ class NnunetClient(BasicClient):
         # Change dataset name
         plans["dataset_name"] = self.dataset_name
 
+        # Load the dataset fingerprint for the local client dataset
+        fp_path = Path(nnUNet_preprocessed) / self.dataset_name / "dataset_fingerprint.json"
+        assert fp_path.exists(), "Could not find the dataset fingerprint file"
+        fp = load_json(fp_path)
+
+        # Change the foreground intensity properties per channel
+        plans["foreground_intensity_properties_per_channel"] = fp["foreground_intensity_properties_per_channel"]
+
+        # Compute the median image size and spacing of the local client dataset
+        median_shape = np.median(fp["shapes_after_crop"], axis=0)[plans["transpose_forward"]]
+        median_spacing = np.median(fp["spacings"], axis=0)[plans["transpose_forward"]]
+        plans["original_median_shape_after_transp"] = [int(round(i)) for i in median_shape]
+        plans["original_median_spacing_after_transp"] = [float(i) for i in median_spacing]
+
+        # Get the median shape after resampling to the desired/input voxel spacing
+        fullres_spacing = plans["configurations"]["3d_fullres"]["spacing"]
+        resampled_shapes = [
+            compute_new_shape(i, j, fullres_spacing) for i, j in zip(fp["shapes_after_crop"], fp["spacings"])
+        ]
+        resampled_median_shape = np.median(resampled_shapes, axis=0)[plans["transpose_forward"]].tolist()
+
         # Change data identifier
         if self.data_identifier is None:
             self.data_identifier = self.plans_name
 
-        # Get maximum number of voxels for a batch based on dataset size
-        # TODO: This function assumes the median image size of the local dataset is the
-        # same as the one from which the plans file was created. Better way to do it is
-        # to pass fingerprint as a param and compute median image size manually.
-        n_cases = self.dataset_json["numTraining"]
-        max_voxels = get_dataset_n_voxels(plans, n_cases) * 0.05  # Max is 5% of total
+        # To be consistent with nnunet, a batch cannot contain more than 5% of the voxels in the dataset.
+        max_voxels = np.prod(resampled_median_shape, dtype=np.float64) * self.dataset_json["numTraining"] * 0.05
 
         # Iterate through nnunet configs in plans file
         for c in plans["configurations"].keys():
             # Change the data identifier
             plans["configurations"][c]["data_identifier"] = self.data_identifier + "_" + c
-            # Ensure batch size is at least 2, then at most 5 percent of dataset
-            # TODO: Possible extension could be to increase batch size if possible
+
+            # Ensure batch size is at least 2 and at most 5 percent of dataset
+            # Otherwise we keep it the same as it affects the target VRAM consumption
             if "batch_size" in plans["configurations"][c].keys():
                 old_bs = plans["configurations"][c]["batch_size"]
-                bs_5percent = round(
-                    (  # Patch size is the input shape to the model
-                        max_voxels / np.prod(plans["configurations"][c]["patch_size"], dtype=np.float64)
-                    )
-                )
+                bs_5percent = round(max_voxels / np.prod(plans["configurations"][c]["patch_size"], dtype=np.float64))
                 new_bs = max(min(old_bs, bs_5percent), 2)
                 plans["configurations"][c]["batch_size"] = new_bs
             else:
-                log(
-                    WARNING,
-                    ("Did not find a 'batch_size' key in the nnunet plans " f"dict for nnunet config: {c}"),
-                )
+                log(WARNING, f"Did not find a 'batch_size' key in the nnunet plans dict for nnunet config: {c}")
 
-        # Can't run nnunet preprocessing without saving plans file
+            # Update median shape of resampled input images
+            if str(c).startswith("2d"):
+                plans["configurations"][c]["median_image_size_in_voxels"] = resampled_median_shape[1:]
+            else:
+                plans["configurations"][c]["median_image_size_in_voxels"] = resampled_median_shape
+
+        # Save local plans file
         os.makedirs(join(nnUNet_preprocessed, self.dataset_name), exist_ok=True)
         plans_save_path = join(nnUNet_preprocessed, self.dataset_name, self.plans_name + ".json")
         save_json(plans, plans_save_path, sort_keys=False)
@@ -483,7 +519,7 @@ class NnunetClient(BasicClient):
         elif self.verbose:
             log(
                 INFO,
-                "\tThis client instance has already extracted the dataset fingerprint. Skipping.",
+                "\tThis client has already extracted the dataset fingerprint during this session. Skipping.",
             )
 
         # Avoid extracting fingerprint multiple times when always_preprocess is true
@@ -622,9 +658,9 @@ class NnunetClient(BasicClient):
         loss_targets = prepare_loss_arg(target)
 
         # Ensure we have the same number of predictions and targets
-        assert isinstance(
-            loss_preds, type(loss_targets)
-        ), f"Got unexpected types for preds and targets: {type(loss_preds)} and {type(loss_targets)}"
+        assert isinstance(loss_preds, type(loss_targets)), (
+            f"Got unexpected types for preds and targets: {type(loss_preds)} and {type(loss_targets)}"
+        )
 
         if isinstance(loss_preds, list):
             assert len(loss_preds) == len(loss_targets), (
