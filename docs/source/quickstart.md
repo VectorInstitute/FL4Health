@@ -41,11 +41,6 @@ class CifarClient(BasicClient):
         train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
         return train_loader, val_loader
 
-    def get_test_data_loader(self, config: Config) -> DataLoader | None:
-        batch_size = narrow_dict_type(config, "batch_size", int)
-        test_loader, _ = load_cifar10_test_data(self.data_path, batch_size)
-        return test_loader
-
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
 
@@ -54,6 +49,18 @@ class CifarClient(BasicClient):
 
     def get_model(self, config: Config) -> nn.Module:
         return Net().to(self.device)
+
+
+def main(config):
+    parser = argparse.ArgumentParser(description="FL Client Main")
+    parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
+    args = parser.parse_args()
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    data_path = Path(args.dataset_path)
+    client = CifarClient(data_path, [Accuracy("accuracy")], device)
+    fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
+    client.shutdown()
 ```
 
 ### `server.py`
@@ -69,9 +76,6 @@ from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import Net
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
-from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.base_server import FlServer
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
@@ -102,15 +106,6 @@ def main(config: dict[str, Any]) -> None:
 
     # Initializing the model on the server side
     model = Net()
-    # To facilitate checkpointing
-    parameter_exchanger = FullParameterExchanger()
-    checkpointers = [
-        BestLossTorchModuleCheckpointer(config["checkpoint_path"], "best_model.pkl"),
-        LatestTorchModuleCheckpointer(config["checkpoint_path"], "latest_model.pkl"),
-    ]
-    checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
-        model=model, parameter_exchanger=parameter_exchanger, model_checkpointers=checkpointers
-    )
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -130,7 +125,6 @@ def main(config: dict[str, Any]) -> None:
         client_manager=SimpleClientManager(),
         fl_config=config,
         strategy=strategy,
-        checkpoint_and_state_module=checkpoint_and_state_module,
         accept_failures=False,
     )
 
