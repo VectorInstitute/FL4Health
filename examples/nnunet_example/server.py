@@ -1,20 +1,12 @@
 import argparse
 import json
 import pickle
-import warnings
 from functools import partial
 from pathlib import Path
 
-import yaml
-
-with warnings.catch_warnings():
-    # Silence deprecation warnings from sentry sdk due to flwr and wandb
-    # https://github.com/adap/flower/issues/4086
-    warnings.filterwarnings("ignore", category=DeprecationWarning)
-    import wandb  # noqa: F401
-
 import flwr as fl
 import torch
+import yaml
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager

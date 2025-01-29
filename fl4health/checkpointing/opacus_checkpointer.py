@@ -1,5 +1,5 @@
 import pickle
-from logging import INFO
+from logging import INFO, getLogger
 from typing import Any
 
 import torch.nn as nn
@@ -8,6 +8,12 @@ from flwr.common.typing import Scalar
 from opacus import GradSampleModule
 
 from fl4health.checkpointing.checkpointer import FunctionTorchModuleCheckpointer
+
+# It seems like the opacus package adds a handler to the root logger which causes double logs.
+# By clearing handlers on the root logger we prevent these double logs whilst also allowing the flwr logger to
+# propagate its logs to the root logger.
+root_logger = getLogger()
+root_logger.handlers.clear()
 
 
 class OpacusCheckpointer(FunctionTorchModuleCheckpointer):
