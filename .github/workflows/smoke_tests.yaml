@@ -52,6 +52,6 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          slug: VectorInstitute/aieng-template-uv
+          slug: VectorInstitute/FL4Health
           fail_ci_if_error: true
           verbose: true
