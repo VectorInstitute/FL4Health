@@ -487,12 +487,12 @@ following additional keys in the config sent from the server:</p>
 <li><p><strong>data_identifier</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The nnunet data identifier prefix to use. The final data
 identifier will be {data_identifier}_config where ‘config’ is the nnunet config (eg. 2d, 3d_fullres,
 etc.). If preprocessed data already exists can be used to specify which preprocessed data to use.
-The default data_identifier prefix is the plans name used during training (see the plans_identifier
-argument).</p></li>
+By default, the plans_identifier is used as the data_identifier.</p></li>
 <li><p><strong>plans_identifier</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Specify what to save the client’s local copy of the plans file
-as. The client modifies the source plans json file sent from the server and makes a local copy.
-If left as default None, the plans identifier will be set as ‘FL_Dataset000_plansname’ where 000 is
-the dataset_id and plansname is the ‘plans_name’ value of the source plans file.</p></li>
+as. The client makes a local modified copy of the global source plans file sent by the server. If left
+as default None, the plans identifier will be set as ‘FL-plansname-000local’ where 000 is the
+dataset_id and plansname is the ‘plans_name’ value of the source plans file. The original plans will be
+saved under the source_plans_name key in the modified plans file.</p></li>
 <li><p><strong>compile</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, the client will jit compile the pytorch model. This requires some
 overhead time at the beginning of training to compile the model, but results in faster training times.
 Defaults to True</p></li>
@@ -563,11 +563,25 @@ optional additional loss</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.nnunet_client.NnunetClient.create_plans">
 <span class="sig-name descname"><span class="pre">create_plans</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/nnunet_client.html#NnunetClient.create_plans"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.nnunet_client.NnunetClient.create_plans" title="Link to this definition">¶</a></dt>
-<dd><p>Modifies the provided plans file to work with the local client dataset</p>
+<dd><p>Modifies the provided plans file to work with the local client dataset and then saves it to disk. Requires the
+local dataset_fingerprint.json to exist, the local dataset_name, plans_name, data_identifier and dataset_json.</p>
+<dl class="simple">
+<dt>The following fields are modified:</dt><dd><ul class="simple">
+<li><p>plans_name</p></li>
+<li><p>dataset_name</p></li>
+<li><p>original_median_shape_after_transp</p></li>
+<li><p>original_median_spacing_after_transp</p></li>
+<li><p>configurations.{config}.data_identifier</p></li>
+<li><p>configurations.{config}.batch_size</p></li>
+<li><p>configurations.{config}.median_image_size_in_voxels</p></li>
+<li><p>foreground_intensity_properties_per_channel</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – The config provided by the server. Expects the
-‘nnunet_plans’ key with a pickled dictionary as the value</p>
+<dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – The config provided by the server. Expects the ‘nnunet_plans’ key with a pickled
+dictionary as the value</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The modified nnunet plans for the client</p>

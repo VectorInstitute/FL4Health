@@ -461,7 +461,7 @@
         <article role="main">
           <h1>Source code for fl4health.checkpointing.opacus_checkpointer</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">INFO</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">INFO</span><span class="p">,</span> <span class="n">getLogger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
@@ -470,6 +470,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">opacus</span><span class="w"> </span><span class="kn">import</span> <span class="n">GradSampleModule</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.checkpointer</span><span class="w"> </span><span class="kn">import</span> <span class="n">FunctionTorchModuleCheckpointer</span>
+
+<span class="c1"># It seems like the opacus package adds a handler to the root logger which causes double logs.</span>
+<span class="c1"># By clearing handlers on the root logger we prevent these double logs whilst also allowing the flwr logger to</span>
+<span class="c1"># propagate its logs to the root logger.</span>
+<span class="n">root_logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">()</span>
+<span class="n">root_logger</span><span class="o">.</span><span class="n">handlers</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="OpacusCheckpointer">

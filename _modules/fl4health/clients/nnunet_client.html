@@ -500,7 +500,6 @@
     <span class="n">StreamToLogger</span><span class="p">,</span>
     <span class="n">convert_deep_supervision_dict_to_list</span><span class="p">,</span>
     <span class="n">convert_deep_supervision_list_to_dict</span><span class="p">,</span>
-    <span class="n">get_dataset_n_voxels</span><span class="p">,</span>
     <span class="n">nnUNetDataLoaderWrapper</span><span class="p">,</span>
     <span class="n">prepare_loss_arg</span><span class="p">,</span>
     <span class="n">use_default_signal_handlers</span><span class="p">,</span>
@@ -515,11 +514,17 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">nnunetv2.experiment_planning.experiment_planners.default_experiment_planner</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentPlanner</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">nnunetv2.experiment_planning.plan_and_preprocess_api</span><span class="w"> </span><span class="kn">import</span> <span class="n">extract_fingerprints</span><span class="p">,</span> <span class="n">preprocess_dataset</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">nnunetv2.paths</span><span class="w"> </span><span class="kn">import</span> <span class="n">nnUNet_preprocessed</span><span class="p">,</span> <span class="n">nnUNet_raw</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">nnunetv2.preprocessing.resampling.default_resampling</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_new_shape</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">nnunetv2.training.dataloading.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">unpack_dataset</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">nnunetv2.training.loss.deep_supervision</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeepSupervisionWrapper</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">nnunetv2.training.lr_scheduler.polylr</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolyLRScheduler</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">nnunetv2.training.nnUNetTrainer.nnUNetTrainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">nnUNetTrainer</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">nnunetv2.utilities.dataset_name_id_conversion</span><span class="w"> </span><span class="kn">import</span> <span class="n">convert_id_to_dataset_name</span>
+
+<span class="c1"># grpcio currently has a log spamming bug that seems to be triggered by multithreading/multiprocessing</span>
+<span class="c1"># Issue: https://github.com/grpc/grpc/issues/37642</span>
+<span class="c1"># I tested versions 1.69.0 and 1.70.0 both exhibited log spams. Here is current workaround</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;GRPC_VERBOSITY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;NONE&quot;</span>
 
 
 <div class="viewcode-block" id="NnunetClient">
@@ -563,12 +568,12 @@
 <span class="sd">            data_identifier (str | None, optional): The nnunet data identifier prefix to use. The final data</span>
 <span class="sd">                identifier will be {data_identifier}_config where &#39;config&#39; is the nnunet config (eg. 2d, 3d_fullres,</span>
 <span class="sd">                etc.). If preprocessed data already exists can be used to specify which preprocessed data to use.</span>
-<span class="sd">                The default data_identifier prefix is the plans name used during training (see the plans_identifier</span>
-<span class="sd">                argument).</span>
+<span class="sd">                By default, the plans_identifier is used as the data_identifier.</span>
 <span class="sd">            plans_identifier (str | None, optional): Specify what to save the client&#39;s local copy of the plans file</span>
-<span class="sd">                as. The client modifies the source plans json file sent from the server and makes a local copy.</span>
-<span class="sd">                If left as default None, the plans identifier will be set as &#39;FL_Dataset000_plansname&#39; where 000 is</span>
-<span class="sd">                the dataset_id and plansname is the &#39;plans_name&#39; value of the source plans file.</span>
+<span class="sd">                as. The client makes a local modified copy of the global source plans file sent by the server. If left</span>
+<span class="sd">                as default None, the plans identifier will be set as &#39;FL-plansname-000local&#39; where 000 is the</span>
+<span class="sd">                dataset_id and plansname is the &#39;plans_name&#39; value of the source plans file. The original plans will be</span>
+<span class="sd">                saved under the source_plans_name key in the modified plans file.</span>
 <span class="sd">            compile (bool, optional): If True, the client will jit compile the pytorch model. This requires some</span>
 <span class="sd">                overhead time at the beginning of training to compile the model, but results in faster training times.</span>
 <span class="sd">                Defaults to True</span>
@@ -742,19 +747,18 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">n_dataload_proc</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;nnUNet_n_proc_DA&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_dataload_proc</span><span class="p">)</span>
 
-        <span class="c1"># The batchgenerators package used under the hood by the dataloaders creates an</span>
-        <span class="c1"># additional stream handler for the root logger Therefore all logs get printed</span>
-        <span class="c1"># twice. First we stop the flwr logger from passing logs to the root logger</span>
-        <span class="c1"># Issue: https://github.com/MIC-DKFZ/batchgenerators/issues/123</span>
-        <span class="c1"># PR: https://github.com/MIC-DKFZ/batchgenerators/pull/124</span>
+        <span class="c1"># The batchgenerators package used under the hood by the dataloaders creates an additional stream handler for</span>
+        <span class="c1"># the root logger Therefore all logs get printed twice. First stop flwr logger from propagating logs to root.</span>
+        <span class="c1"># Issue: https://github.com/MIC-DKFZ/batchgenerators/issues/123 PR:</span>
+        <span class="c1"># https://github.com/MIC-DKFZ/batchgenerators/pull/124</span>
         <span class="n">FLOWER_LOGGER</span><span class="o">.</span><span class="n">propagate</span> <span class="o">=</span> <span class="kc">False</span>
 
-        <span class="c1"># Redirect nnunet output to flwr logger at DEBUG level</span>
+        <span class="c1"># Redirect nnunet output to flwr logger at DEBUG level.</span>
         <span class="k">with</span> <span class="n">redirect_stdout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stream2debug</span><span class="p">):</span>
             <span class="c1"># Get the nnunet dataloader iterators. (Technically augmenter classes)</span>
             <span class="n">train_loader</span><span class="p">,</span> <span class="n">val_loader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_trainer</span><span class="o">.</span><span class="n">get_dataloaders</span><span class="p">()</span>
 
-        <span class="c1"># Now clear the root handler that was create and turn propagate back to true</span>
+        <span class="c1"># Now clear root handler that was created when get_dataloaders was called and reset flwr logger propagate</span>
         <span class="n">root_logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span>
         <span class="n">root_logger</span><span class="o">.</span><span class="n">handlers</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="n">FLOWER_LOGGER</span><span class="o">.</span><span class="n">propagate</span> <span class="o">=</span> <span class="kc">True</span>
@@ -844,21 +848,36 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.create_plans">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">create_plans</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Modifies the provided plans file to work with the local client dataset</span>
+<span class="sd">        Modifies the provided plans file to work with the local client dataset and then saves it to disk. Requires the</span>
+<span class="sd">        local dataset_fingerprint.json to exist, the local dataset_name, plans_name, data_identifier and dataset_json.</span>
+
+<span class="sd">        The following fields are modified:</span>
+<span class="sd">            - plans_name</span>
+<span class="sd">            - dataset_name</span>
+<span class="sd">            - original_median_shape_after_transp</span>
+<span class="sd">            - original_median_spacing_after_transp</span>
+<span class="sd">            - configurations.{config}.data_identifier</span>
+<span class="sd">            - configurations.{config}.batch_size</span>
+<span class="sd">            - configurations.{config}.median_image_size_in_voxels</span>
+<span class="sd">            - foreground_intensity_properties_per_channel</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            config (Config): The config provided by the server. Expects the</span>
-<span class="sd">                &#39;nnunet_plans&#39; key with a pickled dictionary as the value</span>
+<span class="sd">            config (Config): The config provided by the server. Expects the &#39;nnunet_plans&#39; key with a pickled</span>
+<span class="sd">                dictionary as the value</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            dict[str, Any]: The modified nnunet plans for the client</span>
+
+<span class="sd">        TODO:</span>
+<span class="sd">            - Make this an external function or part of another class and explicitly accept the required arguments</span>
+<span class="sd">              rather than using class attributes.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Get the nnunet plans specified by the server</span>
+        <span class="c1"># Get the source nnunet plans specified by the server</span>
         <span class="n">plans</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">narrow_dict_type</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;nnunet_plans&quot;</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">))</span>
 
         <span class="c1"># Change plans name.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">plans_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">plans_name</span> <span class="o">=</span> <span class="s2">&quot;FL_source-&quot;</span> <span class="o">+</span> <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;plans_name&quot;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plans_name</span> <span class="o">=</span> <span class="s2">&quot;FL-&quot;</span> <span class="o">+</span> <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;plans_name&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_id</span><span class="si">}</span><span class="s2">local&quot;</span>
 
         <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;source_plans_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;plans_name&quot;</span><span class="p">]</span>
         <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;plans_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plans_name</span>
@@ -866,39 +885,56 @@
         <span class="c1"># Change dataset name</span>
         <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;dataset_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span>
 
+        <span class="c1"># Load the dataset fingerprint for the local client dataset</span>
+        <span class="n">fp_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">nnUNet_preprocessed</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span> <span class="o">/</span> <span class="s2">&quot;dataset_fingerprint.json&quot;</span>
+        <span class="k">assert</span> <span class="n">fp_path</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span> <span class="s2">&quot;Could not find the dataset fingerprint file&quot;</span>
+        <span class="n">fp</span> <span class="o">=</span> <span class="n">load_json</span><span class="p">(</span><span class="n">fp_path</span><span class="p">)</span>
+
+        <span class="c1"># Change the foreground intensity properties per channel</span>
+        <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;foreground_intensity_properties_per_channel&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fp</span><span class="p">[</span><span class="s2">&quot;foreground_intensity_properties_per_channel&quot;</span><span class="p">]</span>
+
+        <span class="c1"># Compute the median image size and spacing of the local client dataset</span>
+        <span class="n">median_shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">fp</span><span class="p">[</span><span class="s2">&quot;shapes_after_crop&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="n">plans</span><span class="p">[</span><span class="s2">&quot;transpose_forward&quot;</span><span class="p">]]</span>
+        <span class="n">median_spacing</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">fp</span><span class="p">[</span><span class="s2">&quot;spacings&quot;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="n">plans</span><span class="p">[</span><span class="s2">&quot;transpose_forward&quot;</span><span class="p">]]</span>
+        <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;original_median_shape_after_transp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">median_shape</span><span class="p">]</span>
+        <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;original_median_spacing_after_transp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">median_spacing</span><span class="p">]</span>
+
+        <span class="c1"># Get the median shape after resampling to the desired/input voxel spacing</span>
+        <span class="n">fullres_spacing</span> <span class="o">=</span> <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;configurations&quot;</span><span class="p">][</span><span class="s2">&quot;3d_fullres&quot;</span><span class="p">][</span><span class="s2">&quot;spacing&quot;</span><span class="p">]</span>
+        <span class="n">resampled_shapes</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">compute_new_shape</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">fullres_spacing</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">fp</span><span class="p">[</span><span class="s2">&quot;shapes_after_crop&quot;</span><span class="p">],</span> <span class="n">fp</span><span class="p">[</span><span class="s2">&quot;spacings&quot;</span><span class="p">])</span>
+        <span class="p">]</span>
+        <span class="n">resampled_median_shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">resampled_shapes</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="n">plans</span><span class="p">[</span><span class="s2">&quot;transpose_forward&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
         <span class="c1"># Change data identifier</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_identifier</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">data_identifier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plans_name</span>
 
-        <span class="c1"># Get maximum number of voxels for a batch based on dataset size</span>
-        <span class="c1"># TODO: This function assumes the median image size of the local dataset is the</span>
-        <span class="c1"># same as the one from which the plans file was created. Better way to do it is</span>
-        <span class="c1"># to pass fingerprint as a param and compute median image size manually.</span>
-        <span class="n">n_cases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_json</span><span class="p">[</span><span class="s2">&quot;numTraining&quot;</span><span class="p">]</span>
-        <span class="n">max_voxels</span> <span class="o">=</span> <span class="n">get_dataset_n_voxels</span><span class="p">(</span><span class="n">plans</span><span class="p">,</span> <span class="n">n_cases</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.05</span>  <span class="c1"># Max is 5% of total</span>
+        <span class="c1"># To be consistent with nnunet, a batch cannot contain more than 5% of the voxels in the dataset.</span>
+        <span class="n">max_voxels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">resampled_median_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_json</span><span class="p">[</span><span class="s2">&quot;numTraining&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">0.05</span>
 
         <span class="c1"># Iterate through nnunet configs in plans file</span>
         <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;configurations&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="c1"># Change the data identifier</span>
             <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;configurations&quot;</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="s2">&quot;data_identifier&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_identifier</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="n">c</span>
-            <span class="c1"># Ensure batch size is at least 2, then at most 5 percent of dataset</span>
-            <span class="c1"># TODO: Possible extension could be to increase batch size if possible</span>
+
+            <span class="c1"># Ensure batch size is at least 2 and at most 5 percent of dataset</span>
+            <span class="c1"># Otherwise we keep it the same as it affects the target VRAM consumption</span>
             <span class="k">if</span> <span class="s2">&quot;batch_size&quot;</span> <span class="ow">in</span> <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;configurations&quot;</span><span class="p">][</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
                 <span class="n">old_bs</span> <span class="o">=</span> <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;configurations&quot;</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="s2">&quot;batch_size&quot;</span><span class="p">]</span>
-                <span class="n">bs_5percent</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span>
-                    <span class="p">(</span>  <span class="c1"># Patch size is the input shape to the model</span>
-                        <span class="n">max_voxels</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">plans</span><span class="p">[</span><span class="s2">&quot;configurations&quot;</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="s2">&quot;patch_size&quot;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
-                    <span class="p">)</span>
-                <span class="p">)</span>
+                <span class="n">bs_5percent</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">max_voxels</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">plans</span><span class="p">[</span><span class="s2">&quot;configurations&quot;</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="s2">&quot;patch_size&quot;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">))</span>
                 <span class="n">new_bs</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">old_bs</span><span class="p">,</span> <span class="n">bs_5percent</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
                 <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;configurations&quot;</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="s2">&quot;batch_size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_bs</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">log</span><span class="p">(</span>
-                    <span class="n">WARNING</span><span class="p">,</span>
-                    <span class="p">(</span><span class="s2">&quot;Did not find a &#39;batch_size&#39; key in the nnunet plans &quot;</span> <span class="sa">f</span><span class="s2">&quot;dict for nnunet config: </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">),</span>
-                <span class="p">)</span>
+                <span class="n">log</span><span class="p">(</span><span class="n">WARNING</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Did not find a &#39;batch_size&#39; key in the nnunet plans dict for nnunet config: </span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-        <span class="c1"># Can&#39;t run nnunet preprocessing without saving plans file</span>
+            <span class="c1"># Update median shape of resampled input images</span>
+            <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;2d&quot;</span><span class="p">):</span>
+                <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;configurations&quot;</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="s2">&quot;median_image_size_in_voxels&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">resampled_median_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;configurations&quot;</span><span class="p">][</span><span class="n">c</span><span class="p">][</span><span class="s2">&quot;median_image_size_in_voxels&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">resampled_median_shape</span>
+
+        <span class="c1"># Save local plans file</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">nnUNet_preprocessed</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">plans_save_path</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">nnUNet_preprocessed</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">plans_name</span> <span class="o">+</span> <span class="s2">&quot;.json&quot;</span><span class="p">)</span>
         <span class="n">save_json</span><span class="p">(</span><span class="n">plans</span><span class="p">,</span> <span class="n">plans_save_path</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -968,7 +1004,7 @@
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
             <span class="n">log</span><span class="p">(</span>
                 <span class="n">INFO</span><span class="p">,</span>
-                <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">This client instance has already extracted the dataset fingerprint. Skipping.&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">This client has already extracted the dataset fingerprint during this session. Skipping.&quot;</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="c1"># Avoid extracting fingerprint multiple times when always_preprocess is true</span>
