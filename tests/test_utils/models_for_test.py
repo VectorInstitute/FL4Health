@@ -1,8 +1,8 @@
-from typing import List, Optional, Tuple, Union
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode, ParallelSplitHeadModule
 
 
 class LinearModel(nn.Module):
@@ -34,6 +34,18 @@ class ToyConvNet(nn.Module):
             self.bn1 = nn.BatchNorm1d(10)
 
 
+class ToyConvNet_2(nn.Module):
+    def __init__(self, include_bn: bool = False) -> None:
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 8, 5, bias=False)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(8, 32, 5, bias=False)
+        self.fc1 = nn.Linear(32 * 4 * 4, 120, bias=False)
+        self.fc2 = nn.Linear(240, 64, bias=False)
+        if include_bn:
+            self.bn1 = nn.BatchNorm1d(10)
+
+
 class SmallCnn(nn.Module):
     def __init__(self) -> None:
         super().__init__()
@@ -46,6 +58,106 @@ class SmallCnn(nn.Module):
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
         x = x.view(-1, 16 * 4 * 4)
+        x = F.relu(self.fc1(x))
+        return x
+
+
+class HierarchicalCnn(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.h1_layer1 = nn.ModuleDict(
+            {
+                "h2_layer1": nn.ModuleDict(
+                    {
+                        "conv": nn.Conv2d(in_channels=1, out_channels=2, kernel_size=3, padding=1),
+                        "pool": nn.MaxPool2d(kernel_size=2, stride=2),
+                    }
+                ),
+                "h2_layer2": nn.ModuleDict(
+                    {
+                        "conv": nn.Conv2d(in_channels=2, out_channels=4, kernel_size=3, padding=1),
+                        "pool": nn.MaxPool2d(kernel_size=2, stride=2),
+                    }
+                ),
+            }
+        )
+
+        self.h1_layer2 = nn.ModuleDict(
+            {
+                "h2_layer1": nn.ModuleDict(
+                    {
+                        "conv": nn.Conv2d(in_channels=4, out_channels=8, kernel_size=3, padding=1),
+                        "pool": nn.MaxPool2d(kernel_size=2, stride=2),
+                    }
+                ),
+                "h2_layer2": nn.ModuleDict(
+                    {
+                        "conv": nn.Conv2d(in_channels=8, out_channels=16, kernel_size=3, padding=1),
+                        "pool": nn.MaxPool2d(kernel_size=2, stride=2),
+                    }
+                ),
+            }
+        )
+
+        self.classifier = nn.ModuleDict(
+            {"fc": nn.Linear(1 * 4 * 4, 10), "relu": nn.ReLU()}  # Assuming input image size is 64x64
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.h1_layer1["h2_layer1"]["conv"](x)
+        x = self.h1_layer1["h2_layer1"]["pool"](x)
+        x = self.h1_layer1["h2_layer2"]["conv"](x)
+        x = self.h1_layer1["h2_layer2"]["pool"](x)
+
+        x = self.h1_layer2["h2_layer1"]["conv"](x)
+        x = self.h1_layer2["h2_layer1"]["pool"](x)
+        x = self.h1_layer2["h2_layer2"]["conv"](x)
+        x = self.h1_layer2["h2_layer2"]["pool"](x)
+
+        x = torch.flatten(x, 1)
+        x = self.classifier["fc"](x)
+        x = self.classifier["relu"](x)
+
+        return x
+
+
+class FeatureCnn(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 6, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 16 * 4 * 4)
+        x = F.relu(x)
+        x = x.flatten(start_dim=1)
+        return x
+
+
+class HeadCnn(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.fc1 = nn.Linear(16 * 4 * 4, 32)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.fc1(x)
+        return x
+
+
+class FendaHeadCnn(ParallelSplitHeadModule):
+    def __init__(self, join_mode: ParallelFeatureJoinMode = ParallelFeatureJoinMode.CONCATENATE) -> None:
+        super().__init__(join_mode)
+        self.fc1 = nn.Linear(16 * 4 * 4 * 2, 32)
+
+    def parallel_output_join(self, local_x: torch.Tensor, global_x: torch.Tensor) -> torch.Tensor:
+        # Assuming tensors are "batch first" so join column-wise
+        return torch.concat([local_x, global_x], dim=1)
+
+    def head_forward(self, x: torch.Tensor) -> torch.Tensor:
         x = F.relu(self.fc1(x))
         return x
 
@@ -75,15 +187,15 @@ class UNet3D(nn.Module):
         dimensions: int = 3,
         num_encoding_blocks: int = 3,
         out_channels_first_layer: int = 8,
-        normalization: Optional[str] = "batch",
+        normalization: str | None = "batch",
         pooling_type: str = "max",
         upsampling_type: str = "linear",
         preactivation: bool = False,
         residual: bool = False,
         padding: int = 1,
         padding_mode: str = "zeros",
-        activation: Optional[str] = "PReLU",
-        initial_dilation: Optional[int] = None,
+        activation: str | None = "PReLU",
+        initial_dilation: int | None = None,
         dropout: float = 0,
         monte_carlo_dropout: float = 0,
     ):
@@ -190,13 +302,13 @@ class ConvolutionalBlock(nn.Module):
         dimensions: int,
         in_channels: int,
         out_channels: int,
-        normalization: Optional[str] = None,
+        normalization: str | None = None,
         kernel_size: int = 3,
-        activation: Optional[str] = "ReLU",
-        preactivation: Optional[bool] = False,
+        activation: str | None = "ReLU",
+        preactivation: bool | None = False,
         padding: int = 0,
         padding_mode: str = "zeros",
-        dilation: Optional[int] = None,
+        dilation: int | None = None,
         dropout: float = 0,
     ):
         super().__init__()
@@ -259,7 +371,7 @@ class ConvolutionalBlock(nn.Module):
         return self.block(x)
 
     @staticmethod
-    def add_if_not_none(module_list: nn.ModuleList, module: Optional[nn.Module]) -> None:
+    def add_if_not_none(module_list: nn.ModuleList, module: nn.Module | None) -> None:
         if module is not None:
             module_list.append(module)
 
@@ -277,13 +389,13 @@ class Decoder(nn.Module):
         dimensions: int,
         upsampling_type: str,
         num_decoding_blocks: int,
-        normalization: Optional[str],
+        normalization: str | None,
         preactivation: bool = False,
         residual: bool = False,
         padding: int = 0,
         padding_mode: str = "zeros",
-        activation: Optional[str] = "ReLU",
-        initial_dilation: Optional[int] = None,
+        activation: str | None = "ReLU",
+        initial_dilation: int | None = None,
         dropout: float = 0,
     ):
         super().__init__()
@@ -309,7 +421,7 @@ class Decoder(nn.Module):
             if self.dilation is not None:
                 self.dilation //= 2
 
-    def forward(self, skip_connections: List[torch.Tensor], x: torch.Tensor) -> torch.Tensor:
+    def forward(self, skip_connections: list[torch.Tensor], x: torch.Tensor) -> torch.Tensor:
         zipped = zip(reversed(skip_connections), self.decoding_blocks)
         for skip_connection, decoding_block in zipped:
             x = decoding_block(skip_connection, x)
@@ -322,13 +434,13 @@ class DecodingBlock(nn.Module):
         in_channels_skip_connection: int,
         dimensions: int,
         upsampling_type: str,
-        normalization: Optional[str],
+        normalization: str | None,
         preactivation: bool = True,
         residual: bool = False,
         padding: int = 0,
         padding_mode: str = "zeros",
-        activation: Optional[str] = "ReLU",
-        dilation: Optional[int] = None,
+        activation: str | None = "ReLU",
+        dilation: int | None = None,
         dropout: float = 0,
     ):
         super().__init__()
@@ -440,13 +552,13 @@ class Encoder(nn.Module):
         dimensions: int,
         pooling_type: str,
         num_encoding_blocks: int,
-        normalization: Optional[str],
+        normalization: str | None,
         preactivation: bool = False,
         residual: bool = False,
         padding: int = 0,
         padding_mode: str = "zeros",
-        activation: Optional[str] = "ReLU",
-        initial_dilation: Optional[int] = None,
+        activation: str | None = "ReLU",
+        initial_dilation: int | None = None,
         dropout: float = 0,
     ):
         super().__init__()
@@ -481,11 +593,11 @@ class Encoder(nn.Module):
             if self.dilation is not None:
                 self.dilation *= 2
 
-    def forward(self, x: torch.Tensor) -> Tuple[List[torch.Tensor], torch.Tensor]:
-        skip_connections: List[torch.Tensor] = []
+    def forward(self, x: torch.Tensor) -> tuple[list[torch.Tensor], torch.Tensor]:
+        skip_connections: list[torch.Tensor] = []
         for encoding_block in self.encoding_blocks:
-            x, skip_connnection = encoding_block(x)
-            skip_connections.append(skip_connnection)
+            x, skip_connection = encoding_block(x)
+            skip_connections.append(skip_connection)
         return skip_connections, x
 
     @property
@@ -499,21 +611,21 @@ class EncodingBlock(nn.Module):
         in_channels: int,
         out_channels_first: int,
         dimensions: int,
-        normalization: Optional[str],
-        pooling_type: Optional[str],
-        preactivation: Optional[bool] = False,
+        normalization: str | None,
+        pooling_type: str | None,
+        preactivation: bool | None = False,
         is_first_block: bool = False,
         residual: bool = False,
         padding: int = 0,
         padding_mode: str = "zeros",
-        activation: Optional[str] = "ReLU",
-        dilation: Optional[int] = None,
+        activation: str | None = "ReLU",
+        dilation: int | None = None,
         dropout: float = 0,
     ):
         super().__init__()
 
-        self.preactivation: Optional[bool] = preactivation
-        self.normalization: Optional[str] = normalization
+        self.preactivation: bool | None = preactivation
+        self.normalization: str | None = normalization
 
         self.residual = residual
 
@@ -567,7 +679,7 @@ class EncodingBlock(nn.Module):
         if pooling_type is not None:
             self.downsample = get_downsampling_layer(dimensions, pooling_type)
 
-    def forward(self, x: torch.Tensor) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+    def forward(self, x: torch.Tensor) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
         if self.residual:
             connection = self.conv_residual(x)
             x = self.conv1(x)
@@ -592,3 +704,126 @@ def get_downsampling_layer(dimensions: int, pooling_type: str, kernel_size: int 
     class_name = "{}Pool{}d".format(pooling_type.capitalize(), dimensions)
     class_ = getattr(nn, class_name)
     return class_(kernel_size)
+
+
+# Autoencoder: encoder and decoder units
+class VariationalEncoder(nn.Module):
+    def __init__(self, embedding_size: int = 2, condition_vector_size: int | None = None) -> None:
+        super().__init__()
+        if condition_vector_size is not None:
+            self.fc_mu = nn.Linear(100 + condition_vector_size, embedding_size)
+            self.fc_logvar = nn.Linear(100 + condition_vector_size, embedding_size)
+        else:
+            self.fc_mu = nn.Linear(100, embedding_size)
+            self.fc_logvar = nn.Linear(100, embedding_size)
+
+    def forward(self, x: torch.Tensor, condition: torch.Tensor | None = None) -> tuple[torch.Tensor, torch.Tensor]:
+        if condition is not None:
+            return self.fc_mu(torch.cat((x, condition), dim=-1)), self.fc_logvar(torch.cat((x, condition), dim=-1))
+        return self.fc_mu(x), self.fc_logvar(x)
+
+
+class VariationalDecoder(nn.Module):
+    def __init__(self, embedding_size: int = 2, condition_vector_size: int | None = None) -> None:
+        super().__init__()
+        if condition_vector_size is not None:
+            self.linear = nn.Linear(embedding_size + condition_vector_size, 100)
+        else:
+            self.linear = nn.Linear(embedding_size, 100)
+
+    def forward(self, x: torch.Tensor, condition: torch.Tensor | None = None) -> torch.Tensor:
+        if condition is not None:
+            return self.linear(torch.cat((x, condition), dim=-1))
+        return self.linear(x)
+
+
+class ConstantConvNet(nn.Module):
+    def __init__(self, constants: list[float]) -> None:
+        assert len(constants) == 4
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 6, 5, bias=False)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5, bias=False)
+        self.fc1 = nn.Linear(16 * 4 * 4, 16, bias=False)
+        self.fc2 = nn.Linear(16, 4, bias=False)
+
+        nn.init.constant_(self.conv1.weight, val=constants[0])
+        nn.init.constant_(self.conv2.weight, val=constants[1])
+
+        nn.init.constant_(self.fc1.weight, val=constants[2])
+        nn.init.constant_(self.fc2.weight, val=constants[3])
+
+
+class MnistNetWithBnAndFrozen(nn.Module):
+    def __init__(self, freeze_cnn_layer: bool = True) -> None:
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 8, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(8, 16, 5)
+        self.bn = nn.BatchNorm2d(num_features=16)
+        self.fc1 = nn.Linear(16 * 4 * 4, 10)
+
+        if freeze_cnn_layer:
+            layer_to_freeze = self._modules["conv1"]
+            assert layer_to_freeze is not None
+            layer_to_freeze.requires_grad_(False)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = self.bn(x)
+        x = x.view(-1, 16 * 4 * 4)
+        x = F.relu(self.fc1(x))
+        return x
+
+
+class CompositeConvNet(nn.Module):
+    def __init__(self) -> None:
+        super(CompositeConvNet, self).__init__()
+
+        self.conv1d = nn.Conv1d(in_channels=3, out_channels=16, kernel_size=3)
+        self.bn1d = nn.BatchNorm1d(16)
+
+        self.conv2d = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3)
+        self.bn2d = nn.BatchNorm2d(16)
+
+        self.conv3d = nn.Conv3d(in_channels=3, out_channels=16, kernel_size=3)
+        self.bn3d = nn.BatchNorm3d(16)
+
+        self.conv_transpose1d = nn.ConvTranspose1d(in_channels=16, out_channels=8, kernel_size=3)
+        self.conv_transpose2d = nn.ConvTranspose2d(in_channels=16, out_channels=8, kernel_size=3)
+        self.conv_transpose3d = nn.ConvTranspose3d(in_channels=16, out_channels=8, kernel_size=3)
+
+        self.linear = nn.Linear(1880, 10)
+
+        # LayerNorm applied to 2D shape (batch_size, features)
+        self.layer_norm = nn.LayerNorm(10)
+
+    def forward(self, x1d: torch.Tensor, x2d: torch.Tensor, x3d: torch.Tensor) -> torch.Tensor:
+        x1d = F.relu(self.conv1d(x1d))
+        x1d = self.bn1d(x1d)
+        x1d = F.relu(self.conv_transpose1d(x1d))
+
+        x2d = F.relu(self.conv2d(x2d))
+        x2d = self.bn2d(x2d)
+        x2d = F.relu(self.conv_transpose2d(x2d))
+
+        x3d = F.relu(self.conv3d(x3d))
+        x3d = self.bn3d(x3d)
+        x3d = F.relu(self.conv_transpose3d(x3d))
+
+        x_flat = torch.cat([x1d.flatten(1), x2d.flatten(1), x3d.flatten(1)], dim=1)
+        x_flat = self.linear(x_flat)
+
+        x_flat = self.layer_norm(x_flat)
+
+        return x_flat
+
+
+class ModelWrapper(nn.Module):
+    def __init__(self, module: nn.Module) -> None:
+        super().__init__()
+        self.model = module
+
+    def forward(self, *args: torch.Tensor) -> torch.Tensor:
+        return self.model.forward(*args)

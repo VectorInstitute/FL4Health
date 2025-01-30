@@ -1,0 +1,6 @@
+# For delirium
+n_server_rounds: 50 # The number of rounds to run FL
+n_clients: 6 # The number of clients in the FL experiment
+local_steps: 60 # The number of local training steps to perform. [calculated from the approximation formula in flamby]
+# 41
+batch_size: 64 # The batch size for client training [not used here]

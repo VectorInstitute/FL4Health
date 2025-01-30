@@ -28,7 +28,7 @@ def test_adaptive_clipping_convergence() -> None:
         initial_clipping_bound=initial_clipping_bound,
         clipping_learning_rate=clipping_learning_rate,
         clipping_quantile=0.5,
-        clipping_noise_mutliplier=clipping_noise_multiplier,
+        clipping_noise_multiplier=clipping_noise_multiplier,
     )
     clipping_values = [strategy.clipping_bound]
     for _ in range(200):
@@ -46,7 +46,7 @@ def test_adaptive_clipping_convergence() -> None:
         initial_clipping_bound=initial_clipping_bound,
         clipping_learning_rate=clipping_learning_rate,
         clipping_quantile=0.7,
-        clipping_noise_mutliplier=clipping_noise_multiplier,
+        clipping_noise_multiplier=clipping_noise_multiplier,
     )
 
     clipping_values = [strategy.clipping_bound]

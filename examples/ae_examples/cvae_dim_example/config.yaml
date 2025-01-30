@@ -1,0 +1,14 @@
+# Parameters that describe server
+n_server_rounds: 10 # The number of rounds to run FL
+
+# Parameters that describe clients
+n_clients: 2 # The number of clients in the FL experiment
+local_epochs: 2 # The number of epochs to complete for client
+batch_size: 32 # The batch size for client training
+
+# Checkpointing
+checkpoint_path: "examples/ae_examples/cvae_dim_example"
+
+# Parameters used for loading and using a CVAE
+cvae_model_path: "examples/ae_examples/cvae_examples/mlp_cvae_example/best_CVAE_model.pkl" # Path to the saved CVAE model
+latent_dim: 16 # The output size of the encoder in CVAE

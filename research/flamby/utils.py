@@ -1,19 +1,18 @@
 import os
 import warnings
+from collections.abc import Sequence
 from logging import INFO
-from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Metrics, Parameters
+from flwr.common.typing import Config, Parameters
 from torch.utils.data import DataLoader
 from torchinfo import summary
 
-from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
-from fl4health.utils.metrics import Metric, MetricAccumulationMeter
+from fl4health.utils.metrics import Metric, MetricManager
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -30,42 +29,23 @@ def fit_config(
     }
 
 
-def get_initial_model_parameters(client_model: nn.Module) -> Parameters:
-    # Initializing the model parameters on the server side.
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in client_model.state_dict().items()])
-
-
-def get_initial_model_info_with_control_variates(client_model: nn.Module) -> Tuple[Parameters, Parameters]:
+def get_initial_model_info_with_control_variates(client_model: nn.Module) -> tuple[Parameters, Parameters]:
     # Initializing the model parameters on the server side.
     model_weights = [val.cpu().numpy() for _, val in client_model.state_dict().items()]
-    # Initializing the control variates to zero, as suggested in the originalq scaffold paper
+    # Initializing the control variates to zero, as suggested in the original scaffold paper
     control_variates = [np.zeros_like(val.data) for val in client_model.parameters() if val.requires_grad]
     return ndarrays_to_parameters(model_weights), ndarrays_to_parameters(control_variates)
 
 
-def fit_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
-    # This function is run by the server to aggregate metrics returned by each clients fit function
-    # NOTE: The first value of the tuple is number of examples for FedAvg
-    total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
-    return normalize_metrics(total_examples, aggregated_metrics)
-
-
-def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
-    # This function is run by the server to aggregate metrics returned by each clients evaluate function
-    # NOTE: The first value of the tuple is number of examples for FedAvg
-    total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
-    return normalize_metrics(total_examples, aggregated_metrics)
-
-
-def get_all_run_folders(artifact_dir: str) -> List[str]:
+def get_all_run_folders(artifact_dir: str) -> list[str]:
     run_folder_names = [folder_name for folder_name in os.listdir(artifact_dir) if "Run" in folder_name]
     return [os.path.join(artifact_dir, run_folder_name) for run_folder_name in run_folder_names]
 
 
-def write_measurement_results(eval_write_path: str, results: Dict[str, float]) -> None:
+def write_measurement_results(eval_write_path: str, results: dict[str, float]) -> None:
     with open(eval_write_path, "w") as f:
-        for key, metric_vaue in results.items():
-            f.write(f"{key}: {metric_vaue}\n")
+        for key, metric_value in results.items():
+            f.write(f"{key}: {metric_value}\n")
 
 
 def load_local_model(run_folder_dir: str, client_number: int) -> nn.Module:
@@ -80,7 +60,7 @@ def load_global_model(run_folder_dir: str) -> nn.Module:
     return model
 
 
-def get_metric_avg_std(metrics: List[float]) -> Tuple[float, float]:
+def get_metric_avg_std(metrics: list[float]) -> tuple[float, float]:
     mean = float(np.mean(metrics))
     std = float(np.std(metrics, ddof=1))
     return mean, std
@@ -88,17 +68,20 @@ def get_metric_avg_std(metrics: List[float]) -> Tuple[float, float]:
 
 def evaluate_model_on_dataset(
     model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device, is_apfl: bool
-) -> MetricAccumulationMeter:
+) -> MetricManager:
     model.to(device).eval()
-    meter = MetricAccumulationMeter(metrics, "test_meter")
+    meter = MetricManager(metrics, "test_meter")
 
     with torch.no_grad():
         for input, target in dataset:
             input, target = input.to(device), target.to(device)
             if is_apfl:
-                preds = model(input, personal=True)["personal"]
+                preds = model(input)["personal"]
             else:
                 preds = model(input)
+                if isinstance(preds, tuple):
+                    preds = preds[0]
+            preds = preds if isinstance(preds, dict) else {"prediction": preds}
             meter.update(preds, target)
     return meter
 
@@ -108,8 +91,8 @@ def evaluate_fed_isic_model(
 ) -> float:
     meter = evaluate_model_on_dataset(model, dataset, metrics, device, is_apfl)
     computed_metrics = meter.compute()
-    assert "test_meter_FedIsic2019_balanced_accuracy" in computed_metrics
-    balanced_accuracy = computed_metrics["test_meter_FedIsic2019_balanced_accuracy"]
+    assert "test_meter - prediction - FedIsic2019_balanced_accuracy" in computed_metrics
+    balanced_accuracy = computed_metrics["test_meter - prediction - FedIsic2019_balanced_accuracy"]
     assert isinstance(balanced_accuracy, float)
     return balanced_accuracy
 
@@ -120,8 +103,8 @@ def evaluate_fed_heart_disease_model(
     meter = evaluate_model_on_dataset(model, dataset, metrics, device, is_apfl)
 
     computed_metrics = meter.compute()
-    assert "test_meter_FedHeartDisease_accuracy" in computed_metrics
-    accuracy = computed_metrics["test_meter_FedHeartDisease_accuracy"]
+    assert "test_meter - prediction - FedHeartDisease_accuracy" in computed_metrics
+    accuracy = computed_metrics["test_meter - prediction - FedHeartDisease_accuracy"]
     assert isinstance(accuracy, float)
     return accuracy
 
@@ -131,8 +114,8 @@ def evaluate_fed_ixi_model(
 ) -> float:
     meter = evaluate_model_on_dataset(model, dataset, metrics, device, is_apfl)
     computed_metrics = meter.compute()
-    assert "test_meter_FedIXI_dice" in computed_metrics
-    dice = computed_metrics["test_meter_FedIXI_dice"]
+    assert "test_meter - prediction - FedIXI_dice" in computed_metrics
+    dice = computed_metrics["test_meter - prediction - FedIXI_dice"]
     assert isinstance(dice, float)
     return dice
 

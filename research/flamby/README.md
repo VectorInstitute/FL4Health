@@ -1,21 +1,74 @@
 ### Installing the Flamby dependencies
 
+__NOTE__: The workflow below is normally the smoothest way to construct the FLamby + FL4Health environment required to run the FLamby experiments. However, with a recent upgrade to MonAI, some of the functionality that FLamby depends on are broken. Until this is fixed, the workflow below will not work.
+
 First clone the FLamby repository
 ``` bash
 git clone https://github.com/owkin/FLamby.git
 ```
 Create a python environment with your preferred env manager. We'll use conda below
 ``` bash
-conda create -n flamby_fl4health python=3.9
+conda create -n flamby_fl4health python=3.10
 conda activate flamby_fl4health
 ```
 Install the FL4Health requirements
 ``` bash
 cd <fl4health_repository>
-pip install -r requirements.txt
+pip install --upgrade pip poetry
+poetry install --with "dev, dev-local, test, codestyle"
 cd <FLamby_repository>
-pip install -e ".[all_extra]"
+pip install albumentations==1.4.20
+pip install -e ".[cam16, heart, isic2019, ixi, lidc, tcga]"
 ```
+__NOTE__: The forced install of albumentations 1.4.20 avoids an issue where versions > 1.4.20 rely on simsimd which does not compile on the Vector cluster
+__NOTE__: We avoid installing Fed-KITS2019, as it requires a fairly old version on nnUnet, which we no longer support in our library.
+
+In addition, you'll have to edit the code for `FedIXITiny` in `flamby/datasets/fed_ixi/datasets.py` replacing the following
+
+<table>
+<tr>
+<th>Old</th>
+<th>New</th>
+</tr>
+<tr>
+<td>
+
+``` python
+from monai.transforms import (
+    AddChannel,
+    ...
+```
+</td>
+<td>
+
+``` python
+from monai.transforms import (
+    EnsureChannelFirst,
+    ...
+```
+</td>
+</tr>
+</tr>
+<tr>
+<td>
+
+```python
+default_transform = Compose(
+    [ToTensor(), AddChannel(), Resize(self.common_shape)]
+```
+</td>
+<td>
+
+```python
+default_transform = Compose(
+    [ToTensor(), EnsureChannelFirst(channel_dim="no_channel"), Resize(self.common_shape)]
+)
+```
+</td>
+</tr>
+</table>
+
+This is because AddChannel was removed in Version 1.3 of MonAI
 
 ### Downloading the Fed ISIC 2019 Dataset
 

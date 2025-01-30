@@ -1,5 +1,3 @@
-from typing import Optional
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -7,7 +5,8 @@ from efficientnet_pytorch import EfficientNet
 from efficientnet_pytorch.utils import url_map
 from torch.utils import model_zoo
 
-from fl4health.model_bases.fenda_base import FendaHeadModule, FendaJoinMode, FendaModel
+from fl4health.model_bases.fenda_base import FendaModel
+from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode, ParallelSplitHeadModule
 from research.flamby.utils import shutoff_batch_norm_tracking
 
 
@@ -23,15 +22,15 @@ def from_pretrained(model_name: str, in_channels: int = 3, include_top: bool = F
     return model
 
 
-class FendaClassifier(FendaHeadModule):
-    def __init__(self, join_mode: FendaJoinMode, stack_output_dimension: int) -> None:
+class FendaClassifier(ParallelSplitHeadModule):
+    def __init__(self, join_mode: ParallelFeatureJoinMode, stack_output_dimension: int) -> None:
         super().__init__(join_mode)
         # Two layer DNN as a classifier head
         self.fc1 = nn.Linear(stack_output_dimension * 2, 64)
         self.fc2 = nn.Linear(64, 8)
         self.dropout = nn.Dropout(0.2)
 
-    def local_global_concat(self, local_tensor: torch.Tensor, global_tensor: torch.Tensor) -> torch.Tensor:
+    def parallel_output_join(self, local_tensor: torch.Tensor, global_tensor: torch.Tensor) -> torch.Tensor:
         local_tensor = local_tensor.flatten(start_dim=1)
         global_tensor = global_tensor.flatten(start_dim=1)
         # Assuming tensors are "batch first" so join column-wise
@@ -57,7 +56,7 @@ class LocalEfficientNet(nn.Module):
     other approaches.
     """
 
-    def __init__(self, frozen_blocks: Optional[int] = 13, turn_off_bn_tracking: bool = False):
+    def __init__(self, frozen_blocks: int | None = 13, turn_off_bn_tracking: bool = False):
         super().__init__()
         # include_top ensures that we just use feature extraction in the forward pass
         self.base_model = from_pretrained("efficientnet-b0", include_top=False)
@@ -68,7 +67,7 @@ class LocalEfficientNet(nn.Module):
 
     def freeze_layers(self, frozen_blocks: int) -> None:
         # We freeze the bottom layers of the network. We always freeze the _conv_stem module, the _bn0 module and then
-        # we iterate throught the blocks freezing the specified number up to 15 (all of them)
+        # we iterate through the blocks freezing the specified number up to 15 (all of them)
 
         # Freeze the first two layers
         self.base_model._modules["_conv_stem"].requires_grad_(False)
@@ -96,7 +95,7 @@ class GlobalEfficientNet(nn.Module):
     other approaches.
     """
 
-    def __init__(self, frozen_blocks: Optional[int] = 13, turn_off_bn_tracking: bool = False):
+    def __init__(self, frozen_blocks: int | None = 13, turn_off_bn_tracking: bool = False):
         super().__init__()
         # include_top ensures that we just use feature extraction in the forward pass
         self.base_model = from_pretrained("efficientnet-b0", include_top=False)
@@ -107,7 +106,7 @@ class GlobalEfficientNet(nn.Module):
 
     def freeze_layers(self, frozen_blocks: int) -> None:
         # We freeze the bottom layers of the network. We always freeze the _conv_stem module, the _bn0 module and then
-        # we iterate throught the blocks freezing the specified number up to 15 (all of them)
+        # we iterate through the blocks freezing the specified number up to 15 (all of them)
 
         # Freeze the first two layers
         self.base_model._modules["_conv_stem"].requires_grad_(False)
@@ -123,8 +122,8 @@ class GlobalEfficientNet(nn.Module):
 
 
 class FedIsic2019FendaModel(FendaModel):
-    def __init__(self, frozen_blocks: Optional[int] = 13, turn_off_bn_tracking: bool = False) -> None:
+    def __init__(self, frozen_blocks: int | None = 13, turn_off_bn_tracking: bool = False) -> None:
         local_module = LocalEfficientNet(frozen_blocks, turn_off_bn_tracking=turn_off_bn_tracking)
         global_module = GlobalEfficientNet(frozen_blocks, turn_off_bn_tracking=turn_off_bn_tracking)
-        model_head = FendaClassifier(FendaJoinMode.CONCATENATE, 1280)
+        model_head = FendaClassifier(ParallelFeatureJoinMode.CONCATENATE, 1280)
         super().__init__(local_module, global_module, model_head)

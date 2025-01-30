@@ -1,16 +1,16 @@
 import argparse
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import flwr as fl
 
-from examples.simple_metric_aggregation import uniform_evaluate_metrics_aggregation_fn
 from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingByFractionClientManager
-from fl4health.server.evaluate_server import EvaluateServer
+from fl4health.servers.evaluate_server import EvaluateServer
 from fl4health.utils.config import load_config
+from fl4health.utils.metric_aggregation import uniform_evaluate_metrics_aggregation_fn
 
 
-def main(config: Dict[str, Any], server_checkpoint_path: Optional[Path]) -> None:
+def main(config: dict[str, Any], server_checkpoint_path: Path | None) -> None:
     evaluate_config = {"batch_size": config["batch_size"]}
 
     # ClientManager that performs Poisson type sampling
@@ -23,6 +23,7 @@ def main(config: Dict[str, Any], server_checkpoint_path: Optional[Path]) -> None
         evaluate_config=evaluate_config,
         evaluate_metrics_aggregation_fn=uniform_evaluate_metrics_aggregation_fn,
         min_available_clients=config["n_clients"],
+        accept_failures=False,
     )
 
     fl.server.start_server(

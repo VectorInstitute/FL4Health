@@ -1,6 +1,5 @@
 import os
 from logging import INFO
-from typing import Dict, Tuple
 
 import torch
 import torch.nn as nn
@@ -9,8 +8,8 @@ from flwr.common.typing import Scalar
 from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.utils.metrics import MetricMeter
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
+from fl4health.utils.metrics import MetricManager
 
 
 class SingleNodeTrainer:
@@ -25,7 +24,7 @@ class SingleNodeTrainer:
         checkpoint_dir = os.path.join(checkpoint_stub, run_name)
         # This is called the "server model" so that it can be found by the evaluate_on_holdout.py script
         checkpoint_name = "server_best_model.pkl"
-        self.checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
+        self.checkpointer = BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
         self.dataset_dir = dataset_dir
         self.model: nn.Module
         self.criterion: _Loss
@@ -33,14 +32,14 @@ class SingleNodeTrainer:
         self.train_loader: DataLoader
         self.val_loader: DataLoader
 
-    def _maybe_checkpoint(self, comparison_metric: float) -> None:
+    def _maybe_checkpoint(self, loss: float, metrics: dict[str, Scalar]) -> None:
         if self.checkpointer:
-            self.checkpointer.maybe_checkpoint(self.model, comparison_metric)
+            self.checkpointer.maybe_checkpoint(self.model, loss, metrics)
 
     def _handle_reporting(
         self,
         loss: float,
-        metrics_dict: Dict[str, Scalar],
+        metrics_dict: dict[str, Scalar],
         is_validation: bool = False,
     ) -> None:
         metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
@@ -50,7 +49,7 @@ class SingleNodeTrainer:
             f"Centralized {metric_prefix} Loss: {loss} \n" f"Centralized {metric_prefix} Metrics: {metric_string}",
         )
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         # forward pass on the model
         preds = self.model(input)
         loss = self.criterion(preds, target)
@@ -59,48 +58,48 @@ class SingleNodeTrainer:
         loss.backward()
         self.optimizer.step()
 
-        return loss, preds
+        return loss, {"predictions": preds}
 
     def train_by_epochs(
         self,
         epochs: int,
-        train_meter: MetricMeter,
-        val_meter: MetricMeter,
+        train_metric_mngr: MetricManager,
+        val_metric_mngr: MetricManager,
     ) -> None:
         self.model.train()
 
         for local_epoch in range(epochs):
-            train_meter.clear()
+            train_metric_mngr.clear()
             running_loss = 0.0
             for input, target in self.train_loader:
                 input, target = input.to(self.device), target.to(self.device)
                 batch_loss, preds = self.train_step(input, target)
                 running_loss += batch_loss.item()
-                train_meter.update(preds, target)
+                train_metric_mngr.update(preds, target)
 
             log(INFO, f"Local Epoch: {local_epoch}")
             running_loss = running_loss / len(self.train_loader)
-            metrics = train_meter.compute()
+            metrics = train_metric_mngr.compute()
             self._handle_reporting(running_loss, metrics)
 
             # After each epoch run a validation pass
-            self.validate(val_meter)
+            self.validate(val_metric_mngr)
 
-    def validate(self, meter: MetricMeter) -> None:
+    def validate(self, val_metric_mngr: MetricManager) -> None:
         self.model.eval()
         running_loss = 0.0
-        meter.clear()
+        val_metric_mngr.clear()
 
         with torch.no_grad():
             for input, target in self.val_loader:
                 input, target = input.to(self.device), target.to(self.device)
 
-                preds = self.model(input)
-                batch_loss = self.criterion(preds, target)
+                preds = {"predictions": self.model(input)}
+                batch_loss = self.criterion(preds["predictions"], target)
                 running_loss += batch_loss.item()
-                meter.update(preds, target)
+                val_metric_mngr.update(preds, target)
 
         running_loss = running_loss / len(self.val_loader)
-        metrics = meter.compute()
+        metrics = val_metric_mngr.compute()
         self._handle_reporting(running_loss, metrics, is_validation=True)
-        self._maybe_checkpoint(running_loss)
+        self._maybe_checkpoint(running_loss, metrics)

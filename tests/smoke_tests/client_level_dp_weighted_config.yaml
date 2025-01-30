@@ -1,0 +1,26 @@
+# Server parameters
+n_server_rounds: 2
+
+# NOTE: This multiplier is small, yielding a vacuous epsilon for privacy. It is set to this small value for this
+# example due to the small number of clients (3, see below), which, when combined with the clipping implies that
+# much more noise can kill server side convergence.
+server_noise_multiplier: 0.01
+n_clients: 2
+client_sampling_rate: 0.667
+server_learning_rate: 1.0
+server_momentum: 1.0
+weighted_averaging: True
+
+# Client training parameters
+local_steps: 5
+batch_size: 32
+
+# Clipping settings for update and optionally
+# adaptive clipping
+adaptive_clipping: True
+clipping_bound: 1.0
+clipping_learning_rate: 0.5
+# NOTE: The noise multiplier here is just picked for convenience. The recommended heuristic is
+# expected clients per round/20
+clipping_bit_noise_multiplier: 0.5
+clipping_quantile: 0.5

@@ -2,7 +2,7 @@ import argparse
 import os
 from functools import partial
 from logging import INFO
-from typing import Any, Dict
+from typing import Any
 
 import flwr as fl
 from flamby.datasets.fed_isic2019 import Baseline
@@ -10,18 +10,17 @@ from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
+from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.config import load_config
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 from research.flamby.flamby_servers.full_exchange_server import FullExchangeServer
-from research.flamby.utils import (
-    evaluate_metrics_aggregation_fn,
-    fit_config,
-    fit_metrics_aggregation_fn,
-    get_initial_model_parameters,
-)
+from research.flamby.utils import fit_config
 
 
-def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
+def main(config: dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -29,12 +28,17 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         config["n_server_rounds"],
     )
 
+    model = Baseline()
+
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
     checkpoint_name = "server_best_model.pkl"
-    checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
+    checkpointer = BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
+
+    checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
+        model=model, parameter_exchanger=FullParameterExchanger(), model_checkpointers=checkpointer
+    )
 
     client_manager = SimpleClientManager()
-    model = Baseline()
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -47,10 +51,15 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(model),
+        initial_parameters=get_all_model_parameters(model),
     )
 
-    server = FullExchangeServer(client_manager, model, strategy, checkpointer=checkpointer)
+    server = FullExchangeServer(
+        client_manager=client_manager,
+        fl_config=config,
+        strategy=strategy,
+        checkpoint_and_state_module=checkpoint_and_state_module,
+    )
 
     fl.server.start_server(
         server=server,
@@ -58,7 +67,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
 
-    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_metric}")
+    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_score}")
 
     # Shutdown the server gracefully
     server.shutdown()

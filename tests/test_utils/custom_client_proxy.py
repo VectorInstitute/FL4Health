@@ -1,5 +1,3 @@
-from typing import Optional
-
 from flwr.common.typing import (
     Code,
     DisconnectRes,
@@ -27,7 +25,8 @@ class CustomClientProxy(ClientProxy):
     def get_properties(
         self,
         ins: GetPropertiesIns,
-        timeout: Optional[float],
+        timeout: float | None,
+        group_id: int | None,
     ) -> GetPropertiesRes:
         status: Status = Status(code=Code["OK"], message="Test")
         res = GetPropertiesRes(status=status, properties=self.properties)
@@ -36,27 +35,31 @@ class CustomClientProxy(ClientProxy):
     def get_parameters(
         self,
         ins: GetParametersIns,
-        timeout: Optional[float],
+        timeout: float | None,
+        group_id: int | None,
     ) -> GetParametersRes:
         raise NotImplementedError
 
     def fit(
         self,
         ins: FitIns,
-        timeout: Optional[float],
+        timeout: float | None,
+        group_id: int | None,
     ) -> FitRes:
         raise NotImplementedError
 
     def evaluate(
         self,
         ins: EvaluateIns,
-        timeout: Optional[float],
+        timeout: float | None,
+        group_id: int | None,
     ) -> EvaluateRes:
         raise NotImplementedError
 
     def reconnect(
         self,
         ins: ReconnectIns,
-        timeout: Optional[float],
+        timeout: float | None,
+        group_id: int | None,
     ) -> DisconnectRes:
         raise NotImplementedError

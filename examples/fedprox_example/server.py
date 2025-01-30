@@ -1,70 +1,63 @@
 import argparse
 from functools import partial
 from logging import INFO
-from typing import Any, Dict
+from typing import Any
 
 import flwr as fl
 from flwr.common.logger import log
-from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Parameters
+from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import MnistNet
-from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from fl4health.reporting.fl_wanb import ServerWandBReporter
-from fl4health.server.base_server import FlServer
-from fl4health.strategies.fedprox import FedProx
+from examples.utils.functions import make_dict_with_epochs_or_steps
+from fl4health.reporting import JsonReporter, WandBReporter
+from fl4health.servers.adaptive_constraint_servers.fedprox_server import FedProxServer
+from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
-
-
-def get_initial_model_information() -> Parameters:
-    # Initializing the model parameters on the server side.
-    # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = MnistNet()
-    model_weights = [val.cpu().numpy() for _, val in initial_model.state_dict().items()]
-    return ndarrays_to_parameters(model_weights)
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.parameter_extraction import get_all_model_parameters
+from fl4health.utils.random import set_all_random_seeds
 
 
 def fit_config(
-    local_epochs: int,
     batch_size: int,
     n_server_rounds: int,
-    reporting_enabled: bool,
-    project_name: str,
-    group_name: str,
-    entity: str,
     current_round: int,
+    reporting_config: dict[str, str] | None = None,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
 ) -> Config:
-    return {
-        "local_epochs": local_epochs,
+    base_config: Config = {
+        **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
-        "reporting_enabled": reporting_enabled,
-        "project_name": project_name,
-        "group_name": group_name,
-        "entity": entity,
     }
+    if reporting_config is not None:
+        # NOTE: that name is not included, it will be set in the clients
+        base_config["project"] = reporting_config.get("project", "")
+        base_config["group"] = reporting_config.get("group", "")
+        base_config["entity"] = reporting_config.get("entity", "")
+
+    return base_config
 
 
-def main(config: Dict[str, Any], server_address: str) -> None:
+def main(config: dict[str, Any], server_address: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        config["local_epochs"],
         config["batch_size"],
         config["n_server_rounds"],
-        config["reporting_config"].get("enabled", False),
-        # Note that run name is not included, it will be set in the clients
-        config["reporting_config"].get("project_name", ""),
-        config["reporting_config"].get("group_name", ""),
-        config["reporting_config"].get("entity", ""),
+        reporting_config=config.get("reporting_config"),
+        local_epochs=config.get("local_epochs"),
+        local_steps=config.get("local_steps"),
     )
 
-    initial_parameters = get_initial_model_information()
+    initial_model = MnistNet()
 
-    # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedProx(
+    # Server performs simple FedAveraging as its server-side optimization strategy and potentially adapts the
+    # FedProx proximal weight mu
+    strategy = FedAvgWithAdaptiveConstraint(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
@@ -74,16 +67,23 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=initial_parameters,
-        adaptive_proximal_weight=config["adaptive_proximal_weight"],
-        proximal_weight=config["proximal_weight"],
-        proximal_weight_delta=config["proximal_weight_delta"],
-        proximal_weight_patience=config["proximal_weight_patience"],
+        initial_parameters=get_all_model_parameters(initial_model),
+        adapt_loss_weight=config["adapt_proximal_weight"],
+        initial_loss_weight=config["initial_proximal_weight"],
+        loss_weight_delta=config["proximal_weight_delta"],
+        loss_weight_patience=config["proximal_weight_patience"],
     )
 
-    wandb_reporter = ServerWandBReporter.from_config(config)
+    json_reporter = JsonReporter()
     client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy, wandb_reporter)
+    if "reporting_config" in config:
+        wandb_reporter = WandBReporter("round", **config["reporting_config"])
+        reporters = [wandb_reporter, json_reporter]
+    else:
+        reporters = [json_reporter]
+    server = FedProxServer(
+        client_manager=client_manager, fl_config=config, strategy=strategy, reporters=reporters, accept_failures=False
+    )
 
     fl.server.start_server(
         server=server,
@@ -110,8 +110,19 @@ if __name__ == "__main__":
         help="Server Address to be used to communicate with the clients",
         default="0.0.0.0:8080",
     )
+    parser.add_argument(
+        "--seed",
+        action="store",
+        type=int,
+        help="Seed for the random number generators across python, torch, and numpy",
+        required=False,
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
+
+    # Set the random seed for reproducibility
+    set_all_random_seeds(args.seed)
+
     main(config, args.server_address)

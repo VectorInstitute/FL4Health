@@ -1,5 +1,3 @@
-from typing import List, Tuple
-
 import numpy as np
 import pytest
 from flwr.common import Code, FitRes, NDArrays, Parameters, Status, ndarrays_to_parameters
@@ -14,7 +12,7 @@ strategy = ClientLevelDPFedAvgM(
     server_learning_rate=0.5,
     clipping_learning_rate=0.5,
     weight_noise_multiplier=2.0,
-    clipping_noise_mutliplier=5.0,
+    clipping_noise_multiplier=5.0,
 )
 
 
@@ -31,7 +29,7 @@ client0_res = construct_fit_res([np.ones((3, 3)), np.ones((4, 4))], 0.1, 50)
 client1_res = construct_fit_res([np.ones((3, 3)), np.full((4, 4), 2)], 0.2, 50)
 client2_res = construct_fit_res([np.full((3, 3), 3), np.full((4, 4), 3)], 0.3, 100)
 client3_res = construct_fit_res([np.full((3, 3), 4), np.full((4, 4), 4)], 0.4, 200)
-clients_res: List[Tuple[ClientProxy, FitRes]] = [
+clients_res: list[tuple[ClientProxy, FitRes]] = [
     (CustomClientProxy("c0"), client0_res),
     (CustomClientProxy("c1"), client1_res),
     (CustomClientProxy("c2"), client2_res),
@@ -80,7 +78,7 @@ def test_unpacking_weights_and_clipping_bits() -> None:
     n_layers = 4
     n_clients = 3
     n_client_datapoints = 10
-    fit_res_results: List[FitRes] = [
+    fit_res_results: list[FitRes] = [
         construct_fit_res(
             [np.random.rand(2, 3) for _ in range(n_layers)] + [np.random.binomial(1, 0.5, 1).astype(float)],
             0.1,
@@ -88,7 +86,7 @@ def test_unpacking_weights_and_clipping_bits() -> None:
         )
         for _ in range(n_clients)
     ]
-    results: List[Tuple[ClientProxy, FitRes]] = list(
+    results: list[tuple[ClientProxy, FitRes]] = list(
         zip(
             [CustomClientProxy("c0"), CustomClientProxy("c1"), CustomClientProxy("c2"), CustomClientProxy("c3")],
             fit_res_results,

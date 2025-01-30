@@ -1,0 +1,8 @@
+{
+    "first_feature_extractor.conv1":"conv1",
+    "first_feature_extractor.conv2": "conv2",
+    "first_feature_extractor.fc1": "fc1",
+    "second_feature_extractor.conv1":"conv1",
+    "second_feature_extractor.conv2": "conv2",
+    "second_feature_extractor.fc1": "fc1"
+}

@@ -1,0 +1,16 @@
+# Parameters that describe server
+n_server_rounds: 5 # The number of rounds to run FL (50)
+
+# Parameters that describe clients
+n_clients: 2 # The number of clients in the FL experiment
+local_epochs: 3 # The number of epochs to complete for client (4)
+batch_size: 32 # The batch size for client training
+
+# FedProx variables
+adaptive_proximal_weight: False # Whether to use adaptive proximal weight or not
+initial_proximal_weight : 0.1 # The proximal weight
+
+# Checkpointing
+checkpoint_path: "examples/ae_examples/fedprox_vae_example"
+# The output size of the VAE encoder used in this example
+latent_dim: 16

@@ -1,11 +1,12 @@
 import numpy as np
 import pytest
 import torch
+from flwr.common.typing import Config
 
 from fl4health.clients.apfl_client import ApflClient
-from fl4health.clients.numpy_fl_client import NumpyFlClient
+from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.apfl_base import ApflModule
-from tests.clients.fixtures import get_apfl_client, get_numpy_fl_client  # noqa
+from tests.clients.fixtures import get_apfl_client, get_basic_client  # noqa
 from tests.test_utils.models_for_test import SingleLayerWithSeed, ToyConvNet
 
 
@@ -14,8 +15,8 @@ def to_numpy_clone(a: torch.Tensor) -> np.ndarray:
 
 
 @pytest.mark.parametrize("model", [ToyConvNet()])
-def test_set_parameters_numpy_fl_client(get_numpy_fl_client: NumpyFlClient) -> None:  # noqa
-    client = get_numpy_fl_client
+def test_set_parameters_basic_client(get_basic_client: BasicClient) -> None:  # noqa
+    client = get_basic_client
     client_state_dict = client.model.state_dict()
     old_model_state = [to_numpy_clone(state) for state in client_state_dict.values()]
     new_model_state_dict = ToyConvNet().state_dict()
@@ -28,7 +29,8 @@ def test_set_parameters_numpy_fl_client(get_numpy_fl_client: NumpyFlClient) -> N
         to_numpy_clone(new_model_state_dict["fc1.weight"]),
         to_numpy_clone(new_model_state_dict["fc2.weight"]),
     ]
-    client.set_parameters(new_model_state, {})
+    config: Config = {"current_server_round": 1}
+    client.set_parameters(new_model_state, config, fitting_round=True)
 
     # Model state should match the new model state and be different from the old model state,
     # including the linear layers
@@ -42,7 +44,8 @@ def test_set_parameters_numpy_fl_client(get_numpy_fl_client: NumpyFlClient) -> N
     assert len(cnn_parameters_only) == 2
 
     cnn_parameters_only = [weights + 1.0 for weights in cnn_parameters_only]
-    client.set_parameters(cnn_parameters_only, {})
+    config["current_server_round"] = 2
+    client.set_parameters(cnn_parameters_only, config, fitting_round=True)
     client_state_dict = client.model.state_dict()
     client_model_cnn_state = [
         to_numpy_clone(client_state_dict["conv1.weight"]),
@@ -68,8 +71,10 @@ def test_set_parameters_apfl_client(get_apfl_client: ApflClient) -> None:  # noq
     model_to_insert_local_params = to_numpy_clone(model_to_insert_state_dict["local_model.linear.weight"])
     model_to_insert_global_params = to_numpy_clone(model_to_insert_state_dict["global_model.linear.weight"])
 
+    config: Config = {"current_server_round": 1}
+
     # First time we're initializing the model, so all parameters should be initialized
-    client.set_parameters(model_state_to_insert, {})
+    client.set_parameters(model_state_to_insert, config, fitting_round=True)
     current_model_state = [to_numpy_clone(state) for state in client.model.state_dict().values()]
     # The whole model should be initialized with model_state_to_insert
     assert all([np.allclose(a, b, atol=0.001) for a, b in zip(model_state_to_insert, current_model_state)])
@@ -81,7 +86,8 @@ def test_set_parameters_apfl_client(get_apfl_client: ApflClient) -> None:  # noq
     assert len(global_layer_only) == 1
 
     global_layer_only = [weights + 1.0 for weights in global_layer_only]
-    client.set_parameters(global_layer_only, {})
+    config["current_server_round"] = 2
+    client.set_parameters(global_layer_only, config, fitting_round=True)
     client_state_dict = client.model.state_dict()
     client_model_local_state = to_numpy_clone(client_state_dict["local_model.linear.weight"])
     client_model_global_state = to_numpy_clone(client_state_dict["global_model.linear.weight"])

@@ -1,48 +1,56 @@
 import argparse
 from functools import partial
-from typing import Any, Dict
+from typing import Any
 
 import flwr as fl
-import torch.nn as nn
-from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Parameters
+from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import Net
-from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from examples.utils.functions import make_dict_with_epochs_or_steps
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
+from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.server.base_server import FlServerWithCheckpointing
+from fl4health.servers.base_server import FlServer
 from fl4health.utils.config import load_config
-
-
-def get_initial_model_parameters(model: nn.Module) -> Parameters:
-    # Initializing the model parameters on the server side.
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in model.state_dict().items()])
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 
 
 def fit_config(
-    local_epochs: int,
     batch_size: int,
     current_server_round: int,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
 ) -> Config:
-    return {"local_epochs": local_epochs, "batch_size": batch_size, "current_server_round": current_server_round}
+    return {
+        **make_dict_with_epochs_or_steps(local_epochs, local_steps),
+        "batch_size": batch_size,
+        "current_server_round": current_server_round,
+    }
 
 
-def main(config: Dict[str, Any]) -> None:
+def main(config: dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        config["local_epochs"],
         config["batch_size"],
+        local_epochs=config.get("local_epochs"),
+        local_steps=config.get("local_steps"),
     )
 
     # Initializing the model on the server side
     model = Net()
     # To facilitate checkpointing
     parameter_exchanger = FullParameterExchanger()
-    checkpointer = BestMetricTorchCheckpointer(config["checkpoint_path"], "best_model.pkl", maximize=False)
+    checkpointers = [
+        BestLossTorchModuleCheckpointer(config["checkpoint_path"], "best_model.pkl"),
+        LatestTorchModuleCheckpointer(config["checkpoint_path"], "latest_model.pkl"),
+    ]
+    checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
+        model=model, parameter_exchanger=parameter_exchanger, model_checkpointers=checkpointers
+    )
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -55,10 +63,16 @@ def main(config: Dict[str, Any]) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(model),
+        initial_parameters=get_all_model_parameters(model),
     )
 
-    server = FlServerWithCheckpointing(SimpleClientManager(), model, parameter_exchanger, None, strategy, checkpointer)
+    server = FlServer(
+        client_manager=SimpleClientManager(),
+        fl_config=config,
+        strategy=strategy,
+        checkpoint_and_state_module=checkpoint_and_state_module,
+        accept_failures=False,
+    )
 
     fl.server.start_server(
         server=server,

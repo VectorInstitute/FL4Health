@@ -1,0 +1,112 @@
+#!/bin/bash
+
+#SBATCH --gres=gpu:1
+#SBATCH --qos=normal
+#SBATCH --mem=64GB
+#SBATCH -c 16
+#SBATCH --time=12:00:00
+#SBATCH --signal=B:USR1@60
+#SBATCH --job-name=fedavg_picai
+#SBATCH --output=fedavg_picai_%j_%x.out
+#SBATCH --error=fedavg_picai_%j_%x.err
+
+###############################################
+# Usage:
+#
+# sbatch research/picai/fedavg/run_fl_single_node.slrm path_to_config.yaml folder_for_server_logs/ \
+#   folder_for_client_logs/ path_to_desired_venv/
+#
+# Example:
+# sbatch research/picai/fedavg/run_fl_cluster_one_resource.slrm \
+#   research/picai/fedavg/config.yaml \
+#   research/picai/fedavg/server_logs/ \
+#   research/picai/fedavg/client_logs/ \
+#   /h/jewtay/fl4health_env/
+#
+# Notes:
+# 1) The sbatch command above should be run from the top level directory of the repository.
+# 2) The logging directories need to ALREADY EXIST. The script does not create them.
+###############################################
+
+# Set NCCL options
+# export NCCL_DEBUG=INFO
+# NCCL backend to communicate between GPU workers is not provided in vector's cluster.
+# Disable this option in slurm.
+export NCCL_IB_DISABLE=1
+
+if [[ "${SLURM_JOB_PARTITION}" == "t4v2" ]] || \
+    [[ "${SLURM_JOB_PARTITION}" == "rtx6000" ]]; then
+    echo export NCCL_SOCKET_IFNAME=bond0 on "${SLURM_JOB_PARTITION}"
+    export NCCL_SOCKET_IFNAME=bond0
+fi
+
+# Process Inputs
+
+CONFIG_PATH=$1
+SERVER_LOG_DIR=$2
+CLIENT_LOG_DIR=$3
+VENV_PATH=$4
+N_CLIENTS=$5
+
+echo "Python Venv Path: ${VENV_PATH}"
+echo "World size: ${SLURM_NTASKS}"
+echo "Number of nodes: ${SLURM_NNODES}"
+NUM_GPUs=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
+echo "GPUs per node: ${NUM_GPUs}"
+
+# Source the environment
+source ${VENV_PATH}bin/activate
+echo "Active Environment:"
+which python
+
+SERVER_OUTPUT_FILE="${SERVER_LOG_DIR}server.out"
+
+# Start the server, divert the outputs to a server file
+
+echo "Server logging at: ${SERVER_OUTPUT_FILE}"
+echo "Launching Server"
+
+
+
+handler()
+{
+	echo "Requeue $SLURM_JOB_ID at $(date)"
+	scontrol requeue $SLURM_JOB_ID
+}
+
+# Function that checks whether to start or resume training, gets train_args
+# and runs training
+train()
+{
+    nohup python -m research.picai.fedavg.server --config_path ${CONFIG_PATH} --artifact_dir ${SERVER_LOG_DIR} --n_clients ${N_CLIENTS} > ${SERVER_OUTPUT_FILE} 2>&1 &
+
+    # Sleep for 20 seconds to allow the server to come up.
+    sleep 20
+
+    # Start n number of clients and divert the outputs to their own files
+    END=$(($N_CLIENTS))
+    for i in $(seq 1 $END);
+    do
+	CLIENT_NAME="client_${i}"
+	echo "Launching ${CLIENT_NAME}"
+
+	CLIENT_LOG_PATH="${CLIENT_LOG_DIR}client_${i}.out"
+	echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
+	nohup python -m research.picai.fedavg.client --artifact_dir ${CLIENT_LOG_DIR} > ${CLIENT_LOG_PATH} 2>&1 &
+    done
+
+    echo "FL Processes Running"
+
+    wait
+}
+
+# Trap is used to handle signals or errors that occur during execution
+# Here we pass the handler function to initiate a requeue when we get a
+# signal that the job will be killed due to time limit 60 seconds prior
+trap handler SIGUSR1
+
+# Script must be ran in the background (async) to be able to trap signal
+train &
+wait
+
+echo "Finished FL Processes"

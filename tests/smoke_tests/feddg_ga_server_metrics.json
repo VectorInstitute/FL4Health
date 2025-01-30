@@ -1,0 +1,28 @@
+{
+    "rounds": {
+        "1": {
+            "eval_round_metrics_aggregated": {
+                "val - personal - accuracy": 0.5269,
+                "val - global - accuracy": 0.5331,
+                "val - local - accuracy": 0.4984
+            },
+            "val - loss - aggregated": 1.5862
+        },
+        "2": {
+            "eval_round_metrics_aggregated": {
+                "val - personal - accuracy": {"target_value": 0.6584, "custom_tolerance": 0.005},
+                "val - global - accuracy": 0.6031,
+                "val - local - accuracy": {"target_value": 0.614, "custom_tolerance": 0.005}
+            },
+            "val - loss - aggregated": {"target_value": 1.0008, "custom_tolerance": 0.005}
+        },
+        "3": {
+            "eval_round_metrics_aggregated": {
+                "val - personal - accuracy": {"target_value": 0.8218, "custom_tolerance": 0.005},
+                "val - global - accuracy": 0.8497,
+                "val - local - accuracy": {"target_value": 0.7508, "custom_tolerance": 0.005}
+            },
+            "val - loss - aggregated": {"target_value": 0.6042, "custom_tolerance": 0.005}
+        }
+    }
+}

@@ -1,0 +1,135 @@
+#!/bin/bash
+
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=25000MB
+#SBATCH --partition=gpu
+#SBATCH --qos=lopri
+#SBATCH --job-name=moon_5-10
+#SBATCH --output=%j_%x.out
+#SBATCH --error=%j_%x.err
+#SBATCH --mail-user=your_email@vectorinstitute.ai
+
+
+
+# Process Inputs
+
+SERVER_CONFIG_PATH=$1
+ARTIFACT_DIR=$2
+TASK_TYPE=$3
+CLIENT_MU=$4
+CLIENT_LR=$5
+N_CLIENTS=$6
+SERVER_ADDRESS=$7
+
+if [ -z "$N_CLIENTS" ]; then
+    echo "No number provided."
+elif ! [[ $N_CLIENTS =~ ^[0-9]+$ ]]; then
+    echo "Invalid input. Please enter a valid number."
+elif [ ${N_CLIENTS} -eq 2 ]; then
+    HOSPITALS=("THPC THPM" "SMH MSH UHNTG UHNTW SBK")
+elif [ ${N_CLIENTS} -eq 7 ]; then
+    HOSPITALS=("THPC" "THPM" "SMH" "MSH" "UHNTG" "UHNTW" "SBK")
+else
+    HOSPITALS=("100" "101" "103" "105" "106" "107")
+fi
+
+
+# Create the artifact directory
+mkdir "${ARTIFACT_DIR}"
+
+RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )
+
+SEED=2021
+
+
+echo "World size: ${SLURM_NTASKS}"
+echo "Number of nodes: ${SLURM_NNODES}"
+NUM_GPUs=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
+echo "GPUs per node: ${NUM_GPUs}"
+
+echo "Task type: ${TASK_TYPE}"
+
+# Source the environment
+. ~/flenv/bin/activate
+echo "Active Environment:"
+which python
+
+for RUN_NAME in "${RUN_NAMES[@]}";
+do
+    # create the run directory
+    RUN_DIR="${ARTIFACT_DIR}${RUN_NAME}/"
+    ((SEED++))
+    echo "Starting Run and logging artifacts at ${RUN_DIR}"
+    if [ -d "${RUN_DIR}" ]
+    then
+        # Directory already exists, we check if the done.out file exists
+        if [ -f "${RUN_DIR}done.out" ]
+        then
+            # Done file already exists so we skip this run
+            echo "Run already completed. Skipping Run."
+            continue
+        else
+            # Done file doesn't exists (assume pre-emption happened)
+            # Delete the partially finished contents and start over
+            echo "Run did not finished correctly. Re-running."
+            rm -r "${RUN_DIR}"
+            mkdir "${RUN_DIR}"
+        fi
+    else
+        # Directory doesn't exist yet, so we create it.
+        echo "Run directory does not exist. Creating it."
+        mkdir "${RUN_DIR}"
+    fi
+
+    SERVER_OUTPUT_FILE="${RUN_DIR}server.out"
+
+    # Start the server, divert the outputs to a server file
+
+    echo "Server logging at: ${SERVER_OUTPUT_FILE}"
+    echo "Launching Server at ip: ${SERVER_ADDRESS}"
+
+    nohup python -m moon.server \
+        --config_path ${SERVER_CONFIG_PATH} \
+        --artifact_dir ${ARTIFACT_DIR} \
+        --run_name ${RUN_NAME} \
+        --server_address ${SERVER_ADDRESS} \
+        --seed ${SEED} \
+        > ${SERVER_OUTPUT_FILE} 2>&1 &
+
+    # Sleep for 20 seconds to allow the server to come up.
+    sleep 20
+
+    # Start n number of clients and divert the outputs to their own files
+
+    for (( c=0; c<${N_CLIENTS}; c++ ))
+    do
+        CLIENT_NUMBER="client_${c}"
+        echo "Launching ${CLIENT_NUMBER}"
+
+        CLIENT_LOG_PATH="${RUN_DIR}${CLIENT_NUMBER}.out"
+        echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
+        echo "Hospitals: ${HOSPITALS[$c]}"
+        nohup python -m moon.client \
+            --hospital_id ${HOSPITALS[$c]} \
+            --task ${TASK_TYPE} \
+            --artifact_dir ${ARTIFACT_DIR} \
+            --run_name ${RUN_NAME} \
+            --mu ${CLIENT_MU} \
+            --learning_rate ${CLIENT_LR} \
+            --server_address ${SERVER_ADDRESS} \
+            --seed ${SEED} \
+            > ${CLIENT_LOG_PATH} 2>&1 &
+    done
+
+    echo "FL Processes Running"
+
+    wait
+
+    # Create a file that verifies that the Run concluded properly
+    touch "${RUN_DIR}done.out"
+    echo "Finished FL Processes"
+
+done

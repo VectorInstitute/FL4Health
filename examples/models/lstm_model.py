@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import torch
 import torch.nn as nn
 
@@ -18,9 +16,9 @@ class LSTM(nn.Module):
             bidirectional=True,
         )
         self.drop = nn.Dropout(p=0.3)
-        self.fc = nn.Linear(2 * lstm_dimension, 41)
+        self.fc = nn.Linear(2 * lstm_dimension, 4)
 
-    def forward(self, x: torch.Tensor, hidden: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, hidden: tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
         text_emb = self.embedding(x)
         out, _ = self.lstm(text_emb, hidden)
 
@@ -34,6 +32,6 @@ class LSTM(nn.Module):
 
         return text_out
 
-    def init_hidden(self, batch_size: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def init_hidden(self, batch_size: int) -> tuple[torch.Tensor, torch.Tensor]:
         # 4 since the number of layers is 2 and it is bidirectional (so 1 per layer per direction)
         return (torch.zeros(4, batch_size, self.lstm_dimension), torch.zeros(4, batch_size, self.lstm_dimension))

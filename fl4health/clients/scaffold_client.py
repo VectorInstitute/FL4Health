@@ -1,9 +1,12 @@
 import copy
+from collections.abc import Sequence
+from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
 
 import torch
+from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
+from opacus.optimizers.optimizer import DPOptimizer
 import uuid
 import os 
 import json
@@ -11,66 +14,108 @@ import timeit
 from flwr.common.logger import log
 from logging import INFO
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
-from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
-from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
+from fl4health.clients.instance_level_dp_client import InstanceLevelDpClient
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
-from fl4health.utils.losses import Losses, LossMeterType
-from fl4health.utils.metrics import Metric, MetricMeterType
+from fl4health.reporting.base_reporter import BaseReporter
+from fl4health.utils.losses import LossMeterType, TrainingLosses
+from fl4health.utils.metrics import Metric
 
-ScaffoldTrainStepOutput = Tuple[torch.Tensor, torch.Tensor]
+ScaffoldTrainStepOutput = tuple[torch.Tensor, torch.Tensor]
 
 
 class ScaffoldClient(BasicClient):
-    """
-    Federated Learning Client for Scaffold strategy.
-
-    Implementation based on https://arxiv.org/pdf/1910.06378.pdf.
-    """
-
     def __init__(
         self,
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: str | None = None,
     ) -> None:
+        """
+        Federated Learning Client for Scaffold strategy.
+
+        Implementation based on https://arxiv.org/pdf/1910.06378.pdf.
+
+        Args:
+            data_path (Path): path to the data to be used to load the data for client-side training
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
+                'cuda'
+            loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
+                each batch. Defaults to LossMeterType.AVERAGE.
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
+                both checkpointing and state saving. The module, and its underlying model and state checkpointing
+                components will determine when and how to do checkpointing during client-side training.
+                No checkpointing (state or model) is done if not provided. Defaults to None.
+            reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
+                should send data to. Defaults to None.
+            progress_bar (bool, optional): Whether or not to display a progress bar during client training and
+                validation. Uses tqdm. Defaults to False
+            client_name (str | None, optional): An optional client name that uniquely identifies a client.
+                If not passed, a hash is randomly generated. Client state will use this as part of its state file
+                name. Defaults to None.
+        """
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
         )
         self.learning_rate: float  # eta_l in paper
-        self.client_control_variates: Optional[NDArrays] = None  # c_i in paper
-        self.client_control_variates_updates: Optional[NDArrays] = None  # delta_c_i in paper
-        self.server_control_variates: Optional[NDArrays] = None  # c in paper
-        self.optimizer: torch.optim.SGD  # Scaffold require vanilla SGD as optimizer
-        self.server_model_weights: Optional[NDArrays] = None  # x in paper
-        self.parameter_exchanger: ParameterExchangerWithPacking[NDArrays]
+        self.client_control_variates: NDArrays | None = None  # c_i in paper
+        self.client_control_variates_updates: NDArrays | None = None  # delta_c_i in paper
+        self.server_control_variates: NDArrays | None = None  # c in paper
+        # Scaffold require vanilla SGD as optimizer, will assert during setup_client
+        self.optimizers: dict[str, torch.optim.Optimizer]
+
+        self.server_model_weights: NDArrays | None = None  # x in paper
+        self.parameter_exchanger: FullParameterExchangerWithPacking[NDArrays]
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
-        Packs the parameters and control variartes into a single NDArrays to be sent to the server for aggregation
+        Packs the parameters and control variates into a single NDArrays to be sent to the server for aggregation
         """
-        assert self.model is not None and self.parameter_exchanger is not None
+        if not self.initialized:
+            log(
+                INFO,
+                "Setting up client and providing full model parameters to the server for initialization",
+            )
 
-        model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
+            # If initialized==False, the server is requesting model parameters from which to initialize all other
+            # clients. As such get_parameters is being called before fit or evaluate, so we must call
+            # setup_client first.
+            self.setup_client(config)
 
-        # Weights and control variates updates sent to server for aggregation
-        # Control variates updates sent because only client has access to previous client control variate
-        # Therefore it can only be computed locally
-        assert self.client_control_variates_updates is not None
-        packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.client_control_variates_updates)
-        return packed_params
+            # Need all parameters even if normally exchanging partial
+            return FullParameterExchanger().push_parameters(self.model, config=config)
+        else:
+            assert self.model is not None and self.parameter_exchanger is not None
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+            model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
+
+            # Weights and control variates updates sent to server for aggregation
+            # Control variates updates sent because only client has access to previous client control variate
+            # Therefore it can only be computed locally
+            assert self.client_control_variates_updates is not None
+            packed_params = self.parameter_exchanger.pack_parameters(
+                model_weights, self.client_control_variates_updates
+            )
+            return packed_params
+
+    def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
         Assumes that the parameters being passed contain model parameters concatenated with server control variates.
         They are unpacked for the clients to use in training. If it's the first time the model is being initialized,
@@ -85,7 +130,7 @@ class ScaffoldClient(BasicClient):
         server_model_state, server_control_variates = self.parameter_exchanger.unpack_parameters(parameters)
         self.server_control_variates = server_control_variates
 
-        super().set_parameters(server_model_state, config)
+        super().set_parameters(server_model_state, config, fitting_round)
 
         # Note that we are restricting to weights that require a gradient here because they are used to compute
         # control variates
@@ -150,7 +195,9 @@ class ScaffoldClient(BasicClient):
         ]
 
         for param, client_cv, server_cv in zip(
-            model_params_with_grad, self.client_control_variates, self.server_control_variates
+            model_params_with_grad,
+            self.client_control_variates,
+            self.server_control_variates,
         ):
             assert param.grad is not None
             tensor_type = param.grad.dtype
@@ -161,60 +208,71 @@ class ScaffoldClient(BasicClient):
 
     def compute_parameters_delta(self, params_1: NDArrays, params_2: NDArrays) -> NDArrays:
         """
-        Computes elementwise difference of two lists of NDarray
+        Computes element-wise difference of two lists of NDarray
         where elements in params_2 are subtracted from elements in params_1
         """
         parameter_delta: NDArrays = [param_1 - param_2 for param_1, param_2 in zip(params_1, params_2)]
 
         return parameter_delta
 
+    def transform_gradients(self, losses: TrainingLosses) -> None:
+        """
+        Hook function for model training only called after backwards pass but before
+        optimizer step. Used to modify gradient to correct for client drift in Scaffold.
+        """
+        self.modify_grad()
+
     def compute_updated_control_variates(
-        self, local_steps: int, delta_model_weights: NDArrays, delta_control_variates: NDArrays
+        self,
+        local_steps: int,
+        delta_model_weights: NDArrays,
+        delta_control_variates: NDArrays,
     ) -> NDArrays:
         """
         Computes the updated local control variates according to option 2 in Equation 4 of paper
         """
 
         # coef = 1 / (K * eta_l)
-        scaling_coeffient = 1 / (local_steps * self.learning_rate)
+        scaling_coefficient = 1 / (local_steps * self.learning_rate)
 
         # c_i^plus = c_i - c + 1/(K*lr) * (x - y_i)
         updated_client_control_variates = [
-            delta_control_variate + scaling_coeffient * delta_model_weight
+            delta_control_variate + scaling_coefficient * delta_model_weight
             for delta_control_variate, delta_model_weight in zip(delta_control_variates, delta_model_weights)
         ]
         return updated_client_control_variates
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, Dict[str, torch.Tensor]]:
-        # Clear gradients from optimizer if they exist
-        self.optimizer.zero_grad(set_to_none=False)
-
-        # Get predictions and compute loss
-        preds = self.predict(input)
-        losses = self.compute_loss(preds, target)
-
-        # Calculate backward pass, modify grad to account for client drift, update params
-        losses.backward.backward()
-        self.modify_grad()
-        self.optimizer.step()
-
-        return losses, preds
-
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         assert self.model is not None
         model_size = len(self.model.state_dict())
-        parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
+        parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
         return parameter_exchanger
 
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
         """
         Called after training with the number of local_steps performed over the FL round and
-        the corresponding loss dictionairy.
+        the corresponding loss dictionary.
         """
         self.update_control_variates(local_steps)
 
+    def setup_client(self, config: Config) -> None:
+        """
+        Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
+        Then set initialized attribute to True. Extends the basic client to extract the learning rate
+        from the optimizer and set the learning_rate attribute (used to compute updated control variates).
 
-class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ignore
+        Args:
+            config (Config): The config from the server.
+        """
+        super().setup_client(config)
+        if isinstance(self, DPScaffoldClient):
+            assert isinstance(self.optimizers["global"], DPOptimizer)
+        else:
+            assert isinstance(self.optimizers["global"], torch.optim.SGD)
+        self.learning_rate = self.optimizers["global"].defaults["lr"]
+
+
+class DPScaffoldClient(ScaffoldClient, InstanceLevelDpClient):
     """
     Federated Learning client for Instance Level Differentially Private Scaffold strategy
 
@@ -227,8 +285,10 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: str | None = None,
     ) -> None:
         ScaffoldClient.__init__(
             self,
@@ -236,18 +296,22 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
         )
 
-        InstanceLevelPrivacyClient.__init__(
+        InstanceLevelDpClient.__init__(
             self,
             data_path=data_path,
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
         )
 
 class DPScaffoldLoggingClient(DPScaffoldClient):

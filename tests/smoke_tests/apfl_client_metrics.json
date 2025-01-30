@@ -1,0 +1,58 @@
+{
+    "rounds": {
+        "1": {
+            "fit_round_metrics": {
+                "train - personal - accuracy": 0.6063,
+                "train - global - accuracy": 0.6078,
+                "train - local - accuracy": 0.4797
+            },
+            "fit_round_losses": {
+                "backward": 1.4428,
+                "global": 1.3272,
+                "local": 1.6362
+            },
+            "eval_round_metrics": {
+                "val - personal - accuracy": 0.5269,
+                "val - global - accuracy": 0.5331,
+                "val - local - accuracy": 0.4984
+            },
+            "eval_round_loss": 1.5862
+        },
+        "2": {
+            "fit_round_metrics": {
+                "train - personal - accuracy": 0.8063,
+                "train - global - accuracy": 0.8266,
+                "train - local - accuracy": 0.7688
+            },
+            "fit_round_losses": {
+                "backward": 0.6089,
+                "global": 0.6306,
+                "local": 0.7349
+            },
+            "eval_round_metrics": {
+                "val - personal - accuracy": 0.7117,
+                "val - global - accuracy": 0.7162,
+                "val - local - accuracy": 0.6274
+            },
+            "eval_round_loss": 0.9102
+        },
+        "3": {
+            "fit_round_metrics": {
+                "train - personal - accuracy": 0.85,
+                "train - global - accuracy": 0.8703,
+                "train - local - accuracy": 0.8422
+            },
+            "fit_round_losses": {
+                "backward": 0.4666,
+                "global": 0.4760,
+                "local": 0.6050
+            },
+            "eval_round_metrics": {
+                "val - personal - accuracy": 0.7681,
+                "val - global - accuracy": 0.7943,
+                "val - local - accuracy": 0.7094
+            },
+            "eval_round_loss": 0.7815
+        }
+    }
+}

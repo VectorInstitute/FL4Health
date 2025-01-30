@@ -1,7 +1,7 @@
 import argparse
 from functools import partial
 from logging import INFO
-from typing import Any, Dict
+from typing import Any
 
 import flwr as fl
 from flwr.common.logger import log
@@ -10,18 +10,14 @@ from flwr.server.strategy import FedAvg
 
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.utils.config import load_config
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 from research.flamby.fed_isic2019.apfl.apfl_model import ApflEfficientNet
 from research.flamby.flamby_servers.personal_server import PersonalServer
-from research.flamby.utils import (
-    evaluate_metrics_aggregation_fn,
-    fit_config,
-    fit_metrics_aggregation_fn,
-    get_initial_model_parameters,
-    summarize_model_info,
-)
+from research.flamby.utils import fit_config, summarize_model_info
 
 
-def main(config: Dict[str, Any], server_address: str) -> None:
+def main(config: dict[str, Any], server_address: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -44,10 +40,10 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(model),
+        initial_parameters=get_all_model_parameters(model),
     )
 
-    server = PersonalServer(client_manager, strategy)
+    server = PersonalServer(client_manager=client_manager, fl_config=config, strategy=strategy)
 
     fl.server.start_server(
         server=server,

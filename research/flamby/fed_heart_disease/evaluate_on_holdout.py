@@ -1,6 +1,5 @@
 import argparse
 from logging import INFO
-from typing import Dict
 
 import torch
 from flamby.datasets.fed_heart_disease import BATCH_SIZE, NUM_CLIENTS, FedHeartDisease
@@ -28,7 +27,7 @@ def main(
 ) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     all_run_folder_dir = get_all_run_folders(artifact_dir)
-    test_results: Dict[str, float] = {}
+    test_results: dict[str, float] = {}
     metrics = [Accuracy("FedHeartDisease_accuracy")]
 
     all_local_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
@@ -107,7 +106,7 @@ def main(
 
     if eval_global_model:
         # Next we test server checkpointed best model on pooled test data
-        pooled_test_dataset = FedHeartDisease(center=0, train=False, pooled=True)
+        pooled_test_dataset = FedHeartDisease(center=0, train=False, pooled=True, data_path=dataset_dir)
         pooled_test_loader = DataLoader(pooled_test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
         test_metrics = []
@@ -127,7 +126,7 @@ def main(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Evaluate Holdout Global")
+    parser = argparse.ArgumentParser(description="Evaluate Trained Models on Test Data")
     parser.add_argument(
         "--artifact_dir",
         action="store",

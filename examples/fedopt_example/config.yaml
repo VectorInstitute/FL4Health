@@ -1,12 +1,12 @@
 # Parameters that describe server
-n_server_rounds: 10 # The number of rounds to run FL
+n_server_rounds: 5 # The number of rounds to run FL
 
 # Parameters that describe clients
-n_clients: 2 # The number of clients in the FL experiment
-local_epochs: 10 # The number of epochs to complete for client
+n_clients: 3 # The number of clients in the FL experiment
+local_epochs: 3 # The number of epochs to complete for client
 batch_size: 32 # The batch size for client training
 
-vocab_dimension: 100 # The dimension of the vocabulary
+vocab_dimension: 128 # The dimension of the vocabulary
 hidden_size: 64 # The size of the hidden dimension of LSTM
 sequence_length: 64 # The length of sequence used to generate dataset
 

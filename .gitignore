@@ -135,6 +135,7 @@ dmypy.json
 # vscode
 launch.json
 settings.json
+.devcontainer*
 
 #mac
 .DS_Store
@@ -144,7 +145,18 @@ settings.json
 **/datasets/news_classification/partitioned_datasets/**
 **/datasets/mnist_data/**
 **/datasets/MNIST/**
+**/datasets/mimic3d/mimic3d_hospital1.csv
+**/datasets/mimic3d/mimic3d_hospital2.csv
 **/datasets/agnews_data/**
+**/datasets/skin_cancer/HAM10000/**
+**/datasets/skin_cancer/PAD-UFES-20/**
+**/datasets/skin_cancer/ISIC_2019/**
+**/datasets/skin_cancer/Derm7pt/**
+**/datasets/nnunet/**
+**/datasets/nnunet_raw/**
+**/datasets/nnunet_preprocessed/**
+**/datasets/cifar_partitioned_data/**
+**/datasets/rxrx1/rxrx1_v1.0/**
 
 # logs
 
@@ -159,6 +171,15 @@ settings.json
 # model artifacts
 
 **/*.pkl
+**/*.png
+**/*.pt
+**/*.ckpt
+/metrics/
+
+# dev
+temp*.py
+tmp*.py
+
 examples/secure_aggregation_example/running_pid.txt
 **/log/**
 **/log(old)/**

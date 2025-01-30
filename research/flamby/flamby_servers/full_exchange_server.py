@@ -1,28 +1,26 @@
-from typing import Optional
-
-import torch.nn as nn
+from flwr.common.typing import Config
 from flwr.server.client_manager import ClientManager
 from flwr.server.strategy import Strategy
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.server.base_server import FlServerWithCheckpointing
+from fl4health.servers.base_server import FlServer
 
 
-class FullExchangeServer(FlServerWithCheckpointing):
+class FullExchangeServer(FlServer):
     def __init__(
         self,
         client_manager: ClientManager,
-        model: nn.Module,
-        strategy: Optional[Strategy] = None,
-        checkpointer: Optional[BestMetricTorchCheckpointer] = None,
+        fl_config: Config,
+        strategy: Strategy | None = None,
+        checkpoint_and_state_module: BaseServerCheckpointAndStateModule | None = None,
     ) -> None:
-        # To help with model rehydration
-        parameter_exchanger = FullParameterExchanger()
         super().__init__(
             client_manager=client_manager,
-            model=model,
-            parameter_exchanger=parameter_exchanger,
+            fl_config=fl_config,
             strategy=strategy,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
         )
+        # If parameter exchanger has been defined, it needs to be of type FullParameterExchanger
+        if self.checkpoint_and_state_module.parameter_exchanger is not None:
+            assert isinstance(self.checkpoint_and_state_module.parameter_exchanger, FullParameterExchanger)

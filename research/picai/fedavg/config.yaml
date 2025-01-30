@@ -1,0 +1,7 @@
+# Parameters that describe server
+n_server_rounds: 100 # The number of rounds to run FL
+
+# Parameters that describe clients
+fold_id: 0
+local_epochs: 1 # The number of epochs to complete for client
+batch_size: 4 # The batch size for client training

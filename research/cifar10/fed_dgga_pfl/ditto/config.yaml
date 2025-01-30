@@ -1,0 +1,11 @@
+# Parameters that describe server
+n_server_rounds: 20 # The number of rounds to run FL
+
+# Parameters that describe clients
+n_clients: 7 # The number of clients in the FL experiment
+local_epochs: 1 # The number of epochs to complete for client
+batch_size: 32 # The batch size for client training
+# Evaluates model immediately after local training on the validation set (in addition to the training set)
+evaluate_after_fit: True
+# Packs the measured validation losses with the metrics (required for fed-dgga)
+pack_losses_with_val_metrics: True

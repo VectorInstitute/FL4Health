@@ -2,28 +2,24 @@ import argparse
 import os
 from functools import partial
 from logging import INFO
-from typing import Any, Dict
+from typing import Any
 
 import flwr as fl
 from flamby.datasets.fed_ixi import Baseline
 from flwr.common.logger import log
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
+from fl4health.checkpointing.server_module import ScaffoldServerCheckpointAndStateModule
 from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingByFractionClientManager
+from fl4health.servers.scaffold_server import ScaffoldServer
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
-from research.flamby.flamby_servers.scaffold_server import ScaffoldServer
-from research.flamby.utils import (
-    evaluate_metrics_aggregation_fn,
-    fit_config,
-    fit_metrics_aggregation_fn,
-    get_initial_model_info_with_control_variates,
-    summarize_model_info,
-)
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from research.flamby.utils import fit_config, get_initial_model_info_with_control_variates, summarize_model_info
 
 
 def main(
-    config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str, server_learning_rate: float
+    config: dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str, server_learning_rate: float
 ) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
@@ -34,7 +30,13 @@ def main(
 
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
     checkpoint_name = "server_best_model.pkl"
-    checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
+    federated_checkpointing: bool = config.get("federated_checkpointing", True)
+    log(INFO, f"Performing Federated Checkpointing: {federated_checkpointing}")
+    checkpointer = (
+        BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
+        if federated_checkpointing
+        else LatestTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
+    )
 
     client_manager = FixedSamplingByFractionClientManager()
 
@@ -43,6 +45,11 @@ def main(
     # and APFL
     model = Baseline(out_channels_first_layer=12)
     summarize_model_info(model)
+
+    checkpoint_and_state_module = ScaffoldServerCheckpointAndStateModule(
+        model=model,
+        model_checkpointers=checkpointer,
+    )
 
     initial_parameters, initial_control_variates = get_initial_model_info_with_control_variates(model)
 
@@ -61,7 +68,12 @@ def main(
         initial_control_variates=initial_control_variates,
     )
 
-    server = ScaffoldServer(client_manager, model, strategy, checkpointer)
+    server = ScaffoldServer(
+        client_manager=client_manager,
+        fl_config=config,
+        strategy=strategy,
+        checkpoint_and_state_module=checkpoint_and_state_module,
+    )
 
     fl.server.start_server(
         server=server,
@@ -69,7 +81,9 @@ def main(
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
 
-    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_metric}")
+    if federated_checkpointing:
+        assert isinstance(checkpointer, BestLossTorchModuleCheckpointer)
+        log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_score}")
 
     # Shutdown the server gracefully
     server.shutdown()

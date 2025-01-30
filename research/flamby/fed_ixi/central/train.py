@@ -7,7 +7,7 @@ from flamby.datasets.fed_ixi import BATCH_SIZE, LR, NUM_EPOCHS_POOLED, Baseline,
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
 
-from fl4health.utils.metrics import BinarySoftDiceCoefficient, MetricAccumulationMeter
+from fl4health.utils.metrics import BinarySoftDiceCoefficient, MetricManager
 from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datasets
 from research.flamby.single_node_trainer import SingleNodeTrainer
 from research.flamby.utils import summarize_model_info
@@ -64,17 +64,17 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    log(INFO, f"Device to be used: {DEVICE}")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    log(INFO, f"Device to be used: {device}")
 
     trainer = FedIxiCentralizedTrainer(
-        DEVICE,
+        device,
         args.artifact_dir,
         args.dataset_dir,
         args.run_name,
     )
     metrics = [BinarySoftDiceCoefficient("FedIXI_dice")]
-    train_meter = MetricAccumulationMeter(metrics, "train_meter")
-    val_meter = MetricAccumulationMeter(metrics, "val_meter")
+    train_metric_mngr = MetricManager(metrics, "train_meter")
+    val_metric_mngr = MetricManager(metrics, "val_meter")
     # Central and local models in FLamby for FedIX are trained for 10 epochs
-    trainer.train_by_epochs(NUM_EPOCHS_POOLED, train_meter, val_meter)
+    trainer.train_by_epochs(NUM_EPOCHS_POOLED, train_metric_mngr, val_metric_mngr)

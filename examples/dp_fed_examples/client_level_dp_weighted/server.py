@@ -1,32 +1,32 @@
 import argparse
 import pickle
 from functools import partial
-from typing import Any, Dict
+from typing import Any
 
 import flwr as fl
-from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Parameters
+from flwr.common.typing import Config
 
 from examples.dp_fed_examples.client_level_dp_weighted.data import Scaler
 from examples.models.logistic_regression import LogisticRegression
-from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
-from fl4health.server.client_level_dp_fed_avg_server import ClientLevelDPFedAvgServer
+from fl4health.servers.client_level_dp_fed_avg_server import ClientLevelDPFedAvgServer
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
 from fl4health.utils.config import load_config
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 
 
-def get_initial_model_parameters() -> Parameters:
-    # The server-side strategy requires that we provide server side parameter initialization.
-    # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = LogisticRegression(input_dim=31, output_dim=1)
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
-
-
-def construct_config(current_round: int, local_epochs: int, batch_size: int, adaptive_clipping: bool) -> Config:
+def construct_config(
+    current_round: int,
+    batch_size: int,
+    adaptive_clipping: bool,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
+) -> Config:
     # NOTE: The omitted variable is server_round which allows for dynamically changing the config each round
     return {
-        "local_epochs": local_epochs,
+        **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "batch_size": batch_size,
         "adaptive_clipping": adaptive_clipping,
         "scaler": pickle.dumps(Scaler()),
@@ -34,13 +34,27 @@ def construct_config(current_round: int, local_epochs: int, batch_size: int, ada
     }
 
 
-def fit_config(local_epochs: int, batch_size: int, adaptive_clipping: bool, server_round: int) -> Config:
-    return construct_config(server_round, local_epochs, batch_size, adaptive_clipping)
+def fit_config(
+    batch_size: int,
+    adaptive_clipping: bool,
+    server_round: int,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
+) -> Config:
+    return construct_config(server_round, batch_size, adaptive_clipping, local_epochs, local_steps)
 
 
-def main(config: Dict[str, Any]) -> None:
+def main(config: dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
-    fit_config_fn = partial(fit_config, config["local_epochs"], config["batch_size"], config["adaptive_clipping"])
+    fit_config_fn = partial(
+        fit_config,
+        config["batch_size"],
+        config["adaptive_clipping"],
+        local_epochs=config.get("local_epochs"),
+        local_steps=config.get("local_steps"),
+    )
+
+    initial_model = LogisticRegression(input_dim=31, output_dim=1)
 
     # ClientManager that performs Poisson type sampling
     client_manager = PoissonSamplingClientManager()
@@ -56,20 +70,22 @@ def main(config: Dict[str, Any]) -> None:
         # We use the same fit config function, as nothing changes for eval
         on_evaluate_config_fn=fit_config_fn,
         # Server side weight initialization
-        initial_parameters=get_initial_model_parameters(),
+        initial_parameters=get_all_model_parameters(initial_model),
         adaptive_clipping=config["adaptive_clipping"],
         server_learning_rate=config["server_learning_rate"],
         clipping_learning_rate=config["clipping_learning_rate"],
         clipping_quantile=config["clipping_quantile"],
         initial_clipping_bound=config["clipping_bound"],
         weight_noise_multiplier=config["server_noise_multiplier"],
-        clipping_noise_mutliplier=config["clipping_bit_noise_multiplier"],
+        clipping_noise_multiplier=config["clipping_bit_noise_multiplier"],
         beta=config["server_momentum"],
         weighted_aggregation=config["weighted_averaging"],
+        accept_failures=False,
     )
 
     server = ClientLevelDPFedAvgServer(
         client_manager=client_manager,
+        fl_config=config,
         strategy=strategy,
         num_server_rounds=config["n_server_rounds"],
         server_noise_multiplier=config["server_noise_multiplier"],

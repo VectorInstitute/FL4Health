@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import json
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 import nltk
 import numpy as np
@@ -10,25 +11,26 @@ from nltk.tokenize import word_tokenize
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 
-nltk.download("punkt")
+nltk.download("punkt_tab")
 
 
 class LabelEncoder:
-    def __init__(self, classes: List[str], label_to_class: Dict[int, str], class_to_label: Dict[str, int]) -> None:
+    def __init__(self, classes: list[str], label_to_class: dict[int, str], class_to_label: dict[str, int]) -> None:
         self.classes = classes
         self.label_to_class = label_to_class
         self.class_to_label = class_to_label
 
     @staticmethod
-    def encoder_from_dataframe(df: pd.DataFrame, class_column: str) -> "LabelEncoder":
+    def encoder_from_dataframe(df: pd.DataFrame, class_column: str) -> LabelEncoder:
         categories = df[class_column].astype("category")
-        label_to_class = dict(set(zip(categories.cat.codes, categories)))
+        categories_str = [str(category) for category in categories.to_list()]
+        label_to_class = dict(set(zip(categories.cat.codes, categories_str)))
         class_to_label = {category: label for label, category in label_to_class.items()}
         classes = categories.unique().tolist()
         return LabelEncoder(classes, label_to_class, class_to_label)
 
     @staticmethod
-    def from_json(json_str: str) -> "LabelEncoder":
+    def from_json(json_str: str) -> LabelEncoder:
         attributes = json.loads(json_str)
         # need to cast string keys to int
         label_to_class = {int(label): category for label, category in json.loads(attributes["label_to_class"]).items()}
@@ -52,16 +54,16 @@ class LabelEncoder:
 
 
 class Vocabulary:
-    def __init__(self, vocabulary_dict: Optional[Dict[str, int]], train_set: Optional[List[List[str]]]) -> None:
+    def __init__(self, vocabulary_dict: dict[str, int] | None, train_set: list[list[str]] | None) -> None:
         if vocabulary_dict is not None:
             self.word2index = vocabulary_dict
         elif train_set is not None:
             self._create_vocabulary(train_set)
         else:
-            raise ValueError("Must provide either precumputed dictionary or training set to create vocabulary")
+            raise ValueError("Must provide either precomputed dictionary or training set to create vocabulary")
         self.vocabulary_size = len(self.word2index)
 
-    def _create_vocabulary(self, train_set: List[List[str]]) -> None:
+    def _create_vocabulary(self, train_set: list[list[str]]) -> None:
         word2index = {"<PAD>": 0, "<SOS>": 1, "<EOS>": 2, "<UNK>": 3}
         current_index = 4
         for tokenized_text in train_set:
@@ -71,7 +73,7 @@ class Vocabulary:
                     current_index += 1
         self.word2index = word2index
 
-    def encode_and_pad(self, tokenized_text: List[str], seq_length: int) -> List[int]:
+    def encode_and_pad(self, tokenized_text: list[str], seq_length: int) -> list[int]:
         sos = [self.word2index["<SOS>"]]
         eos = [self.word2index["<EOS>"]]
         pad = [self.word2index["<PAD>"]]
@@ -94,11 +96,11 @@ class Vocabulary:
         return json.dumps(self.word2index)
 
     @staticmethod
-    def from_json(json_str: str) -> "Vocabulary":
+    def from_json(json_str: str) -> Vocabulary:
         return Vocabulary(json.loads(json_str), None)
 
 
-def tokenize_labeled_text(df: pd.DataFrame) -> List[Tuple[int, List[str]]]:
+def tokenize_labeled_text(df: pd.DataFrame) -> list[tuple[int, list[str]]]:
     # Assumes the dataframe has two columns (label and text to be tokenized)
     return [(label, word_tokenize(text)) for label, text in list(df.to_records(index=False))]
 
@@ -115,11 +117,10 @@ def create_weight_matrix(train_df: pd.DataFrame) -> torch.Tensor:
 
 def construct_dataloaders(
     path: Path, vocabulary: Vocabulary, label_encoder: LabelEncoder, sequence_length: int, batch_size: int
-) -> Tuple[DataLoader, DataLoader, Dict[str, int], torch.Tensor]:
+) -> tuple[DataLoader, DataLoader, dict[str, int], torch.Tensor]:
     df = get_local_data(path)
-    df.drop(["authors", "link"], axis=1, inplace=True)
     # lower case the headlines and description and concatenate
-    df["article_text"] = df["headline"].str.lower() + " " + df["short_description"].str.lower()
+    df["article_text"] = df["title"].str.lower() + " " + df["body"].str.lower()
     # encode category column as labels
     df = label_encoder.label_dataframe(df, "category")
     processed_df = df[["label", "article_text"]]
