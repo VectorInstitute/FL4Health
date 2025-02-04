@@ -877,7 +877,7 @@
 
         <span class="c1"># Change plans name.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">plans_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">plans_name</span> <span class="o">=</span> <span class="s2">&quot;FL-&quot;</span> <span class="o">+</span> <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;plans_name&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_id</span><span class="si">}</span><span class="s2">local&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plans_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;FL-</span><span class="si">{</span><span class="n">plans</span><span class="p">[</span><span class="s1">&#39;plans_name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_id</span><span class="si">}</span><span class="s2">local&quot;</span>
 
         <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;source_plans_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;plans_name&quot;</span><span class="p">]</span>
         <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;plans_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plans_name</span>
@@ -1329,43 +1329,45 @@
 <span class="sd">                validation sample counts as well as the serialized nnunet plans</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Check if nnunet plans have already been initialized</span>
-        <span class="k">if</span> <span class="s2">&quot;nnunet_plans&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="n">properties</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_properties</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-            <span class="n">properties</span><span class="p">[</span><span class="s2">&quot;nnunet_plans&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;nnunet_plans&quot;</span><span class="p">]</span>
-            <span class="n">properties</span><span class="p">[</span><span class="s2">&quot;num_input_channels&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_trainer</span><span class="o">.</span><span class="n">num_input_channels</span>
-            <span class="n">properties</span><span class="p">[</span><span class="s2">&quot;num_segmentation_heads&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_trainer</span><span class="o">.</span><span class="n">label_manager</span><span class="o">.</span><span class="n">num_segmentation_heads</span>
-            <span class="n">properties</span><span class="p">[</span><span class="s2">&quot;enable_deep_supervision&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_trainer</span><span class="o">.</span><span class="n">enable_deep_supervision</span>
-            <span class="k">return</span> <span class="n">properties</span>
+        <span class="k">if</span> <span class="s2">&quot;nnunet_plans&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Initializing the global plans using local dataset&quot;</span><span class="p">)</span>
+            <span class="c1"># Local client will initialize global nnunet plans</span>
+            <span class="c1"># Check if local nnunet dataset fingerprint needs to be extracted</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">maybe_extract_fingerprint</span><span class="p">()</span>
 
-        <span class="c1"># Check if local nnunet dataset fingerprint needs to be extracted</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">maybe_extract_fingerprint</span><span class="p">()</span>
+            <span class="c1"># Create experiment planner and plans.</span>
+            <span class="c1"># Plans name must be temp_plans so that we can safely delete the generated plans file</span>
+            <span class="n">planner</span> <span class="o">=</span> <span class="n">ExperimentPlanner</span><span class="p">(</span><span class="n">dataset_name_or_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">plans_name</span><span class="o">=</span><span class="s2">&quot;temp_plans&quot;</span><span class="p">)</span>
 
-        <span class="c1"># Create experiment planner and plans. Plans name must be temp_plans so that we</span>
-        <span class="c1"># can safely delete the plans file generated by the experiment planner</span>
-        <span class="n">planner</span> <span class="o">=</span> <span class="n">ExperimentPlanner</span><span class="p">(</span><span class="n">dataset_name_or_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_id</span><span class="p">,</span> <span class="n">plans_name</span><span class="o">=</span><span class="s2">&quot;temp_plans&quot;</span><span class="p">)</span>
+            <span class="c1"># Unless log level is DEBUG or lower, hide nnunet output</span>
+            <span class="k">with</span> <span class="n">redirect_stdout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stream2debug</span><span class="p">):</span>
+                <span class="n">plans</span> <span class="o">=</span> <span class="n">planner</span><span class="o">.</span><span class="n">plan_experiment</span><span class="p">()</span>
 
-        <span class="c1"># Unless log level is DEBUG or lower hide nnunet output</span>
-        <span class="k">with</span> <span class="n">redirect_stdout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stream2debug</span><span class="p">):</span>
-            <span class="n">plans</span> <span class="o">=</span> <span class="n">planner</span><span class="o">.</span><span class="n">plan_experiment</span><span class="p">()</span>
+            <span class="c1"># Set plans name to local dataset so we know the source</span>
+            <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;plans_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span> <span class="o">+</span> <span class="s2">&quot;_plans&quot;</span>
+            <span class="n">plans_bytes</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">plans</span><span class="p">)</span>
 
-        <span class="c1"># Set plans name to local dataset so we know the source</span>
-        <span class="c1"># Dataset name normally begins with Dataset123_, we remove it and keep suffix</span>
-        <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;plans_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">[</span><span class="mi">11</span><span class="p">:]</span> <span class="o">+</span> <span class="s2">&quot;_plans&quot;</span>
-        <span class="n">plans_bytes</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">plans</span><span class="p">)</span>
+            <span class="c1"># Remove plans file . A new one will be generated in self.setup_client</span>
+            <span class="n">plans_path</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">nnUNet_preprocessed</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">planner</span><span class="o">.</span><span class="n">plans_identifier</span> <span class="o">+</span> <span class="s2">&quot;.json&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">exists</span><span class="p">(</span><span class="n">plans_path</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">plans_path</span><span class="p">)</span>
 
-        <span class="c1"># Remove plans file . A new one will be generated in self.setup_client</span>
-        <span class="n">plans_path</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">nnUNet_preprocessed</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">planner</span><span class="o">.</span><span class="n">plans_identifier</span> <span class="o">+</span> <span class="s2">&quot;.json&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">exists</span><span class="p">(</span><span class="n">plans_path</span><span class="p">):</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">plans_path</span><span class="p">)</span>
+            <span class="c1"># Update local config with plans</span>
+            <span class="n">config</span><span class="p">[</span><span class="s2">&quot;nnunet_plans&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">plans_bytes</span>
 
-        <span class="c1"># return properties with initialized nnunet plans. Need to provide</span>
-        <span class="c1"># plans since client needs to be initialized to get properties</span>
-        <span class="n">config</span><span class="p">[</span><span class="s2">&quot;nnunet_plans&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">plans_bytes</span>
+        <span class="c1"># Get client properties. We are now sure that config contains plans</span>
         <span class="n">properties</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_properties</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-        <span class="n">properties</span><span class="p">[</span><span class="s2">&quot;nnunet_plans&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">plans_bytes</span>
+        <span class="n">properties</span><span class="p">[</span><span class="s2">&quot;nnunet_plans&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;nnunet_plans&quot;</span><span class="p">]</span>
+
+        <span class="c1"># super.get_properties should setup the client anyways, but we can add a check here as a precaution.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">setup_client</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>  <span class="c1"># Client must be setup in order to initialize nnunet_trainer</span>
+
+        <span class="c1"># Add additional properties from nnunet trainer to properties dict. We may want to add more keys later</span>
         <span class="n">properties</span><span class="p">[</span><span class="s2">&quot;num_input_channels&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_trainer</span><span class="o">.</span><span class="n">num_input_channels</span>
         <span class="n">properties</span><span class="p">[</span><span class="s2">&quot;num_segmentation_heads&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_trainer</span><span class="o">.</span><span class="n">label_manager</span><span class="o">.</span><span class="n">num_segmentation_heads</span>
         <span class="n">properties</span><span class="p">[</span><span class="s2">&quot;enable_deep_supervision&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_trainer</span><span class="o">.</span><span class="n">enable_deep_supervision</span>
+
         <span class="k">return</span> <span class="n">properties</span>
 
 <div class="viewcode-block" id="NnunetClient.shutdown_dataloader">

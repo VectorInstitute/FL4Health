@@ -465,11 +465,11 @@
 <span id="fl4health-servers-nnunet-server-module"></span><h1>fl4health.servers.nnunet_server module<a class="headerlink" href="#module-fl4health.servers.nnunet_server" title="Link to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="fl4health.servers.nnunet_server.NnunetServer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">NnunetServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client_manager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fl_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_init_parameters_config_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reporters=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_and_state_module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_failures=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nnunet_trainer_class=&lt;class</span> <span class="pre">'nnunetv2.training.nnUNetTrainer.nnUNetTrainer.nnUNetTrainer'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/servers/nnunet_server.html#NnunetServer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.servers.nnunet_server.NnunetServer" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">NnunetServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client_manager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fl_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_init_parameters_config_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reporters=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_and_state_module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_failures=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nnunet_trainer_class=&lt;class</span> <span class="pre">'nnunetv2.training.nnUNetTrainer.nnUNetTrainer.nnUNetTrainer'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_deep_supervision=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/servers/nnunet_server.html#NnunetServer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.servers.nnunet_server.NnunetServer" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="fl4health.servers.base_server.html#fl4health.servers.base_server.FlServer" title="fl4health.servers.base_server.FlServer"><code class="xref py py-class docutils literal notranslate"><span class="pre">FlServer</span></code></a></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.servers.nnunet_server.NnunetServer.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client_manager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fl_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_init_parameters_config_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reporters=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_and_state_module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_failures=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nnunet_trainer_class=&lt;class</span> <span class="pre">'nnunetv2.training.nnUNetTrainer.nnUNetTrainer.nnUNetTrainer'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/servers/nnunet_server.html#NnunetServer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.servers.nnunet_server.NnunetServer.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client_manager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fl_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_init_parameters_config_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reporters=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_and_state_module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_failures=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nnunet_trainer_class=&lt;class</span> <span class="pre">'nnunetv2.training.nnUNetTrainer.nnUNetTrainer.nnUNetTrainer'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_deep_supervision=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/servers/nnunet_server.html#NnunetServer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.servers.nnunet_server.NnunetServer.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>A Basic FlServer with added functionality to ask a client to initialize the global nnunet plans if one was not
 provided in the config. Intended for use with NnUNetClient.</p>
 <dl class="field-list simple">
@@ -505,6 +505,9 @@ and throw an exception. Defaults to True.</p></li>
 <li><p><strong>nnunet_trainer_class</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#type" title="(in Python v3.10)"><em>type</em></a><em>[</em><em>nnUNetTrainer</em><em>]</em>) – nnUNetTrainer class.
 Useful for passing custom nnUNetTrainer. Defaults to the standard nnUNetTrainer class.
 Must match the nnunet_trainer_class passed to the NnunetClient.</p></li>
+<li><p><strong>global_deep_supervision</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a>) – Whether or not the global model should use deep supervision. Does
+not affect the model architecture just the output during inference. This argument applies only to the
+global model, not local client models. Defaults to False.</p></li>
 </ul>
 </dd>
 </dl>
@@ -513,7 +516,8 @@ Must match the nnunet_trainer_class passed to the NnunetClient.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.servers.nnunet_server.NnunetServer.initialize_server_model">
 <span class="sig-name descname"><span class="pre">initialize_server_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/servers/nnunet_server.html#NnunetServer.initialize_server_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.servers.nnunet_server.NnunetServer.initialize_server_model" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Initializes the global server model so that it can be checkpointed.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
 </dd>
@@ -523,14 +527,21 @@ Must match the nnunet_trainer_class passed to the NnunetClient.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.servers.nnunet_server.NnunetServer.update_before_fit">
 <span class="sig-name descname"><span class="pre">update_before_fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_rounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/servers/nnunet_server.html#NnunetServer.update_before_fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.servers.nnunet_server.NnunetServer.update_before_fit" title="Link to this definition">¶</a></dt>
-<dd><p>Hook method to allow the server to do some additional initialization prior to fitting. NunetServer
-uses this method to sample a client for properties which are required to initialize the server.</p>
-<p>In particular, if a nnunet_plans file is not provided in the config, this method will sample a client
-which passes the nnunet_plans back to the sever through get_properties RPC. The server then distributes
-the nnunet_plans to the other clients by including it in the config for subsequent FL rounds.</p>
-<p>Even if the nnunet_plans are included in the config, the server will still poll a client in order to have the
-required properties to instantiate the model architecture on the server side which is required for
-checkpointing. These properties include num_segmentation_heads, num_input_channels and enable_deep_supervision.</p>
+<dd><p>Hook method to allow the server to do some additional initialization prior to fitting.</p>
+<p>NunetServer uses this method to sample a client for properties for one of two reasons</p>
+<ol class="arabic simple">
+<li><p>If a global nnunet_plans file is not provided in the config, this method will request that a random client
+which generate a plans file from it local dataset and return it to the server through the get_properties
+RPC. The server then distributes the nnunet_plans to the other clients by including it in the config for
+subsequent FL rounds.</p></li>
+</ol>
+<p>AND/OR</p>
+<ol class="arabic simple" start="2">
+<li><p>If server side state or model checkpointing is being used, then server will  poll a client in order to have
+the required properties to instantiate the model architecture on the server side. These properties include
+num_segmentation_heads and num_input_channels, essentially the number of input and output channels (which
+are not specified in nnunet plans for some reason).</p></li>
+</ol>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
