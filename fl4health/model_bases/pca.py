@@ -31,8 +31,8 @@ class PcaModule(nn.Module):
 
             https://pytorch.org/docs/stable/generated/torch.pca_lowrank.html
 
-        As per the official documentation of PyTorch, in general, the user should set low_rank to False. Setting it to
-        True would be useful for huge sparse matrices.
+        As per the official documentation of PyTorch, in general, the user should set ``low_rank`` to False. Setting
+        it to True would be useful for huge sparse matrices.
 
         Args:
             low_rank (bool, optional): Indicates whether the data matrix can be well-approximated by a low-rank

@@ -34,7 +34,7 @@ class MaskedConv1d(nn.Conv1d):
         back propagation. Instead, two score tensors - one for the weight and another for the bias - are maintained.
 
         In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores,
-        which are then used to produce binary masks via bernoulli sampling. Finally, the binary masks are applied to
+        which are then used to produce binary masks via Bernoulli sampling. Finally, the binary masks are applied to
         the weight and the bias. During training, gradients with respect to the score tensors are computed and used to
         update the score tensors.
 
@@ -160,7 +160,7 @@ class MaskedConv2d(nn.Conv2d):
         convolutional filter) and a (optional) bias. However, the weight and the bias do not receive gradient in back
         propagation. Instead, two score tensors - one for the weight and another for the bias - are maintained.
         In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores, which
-        are then used to produce binary masks via bernoulli sampling. Finally, the binary masks are applied to the
+        are then used to produce binary masks via Bernoulli sampling. Finally, the binary masks are applied to the
         weight and the bias. During training, gradients with respect to the score tensors are computed and used to
         update the score tensors.
 
@@ -284,7 +284,7 @@ class MaskedConv3d(nn.Conv3d):
         convolutional filter) and a (optional) bias. However, the weight and the bias do not receive gradient in back
         propagation. Instead, two score tensors - one for the weight and another for the bias - are maintained. In the
         forward pass, the score tensors are transformed by the Sigmoid function into probability scores, which are
-        then used to produce binary masks via bernoulli sampling. Finally, the binary masks are applied to the weight
+        then used to produce binary masks via Bernoulli sampling. Finally, the binary masks are applied to the weight
         and the bias. During training, gradients with respect to the score tensors are computed and used to update the
         score tensors.
 
@@ -412,7 +412,7 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
         convolutional layer has a weight (i.e., convolutional filter) and a (optional) bias. However, the weight and
         the bias do not receive gradient in back propagation. Instead, two score tensors - one for the weight and
         another for the bias - are maintained. In the forward pass, the score tensors are transformed by the Sigmoid
-        function into probability scores, which are then used to produce binary masks via bernoulli sampling.
+        function into probability scores, which are then used to produce binary masks via Bernoulli sampling.
         Finally, the binary masks are applied to the weight and the bias. During training, gradients with respect to
         the score tensors are computed and used to update the score tensors.
 
@@ -571,7 +571,7 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
         convolutional layer has a weight (i.e., convolutional filter) and a (optional) bias. However, the weight and
         the bias do not receive gradient in back propagation. Instead, two score tensors - one for the weight and
         another for the bias - are maintained. In the forward pass, the score tensors are transformed by the
-        Sigmoid function into probability scores, which are then used to produce binary masks via bernoulli sampling.
+        Sigmoid function into probability scores, which are then used to produce binary masks via Bernoulli sampling.
         Finally, the binary masks are applied to the weight and the bias. During training, gradients with respect to
         the score tensors are computed and used to update the score tensors.
 
@@ -728,7 +728,7 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
         convolutional layer has a weight (i.e., convolutional filter) and a (optional) bias. However, the weight and
         the bias do not receive gradient in back propagation. Instead, two score tensors - one for the weight and
         another for the bias - are maintained. In the forward pass, the score tensors are transformed by the Sigmoid
-        function into probability scores, which are then used to produce binary masks via bernoulli sampling.
+        function into probability scores, which are then used to produce binary masks via Bernoulli sampling.
         Finally, the binary masks are applied to the weight and the bias. During training, gradients with respect to
         the score tensors are computed and used to update the score tensors.
 

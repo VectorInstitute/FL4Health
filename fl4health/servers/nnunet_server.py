@@ -158,7 +158,7 @@ class NnunetServer(FlServer):
         uses this method to sample a client for properties which are required to initialize the server.
 
         In particular, if a nnunet_plans file is not provided in the config, this method will sample a client
-        which passes the nnunet_plans back to the sever through get_properties RPC. The server then distributes
+        which passes the nnunet_plans back to the server through get_properties RPC. The server then distributes
         the nnunet_plans to the other clients by including it in the config for subsequent FL rounds.
 
         Even if the nnunet_plans are included in the config, the server will still poll a client in order to have the

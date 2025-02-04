@@ -18,7 +18,7 @@ class MoonModel(SequentiallySplitModel):
             base_module (nn.Module): Feature extractor component of the model
             head_module (nn.Module): Classification (or other type) of head used by the model
             projection_module (nn.Module | None, optional): An optional module for manipulating the features before
-                they are passed to the head_module. Defaults to None.
+                they are passed to the ``head_module``. Defaults to None.
         """
 
         # Features are forced to be stored and flattened in this model, as it is expected to always be used with the
@@ -28,12 +28,12 @@ class MoonModel(SequentiallySplitModel):
 
     def sequential_forward(self, input: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
-        Overriding the sequential forward of the SequentiallySplitModel parent to allow for the injection of a
+        Overriding the sequential forward of the ``SequentiallySplitModel`` parent to allow for the injection of a
         projection module into the forward pass. The remainder of the functionality stays the same. That is,
-        We run a forward pass using the sequentially split modules base_module -> head_module.
+        We run a forward pass using the sequentially split modules ``base_module`` -> ``head_module``.
 
         Args:
-            input (torch.Tensor): Input to the model forward pass. Expected to be of shape (batch_size, \\*)
+            input (torch.Tensor): Input to the model forward pass. Expected to be of shape (``batch_size``, \\*)
 
         Returns:
             tuple[torch.Tensor, torch.Tensor]: Returns the predictions and features tensor from the sequential forward
