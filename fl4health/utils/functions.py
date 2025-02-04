@@ -83,7 +83,7 @@ def pseudo_sort_scoring_function(client_result: tuple[ClientProxy, NDArrays, int
 
 
 def decode_and_pseudo_sort_results(
-    results: list[tuple[ClientProxy, FitRes]]
+    results: list[tuple[ClientProxy, FitRes]],
 ) -> list[tuple[ClientProxy, NDArrays, int]]:
     """
     This function is used to convert the results of client training into NDArrays and to apply a pseudo sort
