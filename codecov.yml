@@ -15,5 +15,6 @@ ignore:
   - "**/*.sh"
   - "**/*.ini"
   - "research"
+  - "**/Makefile"
 github_checks:
     annotations: false
