@@ -822,13 +822,10 @@ class NnunetClient(BasicClient):
             dict[str, Scalar]: A dictionary containing the train and
                 validation sample counts as well as the serialized nnunet plans
         """
-        # Get properties from basic client parent class
-        properties = super().get_properties(config)
-
         # Check if nnunet plans have already been initialized
-        if "nnunet_plans" in config.keys():
-            properties["nnunet_plans"] = config["nnunet_plans"]
-        else:  # Local client will initialize global nnunet plans
+        if "nnunet_plans" not in config.keys():
+            log(INFO, "Initializing the global plans using local dataset")
+            # Local client will initialize global nnunet plans
             # Check if local nnunet dataset fingerprint needs to be extracted
             self.maybe_extract_fingerprint()
 
@@ -849,17 +846,18 @@ class NnunetClient(BasicClient):
             if exists(plans_path):
                 os.remove(plans_path)
 
-            # Plans are returned to server via properties dict.
-            # Must also update local config with plans so that client can be initialized.
-            properties["nnunet_plans"] = plans_bytes
+            # Update local config with plans
             config["nnunet_plans"] = plans_bytes
 
-        # Make sure client is initialized so that nnunet_trainer is initialized
-        if not self.initialized:
-            self.setup_client(config)
+        # Get client properties. We are now sure that config contains plans
+        properties = super().get_properties(config)
+        properties["nnunet_plans"] = config["nnunet_plans"]
 
-        # Add additional properties from nnunet trainer to properties dict.
-        # We may want to add more keys later
+        # super.get_properties should setup the client anyways, but we can add a check here as a precaution.
+        if not self.initialized:
+            self.setup_client(config)  # Client must be setup in order to initialize nnunet_trainer
+
+        # Add additional properties from nnunet trainer to properties dict. We may want to add more keys later
         properties["num_input_channels"] = self.nnunet_trainer.num_input_channels
         properties["num_segmentation_heads"] = self.nnunet_trainer.label_manager.num_segmentation_heads
         properties["enable_deep_supervision"] = self.nnunet_trainer.enable_deep_supervision
