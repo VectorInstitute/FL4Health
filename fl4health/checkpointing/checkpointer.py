@@ -322,3 +322,8 @@ class PerRoundStateCheckpointer:
             )
         checkpoint_path = os.path.join(self.checkpoint_dir, checkpoint_name)
         return os.path.exists(checkpoint_path)
+
+
+class DummyTestForAnnotations:
+    def add(self, x: int) -> int:
+        return x + x
