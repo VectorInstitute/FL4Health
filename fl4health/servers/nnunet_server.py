@@ -105,8 +105,9 @@ class NnunetServer(FlServer):
             nnunet_trainer_class (type[nnUNetTrainer]): nnUNetTrainer class.
                 Useful for passing custom nnUNetTrainer. Defaults to the standard nnUNetTrainer class.
                 Must match the nnunet_trainer_class passed to the NnunetClient.
-            global_deep_supervision (bool): Whether or not the global model should use enable deep supervision. Does
-                not affect the architecture just the output during inference. Defaults to False.
+            global_deep_supervision (bool): Whether or not the global model should use deep supervision. Does
+                not affect the model architecture just the output during inference. This argument applies only to the
+                global model, not local client models. Defaults to False.
         """
         if checkpoint_and_state_module is not None:
             assert isinstance(
@@ -156,17 +157,21 @@ class NnunetServer(FlServer):
         self.checkpoint_and_state_module.model = model
 
     def update_before_fit(self, num_rounds: int, timeout: float | None) -> None:
-        """
-        Hook method to allow the server to do some additional initialization prior to fitting. NunetServer
-        uses this method to sample a client for properties which are required to initialize the server.
+        """Hook method to allow the server to do some additional initialization prior to fitting.
 
-        In particular, if a nnunet_plans file is not provided in the config, this method will sample a client
-        which passes the nnunet_plans back to the sever through get_properties RPC. The server then distributes
-        the nnunet_plans to the other clients by including it in the config for subsequent FL rounds.
+        NunetServer uses this method to sample a client for properties for one of two reasons
 
-        Even if the nnunet_plans are included in the config, the server will still poll a client in order to have the
-        required properties to instantiate the model architecture on the server side which is required for
-        checkpointing. These properties include num_segmentation_heads, num_input_channels and enable_deep_supervision.
+        1) If a global nnunet_plans file is not provided in the config, this method will request that a random client
+           which generate a plans file from it local dataset and return it to the server through the get_properties
+           RPC. The server then distributes the nnunet_plans to the other clients by including it in the config for
+           subsequent FL rounds.
+
+        AND/OR
+
+        2) If server side state or model checkpointing is being used, then server will  poll a client in order to have
+           the required properties to instantiate the model architecture on the server side. These properties include
+           num_segmentation_heads and num_input_channels, essentially the number of input and output channels (which
+           are not specified in nnunet plans for some reason).
 
         Args:
             num_rounds (int): The number of server rounds of FL to be performed
@@ -257,7 +262,7 @@ class NnunetServer(FlServer):
         """
         Save server checkpoint consisting of model, history, server round, metrics reporter and server name. This
         method overrides parent to also checkpoint nnunet_plans, num_input_channels, num_segmentation_heads and
-        enable_deep_supervision.
+        global_deep_supervision.
         """
 
         assert (
