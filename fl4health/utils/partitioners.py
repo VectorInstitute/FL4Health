@@ -27,22 +27,29 @@ class DirichletLabelBasedAllocation(Generic[T]):
         number of partitions. Data associated with the label are then assigned to each partition according to the
         distribution. Another distribution is sampled for the next label, and so on.
 
-        NOTE: This differs in kind from label-based Dirichlet sampling. There, an existing dataset is subsampled in
+        **NOTE:** This differs in kind from label-based Dirichlet sampling. There, an existing dataset is subsampled in
         place (rather than partitioned) such that its labels match a Dirichlet distribution.
 
-        NOTE: The range for beta is (0, infinity). The larger the value of beta, the more uniform the multinomial
+        **NOTE:** The range for beta is (0, infinity). The larger the value of beta, the more uniform the multinomial
         probability of the clients will be. The smaller beta is the more heterogeneous it is.
-        np.random.dirichlet([1]*5): array([0.23645891, 0.08857052, 0.29519184, 0.2999956 , 0.07978313])
-        np.random.dirichlet([1000]*5): array([0.2066252 , 0.19644968, 0.20080513, 0.19992536, 0.19619462])
+
+        :code:`np.random.dirichlet([1]*5): array([0.23645891, 0.08857052, 0.29519184, 0.2999956 , 0.07978313])`
+
+        :code:`np.random.dirichlet([1000]*5): array([0.2066252 , 0.19644968, 0.20080513, 0.19992536, 0.19619462])`
 
         Example Usage:
+
+        .. code-block:: python
+
             original_dataset = SyntheticDataset(
                 torch.rand((10000, 3, 3)),
                 torch.randint(low=0, high=10, size=(10000, 1))
             )
+
             heterogeneous_partitioner = DirichletLabelBasedAllocation(
                 number_of_partitions=10, unique_labels=list(range(10)), beta=10.0, min_label_examples=2
             )
+
             partitioned_datasets = heterogeneous_partitioner.partition_dataset(original_dataset, max_retries=5)
 
         Args:
@@ -50,10 +57,13 @@ class DirichletLabelBasedAllocation(Generic[T]):
             unique_labels (list[T]): This is the set of labels through which we'll iterate to perform allocation
             min_label_examples (int | None, optional): This is an optional input if you want to ensure a minimum
                 number of labels is present on each partition. If prior distribution is provided, this is ignored.
-                NOTE: This does not guarantee feasibility. That is, if you have a very small beta and request a large
-                minimum number here, you are unlikely to satisfy this request. In partitioning, if the minimum isn't
-                satisfied, we resample from the Dirichlet distribution. This is repeated some limited number of times.
-                Otherwise the partitioner "gives up". Defaults to None.
+
+                **NOTE:** This does not guarantee feasibility. That is, if you have a very small beta and request a
+                large minimum number here, you are unlikely to satisfy this request. In partitioning, if the minimum
+                isn't satisfied, we resample from the Dirichlet distribution. This is repeated some limited number of
+                times. Otherwise the partitioner "gives up".
+
+                Defaults to None.
             beta (float | None): This controls the heterogeneity of the partition allocations. The smaller the beta,
               the more skewed the label assignments will be to different clients. It is mutually exclusive with given
               prior distribution.

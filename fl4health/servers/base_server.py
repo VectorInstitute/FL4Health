@@ -45,7 +45,7 @@ class FlServer(Server):
             fl_config (Config): This should be the configuration that was used to setup the federated training.
                 In most cases it should be the "source of truth" for how FL training/evaluation should proceed. For
                 example, the config used to produce the on_fit_config_fn and on_evaluate_config_fn for the strategy.
-                NOTE: This config is DISTINCT from the Flwr server config, which is extremely minimal.
+                **NOTE:** This config is DISTINCT from the Flwr server config, which is extremely minimal.
             strategy (Strategy | None, optional): The aggregation strategy to be used by the server to handle.
                 client updates and other information potentially sent by the participating clients. If None the
                 strategy is FedAvg as set by the flwr Server. Defaults to None.
@@ -121,7 +121,7 @@ class FlServer(Server):
     def fit_with_per_round_checkpointing(self, num_rounds: int, timeout: float | None) -> tuple[History, float]:
         """
         Runs federated learning for a number of rounds. Heavily based on the fit method from the base
-        server provided by flower (flwr.server.server.Server) except that it is resilient to preemptions.
+        server provided by flower (``flwr.server.server.Server``) except that it is resilient to preemptions.
         It accomplishes this by checkpointing the server state each round. In the case of preemption,
         when the server is restarted it will load from the most recent checkpoint.
 
@@ -131,8 +131,8 @@ class FlServer(Server):
 
         Returns:
             tuple[History, float]: The first element of the tuple is a history object containing the losses and
-                metrics computed during training and validation. The second element of the tuple is
-                the elapsed time in seconds.
+            metrics computed during training and validation. The second element of the tuple is the elapsed time in
+            seconds.
         """
 
         # Attempt to load the server state if it exists. If the state checkpoint exists, update history, server
@@ -220,8 +220,8 @@ class FlServer(Server):
 
         Returns:
             tuple[History, float]: The first element of the tuple is a history object containing the full set of
-                FL training results, including things like aggregated loss and metrics.
-                Tuple also contains the elapsed time in seconds for the round.
+            FL training results, including things like aggregated loss and metrics. Tuple also contains the elapsed
+            time in seconds for the round.
         """
         start_time = datetime.datetime.now()
         self.reports_manager.report(
@@ -269,9 +269,9 @@ class FlServer(Server):
 
         Returns:
             tuple[Parameters | None, dict[str, Scalar], FitResultsAndFailures] | None: The results of training
-                on the client sit. The first set of parameters are the AGGREGATED parameters from the strategy. The
-                second is a dictionary of AGGREGATED metrics. The third component holds the individual (non-aggregated)
-                parameters, loss, and metrics for successful and unsuccessful client-side training.
+            on the client sit. The first set of parameters are the **AGGREGATED** parameters from the strategy. The
+            second is a dictionary of **AGGREGATED** metrics. The third component holds the individual (non-aggregated)
+            parameters, loss, and metrics for successful and unsuccessful client-side training.
         """
 
         round_start = datetime.datetime.now()

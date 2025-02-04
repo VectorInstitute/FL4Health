@@ -42,29 +42,30 @@ class FendaDittoClient(DittoClient):
         injected into the global feature extractor of the FENDA model.
 
         There are two distinct modes of operation:
-            If freeze_global_feature_extractor is True. The global Ditto model feature extractor SETS AND FREEZES
-            weights of global FENDA feature extractor. The local components of the FENDA model are trained and an
-            additional drift loss is computed between the local and global feature extractors of the FENDA model.
 
-            If freeze_global_feature_extractor is False. The global Ditto model feature extractor INITIALIZES weights
-            of the FENDA model's global feature extractor, both local and global components of FENDA are trained and
-            a drift loss is calculated between Ditto global feature extractor and FENDA global feature extractor.
+        - If freeze_global_feature_extractor is True. The global Ditto model feature extractor **SETS AND FREEZES**
+          weights of global FENDA feature extractor. The local components of the FENDA model are trained and an
+          additional drift loss is computed between the local and global feature extractors of the FENDA model.
 
+        - If freeze_global_feature_extractor is False. The global Ditto model feature extractor **INITIALIZES**
+          weights of the FENDA model's global feature extractor, both local and global components of FENDA are
+          trained and a drift loss is calculated between Ditto global feature extractor and FENDA global feature
+          extractor.
 
         The constraint for the FENDA model feature extractors discussed above uses a weight drift loss on its
         feature extraction modules.
 
-        NOTE: Unlike FENDA, the global feature extractor of the FENDA model is NOT exchanged with the server. Rather,
-        the global Ditto model is exchanged and injected at each round into the global feature extractor. If the
-        global feature extractor is frozen, then only the local components of the FENDA network are trained.
+        **NOTE:** Unlike FENDA, the global feature extractor of the FENDA model is NOT exchanged with the server.
+        Rather, the global Ditto model is exchanged and injected at each round into the global feature extractor. If
+        the global feature extractor is frozen, then only the local components of the FENDA network are trained.
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
             metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
-            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
-                'cuda'
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
+                "cuda"
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
-                each batch. Defaults to LossMeterType.AVERAGE.
+                each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
@@ -72,7 +73,7 @@ class FendaDittoClient(DittoClient):
             reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
                 should send data to. Defaults to None.
             progress_bar (bool, optional): Whether or not to display a progress bar during client training and
-                validation. Uses tqdm. Defaults to False
+                validation. Uses ``tqdm``. Defaults to False
             client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
@@ -161,16 +162,16 @@ class FendaDittoClient(DittoClient):
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
-        For FendaDitto, we transfer the GLOBAL Ditto model weights to the server to be aggregated. The local FENDA
-        model weights stay with the client. The local FENDA model has a different architecture than the GLOBAL model.
-        So if the client is being asked for initialization parameters, we just send the GLOBAL model to sync all GLOBAL
-        models across clients AND the local FENDA model's global feature extractor.
+        For FendaDitto, we transfer the **GLOBAL** Ditto model weights to the server to be aggregated. The local FENDA
+        model weights stay with the client. The local FENDA model has a different architecture than the **GLOBAL**
+        model. So if the client is being asked for initialization parameters, we just send the GLOBAL model to sync
+        all **GLOBAL** models across clients AND the local FENDA model's global feature extractor.
 
         Args:
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            NDArrays: GLOBAL model weights to be sent to the server for aggregation
+            NDArrays: **GLOBAL** model weights to be sent to the server for aggregation
         """
         if not self.initialized:
             log(INFO, "Setting up client")
@@ -194,17 +195,17 @@ class FendaDittoClient(DittoClient):
         The parameters being passed are to be routed to the global (ditto) model and copied to the global feature
         extractor of the local FENDA model and saved as the initial global model tensors to be used in a penalty term
         in training the local model. We assume the both the global and local models are being initialized and use
-        a FullParameterExchanger() to set the model weights for the global model, the global model feature
+        a ``FullParameterExchanger()`` to set the model weights for the global model, the global model feature
         extractor weights will be then copied to the global feature extractor of local FENDA model.
+
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
                 model
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
-            fitting_round (bool): Boolean that indicates whether the current federated learning
-                round is a fitting round or an evaluation round.
-                This is used to help determine which parameter exchange should be used for pulling parameters.
-                A full parameter exchanger is only used if the current federated learning round is the very
-                first fitting round.
+            fitting_round (bool): Boolean that indicates whether the current federated learning round is a fitting
+                round or an evaluation round. This is used to help determine which parameter exchange should be used
+                for pulling parameters. A full parameter exchanger is only used if the current federated learning
+                round is the very first fitting round.
         """
         # Make sure that the proper components exist.
         assert self.global_model is not None and self.model is not None
@@ -220,16 +221,26 @@ class FendaDittoClient(DittoClient):
         self.model.second_feature_extractor.load_state_dict(self.global_model.base_module.state_dict())
 
     def set_initial_global_tensors(self) -> None:
-        # Saving the initial GLOBAL (DITTO) MODEL weights and detaching them so that we don't compute gradients with
-        # respect to the tensors. These are used to form the Ditto local update penalty term.
-        # NOTE: We are only saving the base model parameters, as these will be used to constraint a feature extractor
-        # in the local FENDA model (not the full stack)
+        """
+        Saves the initial **GLOBAL** (DITTO) MODEL weights and detaching them so that we don't compute gradients with
+        respect to the tensors. These are used to form the Ditto local update penalty term.
+
+        **NOTE**: We are only saving the base model parameters, as these will be used to constraint a feature extractor
+        in the local FENDA model (not the full stack)
+        """
         self.drift_penalty_tensors = [
             initial_layer_weights.detach().clone()
             for initial_layer_weights in self.global_model.base_module.parameters()
         ]
 
     def update_before_train(self, current_server_round: int) -> None:
+        """
+        Follows the same flow as the ``DittoClient`` parent module, but adds the ability to freeze the global feature
+        extractor during training if ``self.freeze_global_feature_extractor`` is True
+
+        Args:
+            current_server_round (int): Which round we're currently on
+        """
         # freeze the global feature extractor during training updates if desired.
         if self.freeze_global_feature_extractor:
             for param in self.model.second_feature_extractor.parameters():
@@ -241,15 +252,16 @@ class FendaDittoClient(DittoClient):
         input: TorchInputType,
     ) -> tuple[TorchPredType, TorchFeatureType]:
         """
-        Computes the predictions for both the GLOBAL and LOCAL models and pack them into the prediction dictionary
+        Computes the predictions for both the **GLOBAL** and **LOCAL** models and pack them into the prediction
+        dictionary
 
         Args:
             input (TorchInputType): Inputs to be fed into both models.
 
         Returns:
-            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element
-            contains predictions indexed by name and the second element contains intermediate activations
-            index by name. For Ditto+FENDA, we only need the predictions, so the second dictionary is simply empty.
+            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains predictions indexed
+            by name and the second element contains intermediate activations index by name. For Ditto+FENDA, we only
+            need the predictions, so the second dictionary is simply empty.
 
         Raises:
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
@@ -290,15 +302,14 @@ class FendaDittoClient(DittoClient):
         optimize the global model is stored in the additional losses dictionary under "global_loss".
 
         Args:
-            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
-                All predictions included in the dictionary will be used to compute metrics.
+            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. All predictions included
+                in the dictionary will be used to compute metrics.
             features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: An instance of TrainingLosses containing the backward loss and
-                additional losses indexed by name. Additional losses include each loss component and the global model
-                loss tensor.
+            TrainingLosses: An instance of ``TrainingLosses`` containing the backward loss and additional losses
+            indexed by name. Additional losses include each loss component and the global model loss tensor.
         """
         # Check that both models are in training mode
         assert self.global_model.training and self.model.training

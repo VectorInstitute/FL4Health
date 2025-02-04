@@ -46,7 +46,7 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
         weights, the server also receives the training loss from the clients. If adaptation is enabled, these losses
         are used to update the loss weight parameter according to the FedProx paper recommendations.
 
-        NOTE: Initial parameters are NOT optional. They must be passed for this strategy.
+        **NOTE:** Initial parameters are NOT optional. They must be passed for this strategy.
 
         The aggregation strategy for weights is the same as in FedAvg.
 
@@ -144,8 +144,8 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
 
         Returns:
             tuple[Parameters | None, dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
-                For adaptive constraints, the server also packs a constraint weight to be sent to the clients. This is
-                sent even if adaptive constraint weights are turned off and the value simply remains constant.
+            For adaptive constraints, the server also packs a constraint weight to be sent to the clients. This is
+            sent even if adaptive constraint weights are turned off and the value simply remains constant.
         """
         if not results:
             return None, {}
@@ -196,8 +196,8 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
             loss (float): This is the loss to which we compare the previous loss seen by the server. For Adaptive
             Constraint clients this should be the aggregated training loss seen by each client participating in
             training.
-            NOTE: For adaptive constraint losses, including FedProx, this loss is exchanged (along with the weights)
-            by each client and is the VANILLA loss that does not include the additional penalty losses.
+            **NOTE:** For adaptive constraint losses, including FedProx, this loss is exchanged (along with the
+            weights) by each client and is the VANILLA loss that does not include the additional penalty losses.
         """
 
         if self.adapt_loss_weight:

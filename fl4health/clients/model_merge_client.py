@@ -30,19 +30,19 @@ class ModelMergeClient(NumPyClient):
         client_name: str | None = None,
     ) -> None:
         """
-        ModelMergeClient to support functionality to simply perform model merging across client
-            models and subsequently evaluate.
+        ``ModelMergeClient`` to support functionality to simply perform model merging across client models and
+        subsequently evaluate.
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
             model_path (Path): path to the checkpoint of the client model to be used in model merging.
             metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
-            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
-                'cuda'
-            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
-                reporters which the client should send data to.
-            client_name (str): An optional client name that uniquely identifies a client.
-                If not passed, a hash is randomly generated.
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
+                "cuda"
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the client should
+                send data to.
+            client_name (str): An optional client name that uniquely identifies a client. If not passed, a hash is
+                randomly generated.
         """
         self.data_path = data_path
         self.model_path = model_path
@@ -78,19 +78,18 @@ class ModelMergeClient(NumPyClient):
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
-        Determines which parameters are sent back to the server for aggregation.
-            This uses a parameter exchanger to determine parameters sent.
+        Determines which parameters are sent back to the server for aggregation. This uses a parameter exchanger to
+        determine parameters sent.
 
-        For the ModelMergeClient, we assume that self.setup_client has already been called
-            as it does not support client polling so get_parameters is called from fit and
-            thus should be initialized by this point.
+        For the ``ModelMergeClient``, we assume that ``self.setup_client`` has already been called as it does not
+        support client polling so get_parameters is called from fit and thus should be initialized by this point.
 
         Args:
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
             NDArrays: These are the parameters to be sent to the server. At minimum they represent the relevant model
-                parameters to be aggregated, but can contain more information.
+            parameters to be aggregated, but can contain more information.
         """
         assert self.model is not None
         return self.parameter_exchanger.push_parameters(self.model, config=config)
@@ -114,25 +113,24 @@ class ModelMergeClient(NumPyClient):
 
     def fit(self, parameters: NDArrays, config: Config) -> tuple[NDArrays, int, dict[str, Scalar]]:
         """
-        Initializes client, validates local client model on local test data and returns parameters,
-            test dataset length and test metrics. Importantly, parameters from Server, which is empty,
-            is not used to initialized the client model.
+        Initializes client, validates local client model on local test data and returns parameters, test dataset
+        length and test metrics. Importantly, parameters from Server, which is empty, is not used to initialized the
+        client model.
 
-        Note: Since we only assume the client provides a test_loader, client evaluation and sample
-            counts are always based off the client test_loader.
+        **NOTE:** Since we only assume the client provides a ``test_loader``, client evaluation and sample counts are
+        always based off the client ``test_loader``.
 
         Args:
             parameters (NDArrays): Not used.
             config (NDArrays): The config from the server.
 
         Returns:
-            tuple[NDArrays, int, dict[str, Scalar]]: The local model parameters along with the
-                number of samples in the local test dataset and the computed metrics of the local model
-                on the local test dataset.
+            tuple[NDArrays, int, dict[str, Scalar]]: The local model parameters along with the number of samples in
+            the local test dataset and the computed metrics of the local model on the local test dataset.
 
         Raises:
-            AssertionError: If model is initialized prior to fit method being called which
-                should not happen in the case of the ModelMergeClient.
+            AssertionError: If model is initialized prior to fit method being called which should not happen in the
+                case of the ``ModelMergeClient``.
         """
         assert not self.initialized
         self.setup_client(config)
@@ -151,19 +149,18 @@ class ModelMergeClient(NumPyClient):
 
     def _move_data_to_device(self, data: TorchInputType | TorchTargetType) -> TorchTargetType | TorchInputType:
         """
-        Moving data to self.device where data is intended to be either input to
-        the model or the targets that the model is trying to achieve
+        Moving data to self.device where data is intended to be either input to the model or the targets that the
+        model is trying to achieve
 
         Args:
-            data (TorchInputType | TorchTargetType): The data to move to
-                self.device. Can be a TorchInputType or a TorchTargetType
+            data (TorchInputType | TorchTargetType): The data to move to ``self.device``. Can be a ``TorchInputType``
+                or a  ``TorchTargetType``
 
         Raises:
-            TypeError: Raised if data is not one of the types specified by
-                TorchInputType or TorchTargetType
+            TypeError: Raised if data is not one of the types specified by ``TorchInputType`` or ``TorchTargetType``
 
         Returns:
-            TorchTargetType | TorchInputType: The data argument except now it's been moved to self.device
+            TorchTargetType | TorchInputType: The data argument except now it's been moved to ``self.device``
         """
         # Currently we expect both inputs and targets to be either tensors
         # or dictionaries of tensors
@@ -173,10 +170,8 @@ class ModelMergeClient(NumPyClient):
             return {key: value.to(self.device) for key, value in data.items()}
         else:
             raise TypeError(
-                "data must be of type torch.Tensor or dict[str, torch.Tensor]. \
-                    If definition of TorchInputType or TorchTargetType has \
-                    changed this method might need to be updated or split into \
-                    two"
+                "data must be of type torch.Tensor or dict[str, torch.Tensor]. If definition of TorchInputType or "
+                " TorchTargetType has  changed this method might need to be updated or split into two"
             )
 
     def validate(self) -> dict[str, Scalar]:
@@ -184,8 +179,7 @@ class ModelMergeClient(NumPyClient):
         Validate the model on the test dataset.
 
         Returns:
-            tuple[float, dict[str, Scalar]]: The loss and a dictionary of metrics
-                from test set.
+            tuple[float, dict[str, Scalar]]: The loss and a dictionary of metrics from test set.
         """
         self.model.eval()
         self.test_metric_manager.clear()
@@ -207,10 +201,9 @@ class ModelMergeClient(NumPyClient):
             config (Config): Configuration object from the server.
 
         Returns:
-            tuple[float, int, dict[str, Scalar]: The float represents the
-                loss which is assumed to be 0 for the ModelMergeClient.
-                The int represents the number of examples in the local test dataset and the
-                dictionary is the computed metrics on the test set.
+            tuple[float, int, dict[str, Scalar]: The float represents the loss which is assumed to be 0 for the
+            ``ModelMergeClient``. The int represents the number of examples in the local test dataset and the
+            dictionary is the computed metrics on the test set.
         """
         self.set_parameters(parameters, config)
         metrics = self.validate()
@@ -221,8 +214,8 @@ class ModelMergeClient(NumPyClient):
         Parameter exchange is assumed to always be full for model merging clients. However, this functionality
         may be overridden if a different exchanger is needed.
 
-        Used in non-standard way for ModelMergeClient as set_parameters is only called for evaluate as
-            parameters should initially be set to the parameters in the nn.Module returned by get_model.
+        Used in non-standard way for ``ModelMergeClient`` as ``set_parameters`` is only called for evaluate as
+            parameters should initially be set to the parameters in the nn.Module returned by ``get_model``.
 
         Args:
             config (Config): Configuration object from the server.
@@ -235,9 +228,8 @@ class ModelMergeClient(NumPyClient):
     @abstractmethod
     def get_model(self, config: Config) -> nn.Module:
         """
-        User defined method that returns PyTorch model.
-        This is the local model that will be communicated
-        to the server for merging.
+        User defined method that returns PyTorch model. This is the local model that will be communicated to the
+        server for merging.
 
         Args:
             config (Config): The config from the server.

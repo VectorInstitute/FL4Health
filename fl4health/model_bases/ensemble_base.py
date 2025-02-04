@@ -37,8 +37,8 @@ class EnsembleModel(nn.Module):
             input (torch.Tensor): A batch of input data.
 
         Returns:
-            dict[str, torch.Tensor]: A dictionary of predictions of the individual ensemble models
-                as well as prediction of the ensemble as a whole.
+            dict[str, torch.Tensor]: A dictionary of predictions of the individual ensemble models as well as
+            prediction of the ensemble as a whole.
         """
         preds = {}
         for key, model in self.ensemble_models.items():

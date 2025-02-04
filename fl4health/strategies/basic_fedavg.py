@@ -112,7 +112,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         """
         This function configures a sample of clients for a training round. It handles the case where the client
         manager has a sample fraction vs. a sample function (to allow for more flexible sampling).
-        The function follows the standard configuration flow where the on_fit_config_fn function is used to produce
+        The function follows the standard configuration flow where the ``on_fit_config_fn`` function is used to produce
         configurations to be sent to all clients. These are packaged with the provided parameters and set over to the
         clients.
 
@@ -123,7 +123,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
 
         Returns:
             list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
-                be sent to each client (packaged as FitIns).
+            be sent to each client (packaged as ``FitIns``).
         """
 
         if isinstance(client_manager, BaseFractionSamplingManager):
@@ -151,7 +151,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         """
         This function configures a sample of clients for a evaluation round. It handles the case where the client
         manager has a sample fraction vs. a sample function (to allow for more flexible sampling).
-        The function follows the standard configuration flow where the on_evaluate_config_fn function is used to
+        The function follows the standard configuration flow where the ``on_evaluate_config_fn`` function is used to
         produce configurations to be sent to all clients. These are packaged with the provided parameters and set over
         to the clients.
 
@@ -162,7 +162,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
 
         Returns:
             list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
-                to be sent to each client (packaged as EvaluateIns).
+            to be sent to each client (packaged as ``EvaluateIns``).
         """
 
         # Do not configure federated evaluation if fraction eval is 0.
@@ -202,7 +202,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
 
         Returns:
             list[tuple[ClientProxy, GetPropertiesIns]]: List of sampled client identifiers and the configuration
-                to be sent to each client (packaged as GetPropertiesIns).
+            to be sent to each client (packaged as ``GetPropertiesIns``).
         """
         config = {}
         if self.on_fit_config_fn is not None:
@@ -287,7 +287,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
 
         Returns:
             tuple[float | None, dict[str, Scalar]]: Aggregated loss values and the aggregated metrics. The metrics
-                are aggregated according to evaluate_metrics_aggregation_fn.
+            are aggregated according to ``evaluate_metrics_aggregation_fn``.
         """
         if not results:
             return None, {}

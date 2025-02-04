@@ -42,7 +42,7 @@ class SequentiallySplitModel(nn.Module):
         Run a forward pass using the sequentially split modules base_module -> head_module.
 
         Args:
-            input (torch.Tensor): Input to the model forward pass. Expected to be of shape (batch_size, *)
+            input (torch.Tensor): Input to the model forward pass. Expected to be of shape (batch_size, \\*)
 
         Returns:
             tuple[torch.Tensor, torch.Tensor]: Returns the predictions and features tensor from the sequential forward
@@ -58,7 +58,7 @@ class SequentiallySplitModel(nn.Module):
         on self.flatten_features
 
         Args:
-            input (torch.Tensor): Input to the model forward pass. Expected to be of shape (batch_size, *)
+            input (torch.Tensor): Input to the model forward pass. Expected to be of shape (batch_size, \\*)
 
         Returns:
             tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: Dictionaries of predictions and features

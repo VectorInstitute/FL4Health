@@ -79,7 +79,7 @@ class NnunetServer(FlServer):
             fl_config (Config): This should be the configuration that was used to setup the federated training.
                 In most cases it should be the "source of truth" for how FL training/evaluation should proceed. For
                 example, the config used to produce the on_fit_config_fn and on_evaluate_config_fn for the strategy.
-                NOTE: This config is DISTINCT from the Flwr server config, which is extremely minimal.
+                **NOTE:** This config is DISTINCT from the Flwr server config, which is extremely minimal.
             on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]]): Function used to configure how one
                 asks a client to provide parameters from which to initialize all other clients by providing a
                 Config dictionary. For NnunetServers this is a required function to provide the additional information
@@ -94,7 +94,7 @@ class NnunetServer(FlServer):
                 artifacts to be used or evaluated after training. The latter is used to preserve training state
                 (including models) such that if FL training is interrupted, the process may be restarted. If no
                 module is provided, no checkpointing or state preservation will happen. Defaults to None.
-                NOTE: For NnUnet, this module is allowed to have all components defined other than the model, as it
+                **NOTE:** For NnUnet, this module is allowed to have all components defined other than the model, as it
                 may be set later when the server asks the clients to provide the architecture.
             server_name (str | None, optional): An optional string name to uniquely identify server. This name is also
                 used as part of any state checkpointing done by the server. Defaults to None.

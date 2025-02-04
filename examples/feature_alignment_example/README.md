@@ -20,7 +20,7 @@ In this example, we assume that the target column is the categorical column `LOS
 
 Start the server by running something like
 ```
-python -m examples.feature_alignment_example.server   --config_path /path/to/config.yaml
+python -m examples.feature_alignment_example.server --config_path /path/to/config.yaml
 ```
 from the FL4Health directory. The following arguments must be present in the specified config file:
 * `n_clients`: number of clients the server waits for in order to run the FL training.

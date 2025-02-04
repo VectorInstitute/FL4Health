@@ -33,8 +33,9 @@ class ModelMergeServer(Server):
         server_name: str | None = None,
     ) -> None:
         """
-        ModelMergeServer provides functionality to fetch client weights, perform a simple average,
-            redistribute to clients for evaluation. Optionally can perform server side evaluation as well.
+        ModelMergeServer provides functionality to fetch client weights, perform a simple average, redistribute to
+        clients for evaluation. Optionally can perform server side evaluation as well.
+
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
@@ -82,7 +83,7 @@ class ModelMergeServer(Server):
 
         Returns:
             tuple[History, float]: The first element of the tuple is a History object containing the aggregated
-                metrics returned from the clients. Tuple also contains elapsed time in seconds for round.
+            metrics returned from the clients. Tuple also contains elapsed time in seconds for round.
         """
         self.reports_manager.report({"host_type": "server", "fit_start": datetime.datetime.now()})
 
@@ -165,8 +166,8 @@ class ModelMergeServer(Server):
         self, loss_aggregated: float, metrics_aggregated: dict[str, Scalar], server_round: int
     ) -> None:
         """
-        Method to checkpoint merged model on server side if the checkpointer, server_model and
-            parameter_exchanger provided at initialization are all not None.
+        Method to checkpoint merged model on server side if the checkpointer, server_model and parameter_exchanger
+        provided at initialization are all not None.
 
         Args:
             loss_aggregated (float): Not used.

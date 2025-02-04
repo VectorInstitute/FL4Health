@@ -15,11 +15,11 @@ class TabularFeaturesInfoEncoder:
     """
     This class encodes all the information required to perform feature
     alignment on tabular datasets.
+    **NOTE:** targets are not included in tabular_features
 
     Args:
         tabular_features (list[TabularFeature]): List of all tabular features.
         tabular_targets (list[TabularFeature]): List of all targets.
-        (Note: targets are not included in tabular_features)
     """
 
     def __init__(self, tabular_features: list[TabularFeature], tabular_targets: list[TabularFeature]) -> None:

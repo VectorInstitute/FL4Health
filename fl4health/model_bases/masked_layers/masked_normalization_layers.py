@@ -33,7 +33,7 @@ class MaskedLayerNorm(nn.LayerNorm):
         When elementwise_affine is False, nn.LayerNorm does not have weight or bias.
         Under this condition, both score tensors are None and MaskedLayerNorm acts in the same way as nn.LayerNorm.
 
-        Note: the scores are not assumed to be bounded between 0 and 1.
+        **NOTE:** The scores are not assumed to be bounded between 0 and 1.
 
         Args:
             normalized_shape (TorchShape): input shape from an expected input.
@@ -149,7 +149,7 @@ class _MaskedBatchNorm(_BatchNorm):
             When affine is False, _BatchNorm does not have weight or bias.
             Under this condition, both score tensors are None and _MaskedBatchNorm acts in the same way as _BatchNorm.
 
-            Note: the scores are not assumed to be bounded between 0 and 1.
+            **NOTE:** The scores are not assumed to be bounded between 0 and 1.
 
         Args:
             num_features: number of features or channels :math:`C` of the input

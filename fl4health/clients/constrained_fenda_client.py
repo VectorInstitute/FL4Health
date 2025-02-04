@@ -39,10 +39,10 @@ class ConstrainedFendaClient(FendaClient):
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
             metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
-            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
-                'cuda'
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
+                "cuda"
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
-                each batch. Defaults to LossMeterType.AVERAGE.
+                each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
@@ -50,7 +50,7 @@ class ConstrainedFendaClient(FendaClient):
             reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
                 should send data to. Defaults to None.
             progress_bar (bool, optional): Whether or not to display a progress bar during client training and
-                validation. Uses tqdm. Defaults to False
+                validation. Uses ``tqdm``. Defaults to False
             client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
@@ -115,8 +115,8 @@ class ConstrainedFendaClient(FendaClient):
         Computes the prediction(s) and features of the model(s) given the input.
 
         Args:
-            input (TorchInputType): Inputs to be fed into the model. TorchInputType is simply an alias
-            for the union of torch.Tensor and dict[str, torch.Tensor].
+            input (TorchInputType): Inputs to be fed into the model. ``TorchInputType`` is simply an alias
+            for the union of ``torch.Tensor`` and ``dict[str, torch.Tensor]``.
 
         Returns:
             tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple in which the first element
@@ -166,8 +166,8 @@ class ConstrainedFendaClient(FendaClient):
         """
         This function is called prior to the start of client-side training, but after the server parameters have be
         received and injected into the model. If a PerFCL loss function has been defined, it is used to save the
-        aggregated global feature extractor weights/module representing the initial state of this module BEFORE this
-        iteration of client-side training but AFTER server-side aggregation.
+        aggregated global feature extractor weights/module representing the initial state of this module **BEFORE**
+        this iteration of client-side training but **AFTER** server-side aggregation.
 
         Args:
             current_server_round (int): Current server round being performed.
@@ -197,11 +197,12 @@ class ConstrainedFendaClient(FendaClient):
             target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            tuple[torch.Tensor, dict[str, torch.Tensor]]; A tuple with:
-                - The tensor for the total loss
-                - A dictionary with `loss`, `total_loss` and, based on client attributes set from server config, also
-                    `cos_sim_loss`, `contrastive_loss`, `contrastive_loss_minimize` and `contrastive_loss_minimize`
-                    keys and their respective calculated values.
+            tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
+
+            - The tensor for the total loss
+            - A dictionary with ``loss``, ``total_loss`` and, based on client attributes set from server config, also
+              ``cos_sim_loss``, ``contrastive_loss``, ``contrastive_loss_minimize`` and ``contrastive_loss_minimize``
+              keys and their respective calculated values.
         """
 
         loss = self.criterion(preds["prediction"], target)
@@ -248,8 +249,8 @@ class ConstrainedFendaClient(FendaClient):
     ) -> EvaluationLosses:
         """
         Computes evaluation loss given predictions of the model and ground truth data. Optionally computes
-        additional loss components such as cosine_similarity_loss, contrastive_loss and perfcl_loss based on
-        client attributes set from server config.
+        additional loss components such as ``cosine_similarity_loss``, ``contrastive_loss`` and ``perfcl_loss`` based
+        on client attributes set from server config.
 
         Args:
             preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
@@ -258,9 +259,9 @@ class ConstrainedFendaClient(FendaClient):
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and additional losses
-                indexed by name. Additional losses may include cosine_similarity_loss, contrastive_loss
-                and perfcl_loss.
+            EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
+            indexed by name. Additional losses may include ``cosine_similarity_loss``, ``contrastive_loss``
+            and ``perfcl_loss``.
         """
         _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         return EvaluationLosses(checkpoint=additional_losses["loss"], additional_losses=additional_losses)

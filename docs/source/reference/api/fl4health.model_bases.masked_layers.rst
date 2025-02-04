@@ -1,7 +1,10 @@
-fl4health.model\_bases.masked\_layers namespace
-===============================================
+fl4health.model\_bases.masked\_layers package
+=============================================
 
-.. py:module:: fl4health.model_bases.masked_layers
+.. automodule:: fl4health.model_bases.masked_layers
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Submodules
 ----------

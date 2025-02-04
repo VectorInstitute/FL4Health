@@ -1,7 +1,10 @@
-fl4health.datasets.rxrx1 namespace
-==================================
+fl4health.datasets.rxrx1 package
+================================
 
-.. py:module:: fl4health.datasets.rxrx1
+.. automodule:: fl4health.datasets.rxrx1
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Submodules
 ----------

@@ -71,7 +71,7 @@ def check_if_batch_is_empty_and_verify_input(input: TorchInputType) -> bool:
     """
     This function checks whether the provided batch (input) is empty. If the input is a dictionary of inputs, it
     first verifies that the length of all inputs is the same, then checks if they are non-empty.
-    NOTE: This function assumes the input is BATCH FIRST
+    **NOTE:** This function assumes the input is BATCH FIRST
 
     Args:
         input (TorchInputType): Input batch. input can be of type torch.Tensor or dict[str, torch.Tensor], and in the

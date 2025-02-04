@@ -16,7 +16,8 @@ CheckpointScoreFunctionType = Callable[[float, dict[str, Scalar]], float]
 class TorchModuleCheckpointer(ABC):
     def __init__(self, checkpoint_dir: str, checkpoint_name: str) -> None:
         """
-        Basic abstract base class to handle checkpointing pytorch models. Models are saved with torch.save by default
+        Basic abstract base class to handle checkpointing pytorch models. Models are saved with ``torch.save`` by
+        default.
 
         Args:
             checkpoint_dir (str): Directory to which the model is saved. This directory should already exist. The
@@ -28,8 +29,8 @@ class TorchModuleCheckpointer(ABC):
     @abstractmethod
     def maybe_checkpoint(self, model: nn.Module, loss: float, metrics: dict[str, Scalar]) -> None:
         """
-        Abstract method to be implemented by every TorchCheckpointer. Based on the loss and metrics provided it should
-        determine whether to produce a checkpoint AND save it if applicable.
+        Abstract method to be implemented by every ``TorchCheckpointer``. Based on the loss and metrics provided it
+        should determine whether to produce a checkpoint AND save it if applicable.
 
         Args:
             model (nn.Module): Model to potentially save via the checkpointer
@@ -49,7 +50,7 @@ class TorchModuleCheckpointer(ABC):
 
         Args:
             path_to_checkpoint (str | None, optional): If provided, the checkpoint will be loaded from this path.
-                If not specified, the checkpointer will load from self.checkpoint_path. Defaults to None.
+                If not specified, the checkpointer will load from ``self.checkpoint_path``. Defaults to None.
 
         Returns:
             nn.Module: Returns a torch module loaded from the proper checkpoint path.
@@ -70,7 +71,7 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
         """
         A general torch checkpointer base class that allows for flexible definition of how to decide when to checkpoint
         based on the loss and metrics provided. The score function should compute a score from these values and
-        maximize specifies whether we are hoping to maximize or minimize that score
+        maximize specifies whether we are hoping to maximize or minimize that score.
 
         Args:
             checkpoint_dir (str): Directory to which the model is saved. This directory should already exist. The
@@ -115,15 +116,15 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
         produce a score. This score will then be used to determine whether the model should be checkpointed or not.
 
         Args:
-            model (nn.Module): Model that might be persisted if the scoring function determines it should be
+            model (nn.Module): Model that might be persisted if the scoring function determines it should be.
             loss (float): Loss associated with the provided model. Will potentially contribute to checkpointing
                 decision, based on the score function.
             metrics (dict[str, Scalar]): Metrics associated with the provided model. Will potentially contribute to
                 the checkpointing decision, based on the score function.
 
         Raises:
-            e: Will throw an error if there is an issue saving the model. Torch.save seems to swallow errors in this
-                context, so we explicitly surface the error with a try/except.
+            e: Will throw an error if there is an issue saving the model. ``Torch.save`` seems to swallow errors in
+                this context, so we explicitly surface the error with a try/except.
         """
         # First we use the provided scoring function to produce a score
         comparison_score = self.checkpoint_score_function(loss, metrics)
@@ -178,8 +179,8 @@ class LatestTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
                 the checkpointing decision, based on the score function. NOT USED.
 
         Raises:
-            e: Will throw an error if there is an issue saving the model. Torch.save seems to swallow errors in this
-                context, so we explicitly surface the error with a try/except.
+            e: Will throw an error if there is an issue saving the model. ``Torch.save`` seems to swallow errors in
+                this context, so we explicitly surface the error with a try/except.
         """
         # Always checkpoint the latest model
         log(INFO, "Saving latest checkpoint with LatestTorchCheckpointer")
@@ -194,8 +195,8 @@ class LatestTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
 class BestLossTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
     def __init__(self, checkpoint_dir: str, checkpoint_name: str) -> None:
         """
-        This checkpointer only uses the loss value provided to the maybe_checkpoint function to determine whether a
-        checkpoint should be save. We are always attempting to minimize the loss. So maximize is always set to false
+        This checkpointer only uses the loss value provided to the ``maybe_checkpoint`` function to determine whether a
+        checkpoint should be save. We are always attempting to minimize the loss. So maximize is always set to false.
 
         Args:
             checkpoint_dir (str): Directory to which the model is saved. This directory should already exist. The
@@ -218,15 +219,15 @@ class BestLossTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
         loss is better than any previous losses seen by this checkpointer, the model will be saved.
 
         Args:
-            model (nn.Module): Model that might be persisted if the scoring function determines it should be
+            model (nn.Module): Model that might be persisted if the scoring function determines it should be.
             loss (float): Loss associated with the provided model. This value is used to determine whether to save the
                 model or not.
             metrics (dict[str, Scalar]): Metrics associated with the provided model. Will not be used by this
                 checkpointer.
 
         Raises:
-            e: Will throw an error if there is an issue saving the model. Torch.save seems to swallow errors in this
-                context, so we explicitly surface the error with a try/except.
+            e: Will throw an error if there is an issue saving the model. ``Torch.save`` seems to swallow errors in
+                this context, so we explicitly surface the error with a try/except.
         """
         # First we use the provided scoring function to produce a score
         comparison_score = self.checkpoint_score_function(loss, metrics)
@@ -258,7 +259,7 @@ class PerRoundStateCheckpointer:
 
         Args:
             checkpoint_dir (Path): Base directory to store checkpoints. This checkpoint directory MUST already exist.
-            It will not be created by this state checkpointer.
+                It will not be created by this state checkpointer.
         """
         log(
             WARNING,
@@ -269,9 +270,8 @@ class PerRoundStateCheckpointer:
 
     def save_checkpoint(self, checkpoint_name: str, checkpoint_dict: dict[str, Any]) -> None:
         """
-        Saves checkpoint_dict to checkpoint path form from this classes checkpointer dir and the provided checkpoint
-        name.
-
+        Saves ``checkpoint_dict`` to checkpoint path form from this classes checkpointer dir and the provided
+        checkpoint name.
 
         Args:
             checkpoint_name (str): Name of the state checkpoint file.
@@ -279,8 +279,8 @@ class PerRoundStateCheckpointer:
                 state to checkpoint.
 
         Raises:
-            e: Will throw an error if there is an issue saving the model. Torch.save seems to swallow errors in this
-                context, so we explicitly surface the error with a try/except.
+            e: Will throw an error if there is an issue saving the model. ``Torch.save`` seems to swallow errors in
+                this context, so we explicitly surface the error with a try/except.
         """
 
         checkpoint_path = os.path.join(self.checkpoint_dir, checkpoint_name)
@@ -293,14 +293,14 @@ class PerRoundStateCheckpointer:
 
     def load_checkpoint(self, checkpoint_name: str) -> dict[str, Any]:
         """
-        Loads and returns the checkpoint stored in checkpoint_dir under the provided name if it exists.
-        If it doesn't exist, an assertion error will be thrown.
+        Loads and returns the checkpoint stored in ``checkpoint_dir`` under the provided name if it exists. If it
+        does not exist, an assertion error will be thrown.
 
         Args:
             checkpoint_name (str): Name of the state checkpoint to be loaded.
 
         Returns:
-            dict[str, Any]: A dictionary representing the checkpointed state, as loaded by torch.load.
+            dict[str, Any]: A dictionary representing the checkpointed state, as loaded by ``torch.load``.
         """
 
         assert self.checkpoint_exists(checkpoint_name)
@@ -311,10 +311,18 @@ class PerRoundStateCheckpointer:
 
     def checkpoint_exists(self, checkpoint_name: str, **kwargs: Any) -> bool:
         """
-        Checks if a checkpoint exists at the checkpoint_dir constructed at initialization + checkpoint_name.
+        Checks if a checkpoint exists at the ``checkpoint_dir`` constructed at initialization + ``checkpoint_name``.
+
+        Args:
+            checkpoint_name (str): Name of checkpoint for existence test. Directory of checkpoint is held internally
+                as state by the checkpointer
+
+        Raises:
+            ValueError: Previously this function supported sending a path, but now requires ``checkpoint_name``. Will
+                raise an error is ``checkpoint_path`` provided.
 
         Returns:
-            bool: Whether or not a checkpoint exists.
+            bool: True if checkpoint exists, otherwise false.
         """
         if "checkpoint_path" in kwargs:
             raise ValueError(

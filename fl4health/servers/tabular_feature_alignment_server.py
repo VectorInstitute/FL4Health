@@ -46,7 +46,7 @@ class TabularFeatureAlignmentServer(FlServer):
                 they are to be sampled at all.
             config (Config): This should be the configuration that was used to setup the federated alignment.
                 In most cases it should be the "source of truth" for how FL alignment should proceed.
-                NOTE: This config is DISTINCT from the Flwr server config, which is extremely minimal.
+                **NOTE:** This config is DISTINCT from the Flwr server config, which is extremely minimal.
             strategy (Strategy | None, optional): The aggregation strategy to be used by the server to handle.
                 client updates and other information potentially sent by the participating clients. If None the
                 strategy is FedAvg as set by the flwr Server.

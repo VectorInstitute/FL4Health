@@ -147,15 +147,14 @@ class SimpleMetric(Metric, ABC):
         Compute metric on accumulated input and output over updates.
 
         Args:
-            name (str | None): Optional name used in conjunction with class attribute name
-                to define key in metrics dictionary.
+            name (str | None): Optional name used in conjunction with class attribute name to define key in metrics
+                dictionary.
 
         Raises:
             AssertionError: Input and target lists must be non empty.
 
         Returns:
-            Metrics: A dictionary of string and Scalar representing the computed metric
-                and its associated key.
+            Metrics: A dictionary of string and Scalar representing the computed metric and its associated key.
         """
 
         assert len(self.accumulated_inputs) > 0 and len(self.accumulated_targets) > 0
@@ -407,8 +406,7 @@ class MetricManager:
         Computes set of metrics for each prediction type.
 
         Returns:
-            Metrics: dictionary containing computed metrics along with string identifiers
-                for each prediction type.
+            Metrics: dictionary containing computed metrics along with string identifiers for each prediction type.
         """
         all_results = {}
         for metrics_key, metrics in self.metrics_per_prediction_type.items():

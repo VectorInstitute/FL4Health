@@ -67,9 +67,22 @@ class MkMmdLoss(torch.nn.Module):
 
     def construct_quadruples(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
         """
-        In this function, we assume that X, Y: n_samples, n_features are the same size. We construct the quadruples
-        v_i = [x_{2i-1}, x_{2i}, y_{2i-1}, y_{2i}] forming a matrix of dimension n_samples/2, 4, n_features
-        Note that if n_samples is not divisible by 2, we leave off the modulus
+        In this function, we assume that ``X``, ``Y``: ``n_samples``, ``n_features`` are the same size. We construct
+        the quadruples
+
+        .. math::
+            v_i = [x_{2i-1}, x_{2i}, y_{2i-1}, y_{2i}]
+
+        forming a matrix of dimension (``n_samples/2``, ``4``, ``n_features``).
+
+        **NOTE**: that if ``n_samples`` is not divisible by 2, we leave off the modulus
+
+        Args:
+            X (torch.Tensor): First set of feature tensors
+            Y (torch.Tensor): Second set of feature tensors
+
+        Returns:
+            torch.Tensor: Quadruples of the form described above.
         """
         n_samples, n_features = X.shape
         # truncate if not divisible by 2

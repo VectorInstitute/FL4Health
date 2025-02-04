@@ -116,9 +116,9 @@ class InstanceLevelDpServer(FlServer):
                 clients selected to participate in federated training.
 
         Returns:
-            tuple[History, float]: The first element of the tuple is a history object containing the full
-                set of FL training results, including things like aggregated loss and metrics.
-                Tuple also includes elapsed time in seconds for round.
+            tuple[History, float]: The first element of the tuple is a history object containing the full set of FL
+            training results, including things like aggregated loss and metrics. Tuple also includes elapsed time in
+            seconds for round.
         """
 
         assert isinstance(self.strategy, StrategyWithPolling)

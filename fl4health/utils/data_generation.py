@@ -22,9 +22,10 @@ class SyntheticFedProxDataset(ABC):
         Abstract base class to support synthetic dataset generation in the style of the original FedProx paper.
 
         Paper link: https://arxiv.org/abs/1812.06127
+
         Reference code: https://github.com/litian96/FedProx/tree/master/data/synthetic_1_1
 
-        NOTE: In the implementations here, all clients receive the same number of samples. In the original FedProx
+        **NOTE:** In the implementations here, all clients receive the same number of samples. In the original FedProx
         setup, they are sampled using a power law.
 
         Args:
@@ -49,8 +50,8 @@ class SyntheticFedProxDataset(ABC):
     def construct_covariance_matrix(self) -> torch.Tensor:
         """
         This function generations the covariance matrix used in generating input features. It is fixed across all
-        datasets. It is a diagonal matrix with diagonal entries x_{j, j} = j^{-1.2}, where j starts at 1 in this
-        notation. The matrix is of dimension input_dim x input_dim
+        datasets. It is a diagonal matrix with diagonal entries :math:`x_{j, j} = j^{-1.2}`, where :math:`j` starts at
+        1 in this notation. The matrix is of dimension ``input_dim`` x ``input_dim``
 
         Returns:
             torch.Tensor: Covariance matrix for generation of input features.
@@ -64,19 +65,24 @@ class SyntheticFedProxDataset(ABC):
     def map_inputs_to_outputs(self, x: torch.Tensor, W: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         """
         This function maps features x to a label y as done in the original paper. The first stage is the affine
-        transformation hat{y} = (1/T)*(Wx + b). Then y = softmax(hat{y}). Sampling from the distribution, we then
+        transformation
+
+        .. math::
+            \\hat{y} = \\frac{1}{T} \\cdot (Wx + b).
+
+        Then :math:`y = \\text{softmax}(\\hat{y})`. Sampling from the distribution, we then
         one hot encode the resulting label sample.
 
-        NOTE: This procedure differs slightly from that of the original paper, which simply took a one hot on the
+        **NOTE:** This procedure differs slightly from that of the original paper, which simply took a one hot on the
         softmax distribution. The current strategy allows for a bit more label stochasticity.
 
         Args:
-            x (torch.Tensor): The input features to be mapped to output labels. Shape is (dataset size, input_dim)
-            W (torch.Tensor): The linear transformation matrix. Shape is (output_dim, input_dim)
-            b (torch.Tensor): The bias in the linear transformation. Shape is (output_dim, 1)
+            x (torch.Tensor): The input features to be mapped to output labels. Shape is (dataset size, ``input_dim``)
+            W (torch.Tensor): The linear transformation matrix. Shape is (``output_dim``, ``input_dim``)
+            b (torch.Tensor): The bias in the linear transformation. Shape is (``output_dim``, 1)
 
         Returns:
-            torch.Tensor: The labels associated with each of the inputs. The shape is (dataset size, output_dim)
+            torch.Tensor: The labels associated with each of the inputs. The shape is (dataset size, ``output_dim``)
         """
         raw_y = (torch.matmul(x, W.T) + b.T.repeat(self.samples_per_client, 1)) / self.temperature
         distributions = F.softmax(raw_y, dim=1)
@@ -129,7 +135,7 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
         Paper link: https://arxiv.org/abs/1812.06127
         Reference code: https://github.com/litian96/FedProx/tree/master/data/synthetic_1_1
 
-        NOTE: This generator ends up with fairly skewed labels in generation. That is, many of the clients will not
+        **NOTE:** This generator ends up with fairly skewed labels in generation. That is, many of the clients will not
         have representations of all the labels. This has been verified as also occurring in the reference code above
         and is not a bug.
 
@@ -166,21 +172,22 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
         self, mu: float, v: torch.Tensor, sigma: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
-        This function takes values for the center of elements in the affine transformation elements (mu), the centers
-        feature each of the input feature dimensions (v), and the covariance of those features (sigma) and produces
-        the input, output tensor pairs with the appropriate dimensions
+        This function takes values for the center of elements in the affine transformation elements (``mu``), the
+        centers feature each of the input feature dimensions (``v``), and the covariance of those features (``sigma``)
+        and produces the input, output tensor pairs with the appropriate dimensions
 
         Args:
-            mu (float): The mean value from which each element of W and b are to be drawn ~ mathcal{N}(mu, 1)
+            mu (float): The mean value from which each element of :math:`W` and :math:`b` are to be drawn
+                ~ :math:`\\mathcal{N}(\\mu, 1)`
             v (torch.Tensor): This is assumed to be a 1D tensor of size self.input_dim and represents the mean for the
-                multivariate normal from which to draw the input x
-            sigma (torch.Tensor): This is assumed to be a 2D tensor of shape (input_dim, input_dim) and represents the
-                covariance matrix Sigma of the multivariate normal from which to draw the input x. It should be a
-                diagonal matrix as well.
+                multivariate normal from which to draw the input ``x``
+            sigma (torch.Tensor): This is assumed to be a 2D tensor of shape (``input_dim``, ``input_dim``) and
+                represents the covariance matrix :math:`\\Sigma` of the multivariate normal from which to draw the
+                input ``x``. It  should be a diagonal matrix as well.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: X and Y for the clients synthetic dataset. Shape of X is
-                n_samples x input dimension. Shape of Y is n_samples x output_dim and is one-hot encoded
+            tuple[torch.Tensor, torch.Tensor]: ``X`` and ``Y`` for the clients synthetic dataset. Shape of ``X`` is
+            ``n_samples`` x input dimension. Shape of ``Y`` is ``n_samples`` x output_dim and is one-hot encoded
         """
 
         multivariate_normal = MultivariateNormal(loc=v, covariance_matrix=sigma)
@@ -234,7 +241,7 @@ class SyntheticIidFedProxDataset(SyntheticFedProxDataset):
 
         Paper link: https://arxiv.org/abs/1812.06127
 
-        NOTE: This generator ends up with fairly skewed labels in generation. That is, many of the clients will not
+        **NOTE:** This generator ends up with fairly skewed labels in generation. That is, many of the clients will not
         have representations of all the labels. This has been verified as also occurring in the reference code above
         and is not a bug.
 
@@ -272,8 +279,8 @@ class SyntheticIidFedProxDataset(SyntheticFedProxDataset):
         multidimensional normal distribution with diagonal covariance matrix shared across clients.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: X and Y for the clients synthetic dataset. Shape of X is
-                n_samples x input dimension. Shape of Y is n_samples x output_dim and is one-hot encoded
+            tuple[torch.Tensor, torch.Tensor]: ``X`` and ``Y`` for the clients synthetic dataset. Shape of ``X`` is
+            ``n_samples`` x input dimension. Shape of ``Y`` is ``n_samples`` x output_dim and is one-hot encoded
         """
         # size of x should be samples_per_client x input_dim
         x = self.input_multivariate_normal.sample(torch.Size((self.samples_per_client,)))

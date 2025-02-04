@@ -19,7 +19,7 @@ def set_all_random_seeds(
     random seeding. For more information on reproducibility in pytorch see:
     https://pytorch.org/docs/stable/notes/randomness.html
 
-    NOTE: If the use_deterministic_torch_algos flag is set to True, you may need to set the environment variable
+    **NOTE:** If the use_deterministic_torch_algos flag is set to True, you may need to set the environment variable
     CUBLAS_WORKSPACE_CONFIG to something like :4096:8, to avoid CUDA errors. Additional documentation may be found
     here: https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility
 
@@ -97,7 +97,7 @@ def restore_random_state(
 def generate_hash(length: int = 8) -> str:
     """
     Generates unique hash used as id for client.
-    NOTE: This generation is unaffected by setting of random seeds.
+    **NOTE:** This generation is unaffected by setting of random seeds.
 
     Args:
        length (int): The length of the hash generated. Maximum length is 32

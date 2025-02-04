@@ -41,46 +41,34 @@ class Flash(BasicFedAvg):
         weighted_aggregation: bool = False,
         weighted_eval_losses: bool = False,
     ) -> None:
-        """Flash: Concept Drift Adaptation in Federated Learning.
+        """
+        Flash: Concept Drift Adaptation in Federated Learning.
 
         Implementation based on https://proceedings.mlr.press/v202/panchal23a/panchal23a.pdf
 
         Args:
-            fraction_fit : float, optional
-                Fraction of clients used during training. Defaults to 1.0.
-            fraction_evaluate : float, optional
-                Fraction of clients used during validation. Defaults to 1.0.
-            min_fit_clients : int, optional
-                Minimum number of clients used during training. Defaults to 2.
-            min_evaluate_clients : int, optional
-                Minimum number of clients used during validation. Defaults to 2.
-            min_available_clients : int, optional
-                Minimum number of total clients in the system. Defaults to 2.
-            evaluate_fn : Callable[[int, NDArrays, dict[str, Scalar] | None,
-                          tuple[float, dict[str, Scalar]]]] | None
-                Optional function used for validation. Defaults to None.
-            on_fit_config_fn : Callable[[int], dict[str, Scalar]], optional
-                Function used to configure training. Defaults to None.
-            on_evaluate_config_fn : Callable[[int], dict[str, Scalar]], optional
-                Function used to configure validation. Defaults to None.
-            accept_failures : bool, optional
-                Whether or not accept rounds containing failures. Defaults to True.
-            initial_parameters : Parameters
-                Initial global model parameters.
-            fit_metrics_aggregation_fn : MetricsAggregationFn | None
-                Metrics aggregation function, optional.
-            evaluate_metrics_aggregation_fn: MetricsAggregationFn | None
-                Metrics aggregation function, optional.
-            eta : float, optional
-                Server-side learning rate. Defaults to 1e-1.
-            eta_l : float, optional
-                Client-side learning rate. Defaults to 1e-1.
-            beta_1 : float, optional
-                Momentum parameter. Defaults to 0.9.
-            beta_2 : float, optional
-                Second moment parameter. Defaults to 0.99.
-            tau : float, optional
-                Controls the algorithm's degree of adaptability. Defaults to 1e-9.
+            initial_parameters (Parameters): Initial global model parameters.
+            fraction_fit (float, optional): Fraction of clients used during training.. Defaults to 1.0.
+            fraction_evaluate (float, optional): Fraction of clients used during validation.. Defaults to 1.0.
+            min_fit_clients (int, optional): Minimum number of clients used during training.. Defaults to 2.
+            min_evaluate_clients (int, optional): Minimum number of clients used during validation.. Defaults to 2.
+            min_available_clients (int, optional): Minimum number of total clients in the system.. Defaults to 2.
+            evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]]  |
+                None]  |  None, optional):  Optional function used for validation.. Defaults to None.
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                training. Defaults to None.
+            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                validation. Defaults to None.
+            accept_failures (bool, optional): Whether or not accept rounds containing failures.. Defaults to True.
+            fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
+                Defaults to None.
+            evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
+                Defaults to None.
+            eta (float, optional): Server-side learning rate.. Defaults to 1e-1.
+            eta_l (float, optional): Client-side learning rate.. Defaults to 1e-1.
+            beta_1 (float, optional): Momentum parameter.. Defaults to 0.9.
+            beta_2 (float, optional): Second moment parameter.. Defaults to 0.99.
+            tau (float, optional): Controls the algorithm's degree of adaptability.. Defaults to 1e-9.
             weighted_aggregation (bool, optional): Determines whether parameter aggregation is a linearly weighted
                 average or a uniform average. Flash default is a uniform average by the number of clients.
                 Defaults to False.

@@ -183,20 +183,17 @@ def get_segs_from_probs(preds: torch.Tensor, has_regions: bool = False, threshol
     Converts the nnunet model output probabilities to predicted segmentations
 
     Args:
-        preds (torch.Tensor): The one hot encoded model output probabilities
-            with shape (batch, classes, *additional_dims). The background should be a separate class
-        has_regions (bool, optional): If True, predicted segmentations can be
-            multiple classes at once. The exception is the background class
-            which is assumed to be the first class (class 0). If False, each
-            value in predicted segmentations has only a single class. Defaults to
-            False.
-        threshold (float): When has_regions is True, this is the threshold
-            value used to determine whether or not an output is a part of a
-            class
+        preds (torch.Tensor): The one hot encoded model output probabilities with shape (batch, classes,
+            \\*additional_dims). The background should be a separate class
+        has_regions (bool, optional): If True, predicted segmentations can be multiple classes at once. The exception
+            is the background class which is assumed to be the first class (class 0). If False, each value in
+            predicted segmentations has only a single class. Defaults to False.
+        threshold (float): When has_regions is True, this is the threshold value used to determine whether or not an
+            output is a part of a class
 
     Returns:
-        torch.Tensor: tensor containing the predicted segmentations as a one hot encoded
-            binary tensor of 64-bit integers.
+        torch.Tensor: tensor containing the predicted segmentations as a one hot encoded binary tensor of 64-bit
+        integers.
     """
     if has_regions:
         pred_segs = preds > threshold

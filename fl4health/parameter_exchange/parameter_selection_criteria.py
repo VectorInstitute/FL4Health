@@ -227,8 +227,8 @@ def select_scores_and_sample_masks(model: nn.Module, initial_model: nn.Module | 
     masked layers, and then samples binary masks based on those scores to send to the server.
     This function is meant to be used for the FedPM algorithm.
 
-    Note: in the current implementation, we always exchange the score tensors for all layers. In the future, we might
-        support exchanging a subset of the layers (for example, filtering out the masks that are all zeros).
+    **NOTE:** in the current implementation, we always exchange the score tensors for all layers. In the future, we
+    might support exchanging a subset of the layers (for example, filtering out the masks that are all zeros).
     """
     model_states = model.state_dict()
     with torch.no_grad():

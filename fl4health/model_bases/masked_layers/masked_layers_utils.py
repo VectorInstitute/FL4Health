@@ -22,8 +22,13 @@ from fl4health.model_bases.masked_layers.masked_normalization_layers import (
 
 def convert_to_masked_model(original_model: nn.Module) -> nn.Module:
     """
-    Given a model, convert every one of its layers to a masked layer
-    of the same kind, if applicable.
+    Given a model, convert every one of its layers to a masked layer of the same kind, if applicable.
+
+    Args:
+        original_model (nn.Module): Module to be converted to a masked module
+
+    Returns:
+        nn.Module: New copy of the original model but with masked layers injected to enable FedPM
     """
 
     def replace_with_masked(module: nn.Module) -> None:
@@ -66,6 +71,15 @@ def convert_to_masked_model(original_model: nn.Module) -> nn.Module:
 
 
 def is_masked_module(module: nn.Module) -> bool:
+    """
+    Checks whether the provided module is a masked module of the kind supported.
+
+    Args:
+        module (nn.Module): Module to be checked
+
+    Returns:
+        bool: True if the module is a masked type and False otherwise.
+    """
     return isinstance(
         module,
         (

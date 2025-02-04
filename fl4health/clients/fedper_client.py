@@ -8,11 +8,12 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 
 class FedPerClient(BasicClient):
     """
-    Client to implement the FedPer method (https://arxiv.org/abs/1912.00818). Trains a global feature extractor
-    shared by all clients through FedAvg and a private classifier that is unique to each client. The training is
-    nearly identical to the BasicClient with the exception that our parameter exchanger needs to be a fixed layer
-    exchanger that only exchanges the feature extraction base, which relies on the model being of
-    type SequentiallySplitExchangeBaseModel.
+    Client to implement the FedPer method (https://arxiv.org/abs/1912.00818).
+
+    Trains a global feature extractor shared by all clients through FedAvg and a private classifier that is unique to
+    each client. The training is nearly identical to the ``BasicClient`` with the exception that our parameter
+    exchanger needs to be a fixed layer exchanger that only exchanges the feature extraction base, which relies on the
+    model being of type ``SequentiallySplitExchangeBaseModel``.
     """
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:

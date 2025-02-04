@@ -15,19 +15,21 @@ class FeatureExtractorBuffer:
         features are stored in a dictionary where the keys are the layer names and the values are the extracted
         features as torch Tensors.
 
+        Attributes:
+
+        - model (nn.Module): The neural network model.
+        - flatten_feature_extraction_layers (dict[str, bool]): A dictionary specifying whether to flatten the feature
+          extraction layers.
+        - fhooks (list[RemovableHandle]): A list to store the handles for removing hooks.
+        - accumulate_features (bool): A flag indicating whether to accumulate features.
+        - extracted_features_buffers (dict[str, list[torch.Tensor]]): A dictionary to store the extracted features
+          for each layer.
+
         Args:
             model (nn.Module): The neural network model.
             flatten_feature_extraction_layers (dict[str, bool]): Dictionary of layers to extract features from them and
             whether to flatten them. Keys are the layer names that are extracted from the named_modules and values are
             boolean.
-        Attributes:
-            model (nn.Module): The neural network model.
-            flatten_feature_extraction_layers (dict[str, bool]): A dictionary specifying whether to flatten the feature
-                extraction layers.
-            fhooks (list[RemovableHandle]): A list to store the handles for removing hooks.
-            accumulate_features (bool): A flag indicating whether to accumulate features.
-            extracted_features_buffers (dict[str, list[torch.Tensor]]): A dictionary to store the extracted features
-                for each layer.
         """
         self.model = model
         self.flatten_feature_extraction_layers = flatten_feature_extraction_layers
@@ -154,11 +156,11 @@ class FeatureExtractorBuffer:
 
     def flatten(self, features: torch.Tensor) -> torch.Tensor:
         """
-        Flattens the input tensor along the batch dimension. The features are of shape (batch_size, *).
+        Flattens the input tensor along the batch dimension. The features are of shape (batch_size, \\*).
         We flatten them across the batch dimension to get a 2D tensor of shape (batch_size, feature_size).
 
         Args:
-            features (torch.Tensor): The input tensor of shape (batch_size, *).
+            features (torch.Tensor): The input tensor of shape (batch_size, \\*).
 
         Returns:
             torch.Tensor: The flattened tensor of shape (batch_size, feature_size).
@@ -172,7 +174,7 @@ class FeatureExtractorBuffer:
 
         Returns:
             features (dict[str, torch.Tensor]): A dictionary where the keys are the layer names and the values are
-                the extracted features as torch Tensors.
+            the extracted features as torch Tensors.
         """
         features = {}
 

@@ -135,28 +135,32 @@ class MomentsAccountant:
     ) -> float:
         """
         If the parameters are lists, then it is assumed that the training applied the parameters in a sequence of
+        updates. Ex. sampling_strategies = [PoissonSampling(q_1), PoissonSampling(q_2)], noise_multiplier = [z_1, z_2],
+        updates = [t_1, t_2] implies that q_1, z_1 were applied for t_1 updates, followed by q_2, z_2 for t_2
         updates.
-            Ex. sampling_strategies = [PoissonSampling(q_1), PoissonSampling(q_2)], noise_multiplier = [z_1, z_2],
-            updates = [t_1, t_2] implies that q_1, z_1 were applied for t_1 updates, followed by q_2, z_2 for t_2
-            updates.
-        Sampling_strategies: Are the type of sampling done for each datapoint or client in the DP procedure.
-            This is either Poisson sampling with a sampling rate specified or Fixed ratio sampling with a fixed number
-            of selections performed over a specified population size.
-            For non-FL DP-SGD: This is the ratio of batch size to dataset size
-            (L/N, from Deep Learning with Differential Privacy).
-            For FL with client-side DP-SGD (no noise on server side, instance level privacy): This is the ratio of
-            client sampling probability to client data point probability q*(b_k/n_k)
-            For FL with client privacy: This is the sampling of clients from the client population
-            NOTE: If a sequence of strategies is given, they must be all of the same kind (that is poisson or subset,
-            but may have different parameters)
-         Noise multiplier: Ratio of the noise standard deviation to clipping bound (sigma in Deep Learning with
-            Differential Privacy, z in some other implementations).
-         Updates: This is the number of noise applications to the update weights.
-            For non-FL DP-SGD: This is the number of updates run (epochs*batches per epoch)
-            For FL w/ client-side DP-SGD (instance DP): This is the number of batches run per client (if selected
-            every time), server_updates*epochs per server update*batches per epoch
-            For FL with client privacy: Number of server updates
-         Delta: This is the delta in (epsilon, delta)-Privacy, that we require."""
+
+        Args:
+            sampling_strategies (SamplingStrategy | Sequence[SamplingStrategy]): Are the type of sampling done for
+                each datapoint or client in the DP procedure. This is either Poisson sampling with a sampling rate
+                specified or Fixed ratio sampling with a fixed number of selections performed over a specified
+                population size. For non-FL DP-SGD: This is the ratio of batch size to dataset size (L/N, from Deep
+                Learning with Differential Privacy). For FL with client-side DP-SGD (no noise on server side, instance
+                level privacy): This is the ratio of client sampling probability to client data point probability
+                q*(b_k/n_k) For FL with client privacy: This is the sampling of clients from the client population
+                **NOTE:** If a sequence of strategies is given, they must be all of the same kind (that is poisson or
+                subset, but may have different parameters)
+            noise_multiplier (float | list[float]): Ratio of the noise standard deviation to clipping bound (sigma in
+                Deep Learning with Differential Privacy, z in some other implementations).
+            updates (int | list[int]): This is the number of noise applications to the update weights. For non-FL
+                DP-SGD: This is the number of updates run (epochs*batches per epoch) For FL w/ client-side DP-SGD
+                (instance DP): This is the number of batches run per client (if selected every time),
+                server_updates*epochs per server update*batches per epoch. For FL with client privacy: Number of
+                server updates.
+            delta (float): This is the delta in (epsilon, delta)-Privacy, that we require.
+
+        Returns:
+            float: The corresponding epsilon
+        """
         self._validate_accountant_input(sampling_strategies, noise_multiplier, updates)
         rdp_accountant = self._construct_rdp_accountant(sampling_strategies, noise_multiplier, updates)
         # calculate minimum epsilon for fixed delta
@@ -171,28 +175,33 @@ class MomentsAccountant:
     ) -> float:
         """
         If the parameters are lists, then it is assumed that the training applied the parameters in a sequence of
+        updates. Ex. sampling_strategies = [PoissonSampling(q_1), PoissonSampling(q_2)], noise_multiplier = [z_1, z_2],
+        updates = [t_1, t_2] implies that q_1, z_1 were applied for t_1 updates, followed by q_2, z_2 for t_2
         updates.
-            Ex. sampling_strategies = [PoissonSampling(q_1), PoissonSampling(q_2)], noise_multiplier = [z_1, z_2],
-            updates = [t_1, t_2] implies that q_1, z_1 were applied for t_1 updates, followed by q_2, z_2 for t_2
-            updates.
-        Sampling_strategies: Are the type of sampling done for each datapoint or client in the DP procedure.
-            This is either Poisson sampling with a sampling rate specified or Fixed ratio sampling with a fixed number
-            of selections performed over a specified population size.
-            For non-FL DP-SGD: This is the ratio of batch size to dataset size
-            (L/N, from Deep Learning with Differential Privacy).
-            For FL with client-side DP-SGD (no noise on server side, instance level privacy): This is the ratio of
-            client sampling probability to client data point probability q*(b_k/n_k)
-            For FL with client privacy: This is the sampling of clients from the client population
-            NOTE: If a sequence of strategies is given, they must be all of the same kind (that is poisson or subset,
-            but may have different parameters)
-         Noise multiplier: Ratio of the noise standard deviation to clipping bound (sigma in Deep Learning with
-            Differential Privacy, z in some other implementations).
-         Updates: This is the number of noise applications to the update weights.
-            For non-FL DP-SGD: This is the number of updates run (epochs*batches per epoch)
-            For FL w/ client-side DP-SGD (instance DP): This is the number of batches run per client (if selected
-            every time), server_updates*epochs per server update*batches per epoch
-            For FL with client privacy: Number of server updates
-         epsilon: This is the epsilon in (epsilon, delta)-Privacy, that we require."""
+
+        Args:
+            sampling_strategies (SamplingStrategy | Sequence[SamplingStrategy]): Are the type of sampling done for
+                each datapoint or client in the DP procedure. This is either Poisson sampling with a sampling rate
+                specified or Fixed ratio sampling with a fixed number of selections performed over a specified
+                population size. For non-FL DP-SGD: This is the ratio of batch size to dataset size (L/N, from Deep
+                Learning with Differential Privacy). For FL with client-side DP-SGD (no noise on server side,
+                instance level privacy): This is the ratio of client sampling probability to client data point
+                probability q*(b_k/n_k) For FL with client privacy: This is the sampling of clients from the client
+                population.
+                **NOTE:** If a sequence of strategies is given, they must be all of the same kind (that is poisson or
+                subset, but may have different parameters)
+            noise_multiplier (float | list[float]): Ratio of the noise standard deviation to clipping bound (sigma in
+                Deep Learning with Differential Privacy, z in some other implementations).
+            updates (int | list[int]): This is the number of noise applications to the update weights. For non-FL
+                DP-SGD: This is the number of updates run (epochs*batches per epoch) For FL w/ client-side DP-SGD
+                (instance DP): This is the number of batches run per client (if selected every time),
+                server_updates*epochs per server update*batches per epoch For FL with client privacy: Number of
+                server updates
+            epsilon (float): This is the epsilon in (epsilon, delta)-Privacy, that we require.
+
+        Returns:
+            float: delta for the provided epsilon
+        """
         self._validate_accountant_input(sampling_strategies, noise_multiplier, updates)
         rdp_accountant = self._construct_rdp_accountant(sampling_strategies, noise_multiplier, updates)
         # calculate minimum delta for fixed epsilon

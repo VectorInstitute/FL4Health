@@ -27,7 +27,7 @@ class MaskedLinear(nn.Linear):
         Finally, the binary masks are applied to the weight and the bias. During training,
         gradients with respect to the score tensors are computed and used to update the score tensors.
 
-        Note: the scores are not assumed to be bounded between 0 and 1.
+        **NOTE:** The scores are not assumed to be bounded between 0 and 1.
 
         Args:
             in_features: size of each input sample

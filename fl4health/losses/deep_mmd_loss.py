@@ -135,8 +135,7 @@ class DeepMmdLoss(torch.nn.Module):
             is_var_computed (bool): Whether to compute the variance of the MMD.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor | None]: The value of MMD and the variance of MMD
-                if required to compute.
+            tuple[torch.Tensor, torch.Tensor | None]: The value of MMD and the variance of MMD if required to compute.
         """
         nx = k_x.shape[0]
         ny = k_y.shape[0]
@@ -182,17 +181,14 @@ class DeepMmdLoss(torch.nn.Module):
             features (torch.Tensor): The output features of the deep network.
             len_s (int): The length of the sample.
             features_org (torch.Tensor): The original input features of the deep network.
-            sigma_q (torch.Tensor): The sigma_q parameter.
-            sigma_phi (torch.Tensor): The sigma_phi parameter.
+            sigma_q (torch.Tensor): The ``sigma_q`` parameter.
+            sigma_phi (torch.Tensor): The ``sigma_phi`` parameter.
             epsilon (torch.Tensor): The epsilon parameter.
-            is_smooth (bool, optional): Whether to use the smooth version of the MMD.
-                Defaults to True.
-            is_var_computed (bool, optional): Whether to compute the variance of the MMD.
-                Defaults to True.
+            is_smooth (bool, optional): Whether to use the smooth version of the MMD. Defaults to True.
+            is_var_computed (bool, optional): Whether to compute the variance of the MMD. Defaults to True.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor | None]: The value of MMD and the variance of MMD
-                if required to compute.
+            tuple[torch.Tensor, torch.Tensor | None]: The value of MMD and the variance of MMD if required to compute.
         """
         x = features[0:len_s, :]  # fetch the sample 1 (features of deep networks)
         y = features[len_s:, :]  # fetch the sample 2 (features of deep networks)

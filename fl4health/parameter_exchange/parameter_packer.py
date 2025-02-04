@@ -21,8 +21,16 @@ class ParameterPacker(ABC, Generic[T]):
 
 class ParameterPackerWithControlVariates(ParameterPacker[NDArrays]):
     def __init__(self, size_of_model_params: int) -> None:
-        # Note model params exchanged and control variates can be different sizes, for example, when layers are frozen
-        # or the state dictionary contains things like Batch Normalization layers.
+        """
+        Class to handle the exchange of control variates for the SCAFFOLD FL method
+        **NOTE** model params exchanged and control variates can be different sizes, for example, when layers are
+        frozen or the state dictionary contains things like Batch Normalization layers.
+
+        Args:
+            size_of_model_params (int): This is the number of layers that are associated with the parameters of the
+                model itself. This is used to split the covariates from the model parameters during unpacking.
+        """
+
         self.size_of_model_params = size_of_model_params
         super().__init__()
 
@@ -66,8 +74,14 @@ class ParameterPackerWithLayerNames(ParameterPacker[list[str]]):
 
     def unpack_parameters(self, packed_parameters: NDArrays) -> tuple[NDArrays, list[str]]:
         """
-        Assumption: packed_parameters is a list containing model parameters followed by an NDArray that contains the
-        corresponding names of those parameters.
+        Function to separate the model parameters from the layer names that have been packed with them.
+
+        Args:
+            packed_parameters (NDArrays): packed_parameters is a list containing model parameters followed by an
+                NDArray that contains the corresponding names of those parameters.
+
+        Returns:
+            tuple[NDArrays, list[str]]: tuple of model parameters and the names of the layers to which they correspond
         """
         split_size = len(packed_parameters) - 1
         model_parameters = packed_parameters[:split_size]
@@ -84,9 +98,9 @@ class SparseCooParameterPacker(ParameterPacker[tuple[NDArrays, NDArrays, list[st
 
     For more information on the sparse COO format and sparse tensors in PyTorch, please see the following
     two pages:
-        1. https://pytorch.org/docs/stable/generated/torch.sparse_coo_tensor.html
-        2. https://pytorch.org/docs/stable/sparse.html
 
+    1. https://pytorch.org/docs/stable/generated/torch.sparse_coo_tensor.html
+    2. https://pytorch.org/docs/stable/sparse.html
     """
 
     def pack_parameters(

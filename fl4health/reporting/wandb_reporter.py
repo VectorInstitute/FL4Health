@@ -37,13 +37,13 @@ class WandBReporter(BaseReporter):
         _summary_
 
         Args:
-            wandb_step_type (StepType | str, optional): Whether to use the 'round', 'epoch' or 'step' as the
+            wandb_step_type (StepType | str, optional): Whether to use the "round", "epoch" or "step" as the
                 wandb_step value when logging information to the wandb server.
             project (str | None, optional): The name of the project where you're sending the new run. If unspecified,
                 wandb will try to infer or set to "uncategorized"
             entity (str | None, optional): An entity is a username or team name where you're sending runs. This entity
                 must exist before you can send runs there, so make sure to create your account or team in the UI before
-                starting to log runs. If you don't specify an entity, the run will be sent to your default entity.
+                starting to log runs. If you do not specify an entity, the run will be sent to your default entity.
                 Change your default entity in your settings under "default location to create new projects".
             config (str | None, optional): This sets wandb.config, a dictionary-like object for saving inputs to your
                 job such as hyperparameters for a model. If dict: will load the key value pairs into the wandb.config
@@ -56,7 +56,7 @@ class WandBReporter(BaseReporter):
                 ["new_tag"] after wandb.init().
             name (str | None, optional): A short display name for this run. Default generates a random two-word name.
             id (str | None, optional): A unique ID for this run. It must be unique in the project, and if you delete a
-                run you can't reuse the ID.
+                run you cannot reuse the ID.
             resume (str): Indicates how to handle the case when a run has the same entity, project and run id as
                 a previous run. 'must' enforces the run must resume from the run with same id and throws an error
                 if it does not exist. 'never' enforces that a run will not resume and throws an error if run id exists.

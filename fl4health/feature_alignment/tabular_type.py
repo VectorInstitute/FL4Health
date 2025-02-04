@@ -13,6 +13,19 @@ class TabularType(str, Enum):
 
     @staticmethod
     def get_default_fill_value(tabular_type: TabularType | str) -> Scalar:
+        """
+        Provided the tabular feature type as either a string or enum, this function returns the default value for
+        imputation to be used.
+
+        Args:
+            tabular_type (TabularType | str): Type of tabular feature to be imputed
+
+        Raises:
+            ValueError: If the tabular type is unknown this will be thrown.
+
+        Returns:
+            Scalar: Default imputation value for the specified ``TabularType``
+        """
         if tabular_type is TabularType.NUMERIC:
             return 0.0
         elif tabular_type is TabularType.BINARY:

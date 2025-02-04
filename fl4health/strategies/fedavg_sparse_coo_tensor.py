@@ -38,19 +38,20 @@ class FedAvgSparseCooTensor(BasicFedAvg):
     ) -> None:
         """
         A generalization of the FedAvg strategy where the server can receive any arbitrary subset of parameters from
-        any arbitrary subset of the clients.
-        Weighted average for parameters belonging to each received tensor is performed independently.
+        any arbitrary subset of the clients. Weighted average for parameters belonging to each received tensor is
+        performed independently.
 
         Note that this strategy differs from FedAvgDynamicLayer in that it does not
         require clients to send entire layers (tensors).
+
         A client can send an arbitrary set of parameters within a certain tensor,
         and these parameters are packed according to the sparse COO format.
 
         For more information on the sparse COO format and sparse tensors in PyTorch, please see the following
         two pages:
-            1. https://pytorch.org/docs/stable/generated/torch.sparse_coo_tensor.html
-            2. https://pytorch.org/docs/stable/sparse.html
 
+        1. https://pytorch.org/docs/stable/generated/torch.sparse_coo_tensor.html
+        2. https://pytorch.org/docs/stable/sparse.html
 
         Args:
             fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0. Defaults to 1.0.
@@ -108,11 +109,12 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         alignment must be done using the tensor names packed in along with the weights in the client results.
 
         More precisely, this method performs the following steps:
-            1. Align all tensors according to their names.
-            2. For tensors that have the same name, construct the sparse COO tensors and convert them to dense tensors.
-            3. Perform averaging on the dense tensors (can be weighted or unweighted).
-            4. For every aggregated dense tensor, discard the zero values and retain all information needed
-            to represent it in the sparse COO format.
+
+        1. Align all tensors according to their names.
+        2. For tensors that have the same name, construct the sparse COO tensors and convert them to dense tensors.
+        3. Perform averaging on the dense tensors (can be weighted or unweighted).
+        4. For every aggregated dense tensor, discard the zero values and retain all information needed
+           to represent it in the sparse COO format.
 
         Args:
             server_round (int): Indicates the server round we're currently on.
@@ -124,8 +126,8 @@ class FedAvgSparseCooTensor(BasicFedAvg):
 
         Returns:
             tuple[Parameters | None, dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
-                For sparse tensor exchange we also pack in the names of all of the tensors that were aggregated in this
-                phase to allow clients to insert the values into the proper areas of their models.
+            For sparse tensor exchange we also pack in the names of all of the tensors that were aggregated in this
+            phase to allow clients to insert the values into the proper areas of their models.
         """
         if not results:
             return None, {}
@@ -180,16 +182,15 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         The called functions handle tensor alignment.
 
         Args:
-            results (list[tuple[NDArrays, int]]): The weight results from each client's local training
-            that need to be aggregated on the server-side and the number of training samples
-            held on each client.
+            results (list[tuple[NDArrays, int]]): The weight results from each client's local training that need to
+                be aggregated on the server-side and the number of training samples held on each client.
 
                 In this scheme, the clients pack the tensor names into the results object along with
                 the weight values to allow for alignment during aggregation.
 
         Returns:
             dict[str, Tensor]: A dictionary mapping the name of the tensor that was aggregated to the aggregated
-                weights.
+            weights.
         """
         if self.weighted_aggregation:
             return self.weighted_aggregate(results)
@@ -198,34 +199,35 @@ class FedAvgSparseCooTensor(BasicFedAvg):
 
     def weighted_aggregate(self, results: list[tuple[NDArrays, int]]) -> dict[str, Tensor]:
         """
-        "results" consist of four parts: the exchanged (nonzero) parameter values,
-        their coordinates within the tensor to which they belong,
-        the shape of that tensor, and finally the name of that tensor.
+        "results" consist of four parts: the exchanged (nonzero) parameter values, their coordinates within the tensor
+        to which they belong, the shape of that tensor, and finally the name of that tensor.
 
-        The first three items constitute the information that is needed
-        to construct the tensor in the sparse COO format and convert
-        it to a regular dense tensor.
+        The first three items constitute the information that is needed to construct the tensor in the sparse COO
+        format and convert it to a regular dense tensor.
+
         The tensor name is used to align tensors to ensure that averaging is performed only
         among tensors with the same name.
 
         This method performs the following steps:
-            1. Align all tensors according to their names.
-            2. For tensors that have the same name, construct the sparse COO tensors and convert them to dense tensors.
-            3. Perform weighted averaging on the dense tensors according to
-            the number of training examples each client has.
 
-        Note: this method performs weighted averaging.
+        1. Align all tensors according to their names.
+        2. For tensors that have the same name, construct the sparse COO tensors and convert them to dense tensors.
+        3. Perform weighted averaging on the dense tensors according to the number of training examples each client
+           has.
+
+        **NOTE:** This method performs weighted averaging.
 
         Args:
             results (list[tuple[NDArrays, int]]): The weight results from each client's local training that need to be
                 aggregated on the server-side and the number of training samples held on each client.
-                The weight results consist of four parts, as detailed above.
-                In this scheme, the clients pack the layer names into the results object along with the weight values
-                to allow for alignment during aggregation.
+
+                The weight results consist of four parts, as detailed above. In this scheme, the clients pack the
+                layer names into the results object along with the weight values to allow for alignment during
+                aggregation.
 
         Returns:
             dict[str, Tensor]: A dictionary mapping the name of the tensor that was aggregated to the aggregated
-                weights.
+            weights.
         """
         names_to_dense_tensors: defaultdict[str, list[Tensor]] = defaultdict(list)
         total_num_examples: defaultdict[str, int] = defaultdict(int)
@@ -260,33 +262,34 @@ class FedAvgSparseCooTensor(BasicFedAvg):
 
     def unweighted_aggregate(self, results: list[tuple[NDArrays, int]]) -> dict[str, Tensor]:
         """
-        "results" consist of four parts: the exchanged (nonzero) parameter values,
-        their coordinates within the tensor to which they belong,
-        the shape of that tensor, and finally the name of that tensor.
+        "results" consist of four parts: the exchanged (nonzero) parameter values, their coordinates within the tensor
+        to which they belong, the shape of that tensor, and finally the name of that tensor.
 
-        The first three items constitute the information that is needed to
-        construct the tensor in the sparse COO format and convert
-        it to a regular dense tensor.
+        The first three items constitute the information that is needed to construct the tensor in the sparse COO
+        format and convert it to a regular dense tensor.
+
         The tensor name is used to align tensors to ensure that averaging is performed only
         among tensors with the same name.
 
         This method performs the following steps:
-            1. Align all tensors according to their names.
-            2. For tensors that have the same name, construct the sparse COO tensors and convert them to dense tensors.
-            3. Perform uniform averaging on the dense tensors across all clients.
 
-        Note: this method performs uniform averaging.
+        1. Align all tensors according to their names.
+        2. For tensors that have the same name, construct the sparse COO tensors and convert them to dense tensors.
+        3. Perform uniform averaging on the dense tensors across all clients.
+
+        **NOTE:** This method performs uniform averaging.
 
         Args:
             results (list[tuple[NDArrays, int]]): The weight results from each client's local training that need to be
                 aggregated on the server-side and the number of training samples held on each client.
-                The weight results consist of four parts, as detailed above.
-                In this scheme, the clients pack the layer names into the results object along with the weight values
-                to allow for alignment during aggregation.
+
+                The weight results consist of four parts, as detailed above. In this scheme, the clients pack the
+                layer names into the results object along with the weight values to allow for alignment during
+                aggregation.
 
         Returns:
             dict[str, Tensor]: A dictionary mapping the name of the tensor that was aggregated to the aggregated
-                weights.
+            weights.
         """
         names_to_dense_tensors: defaultdict[str, list[Tensor]] = defaultdict(list)
         total_num_clients: defaultdict[str, int] = defaultdict(int)

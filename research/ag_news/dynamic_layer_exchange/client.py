@@ -80,14 +80,15 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         """
-        This method configures and instantiates a NormDriftParameterExchanger to be used in dynamic weight exchange.
+        This method configures and instantiates a ``NormDriftParameterExchanger`` to be used in dynamic weight
+        exchange.
 
         Args:
             config (Config): Configuration used to setup the weight exchanger properties for dynamic exchange
 
         Returns:
             ParameterExchanger: This exchanger handles the exchange orchestration between clients and server during
-                federated training
+            federated training
         """
         normalize = narrow_dict_type(config, "normalize", bool)
         filter_by_percentage = narrow_dict_type(config, "filter_by_percentage", bool)

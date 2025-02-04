@@ -29,39 +29,34 @@ class MaskedConv1d(nn.Conv1d):
         """
         Implementation of masked Conv1d layers.
 
-        Like regular Conv1d layers (i.e., nn.Conv1d module), a masked convolutional layer has a weight
-        (i.e., convolutional filter) and a (optional) bias.
-        However, the weight and the bias do not receive gradient in back propagation.
-        Instead, two score tensors - one for the weight and another for the bias - are maintained.
-        In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores,
-        which are then used to produce binary masks via bernoulli sampling.
-        Finally, the binary masks are applied to the weight and the bias. During training,
-        gradients with respect to the score tensors are computed and used to update the score tensors.
+        Like regular Conv1d layers (i.e., nn.Conv1d module), a masked convolutional layer has a weight (i.e.,
+        convolutional filter) and a (optional) bias. However, the weight and the bias do not receive gradient in
+        back propagation. Instead, two score tensors - one for the weight and another for the bias - are maintained.
 
-        Note: the scores are not assumed to be bounded between 0 and 1.
+        In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores,
+        which are then used to produce binary masks via bernoulli sampling. Finally, the binary masks are applied to
+        the weight and the bias. During training, gradients with respect to the score tensors are computed and used to
+        update the score tensors.
+
+        **NOTE:** The scores are not assumed to be bounded between 0 and 1.
 
         Args:
             in_channels (int): Number of channels in the input image
             out_channels (int): Number of channels produced by the convolution
             kernel_size (int or tuple): Size of the convolving kernel
             stride (int or tuple, optional): Stride of the convolution. Default: 1
-            padding (int, tuple or str, optional): Padding added to both sides of
-                the input. Default: 0
-            padding_mode (str, optional): ``'zeros'``, ``'reflect'``,
-                ``'replicate'`` or ``'circular'``. Default: ``'zeros'``
-            dilation (int or tuple, optional): Spacing between kernel
-                elements. Default: 1
-            groups (int, optional): Number of blocked connections from input
-                channels to output channels. Default: 1
-            bias (bool, optional): If ``True``, adds a learnable bias to the
-                output. Default: ``True``
-
-        Attributes:
-            weight: weights of the module.
-            bias:  bias of the module.
-            weight_score: learnable scores for the weights. Has the same shape as weight.
-            bias_score: learnable scores for the bias. Has the same shape as bias.
+            padding (int, tuple or str, optional): Padding added to both sides of the input. Default: 0
+            padding_mode (str, optional): ``'zeros'``, ``'reflect'``, ``'replicate'`` or ``'circular'``.
+                Default: ``'zeros'``
+            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
+            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
         """
+        # Attributes:
+        # weight: weights of the module.
+        # bias:  bias of the module.
+        # weight_score: learnable scores for the weights. Has the same shape as weight.
+        # bias_score: learnable scores for the bias. Has the same shape as bias.
         super().__init__(
             in_channels,
             out_channels,
@@ -85,6 +80,15 @@ class MaskedConv1d(nn.Conv1d):
             self.register_parameter("bias_scores", None)
 
     def forward(self, input: Tensor) -> Tensor:
+        """
+        Forward for the mask 1D Convolution
+
+        Args:
+            input (Tensor): input tensor for the layer
+
+        Returns:
+            Tensor: output tensor for the convolution
+        """
         weight_prob_scores = torch.sigmoid(self.weight_scores)
         weight_mask = bernoulli_sample(weight_prob_scores)
         masked_weight = weight_mask * self.weight
@@ -99,7 +103,13 @@ class MaskedConv1d(nn.Conv1d):
     @classmethod
     def from_pretrained(cls, conv_module: nn.Conv1d) -> MaskedConv1d:
         """
-        Return an instance of MaskedConv1d whose weight and bias have the same values as those of conv_module.
+        Return an instance of ``MaskedConv1d`` whose weight and bias have the same values as those of ``conv_module``.
+
+        Args:
+            conv_module (nn.Conv1d): Module to be converted
+
+        Returns:
+            MaskedConv1d: Module with masked layers added to enable FedPM training
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
@@ -146,38 +156,33 @@ class MaskedConv2d(nn.Conv2d):
         """
         Implementation of masked Conv2d layers.
 
-        Like regular Conv2d layers (i.e., nn.Conv2d module), a masked convolutional layer has a weight
-        (i.e., convolutional filter) and a (optional) bias.
-        However, the weight and the bias do not receive gradient in back propagation.
-        Instead, two score tensors - one for the weight and another for the bias - are maintained.
-        In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores,
-        which are then used to produce binary masks via bernoulli sampling.
-        Finally, the binary masks are applied to the weight and the bias. During training,
-        gradients with respect to the score tensors are computed and used to update the score tensors.
+        Like regular Conv2d layers (i.e., nn.Conv2d module), a masked convolutional layer has a weight (i.e.,
+        convolutional filter) and a (optional) bias. However, the weight and the bias do not receive gradient in back
+        propagation. Instead, two score tensors - one for the weight and another for the bias - are maintained.
+        In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores, which
+        are then used to produce binary masks via bernoulli sampling. Finally, the binary masks are applied to the
+        weight and the bias. During training, gradients with respect to the score tensors are computed and used to
+        update the score tensors.
 
-        Note: the scores are not assumed to be bounded between 0 and 1.
+        **NOTE:** The scores are not assumed to be bounded between 0 and 1.
 
         Args:
             in_channels (int): Number of channels in the input image
             out_channels (int): Number of channels produced by the convolution
             kernel_size (int or tuple): Size of the convolving kernel
             stride (int or tuple, optional): Stride of the convolution. Default: 1
-            padding (int, tuple or str, optional): Padding added to all four sides of
-                the input. Default: 0
-            padding_mode (str, optional): ``'zeros'``, ``'reflect'``,
-                ``'replicate'`` or ``'circular'``. Default: ``'zeros'``
+            padding (int, tuple or str, optional): Padding added to all four sides of the input. Default: 0
+            padding_mode (str, optional): ``'zeros'``, ``'reflect'``, ``'replicate'`` or ``'circular'``.
+                Default: ``'zeros'``
             dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
-            groups (int, optional): Number of blocked connections from input
-                channels to output channels. Default: 1
-            bias (bool, optional): If ``True``, adds a learnable bias to the
-                output. Default: ``True``
-
-        Attributes:
-            weight: weights of the module.
-            bias:  bias of the module.
-            weight_score: learnable scores for the weights. Has the same shape as weight.
-            bias_score: learnable scores for the bias. Has the same shape as bias.
+            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
         """
+        # Attributes:
+        # weight: weights of the module.
+        # bias:  bias of the module.
+        # weight_score: learnable scores for the weights. Has the same shape as weight.
+        # bias_score: learnable scores for the bias. Has the same shape as bias.
         super().__init__(
             in_channels,
             out_channels,
@@ -201,6 +206,15 @@ class MaskedConv2d(nn.Conv2d):
             self.register_parameter("bias_scores", None)
 
     def forward(self, input: Tensor) -> Tensor:
+        """
+        Forward for the Masked 2D Convolution
+
+        Args:
+            input (Tensor): input tensor for the layer
+
+        Returns:
+            Tensor: output tensor for the convolution
+        """
         weight_prob_scores = torch.sigmoid(self.weight_scores)
         weight_mask = bernoulli_sample(weight_prob_scores)
         masked_weight = weight_mask * self.weight
@@ -216,6 +230,12 @@ class MaskedConv2d(nn.Conv2d):
     def from_pretrained(cls, conv_module: nn.Conv2d) -> MaskedConv2d:
         """
         Return an instance of MaskedConv2d whose weight and bias have the same values as those of conv_module.
+
+        Args:
+            conv_module (nn.Conv2d): Module to be converted
+
+        Returns:
+            MaskedConv2d: Module with masked layers to enable FedPM
         """
         has_bias = conv_module.bias is not None
         kernel_size_ = _pair(conv_module.kernel_size)
@@ -260,36 +280,33 @@ class MaskedConv3d(nn.Conv3d):
         """
         Implementation of masked Conv2d layers.
 
-        Like regular Conv3d layers (i.e., nn.Conv3d module), a masked convolutional layer has a weight
-        (i.e., convolutional filter) and a (optional) bias.
-        However, the weight and the bias do not receive gradient in back propagation.
-        Instead, two score tensors - one for the weight and another for the bias - are maintained.
-        In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores,
-        which are then used to produce binary masks via bernoulli sampling.
-        Finally, the binary masks are applied to the weight and the bias. During training,
-        gradients with respect to the score tensors are computed and used to update the score tensors.
+        Like regular Conv3d layers (i.e., nn.Conv3d module), a masked convolutional layer has a weight (i.e.,
+        convolutional filter) and a (optional) bias. However, the weight and the bias do not receive gradient in back
+        propagation. Instead, two score tensors - one for the weight and another for the bias - are maintained. In the
+        forward pass, the score tensors are transformed by the Sigmoid function into probability scores, which are
+        then used to produce binary masks via bernoulli sampling. Finally, the binary masks are applied to the weight
+        and the bias. During training, gradients with respect to the score tensors are computed and used to update the
+        score tensors.
 
-        Note: the scores are not assumed to be bounded between 0 and 1.
+        **NOTE:** The scores are not assumed to be bounded between 0 and 1.
 
         Args:
             in_channels (int): Number of channels in the input image
             out_channels (int): Number of channels produced by the convolution
             kernel_size (int or tuple): Size of the convolving kernel
             stride (int or tuple, optional): Stride of the convolution. Default: 1
-            padding (int, tuple or str, optional): Padding added to all six sides of
-                the input. Default: 0
-            padding_mode (str, optional): ``'zeros'``, ``'reflect'``, ``'replicate'``
-            or ``'circular'``. Default: ``'zeros'``
+            padding (int, tuple or str, optional): Padding added to all six sides of the input. Default: 0
+            padding_mode (str, optional): ``'zeros'``, ``'reflect'``, ``'replicate'`` or ``'circular'``.
+                Default: ``'zeros'``
             dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
             groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1
             bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
-
-        Attributes:
-            weight: weights of the module.
-            bias:  bias of the module.
-            weight_score: learnable scores for the weights. Has the same shape as weight.
-            bias_score: learnable scores for the bias. Has the same shape as bias.
         """
+        # Attributes:
+        # weight: weights of the module.
+        # bias:  bias of the module.
+        # weight_score: learnable scores for the weights. Has the same shape as weight.
+        # bias_score: learnable scores for the bias. Has the same shape as bias.
         super().__init__(
             in_channels,
             out_channels,
@@ -313,6 +330,15 @@ class MaskedConv3d(nn.Conv3d):
             self.register_parameter("bias_scores", None)
 
     def forward(self, input: Tensor) -> Tensor:
+        """
+        Forward for the Masked 3D Convolution
+
+        Args:
+            input (Tensor): input tensor for the layer
+
+        Returns:
+            Tensor: output tensor for the convolution
+        """
         weight_prob_scores = torch.sigmoid(self.weight_scores)
         weight_mask = bernoulli_sample(weight_prob_scores)
         masked_weight = weight_mask * self.weight
@@ -328,6 +354,12 @@ class MaskedConv3d(nn.Conv3d):
     def from_pretrained(cls, conv_module: nn.Conv3d) -> MaskedConv3d:
         """
         Return an instance of MaskedConv3d whose weight and bias have the same values as those of conv_module.
+
+        Args:
+            conv_module (nn.Conv3d): Module to convert
+
+        Returns:
+            MaskedConv3d: Module with mask layers added to enable FedPM
         """
         has_bias = conv_module.bias is not None
         kernel_size_ = _triple(conv_module.kernel_size)
@@ -371,43 +403,38 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
         dtype: torch.dtype | None = None,
     ) -> None:
         """
-        Implementation of masked ConvTranspose1d layers. For more information on transposed convolution,
-        please see the PyTorch implementation of nn.Conv1d.
+        Implementation of masked ``ConvTranspose1d`` layers. For more information on transposed convolution,
+        please see the PyTorch implementation of ``nn.Conv1d.``
+
         (https://pytorch.org/docs/stable/_modules/torch/nn/modules/conv.html#ConvTranspose1d)
 
-        Like regular ConvTranspose1d layers (i.e., nn.ConvTranspose1d module),
-        a masked transpose convolutional layer has a weight (i.e., convolutional filter)
-        and a (optional) bias.
-        However, the weight and the bias do not receive gradient in back propagation.
-        Instead, two score tensors - one for the weight and another for the bias - are maintained.
-        In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores,
-        which are then used to produce binary masks via bernoulli sampling.
-        Finally, the binary masks are applied to the weight and the bias. During training,
-        gradients with respect to the score tensors are computed and used to update the score tensors.
+        Like regular ``ConvTranspose1d`` layers (i.e., ``nn.ConvTranspose1d`` module), a masked transpose
+        convolutional layer has a weight (i.e., convolutional filter) and a (optional) bias. However, the weight and
+        the bias do not receive gradient in back propagation. Instead, two score tensors - one for the weight and
+        another for the bias - are maintained. In the forward pass, the score tensors are transformed by the Sigmoid
+        function into probability scores, which are then used to produce binary masks via bernoulli sampling.
+        Finally, the binary masks are applied to the weight and the bias. During training, gradients with respect to
+        the score tensors are computed and used to update the score tensors.
 
-        Note: the scores are not assumed to be bounded between 0 and 1.
-
+        **NOTE:** The scores are not assumed to be bounded between 0 and 1.
 
         Args:
             in_channels (int): Number of channels in the input image
             out_channels (int): Number of channels produced by the transposed convolution
             kernel_size (int or tuple): Size of the convolving kernel
             stride (int or tuple, optional): Stride of the convolution. Default: 1
-            padding (int or tuple, optional): ``dilation * (kernel_size - 1) - padding`` zero-padding
-                will be added to both sides of the input. Default: 0
-            output_padding (int or tuple, optional): Additional size added to one side
-                of the output shape. Default: 0
+            padding (int or tuple, optional): ``dilation * (kernel_size - 1) - padding`` zero-padding will be added to
+                both sides of the input. Default: 0
+            output_padding (int or tuple, optional): Additional size added to one side of the output shape. Default: 0
             groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1
             bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
             dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
-
-
-        Attributes:
-            weight (Tensor): weights of the module.
-            bias (Tensor):   bias of the module.
-            weight_score: learnable scores for the weights. Has the same shape as weight.
-            bias_score: learnable scores for the bias. Has the same shape as bias.
         """
+        # Attributes:
+        # weight (Tensor): weights of the module.
+        # bias (Tensor):   bias of the module.
+        # weight_score: learnable scores for the weights. Has the same shape as weight.
+        # bias_score: learnable scores for the bias. Has the same shape as bias.
         super().__init__(
             in_channels,
             out_channels,
@@ -432,6 +459,19 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
             self.register_parameter("bias_scores", None)
 
     def forward(self, input: Tensor, output_size: list[int] | None = None) -> Tensor:
+        """
+        Forward for the ``MaskedConvTranspose1D``
+
+        Args:
+            input (Tensor): input to be mapped with the module
+            output_size (list[int] | None, optional): Desired output from the transpose. Defaults to None.
+
+        Raises:
+            ValueError: If something other than "zeros" padding has been requested.
+
+        Returns:
+            Tensor: Output tensors.
+        """
         # Note: the same check is already present in super().__init__
         if self.padding_mode != "zeros":
             raise ValueError("Only `zeros` padding mode is supported for ConvTranspose1d")
@@ -467,7 +507,14 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
     @classmethod
     def from_pretrained(cls, conv_module: nn.ConvTranspose1d) -> MaskedConvTranspose1d:
         """
-        Return an instance of MaskedConvTranspose1d whose weight and bias have the same values as those of conv_module.
+        Return an instance of ``MaskedConvTranspose1d`` whose weight and bias have the same values as those of
+        ``conv_module``.
+
+        Args:
+            conv_module (nn.ConvTranspose1d): Target module to be converted
+
+        Returns:
+            MaskedConvTranspose1d: Module with masked layers to enable FedPM
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
@@ -515,42 +562,39 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
         dtype: torch.dtype | None = None,
     ) -> None:
         """
-        Implementation of masked ConvTranspose2d layers. For more information on transposed convolution,
-        please see the PyTorch implementation of nn.Conv2d.
+        Implementation of masked ``ConvTranspose2d`` layers. For more information on transposed convolution,
+        please see the PyTorch implementation of ``nn.Conv2d``.
+
         (https://pytorch.org/docs/stable/_modules/torch/nn/modules/conv.html#ConvTranspose2d)
 
-        Like regular ConvTranspose2d layers (i.e., nn.ConvTranspose2d module),
-        a masked transpose convolutional layer has a weight (i.e., convolutional filter)
-        and a (optional) bias.
-        However, the weight and the bias do not receive gradient in back propagation.
-        Instead, two score tensors - one for the weight and another for the bias - are maintained.
-        In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores,
-        which are then used to produce binary masks via bernoulli sampling.
-        Finally, the binary masks are applied to the weight and the bias. During training,
-        gradients with respect to the score tensors are computed and used to update the score tensors.
+        Like regular ``ConvTranspose2d`` layers (i.e., ``nn.ConvTranspose2d`` module), a masked transpose
+        convolutional layer has a weight (i.e., convolutional filter) and a (optional) bias. However, the weight and
+        the bias do not receive gradient in back propagation. Instead, two score tensors - one for the weight and
+        another for the bias - are maintained. In the forward pass, the score tensors are transformed by the
+        Sigmoid function into probability scores, which are then used to produce binary masks via bernoulli sampling.
+        Finally, the binary masks are applied to the weight and the bias. During training, gradients with respect to
+        the score tensors are computed and used to update the score tensors.
 
-        Note: the scores are not assumed to be bounded between 0 and 1.
-
+        **NOTE:** The scores are not assumed to be bounded between 0 and 1.
 
         Args:
             in_channels (int): Number of channels in the input image
             out_channels (int): Number of channels produced by the transposed convolution
             kernel_size (int or tuple): Size of the convolving kernel
             stride (int or tuple, optional): Stride of the convolution. Default: 1
-            padding (int or tuple, optional): ``dilation * (kernel_size - 1) - padding`` zero-padding
-                will be added to both sides of each dimension in the input. Default: 0
-            output_padding (int or tuple, optional): Additional size added to one side
-                of each dimension in the output shape. Default: 0
+            padding (int or tuple, optional): ``dilation * (kernel_size - 1) - padding`` zero-padding will be added
+                to both sides of each dimension in the input. Default: 0
+            output_padding (int or tuple, optional): Additional size added to one side of each dimension in the
+                output shape. Default: 0
             groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1
             bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
             dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
-
-        Attributes:
-            weight (Tensor): weights of the module.
-            bias (Tensor):   bias of the module.
-            weight_score: learnable scores for the weights. Has the same shape as weight.
-            bias_score: learnable scores for the bias. Has the same shape as bias.
         """
+        # Attributes:
+        # weight (Tensor): weights of the module.
+        # bias (Tensor):   bias of the module.
+        # weight_score: learnable scores for the weights. Has the same shape as weight.
+        # bias_score: learnable scores for the bias. Has the same shape as bias.
         super().__init__(
             in_channels,
             out_channels,
@@ -575,6 +619,19 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
             self.register_parameter("bias_scores", None)
 
     def forward(self, input: Tensor, output_size: list[int] | None = None) -> Tensor:
+        """
+        Maps input tensor through the ``MaskedConvTranspose2D`` module
+
+        Args:
+            input (Tensor): tensor to be mapped
+            output_size (list[int] | None, optional): Desired output size from the module. Defaults to None.
+
+        Raises:
+            ValueError: Thrown if anything except "zeros" padding is requested
+
+        Returns:
+            Tensor: Mapped tensor
+        """
         # Note: the same check is already present in super().__init__
         if self.padding_mode != "zeros":
             raise ValueError("Only `zeros` padding mode is supported for ConvTranspose1d")
@@ -607,7 +664,14 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
     @classmethod
     def from_pretrained(cls, conv_module: nn.ConvTranspose2d) -> MaskedConvTranspose2d:
         """
-        Return an instance of MaskedConvTranspose2d whose weight and bias have the same values as those of conv_module.
+        Return an instance of ``MaskedConvTranspose2d`` whose weight and bias have the same values as those of
+        ``conv_module``.
+
+        Args:
+            conv_module (nn.ConvTranspose2d): Target module to be converted
+
+        Returns:
+            MaskedConvTranspose2d: Module with mask layers added to enable FedPM
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
@@ -655,42 +719,39 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
         dtype: torch.dtype | None = None,
     ) -> None:
         """
-        Implementation of masked ConvTranspose3d layers. For more information on transposed convolution,
-        please see the PyTorch implementation of nn.Conv3d.
+        Implementation of masked ``ConvTranspose3d`` layers. For more information on transposed convolution,
+        please see the PyTorch implementation of ``nn.Conv3d``.
+
         (https://pytorch.org/docs/stable/_modules/torch/nn/modules/conv.html#ConvTranspose3d)
 
-        Like regular ConvTranspose3d layers (i.e., nn.ConvTranspose3d module),
-        a masked transpose convolutional layer has a weight (i.e., convolutional filter)
-        and a (optional) bias.
-        However, the weight and the bias do not receive gradient in back propagation.
-        Instead, two score tensors - one for the weight and another for the bias - are maintained.
-        In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores,
-        which are then used to produce binary masks via bernoulli sampling.
-        Finally, the binary masks are applied to the weight and the bias. During training,
-        gradients with respect to the score tensors are computed and used to update the score tensors.
+        Like regular ``ConvTranspose3d`` layers (i.e., ``nn.ConvTranspose3d`` module), a masked transpose
+        convolutional layer has a weight (i.e., convolutional filter) and a (optional) bias. However, the weight and
+        the bias do not receive gradient in back propagation. Instead, two score tensors - one for the weight and
+        another for the bias - are maintained. In the forward pass, the score tensors are transformed by the Sigmoid
+        function into probability scores, which are then used to produce binary masks via bernoulli sampling.
+        Finally, the binary masks are applied to the weight and the bias. During training, gradients with respect to
+        the score tensors are computed and used to update the score tensors.
 
-        Note: the scores are not assumed to be bounded between 0 and 1.
-
+        **NOTE:** The scores are not assumed to be bounded between 0 and 1.
 
         Args:
             in_channels (int): Number of channels in the input image
             out_channels (int): Number of channels produced by the transposed convolution
             kernel_size (int or tuple): Size of the convolving kernel
             stride (int or tuple, optional): Stride of the convolution. Default: 1
-            padding (int or tuple, optional): ``dilation * (kernel_size - 1) - padding`` zero-padding
-                will be added to both sides of each dimension in the input. Default: 0
-            output_padding (int or tuple, optional): Additional size added to one side
-                of each dimension in the output shape. Default: 0
+            padding (int or tuple, optional): ``dilation * (kernel_size - 1) - padding`` zero-padding will be added to
+                both sides of each dimension in the input. Default: 0
+            output_padding (int or tuple, optional): Additional size added to one side of each dimension in the
+                output shape. Default: 0
             groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1
             bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
             dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
-
-        Attributes:
-            weight (Tensor): weights of the module.
-            bias (Tensor):   bias of the module.
-            weight_score: learnable scores for the weights. Has the same shape as weight.
-            bias_score: learnable scores for the bias. Has the same shape as bias.
         """
+        # Attributes:
+        # weight (Tensor): weights of the module.
+        # bias (Tensor):   bias of the module.
+        # weight_score: learnable scores for the weights. Has the same shape as weight.
+        # bias_score: learnable scores for the bias. Has the same shape as bias.
         super().__init__(
             in_channels,
             out_channels,
@@ -715,6 +776,19 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
             self.register_parameter("bias_scores", None)
 
     def forward(self, input: Tensor, output_size: list[int] | None = None) -> Tensor:
+        """
+        Maps the input tensor with ``MaskedConvTranspose3D``
+
+        Args:
+            input (Tensor): Tensor to be mapped
+            output_size (list[int] | None, optional): Desired output size from the transpose. Defaults to None.
+
+        Raises:
+            ValueError: Throws if anything except "zeros" padding is requested
+
+        Returns:
+            Tensor: Mapped tensor
+        """
         # Note: the same check is already present in super().__init__
         if self.padding_mode != "zeros":
             raise ValueError("Only `zeros` padding mode is supported for ConvTranspose1d")
@@ -747,7 +821,14 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
     @classmethod
     def from_pretrained(cls, conv_module: nn.ConvTranspose3d) -> MaskedConvTranspose3d:
         """
-        Return an instance of MaskedConvTranspose3d whose weight and bias have the same values as those of conv_module.
+        Return an instance of ``MaskedConvTranspose3d`` whose weight and bias have the same values as those of
+        ``conv_module``.
+
+        Args:
+            conv_module (nn.ConvTranspose3d): Target module to be converted
+
+        Returns:
+            MaskedConvTranspose3d: Module with masked layers added to enable FedPM
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has

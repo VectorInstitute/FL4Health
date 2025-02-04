@@ -25,17 +25,18 @@ class SparseCooParameterExchanger(PartialParameterExchanger[tuple[NDArrays, NDAr
 
         For more information on the sparse COO format and sparse tensors in PyTorch, please see the following
         two pages:
-            1. https://pytorch.org/docs/stable/generated/torch.sparse_coo_tensor.html
-            2. https://pytorch.org/docs/stable/sparse.html
+
+        1. https://pytorch.org/docs/stable/generated/torch.sparse_coo_tensor.html
+        2. https://pytorch.org/docs/stable/sparse.html
+
+        In most cases, this function takes as inputs a current model and an initial model, and it returns a dictionary
+        that maps the name of each of the current model's tensors to another tensor which contains the parameter
+        scores.
 
         Args:
             sparsity_level (float): The level of sparsity. Must be between 0 and 1.
-            score_gen_function (ScoreGenFunction): Function that is responsible for
-            generating a score for every parameter inside a model in order to facilitate parameter selection.
-
-            In most cases, this function takes as inputs a current model and an initial model,
-            and it returns a dictionary that maps the name of each of the current model's tensors to
-            another tensor which contains the parameter scores.
+            score_gen_function (ScoreGenFunction): Function that is responsible for generating a score for every
+                parameter inside a model in order to facilitate parameter selection.
         """
         assert 0 < sparsity_level <= 1
         self.sparsity_level = sparsity_level
@@ -43,7 +44,16 @@ class SparseCooParameterExchanger(PartialParameterExchanger[tuple[NDArrays, NDAr
         self.score_gen_function = score_gen_function
 
     def generate_parameter_scores(self, model: nn.Module, initial_model: nn.Module | None) -> dict[str, Tensor]:
-        """Calling the score generating function to produce parameter scores."""
+        """
+        Calling the score generating function to produce parameter scores.
+
+        Args:
+            model (nn.Module): Current model
+            initial_model (nn.Module | None): Model to which the weights will be compared/scored
+
+        Returns:
+            dict[str, Tensor]: scores associated with each layer of the model.
+        """
         return self.score_gen_function(model, initial_model)
 
     def _check_unique_score(self, param_scores: Tensor) -> None:
@@ -51,8 +61,8 @@ class SparseCooParameterExchanger(PartialParameterExchanger[tuple[NDArrays, NDAr
         if len(unique_score_values) == 1:
             log(
                 WARNING,
-                """All parameters have the same score.
-                The number of parameters selected may not match the intended sparsity level.""",
+                "All parameters have the same score.\nThe number of parameters selected may not match the intended"
+                " sparsity level.",
             )
 
     def select_parameters(
