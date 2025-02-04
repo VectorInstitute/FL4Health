@@ -4,3 +4,16 @@ coverage:
       default:
         target: 80%
         threshold: 5%
+ignore:
+  - ".gitignore"
+  - ".flake8"
+  - "poetry.lock"
+  - "**/*.yaml"
+  - "**/*.yml"
+  - "**/*.toml"
+  - "**/*.md"
+  - "**/*.sh"
+  - "**/*.ini"
+  - "research"
+github_checks:
+    annotations: false
