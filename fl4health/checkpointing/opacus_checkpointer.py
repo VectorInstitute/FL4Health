@@ -70,7 +70,7 @@ class OpacusCheckpointer(FunctionTorchModuleCheckpointer):
 
     def _extract_and_save_state(self, model: nn.Module) -> None:
         """
-        Certain Opacus layers don't integrate nicely with the ``torch.sav``e mechanism. So rather than using that
+        Certain Opacus layers don't integrate nicely with the ``torch.save`` mechanism. So rather than using that
         approach for checkpointing Opacus models, we extract and save the model state dictionary.
 
         Args:

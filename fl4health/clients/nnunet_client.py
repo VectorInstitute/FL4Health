@@ -101,7 +101,7 @@ class NnunetClient(BasicClient):
             fold (int | str): Which fold of the local client dataset to use for validation. nnunet defaults to
                 5 folds (0 to 4). Can also be set to "all" to use all the data for both training and validation.
             data_identifier (str | None, optional): The nnunet data identifier prefix to use. The final data
-                identifier will be ``{data_identifier}_config`` where "config" is the nnunet config (eg. 2d,
+                identifier will be ``{data_identifier}_config`` where "config" is the nnunet config (e.g. 2d,
                 ``3d_fullres``, etc.). If preprocessed data already exists can be used to specify which preprocessed
                 data to use. By default, the ``plans_identifier`` is used as the ``data_identifier``.
             plans_identifier (str | None, optional): Specify what to save the client's local copy of the plans file
@@ -465,7 +465,7 @@ class NnunetClient(BasicClient):
         '{nnUNet_preprocessed}/{dataset_name}/{data_identifier} where
         nnUNet_preprocessed is the directory specified by the
         nnUNet_preprocessed environment variable. dataset_name is the nnunet
-        dataset name (eg. Dataset123_MyDataset) and data_identifier
+        dataset name (e.g. Dataset123_MyDataset) and data_identifier
         is {self.data_identifier}_{self.nnunet_config}
 
         Args:

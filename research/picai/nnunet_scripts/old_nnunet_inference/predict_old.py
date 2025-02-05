@@ -232,7 +232,7 @@ def predict(
 
     Args:
         config_path (str): Path to a yaml config file. The three required keys
-            are plans, dataset_json and one or more nnunet_configs (eg. 2d,
+            are plans, dataset_json and one or more nnunet_configs (e.g. 2d,
             3d_fullres etc.). The nnunet config keys should contain a list of
             paths. If the path points to a file it should be a model
             checkpoint. The model checkpoints can be dicts with the
@@ -406,7 +406,7 @@ def main() -> None:
         required=True,
         type=str,
         help="""Path to a yaml config file. The three required keys are plans,
-            dataset_json and one or more nnunet_configs (eg. 2d, 3d_fullres
+            dataset_json and one or more nnunet_configs (e.g. 2d, 3d_fullres
             etc.). The nnunet config keys should contain a list of paths. If
             the path points to a file it should be a model checkpoint. The
             model checkpoints can be dicts with the 'network_weights' key or

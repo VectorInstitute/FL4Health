@@ -17,7 +17,7 @@ class StepType(Enum):
 
 
 # TODO: Add ability to parse data types and save certain data types in specific ways
-# (eg. Artifacts, Tables, etc.)
+# (e.g. Artifacts, Tables, etc.)
 class WandBReporter(BaseReporter):
     def __init__(
         self,
@@ -203,7 +203,7 @@ class WandBReporter(BaseReporter):
             epoch (int | None, optional): The current epoch (In total across all rounds). If None then this method was
                 not called at or within the scope of an epoch. Defaults to None.
             step (int | None, optional): The current step (In total across all rounds and epochs). If None then this
-                method was called outside the scope of a training or evaluation step (eg. at the end of an epoch or
+                method was called outside the scope of a training or evaluation step (e.g. at the end of an epoch or
                 round) Defaults to None.
         """
         # Now that report has been called we are finally forced to start the run.

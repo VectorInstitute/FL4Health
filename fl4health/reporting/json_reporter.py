@@ -63,7 +63,7 @@ class FileReporter(BaseReporter):
             epoch (int | None, optional): The current epoch. If None then this method was not called within the scope
                 of an epoch. Defaults to None.
             step (int | None, optional): The current step (total). If None then this method was called outside the
-                scope of a training or evaluation step (eg. at the end of an epoch or round) Defaults to None.
+                scope of a training or evaluation step (e.g. at the end of an epoch or round) Defaults to None.
         """
         if not self.initialized:
             self.initialize()

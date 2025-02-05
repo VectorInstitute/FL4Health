@@ -29,7 +29,7 @@ class BaseReporter:
                 not called at or within the scope of an epoch. Should always be None if training by steps. Defaults to
                 None.
             step (int | None, optional): The current step (In total across all rounds and epochs). If None then this
-                method was called outside the scope of a training or evaluation step (eg. at the end of an epoch or
+                method was called outside the scope of a training or evaluation step (e.g. at the end of an epoch or
                 round) Defaults to None.
         """
         raise NotImplementedError
