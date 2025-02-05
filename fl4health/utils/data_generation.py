@@ -145,11 +145,12 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
 
         Args:
             num_clients (int): Number of datasets (one per client) to generate
-            alpha (float): This is the standard deviation for the mean (u_k), drawn from a centered normal
-                distribution, which is used to generate the elements of the affine transformation components W, b.
-            beta (float): This is the standard deviation for each element of the multidimensional mean (v_k),
+            alpha (float): This is the standard deviation for the mean (``u_k``), drawn from a centered normal
+                distribution, which is used to generate the elements of the affine transformation components ``W``,
+                ``b``.
+            beta (float): This is the standard deviation for each element of the multidimensional mean (``v_k``),
                 drawn from a centered normal distribution, which is used to generate the elements of the input features
-                for x ~ N(B_k, Sigma)
+                for :math:`x \\sim \\mathcal{N}(B_k, \\Sigma)`
             temperature (float, optional): temperature used for the softmax mapping to labels. Defaults to 1.0.
             input_dim (int, optional): dimension of the input features for the synthetic dataset. Default is as in the
                 FedProx paper. Defaults to 60.
@@ -187,7 +188,7 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
 
         Returns:
             tuple[torch.Tensor, torch.Tensor]: ``X`` and ``Y`` for the clients synthetic dataset. Shape of ``X`` is
-            ``n_samples`` x input dimension. Shape of ``Y`` is ``n_samples`` x output_dim and is one-hot encoded
+            ``n_samples`` x input dimension. Shape of ``Y`` is ``n_samples`` x ``output_dim`` and is one-hot encoded
         """
 
         multivariate_normal = MultivariateNormal(loc=v, covariance_matrix=sigma)
@@ -204,7 +205,7 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
         For the Non-IID synthetic generator, this function uses the values of alpha and beta to sample the parameters
         that will be used to generate the synthetic datasets on each client. For each client, beta is used to sample
         a mean value from which to generate the input features, alpha is used to sample a mean for the transformation
-        components of W and b. Note that sampling occurs for EACH client independently. The larger alpha and beta
+        components of W and b. Note that sampling occurs for **EACH** client independently. The larger alpha and beta
         the larger the variance in these values, implying higher probability of heterogeneity.
 
         Returns:
@@ -280,7 +281,7 @@ class SyntheticIidFedProxDataset(SyntheticFedProxDataset):
 
         Returns:
             tuple[torch.Tensor, torch.Tensor]: ``X`` and ``Y`` for the clients synthetic dataset. Shape of ``X`` is
-            ``n_samples`` x input dimension. Shape of ``Y`` is ``n_samples`` x output_dim and is one-hot encoded
+            ``n_samples`` x input dimension. Shape of ``Y`` is ``n_samples`` x ``output_dim`` and is one-hot encoded
         """
         # size of x should be samples_per_client x input_dim
         x = self.input_multivariate_normal.sample(torch.Size((self.samples_per_client,)))

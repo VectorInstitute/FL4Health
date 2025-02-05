@@ -41,11 +41,11 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         any arbitrary subset of the clients. Weighted average for parameters belonging to each received tensor is
         performed independently.
 
-        Note that this strategy differs from FedAvgDynamicLayer in that it does not
-        require clients to send entire layers (tensors).
+        Note that this strategy differs from FedAvgDynamicLayer in that it does not require clients to send entire
+        layers (tensors).
 
-        A client can send an arbitrary set of parameters within a certain tensor,
-        and these parameters are packed according to the sparse COO format.
+        A client can send an arbitrary set of parameters within a certain tensor, and these parameters are packed
+        according to the sparse COO format.
 
         For more information on the sparse COO format and sparse tensors in PyTorch, please see the following
         two pages:
@@ -56,16 +56,15 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         Args:
             fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0. Defaults to 1.0.
             fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.
-            min_fit_clients (int, optional): _description_. Defaults to 2.
+            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2
             min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             min_available_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
-                Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
-                Function used to configure client-side validation by providing a Config dictionary.
-                Defaults to None.
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                training by providing a configuration dictionary. Defaults to None.
+            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                client-side validation by providing a ``Config`` dictionary. Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             initial_parameters (Parameters | None, optional): Initial global model parameters. Defaults to None.
             fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
@@ -177,16 +176,15 @@ class FedAvgSparseCooTensor(BasicFedAvg):
 
     def aggregate(self, results: list[tuple[NDArrays, int]]) -> dict[str, Tensor]:
         """
-        Aggregate the different tensors across clients that have contributed to a certain tensor.
-        This aggregation may be weighted or unweighted.
-        The called functions handle tensor alignment.
+        Aggregate the different tensors across clients that have contributed to a certain tensor. This aggregation may
+        be weighted or unweighted. The called functions handle tensor alignment.
 
         Args:
             results (list[tuple[NDArrays, int]]): The weight results from each client's local training that need to
                 be aggregated on the server-side and the number of training samples held on each client.
 
-                In this scheme, the clients pack the tensor names into the results object along with
-                the weight values to allow for alignment during aggregation.
+                In this scheme, the clients pack the tensor names into the results object along with the weight values
+                to allow for alignment during aggregation.
 
         Returns:
             dict[str, Tensor]: A dictionary mapping the name of the tensor that was aggregated to the aggregated
@@ -205,8 +203,8 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         The first three items constitute the information that is needed to construct the tensor in the sparse COO
         format and convert it to a regular dense tensor.
 
-        The tensor name is used to align tensors to ensure that averaging is performed only
-        among tensors with the same name.
+        The tensor name is used to align tensors to ensure that averaging is performed only among tensors with the
+        same name.
 
         This method performs the following steps:
 
@@ -268,8 +266,8 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         The first three items constitute the information that is needed to construct the tensor in the sparse COO
         format and convert it to a regular dense tensor.
 
-        The tensor name is used to align tensors to ensure that averaging is performed only
-        among tensors with the same name.
+        The tensor name is used to align tensors to ensure that averaging is performed only among tensors with the
+        same name.
 
         This method performs the following steps:
 

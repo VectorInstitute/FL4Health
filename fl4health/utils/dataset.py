@@ -95,9 +95,9 @@ class SslTensorDataset(TensorDataset):
 class DictionaryDataset(Dataset):
     def __init__(self, data: dict[str, list[torch.Tensor]], targets: torch.Tensor) -> None:
         """
-        A torch dataset that supports a dictionary of input data rather than just a torch.Tensor. This kind of dataset
-        is useful when dealing with non-trivial inputs to a model. For example, a language model may require token ids
-        AND attention masks. This dataset supports that functionality.
+        A torch dataset that supports a dictionary of input data rather than just a ``torch.Tensor``. This kind of
+        dataset is useful when dealing with non-trivial inputs to a model. For example, a language model may require
+        token ids AND attention masks. This dataset supports that functionality.
 
         Args:
             data (dict[str, list[torch.Tensor]]): A set of data for model training/input in the form of a dictionary
@@ -124,6 +124,7 @@ class SyntheticDataset(TensorDataset):
         """
         A dataset for synthetically created data strictly in the form of pytorch tensors. Generally, this dataset
         is just used for tests.
+
         Args:
             data (torch.Tensor): Data tensor with first dimension corresponding to the number of datapoints
             targets (torch.Tensor): Target tensor with first dimension corresponding to the number of datapoints
@@ -147,8 +148,8 @@ D = TypeVar("D", bound=TensorDataset | DictionaryDataset)
 
 def select_by_indices(dataset: D, selected_indices: torch.Tensor) -> D:
     """
-    This function is used to extract a subset of a dataset sliced by the indices in the tensor selected_indices. The
-    dataset returned should be of the same type as the input but with only data associated with the given indices.
+    This function is used to extract a subset of a dataset sliced by the indices in the tensor ``selected_indices``.
+    The dataset returned should be of the same type as the input but with only data associated with the given indices.
 
     Args:
         dataset (D): Dataset to be "subsampled" using the provided indices.

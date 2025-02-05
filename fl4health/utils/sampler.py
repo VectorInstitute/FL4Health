@@ -34,17 +34,16 @@ class LabelBasedSampler(ABC):
 class MinorityLabelBasedSampler(LabelBasedSampler):
     def __init__(self, unique_labels: list[T], downsampling_ratio: float, minority_labels: Set[T]) -> None:
         """
-        This class is used to subsample a dataset so the classes are distributed in a non-IID way.
-        In particular, the MinorityLabelBasedSampler explicitly downsamples classes based on the
-        downsampling_ratio and minority_labels args used to construct the object. Subsampling a dataset is
-        accomplished by calling the subsample method and passing a BaseDataset object. This will return
-        the resulting subsampled dataset.
+        This class is used to subsample a dataset so the classes are distributed in a non-IID way. In particular, the
+        ``MinorityLabelBasedSampler`` explicitly downsamples classes based on the ``downsampling_ratio`` and
+        ``minority_labels`` args used to construct the object. Subsampling a dataset is accomplished by calling the
+        subsample method and passing a ``BaseDataset`` object. This will return the resulting subsampled dataset.
 
         Args:
             unique_labels (list[T]): The full set of labels contained in the dataset.
             downsampling_ratio (float): The percentage to which the specified "minority" labels are downsampled. For
-                example, if a label L has 10 examples and the downsampling_ratio is 0.2, then 8 of the datapoints with
-                label L are discarded.
+                example, if a label ``L`` has 10 examples and the downsampling_ratio is 0.2, then 8 of the datapoints
+                with label ``L`` are discarded.
             minority_labels (Set[T]): The labels subject to downsampling.
         """
         super().__init__(unique_labels)
@@ -79,8 +78,8 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
 
     def _get_random_subsample(self, tensor_to_subsample: torch.Tensor, subsample_size: int) -> torch.Tensor:
         """
-        Given a tensor a new tensor is created by selecting a set of rows from the original tensor of
-        size subsample_size
+        Given a tensor a new tensor is created by selecting a set of rows from the original tensor of size
+        ``subsample_size``
 
         Args:
             tensor_to_subsample (torch.Tensor): Tensor to be subsampled. Assumes that we're subsampling rows of the
@@ -106,18 +105,19 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
         beta: float = 100,
     ) -> None:
         """
-        class used to subsample a dataset so the classes of samples are distributed in a non-IID way.
-        In particular, the DirichletLabelBasedSampler uses a dirichlet distribution to determine the number
-        of samples from each class. The sampler is constructed by passing a beta parameter that determines
-        the level of heterogeneity and a sample_percentage that determines the relative size of the modified
-        dataset. Subsampling a dataset is accomplished by calling the subsample method and passing a BaseDataset
-        object. This will return the resulting subsampled dataset.
+        class used to subsample a dataset so the classes of samples are distributed in a non-IID way. In particular,
+        the ``DirichletLabelBasedSampler`` uses a dirichlet distribution to determine the number of samples from each
+        class. The sampler is constructed by passing a beta parameter that determines the level of heterogeneity and a
+        ``sample_percentage`` that determines the relative size of the modified dataset. Subsampling a dataset is
+        accomplished by calling the subsample method and passing a ``BaseDataset`` object. This will return the
+        resulting  subsampled dataset.
 
-        **NOTE:** The range for beta is (0, infinity). The larger the value of beta, the more evenly the multinomial
-        probability of the labels will be. The smaller beta is the more heterogeneous it is.
+        **NOTE:** The range for beta is (0, :math:`\\infty`). The larger the value of beta, the more evenly the
+        multinomial probability of the labels will be. The smaller beta is the more heterogeneous it is.
 
-        np.random.dirichlet([1]*5): array([0.23645891, 0.08857052, 0.29519184, 0.2999956 , 0.07978313])
-        np.random.dirichlet([1000]*5): array([0.2066252 , 0.19644968, 0.20080513, 0.19992536, 0.19619462])
+        :code:`np.random.dirichlet([1]*5): array([0.23645891, 0.08857052, 0.29519184, 0.2999956 , 0.07978313])`
+
+        :code:`np.random.dirichlet([1000]*5): array([0.2066252 , 0.19644968, 0.20080513, 0.19992536, 0.19619462])`
 
         Args:
             unique_labels (list[Any]): The full set of labels contained in the dataset.

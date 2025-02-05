@@ -30,6 +30,8 @@ class EvaluateServer(Server):
         reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
         """
+        Server meant to facilitate federated evaluation only (that is, no training)
+
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.

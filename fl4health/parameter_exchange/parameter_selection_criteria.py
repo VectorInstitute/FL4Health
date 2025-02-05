@@ -16,17 +16,17 @@ class LayerSelectionFunctionConstructor:
         self, norm_threshold: float, exchange_percentage: float, normalize: bool = True, select_drift_more: bool = True
     ) -> None:
         """
-        This class leverages functools.partial to construct layer selection functions,
-        which are meant to be used by the DynamicLayerExchanger class.
+        This class leverages ``functools.partial`` to construct layer selection functions, which are meant to be used
+        by the ``DynamicLayerExchanger`` class.
 
         Args:
-            norm_threshold (float): A nonnegative real number used to select those
-                layers whose drift in l2 norm exceeds (or falls short of) it.
+            norm_threshold (float): A nonnegative real number used to select those layers whose drift in l2 norm
+                exceeds (or falls short of) it.
             exchange_percentage (float): Indicates the percentage of layers that are selected.
-            normalize (bool, optional): Indicates whether when calculating the norm of a layer,
-                we also divide by the number of parameters in that layer. Defaults to True.
-            select_drift_more (bool, optional): Indicates whether layers with larger
-                drift norm are selected. Defaults to True.
+            normalize (bool, optional): Indicates whether when calculating the norm of a layer, we also divide by the
+                number of parameters in that layer. Defaults to True.
+            select_drift_more (bool, optional): Indicates whether layers with larger drift norm are selected.
+                Defaults to True.
         """
         assert 0 < exchange_percentage <= 1
         assert 0 < norm_threshold
@@ -52,9 +52,19 @@ class LayerSelectionFunctionConstructor:
         )
 
 
-# Selection criteria functions for selecting entire layers. Intended to be used
-# by the DynamicLayerExchanger class via the LayerSelectionFunctionConstructor class.
 def _calculate_drift_norm(t1: torch.Tensor, t2: torch.Tensor, normalize: bool) -> float:
+    """
+    Selection criteria functions for selecting entire layers. Intended to be used by the ``DynamicLayerExchanger``
+    class  via the ``LayerSelectionFunctionConstructor`` class.
+
+    Args:
+        t1 (torch.Tensor): First tensor
+        t2 (torch.Tensor): Second tensor
+        normalize (bool): Whether to divide the difference between the tensors by their number of elements.
+
+    Returns:
+        float: _description_
+    """
     t_diff = (t1 - t2).float()
     drift_norm = torch.linalg.norm(t_diff)
     if normalize:
@@ -70,8 +80,20 @@ def select_layers_by_threshold(
     initial_model: nn.Module,
 ) -> tuple[NDArrays, list[str]]:
     """
-    Return those layers of model that deviate (in l2 norm) away from corresponding layers of
-    self.initial_model by at least (or at most) self.threshold.
+    Return those layers of model that deviate (in l2 norm) away from corresponding layers of ``self.initial_model``
+    by at least (or at most) ``self.threshold``.
+
+    Args:
+        threshold (float): Drift threshold to be used for selection. It is an fixed value.
+        normalize (bool): Whether to divide the difference between the tensors by their number of elements.
+        select_drift_more (bool): Whether we are selecting parameters that have drifted further (True) or less far
+            from their comparison values
+        model (nn.Module): Model after training/modification
+        initial_model (nn.Module): Model that we started with to which we are comparing parameters.
+
+    Returns:
+        tuple[NDArrays, list[str]]: Layers selected by the process and their corresponding names in the model's
+        ``state_dict``.
     """
     layer_names = []
     layers_to_transfer = []
@@ -118,6 +140,8 @@ def select_layers_by_percentage(
 # Score generating functions used for selecting arbitrary sets of weights.
 # The ones implemented here are those that demonstrated good performance in the super-mask paper.
 # Link to this paper: https://arxiv.org/abs/1905.01067
+
+
 def largest_final_magnitude_scores(model: nn.Module, initial_model: nn.Module | None) -> dict[str, Tensor]:
     names_to_scores = {}
     for tensor_name, tensor_values in model.state_dict().items():
@@ -191,13 +215,13 @@ def _process_masked_module(
     Perform Bernoulli sampling using the weight and bias scores of a masked module.
 
     Args:
-        module (nn.Module): the module upon which operations described above are performed.
-            "module" can either be a submodule of the model trained in FedPM, or it can a standalone module itself.
-            In the latter case, the argument "model_state_dict" should be the same as "module.state_dict()".
-            In either case, it is assumed that module is a masked module.
+        module (nn.Module): the module upon which operations described above are performed. "module" can either be a
+            submodule of the model trained in FedPM, or it can a standalone module itself. In the latter case,
+            the argument ``model_state_dict`` should be the same as ``module.state_dict()``. In either case, it is
+            assumed that module is a masked module.
         model_state_dict (dict[str, Tensor]): the state dictionary of the model trained in FedPM.
         module_name (str | None): the name of module if module is a submodule of the model trained in FedPM.
-            This is used to access the weight and bias score tensors in model_state_dict. Defaults to None.
+            This is used to access the weight and bias score tensors in ``model_state_dict``. Defaults to None.
     """
     masks_to_exchange = []
     score_tensor_names = []
@@ -223,9 +247,9 @@ def _process_masked_module(
 
 def select_scores_and_sample_masks(model: nn.Module, initial_model: nn.Module | None) -> tuple[NDArrays, list[str]]:
     """
-    Selection function that first selects the "weight_scores" and "bias_scores" parameters for the
-    masked layers, and then samples binary masks based on those scores to send to the server.
-    This function is meant to be used for the FedPM algorithm.
+    Selection function that first selects the ``weight_scores`` and ``bias_scores`` parameters for the masked layers,
+    and then samples binary masks based on those scores to send to the server. This function is meant to be used for
+    the FedPM algorithm.
 
     **NOTE:** in the current implementation, we always exchange the score tensors for all layers. In the future, we
     might support exchanging a subset of the layers (for example, filtering out the masks that are all zeros).

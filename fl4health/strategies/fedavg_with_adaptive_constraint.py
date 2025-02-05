@@ -46,7 +46,7 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
         weights, the server also receives the training loss from the clients. If adaptation is enabled, these losses
         are used to update the loss weight parameter according to the FedProx paper recommendations.
 
-        **NOTE:** Initial parameters are NOT optional. They must be passed for this strategy.
+        **NOTE:** Initial parameters are **NOT** optional. They must be passed for this strategy.
 
         The aggregation strategy for weights is the same as in FedAvg.
 
@@ -55,17 +55,17 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
         Args:
             fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0.
             fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.
-            min_fit_clients (int, optional): _description_. Defaults to 2.
+            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2
             min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             min_available_clients (int, optional): Minimum number of total clients in the system.
                 Defaults to 2.
             evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
-                Function used to configure training by providing a configuration dictionary. Defaults to None.
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                training by providing a configuration dictionary. Defaults to None.
             on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
-                Function used to configure client-side validation by providing a Config dictionary.
-               Defaults to None.
+                Function used to configure client-side validation by providing a ``Config`` dictionary.
+                Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             initial_parameters (Parameters): Initial global model parameters.
             fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
@@ -189,15 +189,16 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
 
     def _maybe_update_constraint_weight_param(self, loss: float) -> None:
         """
-        Update constraint weight parameter if adaptive_loss_weight is set to True. Regardless of whether adaptivity
+        Update constraint weight parameter if ``adaptive_loss_weight`` is set to True. Regardless of whether adaptivity
         is turned on at this time, the previous loss seen by the server is updated.
+
+        **NOTE:** For adaptive constraint losses, including FedProx, this loss is exchanged (along with the
+        weights) by each client and is the **VANILLA** loss that does not include the additional penalty losses.
 
         Args:
             loss (float): This is the loss to which we compare the previous loss seen by the server. For Adaptive
             Constraint clients this should be the aggregated training loss seen by each client participating in
             training.
-            **NOTE:** For adaptive constraint losses, including FedProx, this loss is exchanged (along with the
-            weights) by each client and is the VANILLA loss that does not include the additional penalty losses.
         """
 
         if self.adapt_loss_weight:

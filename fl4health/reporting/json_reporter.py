@@ -15,15 +15,14 @@ class FileReporter(BaseReporter):
         run_id: str | None = None,
         output_folder: str | Path = Path("metrics"),
     ):
-        """Reports data each round and saves as a json.
+        """
+        Reports data each round and saves as a json.
 
         Args:
-            run_id (str | None, optional): the identifier for the run which these
-                metrics are from. If left as None will check if an id is provided during
-                initialize, otherwise uses a UUID.
-            output_folder (str | Path): the folder to save the metrics to. The metrics
-                will be saved in a file named {output_folder}/{run_id}.json. Optional,
-                default is "metrics".
+            run_id (str | None, optional): the identifier for the run which these metrics are from. If left as None
+                will check if an id is provided during initialize, otherwise uses a ``UUID``.
+            output_folder (str | Path): the folder to save the metrics to. The metrics will be saved in a file named
+                ``{output_folder}/{run_id}.json``. Optional, default is "metrics".
         """
         self.run_id = run_id
 
@@ -50,10 +49,11 @@ class FileReporter(BaseReporter):
         epoch: int | None = None,
         step: int | None = None,
     ) -> None:
-        """A method called by clients or servers to send data to the reporter.
+        """
+        A method called by clients or servers to send data to the reporter.
 
         The report method is called by the client/server at frequent intervals (ie step, epoch, round) and sometimes
-        outside of a FL round (for high level summary data). The json reporter is hardcoded to report at the 'round'
+        outside of a FL round (for high level summary data). The json reporter is hardcoded to report at the "round"
         level and therefore ignores calls to the report method made every epoch or every step.
 
         Args:
@@ -88,7 +88,7 @@ class FileReporter(BaseReporter):
 
 class JsonReporter(FileReporter):
     def dump(self) -> None:
-        """Dumps the current metrics to a JSON file at {output_folder}/{run_id.json}"""
+        """Dumps the current metrics to a JSON file at ``{output_folder}/{run_id.json}``"""
         assert self.run_id is not None
         output_file_path = Path(self.output_folder, self.run_id).with_suffix(".json")
         log(INFO, f"Dumping metrics to {str(output_file_path)}")

@@ -69,31 +69,27 @@ class SparseCooParameterExchanger(PartialParameterExchanger[tuple[NDArrays, NDAr
         self, model: nn.Module, initial_model: nn.Module | None = None
     ) -> tuple[NDArrays, tuple[NDArrays, NDArrays, list[str]]]:
         """
-        Select model parameters according to the sparsity level and pack them into
-        the sparse COO format to be exchanged.
+        Select model parameters according to the sparsity level and pack them into the sparse COO format to be
+        exchanged.
 
-        First, this method leverages a score generating function
-        to generate scores for all parameters of model.
+        First, this method leverages a score generating function to generate scores for all parameters of model.
 
-        Next, these scores are used to select the parameters to be exchanged by
-        performing a thresholding operation on each of the model's tensors.
-        A threshold is determined according to the desired sparsity level,
-        then for each model tensor, parameters whose scores are less than this threshold
-        are set to zero, while parameters whose scores are greater than or equal to
-        this threshold retain their values.
+        Next, these scores are used to select the parameters to be exchanged by performing a thresholding operation
+        on each of the model's tensors. A threshold is determined according to the desired sparsity level, then for
+        each model tensor, parameters whose scores are less than this threshold are set to zero, while parameters
+        whose scores are greater than or equal to this threshold retain their values.
 
-        Finally, the method extracts all the information required to represent
-        the selected parameters in the sparse COO tensor format. More specifically,
-        the information consists of the indices of the parameters within the tensor
-        to which they belong, the shape of that tensor, and also the name of it.
+        Finally, the method extracts all the information required to represent the selected parameters in the
+        sparse COO tensor format. More specifically, the information consists of the indices of the parameters
+        within the tensor to which they belong, the shape of that tensor, and also the name of it.
 
         Args:
             model (nn.Module): Current model.
             initial_model (nn.Module): Initial model.
 
         Returns:
-            tuple[NDArrays, tuple[NDArrays, NDArrays, list[str]]]: the selected parameters
-            and other information, as detailed above.
+            tuple[NDArrays, tuple[NDArrays, NDArrays, list[str]]]: the selected parameters and other information,
+            as detailed above.
         """
         all_parameter_scores = self.generate_parameter_scores(model, initial_model)
         all_scores = torch.cat([val.flatten() for _, val in all_parameter_scores.items()])

@@ -47,7 +47,7 @@ def check_config(config: dict[str, Any]) -> None:
 
 def narrow_dict_type(dictionary: dict[str, Any], key: str, narrow_type_to: type[T]) -> T:
     """
-    Checks if a key exists in dictionary and if so, verify it is of type narrow_type_to.
+    Checks if a key exists in dictionary and if so, verify it is of type ``narrow_type_to``.
 
     Args:
         dictionary (dict[str, Any]): A dictionary with string keys.
@@ -58,8 +58,7 @@ def narrow_dict_type(dictionary: dict[str, Any], key: str, narrow_type_to: type[
         T: The type-checked value at dictionary[key]
 
     Raises:
-        ValueError: If dictionary[key] is not of type narrow_type_to or
-            if the key is not present in dictionary.
+        ValueError: If dictionary[key] is not of type ``narrow_type_to`` or if the key is not present in dictionary.
     """
     if key not in dictionary:
         raise ValueError(f"{key} is not present in the Dictionary.")
@@ -80,10 +79,9 @@ def narrow_dict_type_and_set_attribute(
     func: Callable[[Any], Any] | None = None,
 ) -> None:
     """
-    Checks a key exists in dictionary, verify its type and sets the corresponding attribute.
-    Optionally, passes narrowed value to function prior to setting attribute.
-    If key is not present in dictionary or dictionary[dictionary_key] has the wrong type,
-    a ValueError is thrown.
+    Checks a key exists in dictionary, verify its type and sets the corresponding attribute. Optionally, passes
+    narrowed value to function prior to setting attribute. If key is not present in dictionary or
+    dictionary[dictionary_key] has the wrong type, a ``ValueError`` is thrown.
 
     Args:
         self (object): The object to set attribute to dictionary[dictionary_key].
@@ -92,8 +90,7 @@ def narrow_dict_type_and_set_attribute(
         narrow_type_to (type[T]): The expected type of dictionary[key].
 
     Raises:
-        ValueError: If dictionary[key] is not of type narrow_type_to or
-            if the key is not present in dictionary.
+        ValueError: If dictionary[key] is not of type ``narrow_type_to`` or if the key is not present in dictionary.
     """
     val = narrow_dict_type(dictionary, dictionary_key, narrow_type_to)
     val = func(val) if func is not None else val

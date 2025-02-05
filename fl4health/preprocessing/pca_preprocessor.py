@@ -10,8 +10,7 @@ from fl4health.utils.dataset import TensorDataset
 class PcaPreprocessor:
     def __init__(self, checkpointing_path: Path) -> None:
         """
-        Class that leverages pre-computed principal components of
-        a dataset to perform data-preprocessing.
+        Class that leverages pre-computed principal components of a dataset to perform data-preprocessing.
 
         Args:
             checkpointing_path (Path): Path to saved principal components.
@@ -30,16 +29,16 @@ class PcaPreprocessor:
         dataset: TensorDataset,
     ) -> TensorDataset:
         """
-        Perform dimensionality reduction on a dataset by projecting the data
-        onto a set of pre-computed principal components.
+        Perform dimensionality reduction on a dataset by projecting the data onto a set of pre-computed principal
+        components.
 
-        (Note that PyTorch dataloaders perform lazy application of transforms.
-        So in reality, dimensionality reduction is applied in real-time as the user
-        iterates through the dataloader created from the dataset returned here.)
+        **NOTE** that PyTorch dataloaders perform lazy application of transforms. So in reality, dimensionality
+        reduction is applied in real-time as the user iterates through the dataloader created from the dataset
+        returned here.
 
         Args:
-            new_dimension (int): New data dimension after dimensionality reduction. Equals
-            the number of principal components onto which projection is performed.
+            new_dimension (int): New data dimension after dimensionality reduction. Equals the number of principal
+                components onto which projection is performed.
             dataset (BaseDataset): Dataset containing data whose dimension is to be reduced.
         Returns:
             BaseDataset: Dataset consisting of data with reduced dimension.

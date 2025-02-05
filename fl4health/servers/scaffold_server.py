@@ -40,8 +40,10 @@ class ScaffoldServer(FlServer):
                 they are to be sampled at all.
             fl_config (Config): This should be the configuration that was used to setup the federated training.
                 In most cases it should be the "source of truth" for how FL training/evaluation should proceed. For
-                example, the config used to produce the on_fit_config_fn and on_evaluate_config_fn for the strategy.
-                **NOTE:** This config is DISTINCT from the Flwr server config, which is extremely minimal.
+                example, the config used to produce the ``on_fit_config_fn`` and ``on_evaluate_config_fn`` for the
+                strategy.
+
+                **NOTE:** This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
             strategy (Scaffold): The aggregation strategy to be used by the server to handle client updates and
                 other information potentially sent by the participating clients. This strategy must be of SCAFFOLD
                 type.
@@ -54,8 +56,8 @@ class ScaffoldServer(FlServer):
                 module is provided, no checkpointing or state preservation will happen. Defaults to None.
             on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to
                 configure how one asks a client to provide parameters from which to initialize all other clients by
-                providing a Config dictionary. If this is none, then a blank config is sent with the parameter request
-                (which is default behavior for flower servers). Defaults to None.
+                providing a ``Config`` dictionary. If this is none, then a blank config is sent with the parameter
+                request (which is default behavior for flower servers). Defaults to None.
             server_name (str | None, optional): An optional string name to uniquely identify server. This name is also
                 used as part of any state checkpointing done by the server. Defaults to None.
             accept_failures (bool, optional): Determines whether the server should accept failures during training or
@@ -86,8 +88,8 @@ class ScaffoldServer(FlServer):
 
     def _get_initial_parameters(self, server_round: int, timeout: float | None) -> Parameters:
         """
-        Overrides the _get_initial_parameters in the flwr server base class to strap on the possibility of a
-        warm_start for SCAFFOLD. Initializes parameters (models weights and control variates) of the server.
+        Overrides the ``_get_initial_parameters`` in the flwr server base class to strap on the possibility of a
+        ``warm_start`` for SCAFFOLD. Initializes parameters (models weights and control variates) of the server.
         If warm_start is True, control variates are initialized as the the average local client-side gradients
         (while model weights remain unchanged). That is, all of the clients run a training pass, but the trained
         weights are discarded.
@@ -207,17 +209,19 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
                 they are to be sampled at all.
             fl_config (Config): This should be the configuration that was used to setup the federated training.
                 In most cases it should be the "source of truth" for how FL training/evaluation should proceed. For
-                example, the config used to produce the on_fit_config_fn and on_evaluate_config_fn for the strategy.
-                **NOTE:** This config is DISTINCT from the Flwr server config, which is extremely minimal.
+                example, the config used to produce the ``on_fit_config_fn`` and ``on_evaluate_config_fn`` for the
+                strategy.
+
+                **NOTE:** This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
             noise_multiplier (int): The amount of Gaussian noise to be added to the per sample gradient during
                 DP-SGD.
             batch_size (int): The batch size to be used in training on the client-side. Used in privacy accounting.
             num_server_rounds (int): The number of server rounds to be done in FL training. Used in privacy accounting
             local_epochs (int | None, optional): Number of local epochs to be performed on the client-side. This is
-                used in privacy accounting. One of local_epochs or local_steps should be defined, but not both.
+                used in privacy accounting. One of ``local_epochs`` or ``local_steps`` should be defined, but not both.
                 Defaults to None.
             local_steps (int | None, optional): Number of local steps to be performed on the client-side. This is
-                used in privacy accounting. One of local_epochs or local_steps should be defined, but not both.
+                used in privacy accounting. One of ``local_epochs`` or ``local_steps`` should be defined, but not both.
                 Defaults to None.
             strategy (Scaffold): The aggregation strategy to be used by the server to handle client updates and
                 other information potentially sent by the participating clients. This strategy must be of SCAFFOLD
@@ -232,13 +236,13 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
                 a "warm" estimate of the SCAFFOLD control variates. If false, variates are initialized to 0.
                 Defaults to False.
             delta (float | None, optional): The delta value for epsilon-delta DP accounting. If None it defaults to
-                being 1/total_samples in the FL run. Defaults to None.
-            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
-                reporters which the client should send data to.
+                being ``1/total_samples`` in the FL run. Defaults to None.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the client should
+                send data to.
             on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to
                 configure how one asks a client to provide parameters from which to initialize all other clients by
-                providing a Config dictionary. If this is none, then a blank config is sent with the parameter request
-                (which is default behavior for flower servers). Defaults to None.
+                providing a ``Config`` dictionary. If this is none, then a blank config is sent with the parameter
+                request (which is default behavior for flower servers). Defaults to None.
             server_name (str | None, optional): An optional string name to uniquely identify server. This name is also
                 used as part of any state checkpointing done by the server. Defaults to None.
             accept_failures (bool, optional): Determines whether the server should accept

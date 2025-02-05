@@ -20,12 +20,22 @@ class FixedLayerExchanger(ParameterExchanger):
 
         Args:
             layers_to_transfer (list[str]): Names of the layers to be exchanged. These should correspond to the
-                names of the layers in the state_dict of the pytorch module.
+                names of the layers in the ``state_dict`` of the pytorch module.
         """
         self.layers_to_transfer = layers_to_transfer
 
     def apply_layer_filter(self, model: nn.Module) -> NDArrays:
-        # NOTE: Filtering layers only works if each client exchanges exactly the same layers
+        """
+        Filter layers to the specific set of layers to be transferred using the ``layers_to_transfer`` property.
+
+        **NOTE**: Filtering layers only works if each client exchanges exactly the same layers
+
+        Args:
+            model (nn.Module): Model whose parameters are to be filtered then transferred.
+
+        Returns:
+            NDArrays: Filter set of model parameters.
+        """
         model_state_dict = model.state_dict()
         return [model_state_dict[layer_to_transfer].cpu().numpy() for layer_to_transfer in self.layers_to_transfer]
 
@@ -52,7 +62,7 @@ class LayerExchangerWithExclusions(ParameterExchanger):
 
         Args:
             model (nn.Module): Model whose layers are to be exchanged.
-            module_exclusions (Set[type[TorchModule]]): modules within the model to EXLUDE from exchange with the
+            module_exclusions (Set[type[TorchModule]]): modules within the model to **EXCLUDE** from exchange with the
                 server. It should correspond to a torch module or set of modules.
         """
         # module_exclusion is a set of nn.Module types that should NOT be exchanged with the server.
@@ -112,15 +122,15 @@ class DynamicLayerExchanger(PartialParameterExchanger[list[str]]):
         layer_selection_function: LayerSelectionFunction,
     ) -> None:
         """
-        This exchanger uses "layer_selection_function" to select a subset of a model's layers
+        This exchanger uses ``layer_selection_function`` to select a subset of a model's layers
         at the end of each training round. Only the selected layers are exchanged with the server.
 
         Args:
             layer_selection_function (LayerSelectionFunction): Function responsible for selecting the layers to be
                 exchanged. This function relies on extra parameters such as norm threshold or exchange percentage,
                 but we assume that it has already been pre-constructed using the class
-                LayerSelectionFunctionConstructor, so it only needs to take in two nn.Module objects as inputs.
-                For more details, please see the docstring of LayerSelectionFunctionConstructor.
+                ``LayerSelectionFunctionConstructor``, so it only needs to take in two ``nn.Module`` objects as inputs.
+                For more details, please see the docstring of ``LayerSelectionFunctionConstructor``.
         """
         self.layer_selection_function = layer_selection_function
         self.parameter_packer = ParameterPackerWithLayerNames()

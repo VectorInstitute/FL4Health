@@ -70,7 +70,7 @@ def poll_clients(
 
     Args:
         client_instructions (list[tuple[ClientProxy, GetPropertiesIns]]): This is the set of instructions for the
-            polling to be passed to each client. Each client is represented by a single ClientProxy in the list.
+            polling to be passed to each client. Each client is represented by a single ``ClientProxy`` in the list.
         max_workers (int | None): This is the maximum number of concurrent workers to be used by the server to
             poll the clients. This should be set if pooling an extremely large number, if none a maximum of 32 workers
             are used.

@@ -62,16 +62,17 @@ def select_zeroeth_element(array: np.ndarray) -> float:
 
 def pseudo_sort_scoring_function(client_result: tuple[ClientProxy, NDArrays, int]) -> float:
     """
-    This function provides the "score" that is used to sort a list of tuple[ClientProxy, NDArrays, int]. We select
-    the zeroeth (index 0 across all dimensions) element from each of the arrays in the NDArrays list, sum them, and
+    This function provides the "score" that is used to sort a list of ``tuple[ClientProxy, NDArrays, int]``. We select
+    the zeroeth (index 0 across all dimensions) element from each of the arrays in the ``NDArrays`` list, sum them, and
     add the integer (client sample counts) to the sum to come up with a score for sorting. Note that the underlying
-    numpy arrays in NDArrays may not all be of numerical type. So we limit to selecting elements from arrays of floats.
+    numpy arrays in ``NDArrays`` may not all be of numerical type. So we limit to selecting elements from arrays of
+    floats.
 
     Args:
         client_result (tuple[ClientProxy, NDArrays, int]]): Elements to use to determine the score.
 
     Returns:
-        float: Sum of a the zeroeth elements of each array in the NDArrays and the int of the tuple
+        float: Sum of a the zeroeth elements of each array in the ``NDArrays`` and the int of the tuple
     """
     _, client_arrays, sample_count = client_result
     zeroeth_params = [
@@ -84,7 +85,7 @@ def decode_and_pseudo_sort_results(
     results: list[tuple[ClientProxy, FitRes]]
 ) -> list[tuple[ClientProxy, NDArrays, int]]:
     """
-    This function is used to convert the results of client training into NDArrays and to apply a pseudo sort
+    This function is used to convert the results of client training into ``NDArrays`` and to apply a pseudo sort
     based on the zeroeth elements in the weights and the sample counts. As long as the numpy seed has been set on the
     server this process should be deterministic when repeatedly running the same server code leading to deterministic
     sorting (assuming the clients are deterministically training their weights as well). This allows, for example,
@@ -97,7 +98,7 @@ def decode_and_pseudo_sort_results(
         results (list[tuple[ClientProxy, FitRes]]): Results from a federated training round.
 
     Returns:
-        list[tuple[ClientProxy, NDArrays, int]]: The ordered set of weights as NDarrays and the corresponding
+        list[tuple[ClientProxy, NDArrays, int]]: The ordered set of weights as ``NDarrays`` and the corresponding
         number of examples
     """
     ndarrays_results = [

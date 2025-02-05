@@ -47,11 +47,10 @@ class FedAvgDynamicLayer(BasicFedAvg):
             min_available_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
-                Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
-                Function used to configure client-side validation by providing a Config dictionary.
-                Defaults to None.
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                training by providing a configuration dictionary. Defaults to None.
+            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                client-side validation by providing a ``Config`` dictionary. Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             initial_parameters (Parameters | None, optional): Initial global model parameters. Defaults to None.
             fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
@@ -177,7 +176,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
 
         Returns:
             dict[str, NDArray]: A dictionary mapping the name of the layer that was aggregated to the aggregated
-             weights.
+            weights.
         """
         names_to_layers: defaultdict[str, list[NDArray]] = defaultdict(list)
         total_num_examples: defaultdict[str, int] = defaultdict(int)

@@ -81,22 +81,22 @@ def load_mnist_data(
     Load MNIST Dataset (training and validation set).
 
     Args:
-        data_dir (Path): The path to the MNIST dataset locally.
-            Dataset is downloaded to this location if it does not already exist.
+        data_dir (Path): The path to the MNIST dataset locally. Dataset is downloaded to this location if it does
+            not already exist.
         batch_size (int): The batch size to use for the train and validation dataloader.
         sampler (LabelBasedSampler | None): Optional sampler to subsample dataset based on labels.
         transform (Callable | None): Optional transform to be applied to input samples.
         target_transform (Callable | None): Optional transform to be applied to targets.
-        dataset_converter (DatasetConverter | None): Optional dataset converter used to convert
-            the input and/or target of train and validation dataset.
+        dataset_converter (DatasetConverter | None): Optional dataset converter used to convert the input and/or
+            target of train and validation dataset.
         validation_proportion (float): A float between 0 and 1 specifying the proportion of samples
             to allocate to the validation dataset. Defaults to 0.2.
         hash_key (int | None): Optional hash key to create a reproducible split for train and validation
             datasets.
 
     Returns:
-        tuple[DataLoader, DataLoader, dict[str, int]]: The train data loader, validation data loader
-            and a dictionary with the sample counts of datasets underpinning the respective data loaders.
+        tuple[DataLoader, DataLoader, dict[str, int]]: The train data loader, validation data loader and a dictionary
+        with the sample counts of datasets underpinning the respective data loaders.
     """
     log(INFO, f"Data directory: {str(data_dir)}")
 
@@ -137,8 +137,8 @@ def load_mnist_test_data(
     Load MNIST Test Dataset.
 
     Args:
-        data_dir (Path): The path to the MNIST dataset locally.
-            Dataset is downloaded to this location if it does not already exist.
+        data_dir (Path): The path to the MNIST dataset locally. Dataset is downloaded to this location if it does not
+            already exist.
         batch_size (int): The batch size to use for the test dataloader.
         sampler (LabelBasedSampler | None): Optional sampler to subsample dataset based on labels.
         transform (Callable | None): Optional transform to be applied to input samples.
@@ -206,18 +206,18 @@ def load_cifar10_data(
     Load CIFAR10 Dataset (training and validation set).
 
     Args:
-        data_dir (Path): The path to the CIFAR10 dataset locally.
-            Dataset is downloaded to this location if it does not already exist.
+        data_dir (Path): The path to the CIFAR10 dataset locally. Dataset is downloaded to this location if it does
+            not already exist.
         batch_size (int): The batch size to use for the train and validation dataloader.
         sampler (LabelBasedSampler | None): Optional sampler to subsample dataset based on labels.
-        validation_proportion (float): A float between 0 and 1 specifying the proportion of samples
-            to allocate to the validation dataset. Defaults to 0.2.
+        validation_proportion (float): A float between 0 and 1 specifying the proportion of samples to allocate to the
+            validation dataset. Defaults to 0.2.
         hash_key (int | None): Optional hash key to create a reproducible split for train and validation
             datasets.
 
     Returns:
-        tuple[DataLoader, DataLoader, dict[str, int]]: The train data loader, validation data loader
-            and a dictionary with the sample counts of datasets underpinning the respective data loaders.
+        tuple[DataLoader, DataLoader, dict[str, int]]: The train data loader, validation data loader and a dictionary
+        with the sample counts of datasets underpinning the respective data loaders.
     """
     log(INFO, f"Data directory: {str(data_dir)}")
 
@@ -252,14 +252,14 @@ def load_cifar10_test_data(
     Load CIFAR10 Test Dataset.
 
     Args:
-        data_dir (Path): The path to the CIFAR10 dataset locally.
-            Dataset is downloaded to this location if it does not already exist.
+        data_dir (Path): The path to the CIFAR10 dataset locally. Dataset is downloaded to this location if it does
+            not already exist.
         batch_size (int): The batch size to use for the test dataloader.
         sampler (LabelBasedSampler | None): Optional sampler to subsample dataset based on labels.
 
     Returns:
-        tuple[DataLoader, dict[str, int]]: The test data loader and a dictionary containing the sample count
-            of the test dataset.
+        tuple[DataLoader, dict[str, int]]: The test data loader and a dictionary containing the sample count of the
+        test dataset.
     """
     log(INFO, f"Data directory: {str(data_dir)}")
     transform = transforms.Compose(
@@ -282,15 +282,13 @@ def load_cifar10_test_data(
 
 def load_msd_dataset(data_path: str, msd_dataset_name: str) -> None:
     """
-    Downloads and extracts one of the 10 Medical Segmentation Decathelon (MSD)
-    datasets.
+    Downloads and extracts one of the 10 Medical Segmentation Decathelon (MSD) datasets.
 
     Args:
-        data_path (str): Path to the folder in which to extract the
-            dataset. The data itself will be in a subfolder named after the
-            dataset, not in the data_path directory itself. The name of the
-            folder will be the name of the dataset as defined by the values of
-            the MsdDataset enum returned by get_msd_dataset_enum
+        data_path (str): Path to the folder in which to extract the dataset. The data itself will be in a subfolder
+            named after the dataset, not in the ``data_path`` directory itself. The name of the folder will be the
+            name of the dataset as defined by the values of the ``MsdDataset`` enum returned by
+            ``get_msd_dataset_enum``
         msd_dataset_name (str): One of the 10 msd datasets
     """
     msd_enum = get_msd_dataset_enum(msd_dataset_name)

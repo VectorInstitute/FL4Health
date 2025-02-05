@@ -10,8 +10,8 @@ def uniform_metric_aggregation(
     Function that aggregates client metrics and divides by the number of clients that contributed to metric.
 
     Args:
-        all_client_metrics (list[tuple[int, Metrics]]): A list of tuples with the
-            sample counts and metrics for each client.
+        all_client_metrics (list[tuple[int, Metrics]]): A list of tuples with the sample counts and metrics for each
+            client.
 
     Returns:
         tuple[defaultdict[str, int], Metrics]: Client counts per metric and the uniformly aggregated metrics.
@@ -45,8 +45,8 @@ def metric_aggregation(
     Function that computes a weighted aggregation of metrics normalized by the total number of samples.
 
     Args:
-        all_client_metrics (list[tuple[int, Metrics]]): A list of tuples with the
-            sample counts and metrics for each client.
+        all_client_metrics (list[tuple[int, Metrics]]): A list of tuples with the sample counts and metrics for each
+            client.
 
     Returns:
         tuple[int, Metrics]: The total number of examples along with aggregated metrics.
@@ -81,7 +81,7 @@ def normalize_metrics(total_examples: int, aggregated_metrics: Metrics) -> Metri
         aggregated_metrics (Metrics): Metrics that have been aggregated across clients.
 
     Returns:
-        Metrics: The metrics normalized by total_examples.
+        Metrics: The metrics normalized by ``total_examples``.
     """
     # Normalize all metric values by the total count of examples seen.
     normalized_metrics: Metrics = {}
@@ -116,12 +116,12 @@ def fit_metrics_aggregation_fn(
     all_client_metrics: list[tuple[int, Metrics]],
 ) -> Metrics:
     """
-    Function for fit that computes a weighted aggregation of the client metrics
-    and normalizes by the total number of samples.
+    Function for fit that computes a weighted aggregation of the client metrics and normalizes by the total number of
+    samples.
 
     Args:
-        all_client_metrics (list[tuple[int, Metrics]]): A list of tuples with the
-            sample counts and metrics for each client.
+        all_client_metrics (list[tuple[int, Metrics]]): A list of tuples with the sample counts and metrics for each
+            client.
 
     Returns:
         Metrics: The aggregated normalized metrics.
@@ -136,12 +136,12 @@ def evaluate_metrics_aggregation_fn(
     all_client_metrics: list[tuple[int, Metrics]],
 ) -> Metrics:
     """
-    Function for evaluate that computes a weighted aggregation of the client metrics
-    and normalizes by the total number of samples.
+    Function for evaluate that computes a weighted aggregation of the client metrics and normalizes by the total
+    number of samples.
 
     Args:
-        all_client_metrics (list[tuple[int, Metrics]]): A list of tuples with the
-            sample counts and metrics for each client.
+        all_client_metrics (list[tuple[int, Metrics]]): A list of tuples with the sample counts and metrics for each
+            client.
 
     Returns:
         Metrics: The aggregated normalized metrics.
@@ -156,12 +156,12 @@ def uniform_evaluate_metrics_aggregation_fn(
     all_client_metrics: list[tuple[int, Metrics]],
 ) -> Metrics:
     """
-    Function for evaluate that computes aggregation of the client metrics and normalizes by the number
-    of clients that contributed to the metric.
+    Function for evaluate that computes aggregation of the client metrics and normalizes by the number of clients that
+    contributed to the metric.
 
     Args:
-        all_client_metrics (list[tuple[int, Metrics]]): A list of tuples with the
-            sample counts and metrics for each client.
+        all_client_metrics (list[tuple[int, Metrics]]): A list of tuples with the sample counts and metrics for each
+        client.
 
     Returns:
         Metrics: The aggregated normalized metrics.

@@ -41,18 +41,18 @@ def set_pack_losses_with_val_metrics(config: Config) -> bool:
 
 def move_data_to_device(data: T, device: torch.device) -> T:
     """
-    _summary_
+    Moves data to the target device.
 
     Args:
-        data (T): The data to move to self.device. Can be a TorchInputType or a TorchTargetType
+        data (T): The data to move to self.device. Can be a ``TorchInputType`` or a ``TorchTargetType``
         device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
             'cuda'
 
     Raises:
-        TypeError: Raised if data is not one of the types specified by TorchInputType or TorchTargetType
+        TypeError: Raised if data is not one of the types specified by ``TorchInputType`` or ``TorchTargetType``
 
     Returns:
-        T: The data argument except now it's been moved to self.device
+        T: The data argument except now it's been moved to ``self.device``
     """
     # Currently we expect both inputs and targets to be either tensors
     # or dictionaries of tensors
@@ -71,15 +71,16 @@ def check_if_batch_is_empty_and_verify_input(input: TorchInputType) -> bool:
     """
     This function checks whether the provided batch (input) is empty. If the input is a dictionary of inputs, it
     first verifies that the length of all inputs is the same, then checks if they are non-empty.
-    **NOTE:** This function assumes the input is BATCH FIRST
+    **NOTE:** This function assumes the input is **BATCH FIRST**
 
     Args:
-        input (TorchInputType): Input batch. input can be of type torch.Tensor or dict[str, torch.Tensor], and in the
-        latter case, the batch is considered to be empty if all tensors in the dictionary have length zero.
+        input (TorchInputType): Input batch. input can be of type ``torch.Tensor`` or ``dict[str, torch.Tensor]``,
+            and in the latter case, the batch is considered to be empty if all tensors in the dictionary have length
+            zero.
 
     Raises:
-        TypeError: Raised if input is not of type torch.Tensor or dict[str, torch.Tensor].
-        ValueError: Raised if input has type dict[str, torch.Tensor] and not all tensors within the dictionary have
+        TypeError: Raised if input is not of type ``torch.Tensor`` or ``dict[str, torch.Tensor]``.
+        ValueError: Raised if input has type ``dict[str, torch.Tensor]`` and not all tensors within the dictionary have
             the same size.
 
     Returns:
@@ -120,16 +121,14 @@ def clone_and_freeze_model(model: nn.Module) -> nn.Module:
 
 def maybe_progress_bar(iterable: Iterable, display_progress_bar: bool) -> Iterable:
     """
-    Used to print progress bars during client training and validation. If
-    self.progress_bar is false, just returns the original input iterable
-    without modifying it.
+    Used to print progress bars during client training and validation. If ``self.progress_bar`` is false, just returns
+    the original input iterable without modifying it.
+
     Args:
         iterable (Iterable): The iterable to wrap
     Returns:
-        Iterable: an iterator which acts exactly like the original
-            iterable, but prints a dynamically updating progress bar every
-            time a value is requested. Or the original iterable if
-            self.progress_bar is False
+        Iterable: an iterator which acts exactly like the original iterable, but prints a dynamically updating
+        progress bar every time a value is requested. Or the original iterable if ``self.progress_bar`` is False
     """
     if not display_progress_bar:
         return iterable

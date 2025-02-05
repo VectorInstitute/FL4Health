@@ -33,14 +33,14 @@ class ModelMergeServer(Server):
         server_name: str | None = None,
     ) -> None:
         """
-        ModelMergeServer provides functionality to fetch client weights, perform a simple average, redistribute to
+        ``ModelMergeServer`` provides functionality to fetch client weights, perform a simple average, redistribute to
         clients for evaluation. Optionally can perform server side evaluation as well.
 
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
             strategy (Strategy | None, optional): The aggregation strategy to be used by the server to handle
-                client updates sent by the participating clients. Must be ModelMergeStrategy.
+                client updates sent by the participating clients. Must be ``ModelMergeStrategy``.
             checkpointer (LatestTorchCheckpointer | None, optional): To be provided if the server should perform
                 server side checkpointing on the merged model. If none, then no server-side checkpointing is
                 performed. Defaults to None.
@@ -48,7 +48,7 @@ class ModelMergeServer(Server):
                 server side checkpointing. Must only be provided if checkpointer is also provided. Defaults to None.
             parameter_exchanger (ExchangerType | None, optional): A parameter exchanger used to facilitate
                 server-side model checkpointing if a checkpointer has been defined. If not provided then checkpointing
-                will not be done unless the _hydrate_model_for_checkpointing function is overridden. Because the
+                will not be done unless the ``_hydrate_model_for_checkpointing`` function is overridden. Because the
                 server only sees numpy arrays, the parameter exchanger is used to insert the numpy arrays into a
                 provided model. Defaults to None.
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the server should
@@ -72,9 +72,9 @@ class ModelMergeServer(Server):
 
     def fit(self, num_rounds: int, timeout: float | None) -> tuple[History, float]:
         """
-        Performs a fit round in which the local client weights are evaluated on their test set,
-            uploaded to the server and averaged, then redistributed to clients for evaluation.
-            Optionally, can perform evaluation of the merged model on the server side as well.
+        Performs a fit round in which the local client weights are evaluated on their test set, uploaded to the server
+        and averaged, then redistributed to clients for evaluation. Optionally, can perform evaluation of the merged
+        model on the server side as well.
 
         Args:
             num_rounds (int): Not used.
@@ -166,8 +166,8 @@ class ModelMergeServer(Server):
         self, loss_aggregated: float, metrics_aggregated: dict[str, Scalar], server_round: int
     ) -> None:
         """
-        Method to checkpoint merged model on server side if the checkpointer, server_model and parameter_exchanger
-        provided at initialization are all not None.
+        Method to checkpoint merged model on server side if the checkpointer, ``server_model`` and
+        ``parameter_exchanger`` provided at initialization are all not None.
 
         Args:
             loss_aggregated (float): Not used.

@@ -10,9 +10,10 @@ def aggregate_results(results: list[tuple[NDArrays, int]], weighted: bool = True
     Compute weighted or unweighted average.
 
     Args:
-        results (list[tuple[NDArrays, int]]): This is a set of NDArrays (list of numpy arrays) and the number of
+        results (list[tuple[NDArrays, int]]): This is a set of ``NDArrays`` (list of numpy arrays) and the number of
             relevant samples from each client (training or validation samples where appropriate). These are to be
-            aggregated together in a weighted or unweighted average. The NDArrays most often represent model states.
+            aggregated together in a weighted or unweighted average. The ``NDArrays`` most often represent model
+            states.
         weighted (bool, optional): Whether or not the aggregation is a weighted average (by the sample counts
             provided in the tuple) or a uniform average. Defaults to True.
 

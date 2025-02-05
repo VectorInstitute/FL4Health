@@ -36,7 +36,7 @@ class Losses(ABC):
     @abstractmethod
     def aggregate(loss_meter: LossMeter) -> Losses:
         """
-        Aggregates the losses in the given LossMeter into an instance of Losses
+        Aggregates the losses in the given ``LossMeter`` into an instance of Losses
 
         Args:
             loss_meter (LossMeter): The loss meter object with the collected losses.
@@ -50,8 +50,8 @@ class Losses(ABC):
 class EvaluationLosses(Losses):
     def __init__(self, checkpoint: torch.Tensor, additional_losses: dict[str, torch.Tensor] | None = None) -> None:
         """
-        A class to store the checkpoint and additional_losses of a model
-        along with a method to return a dictionary representation.
+        A class to store the checkpoint and ``additional_losses`` of a model along with a method to return a
+        dictionary representation.
 
         Args:
             checkpoint (torch.Tensor): The loss used to checkpoint model (if checkpointing is enabled).
@@ -75,7 +75,7 @@ class EvaluationLosses(Losses):
     @staticmethod
     def aggregate(loss_meter: LossMeter[EvaluationLosses]) -> EvaluationLosses:
         """
-        Aggregates the losses in the given LossMeter into An instance of ``EvaluationLosses``
+        Aggregates the losses in the given ``LossMeter`` into An instance of ``EvaluationLosses``
 
         Args:
             loss_meter (LossMeter[EvaluationLosses]): The loss meter object with the collected evaluation losses.
@@ -102,13 +102,13 @@ class TrainingLosses(Losses):
         additional_losses: dict[str, torch.Tensor] | None = None,
     ) -> None:
         """
-        A class to store the backward and additional_losses of a model
-        along with a method to return a dictionary representation.
+        A class to store the backward and ``additional_losses`` of a model along with a method to return a dictionary
+        representation.
 
         Args:
             backward (torch.Tensor | dict[str, torch.Tensor]): The backward loss or
                 losses to optimize. In the normal case, backward is a Tensor corresponding to the
-                loss of a model. In the case of an ensemble_model, backward is dictionary of losses.
+                loss of a model. In the case of an ``ensemble_model``, backward is dictionary of losses.
             additional_losses (dict[str, torch.Tensor] | None): Optional dictionary of additional losses.
         """
         super().__init__(additional_losses)
@@ -132,7 +132,7 @@ class TrainingLosses(Losses):
     @staticmethod
     def aggregate(loss_meter: LossMeter[TrainingLosses]) -> TrainingLosses:
         """
-        Aggregates the losses in the given LossMeter into An instance of ``TrainingLosses``
+        Aggregates the losses in the given ``LossMeter`` into An instance of ``TrainingLosses``
 
         Args:
             loss_meter (LossMeter[TrainingLosses]): The loss meter object with the collected training losses.
@@ -172,8 +172,8 @@ class LossMeter(Generic[LossesType]):
 
         Args:
             loss_meter_type (LossMeterType): The type of this loss meter
-            losses_type (type[Losses]): The type of the loss that will be stored. Should be one
-                of the subclasses of Losses
+            losses_type (type[Losses]): The type of the loss that will be stored. Should be one of the subclasses of
+                Losses
 
         """
         self.losses_list: list[LossesType] = []
@@ -191,7 +191,7 @@ class LossMeter(Generic[LossesType]):
 
     def clear(self) -> None:
         """
-        Resets the meter by re-initializing losses_list to be empty
+        Resets the meter by re-initializing ``losses_list`` to be empty
         """
         self.losses_list = []
 
@@ -200,7 +200,7 @@ class LossMeter(Generic[LossesType]):
         Computes the aggregation of current list of losses if non-empty.
 
         Returns:
-            LossesType: New Losses object with the aggregation of losses in losses_list.
+            LossesType: New Losses object with the aggregation of losses in ``losses_list``.
         """
         assert len(self.losses_list) > 0
         return self.losses_type.aggregate(self)  # type: ignore

@@ -11,25 +11,30 @@ class PcaModule(nn.Module):
     def __init__(self, low_rank: bool = False, full_svd: bool = False, rank_estimation: int = 6) -> None:
         """
         PyTorch module for performing Principal Component Analysis.
+
         Notes:
 
-        - If low_rank is set to True, then a value q for rank_estimation is required (either specified by the user or
-          via its default value). If q is too far away from the actual rank k of the data matrix, then the resulting
-          rank-q svd approximation is not guaranteed to be a good approximation of the data matrix.
-        - If low_rank is set to True, then a value q for rank_estimation can be chosen according to the following
-          criteria:
+        - If ``low_rank`` is set to True, then a value :math:`q` for ``rank_estimation`` is required (either specified
+          by the user or via its default value). If :math:`q` is too far away from the actual rank :math:`k` of the
+          data matrix, then the resulting rank-q svd approximation is not guaranteed to be a good approximation of the
+          data matrix.
+        - If ``low_rank`` is set to True, then a value :math:`q` for ``rank_estimation`` can be chosen according to the
+          following criteria:
 
-          - in general, k <= q <= min(2*k, m, n). For large low-rank matrices, take q = k + l, where 5 <= l <= 10.
-            If k is relatively small compared to min(m, n), choosing l = 0, 1, 2 may be sufficient.
-        - If low_rank is set to True and rank_estimation is set to q, then the module will utilize a randomized
-          algorithm to compute a rank-q approximation of the data matrix via SVD.
+          - in general, :math:`k \\leq q \\leq \\min(2\\cdot k, m, n)`. For large low-rank matrices, take
+            :math:`q = k + l`, where :math:`5 \\leq l \\leq 10`.
+            If :math:`k` is relatively small compared to :math:`\\min(m, n)`, choosing :math:`l = 0, 1, 2` may be
+            sufficient.
+        - If ``low_rank`` is set to True and ``rank_estimation`` is set to :math:`q`, then the module will utilize a
+          randomized algorithm to compute a rank-q approximation of the data matrix via SVD.
 
         For more details on this, see:
-            https://pytorch.org/docs/stable/generated/torch.svd_lowrank.html
 
-            and
+        https://pytorch.org/docs/stable/generated/torch.svd_lowrank.html
 
-            https://pytorch.org/docs/stable/generated/torch.pca_lowrank.html
+        and
+
+        https://pytorch.org/docs/stable/generated/torch.pca_lowrank.html
 
         As per the official documentation of PyTorch, in general, the user should set ``low_rank`` to False. Setting
         it to True would be useful for huge sparse matrices.
@@ -38,11 +43,11 @@ class PcaModule(nn.Module):
             low_rank (bool, optional): Indicates whether the data matrix can be well-approximated by a low-rank
                 singular value decomposition. If the user has good reasons to believe so, then this parameter can be
                 set to True to allow for more efficient computations. Defaults to False.
-            full_svd (bool, optional): Indicates whether full SVD or reduced SVD is performed. If low_rank is set to
-                True, then an alternative implementation of SVD will be used and this argument is ignored.
+            full_svd (bool, optional): Indicates whether full SVD or reduced SVD is performed. If ``low_rank`` is set
+                to True, then an alternative implementation of SVD will be used and this argument is ignored.
                 Defaults to False.
             rank_estimation (int, optional): A slight overestimation of the rank of the data matrix. Only used if
-                self.low_rank is True. Defaults to 6. Defaults to 6.
+                ``self.low_rank`` is True. Defaults to 6.
         """
         super().__init__()
         self.low_rank = low_rank
@@ -54,15 +59,17 @@ class PcaModule(nn.Module):
 
     def forward(self, X: Tensor, center_data: bool) -> tuple[Tensor, Tensor]:
         """
-        Perform PCA on the data matrix X by computing its SVD. **NOTE**: the algorithm assumes that the rows of X are
-        the data points (after reshaping as needed). Consequently, the principal components, which are the
-        eigenvectors of X.T @ X, are the right singular vectors in the SVD of X.
+        Perform PCA on the data matrix X by computing its SVD.
+
+        **NOTE**: the algorithm assumes that the rows of X are the data points (after reshaping as needed).
+        Consequently, the principal components, which are the eigenvectors of X.T @ X, are the right singular vectors
+        in the SVD of X.
 
         Args:
             X (Tensor): Data matrix.
             center_data (bool): If true, then the data mean will be subtracted from all data points prior to
-                performing PCA. If center_data is false, it is expected that the data has already been centered and an
-                exception will be thrown if it is not.
+                performing PCA. If ``center_data`` is false, it is expected that the data has already been centered
+                and an exception will be thrown if it is not.
 
         Returns:
             tuple[Tensor, Tensor]: The principal components (i.e., right singular vectors) and their corresponding
@@ -143,7 +150,8 @@ class PcaModule(nn.Module):
     def project_lower_dim(self, X: Tensor, k: int | None = None, center_data: bool = False) -> Tensor:
         """
         Project input data X onto the top k principal components.
-        **NOTE**: The result of projection (after centering) is X @ U because this method assumes that the rows of X
+
+        *NOTE**: The result of projection (after centering) is X @ U because this method assumes that the rows of X
         are the data points while the columns of U are the principal components.
 
         Args:
@@ -216,7 +224,7 @@ class PcaModule(nn.Module):
         """
         Compute the variance of the data matrix X after projection via PCA.
 
-        The variance is defined as | X @ U |_F ** 2
+        The variance is defined as ``| X @ U |_F ** 2``
 
         Args:
             X (Tensor): input data tensor whose rows represent data points.

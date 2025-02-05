@@ -68,7 +68,7 @@ class Flash(BasicFedAvg):
             eta_l (float, optional): Client-side learning rate.. Defaults to 1e-1.
             beta_1 (float, optional): Momentum parameter.. Defaults to 0.9.
             beta_2 (float, optional): Second moment parameter.. Defaults to 0.99.
-            tau (float, optional): Controls the algorithm's degree of adaptability.. Defaults to 1e-9.
+            tau (float, optional): Controls the algorithm's degree of adaptability. Defaults to 1e-9.
             weighted_aggregation (bool, optional): Determines whether parameter aggregation is a linearly weighted
                 average or a uniform average. Flash default is a uniform average by the number of clients.
                 Defaults to False.
