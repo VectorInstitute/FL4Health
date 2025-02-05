@@ -45,8 +45,8 @@ class WandBReporter(BaseReporter):
                 must exist before you can send runs there, so make sure to create your account or team in the UI before
                 starting to log runs. If you do not specify an entity, the run will be sent to your default entity.
                 Change your default entity in your settings under "default location to create new projects".
-            config (str | None, optional): This sets wandb.config, a dictionary-like object for saving inputs to your
-                job such as hyperparameters for a model.
+            config (str | None, optional): This sets ``wandb.config``, a dictionary-like object for saving inputs to
+                your job such as hyperparameters for a model.
 
                 - If ``dict``: will load the key value pairs into the  ``wandb.config`` object.
                 - If ``str``: will look for a yaml file by that name, and load config from that file into the
@@ -63,7 +63,7 @@ class WandBReporter(BaseReporter):
                 a previous run. "must" enforces the run must resume from the run with same id and throws an error
                 if it does not exist. "never" enforces that a run will not resume and throws an error if run id exists.
                 "allow" resumes if the run id already exists. Defaults to "allow".
-            kwargs (Any): Keyword arguments to`` wandb.init`` excluding the ones explicitly described above.
+            kwargs (Any): Keyword arguments to ``wandb.init`` excluding the ones explicitly described above.
                 Documentation here: https://docs.wandb.ai/ref/python/init/
         """
 

@@ -116,7 +116,7 @@ class ConstrainedFendaClient(FendaClient):
 
         Args:
             input (TorchInputType): Inputs to be fed into the model. ``TorchInputType`` is simply an alias
-            for the union of ``torch.Tensor`` and ``dict[str, torch.Tensor]``.
+                for the union of ``torch.Tensor`` and ``dict[str, torch.Tensor]``.
 
         Returns:
             tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple in which the first element
