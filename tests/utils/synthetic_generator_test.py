@@ -1,5 +1,6 @@
 import os
 
+import cpuinfo
 import pytest
 import torch
 import torch.nn.functional as F
@@ -8,6 +9,11 @@ from fl4health.utils.data_generation import SyntheticIidFedProxDataset, Syntheti
 
 # skip some tests that currently fail if running locallly
 IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
+
+# check if intel or mac chip
+manufacturer: str = cpuinfo.get_cpu_info().get("brand_raw", "Unable to get chip manufacturer")
+APPLE_SILICON = "apple" in manufacturer.lower()
+INTEL = "intel" in manufacturer.lower()
 
 
 def test_covariance_matrix_construction() -> None:
@@ -59,8 +65,43 @@ def test_get_input_output_tensors() -> None:
 
 # This test produces different tensors on our Mac M chips locally than on the remote github runners due to very
 # slight numerical fluctuations that add up (perhaps an arm64 vs x86_64 issue).
-@pytest.mark.skipif(not IN_GITHUB_ACTIONS, reason="Test doesn't work locally.")
-def test_generate_client_tensors() -> None:
+@pytest.mark.skipif(not INTEL, reason="Test expected values are set for intel chips")
+def test_generate_client_tensors_intel() -> None:
+    torch.manual_seed(100)
+
+    data_generator = SyntheticNonIidFedProxDataset(5, 0.0, 0.0, temperature=2.0, samples_per_client=5000)
+    client_tensors = data_generator.generate_client_tensors()
+
+    assert len(client_tensors) == 5
+    for input_tensors, output_tensors in client_tensors:
+        assert input_tensors.shape == (5000, 60)
+        assert output_tensors.shape == (5000, 10)
+
+    client_0_label_counts = torch.sum(client_tensors[0][1], dim=0)
+    client_2_label_counts = torch.sum(client_tensors[2][1], dim=0)
+
+    assert torch.equal(client_0_label_counts, torch.Tensor([2, 7, 4939, 2, 29, 16, 1, 4, 0, 0]))
+    assert torch.equal(client_2_label_counts, torch.Tensor([282, 0, 0, 5, 0, 4, 313, 0, 0, 4396]))
+
+    data_generator = SyntheticNonIidFedProxDataset(5, 0.5, 0.5, temperature=2.0, samples_per_client=5000)
+    client_tensors = data_generator.generate_client_tensors()
+
+    assert len(client_tensors) == 5
+    for input_tensors, output_tensors in client_tensors:
+        assert input_tensors.shape == (5000, 60)
+        assert output_tensors.shape == (5000, 10)
+
+    client_1_label_counts = torch.sum(client_tensors[1][1], dim=0)
+    client_4_label_counts = torch.sum(client_tensors[4][1], dim=0)
+
+    assert torch.equal(client_1_label_counts, torch.Tensor([1, 5, 680, 103, 4, 3560, 559, 88, 0, 0]))
+    assert torch.equal(client_4_label_counts, torch.Tensor([79, 228, 0, 1, 26, 6, 3344, 720, 1, 595]))
+
+    torch.seed()
+
+
+@pytest.mark.skipif(not APPLE_SILICON, reason="Test expected values are set for apple silicon chips")
+def test_generate_client_tensors_apple() -> None:
     torch.manual_seed(100)
 
     data_generator = SyntheticNonIidFedProxDataset(5, 0.0, 0.0, temperature=2.0, samples_per_client=5000)
