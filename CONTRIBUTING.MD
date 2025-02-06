@@ -20,7 +20,7 @@ For development and testing, we use [Poetry](https://python-poetry.org/) for dep
 
 The easiest way to create and activate a virtual environment is by using the [virtualenv](https://pypi.org/project/virtualenv/) package:
 ```bash
-python -m venv <ENV_NAME>
+python -m venv <ENV_PATH>
 source "ENV_PATH/bin/activate"
 pip install --upgrade pip poetry
 poetry install --with "dev, dev-local, test, codestyle"
