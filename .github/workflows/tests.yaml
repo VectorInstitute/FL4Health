@@ -39,7 +39,7 @@ jobs:
       - name: Run Tests
         run: |
           source .venv/bin/activate
-          pytest -m "not smoketest" --cov fl4health --cov-report=xml tests
+          pytest -m "not smoketest" -v --cov fl4health --cov-report=xml tests
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
