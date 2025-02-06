@@ -1,14 +1,9 @@
-import os
-
 import cpuinfo
 import pytest
 import torch
 import torch.nn.functional as F
 
 from fl4health.utils.data_generation import SyntheticIidFedProxDataset, SyntheticNonIidFedProxDataset
-
-# skip some tests that currently fail if running locallly
-IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 
 # check if intel or mac chip
 manufacturer: str = cpuinfo.get_cpu_info().get("brand_raw", "Unable to get chip manufacturer")
