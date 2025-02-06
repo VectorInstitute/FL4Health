@@ -2,7 +2,7 @@ coverage:
   status:
     project: # https://docs.codecov.com/docs/commit-status
       default:
-        target: 60%
+        target: 65%
         threshold: 5%
 ignore:
   - ".gitignore"
