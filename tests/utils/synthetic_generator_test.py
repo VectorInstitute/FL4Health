@@ -8,7 +8,6 @@ from fl4health.utils.data_generation import SyntheticIidFedProxDataset, Syntheti
 # check if intel or mac chip
 manufacturer: str = cpuinfo.get_cpu_info().get("brand_raw", "Unable to get chip manufacturer")
 APPLE_SILICON = "apple" in manufacturer.lower()
-INTEL = "intel" in manufacturer.lower()
 
 
 def test_covariance_matrix_construction() -> None:
@@ -73,7 +72,7 @@ def test_get_input_output_tensors() -> None:
             [282, 0, 0, 5, 0, 4, 313, 0, 0, 4396],
             [1, 5, 680, 103, 4, 3560, 559, 88, 0, 0],
             [79, 228, 0, 1, 26, 6, 3344, 720, 1, 595],
-            marks=pytest.mark.skipif(not INTEL, reason="Test expected values are set for intel chips"),
+            marks=pytest.mark.skipif(APPLE_SILICON, reason="Test expected values are set for non-apple chips"),
         ),
         pytest.param(
             [2, 10, 4932, 2, 24, 16, 1, 13, 0, 0],
@@ -83,7 +82,7 @@ def test_get_input_output_tensors() -> None:
             marks=pytest.mark.skipif(not APPLE_SILICON, reason="Test expected values are set for apple m chips"),
         ),
     ],
-    ids=["intel", "apple"],
+    ids=["other-chip", "apple-chip"],
 )
 def test_generate_client_tensors(
     client_0_expected_label_counts: list[int],
