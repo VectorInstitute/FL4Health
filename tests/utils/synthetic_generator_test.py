@@ -60,8 +60,37 @@ def test_get_input_output_tensors() -> None:
 
 # This test produces different tensors on our Mac M chips locally than on the remote github runners due to very
 # slight numerical fluctuations that add up (perhaps an arm64 vs x86_64 issue).
-@pytest.mark.skipif(not INTEL, reason="Test expected values are set for intel chips")
-def test_generate_client_tensors_intel() -> None:
+@pytest.mark.parametrize(
+    (
+        "client_0_expected_label_counts",
+        "client_2_expected_label_counts",
+        "client_1_expected_label_counts",
+        "client_4_expected_label_counts",
+    ),
+    [
+        pytest.param(
+            [2, 7, 4939, 2, 29, 16, 1, 4, 0, 0],
+            [282, 0, 0, 5, 0, 4, 313, 0, 0, 4396],
+            [1, 5, 680, 103, 4, 3560, 559, 88, 0, 0],
+            [79, 228, 0, 1, 26, 6, 3344, 720, 1, 595],
+            marks=pytest.mark.skipif(not INTEL, reason="Test expected values are set for intel chips"),
+        ),
+        pytest.param(
+            [2, 10, 4932, 2, 24, 16, 1, 13, 0, 0],
+            [21, 547, 575, 192, 0, 1951, 3, 346, 1359, 6],
+            [3644, 2, 194, 5, 0, 3, 0, 1115, 32, 5],
+            [57, 3871, 0, 0, 62, 0, 5, 81, 923, 1],
+            marks=pytest.mark.skipif(not APPLE_SILICON, reason="Test expected values are set for apple m chips"),
+        ),
+    ],
+    ids=["intel", "apple"],
+)
+def test_generate_client_tensors(
+    client_0_expected_label_counts: list[int],
+    client_2_expected_label_counts: list[int],
+    client_1_expected_label_counts: list[int],
+    client_4_expected_label_counts: list[int],
+) -> None:
     torch.manual_seed(100)
 
     data_generator = SyntheticNonIidFedProxDataset(5, 0.0, 0.0, temperature=2.0, samples_per_client=5000)
@@ -75,8 +104,8 @@ def test_generate_client_tensors_intel() -> None:
     client_0_label_counts = torch.sum(client_tensors[0][1], dim=0)
     client_2_label_counts = torch.sum(client_tensors[2][1], dim=0)
 
-    assert torch.equal(client_0_label_counts, torch.Tensor([2, 7, 4939, 2, 29, 16, 1, 4, 0, 0]))
-    assert torch.equal(client_2_label_counts, torch.Tensor([282, 0, 0, 5, 0, 4, 313, 0, 0, 4396]))
+    assert torch.equal(client_0_label_counts, torch.Tensor(client_0_expected_label_counts))
+    assert torch.equal(client_2_label_counts, torch.Tensor(client_2_expected_label_counts))
 
     data_generator = SyntheticNonIidFedProxDataset(5, 0.5, 0.5, temperature=2.0, samples_per_client=5000)
     client_tensors = data_generator.generate_client_tensors()
@@ -89,43 +118,8 @@ def test_generate_client_tensors_intel() -> None:
     client_1_label_counts = torch.sum(client_tensors[1][1], dim=0)
     client_4_label_counts = torch.sum(client_tensors[4][1], dim=0)
 
-    assert torch.equal(client_1_label_counts, torch.Tensor([1, 5, 680, 103, 4, 3560, 559, 88, 0, 0]))
-    assert torch.equal(client_4_label_counts, torch.Tensor([79, 228, 0, 1, 26, 6, 3344, 720, 1, 595]))
-
-    torch.seed()
-
-
-@pytest.mark.skipif(not APPLE_SILICON, reason="Test expected values are set for apple silicon chips")
-def test_generate_client_tensors_apple() -> None:
-    torch.manual_seed(100)
-
-    data_generator = SyntheticNonIidFedProxDataset(5, 0.0, 0.0, temperature=2.0, samples_per_client=5000)
-    client_tensors = data_generator.generate_client_tensors()
-
-    assert len(client_tensors) == 5
-    for input_tensors, output_tensors in client_tensors:
-        assert input_tensors.shape == (5000, 60)
-        assert output_tensors.shape == (5000, 10)
-
-    client_0_label_counts = torch.sum(client_tensors[0][1], dim=0)
-    client_2_label_counts = torch.sum(client_tensors[2][1], dim=0)
-
-    assert torch.equal(client_0_label_counts, torch.Tensor([2, 10, 4932, 2, 24, 16, 1, 13, 0, 0]))
-    assert torch.equal(client_2_label_counts, torch.Tensor([21, 547, 575, 192, 0, 1951, 3, 346, 1359, 6]))
-
-    data_generator = SyntheticNonIidFedProxDataset(5, 0.5, 0.5, temperature=2.0, samples_per_client=5000)
-    client_tensors = data_generator.generate_client_tensors()
-
-    assert len(client_tensors) == 5
-    for input_tensors, output_tensors in client_tensors:
-        assert input_tensors.shape == (5000, 60)
-        assert output_tensors.shape == (5000, 10)
-
-    client_1_label_counts = torch.sum(client_tensors[1][1], dim=0)
-    client_4_label_counts = torch.sum(client_tensors[4][1], dim=0)
-
-    assert torch.equal(client_1_label_counts, torch.Tensor([3644, 2, 194, 5, 0, 3, 0, 1115, 32, 5]))
-    assert torch.equal(client_4_label_counts, torch.Tensor([57, 3871, 0, 0, 62, 0, 5, 81, 923, 1]))
+    assert torch.equal(client_1_label_counts, torch.Tensor(client_1_expected_label_counts))
+    assert torch.equal(client_4_label_counts, torch.Tensor(client_4_expected_label_counts))
 
     torch.seed()
 
