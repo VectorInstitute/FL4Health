@@ -62,6 +62,7 @@ mock = "^5.1.0"
 pytest-cov = "^4.1.0"
 freezegun = "^1.4.0"
 pytest-asyncio = "^0.25.2"
+py-cpuinfo = "^9.0.0"
 
 [tool.poetry.group.codestyle.dependencies]
 black = "^24.3.0"
