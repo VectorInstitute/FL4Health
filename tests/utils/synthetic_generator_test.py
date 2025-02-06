@@ -1,8 +1,13 @@
+import os
+
 import pytest
 import torch
 import torch.nn.functional as F
 
 from fl4health.utils.data_generation import SyntheticIidFedProxDataset, SyntheticNonIidFedProxDataset
+
+# skip some tests that currently fail if running locallly
+IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 
 
 def test_covariance_matrix_construction() -> None:
@@ -52,6 +57,9 @@ def test_get_input_output_tensors() -> None:
     torch.seed()
 
 
+# This test produces different tensors on our Mac M chips locally than on the remote github runners due to very
+# slight numerical fluctuations that add up (perhaps an arm64 vs x86_64 issue).
+@pytest.mark.skipif(not IN_GITHUB_ACTIONS, reason="Test doesn't work locally.")
 def test_generate_client_tensors() -> None:
     torch.manual_seed(100)
 
