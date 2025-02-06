@@ -15,6 +15,7 @@ Subpackages
    fl4health.checkpointing
    fl4health.client_managers
    fl4health.clients
+   fl4health.datasets
    fl4health.feature_alignment
    fl4health.losses
    fl4health.model_bases

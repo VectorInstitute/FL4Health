@@ -7,14 +7,14 @@
 
     
       <meta name="description" content="aieng-template Python API documentation">
-    <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Quickstart" href="quickstart.html" />
+    <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="API Reference" href="api.html" /><link rel="prev" title="Basic Example" href="examples/basic/index.html" />
 
     <meta name="generator" content="sphinx-8.1.3, furo 2024.08.06"/>
 
     
     <meta name="msvalidate.01" content="8D2A5032F006424CAF54C0DDCD16F666" />
       
-        <title>FL4Health</title>
+        <title>Contributing - FL4Health</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
@@ -57,7 +57,6 @@
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="_static/copybutton.js?v=ccdb6887"></script>
     <script src="_static/design-tabs.js?v=f930bc37"></script>
-    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/require.min.js?v=53367eec"></script>
     <script src="_static/custom.js?v=c3ea0f6c"></script>
     
@@ -193,7 +192,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="#"><div class="brand">FL4Health</div></a>
+      <a href="index.html"><div class="brand">FL4Health</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -213,7 +212,7 @@
   <aside class="sidebar-drawer">
     <div class="sidebar-container">
       
-      <div class="sidebar-sticky"><a class="sidebar-brand" href="#">
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
   <span class="sidebar-brand-text">FL4Health</span>
@@ -224,7 +223,7 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <ul>
+  <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="module_guides/index.html">Module Guides</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Module Guides</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="module_guides/checkpointing/index.html">Checkpointing</a></li>
@@ -234,7 +233,7 @@
 <li class="toctree-l2"><a class="reference internal" href="examples/basic/index.html">Basic Example</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Contributing</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="api.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of API Reference</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2 has-children"><a class="reference internal" href="reference/api/fl4health.html">fl4health package</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of fl4health package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l3 has-children"><a class="reference internal" href="reference/api/fl4health.checkpointing.html">fl4health.checkpointing package</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle navigation of fl4health.checkpointing package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -476,210 +475,117 @@
           </label>
         </div>
         <article role="main">
-          <p><img alt="FL4Health Logo" src="_images/fl4health_rect_logo_no_background.png" /></p>
-<section id="welcome-to-fl4health">
-<h1>Welcome to FL4Health ✨<a class="headerlink" href="#welcome-to-fl4health" title="Link to this heading">¶</a></h1>
-<div class="toctree-wrapper compound">
+          <section id="contributing">
+<h1>Contributing<a class="headerlink" href="#contributing" title="Link to this heading">¶</a></h1>
+<p>Thanks for your interest in contributing to the FL4Health library!</p>
+<p>To submit PRs, please fill out the PR template along with the PR. If the PR fixes an issue, please include a link to the PR to the issue, if possible. Below are some details around important things to consider before contributing to the library. A table of contents also appears below for navigation.</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#development-practices">Development Practices</a></p></li>
+<li><p><a class="reference internal" href="#development-requirements">Development Requirements</a></p></li>
+<li><p><a class="reference internal" href="#coding-guidelines-formatters-and-checks">Coding Guidelines, Formatters, and Checks</a></p></li>
+<li><p><a class="reference internal" href="#code-documentation">Code Documentation</a></p></li>
+<li><p><a class="reference internal" href="#tests">Tests</a></p></li>
+</ul>
+<section id="development-practices">
+<h2>Development Practices<a class="headerlink" href="#development-practices" title="Link to this heading">¶</a></h2>
+<p>We use the standard git development flow of branch and merge to main with PRs on GitHub. At least one member of the core team needs to approve a PR before it can be merged into main. As mentioned above, tests are run automatically on PRs with a merge target of main. Furthermore, a suite of static code checkers and formatters are also run on said PRs. These also need to pass for a PR to be eligible for merging into the main branch of the library. Currently, such checks run on python3.9.</p>
+</section>
+<section id="development-requirements">
+<h2>Development Requirements<a class="headerlink" href="#development-requirements" title="Link to this heading">¶</a></h2>
+<p>For development and testing, we use <a class="reference external" href="https://python-poetry.org/">Poetry</a> for dependency management. The library dependencies and those for development and testing are listed in the <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> file. You may use whatever virtual environment management tool that you would like. These include conda, poetry itself, and virtualenv. Poetry is also used to produce our releases, which are managed and automated by GitHub.</p>
+<p>The easiest way to create and activate a virtual environment is by using the <a class="reference external" href="https://pypi.org/project/virtualenv/">virtualenv</a> package:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>virtualenv<span class="w"> </span><span class="s2">&quot;ENV_PATH&quot;</span>
+<span class="nb">source</span><span class="w"> </span><span class="s2">&quot;ENV_PATH/bin/activate&quot;</span>
+pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip<span class="w"> </span>poetry
+poetry<span class="w"> </span>install<span class="w"> </span>--with<span class="w"> </span><span class="s2">&quot;dev, dev-local, test, codestyle&quot;</span>
+</pre></div>
 </div>
-<p>A flexible, modular, and easy to use library to facilitate federated learning research and development in healthcare settings.</p>
-<section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">¶</a></h2>
-<p>Principally, this library contains the federated learning (FL) engine aimed at facilitating FL research, experimentation, and exploration, with a specific focus on health applications.</p>
-<p>This library is built on the foundational components of <a class="reference external" href="https://flower.dev/">Flower</a>, an open-source FL library in its own right. The documentation is <a class="reference external" href="https://flower.dev/docs/framework/index.html">here</a>. This library contains a number of unique components that extend the functionality of Flower in a number of directions.</p>
+<p>Note that the with command is installing all libraries required for the full development workflow. See the <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> file for additional details as to what is installed with each of these options.</p>
+<p>If you need to update the environment libraries, you should change the requirements in the <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> and then update the <code class="docutils literal notranslate"><span class="pre">poetry.lock</span></code> using the command <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">update</span></code></p>
 </section>
-<section id="summary-of-currently-implemented-approaches">
-<span id="summary-of-approaches"></span><h2>Summary of Currently Implemented Approaches<a class="headerlink" href="#summary-of-currently-implemented-approaches" title="Link to this heading">¶</a></h2>
-<p>The present set of FL approaches implemented in the library are:</p>
-<table>
-<tr>
-<th style="text-align: left; width: 250px"> Non-Personalized Methods </th>
-<th style="text-align: center; width: 350px"> Notes </th>
-</tr>
-<tr>
-<td>
-<p><a class="reference external" href="https://arxiv.org/abs/1602.05629">FedAvg</a></p>
-</td>
-<td>
-Weights are aggregated on the server-side through averaging. Weighted and unweighted averaging is available.
-</td>
-</tr>
-<tr>
-<td>
-<p><a class="reference external" href="https://arxiv.org/abs/2003.00295">FedOpt</a></p>
-</td>
-<td>
-A recent extension of FedAvg that includes adaptive optimization on the server-side aggregation. Implementations through Flower include FedAdam, FedAdaGrad, and FedYogi.
-</td>
-</tr>
-<tr>
-<td>
-<p><a class="reference external" href="https://arxiv.org/abs/1812.06127">FedProx</a></p>
-</td>
-<td>
-An extension of FedAvg that attempts to control local weight drift through a penalty term added to each client's local loss function. Both fixed and adaptive FedProx implementations are available.
-</td>
-</tr>
-<tr>
-<td>
-<p><a class="reference external" href="https://arxiv.org/abs/1910.06378">SCAFFOLD</a></p>
-</td>
-<td>
-Another extension of FedAvg that attempts to correct for local gradient drift due to heterogenous data representations. This is done through the calculation of control variates used to modify the weight updates. In addition to standard SCAFFOLD, a version with warm-up is implemented, along with DP-SCAFFOLD.
-</td>
-</tr>
-<tr>
-<td>
-<p><a class="reference external" href="https://arxiv.org/abs/2103.16257">MOON</a></p>
-</td>
-<td>
-MOON adds a contrastive loss function that attempts to ensure that the feature representations learned on the client-side do not significantly drift from those of the previous server model.
-</td>
-</tr>
-<tr>
-<td>
-<p><a class="reference external" href="https://arxiv.org/abs/2103.06030">FedDG-GA</a></p>
-</td>
-<td>
-FedDG-GA is a domain generalization approach that aims to ensure that the models trained during FL generalize well to unseen domains, potentially outside of the training distribution. The method applies an adjustment algorithm which modifies the client coefficients used during weighted averaging on the server-side.
-</td>
-</tr>
-<tr>
-<td>
-<p><a class="reference external" href="https://proceedings.mlr.press/v202/panchal23a/panchal23a.pdf">FLASH</a></p>
-</td>
-<td>
-FLASH incorporates a modification to the server-side aggregation algorithm, adding an additional term that is meant to modify the server side learning rate if a data distribution shift occurs during training. In the absence of distribution shifts, the modified aggregation approach is nearly equivalent to the existing FedAvg or FedOpt approaches.
-</td>
-</tr>
-<tr>
-<td>
-<p><a class="reference external" href="https://arxiv.org/pdf/2209.15328">FedPM</a></p>
-</td>
-<td>
-FedPM is a recent sparse, communication efficient approach to federated learning. The method has been shown to have exceptional information compression while maintaining good performance. Interestingly, it is also connected to the Lottery Ticket Hypothesis.
-</td>
-</tr>
-<tr>
-<th style="text-align: left; width: 250px"> Personalized Methods </th>
-<th style="text-align: center; width: 350px"> Notes </th>
-</tr>
-<tr>
-<td>
-<p><a class="reference external" href="https://arxiv.org/abs/2205.13692">Personal FL</a></p>
-</td>
-<td>
-This method strictly considers the effect of continuing local training on each client model, locally, after federated training has completed.
-</td>
-</tr>
-<tr>
-<td>
-<p><a class="reference external" href="https://arxiv.org/abs/2102.07623">FedBN</a></p>
-</td>
-<td>
-FedBN implements a very light version of personalization wherein clients exchange all parameters in their model except for anything related to batch normalization layers, which are only learned locally.
-</tr>
-<tr>
-<td>
-<p><a class="reference external" href="https://arxiv.org/abs/1912.00818">FedPer</a></p>
-</td>
-<td>
-Trains a global feature extractor shared by all clients through FedAvg and a private classifier that is unique to each client.
-</td>
-</tr>
-<tr>
-<td>
-<p><a class="reference external" href="https://arxiv.org/abs/2303.05206">FedRep</a></p>
-</td>
-<td>
-Similar to FedPer, FedRep trains a global feature extractor shared by all clients through FedAvg and a private classifier that is unique to each client. However, FedRep breaks up the client-side training of these components into two phases. First the local classifier is trained with the feature extractor frozen. Next, the classifier is frozen and the feature extractor is trained.
-</td>
-</tr>
-<tr>
-<td>
-<p><a class="reference external" href="https://arxiv.org/abs/2012.04221">Ditto</a></p>
-</td>
-<td>
-Trains a global model with FedAvg and a personal model that is constrained by the l2-norm of the difference between the personal model weights and the previous global model.
-</td>
-</tr>
-<tr>
-<td>
-<p><a class="reference external" href="https://arxiv.org/abs/2206.07902">MR-MTL</a></p>
-</td>
-<td>
-Trains a personal model that is constrained by the l2-norm of the difference between the personal model weights and the previous aggregation of all client's models. Aggregation of the personal models is done through FedAvg. Unlike Ditto, no global model is optimized during client-side training.
-</td>
-</tr>
-<tr>
-<td>
-<p><a class="reference external" href="https://arxiv.org/abs/2003.13461">APFL</a></p>
-</td>
-<td>
-Twin models are trained. One of them is globally shared by all clients and aggregated on the server. The other is strictly trained locally by each client. Predictions are made by a convex combination of the models.
-</td>
-</tr>
-<tr>
-<td>
-<p><a class="reference external" href="https://ieeexplore.ieee.org/document/10020518/">PerFCL</a></p>
-</td>
-<td>
-PerFCL extends MOON to consider separate globally and locally trained feature extractors and a locally trained classifier. Contrastive loss functions are used to ensure that, during client training, the global features stay close to the original server model features and that the local features are not close to the global features.
-</td>
-</tr>
-<tr>
-<td>
-<p><a class="reference external" href="https://arxiv.org/pdf/2309.16825.pdf">FENDA-FL</a></p>
-</td>
-<td>
-FENDA is an ablation of PerFCL that strictly considers globally and locally trained feature extractors and a locally trained classifier. The contrastive loss functions are removed from the training procedure to allow for less constrained feature learning and more flexible model architecture design.
-</td>
-</tr>
-<tr>
-<td>
-<p>FENDA+Ditto</p>
-</td>
-<td>
-This is a combination of two state-of-the-art approaches above: FENDA-FL and Ditto. The idea is to merge the two approaches to yield a "best of both" set of modeling with the flexibility of FENDA-FL for local adaptation and the global-model constrained optimization of Ditto.
-</td>
-</tr>
-</table>
-<p>More approaches are being implemented as they are prioritized. However, the library also provides significant flexibility to implement strategies of your own.</p>
+<section id="coding-guidelines-formatters-and-checks">
+<h2>Coding Guidelines, Formatters, and Checks<a class="headerlink" href="#coding-guidelines-formatters-and-checks" title="Link to this heading">¶</a></h2>
+<p>For code style, we recommend the <a class="reference external" href="https://google.github.io/styleguide/pyguide.html">google style guide</a>.</p>
+<p>Pre-commit hooks apply <a class="reference external" href="https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html">black</a> code formatting.</p>
+<p>We also use <a class="reference external" href="https://flake8.pycqa.org/en/latest/">flake8</a> and <a class="reference external" href="https://pylint.pycqa.org/en/stable/">pylint</a> for further static code analysis. The pre-commit hooks show errors which you need to fix before submitting a PR.</p>
+<p>Last but not least, we use type hints in our code which are checked using <a class="reference external" href="https://mypy.readthedocs.io/en/stable/">mypy</a>. The mypy checks are strictly enforced. That is, all mypy checks must pass or the associated PR will not be merge-able.</p>
+<p>The settings for <code class="docutils literal notranslate"><span class="pre">mypy</span></code> are in the <code class="docutils literal notranslate"><span class="pre">mypy.ini</span></code>, settings for <code class="docutils literal notranslate"><span class="pre">flake8</span></code> are contained in the <code class="docutils literal notranslate"><span class="pre">.flake8</span></code> file. Settings for <code class="docutils literal notranslate"><span class="pre">black</span></code> and <code class="docutils literal notranslate"><span class="pre">isort</span></code> come from the <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> and some standard checks are defined directly in the <code class="docutils literal notranslate"><span class="pre">.pre-commit-config.yaml</span></code> settings.</p>
+<p>All of these checks and formatters are invoked by pre-commit hooks. These hooks are run remotely on GitHub. In order to ensure that your code conforms to these standards, and, therefore, passes the remote checks, you can install the pre-commit hooks to be run locally. This is done by running (with your environment active)</p>
+<p><strong>Note</strong>: We use the modern mypy types introduced in Python 3.10 and above. See some of the <a class="reference external" href="https://mypy.readthedocs.io/en/stable/builtin_types.html">documentation here</a></p>
+<p>For example, this means that we’re using <code class="docutils literal notranslate"><span class="pre">list[str],</span> <span class="pre">tuple[int,</span> <span class="pre">int],</span> <span class="pre">tuple[int,</span> <span class="pre">...],</span> <span class="pre">dict[str,</span> <span class="pre">int],</span> <span class="pre">type[C]</span></code> as built-in types and <code class="docutils literal notranslate"><span class="pre">Iterable[int],</span> <span class="pre">Sequence[bool],</span> <span class="pre">Mapping[str,</span> <span class="pre">int],</span> <span class="pre">Callable[[...],</span> <span class="pre">...]</span></code> from collections.abc (as now recommended by mypy).</p>
+<p>We are also moving to the new Optional and Union specification style:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Optional</span><span class="p">[</span><span class="n">typing_stuff</span><span class="p">]</span> <span class="o">-&gt;</span> <span class="n">typing_stuff</span> <span class="o">|</span> <span class="kc">None</span>
+<span class="n">Union</span><span class="p">[</span><span class="n">typing1</span><span class="p">,</span> <span class="n">typing2</span><span class="p">]</span> <span class="o">-&gt;</span> <span class="n">typing1</span> <span class="o">|</span> <span class="n">typing2</span>
+<span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">typing1</span><span class="p">,</span> <span class="n">typing2</span><span class="p">]]</span> <span class="o">-&gt;</span> <span class="n">typing1</span> <span class="o">|</span> <span class="n">typing2</span> <span class="o">|</span> <span class="kc">None</span>
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pre-commit<span class="w"> </span>install
+</pre></div>
+</div>
+<p>To run the checks, some of which will automatically re-format your code to fit the standards, you can run</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
+</pre></div>
+</div>
+<p>It can also be run on a subset of files by omitting the <code class="docutils literal notranslate"><span class="pre">--all-files</span></code> option and pointing to specific files or folders.</p>
+<p>If you’re using VS Code for development, pre-commit should setup git hooks that execute the pre-commit checks each time you check code into your branch through the integrated source-control as well. This will ensure that each of your commits conform to the desired format before they are run remotely and without needing to remember to run the checks before pushing to a remote. If this isn’t done automatically, you can find instructions for setting up these hooks manually online.</p>
 </section>
-<section id="privacy-capabilities">
-<span id="id1"></span><h2>Privacy Capabilities<a class="headerlink" href="#privacy-capabilities" title="Link to this heading">¶</a></h2>
-<p>In addition to the FL strategies, we also support several differentially private FL training approaches. These include:</p>
-<ul class="simple">
-<li><p><a class="reference external" href="https://arxiv.org/abs/1607.00133">Instance-level FL privacy</a></p></li>
-<li><p><a class="reference external" href="https://arxiv.org/abs/1905.03871">Client-level FL privacy with Adaptive Clipping</a></p>
-<ul>
-<li><p>Weighted and Unweighted FedAvg</p></li>
-</ul>
-</li>
-</ul>
-<p>The addition of Distributed Differential Privacy (DDP) with Secure Aggregation is also anticipated soon.</p>
+<section id="code-documentation">
+<h2>Code Documentation<a class="headerlink" href="#code-documentation" title="Link to this heading">¶</a></h2>
+<p>For code documentation, we try to adhere to the Google docstring style (See <a class="reference external" href="https://google.github.io/styleguide/pyguide.html">here</a>, Section: Comments and Doc-strings). The implementation of an extensive set of comments for the code in this repository is a work-in-progress. However, we are continuing to work towards a better commented state for the code. For development, as stated in the style guide, <strong>any non-trivial or non-obvious methods added to the library should have a doc string</strong>. For our library this applies only to code added to the main library in <code class="docutils literal notranslate"><span class="pre">fl4health</span></code>. Examples, research code, and tests need not incorporate the strict rules of documentation, though clarifying and helpful comments in that code is also <strong>strongly encouraged</strong>.</p>
+<blockquote>
+<div><p>As a matter of convention choice, classes are documented through their <code class="docutils literal notranslate"><span class="pre">__init__</span></code> functions rather than at the “class” level.</p>
+</div></blockquote>
+<p>If you are using VS Code a very helpful integration is available to facilitate the creation of properly formatted doc-strings called autoDocstring <a class="reference external" href="https://marketplace.visualstudio.com/items?itemName=njpwerner.autodocstring">VS Code Page</a> and <a class="reference external" href="https://github.com/NilsJPWerner/autoDocstring">Documentation</a>. This tool will automatically generate a docstring template when starting a docstring with triple quotation marks (<code class="docutils literal notranslate"><span class="pre">&quot;&quot;&quot;</span></code>). To get the correct format, the following settings should be prescribed in your VS Code settings JSON:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;autoDocstring.customTemplatePath&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;autoDocstring.docstringFormat&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;google&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;autoDocstring.generateDocstringOnEnter&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;autoDocstring.guessTypes&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;autoDocstring.includeExtendedSummary&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;autoDocstring.includeName&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;autoDocstring.logLevel&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Info&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;autoDocstring.quoteStyle&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;\&quot;\&quot;\&quot;&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;autoDocstring.startOnNewLine&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 </section>
-<section id="community">
-<span id="id2"></span><h2>Community<a class="headerlink" href="#community" title="Link to this heading">¶</a></h2>
-<p>Need a specific FL algorithm implemented? Submit an issue in our Github, or
-even better contribute to our open-source project!</p>
-<ul class="simple">
-<li><p><a class="reference external" href="https://github.com/VectorInstitute/FL4Health">FL4Health Python Github</a></p></li>
-<li><p><a class="reference external" href="https://pypi.org/project/fl4health/">FL4Health on PyPi</a></p></li>
-<li><p><a class="reference external" href="https://github.com/VectorInstitute/FL4Health/blob/main/CONTRIBUTING.MD">FL4Health Contributing Guide</a></p></li>
-</ul>
+<section id="tests">
+<h2>Tests<a class="headerlink" href="#tests" title="Link to this heading">¶</a></h2>
+<p>All tests for the library are housed in the tests folder. The unit and integration tests are run using <code class="docutils literal notranslate"><span class="pre">pytest</span></code>. These tests are automatically run through GitHub integrations on PRs to the main branch of this repository. PRs that fail any of the tests will not be eligible to be merged until they are fixed.</p>
+<p>To run all tests in the tests folder one only needs to run (with the venv active)</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>.
+</pre></div>
+</div>
+<p>To run a specific test with pytest, one runs</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>tests/checkpointing/test_best_checkpointer.py
+</pre></div>
+</div>
+<p>If you use VS Code for development, you can setup the tests with the testing integration so that you can run debugging and other IDE features. Setup will vary depending on your VS Code environment, but in your .vscode folder your <code class="docutils literal notranslate"><span class="pre">settings.json</span></code> might look something like</p>
+<div class="highlight-JSON notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;python.testing.unittestArgs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="s2">&quot;-v&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;-s&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;.&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;-p&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="s2">&quot;test_*.py&quot;</span>
+<span class="w">    </span><span class="p">],</span>
+<span class="w">    </span><span class="nt">&quot;python.testing.pytestEnabled&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;python.testing.unittestEnabled&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;python.testing.pytestArgs&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="s2">&quot;.&quot;</span>
+<span class="w">    </span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>In addition to the unit and integration tests through <code class="docutils literal notranslate"><span class="pre">pytest</span></code> a number of <strong>smoke tests</strong> have been implemented and are run remotely on github as well. These tests are housed in <code class="docutils literal notranslate"><span class="pre">tests/smoke_tests</span></code>. All of these smoke tests must also pass for a PR to be eligible for merging to main. These smoke tests ensure that changes to note unintentionally break or alter the current functionality of many of our examples. This helps to ensure that code changes do not have unintended side-effects on already tested and/or working code.</p>
+<section id="code-coverage">
+<h3>Code Coverage<a class="headerlink" href="#code-coverage" title="Link to this heading">¶</a></h3>
+<p>For code coverage, we use <a class="reference external" href="https://about.codecov.io/">Codecov</a> (by Sentry) and have configured this tool to pass only if a PR’s overall code coverage is above 80%.</p>
+<blockquote>
+<div><p>The contents of the tests folder is not packed with the FL4Health library on release to PyPi</p>
+</div></blockquote>
 </section>
-<section id="what-s-next">
-<h2>What’s Next?<a class="headerlink" href="#what-s-next" title="Link to this heading">¶</a></h2>
-<ul class="simple">
-<li><p><a class="reference internal" href="quickstart.html"><span class="doc">Quickstart</span></a><br />
-Get started with simple federated system in a few lines of code.</p></li>
-<li><p><a class="reference internal" href="module_guides/index.html#module-guides"><span class="std std-ref">Module Guides</span></a><br />
-Explore the various modules of <code class="docutils literal notranslate"><span class="pre">fl4health</span></code>!</p></li>
-<li><p><a class="reference internal" href="examples/index.html#examples"><span class="std std-ref">Examples</span></a><br />
-A wide-ranging set of FL example tasks.</p></li>
-<li><p><a class="reference internal" href="api.html#api-reference"><span class="std std-ref">API Reference</span></a><br />
-Thorough documentation of our classes.</p></li>
-</ul>
 </section>
 </section>
 
@@ -688,16 +594,26 @@ Thorough documentation of our classes.</p></li>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="quickstart.html">
+          <a class="next-page" href="api.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Quickstart</div>
+                <div class="title">API Reference</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          
+          <a class="prev-page" href="examples/basic/index.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Basic Example</div>
+                
+              </div>
+            </a>
         </div>
         <div class="bottom-of-page">
           <div class="left-details">
@@ -745,12 +661,15 @@ Thorough documentation of our classes.</p></li>
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">Welcome to FL4Health ✨</a><ul>
-<li><a class="reference internal" href="#introduction">Introduction</a></li>
-<li><a class="reference internal" href="#summary-of-currently-implemented-approaches">Summary of Currently Implemented Approaches</a></li>
-<li><a class="reference internal" href="#privacy-capabilities">Privacy Capabilities</a></li>
-<li><a class="reference internal" href="#community">Community</a></li>
-<li><a class="reference internal" href="#what-s-next">What’s Next?</a></li>
+<li><a class="reference internal" href="#">Contributing</a><ul>
+<li><a class="reference internal" href="#development-practices">Development Practices</a></li>
+<li><a class="reference internal" href="#development-requirements">Development Requirements</a></li>
+<li><a class="reference internal" href="#coding-guidelines-formatters-and-checks">Coding Guidelines, Formatters, and Checks</a></li>
+<li><a class="reference internal" href="#code-documentation">Code Documentation</a></li>
+<li><a class="reference internal" href="#tests">Tests</a><ul>
+<li><a class="reference internal" href="#code-coverage">Code Coverage</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

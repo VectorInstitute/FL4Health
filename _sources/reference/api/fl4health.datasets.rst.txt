@@ -1,7 +1,10 @@
-fl4health.datasets namespace
-============================
+fl4health.datasets package
+==========================
 
-.. py:module:: fl4health.datasets
+.. automodule:: fl4health.datasets
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Subpackages
 -----------

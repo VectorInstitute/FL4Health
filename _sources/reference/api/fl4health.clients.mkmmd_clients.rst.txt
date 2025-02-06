@@ -1,7 +1,10 @@
-fl4health.clients.mkmmd\_clients namespace
-==========================================
+fl4health.clients.mkmmd\_clients package
+========================================
 
-.. py:module:: fl4health.clients.mkmmd_clients
+.. automodule:: fl4health.clients.mkmmd_clients
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Submodules
 ----------

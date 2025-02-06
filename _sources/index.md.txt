@@ -5,10 +5,10 @@
 ```{toctree}
 :hidden:
 
-installation_and_setup
 quickstart
 module_guides/index
 examples/index
+contributing
 api
 
 ```
