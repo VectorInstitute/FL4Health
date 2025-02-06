@@ -19,14 +19,14 @@ root_logger.handlers.clear()
 class OpacusCheckpointer(FunctionTorchModuleCheckpointer):
     """
     This is a specific type of checkpointer to be used in saving models trained using Opacus for differential privacy.
-    Certain layers within Opacus wrapped models do not interact well with torch.save functionality. This checkpointer
-    fixes this issue.
+    Certain layers within Opacus wrapped models do not interact well with ``torch.save`` functionality. This
+    checkpointer fixes this issue.
     """
 
     def maybe_checkpoint(self, model: GradSampleModule, loss: float, metrics: dict[str, Scalar]) -> None:
         """
-        Overriding the checkpointing strategy of the FunctionTorchCheckpointer to save model state dictionaries
-        instead of using the torch.save workflow.
+        Overriding the checkpointing strategy of the ``FunctionTorchCheckpointer`` to save model state dictionaries
+        instead of using the ``torch.save`` workflow.
 
         Args:
             model (nn.Module): Model to be potentially saved (should be an Opacus wrapped model)
@@ -55,23 +55,23 @@ class OpacusCheckpointer(FunctionTorchModuleCheckpointer):
 
     def _process_state_dict_keys(self, opacus_state_dict: dict[str, Any]) -> dict[str, Any]:
         """
-        State dictionary keys for Opacus modules will be prefixed with an _module. So we remove these when loading
+        State dictionary keys for Opacus modules will be prefixed with an ``_module``. So we remove these when loading
         the state information into a standard torch model.
 
         Args:
-            opacus_state_dict (dict[str, Any]): A state dictionary produced by an Opacus GradSamplingModule
+            opacus_state_dict (dict[str, Any]): A state dictionary produced by an Opacus ``GradSamplingModule``
 
         Returns:
-            dict[str, Any]: A state dictionary with the _module. removed from the key prefixes to facilitate loading
-                the state dictionary into a non-Opacus model.
+            dict[str, Any]: A state dictionary with the ``_module``. removed from the key prefixes to facilitate
+            loading the state dictionary into a non-Opacus model.
         """
 
         return {key.removeprefix("_module."): val for key, val in opacus_state_dict.items()}
 
     def _extract_and_save_state(self, model: nn.Module) -> None:
         """
-        Certain Opacus layers don't integrate nicely with the torch.save mechanism. So rather than using that approach
-        for checkpointing Opacus models, we extract and save the model state dictionary.
+        Certain Opacus layers don't integrate nicely with the ``torch.save`` mechanism. So rather than using that
+        approach for checkpointing Opacus models, we extract and save the model state dictionary.
 
         Args:
             model (nn.Module): Model to be checkpointed via the state dictionary.
@@ -90,12 +90,12 @@ class OpacusCheckpointer(FunctionTorchModuleCheckpointer):
         self, target_model: nn.Module, target_is_grad_sample_module: bool = False
     ) -> None:
         """
-        State dictionary loading requires a model to be provided (unlike the torch.save mechanism). So we define this
-        function, which requires the user to provide a model into which the state dictionary is to be loaded.
+        State dictionary loading requires a model to be provided (unlike the ``torch.save`` mechanism). So we define
+        this function, which requires the user to provide a model into which the state dictionary is to be loaded.
 
         Args:
             target_model (nn.Module): Target model for loading state into.
-            target_is_grad_sample_module (bool, optional): Whether the target_model that the state_dict is being
+            target_is_grad_sample_module (bool, optional): Whether the target_model that the ``state_dict`` is being
                 loaded into is an Opacus module or just a vanilla Pytorch module. Defaults to False.
         """
         with open(self.checkpoint_path, "rb") as handle:
@@ -137,7 +137,7 @@ class BestLossOpacusCheckpointer(OpacusCheckpointer):
     def __init__(self, checkpoint_dir: str, checkpoint_name: str) -> None:
         """
         This checkpointer only uses the loss value provided to the maybe_checkpoint function to determine whether a
-        checkpoint should be save. We are always attempting to minimize the loss. So maximize is always set to false
+        checkpoint should be save. We are always attempting to minimize the loss. So maximize is always set to false.
 
         Args:
             checkpoint_dir (str): Directory to which the model is saved. This directory should already exist. The

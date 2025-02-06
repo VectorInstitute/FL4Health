@@ -35,17 +35,17 @@ class AdaptiveDriftConstraintClient(BasicClient):
         This client serves as a base for FL methods implementing an auxiliary loss penalty with a weight coefficient
         that might be adapted via loss trajectories on the server-side. An example of such a method is FedProx, which
         uses an auxiliary loss penalizing weight drift with a coefficient mu. This client is a simple extension of the
-        BasicClient that packs the self.loss_for_adaptation for exchange with the server and expects to receive an
-        updated (or constant if non-adaptive) parameter for the loss weight. In many cases, such as FedProx, the
-        loss_for_adaptation being packaged is the criterion loss (i.e. loss without the penalty)
+        ``BasicClient`` that packs the ``self.loss_for_adaptation`` for exchange with the server and expects to
+        receive an updated (or constant if non-adaptive) parameter for the loss weight. In many cases, such as FedProx,
+        the ``loss_for_adaptation`` being packaged is the criterion loss (i.e. loss without the penalty)
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
             metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
-            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
-                'cuda'
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
+                "cuda"
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
-                each batch. Defaults to LossMeterType.AVERAGE.
+                each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
@@ -53,7 +53,7 @@ class AdaptiveDriftConstraintClient(BasicClient):
             reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
                 should send data to. Defaults to None.
             progress_bar (bool, optional): Whether or not to display a progress bar during client training and
-                validation. Uses tqdm. Defaults to False
+                validation. Uses ``tqdm``. Defaults to False
             client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
@@ -82,9 +82,9 @@ class AdaptiveDriftConstraintClient(BasicClient):
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
-        Packs the parameters and training loss into a single NDArrays to be sent to the server for aggregation. If
+        Packs the parameters and training loss into a single ``NDArrays`` to be sent to the server for aggregation. If
         the client has not been initialized, this means the server is requesting parameters for initialization and
-        just the model parameters are sent. When using the FedAvgWithAdaptiveConstraint strategy, this should not
+        just the model parameters are sent. When using the ``FedAvgWithAdaptiveConstraint`` strategy, this should not
         happen, as that strategy requires server-side initialization parameters. However, other strategies may handle
         this case.
 
@@ -123,7 +123,8 @@ class AdaptiveDriftConstraintClient(BasicClient):
         """
         Assumes that the parameters being passed contain model parameters concatenated with a penalty weight. They are
         unpacked for the clients to use in training. In the first fitting round, we assume the full model is being
-        initialized and use the FullParameterExchanger() to set all model weights.
+        initialized and use the ``FullParameterExchanger()`` to set all model weights.
+
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
                 model and also the penalty weight to be applied during training.
@@ -157,8 +158,8 @@ class AdaptiveDriftConstraintClient(BasicClient):
             target: (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: an instance of TrainingLosses containing backward loss and additional losses indexed
-                by name. Additional losses includes penalty loss.
+            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed
+            by name. Additional losses includes penalty loss.
         """
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         if additional_losses is None:
@@ -178,6 +179,7 @@ class AdaptiveDriftConstraintClient(BasicClient):
         """
         Setting up the parameter exchanger to include the appropriate packing functionality.
         By default we assume that we're exchanging all parameters. Can be overridden for other behavior
+
         Args:
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
@@ -189,7 +191,7 @@ class AdaptiveDriftConstraintClient(BasicClient):
 
     def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
         """
-        Called after training with the number of local_steps performed over the FL round and the corresponding loss
+        Called after training with the number of ``local_steps`` performed over the FL round and the corresponding loss
         dictionary. We use this to store the training loss that we want to use to adapt the penalty weight parameter
         on the server side.
 

@@ -21,8 +21,8 @@ class EnsembleModel(nn.Module):
 
         Args:
             ensemble_models (dict[str, nn.Module]): A dictionary of models that make up the ensemble.
-            aggregation_mode (EnsembleAggregationMode | None): The mode in which to aggregate the
-                predictions of individual models.
+            aggregation_mode (EnsembleAggregationMode | None): The mode in which to aggregate the predictions of
+                individual models.
         """
         super().__init__()
 
@@ -37,8 +37,8 @@ class EnsembleModel(nn.Module):
             input (torch.Tensor): A batch of input data.
 
         Returns:
-            dict[str, torch.Tensor]: A dictionary of predictions of the individual ensemble models
-                as well as prediction of the ensemble as a whole.
+            dict[str, torch.Tensor]: A dictionary of predictions of the individual ensemble models as well as
+            prediction of the ensemble as a whole.
         """
         preds = {}
         for key, model in self.ensemble_models.items():
@@ -57,9 +57,8 @@ class EnsembleModel(nn.Module):
 
     def ensemble_vote(self, preds_list: list[torch.Tensor]) -> torch.Tensor:
         """
-        Produces the aggregated prediction of the ensemble via voting. Expects predictions
-        to be in a format where the 0 axis represents the sample index and the -1 axis represents
-        the class dimension.
+        Produces the aggregated prediction of the ensemble via voting. Expects predictions to be in a format where
+        the 0 axis represents the sample index and the -1 axis represents the class dimension.
 
         Args:
             preds_list (list[torch.Tensor]): A list of predictions of the models in the ensemble.

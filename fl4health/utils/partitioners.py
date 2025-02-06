@@ -27,22 +27,29 @@ class DirichletLabelBasedAllocation(Generic[T]):
         number of partitions. Data associated with the label are then assigned to each partition according to the
         distribution. Another distribution is sampled for the next label, and so on.
 
-        NOTE: This differs in kind from label-based Dirichlet sampling. There, an existing dataset is subsampled in
+        **NOTE:** This differs in kind from label-based Dirichlet sampling. There, an existing dataset is subsampled in
         place (rather than partitioned) such that its labels match a Dirichlet distribution.
 
-        NOTE: The range for beta is (0, infinity). The larger the value of beta, the more uniform the multinomial
-        probability of the clients will be. The smaller beta is the more heterogeneous it is.
-        np.random.dirichlet([1]*5): array([0.23645891, 0.08857052, 0.29519184, 0.2999956 , 0.07978313])
-        np.random.dirichlet([1000]*5): array([0.2066252 , 0.19644968, 0.20080513, 0.19992536, 0.19619462])
+        **NOTE:** The range for beta is (0, :math:`\\infty`). The larger the value of beta, the more uniform the
+        multinomial probability of the clients will be. The smaller beta is the more heterogeneous it is.
+
+        :code:`np.random.dirichlet([1]*5): array([0.23645891, 0.08857052, 0.29519184, 0.2999956 , 0.07978313])`
+
+        :code:`np.random.dirichlet([1000]*5): array([0.2066252 , 0.19644968, 0.20080513, 0.19992536, 0.19619462])`
 
         Example Usage:
+
+        .. code-block:: python
+
             original_dataset = SyntheticDataset(
                 torch.rand((10000, 3, 3)),
                 torch.randint(low=0, high=10, size=(10000, 1))
             )
+
             heterogeneous_partitioner = DirichletLabelBasedAllocation(
                 number_of_partitions=10, unique_labels=list(range(10)), beta=10.0, min_label_examples=2
             )
+
             partitioned_datasets = heterogeneous_partitioner.partition_dataset(original_dataset, max_retries=5)
 
         Args:
@@ -50,17 +57,20 @@ class DirichletLabelBasedAllocation(Generic[T]):
             unique_labels (list[T]): This is the set of labels through which we'll iterate to perform allocation
             min_label_examples (int | None, optional): This is an optional input if you want to ensure a minimum
                 number of labels is present on each partition. If prior distribution is provided, this is ignored.
-                NOTE: This does not guarantee feasibility. That is, if you have a very small beta and request a large
-                minimum number here, you are unlikely to satisfy this request. In partitioning, if the minimum isn't
-                satisfied, we resample from the Dirichlet distribution. This is repeated some limited number of times.
-                Otherwise the partitioner "gives up". Defaults to None.
+
+                **NOTE:** This does not guarantee feasibility. That is, if you have a very small beta and request a
+                large minimum number here, you are unlikely to satisfy this request. In partitioning, if the minimum
+                isn't satisfied, we resample from the Dirichlet distribution. This is repeated some limited number of
+                times. Otherwise the partitioner "gives up".
+
+                Defaults to None.
             beta (float | None): This controls the heterogeneity of the partition allocations. The smaller the beta,
               the more skewed the label assignments will be to different clients. It is mutually exclusive with given
               prior distribution.
             prior_distribution (dict[T, np.ndarray] | None, optional): This is an optional input if you want to
               provide a prior distribution for the Dirichlet distribution. This is useful if you want to make sure that
               the partitioning of test data is similar to the partitioning of the training data. Defaults to None. It
-              is mutually exclusive with the beta parameter and min_label_examples.
+              is mutually exclusive with the beta parameter and ``min_label_examples``.
         """
         assert (beta is not None) ^ (
             prior_distribution is not None
@@ -90,14 +100,19 @@ class DirichletLabelBasedAllocation(Generic[T]):
         a Dirichlet distribution, to the partitions.
 
         Args:
-            label (T): Label is passed for logging transparency. It must be convertible to a string through str()
+            label (T): Label is passed for logging transparency. It must be convertible to a string through ``str()``
             label_indices (torch.Tensor): Indices from the dataset corresponding to a particular label. This assumes
                 that the tensor is 1D and it's len constitutes the number of total datapoints with the label.
 
+        Raises:
+            ValueError: Either beta or a prior distribution must be provided.
+
         Returns:
-            list[torch.Tensor]: partitioned indices of datapoints with the corresponding label.
-            int: The minimum number of data points assigned to a partition.
-            np.ndarray: The Dirichlet distribution used to partition the data points.
+            tuple[list[torch.Tensor], int, np.ndarray]: Tuple of:
+
+            - ``torch.Tensor``: partitioned indices of datapoints with the corresponding label.
+            - ``int``: The minimum number of data points assigned to a partition.
+            - ``np.ndarray``: The Dirichlet distribution used to partition the data points.
         """
         if self.prior_distribution is not None:
             label_prior_distribution = self.prior_distribution[label]
@@ -152,7 +167,7 @@ class DirichletLabelBasedAllocation(Generic[T]):
         self, original_dataset: D, max_retries: int | None = 5
     ) -> tuple[list[D], dict[T, np.ndarray]]:
         """
-        Attempts partitioning of the original dataset up to max_retries times. Retries are potentially required if
+        Attempts partitioning of the original dataset up to ``max_retries`` times. Retries are potentially required if
         the user requests a minimum number of labels be assigned to each of the partitions. If the drawn Dirichlet
         distribution violates this minimum, a new distribution is drawn. This is repeated until the number of retries
         is exceeded or the minimum threshold is met.
@@ -167,9 +182,9 @@ class DirichletLabelBasedAllocation(Generic[T]):
             ValueError: Throws this error if the retries have been exhausted and the user provided minimum is not met.
 
         Returns:
-            tuple[list[D], dict[T, np.ndarray]]: list[D] is the partitioned datasets, length should correspond to
-            self.number_of_partitions. dict[T, np.ndarray] is the Dirichlet distribution used to partition the data
-            points for each label.
+            tuple[list[D], dict[T, np.ndarray]]: ``list[D]`` is the partitioned datasets, length should correspond to
+            ``self.number_of_partitions``. ``dict[T, np.ndarray]`` is the Dirichlet distribution used to partition the
+            data points for each label.
         """
 
         targets = original_dataset.targets

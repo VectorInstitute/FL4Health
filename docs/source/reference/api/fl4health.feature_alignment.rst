@@ -1,7 +1,10 @@
-fl4health.feature\_alignment namespace
-======================================
+fl4health.feature\_alignment package
+====================================
 
-.. py:module:: fl4health.feature_alignment
+.. automodule:: fl4health.feature_alignment
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Submodules
 ----------

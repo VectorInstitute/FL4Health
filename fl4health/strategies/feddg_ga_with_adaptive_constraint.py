@@ -39,9 +39,9 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
         """
         Strategy for the FedDG-GA algorithm (Federated Domain Generalization with Generalization Adjustment,
         Zhang et al. 2023) combined with the Adaptive Strategy for Auxiliary constraints like FedProx. See
-        documentation on FedAvgWithAdaptiveConstraint for more information.
+        documentation on ``FedAvgWithAdaptiveConstraint`` for more information.
 
-        NOTE: Initial parameters are NOT optional. They must be passed for this strategy.
+        **NOTE:** Initial parameters are **NOT** optional. They must be passed for this strategy.
 
         Args:
             min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2.
@@ -74,10 +74,10 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
                 proximal weight in the adaptive setting. Defaults to False.
             fairness_metric (FairnessMetric | None, optional): he metric to evaluate the local model of each
                 client against the global model in order to determine their adjustment weight for aggregation.
-                Can be set to any default metric in FairnessMetricType or set to use a custom metric.
-                Optional, default is FairnessMetric(FairnessMetricType.LOSS) when specified as None.
+                Can be set to any default metric in ``FairnessMetricType`` or set to use a custom metric.
+                Optional, default is ``FairnessMetric(FairnessMetricType.LOSS)`` when specified as None.
             adjustment_weight_step_size (float, optional): The step size to determine the magnitude of change for
-                the generalization adjustment weight. It has to be 0 < adjustment_weight_step_size < 1.
+                the generalization adjustment weight. It has to be ``0 < adjustment_weight_step_size < 1.``
                 Optional, default is 0.2.
         """
 
@@ -133,9 +133,9 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
 
         Returns:
             (tuple[Parameters | None, dict[str, Scalar]]) A tuple containing the aggregated parameters
-                and the aggregated fit metrics. For adaptive constraints, the server also packs a constraint weight
-                to be sent to the clients. This is sent even if adaptive constraint weights are turned off and
-                the value simply remains constant.
+            and the aggregated fit metrics. For adaptive constraints, the server also packs a constraint weight
+            to be sent to the clients. This is sent even if adaptive constraint weights are turned off and
+            the value simply remains constant.
         """
         if not results:
             return None, {}
@@ -175,7 +175,7 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
         separate the model weights from the training losses. The model weights are reinserted into the parameters
         of the FitRes objects and the losses (along with sample counts) are placed in a list and returned
 
-        NOTE: The results that are passed to this function are MODIFIED IN-PLACE
+        **NOTE:** The results that are passed to this function are **MODIFIED IN-PLACE**.
 
         Args:
             results (list[tuple[ClientProxy, FitRes]]): The results produced in a fitting round by each of the clients
@@ -198,15 +198,16 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
 
     def _maybe_update_constraint_weight_param(self, loss: float) -> None:
         """
-        Update constraint weight parameter if adaptive_loss_weight is set to True. Regardless of whether adaptivity
+        Update constraint weight parameter if ``adaptive_loss_weight`` is set to True. Regardless of whether adaptivity
         is turned on at this time, the previous loss seen by the server is updated.
+
+        **NOTE:** For adaptive constraint losses, including FedProx, this loss is exchanged (along with the
+        weights) by each client and is the VANILLA loss that does not include the additional penalty losses.
 
         Args:
             loss (float): This is the loss to which we compare the previous loss seen by the server. For Adaptive
-            Constraint clients this should be the aggregated training loss seen by each client participating in
-            training.
-            NOTE: For adaptive constraint losses, including FedProx, this loss is exchanged (along with the weights)
-            by each client and is the VANILLA loss that does not include the additional penalty losses.
+                Constraint clients this should be the aggregated training loss seen by each client participating in
+                training.
         """
 
         if self.adapt_loss_weight:

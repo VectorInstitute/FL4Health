@@ -14,22 +14,27 @@ def set_all_random_seeds(
     """
     Set seeds for python random, numpy random, and pytorch random. It also offers the option to force pytorch to use
     deterministic algorithm for certain methods and layers see:
-    https://pytorch.org/docs/stable/generated/torch.use_deterministic_algorithms.html) for more details. Finally, it
-    allows one to disable cuda benchmarking, which can also affect the determinism of pytorch training outside of
-    random seeding. For more information on reproducibility in pytorch see:
+
+    https://pytorch.org/docs/stable/generated/torch.use_deterministic_algorithms.html)
+
+    for more details. Finally, it allows one to disable cuda benchmarking, which can also affect the determinism of
+    pytorch training outside of random seeding. For more information on reproducibility in pytorch see:
+
     https://pytorch.org/docs/stable/notes/randomness.html
 
-    NOTE: If the use_deterministic_torch_algos flag is set to True, you may need to set the environment variable
-    CUBLAS_WORKSPACE_CONFIG to something like :4096:8, to avoid CUDA errors. Additional documentation may be found
-    here: https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility
+    **NOTE:** If the ``use_deterministic_torch_algos`` flag is set to True, you may need to set the environment
+    variable ``CUBLAS_WORKSPACE_CONFIG`` to something like ``:4096:8``, to avoid CUDA errors. Additional documentation
+    may be found here:
+
+    https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility
 
     Args:
         seed (int | None, optional): The seed value to be used for random number generators. Default is 42. Seed
             setting will no-op if the seed is explicitly set to None
-        use_deterministic_torch_algos (bool, optional): Whether or not to set torch.use_deterministic_algorithms to
+        use_deterministic_torch_algos (bool, optional): Whether or not to set ``torch.use_deterministic_algorithms`` to
             True. Defaults to False.
-        disable_torch_benchmarking (bool, optional): Whether to explicitly disable cuda benchmarking in
-            torch processes. Defaults to False.
+        disable_torch_benchmarking (bool, optional): Whether to explicitly disable cuda benchmarking in torch
+            processes. Defaults to False.
     """
     if seed is None:
         log(INFO, "No seed provided. Using random seed.")
@@ -51,7 +56,7 @@ def set_all_random_seeds(
 def unset_all_random_seeds() -> None:
     """
     Set random seeds for Python random, NumPy, and PyTorch to None. Running this function would undo
-    the effects of set_all_random_seeds.
+    the effects of ``set_all_random_seeds``.
     """
     log(INFO, "Setting all random seeds to None. Reverting torch determinism settings")
     random.seed(None)
@@ -67,7 +72,7 @@ def save_random_state() -> tuple[tuple[Any, ...], dict[str, Any], torch.Tensor]:
 
     Returns:
         tuple[tuple[Any, ...], dict[str, Any], torch.Tensor]: A tuple containing the state of the random number
-            generators for Python, NumPy, and
+        generators for Python, NumPy, and PyTorch.
     """
     log(INFO, "Saving random state.")
     random_state = random.getstate()
@@ -97,7 +102,8 @@ def restore_random_state(
 def generate_hash(length: int = 8) -> str:
     """
     Generates unique hash used as id for client.
-    NOTE: This generation is unaffected by setting of random seeds.
+
+    **NOTE:** This generation is unaffected by setting of random seeds.
 
     Args:
        length (int): The length of the hash generated. Maximum length is 32

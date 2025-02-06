@@ -33,6 +33,7 @@ with warnings.catch_warnings():
 class NnunetConfig(Enum):
     """
     The possible nnunet model configs as of nnunetv2 version 2.5.1.
+
     See https://github.com/MIC-DKFZ/nnUNet/tree/v2.5.1
     """
 
@@ -59,15 +60,15 @@ NNUNET_N_SPATIAL_DIMS = {  # The number of spatial dims for each config
 
 def use_default_signal_handlers(fn: Callable) -> Callable:
     """
-    This is a decorator that resets the SIGINT and SIGTERM signal handlers back to the
-    python defaults for the execution of the method
+    This is a decorator that resets the ``SIGINT`` and ``SIGTERM`` signal handlers back to the python defaults for the
+    execution of the method
 
-    flwr 1.9.0 overrides the default signal handlers with handlers that raise an error
-    on any interruption or termination. Since nnunet spawns child processes which
-    inherit these handlers, when those subprocesses are terminated (which is expected
-    behavior), the flwr signal handlers raise an error (which we don't want).
+    flwr 1.9.0 overrides the default signal handlers with handlers that raise an error on any interruption or
+    termination. Since nnunet spawns child processes which inherit these handlers, when those subprocesses are
+    terminated (which is expected behavior), the flwr signal handlers raise an error (which we don't want).
 
     Flwr is expected to fix this in the next release. See the following issue:
+
     https://github.com/adap/flower/issues/3837
     """
 
@@ -87,15 +88,13 @@ def use_default_signal_handlers(fn: Callable) -> Callable:
 
 def reload_modules(packages: Sequence[str]) -> None:
     """
-    Given the names of one or more packages, subpackages or modules, reloads all the
-    modules within the scope of each package or the modules themselves if a module was
-    specified.
+    Given the names of one or more packages, subpackages or modules, reloads all the modules within the scope of each
+    package or the modules themselves if a module was specified.
 
     Args:
-        package (Sequence[str]): The absolute names of the packages, subpackages or
-            modules to reload. The entire import hierarchy must be specified. Eg.
-            'package.subpackage' to reload all modules in subpackage, not just
-            'subpackage'. Packages are reloaded in the order they are given
+        package (Sequence[str]): The absolute names of the packages, subpackages or modules to reload. The entire
+            import hierarchy must be specified. Eg. ``package.subpackage`` to reload all modules in subpackage, not
+            just ``subpackage``. Packages are reloaded in the order they are given.
     """
     for m_name, module in list(sys.modules.items()):
         for package in packages:
@@ -108,10 +107,9 @@ def reload_modules(packages: Sequence[str]) -> None:
 
 def set_nnunet_env(verbose: bool = False, **kwargs: str) -> None:
     """
-    For each keyword argument name and value sets the current environment variable with
-    the same name to that value and then reloads nnunet. Values must be strings. This
-    is necessary because nnunet checks some environment variables on import, and
-    therefore it must be imported or reloaded after they are set.
+    For each keyword argument name and value sets the current environment variable with the same name to that value
+    and then reloads nnunet. Values must be strings. This is necessary because nnunet checks some environment
+    variables on import, and therefore it must be imported or reloaded after they are set.
     """
     # Set environment variables
     for key, val in kwargs.items():
@@ -133,21 +131,18 @@ def convert_deep_supervision_list_to_dict(
     tensor_list: list[torch.Tensor] | tuple[torch.Tensor], num_spatial_dims: int
 ) -> dict[str, torch.Tensor]:
     """
-    Converts a list of torch.Tensors to a dictionary. Names the keys for
-    each tensor based on the spatial resolution of the tensor and its
-    index in the list. Useful for nnUNet models with deep supervision where
-    model outputs and targets loaded by the dataloader are lists. Assumes the
-    spatial dimensions of the tensors are last.
+    Converts a list of ``torch.Tensors`` to a dictionary. Names the keys for each tensor based on the spatial
+    resolution of the tensor and its index in the list. Useful for nnUNet models with deep supervision where model
+    outputs and targets loaded by the dataloader are lists. Assumes the spatial dimensions of the tensors are last.
 
     Args:
-        tensor_list (list[torch.Tensor]): A list of tensors, usually either
-            nnunet model outputs or targets, to be converted into a dictionary
-        num_spatial_dims (int): The number of spatial dimensions. Assumes the
-            spatial dimensions are last
+        tensor_list (list[torch.Tensor]): A list of tensors, usually either nnunet model outputs or targets, to be
+            converted into a dictionary
+        num_spatial_dims (int): The number of spatial dimensions. Assumes the spatial dimensions are last
+
     Returns:
-        dict[str, torch.Tensor]: A dictionary containing the tensors as
-            values where the keys are 'i-XxYxZ' where i was the tensor's index
-            in the list and X,Y,Z are the spatial dimensions of the tensor
+        dict[str, torch.Tensor]: A dictionary containing the tensors as values where the keys are 'i-XxYxZ' where i
+        was the tensor's index in the list and X,Y,Z are the spatial dimensions of the tensor
     """
     # Convert list of targets into a dictionary
     tensors = {}
@@ -162,17 +157,15 @@ def convert_deep_supervision_list_to_dict(
 
 def convert_deep_supervision_dict_to_list(tensor_dict: dict[str, torch.Tensor]) -> list[torch.Tensor]:
     """
-    Converts a dictionary of tensors back into a list so that it can be used
-    by nnunet deep supervision loss functions
+    Converts a dictionary of tensors back into a list so that it can be used by nnunet deep supervision loss functions
 
     Args:
-        tensor_dict (dict[str, torch.Tensor]): Dictionary containing
-            torch.Tensors. The key values must start with 'X-' where X is an
-            integer representing the index at which the tensor should be placed
-            in the output list
+        tensor_dict (dict[str, torch.Tensor]): Dictionary containing ``torch.Tensors``. The key values must start
+            with 'X-' where X is an integer representing the index at which the tensor should be placed in the output
+            list
 
     Returns:
-        list[torch.Tensor]: A list of torch.Tensors
+        list[torch.Tensor]: A list of ``torch.Tensors``
     """
     sorted_list = sorted(tensor_dict.items(), key=lambda x: int(x[0].split("-")[0]))
     return [tensor for key, tensor in sorted_list]
@@ -183,20 +176,17 @@ def get_segs_from_probs(preds: torch.Tensor, has_regions: bool = False, threshol
     Converts the nnunet model output probabilities to predicted segmentations
 
     Args:
-        preds (torch.Tensor): The one hot encoded model output probabilities
-            with shape (batch, classes, *additional_dims). The background should be a separate class
-        has_regions (bool, optional): If True, predicted segmentations can be
-            multiple classes at once. The exception is the background class
-            which is assumed to be the first class (class 0). If False, each
-            value in predicted segmentations has only a single class. Defaults to
-            False.
-        threshold (float): When has_regions is True, this is the threshold
-            value used to determine whether or not an output is a part of a
-            class
+        preds (torch.Tensor): The one hot encoded model output probabilities with shape (batch, classes,
+            \\*additional_dims). The background should be a separate class
+        has_regions (bool, optional): If True, predicted segmentations can be multiple classes at once. The exception
+            is the background class which is assumed to be the first class (class 0). If False, each value in
+            predicted segmentations has only a single class. Defaults to False.
+        threshold (float): When ``has_regions`` is True, this is the threshold value used to determine whether or not
+            an output is a part of a class
 
     Returns:
-        torch.Tensor: tensor containing the predicted segmentations as a one hot encoded
-            binary tensor of 64-bit integers.
+        torch.Tensor: tensor containing the predicted segmentations as a one hot encoded binary tensor of 64-bit
+        integers.
     """
     if has_regions:
         pred_segs = preds > threshold
@@ -231,8 +221,7 @@ def collapse_one_hot_tensor(input: torch.Tensor, dim: int = 0) -> torch.Tensor:
 
 def get_dataset_n_voxels(source_plans: dict, n_cases: int) -> float:
     """
-    Determines the total number of voxels in the dataset. Used by NnunetClient to
-    determine the maximum batch size.
+    Determines the total number of voxels in the dataset. Used by ``NnunetClient`` to determine the maximum batch size.
 
     Args:
         source_plans (Dict): The nnunet plans dict that is being modified
@@ -261,9 +250,8 @@ def prepare_loss_arg(tensor: torch.Tensor | dict[str, torch.Tensor]) -> torch.Te
         tensor (torch.Tensor | dict[str, torch.Tensor]): The input tensor
 
     Returns:
-        torch.Tensor | list[torch.Tensor]: The tensor ready to be passed to the loss
-            function. A single tensor if not using deep supervision and a list of
-            tensors if deep supervision is on.
+        torch.Tensor | list[torch.Tensor]: The tensor ready to be passed to the loss function. A single tensor if not
+        using deep supervision and a list of tensors if deep supervision is on.
     """
     # TODO: IDK why we have to make assumptions when we could just have a boolean state
     if isinstance(tensor, torch.Tensor):
@@ -292,8 +280,8 @@ class nnUNetDataLoaderWrapper(DataLoader):
                 dataloader used by nnunet
             nnunet_config (NnUNetConfig): The nnunet config. Enum type helps ensure that nnunet config is valid
             infinite (bool, optional): Whether or not to treat the dataset as infinite. The dataloaders sample data
-                with replacement either way. The only difference is that if set to False, a StopIteration is
-                generated after num_samples/batch_size steps. Defaults to False.
+                with replacement either way. The only difference is that if set to False, a ``StopIteration`` is
+                generated after ``num_samples``/``batch_size`` steps. Defaults to False.
         """
         # The augmenter is a wrapper on the nnunet dataloader
         self.nnunet_augmenter = nnunet_augmenter
@@ -338,15 +326,13 @@ class nnUNetDataLoaderWrapper(DataLoader):
 
     def __len__(self) -> int:
         """
-        nnunetv2 v2.5.1 hardcodes an 'epoch' as 250 steps. We could set the len to
-        n_samples/batch_size, but this gets complicated as nnunet models operate on
-        patches of the input images, and therefore can have batch sizes larger than the
-        dataset. We would then have epochs with only 1 step!
+        nnunetv2 v2.5.1 hardcodes an 'epoch' as 250 steps. We could set the len to ``n_samples``/``batch_size``, but
+        this gets complicated as nnunet models operate on patches of the input images, and therefore can have batch
+        sizes larger than the dataset. We would then have epochs with only 1 step!
 
-        Here we go through the hassle of computing the ratio between the number of
-        voxels in a sample and the number of voxels in a patch and then using that
-        factor to scale n_samples. This is particularly important for training 2d
-        models on 3d data.
+        Here we go through the hassle of computing the ratio between the number of voxels in a sample and the number
+        of voxels in a patch and then using that factor to scale ``n_samples``. This is particularly important for
+        training 2d models on 3d data.
         """
         sample, _, _ = self.dataset.load_case(self.nnunet_dataloader.indices[0])
         n_image_voxels = np.prod(sample.shape)
@@ -366,8 +352,7 @@ class nnUNetDataLoaderWrapper(DataLoader):
 
     def shutdown(self) -> None:
         """
-        The multithreaded augmenters used by nnunet need to be shutdown gracefully to
-        avoid errors
+        The multithreaded augmenters used by nnunet need to be shutdown gracefully to avoid errors
         """
         if isinstance(self.nnunet_augmenter, (NonDetMultiThreadedAugmenter, MultiThreadedAugmenter)):
             self.nnunet_augmenter._finish()
@@ -376,7 +361,7 @@ class nnUNetDataLoaderWrapper(DataLoader):
 
 
 class Module2LossWrapper(_Loss):
-    """Converts a nn.Module subclass to a _Loss subclass"""
+    """Converts a `` nn.Module`` subclass to a ``_Loss`` subclass"""
 
     def __init__(self, loss: nn.Module, **kwargs: Any) -> None:
         super().__init__(**kwargs)
@@ -420,17 +405,17 @@ class PolyLRSchedulerWrapper(_LRScheduler):
         steps_per_lr: int = 250,
     ) -> None:
         """
-        Learning rate (LR) scheduler with polynomial decay across fixed windows of size steps_per_lr.
+        Learning rate (LR) scheduler with polynomial decay across fixed windows of size ``steps_per_lr``.
 
         Args:
             optimizer (Optimizer): The optimizer to apply LR scheduler to.
             initial_lr (float): The initial learning rate of the optimizer.
             max_steps (int): The maximum total number of steps across all FL rounds.
-            exponent (float): Controls how quickly LR decreases over time. Higher values
-                lead to more rapid descent. Defaults to 0.9.
-            steps_per_lr (int): The number of steps per LR before decaying.
-                (ie 10 means the LR will be constant for 10 steps prior to being decreased to the subsequent value).
-                Defaults to 250 as that is the default for nnunet (decay LR once an epoch and epoch is 250 steps).
+            exponent (float): Controls how quickly LR decreases over time. Higher values lead to more rapid descent.
+                Defaults to 0.9.
+            steps_per_lr (int): The number of steps per LR before decaying. (ie 10 means the LR will be constant for
+                10 steps prior to being decreased to the subsequent value). Defaults to 250 as that is the default for
+                nnunet (decay LR once an epoch and epoch is 250 steps).
         """
         self.optimizer = optimizer
         self.initial_lr = initial_lr

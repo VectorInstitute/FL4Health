@@ -1,7 +1,10 @@
-fl4health.clients.deep\_mmd\_clients namespace
-==============================================
+fl4health.clients.deep\_mmd\_clients package
+============================================
 
-.. py:module:: fl4health.clients.deep_mmd_clients
+.. automodule:: fl4health.clients.deep_mmd_clients
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Submodules
 ----------

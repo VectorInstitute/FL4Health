@@ -111,7 +111,7 @@ if __name__ == "__main__":
         required=False,
         help="[OPTIONAL] The nnunet data identifier prefix to use. The final \
             data identifier will be the 'prefix_config' where config is the \
-            nnunet config (eg. 2d, 3d_fullres, etc.). If preprocessed data \
+            nnunet config (e.g. 2d, 3d_fullres, etc.). If preprocessed data \
             already exists can be used to specify which preprocessed data to \
             use. The default prefix is the plans name used during training (see \
             the --save-plans flag)",

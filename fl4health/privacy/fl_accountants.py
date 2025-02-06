@@ -10,12 +10,6 @@ from fl4health.privacy.moments_accountant import (
 
 
 class FlInstanceLevelAccountant:
-    """
-    This accountant should be used when applying FL and measuring instance-level privacy
-    NOTE: This class assumes that all sampling is done via Poisson sampling (client and data point level).
-    Further it assumes that the sampling ratio of clients and noise multiplier are fixed throughout training
-    """
-
     def __init__(
         self,
         client_sampling_rate: float,
@@ -26,12 +20,21 @@ class FlInstanceLevelAccountant:
         moment_orders: list[float] | None = None,
     ) -> None:
         """
-        client_sampling_rate: probability that each client will be included in a round
-        noise_multiplier: multiplier of noise std. dev. on clipping bound
-        epochs_per_round: number of epochs each client will complete per server round
-        client_batch_sizes: batch size per client, if a single value it is assumed to be constant across clients
-        client_dataset_sizes: size of full dataset on a client, if a single value it is assumed to be constant
-        across clients.
+        This accountant should be used when applying FL and measuring instance-level privacy
+
+        **NOTE**: This class assumes that all sampling is done via Poisson sampling (client and data point level).
+        Further it assumes that the sampling ratio of clients and noise multiplier are fixed throughout training
+
+        Args:
+            client_sampling_rate (float): probability that each client will be included in a round
+            noise_multiplier (float):  multiplier of noise std. dev. on clipping bound
+            epochs_per_round (int): number of epochs each client will complete per server round
+            client_batch_sizes (list[int]): batch size per client, if a single value it is assumed to be constant
+                across clients
+            client_dataset_sizes (list[int]): size of full dataset on a client, if a single value it is assumed to be
+                constant across clients.
+            moment_orders (list[float] | None, optional): Moments orders to be used in computing the approximate
+                epsilon value. Defaults to None.
         """
         self.noise_multiplier = noise_multiplier
         self.epochs_per_round = epochs_per_round
@@ -53,7 +56,16 @@ class FlInstanceLevelAccountant:
         return [ceil(dataset / batch) for batch, dataset in zip(client_batch_sizes, client_dataset_sizes)]
 
     def get_epsilon(self, server_updates: int, delta: float) -> float:
-        """server_updates: number of central server updates performed"""
+        """
+        Compute the epsilon value for the provided delta and the number of server updates performed
+
+        Args:
+            server_updates (int): number of central server updates performed
+            delta (float): Delta value from which to compute epsilon
+
+        Returns:
+            float: Epsilon
+        """
         epsilons = []
         for num_batch, sampling_strategy in zip(self.num_batches_per_client, self.sampling_strategies_per_client):
             # Round up because privacy loss is monotonic wrt total_updates
@@ -63,7 +75,16 @@ class FlInstanceLevelAccountant:
         return max(epsilons)
 
     def get_delta(self, server_updates: int, epsilon: float) -> float:
-        """server_updates: number of central server updates performed"""
+        """
+        Compute the delta value for the provided epsilon and the number of server updates performed
+
+        Args:
+            server_updates (int): number of central server updates performed
+            epsilon (float): Epsilon value from which to compute delta
+
+        Returns:
+            float: delta
+        """
         deltas = []
         for num_batch, sampling_strategy in zip(self.num_batches_per_client, self.sampling_strategies_per_client):
             # Round up because privacy loss is monotonic wrt total_updates
@@ -95,10 +116,6 @@ class ClientLevelAccountant(ABC):
 
 
 class FlClientLevelAccountantPoissonSampling(ClientLevelAccountant):
-    """
-    This accountant should be used when applying FL with Poisson client sampling and measuring client-level privacy
-    """
-
     def __init__(
         self,
         client_sampling_rate: float | list[float],
@@ -106,10 +123,16 @@ class FlClientLevelAccountantPoissonSampling(ClientLevelAccountant):
         moment_orders: list[float] | None = None,
     ) -> None:
         """
-        client_sampling_rate: probability that each client will be included in a round
-        noise_multiplier: multiplier of noise std. dev. on clipping bound
-        NOTE: The above values can be lists, where they are treated as sequences of training with the respective
+        This accountant should be used when applying FL with Poisson client sampling and measuring client-level privacy
+
+        **NOTE**: The above values can be lists, where they are treated as sequences of training with the respective
         parameters
+
+        Args:
+            client_sampling_rate (float | list[float]): probability that each client will be included in a round
+            noise_multiplier (float | list[float]): multiplier of noise std. dev. on clipping bound
+            moment_orders (list[float] | None, optional): Moments orders to be used in computing the approximate
+                epsilon value. Defaults to None. Defaults to None.
         """
         super().__init__(noise_multiplier, moment_orders)
         self.sampling_strategy: SamplingStrategy | list[PoissonSampling]
@@ -120,21 +143,35 @@ class FlClientLevelAccountantPoissonSampling(ClientLevelAccountant):
             self.sampling_strategy = PoissonSampling(client_sampling_rate)
 
     def get_epsilon(self, server_updates: int | list[int], delta: float) -> float:
-        """server_updates: number of central server updates performed"""
+        """
+        Compute the epsilon value for the provided delta and the number of server updates performed
+
+        Args:
+            server_updates (int | list[int]): number of central server updates performed
+            delta (float): Delta value from which to compute epsilon
+
+        Returns:
+            float: epsilon
+        """
         self._validate_server_updates(server_updates)
         return self.accountant.get_epsilon(self.sampling_strategy, self.noise_multiplier, server_updates, delta)
 
     def get_delta(self, server_updates: int | list[int], epsilon: float) -> float:
-        """server_updates: number of central server updates performed"""
+        """
+        Compute the delta value for the provided epsilon and the number of server updates performed
+
+        Args:
+            server_updates (int | list[int]): number of central server updates performed
+            epsilon (float): Epsilon value from which to compute delta
+
+        Returns:
+            float: delta
+        """
         self._validate_server_updates(server_updates)
         return self.accountant.get_delta(self.sampling_strategy, self.noise_multiplier, server_updates, epsilon)
 
 
 class FlClientLevelAccountantFixedSamplingNoReplacement(ClientLevelAccountant):
-    """
-    This accountant should be used when applying FL with Fixed Sampling
-    with No Replacement and measuring client-level privacy
-    """
 
     def __init__(
         self,
@@ -144,11 +181,18 @@ class FlClientLevelAccountantFixedSamplingNoReplacement(ClientLevelAccountant):
         moment_orders: list[float] | None = None,
     ) -> None:
         """
-        n_total_clients: total number of clients to be sampled from
-        n_clients_sampled: number of clients sampled in a given round
-        noise_multiplier: multiplier of noise std. dev. on clipping bound
-        NOTE: The above values can be lists, where they are treated as sequences of training with the respective
+        This accountant should be used when applying FL with Fixed Sampling with No Replacement and measuring
+        client-level privacy
+
+        **NOTE**: The above values can be lists, where they are treated as sequences of training with the respective
         parameters
+
+        Args:
+            n_total_clients (int): total number of clients to be sampled from
+            n_clients_sampled (int | list[int]): number of clients sampled in a given round
+            noise_multiplier (float | list[float]): multiplier of noise std. dev. on clipping bound
+            moment_orders (list[float] | None, optional): Moments orders to be used in computing the approximate
+                epsilon value. Defaults to None. Defaults to None.
         """
         super().__init__(noise_multiplier, moment_orders)
         self.sampling_strategy: SamplingStrategy | list[FixedSamplingWithoutReplacement]
@@ -161,11 +205,29 @@ class FlClientLevelAccountantFixedSamplingNoReplacement(ClientLevelAccountant):
             self.sampling_strategy = FixedSamplingWithoutReplacement(n_total_clients, n_clients_sampled)
 
     def get_epsilon(self, server_updates: int | list[int], delta: float) -> float:
-        """server_updates: number of central server updates performed"""
+        """
+        Compute the epsilon value for the provided delta and the number of server updates performed
+
+        Args:
+            server_updates (int | list[int]): number of central server updates performed
+            delta (float): Delta value from which to compute epsilon
+
+        Returns:
+            float: epsilon
+        """
         self._validate_server_updates(server_updates)
         return self.accountant.get_epsilon(self.sampling_strategy, self.noise_multiplier, server_updates, delta)
 
     def get_delta(self, server_updates: int | list[int], epsilon: float) -> float:
-        """server_updates: number of central server updates performed"""
+        """
+        Compute the delta value for the provided epsilon and the number of server updates performed
+
+        Args:
+            server_updates (int | list[int]): number of central server updates performed
+            epsilon (float): Epsilon value from which to compute delta
+
+        Returns:
+            float: delta
+        """
         self._validate_server_updates(server_updates)
         return self.accountant.get_delta(self.sampling_strategy, self.noise_multiplier, server_updates, epsilon)

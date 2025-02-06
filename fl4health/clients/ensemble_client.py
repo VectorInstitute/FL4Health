@@ -32,10 +32,10 @@ class EnsembleClient(BasicClient):
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
             metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
-            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
-                'cuda'
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
+                "cuda"
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
-                each batch. Defaults to LossMeterType.AVERAGE.
+                each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
@@ -43,7 +43,7 @@ class EnsembleClient(BasicClient):
             reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
                 should send data to. Defaults to None.
             progress_bar (bool, optional): Whether or not to display a progress bar during client training and
-                validation. Uses tqdm. Defaults to False
+                validation. Uses ``tqdm``. Defaults to False
             client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
@@ -80,8 +80,9 @@ class EnsembleClient(BasicClient):
 
     def set_optimizer(self, config: Config) -> None:
         """
-        Method called in the the setup_client method to set optimizer attribute returned by used-defined get_optimizer.
-        Ensures that the return value of get_optimizer is a dictionary since that is required for the ensemble client.
+        Method called in the the setup_client method to set optimizer attribute returned by used-defined
+        ``get_optimizer``. Ensures that the return value of ``get_optimizer`` is a dictionary since that is required
+        for the ensemble client.
 
         Args:
             config (Config): The config from the server.
@@ -92,21 +93,20 @@ class EnsembleClient(BasicClient):
 
     def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
         """
-        Given a single batch of input and target data, generate predictions
-        (both individual models and ensemble prediction), compute loss, update parameters and
-        optionally update metrics if they exist. (ie backpropagation on a single batch of data).
-        Assumes self.model is in train mode already. Differs from parent method in that, there are multiple losses
-        that we have to do backward passes on and multiple optimizers to update parameters each train step.
+        Given a single batch of input and target data, generate predictions (both individual models and ensemble
+        prediction), compute loss, update parameters and optionally update metrics if they exist. (i.e.
+        backpropagation on a single batch of data). Assumes ``self.model`` is in train mode already. Differs from
+        parent  method in that, there are multiple losses that we have to do backward passes on and multiple
+        optimizers to  update parameters each train step.
 
         Args:
-            input (TorchInputType): The input to be fed into the model.
-            TorchInputType is simply an alias for the union of torch.Tensor and
-            dict[str, torch.Tensor].
+            input (TorchInputType): The input to be fed into the model. ``TorchInputType`` is simply an alias for the
+                union of ``torch.Tensor`` and ``dict[str, torch.Tensor]``.
             target (torch.Tensor): The target corresponding to the input.
 
         Returns:
             tuple[TrainingLosses, dict[str, torch.Tensor]]: The losses object from the train step along with
-                a dictionary of any predictions produced by the model.
+            a dictionary of any predictions produced by the model.
         """
         assert isinstance(input, torch.Tensor)
         for optimizer in self.optimizers.values():
@@ -142,8 +142,8 @@ class EnsembleClient(BasicClient):
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: an instance of TrainingLosses containing backward loss and additional losses
-                indexed by name.
+            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses
+            indexed by name.
         """
         loss_dict = {}
         for key, pred in preds.items():
@@ -169,8 +169,8 @@ class EnsembleClient(BasicClient):
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and additional losses
-                indexed by name.
+            EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
+            indexed by name.
         """
         loss_dict = {}
         for key, pred in preds.items():
@@ -181,15 +181,14 @@ class EnsembleClient(BasicClient):
 
     def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
         """
-        Method to be defined by user that returns dictionary of optimizers with keys corresponding to the
-        keys of the models in EnsembleModel that the optimizer applies too.
+        Method to be defined by user that returns dictionary of optimizers with keys corresponding to the keys of the
+        models in ``EnsembleModel`` that the optimizer applies too.
 
         Args:
             config (Config): The config sent from the server.
 
         Returns:
-            dict[str, Optimizer]: An optimizer or dictionary of optimizers to
-            train model.
+            dict[str, Optimizer]: An optimizer or dictionary of optimizers to train model.
 
         Raises:
             NotImplementedError: To be defined in child class.

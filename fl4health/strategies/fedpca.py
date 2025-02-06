@@ -34,21 +34,19 @@ class FedPCA(BasicFedAvg):
         svd_merging: bool = True,
     ) -> None:
         """
-        Strategy responsible for performing federated Principal Component Analysis.
-        More specifically, this strategy merges client-computed local principal components
-        to obtain the principal components for all data.
+        Strategy responsible for performing federated Principal Component Analysis. More specifically, this strategy
+        merges client-computed local principal components to obtain the principal components for all data.
 
         Args:
-            fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0. Defaults to 1.0.
+            fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0.
             fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.
             min_available_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
-                Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
-                Function used to configure client-side validation by providing a Config dictionary.
-                Defaults to None.
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                training by providing a configuration dictionary. Defaults to None.
+            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                client-side validation by providing a ``Config`` dictionary. Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             initial_parameters (Parameters | None, optional): Initial global model parameters. Defaults to None.
             fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
@@ -103,7 +101,7 @@ class FedPCA(BasicFedAvg):
 
         Returns:
             tuple[Parameters | None, dict[str, Scalar]]: The aggregated parameters and the metrics dictionary.
-                In this case, the parameters are the new singular vectors and their corresponding singular values.
+            In this case, the parameters are the new singular vectors and their corresponding singular values.
         """
         if not results:
             return None, {}
@@ -150,36 +148,43 @@ class FedPCA(BasicFedAvg):
         self, client_singular_vectors: NDArrays, client_singular_values: NDArrays
     ) -> tuple[NDArray, NDArray]:
         """
-        Produce the principal components for all the data distributed across clients by merging
-        the principal components belonging to each local dataset.
+        Produce the principal components for all the data distributed across clients by merging the principal
+        components belonging to each local dataset.
 
-        Each clients sends a matrix whose columns are its local principal components to the server.
-        The corresponding singular values are also shared.
+        Each clients sends a matrix whose columns are its local principal components to the server. The corresponding
+        singular values are also shared.
 
         The server arranges the local principal components into a block matrix, then performs SVD.
 
-        More precisely, if U_i denotes the matrix of the principal components of client i, and S_i denotes
+        More precisely, if ``U_i`` denotes the matrix of the principal components of client i, and ``S_i`` denotes
         the corresponding diagonal matrix of singular values, and there are n clients, then merging is done by
         performing SVD on the matrix
 
-        B = [U_1 @ S_1 | U_2 @ S_2 | ... | U_n @ S_n],
+        ``B = [U_1 @ S_1 | U_2 @ S_2 | ... | U_n @ S_n],``
 
         where the new left singular vectors are returned as the merging result.
 
         Notes:
 
-        1. If U_i @ S_i is of size d by N_i, then B has size d by N, where N = N_1 + N_2 + ... + N_n.
-
+        1. If ``U_i @ S_i`` is of size ``d`` by ``N_i``, then ``B`` has size ``d`` by ``N``, where
+           ``N = N_1 + N_2 + ... + N_n.``
         2. If
 
-        U @ S @ V.T = B
+           ``U @ S @ V.T = B``
 
-        is the SVD of B, then it turns out that U = A @ U',
-        where the columns of U' are the true principal components of the aggregated data,
-        and A is some block unitary matrix.
+           is the SVD of ``B``, then it turns out that ``U = A @ U'``, where the columns of ``U'`` are the true
+           principal components of the aggregated data, and ``A`` is some block unitary matrix.
 
         For the theoretical justification behind this procedure, see the paper
         "A Distributed and Incremental SVD Algorithm for Agglomerative Data Analysis on Large Networks".
+
+        **NOTE:** This method assumes that the *columns* of ``U_i``'s are the local principal components. Thus, after
+        performing SVD on the matrix ``B`` (defined above), the merging result is the **left** singular vectors.
+
+        This is in contrast with the client-side implementation of PCA (contained in class PcaModule), which assumes
+        that the **rows** of the input data matrix are the data points. Hence, in PcaModule, the **right** singular
+        vectors of the SVD of each client's data matrix are the principal components. (In a nutshell, the input data
+        matrices in these two cases are "transposes" of each other.)
 
         Args:
             client_singular_vectors (NDArrays): Local PCs.
@@ -187,19 +192,6 @@ class FedPCA(BasicFedAvg):
 
         Returns:
             tuple[NDArray, NDArray]: merged PCs and corresponding singular values.
-
-        Note:
-            This method assumes that the *columns* of U_i's are the local principal components.
-            Thus, after performing SVD on the matrix B (defined above), the merging result is the
-            *left* singular vectors.
-
-            This is in contrast with the client-side implementation of PCA
-            (contained in class PcaModule), which assumes that the *rows* of the
-            input data matrix are the data points.
-            Hence, in PcaModule, the *right* singular vectors of the SVD of
-            each client's data matrix are the principal components.
-
-            (In a nutshell, the input data matrices in these two cases are "transposes" of each other.)
         """
         X = [U @ np.diag(S) for U, S in zip(client_singular_vectors, client_singular_values)]
         svd_input = np.concatenate(X, axis=1)
@@ -216,23 +208,27 @@ class FedPCA(BasicFedAvg):
         Each clients sends a matrix whose columns are the local principal components to the server. The corresponding
         singular values are also shared.
 
-        This implementation can be viewed as a more efficient approximation to
-        the SVD-based merging in that it does not require performing SVD on a large matrix.
+        This implementation can be viewed as a more efficient approximation to  the SVD-based merging in that it does
+        not require performing SVD on a large matrix.
 
         Directly performing SVD does not take into account the following two observations, suggesting there are more
         efficient algorithms for merging:
-            1. Each client's singular vectors are already orthonormal.
-            2. The right singular vectors do not need to be computed since
-            only the left singular vectors are returned as the merging result.
 
-        In contrast, the algorithm here performs a QR decomposition on the large data matrix, which
-        is more efficient than SVD, and SVD is only performed on a much smaller matrix.
+        1. Each client's singular vectors are already orthonormal.
+        2. The right singular vectors do not need to be computed since only the left singular vectors are returned as
+           the merging result.
+
+        In contrast, the algorithm here performs a QR decomposition on the large data matrix, which is more efficient
+        than SVD, and SVD is only performed on a much smaller matrix.
 
         Similarly to the SVD-based merging, it returns an approximation of the true principal components
         of the aggregated data up to the multiplication of some block unitary matrix.
 
-        For the theoretical justification behind this approach, see the paper
-        "Subspace Tracking for Latent Semantic Analysis".
+        For the theoretical justification behind this approach, see the paper "Subspace Tracking for Latent
+        Semantic Analysis".
+
+        **NOTE:** Similar to ``merge_subspaces_svd``, this method assumes that the **columns** of ``U_i``'s are the
+        local principal components.
 
         Args:
             client_singular_vectors (NDArrays): Local PCs.
@@ -240,10 +236,6 @@ class FedPCA(BasicFedAvg):
 
         Returns:
             tuple[NDArray, NDArray]: merged PCs and corresponding singular values.
-
-        Note:
-            Similar to merge_subspaces_svd, this method assumes that the *columns* of U_i's are
-            the local principal components.
         """
         assert len(client_singular_values) >= 2
         if len(client_singular_values) == 2:

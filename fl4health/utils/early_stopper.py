@@ -105,7 +105,7 @@ class EarlyStopper:
 
     def save_snapshot(self) -> None:
         """
-        Creates a snapshot of the client state and if snapshot_ckpt is given, saves it to the checkpoint.
+        Creates a snapshot of the client state and if ``snapshot_ckpt`` is given, saves it to the checkpoint.
         """
         for attr, (snapshotter_function, expected_type) in self.snapshot_attrs.items():
             self.snapshot_ckpt.update(snapshotter_function.save(attr, expected_type))
@@ -131,8 +131,8 @@ class EarlyStopper:
         Load checkpointed snapshot dict consisting to the respective model attributes.
 
         Args:
-            attributes (list[str] | None): List of attributes to load from the checkpoint.
-                If None, all attributes are loaded. Defaults to None.
+            attributes (list[str] | None): List of attributes to load from the checkpoint. If None, all attributes
+                are loaded. Defaults to None.
         """
         assert (
             self.checkpointer.checkpoint_exists(self.checkpoint_name) or self.snapshot_ckpt != {}

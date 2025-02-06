@@ -72,11 +72,12 @@ def process_client_data(
 
 
 def preprocess_isic_2019(data_path: str, official_columns: list[str]) -> None:
-    """Preprocesses the ISIC 2019 dataset.
+    """
+    Preprocesses the ISIC 2019 dataset.
 
     Args:
-        data_path: The base path to the dataset.
-        official_columns: The list of official columns for the dataset.
+        data_path (str): The base path to the dataset.
+        official_columns (list[str]): The list of official columns for the dataset.
     """
     Isic_2019_path = os.path.join(data_path, "ISIC_2019")
     Isic_csv_path = os.path.join(Isic_2019_path, "ISIC_2019_Training_GroundTruth.csv")
@@ -115,25 +116,27 @@ def preprocess_isic_2019(data_path: str, official_columns: list[str]) -> None:
 
 
 def ham_image_path_func(row: pd.Series) -> str:
-    """Constructs the image path for the HAM10000 dataset.
+    """
+    Constructs the image path for the HAM10000 dataset.
 
     Args:
-        row: A row from the dataframe.
+        row (pd.Series): A row from the dataframe.
 
     Returns:
-        The constructed image path.
+        str: The constructed image path.
     """
     return os.path.join("fl4health", "datasets", "skin_cancer", "HAM10000", row["image_id"] + ".jpg")
 
 
 def ham_label_map_func(row: pd.Series) -> str:
-    """Maps the original label to the new label for the HAM10000 dataset.
+    """
+    Maps the original label to the new label for the HAM10000 dataset.
 
     Args:
-        row: A row from the dataframe.
+        row (pd.Series): A row from the dataframe.
 
     Returns:
-        The mapped label.
+        str: The mapped label.
     """
     Ham_labelmap = {
         "akiec": "AK",
@@ -148,11 +151,12 @@ def ham_label_map_func(row: pd.Series) -> str:
 
 
 def preprocess_ham10000(data_path: str, official_columns: list[str]) -> None:
-    """Preprocesses the HAM10000 dataset.
+    """
+    Preprocesses the HAM10000 dataset.
 
     Args:
-        data_path: The base path to the dataset.
-        official_columns: The list of official columns for the dataset.
+        data_path (str): The base path to the dataset.
+        official_columns (list[str]): The list of official columns for the dataset.
     """
     Ham_10000_path = os.path.join(data_path, "HAM10000")
     Ham_csv_path = os.path.join(Ham_10000_path, "HAM10000_metadata")
@@ -186,25 +190,27 @@ def preprocess_ham10000(data_path: str, official_columns: list[str]) -> None:
 
 
 def pad_image_path_func(row: pd.Series) -> str:
-    """Constructs the image path for the PAD-UFES-20 dataset.
+    """
+    Constructs the image path for the PAD-UFES-20 dataset.
 
     Args:
-        row: A row from the dataframe.
+        row (pd.Series): A row from the dataframe.
 
     Returns:
-        The constructed image path.
+        str: The constructed image path.
     """
     return os.path.join("fl4health", "datasets", "skin_cancer", "PAD-UFES-20", row["img_id"])
 
 
 def pad_label_map_func(row: pd.Series) -> str:
-    """Maps the original label to the new label for the PAD-UFES-20 dataset.
+    """
+    Maps the original label to the new label for the PAD-UFES-20 dataset.
 
     Args:
-        row: A row from the dataframe.
+        row (pd.Series): A row from the dataframe.
 
     Returns:
-        The mapped label.
+        str: The mapped label.
     """
     Pad_ufes_20_labelmap = {
         "ACK": "AK",
@@ -218,11 +224,12 @@ def pad_label_map_func(row: pd.Series) -> str:
 
 
 def preprocess_pad_ufes_20(data_path: str, official_columns: list[str]) -> None:
-    """Preprocesses the PAD-UFES-20 dataset.
+    """
+    Preprocesses the PAD-UFES-20 dataset.
 
     Args:
-        data_path: The base path to the dataset.
-        official_columns: The list of official columns for the dataset.
+        data_path (str): The base path to the dataset.
+        official_columns (list[str]): The list of official columns for the dataset.
     """
     Pad_ufes_20_path = os.path.join(data_path, "PAD-UFES-20")
     Pad_ufes_20_csv_path = os.path.join(Pad_ufes_20_path, "metadata.csv")
@@ -242,25 +249,27 @@ def preprocess_pad_ufes_20(data_path: str, official_columns: list[str]) -> None:
 
 
 def derm7pt_image_path_func(row: pd.Series) -> str:
-    """Constructs the image path for the Derm7pt dataset.
+    """
+    Constructs the image path for the Derm7pt dataset.
 
     Args:
-        row: A row from the dataframe.
+        row (pd.Series): A row from the dataframe.
 
     Returns:
-        The constructed image path.
+        str:  The constructed image path.
     """
     return os.path.join("fl4health", "datasets", "skin_cancer", "Derm7pt", "images", row["derm"])
 
 
 def derm7pt_label_map_func(row: pd.Series) -> str:
-    """Maps the original label to the new label for the Derm7pt dataset.
+    """
+    Maps the original label to the new label for the Derm7pt dataset.
 
     Args:
-        row: A row from the dataframe.
+        row (pd.Series): A row from the dataframe.
 
     Returns:
-        The mapped label.
+        str:  The mapped label.
     """
     Derm7pt_labelmap = {
         "basal cell carcinoma": "BCC",
@@ -288,11 +297,12 @@ def derm7pt_label_map_func(row: pd.Series) -> str:
 
 
 def preprocess_derm7pt(data_path: str, official_columns: list[str]) -> None:
-    """Preprocesses the Derm7pt dataset.
+    """
+    Preprocesses the Derm7pt dataset.
 
     Args:
-        data_path: The base path to the dataset.
-        official_columns: The list of official columns for the dataset.
+        data_path (str): The base path to the dataset.
+        official_columns (list[str]): The list of official columns for the dataset.
     """
     Derm7pt_path = os.path.join(data_path, "Derm7pt")
     Derm7pt_df = pd.read_csv(os.path.join(Derm7pt_path, "meta", "meta_core.csv"))

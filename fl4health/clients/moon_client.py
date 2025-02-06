@@ -39,10 +39,10 @@ class MoonClient(BasicClient):
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
             metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
-            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
-                'cuda'
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
+                "cuda"
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
-                each batch. Defaults to LossMeterType.AVERAGE.
+                each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
@@ -50,7 +50,7 @@ class MoonClient(BasicClient):
             reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
                 should send data to. Defaults to None.
             progress_bar (bool, optional): Whether or not to display a progress bar during client training and
-                validation. Uses tqdm. Defaults to False
+                validation. Uses ``tqdm``. Defaults to False
             client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
@@ -85,13 +85,13 @@ class MoonClient(BasicClient):
     def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the prediction(s) and features of the model(s) given the input. This function also produces the
-        necessary features from the global_model (aggregated model from server) and old_models (previous client-side
-        optimized models) in order to be able to compute the appropriate contrastive loss.
+        necessary features from the ``global_model`` (aggregated model from server) and ``old_models`` (previous
+        client-side optimized models) in order to be able to compute the appropriate contrastive loss.
 
         Args:
-            input (TorchInputType): Inputs to be fed into the model. TorchInputType is simply an alias
-            for the union of torch.Tensor and dict[str, torch.Tensor]. Here, the MOON models require input to
-            simply be of type torch.Tensor
+            input (TorchInputType): Inputs to be fed into the model. ``TorchInputType`` is simply an alias
+                for the union of ``torch.Tensor`` and ``dict[str, torch.Tensor]``. Here, the MOON models require
+                input to simply be of type ``torch.Tensor``
 
         Returns:
             tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple in which the first element
@@ -169,9 +169,10 @@ class MoonClient(BasicClient):
             target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            tuple[torch.Tensor, dict[str, torch.Tensor]]; A tuple with:
-                - The tensor for the total loss
-                - A dictionary with `loss`, `contrastive_loss` and `total_loss` keys and their calculated values.
+            tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
+
+            - The tensor for the total loss
+            - A dictionary with `loss`, `contrastive_loss` and `total_loss` keys and their calculated values.
         """
 
         loss = self.criterion(preds["prediction"], target)
@@ -208,7 +209,7 @@ class MoonClient(BasicClient):
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: an instance of TrainingLosses containing backward loss and additional losses
+            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses
             indexed by name.
         """
         # Check that the model is in training mode
@@ -240,8 +241,8 @@ class MoonClient(BasicClient):
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and
-                additional losses indexed by name.
+            EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
+            indexed by name.
         """
         # Check that the model is in evaluation mode
         assert not self.model.training

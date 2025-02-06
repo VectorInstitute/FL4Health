@@ -25,17 +25,18 @@ class SparseCooParameterExchanger(PartialParameterExchanger[tuple[NDArrays, NDAr
 
         For more information on the sparse COO format and sparse tensors in PyTorch, please see the following
         two pages:
-            1. https://pytorch.org/docs/stable/generated/torch.sparse_coo_tensor.html
-            2. https://pytorch.org/docs/stable/sparse.html
+
+        1. https://pytorch.org/docs/stable/generated/torch.sparse_coo_tensor.html
+        2. https://pytorch.org/docs/stable/sparse.html
+
+        In most cases, this function takes as inputs a current model and an initial model, and it returns a dictionary
+        that maps the name of each of the current model's tensors to another tensor which contains the parameter
+        scores.
 
         Args:
             sparsity_level (float): The level of sparsity. Must be between 0 and 1.
-            score_gen_function (ScoreGenFunction): Function that is responsible for
-            generating a score for every parameter inside a model in order to facilitate parameter selection.
-
-            In most cases, this function takes as inputs a current model and an initial model,
-            and it returns a dictionary that maps the name of each of the current model's tensors to
-            another tensor which contains the parameter scores.
+            score_gen_function (ScoreGenFunction): Function that is responsible for generating a score for every
+                parameter inside a model in order to facilitate parameter selection.
         """
         assert 0 < sparsity_level <= 1
         self.sparsity_level = sparsity_level
@@ -43,7 +44,16 @@ class SparseCooParameterExchanger(PartialParameterExchanger[tuple[NDArrays, NDAr
         self.score_gen_function = score_gen_function
 
     def generate_parameter_scores(self, model: nn.Module, initial_model: nn.Module | None) -> dict[str, Tensor]:
-        """Calling the score generating function to produce parameter scores."""
+        """
+        Calling the score generating function to produce parameter scores.
+
+        Args:
+            model (nn.Module): Current model
+            initial_model (nn.Module | None): Model to which the weights will be compared/scored
+
+        Returns:
+            dict[str, Tensor]: scores associated with each layer of the model.
+        """
         return self.score_gen_function(model, initial_model)
 
     def _check_unique_score(self, param_scores: Tensor) -> None:
@@ -51,39 +61,35 @@ class SparseCooParameterExchanger(PartialParameterExchanger[tuple[NDArrays, NDAr
         if len(unique_score_values) == 1:
             log(
                 WARNING,
-                """All parameters have the same score.
-                The number of parameters selected may not match the intended sparsity level.""",
+                "All parameters have the same score.\nThe number of parameters selected may not match the intended"
+                " sparsity level.",
             )
 
     def select_parameters(
         self, model: nn.Module, initial_model: nn.Module | None = None
     ) -> tuple[NDArrays, tuple[NDArrays, NDArrays, list[str]]]:
         """
-        Select model parameters according to the sparsity level and pack them into
-        the sparse COO format to be exchanged.
+        Select model parameters according to the sparsity level and pack them into the sparse COO format to be
+        exchanged.
 
-        First, this method leverages a score generating function
-        to generate scores for all parameters of model.
+        First, this method leverages a score generating function to generate scores for all parameters of model.
 
-        Next, these scores are used to select the parameters to be exchanged by
-        performing a thresholding operation on each of the model's tensors.
-        A threshold is determined according to the desired sparsity level,
-        then for each model tensor, parameters whose scores are less than this threshold
-        are set to zero, while parameters whose scores are greater than or equal to
-        this threshold retain their values.
+        Next, these scores are used to select the parameters to be exchanged by performing a thresholding operation
+        on each of the model's tensors. A threshold is determined according to the desired sparsity level, then for
+        each model tensor, parameters whose scores are less than this threshold are set to zero, while parameters
+        whose scores are greater than or equal to this threshold retain their values.
 
-        Finally, the method extracts all the information required to represent
-        the selected parameters in the sparse COO tensor format. More specifically,
-        the information consists of the indices of the parameters within the tensor
-        to which they belong, the shape of that tensor, and also the name of it.
+        Finally, the method extracts all the information required to represent the selected parameters in the
+        sparse COO tensor format. More specifically, the information consists of the indices of the parameters
+        within the tensor to which they belong, the shape of that tensor, and also the name of it.
 
         Args:
             model (nn.Module): Current model.
             initial_model (nn.Module): Initial model.
 
         Returns:
-            tuple[NDArrays, tuple[NDArrays, NDArrays, list[str]]]: the selected parameters
-            and other information, as detailed above.
+            tuple[NDArrays, tuple[NDArrays, NDArrays, list[str]]]: the selected parameters and other information,
+            as detailed above.
         """
         all_parameter_scores = self.generate_parameter_scores(model, initial_model)
         all_scores = torch.cat([val.flatten() for _, val in all_parameter_scores.items()])

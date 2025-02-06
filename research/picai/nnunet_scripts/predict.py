@@ -58,12 +58,11 @@ def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, 
     # Helper function to make code cleaner
     def check_for_ckpt_info(model: dict) -> tuple[str, bool]:
         """
-        Checks model dict for trainer name and inference_allowed_mirroring_axes
+        Checks model dict for trainer name and ``inference_allowed_mirroring_axes``
 
         Returns:
-            tuple[str | None, bool]: Tuple with elements trainer_name and
-                inference_allowed_mirroring_axes. Defaults to
-                ('nnUNetTrainer, False)
+            tuple[str | None, bool]: Tuple with elements ``trainer_name`` and `inference_allowed_mirroring_axes`.
+            Defaults to ("nnUNetTrainer", False)
         """
         trainer_name = "nnUNetTrainer"
         inference_allowed_mirror_axes = False
@@ -145,7 +144,7 @@ def predict(
 
     Args:
         config_path (str): Path to a yaml config file. The three required keys
-            are plans, dataset_json and one or more nnunet_configs (eg. 2d,
+            are plans, dataset_json and one or more nnunet_configs (e.g. 2d,
             3d_fullres etc.). The nnunet config keys should contain a list of
             paths. If the path points to a file it should be a model
             checkpoint. The model checkpoints can be dicts with the
@@ -318,7 +317,7 @@ def main() -> None:
         required=True,
         type=str,
         help="""Path to a yaml config file. The three required keys
-            are plans, dataset_json and one or more nnunet_configs (eg. 2d,
+            are plans, dataset_json and one or more nnunet_configs (e.g. 2d,
             3d_fullres etc.). The nnunet config keys should contain a list of
             paths. If the path points to a file it should be a model
             checkpoint. The model checkpoints can be dicts with the

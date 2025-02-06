@@ -33,15 +33,13 @@ CFG_FN = FIT_CFG_FN | EVAL_CFG_FN
 
 def add_items_to_config_fn(fn: CFG_FN, items: Config) -> CFG_FN:
     """
-    Accepts a flwr Strategy configure function (either configure_fit or
-    configure_evaluate) and returns a new function that returns the same thing
-    except the dictionary items in the items argument have been added to the
-    config that is returned by the original function
+    Accepts a flwr Strategy configure function (either ``configure_fit`` or ``configure_evaluate``) and returns a new
+    function  that returns the same thing except the dictionary items in the items argument have been added to the
+    config that  is returned by the original function
 
     Args:
         fn (CFG_FN): The Strategy configure function to wrap
-        items (Config): A Config containing additional items to update the
-            original config with
+        items (Config): A ``Config`` containing additional items to update the original config with
 
     Returns:
         CFG_FN: The wrapped function. Argument and return type is the same
@@ -72,19 +70,21 @@ class NnunetServer(FlServer):
     ) -> None:
         """
         A Basic FlServer with added functionality to ask a client to initialize the global nnunet plans if one was not
-        provided in the config. Intended for use with NnUNetClient.
+        provided in the config. Intended for use with ``NnUNetClient``.
 
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
             fl_config (Config): This should be the configuration that was used to setup the federated training.
                 In most cases it should be the "source of truth" for how FL training/evaluation should proceed. For
-                example, the config used to produce the on_fit_config_fn and on_evaluate_config_fn for the strategy.
-                NOTE: This config is DISTINCT from the Flwr server config, which is extremely minimal.
+                example, the config used to produce the ``on_fit_config_fn`` and ``on_evaluate_config_fn`` for the
+                strategy.
+
+                **NOTE:** This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
             on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]]): Function used to configure how one
                 asks a client to provide parameters from which to initialize all other clients by providing a
-                Config dictionary. For NnunetServers this is a required function to provide the additional information
-                necessary to a client for parameter initialization
+                ``Config`` dictionary. For ``NnunetServers`` this is a required function to provide the additional
+                information necessary to a client for parameter initialization
             strategy (Strategy | None, optional): The aggregation strategy to be used by the server to handle
                 client updates and other information potentially sent by the participating clients. If None the
                 strategy is FedAvg as set by the flwr Server. Defaults to None.
@@ -95,16 +95,17 @@ class NnunetServer(FlServer):
                 artifacts to be used or evaluated after training. The latter is used to preserve training state
                 (including models) such that if FL training is interrupted, the process may be restarted. If no
                 module is provided, no checkpointing or state preservation will happen. Defaults to None.
-                NOTE: For NnUnet, this module is allowed to have all components defined other than the model, as it
+
+                **NOTE:** For NnUnet, this module is allowed to have all components defined other than the model, as it
                 may be set later when the server asks the clients to provide the architecture.
             server_name (str | None, optional): An optional string name to uniquely identify server. This name is also
                 used as part of any state checkpointing done by the server. Defaults to None.
             accept_failures (bool, optional): Determines whether the server should accept failures during training or
                 evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
                 and throw an exception. Defaults to True.
-            nnunet_trainer_class (type[nnUNetTrainer]): nnUNetTrainer class.
-                Useful for passing custom nnUNetTrainer. Defaults to the standard nnUNetTrainer class.
-                Must match the nnunet_trainer_class passed to the NnunetClient.
+            nnunet_trainer_class (type[nnUNetTrainer]): ``nnUNetTrainer`` class.
+                Useful for passing custom ``nnUNetTrainer``. Defaults to the standard ``nnUNetTrainer`` class.
+                Must match the ``nnunet_trainer_class`` passed to the ``NnunetClient``.
             global_deep_supervision (bool): Whether or not the global model should use deep supervision. Does
                 not affect the model architecture just the output during inference. This argument applies only to the
                 global model, not local client models. Defaults to False.
@@ -157,21 +158,22 @@ class NnunetServer(FlServer):
         self.checkpoint_and_state_module.model = model
 
     def update_before_fit(self, num_rounds: int, timeout: float | None) -> None:
-        """Hook method to allow the server to do some additional initialization prior to fitting.
+        """
+        Hook method to allow the server to do some additional initialization prior to fitting.
 
-        NunetServer uses this method to sample a client for properties for one of two reasons
+        ``NunetServer`` uses this method to sample a client for properties for one of two reasons
 
-        1) If a global nnunet_plans file is not provided in the config, this method will request that a random client
-           which generate a plans file from it local dataset and return it to the server through the get_properties
-           RPC. The server then distributes the nnunet_plans to the other clients by including it in the config for
-           subsequent FL rounds.
+        1. If a global ``nnunet_plans`` file is not provided in the config, this method will request that a random
+           client which generate a plans file from it local dataset and return it to the server through the
+           ``get_properties`` RPC. The server then distributes the ``nnunet_plans`` to the other clients by including
+           it in the config for subsequent FL rounds.
 
-        AND/OR
+           AND/OR
 
-        2) If server side state or model checkpointing is being used, then server will  poll a client in order to have
+        2. If server side state or model checkpointing is being used, then server will  poll a client in order to have
            the required properties to instantiate the model architecture on the server side. These properties include
-           num_segmentation_heads and num_input_channels, essentially the number of input and output channels (which
-           are not specified in nnunet plans for some reason).
+           ``num_segmentation_heads`` and ``num_input_channels``, essentially the number of input and output channels
+           (which are not specified in nnunet plans for some reason).
 
         Args:
             num_rounds (int): The number of server rounds of FL to be performed
@@ -261,8 +263,8 @@ class NnunetServer(FlServer):
     def _save_server_state(self) -> None:
         """
         Save server checkpoint consisting of model, history, server round, metrics reporter and server name. This
-        method overrides parent to also checkpoint nnunet_plans, num_input_channels, num_segmentation_heads and
-        global_deep_supervision.
+        method overrides parent to also `checkpoint` ``nnunet_plans``, ``num_input_channels``,
+        ``num_segmentation_heads`` and ``global_deep_supervision``.
         """
 
         assert (

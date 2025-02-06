@@ -17,7 +17,7 @@ class StepType(Enum):
 
 
 # TODO: Add ability to parse data types and save certain data types in specific ways
-# (eg. Artifacts, Tables, etc.)
+# (e.g. Artifacts, Tables, etc.)
 class WandBReporter(BaseReporter):
     def __init__(
         self,
@@ -34,34 +34,36 @@ class WandBReporter(BaseReporter):
         **kwargs: Any,
     ) -> None:
         """
-        _summary_
+        Weights and Biases Reporter for logging experimental results associated with FL runs.
 
         Args:
-            wandb_step_type (StepType | str, optional): Whether to use the 'round', 'epoch' or 'step' as the
-                wandb_step value when logging information to the wandb server.
+            wandb_step_type (StepType | str, optional): Whether to use the "round", "epoch" or "step" as the
+                ``wandb_step`` value when logging information to the wandb server.
             project (str | None, optional): The name of the project where you're sending the new run. If unspecified,
                 wandb will try to infer or set to "uncategorized"
             entity (str | None, optional): An entity is a username or team name where you're sending runs. This entity
                 must exist before you can send runs there, so make sure to create your account or team in the UI before
-                starting to log runs. If you don't specify an entity, the run will be sent to your default entity.
+                starting to log runs. If you do not specify an entity, the run will be sent to your default entity.
                 Change your default entity in your settings under "default location to create new projects".
-            config (str | None, optional): This sets wandb.config, a dictionary-like object for saving inputs to your
-                job such as hyperparameters for a model. If dict: will load the key value pairs into the wandb.config
-                object. If str: will look for a yaml file by that name, and load config from that file into the
-                wandb.config object.
+            config (str | None, optional): This sets ``wandb.config``, a dictionary-like object for saving inputs to
+                your job such as hyperparameters for a model.
+
+                - If ``dict``: will load the key value pairs into the  ``wandb.config`` object.
+                - If ``str``: will look for a yaml file by that name, and load config from that file into the
+                  ``wandb.config`` object.
             group (str | None, optional): Specify a group to organize individual runs into a larger experiment.
             job_type (str | None, optional): Specify the type of run, useful when grouping runs.
             tags (list[str] |None, optional): A list of strings, which will populate the list of tags on this run. If
-                you want to add tags to a resumed run without overwriting its existing tags, use run.tags +=
-                ["new_tag"] after wandb.init().
+                you want to add tags to a resumed run without overwriting its existing tags, use ``run.tags +=
+                ["new_tag"]`` after ``wandb.init()``.
             name (str | None, optional): A short display name for this run. Default generates a random two-word name.
             id (str | None, optional): A unique ID for this run. It must be unique in the project, and if you delete a
-                run you can't reuse the ID.
+                run you cannot reuse the ID.
             resume (str): Indicates how to handle the case when a run has the same entity, project and run id as
-                a previous run. 'must' enforces the run must resume from the run with same id and throws an error
-                if it does not exist. 'never' enforces that a run will not resume and throws an error if run id exists.
-                'allow' resumes if the run id already exists. Defaults to 'allow'.
-            kwargs (Any): Keyword arguments to wandb.init excluding the ones explicitly described above.
+                a previous run. "must" enforces the run must resume from the run with same id and throws an error
+                if it does not exist. "never" enforces that a run will not resume and throws an error if run id exists.
+                "allow" resumes if the run id already exists. Defaults to "allow".
+            kwargs (Any): Keyword arguments to ``wandb.init`` excluding the ones explicitly described above.
                 Documentation here: https://docs.wandb.ai/ref/python/init/
         """
 
@@ -92,9 +94,10 @@ class WandBReporter(BaseReporter):
         self.run: wandb.wandb_run.Run
 
     def initialize(self, **kwargs: Any) -> None:
-        """Checks if an id was provided by the client or server.
+        """
+        Checks if an id was provided by the client or server.
 
-        If an id was passed to the WandBReporter on init then it takes priority over the one passed by the
+        If an id was passed to the ``WandBReporter`` on init then it takes priority over the one passed by the
         client/server.
         """
         if self.id is None:
@@ -102,7 +105,8 @@ class WandBReporter(BaseReporter):
             self.initialized = True
 
     def define_metrics(self) -> None:
-        """This method defines some of the metrics we expect to see from Basic Client and server.
+        """
+        This method defines some of the metrics we expect to see from Basic Client and server.
 
         Note that you do not have to define metrics, but it can be useful for determining what should and shouldn't go
         into the run summary.
@@ -142,14 +146,15 @@ class WandBReporter(BaseReporter):
         self.run.define_metric("eval_round_metrics_centralized", step_metric="round", summary="best")
 
     def start_run(self, wandb_init_kwargs: dict[str, Any]) -> None:
-        """Initializes the wandb run.
+        """
+        Initializes the wandb run.
 
-        We avoid doing this in the self.init function so that when debugging, jobs that fail before training starts do
-        not get uploaded to wandb.
+        We avoid doing this in the ``self.init`` function so that when debugging, jobs that fail before training
+        starts do not get uploaded to wandb.
 
         Args:
-            wandb_init_kwargs (dict[str, Any]): Keyword arguments for wandb.init() excluding the ones explicitly
-                accessible through WandBReporter.init().
+            wandb_init_kwargs (dict[str, Any]): Keyword arguments for ``wandb.init()`` excluding the ones explicitly
+                accessible through ``WandBReporter.init()``.
         """
         if not self.initialized:
             self.initialize()
@@ -179,16 +184,17 @@ class WandBReporter(BaseReporter):
         epoch: int | None = None,
         step: int | None = None,
     ) -> None:
-        """Reports wandb compatible data to the wandb server.
+        """
+        Reports wandb compatible data to the wandb server.
 
-        Data passed to self.report is always reported. If round is None, the data is reported as config information.
-        If round is specified, the data is logged to the wandb run at the current wandb step which is either the
-        current round, epoch or step depending on the wandb_step_type passed on initialization. The current epoch and
-        step are initialized at 0 and updated internally when specified as arguments to report. Therefore leaving epoch
-        or step as None will overwrite the data for the previous epoch/step if the key is the same, otherwise the new
-        key-value pairs are added. For example, if {"loss": value} is logged every epoch but wandb_step_type is
-        'round', then the value for "loss" at round 1 will be it's value at the last epoch of that round. You can only
-        update or overwrite the current wandb step, previous steps can not be modified.
+        Data passed to ``self.report`` is always reported. If round is None, the data is reported as config
+        information. If round is specified, the data is logged to the wandb run at the current wandb step which is
+        either the current round, epoch or step depending on the ``wandb_step_type`` passed on initialization. The
+        current epoch  and step are initialized at 0 and updated internally when specified as arguments to report.
+        Therefore leaving  epoch or step as None will overwrite the data for the previous epoch/step if the key is the
+        same, otherwise  the new key-value pairs are added. For example, if ``{"loss": value}`` is logged every epoch
+        but  ``wandb_step_type`` is "round", then the value for "loss" at round 1 will be it's value at the last epoch
+        of  that round. You can only update or overwrite the current wandb step, previous steps can not be modified.
 
         Args:
             data (dict[str, Any]): Dictionary of wandb compatible data to log
@@ -197,7 +203,7 @@ class WandBReporter(BaseReporter):
             epoch (int | None, optional): The current epoch (In total across all rounds). If None then this method was
                 not called at or within the scope of an epoch. Defaults to None.
             step (int | None, optional): The current step (In total across all rounds and epochs). If None then this
-                method was called outside the scope of a training or evaluation step (eg. at the end of an epoch or
+                method was called outside the scope of a training or evaluation step (e.g. at the end of an epoch or
                 round) Defaults to None.
         """
         # Now that report has been called we are finally forced to start the run.

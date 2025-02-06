@@ -8,7 +8,6 @@ from flwr.common.logger import log
 
 
 class WarmedUpModule:
-    """This class is used to load a pretrained model into the target model."""
 
     def __init__(
         self,
@@ -16,16 +15,20 @@ class WarmedUpModule:
         pretrained_model_path: Path | None = None,
         weights_mapping_path: Path | None = None,
     ) -> None:
-        """Initialize the WarmedUpModule with the pretrained model states and weights mapping dict.
+        """
+        This class is used to load a pretrained model into the target model.
+
+
+        Initialize the ``WarmedUpModule`` with the pretrained model states and weights mapping dict.
 
         Args:
-            pretrained_model (torch.nn.Module | None): Pretrained model.
-                                                          This is mutually exclusive with pretrained_model_path.
-            pretrained_model_path (Path | None): Path of the pretrained model.
-                                                    This is mutually exclusive with pretrained_model.
-            weights_mapping_dir (str | None, optional): Path of to json file of the weights mapping dict.
-            If models are not exactly the same, a weights mapping dict is needed to map the weights of the pretrained
-            model to the target model.
+            pretrained_model (torch.nn.Module | None): Pretrained model. This is mutually exclusive with
+                ``pretrained_model_path``.
+            pretrained_model_path (Path | None): Path of the pretrained model. This is mutually exclusive with
+                ``pretrained_model``.
+            weights_mapping_dir (str | None, optional): Path of to json file of the weights mapping dict. If models
+                are not exactly the same, a weights mapping dict is needed to map the weights of the pretrained
+                model to the target model.
         """
         if pretrained_model is not None and pretrained_model_path is not None:
             AssertionError(
@@ -54,13 +57,14 @@ class WarmedUpModule:
             self.weights_mapping_dict = None
 
     def get_matching_component(self, key: str) -> str | None:
-        """Get the matching component of the key from the weights mapping dictionary. Since the provided mapping
+        """
+        Get the matching component of the key from the weights mapping dictionary. Since the provided mapping
         can contain partial names of the keys, this function is used to split the key of the target model and
         match it with the partial key in the mapping, returning the complete name of the key in the pretrained model.
 
-        This allows users to provide one mapping for multiple states that share the same prefix. For example,if the
-        mapping is {"model": "global_model"} and the input key of the target model is "model.layer1.weight",then the
-        returned matching component is "global_model.layer1.weight".
+        This allows users to provide one mapping for multiple states that share the same prefix. For example, if the
+        mapping is ``{"model": "global_model"}`` and the input key of the target model is ``model.layer1.weight``,
+        then the returned matching component is ``global_model.layer1.weight``.
 
         Args:
             key (str): Key to be matched in pretrained model.
@@ -85,7 +89,8 @@ class WarmedUpModule:
         return None
 
     def load_from_pretrained(self, model: torch.nn.Module) -> torch.nn.Module:
-        """Load the pretrained model into the target model.
+        """
+        Load the pretrained model into the target model.
 
         Args:
             model (torch.nn.Module): target model.

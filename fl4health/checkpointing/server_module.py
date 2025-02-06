@@ -129,7 +129,8 @@ class BaseServerCheckpointAndStateModule:
 
         This function may be overridden in a child class if different behavior is desired.
 
-        NOTE: This function stores the weights directly in the self.model attribute
+        **NOTE:** This function stores the weights directly in the self.model attribute
+
         Args:
             server_parameters (Parameters): Parameters to be injected into the torch model architecture and
             checkpointed.
@@ -147,22 +148,23 @@ class BaseServerCheckpointAndStateModule:
         """
         This function is meant to facilitate saving state required to restart on FL process on the server side. By
         default, this function will always at least preserve the model being trained. However, it may be desirable to
-        save additional information, like the current server round etc. So the other_state dictionary may be provided
-        to preserve this additional state.
+        save additional information, like the current server round etc. So the ``other_state`` dictionary may be
+        provided to preserve this additional state.
 
-        NOTE: This function will throw an error if you attempt to save the model under the 'model' key in other_state
+        **NOTE:** This function will throw an error if you attempt to save the model under the 'model' key in
+        ``other_state``
 
         Args:
             state_checkpoint_name (str): Name of the state checkpoint file. The checkpointer itself will have a
                 directory to which state will be saved.
             server_parameters (Parameters): Like model checkpointers, these are the aggregated Parameters stored by
                 the server representing model state. They are mapped to a torch model architecture via the
-                _hydrate_model_for_checkpointing function.
+                ``_hydrate_model_for_checkpointing`` function.
             other_state (dict[str, Any]): Any additional state (such as current server round) to be checkpointed in
                 order to allow FL to restart from where it left off.
 
         Raises:
-            ValueError: Throws an error if other_state already has a key called 'model'
+            ValueError: Throws an error if ``other_state`` already has a key called "model"
             ValueError: Throws an error if this function is called, but no state checkpointer has been provided
         """
         if self.state_checkpointer is not None:
@@ -177,7 +179,7 @@ class BaseServerCheckpointAndStateModule:
 
     def maybe_load_state(self, state_checkpoint_name: str) -> dict[str, Any] | None:
         """
-        This function facilitates loading of any pre-existing state (with the name state_checkpoint_name) in the
+        This function facilitates loading of any pre-existing state (with the name ``state_checkpoint_name``) in the
         directory of the state_checkpointer. If the state already exists at the proper path, the state is loaded
         and returned. If it doesn't exist, we return None.
 
@@ -190,7 +192,7 @@ class BaseServerCheckpointAndStateModule:
 
         Returns:
             dict[str, Any] | None: If the state checkpoint properly exists and is loaded correctly, this dictionary
-                carries that state. Otherwise, we return a None (or throw an exception).
+            carries that state. Otherwise, we return a None (or throw an exception).
         """
         if self.state_checkpointer is not None:
             if self.state_checkpointer.checkpoint_exists(state_checkpoint_name):
@@ -215,7 +217,7 @@ class PackingServerCheckpointAndAndStateModule(BaseServerCheckpointAndStateModul
         This module is meant to be a base class for any server-side checkpointing module that relies on unpacking
         of parameters to hydrate models for checkpointing. The specifics of the unpacking will be handled by the
         child classes of the packer within the parameter exchange.
-        NOTE: This function ASSUMES full parameter exchange unpacking. If more complex unpacking/parameter exchange
+        **NOTE:** This function ASSUMES full parameter exchange unpacking. If more complex unpacking/parameter exchange
         is used, this is not the right parent class.
 
         Args:
@@ -251,7 +253,8 @@ class PackingServerCheckpointAndAndStateModule(BaseServerCheckpointAndStateModul
         This function overrides the base functionality of model hydration to insert an additional unpacking step
         using the unpacking function of the specific type of parameter exchanger.
 
-        NOTE: This function stores the weights directly in the self.model attribute
+        **NOTE**: This function stores the weights directly in the self.model attribute
+
         Args:
             server_parameters (Parameters): Parameters to be injected into the torch model architecture and
             checkpointed.
@@ -496,7 +499,7 @@ class NnUnetServerCheckpointAndStateModule(BaseServerCheckpointAndStateModule):
         state_checkpointer: PerRoundStateCheckpointer | None = None,
     ) -> None:
         """
-        This module is meant to be used with the NnUnetServer class to handle model and state checkpointing on the
+        This module is meant to be used with the ``NnUnetServer`` class to handle model and state checkpointing on the
         server-side of an FL process. Unlike the module on the client side, this module has no concept of pre- or
         post-aggregation checkpointing. It only considers checkpointing the global server model after aggregation,
         perhaps based on validation statistics retrieved on the client side by running a federated evaluation step.
@@ -512,8 +515,13 @@ class NnUnetServerCheckpointAndStateModule(BaseServerCheckpointAndStateModule):
             model (nn.Module | None, optional): Model architecture to be saved. The module will use this architecture
                 to hold the server parameters and facilitate checkpointing with the help of the parameter exchanger.
                 Recall that servers only have parameters rather than torch models. So we need to know where to route
-                these parameters to allow for real models to be saved. Defaults to None.
-                NOTE: For NnUnet, this need not be set upon creation, as the model architecture may only be known later
+                these parameters to allow for real models to be saved.
+
+                **NOTE**: For NnUnet, this need not be set upon creation, as the model architecture may only be known
+                later
+
+                Defaults to None.
+
             parameter_exchanger (FullParameterExchangerWithPacking | None, optional): This will facilitate routing the
                 server parameters into the right components of the provided model architecture. Note that this
                 exchanger and the model must match the one used for training and exchange with the servers to ensure

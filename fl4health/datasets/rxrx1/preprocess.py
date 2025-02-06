@@ -12,11 +12,11 @@ from torchvision.transforms import ToTensor
 
 def filter_and_save_data(metadata: pd.DataFrame, top_sirna_ids: list[int], cell_type: str, output_path: Path) -> None:
     """
-    Filters data for the given cell type and frequency of their sirna_id and saves it to a CSV file.
+    Filters data for the given cell type and frequency of their ``sirna_id`` and saves it to a CSV file.
 
     Args:
         metadata (pd.DataFrame): Metadata containing information about all images.
-        top_sirna_ids (list[int]): Top sirna_id values to filter by.
+        top_sirna_ids (list[int]): Top ``sirna_id`` values to filter by.
         cell_type (str): Cell type to filter by.
         output_path (Path): Path to save the filtered metadata.
     """
@@ -63,7 +63,7 @@ def process_data(metadata: pd.DataFrame, input_dir: Path, output_dir: Path, clie
         input_dir (Path): Input directory containing the image files.
         output_dir (Path): Output directory containing the image files.
         client_num (int): Client number to load data for.
-        type_data (str): 'train' or 'test' to specify dataset type.
+        type_data (str): "train" or "test" to specify dataset type.
     """
     for i, row in metadata.iterrows():
         image_tensor = load_image(row.to_dict(), Path(input_dir))

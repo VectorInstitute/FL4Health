@@ -25,7 +25,8 @@ class TabularFeature:
             feature_type (TabularType): data type of the feature.
             fill_value (Scalar | None): the default fill value for this feature when it is missing in a dataframe.
             metadata (MetaData, optional): metadata associated with this feature.
-            For example, if the feature is categorical, then metadata would be all the categories. Defaults to None.
+                For example, if the feature is categorical, then metadata would be all the categories.
+                Defaults to None.
         """
         self.feature_name = feature_name
         self.feature_type = feature_type
@@ -61,6 +62,12 @@ class TabularFeature:
             raise ValueError("Metadata dimension is not supported when self.feature_type is TabularType.STRING.")
 
     def to_json(self) -> str:
+        """
+        Converge the information in this class to json format for serialization
+
+        Returns:
+            str: Json with all of the pieces of information in this class
+        """
         return json.dumps(
             {
                 "feature_name": json.dumps(self.get_feature_name()),
@@ -72,6 +79,16 @@ class TabularFeature:
 
     @staticmethod
     def from_json(json_str: str) -> TabularFeature:
+        """
+        Provided a JSON string, this function reconstructs the ``TabularFeature`` class to which it corresponds.
+
+        Args:
+            json_str (str): json string with all of the information necessary to construct the ``TabularFeature``
+                object
+
+        Returns:
+            TabularFeature: Reconstructed ``TabularFeature`` object from the provided JSON
+        """
         attributes = json.loads(json_str)
         return TabularFeature(
             json.loads(attributes["feature_name"]),

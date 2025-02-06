@@ -30,6 +30,8 @@ class EvaluateServer(Server):
         reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
         """
+        Server meant to facilitate federated evaluation only (that is, no training)
+
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
@@ -88,8 +90,8 @@ class EvaluateServer(Server):
                 If none, then it will wait for the minimum number to respond indefinitely.
 
         Returns:
-            tuple[History, float]: The first element of the tuple is a History object containing the aggregated
-                metrics returned from the clients. Tuple also contains elapsed time in seconds for round.
+            tuple[History, float]: The first element of the tuple is a ``History`` object containing the aggregated
+            metrics returned from the clients. Tuple also contains elapsed time in seconds for round.
         """
         history = History()
 
@@ -144,9 +146,9 @@ class EvaluateServer(Server):
 
         Returns:
             tuple[float | None, dict[str, Scalar], EvaluateResultsAndFailures] | None: The first value is the
-                loss, which is ignored since we pack loss from the global and local models into the metrics dictionary
-                The second is the aggregated metrics passed from the clients, the third is the set of raw results and
-                failure objects returned by the clients.
+            loss, which is ignored since we pack loss from the global and local models into the metrics dictionary
+            The second is the aggregated metrics passed from the clients, the third is the set of raw results and
+            failure objects returned by the clients.
         """
 
         # Get clients and their respective instructions from client manager
@@ -191,8 +193,8 @@ class EvaluateServer(Server):
 
         Returns:
             list[tuple[ClientProxy, EvaluateIns]]: List of configuration instructions for the clients selected by the
-                client manager for evaluation. These configuration objects are sent to the clients to customize
-                evaluation.
+            client manager for evaluation. These configuration objects are sent to the clients to customize
+            evaluation.
         """
         # Do not configure federated evaluation if fraction eval is 0.
         if self.fraction_evaluate == 0.0:
@@ -221,7 +223,7 @@ class EvaluateServer(Server):
         failures: list[tuple[ClientProxy, EvaluateRes] | BaseException],
     ) -> tuple[float | None, dict[str, Scalar]]:
         """
-        Aggregate evaluation results using the evaluate_metrics_aggregation_fn provided. Note that a dummy loss is
+        Aggregate evaluation results using the ``evaluate_metrics_aggregation_fn`` provided. Note that a dummy loss is
         returned as we assume that it was packed into the metrics dictionary for this functionality.
 
         Args:
@@ -233,7 +235,7 @@ class EvaluateServer(Server):
 
         Returns:
             tuple[float | None, dict[str, Scalar]]: A dummy float for the "loss" (these are packed with the metrics)
-                and the aggregated metrics dictionary.
+            and the aggregated metrics dictionary.
         """
         if not results:
             return None, {}

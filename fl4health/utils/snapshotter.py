@@ -82,8 +82,8 @@ class AbstractSnapshotter(ABC, Generic[T]):
     @abstractmethod
     def save_attribute(self, attribute: dict[str, T]) -> dict[str, Any]:
         """
-        Abstract method to save the state of the attribute. This method should be implemented
-        based on the type of the attribute and the way it should be saved.
+        Abstract method to save the state of the attribute. This method should be implemented based on the type of
+        the attribute and the way it should be saved.
 
         Args:
             attribute (dict[str, T]): The attribute to be saved.
@@ -95,8 +95,8 @@ class AbstractSnapshotter(ABC, Generic[T]):
     @abstractmethod
     def load_attribute(self, attribute_snapshot: dict[str, Any], attribute: dict[str, T]) -> None:
         """
-        Abstract method to load the state of the attribute. This method should be implemented
-        based on the type of the attribute and the way it should be loaded.
+        Abstract method to load the state of the attribute. This method should be implemented based on the type of
+        the attribute and the way it should be loaded.
 
         Args:
             attribute_snapshot (dict[str, Any]): The snapshot containing the state of the attribute.
@@ -168,13 +168,13 @@ class TorchModuleSnapshotter(AbstractSnapshotter[nn.Module]):
 
     def save_attribute(self, attribute: dict[str, nn.Module]) -> dict[str, Any]:
         """
-        Save the state of the nn.Modules.
+        Save the state of the ``nn.Modules``.
 
         Args:
-            attribute (dict[str, nn.Module]): The nn.Modules to be saved.
+            attribute (dict[str, nn.Module]): The ``nn.Modules`` to be saved.
 
         Returns:
-            dict[str, Any]: A dictionary containing the state of the nn.Modules.
+            dict[str, Any]: A dictionary containing the state of the ``nn.Modules``.
         """
         output = {}
         for key, model in attribute.items():
@@ -183,11 +183,11 @@ class TorchModuleSnapshotter(AbstractSnapshotter[nn.Module]):
 
     def load_attribute(self, attribute_snapshot: dict[str, Any], attribute: dict[str, nn.Module]) -> None:
         """
-        Load the state of the nn.Modules.
+        Load the state of the ``nn.Modules``.
 
         Args:
-            attribute_snapshot (dict[str, Any]): The snapshot containing the state of the nn.Modules.
-            attribute (dict[str, nn.Module]): The nn.Modules to be loaded
+            attribute_snapshot (dict[str, Any]): The snapshot containing the state of the ``nn.Modules``.
+            attribute (dict[str, nn.Module]): The ``nn.Modules`` to be loaded
         """
         for key, model in attribute.items():
             model.load_state_dict(attribute_snapshot[key])

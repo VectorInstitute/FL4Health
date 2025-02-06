@@ -11,8 +11,10 @@ class MoonContrastiveLoss(nn.Module):
     ) -> None:
         """
         This contrastive loss is implemented based on https://github.com/QinbinLi/MOON.
-        Contrastive loss aims to enhance the similarity between the features and their positive pairs
-        while reducing the similarity between the features and their negative pairs.
+
+        Contrastive loss aims to enhance the similarity between the features and their positive pairs while reducing
+        the similarity between the features and their negative pairs.
+
         Args:
             device (torch.device): device to use for computation
             temperature (float): temperature to scale the logits
@@ -30,12 +32,13 @@ class MoonContrastiveLoss(nn.Module):
         negative pairs.
 
         Args:
-            features (torch.Tensor): Main features, shape (batch_size, n_features)
-            negative_pairs (torch.Tensor): Negative pairs of main features, shape (n_pairs, batch_size, n_features)
+            features (torch.Tensor): Main features, shape (``batch_size``, ``n_features``)
+            negative_pairs (torch.Tensor): Negative pairs of main features, shape
+                (``n_pairs``, ``batch_size``, ``n_features``)
 
         Returns:
-            torch.Tensor: Cosine similarities of the batch of features provided with the set of batches of
-                negative pairs. The shape is n_pairs x batch_size
+            torch.Tensor: Cosine similarities of the batch of features provided with the set of batches of negative
+            pairs. The shape is ``n_pairs`` x ``batch_size``
         """
         # Check that features and each of the negatives pairs have the same shape
         assert features.shape == negative_pairs.shape[1:]
@@ -52,9 +55,10 @@ class MoonContrastiveLoss(nn.Module):
         between the feature and its positive pair relative to negative pairs.
 
         Args:
-            features (torch.Tensor): Main features, shape (batch_size, n_features)
-            positive_pairs (torch.Tensor): Positive pair of main features, shape (1, batch_size, n_features)
-            negative_pairs (torch.Tensor): Negative pairs of main features, shape (n_pairs, batch_size, n_features)
+            features (torch.Tensor): Main features, shape (``batch_size``, ``n_features``)
+            positive_pairs (torch.Tensor): Positive pair of main features, shape (1, ``batch_size``, ``n_features``)
+            negative_pairs (torch.Tensor): Negative pairs of main features,
+                shape (``n_pairs``, ``batch_size``, ``n_features``)
 
         Returns:
             torch.Tensor: Contrastive loss value
@@ -94,8 +98,11 @@ class NtXentLoss(nn.Module):
         """
         Implementation of Normalized Temperature-Scaled Cross Entropy Loss (NT-Xent) proposed in
         https://papers.nips.cc/paper_files/paper/2016/hash/6b180037abbebea991d8b1232f8a8ca9-Abstract.html
-        and notably used in SimCLR (https://arxiv.org/pdf/2002.05709) and FedSimCLR as proposed in Fed-X
-        (https://arxiv.org/pdf/2207.09158).
+
+        and notably used in:
+
+        - SimCLR (https://arxiv.org/pdf/2002.05709)
+        - FedSimCLR as proposed in Fed-X (https://arxiv.org/pdf/2207.09158).
 
         NT-Xent is a contrastive loss in which each feature has a positive pair and the rest of the features
         are considered negative. It is computed based on the similarity of positive pairs relative to negative
@@ -111,15 +118,15 @@ class NtXentLoss(nn.Module):
 
     def forward(self, features: torch.Tensor, transformed_features: torch.Tensor) -> torch.Tensor:
         """
-        Compute the contrastive loss based on the features and transformed_features. Given N features
-        and N transformed_features per batch, features[i] and transformed_features[i] are positive pairs
-        and the remaining 2N - 2 are negative pairs.
+        Compute the contrastive loss based on the features and ``transformed_features``. Given N features
+        and N ``transformed_features`` per batch, ``features[i]`` and ``transformed_features[i]`` are positive pairs
+        and the remaining :math:`2N - 2` are negative pairs.
 
         Args:
             features (torch.Tensor): Features of input without transformation applied.
-                Shaped (batch_size, feature_dimension).
+                Shaped (``batch_size``, ``feature_dimension``).
             transformed_features (torch.Tensor): Features of input with transformation applied.
-                Shaped (batch_size, feature_dimension).
+                Shaped (``batch_size``, ``feature_dimension``).
 
         Returns:
             torch.Tensor: Contrastive loss value
