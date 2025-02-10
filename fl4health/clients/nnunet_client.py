@@ -225,6 +225,7 @@ class NnunetClient(BasicClient):
         if self.device.type != "cuda":
             return super().train_step(input, target)
 
+        # As in the nnUNetTrainer, we implement mixed precision using torch.autocast and torch.GradScaler
         # Clear gradients from optimizer if they exist
         self.optimizers["global"].zero_grad()
 
