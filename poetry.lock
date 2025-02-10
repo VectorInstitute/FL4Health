@@ -12,6 +12,37 @@ files = [
 ]
 
 [[package]]
+name = "accelerate"
+version = "1.3.0"
+description = "Accelerate"
+optional = false
+python-versions = ">=3.9.0"
+files = [
+    {file = "accelerate-1.3.0-py3-none-any.whl", hash = "sha256:5788d9e6a7a9f80fed665cf09681c4dddd9dc056bea656db4140ffc285ce423e"},
+    {file = "accelerate-1.3.0.tar.gz", hash = "sha256:518631c0adb80bd3d42fb29e7e2dc2256bcd7c786b0ba9119bbaa08611b36d9c"},
+]
+
+[package.dependencies]
+huggingface-hub = ">=0.21.0"
+numpy = ">=1.17,<3.0.0"
+packaging = ">=20.0"
+psutil = "*"
+pyyaml = "*"
+safetensors = ">=0.4.3"
+torch = ">=2.0.0"
+
+[package.extras]
+deepspeed = ["deepspeed"]
+dev = ["bitsandbytes", "black (>=23.1,<24.0)", "datasets", "diffusers", "evaluate", "hf-doc-builder (>=0.3.0)", "parameterized", "pytest (>=7.2.0,<=8.0.0)", "pytest-subtests", "pytest-xdist", "rich", "ruff (>=0.6.4,<0.7.0)", "scikit-learn", "scipy", "timm", "torchdata (>=0.8.0)", "torchpippy (>=0.2.0)", "tqdm", "transformers"]
+quality = ["black (>=23.1,<24.0)", "hf-doc-builder (>=0.3.0)", "ruff (>=0.6.4,<0.7.0)"]
+rich = ["rich"]
+sagemaker = ["sagemaker"]
+test-dev = ["bitsandbytes", "datasets", "diffusers", "evaluate", "scikit-learn", "scipy", "timm", "torchdata (>=0.8.0)", "torchpippy (>=0.2.0)", "tqdm", "transformers"]
+test-prod = ["parameterized", "pytest (>=7.2.0,<=8.0.0)", "pytest-subtests", "pytest-xdist"]
+test-trackers = ["comet-ml", "dvclive", "tensorboard", "wandb"]
+testing = ["bitsandbytes", "datasets", "diffusers", "evaluate", "parameterized", "pytest (>=7.2.0,<=8.0.0)", "pytest-subtests", "pytest-xdist", "scikit-learn", "scipy", "timm", "torchdata (>=0.8.0)", "torchpippy (>=0.2.0)", "tqdm", "transformers"]
+
+[[package]]
 name = "acvl-utils"
 version = "0.2"
 description = "Super cool utilities that we just love to use"
@@ -1788,6 +1819,28 @@ typer = {version = ">=0.9.0,<0.10.0", extras = ["all"]}
 [package.extras]
 rest = ["requests (>=2.31.0,<3.0.0)", "starlette (>=0.31.0,<0.32.0)", "uvicorn[standard] (>=0.23.0,<0.24.0)"]
 simulation = ["ray (==2.10.0)"]
+
+[[package]]
+name = "flwr-datasets"
+version = "0.5.0"
+description = "Flower Datasets"
+optional = false
+python-versions = "<4.0,>=3.9"
+files = [
+    {file = "flwr_datasets-0.5.0-py3-none-any.whl", hash = "sha256:538b805b050c0d352e138421349ffb3a185ee6d483beb7fb8086f8f573f1e815"},
+    {file = "flwr_datasets-0.5.0.tar.gz", hash = "sha256:72721a6a0595ccc2fab71616c57f4c7ba0a7c2be71f0663a1433750af7e9c3ca"},
+]
+
+[package.dependencies]
+datasets = ">=2.14.6,<=3.1.0"
+matplotlib = ">=3.7.5,<4.0.0"
+numpy = ">=1.26.0,<3.0.0"
+seaborn = ">=0.13.0,<0.14.0"
+tqdm = ">=4.66.1,<5.0.0"
+
+[package.extras]
+audio = ["librosa (>=0.10.0.post2)", "soundfile (>=0.12.1)"]
+vision = ["pillow (>=6.2.1)"]
 
 [[package]]
 name = "fonttools"
@@ -4642,6 +4695,35 @@ files = [
     {file = "pathspec-0.12.1-py3-none-any.whl", hash = "sha256:a0d503e138a4c123b27490a4f7beda6a01c6f288df0e4a8b79c7eb0dc7b4cc08"},
     {file = "pathspec-0.12.1.tar.gz", hash = "sha256:a482d51503a1ab33b1c67a6c3813a26953dbdc71c31dacaef9a838c4e29f5712"},
 ]
+
+[[package]]
+name = "peft"
+version = "0.14.0"
+description = "Parameter-Efficient Fine-Tuning (PEFT)"
+optional = false
+python-versions = ">=3.9.0"
+files = [
+    {file = "peft-0.14.0-py3-none-any.whl", hash = "sha256:2f04f3a870c3baf30f15e7dcaa5dd70d3e54cfdd146d3c6c187735d3ae0a0700"},
+    {file = "peft-0.14.0.tar.gz", hash = "sha256:546d69af7b42f5ef715a3d3261ed818bc917ae6055e5d7e187ed3f2c76ad72dc"},
+]
+
+[package.dependencies]
+accelerate = ">=0.21.0"
+huggingface-hub = ">=0.25.0"
+numpy = ">=1.17"
+packaging = ">=20.0"
+psutil = "*"
+pyyaml = "*"
+safetensors = "*"
+torch = ">=1.13.0"
+tqdm = "*"
+transformers = "*"
+
+[package.extras]
+dev = ["black", "hf-doc-builder", "ruff (>=0.6.1,<0.7.0)"]
+docs-specific = ["black", "hf-doc-builder"]
+quality = ["black", "hf-doc-builder", "ruff (>=0.6.1,<0.7.0)"]
+test = ["black", "datasets", "diffusers", "hf-doc-builder", "parameterized", "protobuf", "pytest", "pytest-cov", "pytest-xdist", "ruff (>=0.6.1,<0.7.0)", "scipy", "sentencepiece"]
 
 [[package]]
 name = "pexpect"
@@ -7767,6 +7849,37 @@ tests = ["autopep8", "flake8", "isort", "numpy", "pytest", "scipy (>=1.7.1)", "t
 tutorials = ["matplotlib", "pandas", "tabulate", "torch"]
 
 [[package]]
+name = "trl"
+version = "0.14.0"
+description = "Train transformer language models with reinforcement learning."
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "trl-0.14.0-py3-none-any.whl", hash = "sha256:2407df4ea0e92d2c228a49f92047b4856b2e09bdfc1cde2b2151d342092efee2"},
+    {file = "trl-0.14.0.tar.gz", hash = "sha256:ddbd73b12e870a9acb8c50bfa5704de88eb519e4aad5bd9e91177b2f93b908d8"},
+]
+
+[package.dependencies]
+accelerate = ">=0.34.0"
+datasets = ">=2.21.0"
+rich = "*"
+transformers = ">=4.46.0"
+
+[package.extras]
+deepspeed = ["deepspeed (>=0.14.4)"]
+dev = ["Pillow", "Pillow", "bitsandbytes", "bitsandbytes", "deepspeed (>=0.14.4)", "deepspeed (>=0.14.4)", "diffusers (>=0.18.0)", "diffusers (>=0.18.0)", "liger-kernel (>=0.4.0)", "liger-kernel (>=0.4.0)", "llm-blender (>=0.0.2)", "llm-blender (>=0.0.2)", "mergekit (>=0.0.5.1)", "mergekit (>=0.0.5.1)", "openai (>=1.23.2)", "openai (>=1.23.2)", "parameterized", "parameterized", "peft (>=0.8.0)", "peft (>=0.8.0)", "pytest", "pytest", "pytest-cov", "pytest-cov", "pytest-rerunfailures", "pytest-rerunfailures", "pytest-xdist", "pytest-xdist", "scikit-learn", "scikit-learn", "vllm", "vllm"]
+diffusers = ["diffusers (>=0.18.0)"]
+judges = ["llm-blender (>=0.0.2)", "openai (>=1.23.2)"]
+liger = ["liger-kernel (>=0.4.0)"]
+mergekit = ["mergekit (>=0.0.5.1)"]
+peft = ["peft (>=0.8.0)"]
+quantization = ["bitsandbytes"]
+scikit = ["scikit-learn"]
+test = ["parameterized", "pytest", "pytest-cov", "pytest-rerunfailures", "pytest-xdist"]
+vllm = ["vllm"]
+vlm = ["Pillow"]
+
+[[package]]
 name = "trove-classifiers"
 version = "2025.1.15.22"
 description = "Canonical source for classifiers on PyPI (pypi.org)."
@@ -8543,4 +8656,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10.0,<3.11"
-content-hash = "62a7568be7267984b1d6ad270f8938f12c50284ca170b4cea478a24f89f5d4d8"
+content-hash = "ded29df90327871fb980a7faaf2498eeca7357392e6667af80a880d4071bc555"

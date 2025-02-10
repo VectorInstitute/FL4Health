@@ -1,0 +1,46 @@
+# Parameters that describe server
+n_server_rounds: 15 # The number of rounds to run FL
+
+# Parameters that describe clients
+n_clients: 3 # The number of clients in the FL experiment
+local_epochs: 1 # The number of epochs to complete for client
+batch_size: 128 # The batch size for client training
+
+reporting_config:
+  project: FL4Health # Name of the project under which everything should be logged
+  name: "FedLLM Server" # Name of the run on the server-side, each client will also have it's own run name
+  group: "FedLLM Experiment" # Group under which each of the FL run logging will be stored
+  entity: "your_entity_here" # WandB user name
+  notes: "Testing WB reporting"
+  tags: ["Test", "FedLLM"]
+
+evaluate_after_fit: false # Whether to evaluate the model after trainingå
+
+
+dataset:
+  name: "vicgalle/alpaca-gpt4"
+
+model:
+  name: "openlm-research/open_llama_3b_v2"
+  quantization: 4
+  gradient_checkpointing: true
+  lora:
+    peft_lora_r: 32
+    peft_lora_alpha: 64
+
+train:
+  save_every_round: 5
+  learning_rate_max: 5e-5
+  learning_rate_min: 1e-6
+  seq-length: 512
+  training_arguments:
+    output_dir: ""
+    learning_rate: ""
+    gradient_accumulation_steps: 1
+    logging_steps: 10
+    max_steps: 10
+    save_steps: 10
+    save_total_limit: 10
+    gradient_checkpointing: true
+    lr_scheduler_type: "constant"
+

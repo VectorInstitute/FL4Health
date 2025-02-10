@@ -38,6 +38,7 @@ scikit-learn = "1.5.0" # Pin as it was causing issues with nnunet
 # https://github.com/grpc/grpc/issues/37162
 tornado = ">=6.4.2"
 pympler = "^1.1"
+flwr-datasets = "^0.5.0"
 
 [tool.poetry.group.dev.dependencies]
 # locked the 2.15 version because of restrictions with tensorflow-io
@@ -89,6 +90,11 @@ mlflow = "^2.12.2"
 fire = "^0.6.0"
 einops = "0.8.0"
 
+
+
+[tool.poetry.group.llm.dependencies]
+trl = "^0.14.0"
+peft = "^0.14.0"
 
 [build-system]
 requires = ["poetry-core"]
