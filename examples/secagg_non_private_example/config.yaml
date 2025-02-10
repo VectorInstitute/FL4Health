@@ -1,0 +1,24 @@
+# YAML parser's must-have configs
+n_server_rounds: 20
+
+# must have at least 3 clients
+n_clients: 3    # set this parameter in run.sh as well
+batch_size: 16
+shamir_reconstruction_threshold: 2
+
+# # optional parameter
+# model_integer_range: 9999
+
+# Other configs
+local_epochs: 5
+# local_steps: 10
+checkpoint_path: "examples/secagg_non_private_example"
+
+# privacy parameters
+clipping_threshold: 1000000
+granularity: 0.001
+noise_scale: 0.00001
+bias: 0.1
+
+# not used by client directly
+model_integer_range_exponent: 16   # modulus = 2^model_integer_range_exponent

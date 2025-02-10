@@ -2,20 +2,20 @@
 
 # pass in command line arg "clean" to kill all previous processes
 
-# rm examples/secure_aggregation_example/*.pkl
+# rm examples/secagg_non_private_example/*.pkl
 
 # source .venv/bin/activate
 
-mkdir -p examples/secure_aggregation_example/log
+mkdir -p examples/secagg_non_private_example/log
 
 num_clients=3
 
 clean()
 {
     echo "killing processes"
-    cat < examples/secure_aggregation_example/log/running_pid.txt
+    cat < examples/secagg_non_private_example/log/running_pid.txt
 
-    PIDFile="examples/secure_aggregation_example/log/running_pid.txt"
+    PIDFile="examples/secagg_non_private_example/log/running_pid.txt"
     kill $(<"$PIDFile")
 }
 
@@ -40,17 +40,17 @@ else
 
     array=()    # PID
 
-    nohup python -m examples.secure_aggregation_example.server > examples/secure_aggregation_example/log/server.out 2>&1 & array[${#array[@]}]=$!
+    nohup python -m examples.secagg_non_private_example.server > examples/secagg_non_private_example/log/server.out 2>&1 & array[${#array[@]}]=$!
     sleep 10
 
     for (( i=1; i<=${num_clients}; i++ ))
     do
-        log_path="examples/secure_aggregation_example/log/client_${i}.out"
-        nohup python -m examples.secure_aggregation_example.client --client_number="$i" > ${log_path} 2>&1 & array[${#array[@]}]=$!
+        log_path="examples/secagg_non_private_example/log/client_${i}.out"
+        nohup python -m examples.secagg_non_private_example.client --client_number="$i" > ${log_path} 2>&1 & array[${#array[@]}]=$!
     done
     echo "saving pid to file"
     echo "${array[*]}"
-    echo "${array[*]}" > examples/secure_aggregation_example/log/running_pid.txt
+    echo "${array[*]}" > examples/secagg_non_private_example/log/running_pid.txt
     read -p "Press y to terminate session >>> " input
     if [ "$input" = "y" ]
     then

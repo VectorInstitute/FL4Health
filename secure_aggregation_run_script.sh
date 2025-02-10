@@ -10,8 +10,8 @@ EXPERIMENT=$1
 
 cancel_present_jobs=0
 lightweight=0
-clean_up=1
-erase_checkpoints=1
+clean_up=0
+erase_checkpoints=0
 
 if [[ $clean_up == 1 ]]; then
     clear
