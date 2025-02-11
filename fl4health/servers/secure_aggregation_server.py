@@ -13,9 +13,10 @@ from flwr.common.typing import NDArrays, Scalar
 from flwr.server.client_manager import ClientManager, ClientProxy
 from flwr.server.history import History
 from flwr.server.server import FitResultsAndFailures, fit_clients
+from flwr.common.typing import Config
 from torch.nn import Module
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.checkpointer import TorchModuleCheckpointer
 from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
 from fl4health.privacy_mechanisms.slow_discrete_gaussian_mechanism import (
     generate_random_sign_vector,
@@ -28,7 +29,7 @@ from fl4health.privacy_mechanisms.discrete_gaussian_mechanism import (
     modular_clipping
 )
 from fl4health.privacy_mechanisms.index import PrivacyMechanismIndex
-from fl4health.reporting.fl_wanb import ServerWandBReporter
+from fl4health.reporting.wandb_reporter import WandBReporter
 from fl4health.reporting.secure_aggregation_blackbox import BlackBox
 from fl4health.security.secure_aggregation import (
     ClientId,
@@ -39,12 +40,14 @@ from fl4health.security.secure_aggregation import (
     ServerCryptoKit,
     ShamirOwnerId,
 )
-from fl4health.server.base_server import ExchangerType, FlServerWithCheckpointing
-from fl4health.server.polling import poll_clients
-from fl4health.server.secure_aggregation_utils import get_model_dimension, unvectorize_model, vectorize_model, change_model_dtypes, get_model_layer_types
+from fl4health.parameter_exchange.parameter_exchanger_base import ExchangerType
+from fl4health.servers.base_server import FlServer
+from fl4health.servers.polling import poll_clients
+from fl4health.servers.secure_aggregation_utils import get_model_dimension, unvectorize_model, vectorize_model, change_model_dtypes, get_model_layer_types
 from fl4health.strategies.secure_aggregation_strategy import SecureAggregationStrategy
 
 from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
+from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 
 import json
 import os
@@ -58,7 +61,7 @@ class Status:
     dropout: bool
 
 
-class SecureAggregationServer(FlServerWithCheckpointing):
+class SecureAggregationServer(FlServer):
 
     """
     Server supporting secure aggregation.
@@ -68,11 +71,12 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         self,
         client_manager: ClientManager,
         strategy: SecureAggregationStrategy,
+        fl_config: Config,
         model: Module,
         parameter_exchanger: ExchangerType,
         privacy_settings,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        wandb_reporter: Optional[WandBReporter] = None,
+        checkpointer: Optional[TorchModuleCheckpointer] = None,
         timeout: Optional[float] = 30,
         # secure aggregation params
         shamir_reconstruction_threshold: int = 2,
@@ -83,7 +87,10 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         self.debug_mode = True
         log(INFO, 'secure aggregation server initializing...')
         assert isinstance(strategy, SecureAggregationStrategy)
-        super().__init__(client_manager, model, parameter_exchanger, wandb_reporter, strategy, checkpointer)
+        
+        checkpoint_and_state_module = BaseServerCheckpointAndStateModule(model=model, parameter_exchanger=parameter_exchanger, model_checkpointers=[checkpointer])
+        
+        super().__init__(client_manager, fl_config, strategy, wandb_reporter, checkpoint_and_state_module,accept_failures=False)
 
         self.layer_dtypes = get_model_layer_types(model)
         
@@ -98,7 +105,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         self.crypto.model_dimension = get_model_dimension(model)
 
         temporary_dir = os.path.join(
-            os.path.dirname(checkpointer.best_checkpoint_path),
+            os.path.dirname(checkpointer.checkpoint_path),
             'temp'
         )
 
@@ -112,7 +119,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
 
         self.blackbox = BlackBox()
         metrics_dir = os.path.join(os.path.dirname(
-            checkpointer.best_checkpoint_path), 
+            checkpointer.checkpoint_path), 
             'metrics'
         )
 
@@ -170,7 +177,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         self.initialize_tables()
 
         # both the client and the server initially nulls the model vector
-        vector_0 = vectorize_model(self.server_model)
+        vector_0 = vectorize_model(self.checkpoint_and_state_module.model)
         # log(INFO, 'initial model')
         # log(INFO, vector_0)
         torch.save(vector_0, self.temporary_model_path)
@@ -201,7 +208,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
 
                 with open(self.metrics_path, 'r') as file:
                     metrics_to_save = json.load(file)
-                    metrics_to_save['model_size'] = sum(p.numel() for p in self.server_model.parameters() if p.requires_grad)
+                    metrics_to_save['model_size'] = sum(p.numel() for p in self.checkpoint_and_state_module.model.parameters() if p.requires_grad)
                     metrics_to_save['current_round'] = current_round
 
                     if current_round == 1:
@@ -352,7 +359,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         model_vector = vector + torch.load(self.temporary_model_path).to(device=device) 
 
         torch.save(model_vector, self.temporary_model_path)
-        self.server_model = unvectorize_model(self.server_model, model_vector)
+        self.server_model = unvectorize_model(self.checkpoint_and_state_module.model, model_vector)
         self.revert_layer_dtype()
         self.parameters = ndarrays_to_parameters(
             [layer.cpu().numpy() for layer in self.server_model.state_dict().values()]
@@ -684,9 +691,9 @@ class SecureAggregationServer(FlServerWithCheckpointing):
                 log(WARN, "The responded ID should not equal dropout ID, something is wrong, aborting FL.")
                 exit()
 
-        unmasked_vector = torch.from_numpy(unmasking_vector) + vectorize_model(model=self.server_model)
+        unmasked_vector = torch.from_numpy(unmasking_vector) + vectorize_model(model=self.checkpoint_and_state_module.model)
 
-        self.server_model = unvectorize_model(model=self.server_model, parameter_vector=unmasked_vector)
+        self.server_model = unvectorize_model(model=self.checkpoint_and_state_module.model, parameter_vector=unmasked_vector)
         self.parameters = ndarrays_to_parameters(
             [layer.cpu().numpy() for layer in self.server_model.state_dict().values()]
         )
@@ -883,6 +890,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
             client_instructions=client_instructions,
             max_workers=self.max_workers,
             timeout=timeout,
+            group_id=server_round,
         )
 
         peer_count = self.get_peer_number()
@@ -1036,7 +1044,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         req = {"sender": "server", "fl_round": self.fl_round, "even_name": Event.MASKED_INPUT_COLLECTION.value}
 
     def revert_layer_dtype(self):
-        self.server_model = change_model_dtypes(model=self.server_model, dtypes_list=self.layer_dtypes)
+        self.server_model = change_model_dtypes(model=self.checkpoint_and_state_module.model, dtypes_list=self.layer_dtypes)
 
     def echo(self, message: str, to_print: any) -> None:
         if self.debug_mode:

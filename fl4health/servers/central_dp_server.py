@@ -31,7 +31,7 @@ from fl4health.privacy_mechanisms.discrete_gaussian_mechanism import (
     modular_clipping
 )
 from fl4health.privacy_mechanisms.index import PrivacyMechanismIndex
-from fl4health.reporting.fl_wanb import ServerWandBReporter
+from fl4health.reporting.wandb_reporter import WandBReporter
 from fl4health.reporting.secure_aggregation_blackbox import BlackBox
 from fl4health.security.secure_aggregation import (
     ClientId,

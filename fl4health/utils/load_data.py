@@ -247,7 +247,7 @@ def load_cifar10_data(
         "validation_set": len(validation_set),
     }
     return train_loader, validation_loader, num_examples
-def poisson_subsampler_cifar10(data_dir: Path, expected_batch_size: int) -> Tuple[DataLoader, DataLoader]:
+def poisson_subsampler_cifar10(data_dir: Path, expected_batch_size: int) -> tuple[DataLoader, DataLoader]:
     """This dataloader for CIFAR-10 uses Poisson subsampling to select batches of given EXPECTED batch size.
 
     Args

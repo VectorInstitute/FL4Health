@@ -16,7 +16,7 @@ from fl4health.privacy_mechanisms.slow_discrete_gaussian_mechanism import (
     randomized_rounding,
 )
 from fl4health.privacy_mechanisms.index import PrivacyMechanismIndex
-from fl4health.server.secure_aggregation_utils import get_model_norm, vectorize_model
+from fl4health.servers.secure_aggregation_utils import get_model_norm, vectorize_model
 
 
 class SecureAggregationExchanger(ParameterExchanger):

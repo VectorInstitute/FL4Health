@@ -15,14 +15,16 @@ from flwr.common.logger import log
 from flwr.common.typing import Config, List, NDArrays, Scalar
 import torch.utils.data
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.checkpointer import TorchModuleCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
 from fl4health.privacy_mechanisms.index import PrivacyMechanismIndex
 from fl4health.security.secure_aggregation import ClientCryptoKit, ClientId, Event, ShamirSecret, ShamirSecrets
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import Metric, MetricMeterType
+from fl4health.utils.metrics import Metric
+from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointAndStateModule
+
 
 from fl4health.privacy_mechanisms.slow_discrete_gaussian_mechanism import (
     discrete_gaussian_noise_vector,
@@ -42,7 +44,7 @@ from fl4health.privacy_mechanisms.discrete_gaussian_mechanism import (
     shift_transform
 )
 from fl4health.privacy_mechanisms.index import PrivacyMechanismIndex
-from fl4health.server.secure_aggregation_utils import get_model_norm, vectorize_model, get_model_layer_types, change_model_dtypes
+from fl4health.servers.secure_aggregation_utils import get_model_norm, vectorize_model, get_model_layer_types, change_model_dtypes
 import json 
 import os
 import uuid 
@@ -51,6 +53,9 @@ import timeit
 from fl4health.privacy_mechanisms.gaussian_mechanism import gaussian_mechanism
 from statistics import mean
 from opacus import PrivacyEngine
+
+from fl4health.reporting.base_reporter import BaseReporter
+
 
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -65,13 +70,19 @@ class SecureAggregationClient(BasicClient):
         device: torch.device,
         privacy_settings,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        # metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
+        checkpointer: Optional[TorchModuleCheckpointer] = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: str | None = None,
         client_id: str = uuid.uuid1(),
         task_name: str = '',
         num_mini_clients = 8,
     ) -> None:
-        super().__init__(data_path, metrics, device, loss_meter_type, metric_meter_type, checkpointer)
+        
+        super().__init__(data_path, metrics, device, loss_meter_type)
+        
+        
 
         self.client_id = client_id
         self.task_name = task_name
@@ -81,7 +92,7 @@ class SecureAggregationClient(BasicClient):
         self.start_time:float
 
         temporary_dir = os.path.join(
-            os.path.dirname(checkpointer.best_checkpoint_path),
+            os.path.dirname(checkpointer.checkpoint_path),
             'temp'
         )
         self.temporary_dir = temporary_dir
@@ -107,7 +118,7 @@ class SecureAggregationClient(BasicClient):
         )
 
         metrics_dir = os.path.join(
-            os.path.dirname(checkpointer.best_checkpoint_path),
+            os.path.dirname(checkpointer.checkpoint_path),
             'metrics'
         )
 
@@ -345,15 +356,16 @@ class SecureAggregationClient(BasicClient):
 
     # Orchestrates training
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
-        local_epochs, local_steps, current_server_round = self.process_config(config)
+        local_epochs, local_steps, current_server_round, _, _ = self.process_config(config)
         self.current_server_round = current_server_round
         log(INFO, f' start of client server round {current_server_round}')
         if not self.initialized:
             self.setup_client(config)
+            self.optimizer = self.get_optimizer(config)
             self.setup_opacus()
 
         # local model <- global model
-        self.set_parameters(parameters, config)
+        self.set_parameters(parameters, config, True)
 
         # store initial model vector for computing model delta
         vector_0 = vectorize_model(self.model)
@@ -419,7 +431,7 @@ class SecureAggregationClient(BasicClient):
             for id in range(1, 1+ self.num_mini_clients):
                 log(INFO, f'Training by epochs: {local_epochs} local epochs')
                 self.model.load_state_dict(torch.load(self.temporary_model_state_path))
-                self.optimizer = self.get_optimizer(config)
+                # self.optimizer = self.get_optimizer(config)
                 self.optimizer.load_state_dict(torch.load(self.temporary_optimizer_state_path))
                 
                 self.train_loader = self.mini_clients_data_loaders[id - 1]
@@ -803,7 +815,7 @@ class SecureAggregationClient(BasicClient):
         datasize = 0
         for local_epoch in range(epochs):
             log(INFO, f'Consumed {datasize} datapoints by epoch {local_epoch}.')
-            self.train_metric_meter_mngr.clear()
+            self.train_metric_manager.clear()
             self.train_loss_meter.clear()
             for input, target in self.train_loader:
 
@@ -812,17 +824,19 @@ class SecureAggregationClient(BasicClient):
                 input, target = input.to(self.device), target.to(self.device)
                 losses, preds = self.train_step(input, target)
                 self.train_loss_meter.update(losses)
-                self.train_metric_meter_mngr.update(preds, target)
+                # self.train_metric_meter_mngr.update(preds, target)
+                self.update_metric_manager(preds, target, self.train_metric_manager)
+                
                 self.update_after_step(local_step)
                 self.total_steps += 1
                 local_step += 1
-            metrics = self.train_metric_meter_mngr.compute()
+            metrics = self.train_metric_manager.compute()
             losses = self.train_loss_meter.compute()
             loss_dict = losses.as_dict()
 
             # Log results and maybe report via WANDB
-            self._handle_logging(loss_dict, metrics, current_round=current_round, current_epoch=local_epoch)
-            self._handle_reporting(loss_dict, metrics, current_round=current_round)
+            self._log_results(loss_dict, metrics, current_round=current_round, current_epoch=local_epoch)
+            self._log_results(loss_dict, metrics, current_round=current_round)
 
         # Return final training metrics
         return loss_dict, metrics, datasize
@@ -842,7 +856,7 @@ class SecureAggregationClient(BasicClient):
         train_iterator = iter(self.train_loader)
 
         self.train_loss_meter.clear()
-        self.train_metric_meter_mngr.clear()
+        self.train_metric_manager.clear()
 
         datasize = 0
         for step in range(steps):
@@ -859,17 +873,18 @@ class SecureAggregationClient(BasicClient):
             input, target = input.to(self.device), target.to(self.device)
             losses, preds = self.train_step(input, target)
             self.train_loss_meter.update(losses)
-            self.train_metric_meter_mngr.update(preds, target)
+            # self.train_metric_meter_mngr.update(preds, target)
+            self.update_metric_manager(preds, target, self.train_metric_manager)
             self.update_after_step(step)
             self.total_steps += 1
 
         losses = self.train_loss_meter.compute()
         loss_dict = losses.as_dict()
-        metrics = self.train_metric_meter_mngr.compute()
+        metrics = self.train_metric_manager.compute()
 
         # Log results and maybe report via WANDB
-        self._handle_logging(loss_dict, metrics, current_round=current_round)
-        self._handle_reporting(loss_dict, metrics, current_round=current_round)
+        self._log_results(loss_dict, metrics, current_round=current_round)
+        self._log_results(loss_dict, metrics, current_round=current_round)
 
         return loss_dict, metrics, datasize
     

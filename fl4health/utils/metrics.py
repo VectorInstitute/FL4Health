@@ -22,7 +22,7 @@ class MetricPrefix(Enum):
 TEST_NUM_EXAMPLES_KEY = f"{MetricPrefix.TEST_PREFIX.value} num_examples"
 TEST_LOSS_KEY = f"{MetricPrefix.TEST_PREFIX.value} checkpoint"
 
-from flamby.datasets.fed_tcga_brca import metric as c_index
+# from flamby.datasets.fed_tcga_brca import metric as c_index
 
 class Metric(ABC):
     def __init__(self, name: str) -> None:
@@ -271,14 +271,14 @@ class BinarySoftDiceCoefficient(SimpleMetric):
         dice[union == 0] = 1
         return torch.mean(dice).item()
     
-class C_Index(Metric):
-    def __init__(self, name: str = "concordance index"):
-        super().__init__(name)
+# class C_Index(Metric):
+#     def __init__(self, name: str = "concordance index"):
+#         super().__init__(name)
         
-    def __call__(self, preds: torch.Tensor, target: torch.Tensor) -> Scalar:
-        target = target.cpu().detach()
-        preds = preds.cpu().detach()
-        return c_index(target, preds)
+#     def __call__(self, preds: torch.Tensor, target: torch.Tensor) -> Scalar:
+#         target = target.cpu().detach()
+#         preds = preds.cpu().detach()
+#         return c_index(target, preds)
 
 class Accuracy(SimpleMetric):
     def __init__(self, name: str = "accuracy"):
