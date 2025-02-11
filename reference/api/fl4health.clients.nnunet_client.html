@@ -507,9 +507,11 @@ as. The client makes a local modified copy of the global source plans file sent 
 as default None, the plans identifier will be set as “FL-plansname-000local” where 000 is the
 <code class="docutils literal notranslate"><span class="pre">dataset_id</span></code> and plansname is the “plans_name” value of the source plans file. The original plans
 will be saved under the <code class="docutils literal notranslate"><span class="pre">source_plans_name</span></code> key in the modified plans file.</p></li>
-<li><p><strong>compile</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, the client will jit compile the pytorch model. This requires some
-overhead time at the beginning of training to compile the model, but results in faster training times.
-Defaults to True</p></li>
+<li><p><strong>compile</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If set to True, the client will Just-In-Time (JIT) compile the nnUNet model and
+perform optimizations at the start of training. This process significantly reduces the runtime for
+nnUNet models, especially for larger models or long-running jobs. However, it introduces some overhead
+time and computation during the initial step. It is recommended to keep this option enabled. The
+default value is True.</p></li>
 <li><p><strong>always_preprocess</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, will preprocess the local client dataset even if the
 preprocessed data already seems to exist. The existence of the preprocessed data is determined by
 matching the provided <code class="docutils literal notranslate"><span class="pre">data_identifier</span></code> with that of the preprocessed data already  on the client.
@@ -826,8 +828,9 @@ the ignore class specified by ignore label. See nnunet documentation for more in
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.nnunet_client.NnunetClient.predict">
 <span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/nnunet_client.html#NnunetClient.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.nnunet_client.NnunetClient.predict" title="Link to this definition">¶</a></dt>
-<dd><p>Generate model outputs. Overridden because nnunets output lists when deep supervision is on so we have to
-reformat the output into dicts If device type is cuda, loss computed in mixed precision.</p>
+<dd><p>Generate model outputs. Overridden because nnunets outputs lists when deep supervision is on so we have to
+reformat the output into dicts.</p>
+<p>Additionally if device type is cuda, loss computed in mixed precision.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>input</strong> (<em>TorchInputType</em>) – The model inputs</p>

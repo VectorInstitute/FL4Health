@@ -492,7 +492,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">FLOWER_LOGGER</span><span class="p">,</span> <span class="n">console_handler</span><span class="p">,</span> <span class="n">log</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span><span class="p">,</span> <span class="n">Scalar</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torch.cuda.amp</span><span class="w"> </span><span class="kn">import</span> <span class="n">GradScaler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.amp</span><span class="w"> </span><span class="kn">import</span> <span class="n">GradScaler</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn.modules.loss</span><span class="w"> </span><span class="kn">import</span> <span class="n">_Loss</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim.lr_scheduler</span><span class="w"> </span><span class="kn">import</span> <span class="n">_LRScheduler</span>
@@ -589,9 +589,11 @@
 <span class="sd">                as default None, the plans identifier will be set as &quot;FL-plansname-000local&quot; where 000 is the</span>
 <span class="sd">                ``dataset_id`` and plansname is the &quot;plans_name&quot; value of the source plans file. The original plans</span>
 <span class="sd">                will be saved under the ``source_plans_name`` key in the modified plans file.</span>
-<span class="sd">            compile (bool, optional): If True, the client will jit compile the pytorch model. This requires some</span>
-<span class="sd">                overhead time at the beginning of training to compile the model, but results in faster training times.</span>
-<span class="sd">                Defaults to True</span>
+<span class="sd">            compile (bool, optional): If set to True, the client will Just-In-Time (JIT) compile the nnUNet model and</span>
+<span class="sd">                perform optimizations at the start of training. This process significantly reduces the runtime for</span>
+<span class="sd">                nnUNet models, especially for larger models or long-running jobs. However, it introduces some overhead</span>
+<span class="sd">                time and computation during the initial step. It is recommended to keep this option enabled. The</span>
+<span class="sd">                default value is True.</span>
 <span class="sd">            always_preprocess (bool, optional): If True, will preprocess the local client dataset even if the</span>
 <span class="sd">                preprocessed data already seems to exist. The existence of the preprocessed data is determined by</span>
 <span class="sd">                matching the provided ``data_identifier`` with that of the preprocessed data already  on the client.</span>
@@ -621,6 +623,7 @@
 <span class="sd">                Defaults to empty dictionary.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">metrics</span> <span class="o">=</span> <span class="n">metrics</span> <span class="k">if</span> <span class="n">metrics</span> <span class="k">else</span> <span class="p">[]</span>
+
         <span class="c1"># Parent method sets up several class attributes</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">data_path</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;dummy/path&quot;</span><span class="p">),</span>  <span class="c1"># data_path not used by NnunetClient</span>
@@ -641,6 +644,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">always_preprocess</span> <span class="o">=</span> <span class="n">always_preprocess</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">plans_name</span> <span class="o">=</span> <span class="n">plans_identifier</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fingerprint_extracted</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grad_scaler</span> <span class="o">=</span> <span class="n">GradScaler</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_grad_norm</span> <span class="o">=</span> <span class="n">max_grad_norm</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_dataload_proc</span> <span class="o">=</span> <span class="n">n_dataload_processes</span>
         <span class="k">try</span><span class="p">:</span>
@@ -658,9 +662,6 @@
         <span class="c1"># Used to redirect stdout to logger</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">stream2debug</span> <span class="o">=</span> <span class="n">StreamToLogger</span><span class="p">(</span><span class="n">FLOWER_LOGGER</span><span class="p">,</span> <span class="n">DEBUG</span><span class="p">)</span>
 
-        <span class="c1"># Used to scale gradients if using mixed precision training (true if device is cuda)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">grad_scaler</span><span class="p">:</span> <span class="n">GradScaler</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">GradScaler</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">else</span> <span class="kc">None</span>
-
         <span class="c1"># nnunet specific attributes to be initialized in setup_client</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_trainer_class</span> <span class="o">=</span> <span class="n">nnunet_trainer_class</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_trainer_class_kwargs</span> <span class="o">=</span> <span class="n">nnunet_trainer_class_kwargs</span>
@@ -670,11 +671,18 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">steps_per_round</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># N steps per server round</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># N_rounds x steps_per_round</span>
 
-        <span class="c1"># Set nnunet compile environment variable. Nnunet default is to compile</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">compile</span><span class="p">:</span>
+        <span class="c1"># Turn on/off model optimizations for decreasing runtime efficiency.</span>
+        <span class="k">if</span> <span class="nb">compile</span><span class="p">:</span>
+            <span class="c1"># Turning on cudnn.benchmark reduces nnUNet runtimes by 2-3x in our experiments.</span>
+            <span class="c1"># Limit of 0 tells cudnn to benchmark all available conv algorithms (default is 10)</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">backends</span><span class="o">.</span><span class="n">cudnn</span><span class="o">.</span><span class="n">benchmark</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">backends</span><span class="o">.</span><span class="n">cudnn</span><span class="o">.</span><span class="n">benchmark_limit</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;nnUNet_compile&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="s2">&quot;true&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">backends</span><span class="o">.</span><span class="n">cudnn</span><span class="o">.</span><span class="n">benchmark</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;nnUNet_compile&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="s2">&quot;false&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
-                <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Switching pytorch model jit compile to OFF&quot;</span><span class="p">)</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;nnUNet_compile&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="s2">&quot;false&quot;</span><span class="p">)</span></div>
+                <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Disabling model optimizations and JIT compilation. This may impact runtime performance.&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="NnunetClient.train_step">
@@ -696,15 +704,11 @@
 <span class="sd">            Tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with a dictionary of any</span>
 <span class="sd">            predictions produced by the model.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># If the device type is not cuda, we don&#39;t use mixed precision training</span>
-        <span class="c1"># So we are safe to use the BasicClient train_step method</span>
-        <span class="c1"># Note that transform_gradients is defined for the NnunetClient</span>
+        <span class="c1"># If the device type is not cuda, we don&#39;t use mixed precision training and therefore can use parent method.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">!=</span> <span class="s2">&quot;cuda&quot;</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">train_step</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
 
-        <span class="c1"># If performing mixed precision training, scaler should be defined</span>
-        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">grad_scaler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-
+        <span class="c1"># As in the nnUNetTrainer, we implement mixed precision using torch.autocast and torch.GradScaler</span>
         <span class="c1"># Clear gradients from optimizer if they exist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="p">[</span><span class="s2">&quot;global&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
 
@@ -712,10 +716,6 @@
         <span class="n">preds</span><span class="p">,</span> <span class="n">features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
         <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_target</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
         <span class="n">losses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_training_loss</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-
-        <span class="c1"># Custom backward pass logic with gradient scaling adapted from nnUNetTrainer:</span>
-        <span class="c1"># https://github.com/MIC-DKFZ/nnUNet/blob/43349fa5f0680e8109a78dca7215c19e258c9dd7/ \</span>
-        <span class="c1"># nnunetv2/training/nnUNetTrainer/nnUNetTrainer.py#L999</span>
 
         <span class="c1"># Compute scaled loss and perform backward pass</span>
         <span class="n">scaled_backward_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grad_scaler</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">losses</span><span class="o">.</span><span class="n">backward</span><span class="p">[</span><span class="s2">&quot;backward&quot;</span><span class="p">])</span>
@@ -1097,8 +1097,10 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.predict">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">TorchInputType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TorchPredType</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Generate model outputs. Overridden because nnunets output lists when deep supervision is on so we have to</span>
-<span class="sd">        reformat the output into dicts If device type is cuda, loss computed in mixed precision.</span>
+<span class="sd">        Generate model outputs. Overridden because nnunets outputs lists when deep supervision is on so we have to</span>
+<span class="sd">        reformat the output into dicts.</span>
+
+<span class="sd">        Additionally if device type is cuda, loss computed in mixed precision.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            input (TorchInputType): The model inputs</span>
@@ -1109,8 +1111,6 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
             <span class="c1"># If device type is cuda, nnUNet defaults to mixed precision forward pass</span>
-            <span class="c1"># https://github.com/MIC-DKFZ/nnUNet/blob/43349fa5f0680e8109a78dca7215c19e258c9dd7 \</span>
-            <span class="c1"># nnunetv2/training/nnUNetTrainer/nnUNetTrainer.py#L993</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;cuda&quot;</span><span class="p">:</span>
                 <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">autocast</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
                     <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
@@ -1121,6 +1121,7 @@
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;prediction&quot;</span><span class="p">:</span> <span class="n">output</span><span class="p">},</span> <span class="p">{}</span>
+        <span class="c1"># If output is a list or tuple then deep supervision is on and we need to convert preds into a dict</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
             <span class="n">num_spatial_dims</span> <span class="o">=</span> <span class="n">NNUNET_N_SPATIAL_DIMS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">nnunet_config</span><span class="p">]</span>
             <span class="n">preds</span> <span class="o">=</span> <span class="n">convert_deep_supervision_list_to_dict</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">num_spatial_dims</span><span class="p">)</span>
@@ -1153,7 +1154,7 @@
 <span class="sd">            tuple[torch.Tensor, dict[str, torch.Tensor] | None]: A tuple where the first element is the loss and the</span>
 <span class="sd">            second element is an optional additional loss</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># prepare loss args check if deep supervision is on and returns list if so</span>
+        <span class="c1"># If deep supervision is turned on we must convert loss and target dicts into lists</span>
         <span class="n">loss_preds</span> <span class="o">=</span> <span class="n">prepare_loss_arg</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span>
         <span class="n">loss_targets</span> <span class="o">=</span> <span class="n">prepare_loss_arg</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
 
@@ -1169,8 +1170,6 @@
             <span class="p">)</span>
 
         <span class="c1"># If device type is cuda, nnUNet defaults to compute loss in mixed precision</span>
-        <span class="c1"># https://github.com/MIC-DKFZ/nnUNet/blob/43349fa5f0680e8109a78dca7215c19e258c9dd7 \</span>
-        <span class="c1"># nnunetv2/training/nnUNetTrainer/nnUNetTrainer.py#L993</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s2">&quot;cuda&quot;</span><span class="p">:</span>
             <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">autocast</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
                 <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">criterion</span><span class="p">(</span><span class="n">loss_preds</span><span class="p">,</span> <span class="n">loss_targets</span><span class="p">),</span> <span class="kc">None</span>
