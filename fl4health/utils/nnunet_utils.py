@@ -269,6 +269,8 @@ class nnUNetDataLoaderWrapper(DataLoader):
         nnunet_augmenter: SingleThreadedAugmenter | NonDetMultiThreadedAugmenter | MultiThreadedAugmenter,
         nnunet_config: NnunetConfig | str,
         infinite: bool = False,
+        set_len: int | None = None,
+        ref_image_shape: Sequence | None = None,
     ) -> None:
         """
         Wraps nnunet dataloader classes using the pytorch dataloader to make them pytorch compatible. Also handles
@@ -282,6 +284,14 @@ class nnUNetDataLoaderWrapper(DataLoader):
             infinite (bool, optional): Whether or not to treat the dataset as infinite. The dataloaders sample data
                 with replacement either way. The only difference is that if set to False, a ``StopIteration`` is
                 generated after ``num_samples``/``batch_size`` steps. Defaults to False.
+            set_len (int | None): If specified overrides the dataloaders estimate of its own length with the provided
+                value. A ``StopIteration`` will be raised after ``set_len`` steps. If not specified the length is
+                determined by scaling the number of samples by the ratio of image size to the networks input patch
+                size.
+            ref_image_shape (Sequence | None): The image shape to use when computing the scaling factor used in
+                determining the length of the dataloader. Should be representative of the median or average image size
+                in the data set. If not specified a random image is loaded and its shape is used in the calculation of
+                the scaling factor.
         """
         # The augmenter is a wrapper on the nnunet dataloader
         self.nnunet_augmenter = nnunet_augmenter
@@ -301,6 +311,8 @@ class nnUNetDataLoaderWrapper(DataLoader):
         # nnunet dataloaders are infinite by default so we have to track steps to stop iteration
         self.current_step = 0
         self.infinite = infinite
+        self.ref_image_shape = ref_image_shape
+        self.set_len = set_len
 
     def __next__(self) -> tuple[torch.Tensor, torch.Tensor | dict[str, torch.Tensor]]:
         if not self.infinite and self.current_step == self.__len__():
@@ -334,12 +346,21 @@ class nnUNetDataLoaderWrapper(DataLoader):
         of voxels in a patch and then using that factor to scale ``n_samples``. This is particularly important for
         training 2d models on 3d data.
         """
-        sample, _, _ = self.dataset.load_case(self.nnunet_dataloader.indices[0])
-        n_image_voxels = np.prod(sample.shape)
+        if self.set_len is not None:
+            return self.set_len
+
+        if self.ref_image_shape is None:
+            # Sample will have shape (n_channels, x, y, ...)
+            sample, _, _ = self.dataset.load_case(self.nnunet_dataloader.indices[0])
+            self.ref_image_shape = sample.shape[1:]  # Must remove the channel dimension
+
+        n_image_voxels = np.prod(self.ref_image_shape)
         n_patch_voxels = np.prod(self.nnunet_dataloader.final_patch_size)
+
         # Scale factor is at least one to prevent shrinking the dataset. We can have a
         # larger patch size sometimes because nnunet will do padding
         scale = max(n_image_voxels / n_patch_voxels, 1)
+
         # Scale n_samples and then divide by batch size to get n_steps per epoch
         return round((len(self.dataset) * scale) / self.nnunet_dataloader.batch_size)
 

@@ -690,7 +690,8 @@ class BasicClient(NumPyClient):
         """
         self.model.train()
 
-        # Pass loader to iterator so we can step through train loader
+        # Pass loader to iterator so we can step through train loader using next()
+        # NOTE: This does not reset the train_loader, it's position will be remembered.
         train_iterator = iter(self.train_loader)
 
         self.train_loss_meter.clear()
@@ -703,8 +704,8 @@ class BasicClient(NumPyClient):
             try:
                 input, target = next(train_iterator)
             except StopIteration:
-                # StopIteration is thrown if dataset ends
-                # reinitialize data loader
+                # StopIteration thrown if dataset ends. Pytorch dataloaders reinitialize internally, so we try again.
+                # If shuffle of dataloader is True, sample order won't repeat after StopIteration.
                 train_iterator = iter(self.train_loader)
                 input, target = next(train_iterator)
 
@@ -769,11 +770,30 @@ class BasicClient(NumPyClient):
         self.model.eval()
         metric_manager.clear()
         loss_meter.clear()
+
+        # Limit n_steps if max_num_validation steps is set and we are in fact doing validation.
+        if logging_mode == LoggingMode.VALIDATION and self.max_num_validation_steps is not None:
+            n_steps = self.max_num_validation_steps
+        else:
+            # If an Iterable Dataset is being used with multiproc this may be inaccurate.
+            # See https://github.com/pytorch/pytorch/blob/v2.6.0/torch/utils/data/dataloader.py#L511
+            n_steps = len(loader)
+
+        # Get loader iterable so that we can call next() on it.
+        # NOTE: This does not reset the loader, its position will be remembered
+        loader_iter = iter(loader)
+
+        # Validation loop
         with torch.no_grad():
-            for i, (input, target) in enumerate(maybe_progress_bar(loader, self.progress_bar)):
-                # Limit validation to self.max_num_validation_steps if it is defined
-                if logging_mode == LoggingMode.VALIDATION and self.max_num_validation_steps == i:
-                    break
+            for step in maybe_progress_bar(range(n_steps), self.progress_bar):
+                try:
+                    input, target = next(loader_iter)
+                except StopIteration:
+                    # Dataset has ended. Pytorch dataloaders reinitialize internally, so we try again.
+                    # If shuffle of dataloader is True, sample order won't repeat after StopIteration.
+                    loader_iter = iter(loader)
+                    input, target = next(loader_iter)
+
                 input = move_data_to_device(input, self.device)
                 target = move_data_to_device(target, self.device)
                 losses, preds = self.val_step(input, target)

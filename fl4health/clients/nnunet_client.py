@@ -293,9 +293,19 @@ class NnunetClient(BasicClient):
         root_logger.handlers.clear()
         FLOWER_LOGGER.propagate = True
 
+        # Get accurate estimate of image shape so that we can get accurate dataloader length
+        if self.plans is None:
+            self.plans = self.create_plans(config)
+        shape = self.plans["configurations"][self.nnunet_config]["median_image_shape_in_voxels"]
+
         # Wrap nnunet dataloaders to make them compatible with fl4health
-        train_loader = nnUNetDataLoaderWrapper(nnunet_augmenter=train_loader, nnunet_config=self.nnunet_config)
-        val_loader = nnUNetDataLoaderWrapper(nnunet_augmenter=val_loader, nnunet_config=self.nnunet_config)
+        train_loader = nnUNetDataLoaderWrapper(
+            nnunet_augmenter=train_loader, nnunet_config=self.nnunet_config, ref_image_shape=shape
+        )
+        val_loader = nnUNetDataLoaderWrapper(
+            nnunet_augmenter=val_loader, nnunet_config=self.nnunet_config, ref_image_shape=shape
+        )
+        log(INFO, f"{len(val_loader)}, {len(val_loader.dataset)}, {val_loader.nnunet_dataloader.batch_size}")
 
         if self.verbose:
             log(INFO, f"\tDataloaders initialized in {time.time() - start_time:.1f}s")
@@ -552,7 +562,8 @@ class NnunetClient(BasicClient):
         self.maybe_extract_fingerprint()
 
         # Create the nnunet plans for the local client
-        self.plans = self.create_plans(config=config)
+        if self.plans is None:
+            self.plans = self.create_plans(config=config)
 
         # Unless log level is DEBUG or lower hide nnunet output
         with redirect_stdout(self.stream2debug):
@@ -655,9 +666,9 @@ class NnunetClient(BasicClient):
         loss_targets = prepare_loss_arg(target)
 
         # Ensure we have the same number of predictions and targets
-        assert isinstance(
-            loss_preds, type(loss_targets)
-        ), f"Got unexpected types for preds and targets: {type(loss_preds)} and {type(loss_targets)}"
+        assert isinstance(loss_preds, type(loss_targets)), (
+            f"Got unexpected types for preds and targets: {type(loss_preds)} and {type(loss_targets)}"
+        )
 
         if isinstance(loss_preds, list):
             assert len(loss_preds) == len(loss_targets), (
