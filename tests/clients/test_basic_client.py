@@ -140,37 +140,14 @@ def test_evaluate_after_fit_disabled() -> None:
 def test_num_val_samples_correct() -> None:
     fl_client_no_max = MockBasicClient()
     fl_client_no_max.setup_client({})
-    assert fl_client_no_max.max_num_validation_steps is None
+    assert fl_client_no_max.num_validation_steps is None
     assert fl_client_no_max.num_val_samples == 32
 
     fl_client_max = MockBasicClient()
-    config: Config = {"max_num_validation_steps": 2}
+    config: Config = {"num_validation_steps": 2}
     fl_client_max.setup_client(config)
-    assert fl_client_max.max_num_validation_steps == 2
+    assert fl_client_max.num_validation_steps == 2
     assert fl_client_max.num_val_samples == 8
-
-
-def test_stop_validation_iterations() -> None:
-    client = MockBasicClient()
-    client.max_num_validation_steps = 5
-    client.setup_client({})
-
-    should_stop = client._should_stop_iteration(LoggingMode.TEST, 3)
-    assert not should_stop
-
-    should_stop = client._should_stop_iteration(LoggingMode.VALIDATION, 3)
-    assert not should_stop
-
-    should_stop = client._should_stop_iteration(LoggingMode.VALIDATION, 5)
-    assert should_stop
-
-    should_stop = client._should_stop_iteration(LoggingMode.VALIDATION, 20)
-    assert should_stop
-
-    client.max_num_validation_steps = None
-
-    should_stop = client._should_stop_iteration(LoggingMode.VALIDATION, 10)
-    assert not should_stop
 
 
 class MockBasicClient(BasicClient):
@@ -201,7 +178,7 @@ class MockBasicClient(BasicClient):
         self.test_loader = MagicMock()
         self.num_train_samples = 0
         self.num_val_samples = 0
-        self.max_num_validation_steps = None
+        self.num_validation_steps = None
 
         # Mocking methods
         self.set_parameters = MagicMock()  # type: ignore
@@ -215,14 +192,15 @@ class MockBasicClient(BasicClient):
         mock_data_loader = MagicMock()  # type: ignore
         mock_data_loader.batch_size = 4
         mock_data_loader.dataset = [None] * 32
+        mock_data_loader.__len__ = lambda _: len(mock_data_loader.dataset) // mock_data_loader.batch_size
         self.get_data_loaders.return_value = mock_data_loader, mock_data_loader
         self.get_test_data_loader = MagicMock()  # type: ignore
         self.get_test_data_loader.return_value = mock_data_loader
         self.get_optimizer = MagicMock()  # type: ignore
         self.get_criterion = MagicMock()  # type: ignore
 
-        self._validate_or_test = MagicMock()  # type: ignore
-        self._validate_or_test.side_effect = self.mock_validate_or_test
+        self._fully_validate_or_test = MagicMock()  # type: ignore
+        self._fully_validate_or_test.side_effect = self.mock_validate_or_test
 
     def mock_validate_or_test(  # type: ignore
         self, loader, loss_meter, metric_manager, logging_mode=LoggingMode.VALIDATION, include_losses_in_metrics=False

@@ -1,6 +1,6 @@
 import datetime
-from collections.abc import Sequence
-from logging import INFO, WARNING
+from collections.abc import Iterator, Sequence
+from logging import INFO
 from pathlib import Path
 from typing import Any
 
@@ -24,6 +24,7 @@ from fl4health.utils.client import (
     fold_loss_dict_into_metrics,
     maybe_progress_bar,
     move_data_to_device,
+    process_and_check_validation_steps,
     set_pack_losses_with_val_metrics,
 )
 from fl4health.utils.config import narrow_dict_type, narrow_dict_type_and_set_attribute
@@ -123,14 +124,15 @@ class BasicClient(NumPyClient):
         # and setting the patience and interval_steps attributes. The early stopper will be used to
         # stop training if the validation loss does not improve for a certain number of steps.
         self.early_stopper: EarlyStopper | None = None
-        # Config can contain max_num_validation_steps key, which determines an upper bound
+        # Config can contain num_validation_steps key, which determines an upper bound
         # for the validation steps taken. If not specified, no upper bound will be enforced.
         # By specifying this in the config we cannot guarantee the validation set is the same
         # across rounds for clients.
-        self.max_num_validation_steps: int | None = None
-        # Train iterator is used in executing training by steps. It is only instantiated if needed.
-        # NOTE: It is of type _BaseDataLoaderIter, which is not importable...so we're forced to use Any
-        self.train_iterator: Any | None = None
+        self.num_validation_steps: int | None = None
+        # NOTE: These iterators are of type _BaseDataLoaderIter, which is not importable...so we're forced to use
+        # Iterator
+        self.train_iterator: Iterator | None = None
+        self.val_iterator: Iterator | None = None
 
     def _maybe_checkpoint(self, loss: float, metrics: dict[str, Scalar], checkpoint_mode: CheckpointMode) -> None:
         """
@@ -744,29 +746,61 @@ class BasicClient(NumPyClient):
 
         return loss_dict, metrics
 
-    def _should_stop_iteration(self, logging_mode: LoggingMode, step: int) -> bool:
+    def _validate_by_steps(
+        self, loss_meter: LossMeter, metric_manager: MetricManager, include_losses_in_metrics: bool = False
+    ) -> tuple[float, dict[str, Scalar]]:
         """
-        Determines whether to stop a validation or test run through the associated dataloader. As currently configured,
-        we always pass through the entire test dataloaders if one exists. If ``self.max_num_validation_steps`` is set
-        then we stop iterating through a validation loader after the provided step exceeds this value. Otherwise, we
-        go through the entire loader.
+        Evaluate the model on the validation set for a fixed number of steps set by ``self.num_validation_steps``
 
         Args:
-            logging_mode (LoggingMode): Whether we're doing validation or testing
-            step (int): What step we're on in the validation or testing run through the loader
+            loss_meter (LossMeter): The meter to track the losses.
+            metric_manager (MetricManager): The manager to track the metrics.
+            include_losses_in_metrics (bool, optional): Whether or not to pack the additional losses into the metrics
+                dictionary. Defaults to False.
 
         Returns:
-            bool: Whether or not we should conclude our iterations through the dataloader.
+            tuple[float, dict[str, Scalar]]: The loss and a dictionary of metrics from evaluation.
         """
-        if logging_mode == LoggingMode.TEST:
-            return False
-        elif self.max_num_validation_steps is None:
-            return False
-        elif step >= self.max_num_validation_steps:
-            return True
-        return False
 
-    def _validate_or_test(
+        assert self.num_validation_steps is not None, "num_validation_steps must be defined to use this function"
+
+        self.model.eval()
+        metric_manager.clear()
+        loss_meter.clear()
+
+        # If the val_iterator hasn't been created before, we do so now.
+        if self.val_iterator is None:
+            # Pass loader to iterator so we can step through validation loader
+            self.val_iterator = iter(self.val_loader)
+
+        with torch.no_grad():
+            for _ in maybe_progress_bar(range(self.num_validation_steps), self.progress_bar):
+                try:
+                    input, target = next(self.val_iterator)
+                except StopIteration:
+                    # StopIteration is thrown if dataset ends. Calling iter() on the dataloader resets the loader
+                    # If shuffle=True for the dataloader, the data is also shuffled anew. If not, we pass through
+                    # the data in the same order
+                    self.val_iterator = iter(self.val_loader)
+                    input, target = next(self.val_iterator)
+
+                input = move_data_to_device(input, self.device)
+                target = move_data_to_device(target, self.device)
+                losses, preds = self.val_step(input, target)
+                loss_meter.update(losses)
+                self.update_metric_manager(preds, target, metric_manager)
+
+        # Compute losses and metrics over validation set
+        loss_dict = loss_meter.compute().as_dict()
+        metrics = metric_manager.compute()
+        self._log_results(loss_dict, metrics, logging_mode=LoggingMode.VALIDATION)
+
+        if include_losses_in_metrics:
+            fold_loss_dict_into_metrics(metrics, loss_dict, LoggingMode.VALIDATION)
+
+        return loss_dict["checkpoint"], metrics
+
+    def _fully_validate_or_test(
         self,
         loader: DataLoader,
         loss_meter: LossMeter,
@@ -775,9 +809,7 @@ class BasicClient(NumPyClient):
         include_losses_in_metrics: bool = False,
     ) -> tuple[float, dict[str, Scalar]]:
         """
-        Evaluate the model on the given validation or test dataset. If ``max_num_validation_steps`` attribute is not
-        None  and in validation phase, steps are limited to the value of ``max_num_validation_steps``. Otherwise, the
-        entire validation set is used.
+        Evaluate the model on the given validation or test dataset.
 
         Args:
             loader (DataLoader): The data loader for the dataset (validation or test).
@@ -797,10 +829,7 @@ class BasicClient(NumPyClient):
         metric_manager.clear()
         loss_meter.clear()
         with torch.no_grad():
-            for i, (input, target) in enumerate(maybe_progress_bar(loader, self.progress_bar)):
-                # Limit validation to self.max_num_validation_steps if it is defined
-                if self._should_stop_iteration(logging_mode, i):
-                    break
+            for input, target in maybe_progress_bar(loader, self.progress_bar):
                 input = move_data_to_device(input, self.device)
                 target = move_data_to_device(target, self.device)
                 losses, preds = self.val_step(input, target)
@@ -819,8 +848,8 @@ class BasicClient(NumPyClient):
 
     def validate(self, include_losses_in_metrics: bool = False) -> tuple[float, dict[str, Scalar]]:
         """
-        Validate the current model on the entire validation and potentially an entire test dataset if it has been
-        defined.
+        Validate the current model on the entire validation (or a subset thereof if num_validation_steps is not None)
+        and potentially an entire test dataset if it has been defined.
 
         Args:
             include_losses_in_metrics (bool, optional): Determines whether to include the calculated losses into the
@@ -830,14 +859,22 @@ class BasicClient(NumPyClient):
             tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation
             (and test if present).
         """
-        val_loss, val_metrics = self._validate_or_test(
-            self.val_loader,
-            self.val_loss_meter,
-            self.val_metric_manager,
-            include_losses_in_metrics=include_losses_in_metrics,
-        )
+        if self.num_validation_steps is None:
+            val_loss, val_metrics = self._fully_validate_or_test(
+                self.val_loader,
+                self.val_loss_meter,
+                self.val_metric_manager,
+                include_losses_in_metrics=include_losses_in_metrics,
+            )
+        else:
+            val_loss, val_metrics = self._validate_by_steps(
+                self.val_loss_meter,
+                self.val_metric_manager,
+                include_losses_in_metrics=include_losses_in_metrics,
+            )
+
         if self.test_loader:
-            test_loss, test_metrics = self._validate_or_test(
+            test_loss, test_metrics = self._fully_validate_or_test(
                 self.test_loader,
                 self.test_loss_meter,
                 self.test_metric_manager,
@@ -886,30 +923,21 @@ class BasicClient(NumPyClient):
         self.val_loader = val_loader
         self.test_loader = self.get_test_data_loader(config)
 
-        if "max_num_validation_steps" in config:
-            log(
-                INFO,
-                "max_num_validation_steps specified in config. Only a subset of batches will be processed from the "
-                "validation set. If max_num_validation_steps is greater than the number of batches in the validation "
-                "dataloader, all batches will be processed",
-            )
-            self.max_num_validation_steps = narrow_dict_type(config, "max_num_validation_steps", int)
+        self.num_validation_steps = process_and_check_validation_steps(config, self.val_loader)
 
         # The following lines are type ignored because torch datasets are not "Sized"
         # IE __len__ is considered optionally defined. In practice, it is almost always defined
         # and as such, we will make that assumption.
         self.num_train_samples = len(self.train_loader.dataset)  # type: ignore
 
-        # if max_num_validation_steps is defined, limit validation set to minimum of
-        # batch_size * max_num_validation_steps and the length of validation set
+        # if num_validation_steps is defined, the number of validation samples seen is
+        # batch_size * num_validation_steps
         self.num_val_samples = len(self.val_loader.dataset)  # type: ignore
-        if self.max_num_validation_steps is not None:
-            log(WARNING, "If shuffle is False for the validation loader, the SAME batches are processed each time.")
+        if self.num_validation_steps is not None:
             assert (
                 self.val_loader.batch_size is not None
             ), "Validation batch size must be defined if we want to limit the number of validation steps"
-            max_val_size = self.max_num_validation_steps * self.val_loader.batch_size
-            self.num_val_samples = min(self.num_val_samples, max_val_size)
+            self.num_val_samples = self.num_validation_steps * self.val_loader.batch_size
 
         if self.test_loader:
             self.num_test_samples = len(self.test_loader.dataset)  # type: ignore

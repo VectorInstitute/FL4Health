@@ -187,7 +187,7 @@ class NnunetClient(BasicClient):
         self.nnunet_trainer_class_kwargs = nnunet_trainer_class_kwargs
         self.nnunet_trainer: nnUNetTrainer
         self.nnunet_config: NnunetConfig
-        self.plans: dict[str, Any]
+        self.plans: dict[str, Any] | None = None
         self.steps_per_round: int  # N steps per server round
         self.max_steps: int  # N_rounds x steps_per_round
 
@@ -293,9 +293,19 @@ class NnunetClient(BasicClient):
         root_logger.handlers.clear()
         FLOWER_LOGGER.propagate = True
 
+        # Get accurate estimate of image shape so that we can get accurate dataloader length
+        if self.plans is None:
+            self.plans = self.create_plans(config)
+        shape = self.plans["configurations"][self.nnunet_config.value]["median_image_size_in_voxels"]
+
         # Wrap nnunet dataloaders to make them compatible with fl4health
-        train_loader = nnUNetDataLoaderWrapper(nnunet_augmenter=train_loader, nnunet_config=self.nnunet_config)
-        val_loader = nnUNetDataLoaderWrapper(nnunet_augmenter=val_loader, nnunet_config=self.nnunet_config)
+        train_loader = nnUNetDataLoaderWrapper(
+            nnunet_augmenter=train_loader, nnunet_config=self.nnunet_config, ref_image_shape=shape
+        )
+        val_loader = nnUNetDataLoaderWrapper(
+            nnunet_augmenter=val_loader, nnunet_config=self.nnunet_config, ref_image_shape=shape
+        )
+        log(INFO, f"{len(val_loader)}, {len(val_loader.dataset)}, {val_loader.nnunet_dataloader.batch_size}")
 
         if self.verbose:
             log(INFO, f"\tDataloaders initialized in {time.time() - start_time:.1f}s")
@@ -548,7 +558,8 @@ class NnunetClient(BasicClient):
         self.maybe_extract_fingerprint()
 
         # Create the nnunet plans for the local client
-        self.plans = self.create_plans(config=config)
+        if self.plans is None:
+            self.plans = self.create_plans(config=config)
 
         # Unless log level is DEBUG or lower hide nnunet output
         with redirect_stdout(self.stream2debug):
