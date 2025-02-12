@@ -16,7 +16,7 @@ import torch
 from flwr.common.logger import FLOWER_LOGGER, console_handler, log
 from flwr.common.typing import Config, Scalar
 from torch import nn
-from torch.cuda.amp import GradScaler
+from torch.amp import GradScaler
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
@@ -109,9 +109,11 @@ class NnunetClient(BasicClient):
                 as default None, the plans identifier will be set as "FL-plansname-000local" where 000 is the
                 ``dataset_id`` and plansname is the "plans_name" value of the source plans file. The original plans
                 will be saved under the ``source_plans_name`` key in the modified plans file.
-            compile (bool, optional): If True, the client will jit compile the pytorch model. This requires some
-                overhead time at the beginning of training to compile the model, but results in faster training times.
-                Defaults to True
+            compile (bool, optional): If set to True, the client will Just-In-Time (JIT) compile the nnUNet model and
+                perform optimizations at the start of training. This process significantly reduces the runtime for
+                nnUNet models, especially for larger models or long-running jobs. However, it introduces some overhead
+                time and computation during the initial step. It is recommended to keep this option enabled. The
+                default value is True.
             always_preprocess (bool, optional): If True, will preprocess the local client dataset even if the
                 preprocessed data already seems to exist. The existence of the preprocessed data is determined by
                 matching the provided ``data_identifier`` with that of the preprocessed data already  on the client.
@@ -141,6 +143,7 @@ class NnunetClient(BasicClient):
                 Defaults to empty dictionary.
         """
         metrics = metrics if metrics else []
+
         # Parent method sets up several class attributes
         super().__init__(
             data_path=Path("dummy/path"),  # data_path not used by NnunetClient
@@ -161,6 +164,7 @@ class NnunetClient(BasicClient):
         self.always_preprocess = always_preprocess
         self.plans_name = plans_identifier
         self.fingerprint_extracted = False
+        self.grad_scaler = GradScaler()
         self.max_grad_norm = max_grad_norm
         self.n_dataload_proc = n_dataload_processes
         try:
@@ -178,9 +182,6 @@ class NnunetClient(BasicClient):
         # Used to redirect stdout to logger
         self.stream2debug = StreamToLogger(FLOWER_LOGGER, DEBUG)
 
-        # Used to scale gradients if using mixed precision training (true if device is cuda)
-        self.grad_scaler: GradScaler | None = GradScaler() if self.device.type == "cuda" else None
-
         # nnunet specific attributes to be initialized in setup_client
         self.nnunet_trainer_class = nnunet_trainer_class
         self.nnunet_trainer_class_kwargs = nnunet_trainer_class_kwargs
@@ -190,11 +191,18 @@ class NnunetClient(BasicClient):
         self.steps_per_round: int  # N steps per server round
         self.max_steps: int  # N_rounds x steps_per_round
 
-        # Set nnunet compile environment variable. Nnunet default is to compile
-        if not compile:
-            if self.verbose:
-                log(INFO, "Switching pytorch model jit compile to OFF")
+        # Turn on/off model optimizations for decreasing runtime efficiency.
+        if compile:
+            # Turning on cudnn.benchmark reduces nnUNet runtimes by 2-3x in our experiments.
+            # Limit of 0 tells cudnn to benchmark all available conv algorithms (default is 10)
+            torch.backends.cudnn.benchmark = True
+            torch.backends.cudnn.benchmark_limit = 0
+            os.environ["nnUNet_compile"] = str("true")
+        else:
+            torch.backends.cudnn.benchmark = False
             os.environ["nnUNet_compile"] = str("false")
+            if self.verbose:
+                log(INFO, "Disabling model optimizations and JIT compilation. This may impact runtime performance.")
 
     def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
         """
@@ -213,15 +221,11 @@ class NnunetClient(BasicClient):
             Tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with a dictionary of any
             predictions produced by the model.
         """
-        # If the device type is not cuda, we don't use mixed precision training
-        # So we are safe to use the BasicClient train_step method
-        # Note that transform_gradients is defined for the NnunetClient
+        # If the device type is not cuda, we don't use mixed precision training and therefore can use parent method.
         if self.device.type != "cuda":
             return super().train_step(input, target)
 
-        # If performing mixed precision training, scaler should be defined
-        assert self.grad_scaler is not None
-
+        # As in the nnUNetTrainer, we implement mixed precision using torch.autocast and torch.GradScaler
         # Clear gradients from optimizer if they exist
         self.optimizers["global"].zero_grad()
 
@@ -229,10 +233,6 @@ class NnunetClient(BasicClient):
         preds, features = self.predict(input)
         target = self.transform_target(target)
         losses = self.compute_training_loss(preds, features, target)
-
-        # Custom backward pass logic with gradient scaling adapted from nnUNetTrainer:
-        # https://github.com/MIC-DKFZ/nnUNet/blob/43349fa5f0680e8109a78dca7215c19e258c9dd7/ \
-        # nnunetv2/training/nnUNetTrainer/nnUNetTrainer.py#L999
 
         # Compute scaled loss and perform backward pass
         scaled_backward_loss = self.grad_scaler.scale(losses.backward["backward"])
@@ -596,8 +596,10 @@ class NnunetClient(BasicClient):
 
     def predict(self, input: TorchInputType) -> tuple[TorchPredType, dict[str, torch.Tensor]]:
         """
-        Generate model outputs. Overridden because nnunets output lists when deep supervision is on so we have to
-        reformat the output into dicts If device type is cuda, loss computed in mixed precision.
+        Generate model outputs. Overridden because nnunets outputs lists when deep supervision is on so we have to
+        reformat the output into dicts.
+
+        Additionally if device type is cuda, loss computed in mixed precision.
 
         Args:
             input (TorchInputType): The model inputs
@@ -608,8 +610,6 @@ class NnunetClient(BasicClient):
         """
         if isinstance(input, torch.Tensor):
             # If device type is cuda, nnUNet defaults to mixed precision forward pass
-            # https://github.com/MIC-DKFZ/nnUNet/blob/43349fa5f0680e8109a78dca7215c19e258c9dd7 \
-            # nnunetv2/training/nnUNetTrainer/nnUNetTrainer.py#L993
             if self.device.type == "cuda":
                 with torch.autocast(self.device.type, enabled=True):
                     output = self.model(input)
@@ -620,6 +620,7 @@ class NnunetClient(BasicClient):
 
         if isinstance(output, torch.Tensor):
             return {"prediction": output}, {}
+        # If output is a list or tuple then deep supervision is on and we need to convert preds into a dict
         elif isinstance(output, (list, tuple)):
             num_spatial_dims = NNUNET_N_SPATIAL_DIMS[self.nnunet_config]
             preds = convert_deep_supervision_list_to_dict(output, num_spatial_dims)
@@ -649,7 +650,7 @@ class NnunetClient(BasicClient):
             tuple[torch.Tensor, dict[str, torch.Tensor] | None]: A tuple where the first element is the loss and the
             second element is an optional additional loss
         """
-        # prepare loss args check if deep supervision is on and returns list if so
+        # If deep supervision is turned on we must convert loss and target dicts into lists
         loss_preds = prepare_loss_arg(preds)
         loss_targets = prepare_loss_arg(target)
 
@@ -665,8 +666,6 @@ class NnunetClient(BasicClient):
             )
 
         # If device type is cuda, nnUNet defaults to compute loss in mixed precision
-        # https://github.com/MIC-DKFZ/nnUNet/blob/43349fa5f0680e8109a78dca7215c19e258c9dd7 \
-        # nnunetv2/training/nnUNetTrainer/nnUNetTrainer.py#L993
         if self.device.type == "cuda":
             with torch.autocast(self.device.type, enabled=True):
                 loss = self.criterion(loss_preds, loss_targets), None
