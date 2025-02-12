@@ -49,7 +49,7 @@ def assert_on_done_task(task: asyncio.Task) -> None:
 
 
 @pytest.mark.smoketest
-async def test_basic_server_client_cifar(tolerance: float, tmp_path: Path) -> None:
+async def test_basic_server_client_checkpoint(tolerance: float, tmp_path: Path) -> None:
     checkpoint_dir = tmp_path / "checkpoints"
     checkpoint_dir.mkdir(exist_ok=True)
     coroutine = run_fault_tolerance_smoke_test(
@@ -59,8 +59,12 @@ async def test_basic_server_client_cifar(tolerance: float, tmp_path: Path) -> No
         partial_config_path="tests/smoke_tests/load_from_checkpoint_example/partial_config.yaml",
         dataset_path="examples/datasets/cifar_data/",
         seed=42,
-        server_metrics=load_metrics_from_file("tests/smoke_tests/basic_server_metrics.json"),
-        client_metrics=load_metrics_from_file("tests/smoke_tests/basic_client_metrics.json"),
+        server_metrics=load_metrics_from_file(
+            "tests/smoke_tests/load_from_checkpoint_example/basic_server_metrics.json"
+        ),
+        client_metrics=load_metrics_from_file(
+            "tests/smoke_tests/load_from_checkpoint_example/basic_client_metrics.json"
+        ),
         intermediate_checkpoint_dir=checkpoint_dir.as_posix(),
         tolerance=tolerance,
     )

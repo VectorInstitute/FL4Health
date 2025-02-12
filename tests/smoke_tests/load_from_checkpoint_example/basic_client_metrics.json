@@ -1,0 +1,42 @@
+{
+    "rounds": {
+        "1": {
+            "fit_round_metrics": {
+                "train - prediction - accuracy": 0.084375
+            },
+            "fit_round_losses": {
+                "backward": 3.4583
+            }
+        },
+        "2": {
+            "fit_round_metrics": {
+                "train - prediction - accuracy": 0.1
+            },
+            "fit_round_losses": {
+                "backward": 2.32976
+            },
+            "eval_round_metrics": {
+                "val - prediction - accuracy": 0.0942,
+                "test - num_examples": 10000,
+                "test - checkpoint": 2.30616,
+                "test - prediction - accuracy": 0.0966
+            },
+            "eval_round_loss": 2.3042
+        },
+        "3": {
+            "fit_round_metrics": {
+                "train - prediction - accuracy": 0.109375
+            },
+            "fit_round_losses": {
+                "backward": 2.2998020
+            },
+            "eval_round_metrics": {
+                "val - prediction - accuracy": 0.0930,
+                "test - num_examples": 10000,
+                "test - checkpoint": 2.30109,
+                "test - prediction - accuracy": 0.096
+            },
+            "eval_round_loss": 2.2999
+        }
+    }
+}
