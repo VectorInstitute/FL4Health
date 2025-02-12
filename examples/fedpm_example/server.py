@@ -7,10 +7,9 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.masked_model import Masked4Cnn
-from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.servers.fedpm_server import FedPmServer
 from fl4health.strategies.fedpm import FedPm
-from fl4health.utils.config import load_config
+from fl4health.utils.config import load_config, make_dict_with_epochs_or_steps
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 

@@ -150,6 +150,29 @@ def test_num_val_samples_correct() -> None:
     assert fl_client_max.num_val_samples == 8
 
 
+def test_stop_validation_iterations() -> None:
+    client = MockBasicClient()
+    client.max_num_validation_steps = 5
+    client.setup_client({})
+
+    should_stop = client._should_stop_iteration(LoggingMode.TEST, 3)
+    assert not should_stop
+
+    should_stop = client._should_stop_iteration(LoggingMode.VALIDATION, 3)
+    assert not should_stop
+
+    should_stop = client._should_stop_iteration(LoggingMode.VALIDATION, 5)
+    assert should_stop
+
+    should_stop = client._should_stop_iteration(LoggingMode.VALIDATION, 20)
+    assert should_stop
+
+    client.max_num_validation_steps = None
+
+    should_stop = client._should_stop_iteration(LoggingMode.VALIDATION, 10)
+    assert not should_stop
+
+
 class MockBasicClient(BasicClient):
     def __init__(
         self,
