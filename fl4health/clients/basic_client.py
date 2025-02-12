@@ -745,6 +745,19 @@ class BasicClient(NumPyClient):
         return loss_dict, metrics
 
     def _should_stop_iteration(self, logging_mode: LoggingMode, step: int) -> bool:
+        """
+        Determines whether to stop a validation or test run through the associated dataloader. As currently configured,
+        we always pass through the entire test dataloaders if one exists. If ``self.max_num_validation_steps`` is set
+        then we stop iterating through a validation loader after the provided step exceeds this value. Otherwise, we
+        go through the entire loader.
+
+        Args:
+            logging_mode (LoggingMode): Whether we're doing validation or testing
+            step (int): What step we're on in the validation or testing run through the loader
+
+        Returns:
+            bool: Whether or not we should conclude our iterations through the dataloader.
+        """
         if logging_mode == LoggingMode.TEST:
             return False
         elif self.max_num_validation_steps is None:
