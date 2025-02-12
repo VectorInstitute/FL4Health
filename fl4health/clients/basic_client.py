@@ -1,6 +1,6 @@
 import datetime
-from collections.abc import Sequence
-from logging import INFO, WARNING
+from collections.abc import Iterator, Sequence
+from logging import INFO
 from pathlib import Path
 from typing import Any
 
@@ -128,9 +128,11 @@ class BasicClient(NumPyClient):
         # By specifying this in the config we cannot guarantee the validation set is the same
         # across rounds for clients.
         self.max_num_validation_steps: int | None = None
-        # Train iterator is used in executing training by steps. It is only instantiated if needed.
-        # NOTE: It is of type _BaseDataLoaderIter, which is not importable...so we're forced to use Any
-        self.train_iterator: Any | None = None
+
+        # NOTE: Type _BaseDataLoaderIter, which is not importable...so we're forced to use Iterator
+        # The train iterator is only used in train_by_steps, but is instatiated regardless
+        self.train_iterator: Iterator
+        self.val_iterator: Iterator
 
     def _maybe_checkpoint(self, loss: float, metrics: dict[str, Scalar], checkpoint_mode: CheckpointMode) -> None:
         """
@@ -692,12 +694,6 @@ class BasicClient(NumPyClient):
             Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         self.model.train()
-
-        # If the train_iterator hasn't been created before, we do so now.
-        if self.train_iterator is None:
-            # Pass loader to iterator so we can step through train loader
-            self.train_iterator = iter(self.train_loader)
-
         self.train_loss_meter.clear()
         self.train_metric_manager.clear()
         self._log_header_str(current_round)
@@ -708,9 +704,8 @@ class BasicClient(NumPyClient):
             try:
                 input, target = next(self.train_iterator)
             except StopIteration:
-                # StopIteration is thrown if dataset ends. Calling iter() on the dataloader resets the loader
-                # If shuffle=True for the dataloader, the data is also shuffled anew. If not, we pass through
-                # the data in the same order
+                # StopIteration is thrown if dataset ends. Reset iterator and continue. If shuffle=True for the
+                # dataloader, the data is also shuffled anew. If not, we pass through the data in the same order
                 self.train_iterator = iter(self.train_loader)
                 input, target = next(self.train_iterator)
 
@@ -744,27 +739,31 @@ class BasicClient(NumPyClient):
 
         return loss_dict, metrics
 
-    def _should_stop_iteration(self, logging_mode: LoggingMode, step: int) -> bool:
+    def _get_num_eval_steps(self, logging_mode: LoggingMode, loader: DataLoader) -> int:
         """
-        Determines whether to stop a validation or test run through the associated dataloader. As currently configured,
-        we always pass through the entire test dataloaders if one exists. If ``self.max_num_validation_steps`` is set
-        then we stop iterating through a validation loader after the provided step exceeds this value. Otherwise, we
-        go through the entire loader.
+        Determines the number of validation steps to do
 
         Args:
-            logging_mode (LoggingMode): Whether we're doing validation or testing
-            step (int): What step we're on in the validation or testing run through the loader
+            logging_mode (LoggingMode): Whether we are doing validation or testing
+            loader (DataLoader): The data loader for the dataset (validation or test).
 
         Returns:
-            bool: Whether or not we should conclude our iterations through the dataloader.
+            int: The number of validation/testing steps to do
         """
-        if logging_mode == LoggingMode.TEST:
-            return False
-        elif self.max_num_validation_steps is None:
-            return False
-        elif step >= self.max_num_validation_steps:
-            return True
-        return False
+        assert (
+            len(loader) > 0
+        ), f"Dataloader must have length greater than 0. Got {len(loader)} during {logging_mode.value}"
+
+        # Limit n_steps if max_num_validation steps is set and we are in fact doing validation.
+        if logging_mode == LoggingMode.VALIDATION and self.max_num_validation_steps is not None:
+            assert (
+                self.max_num_validation_steps > 0
+            ), f"Max number of validation steps must be greater than 0. Got {self.max_num_validation_steps}"
+            return min(self.max_num_validation_steps, len(loader))
+        else:
+            # If an Iterable Dataset is being used with multiproc this may be inaccurate.
+            # See https://github.com/pytorch/pytorch/blob/v2.6.0/torch/utils/data/dataloader.py#L511
+            return len(loader)
 
     def _validate_or_test(
         self,
@@ -797,24 +796,19 @@ class BasicClient(NumPyClient):
         metric_manager.clear()
         loss_meter.clear()
 
-        # Limit n_steps if max_num_validation steps is set and we are in fact doing validation.
-        if logging_mode == LoggingMode.VALIDATION and self.max_num_validation_steps is not None:
-            n_steps = self.max_num_validation_steps
-        else:
-            # If an Iterable Dataset is being used with multiproc this may be inaccurate.
-            # See https://github.com/pytorch/pytorch/blob/v2.6.0/torch/utils/data/dataloader.py#L511
-            n_steps = len(loader)
-
-        # Get loader iterable so that we can call next() on it.
-        # NOTE: This does not reset the loader, its position will be remembered
-        loader_iter = iter(loader)
+        # Get number of steps for vaidation or testing
+        n_steps = self._get_num_eval_steps(logging_mode, loader)
 
         # Validation loop
         with torch.no_grad():
-            for i, (input, target) in enumerate(maybe_progress_bar(loader, self.progress_bar)):
-                # Limit validation to self.max_num_validation_steps if it is defined
-                if self._should_stop_iteration(logging_mode, i):
-                    break
+            for step in maybe_progress_bar(range(n_steps), self.progress_bar):
+                try:
+                    input, target = next(self.val_iterator)
+                except StopIteration:
+                    # StopIteration Raised if we run out of data. Reset Iterator and continue
+                    self.val_iterator = iter(self.val_loader)
+                    input, target = next(self.val_iterator)
+
                 input = move_data_to_device(input, self.device)
                 target = move_data_to_device(target, self.device)
                 losses, preds = self.val_step(input, target)
@@ -898,6 +892,8 @@ class BasicClient(NumPyClient):
         train_loader, val_loader = self.get_data_loaders(config)
         self.train_loader = train_loader
         self.val_loader = val_loader
+        self.val_iterator = iter(val_loader)
+        self.train_iterator = iter(train_loader)
         self.test_loader = self.get_test_data_loader(config)
 
         if "max_num_validation_steps" in config:
@@ -918,10 +914,9 @@ class BasicClient(NumPyClient):
         # batch_size * max_num_validation_steps and the length of validation set
         self.num_val_samples = len(self.val_loader.dataset)  # type: ignore
         if self.max_num_validation_steps is not None:
-            log(WARNING, "If shuffle is False for the validation loader, the SAME batches are processed each time.")
-            assert self.val_loader.batch_size is not None, (
-                "Validation batch size must be defined if we want to limit the number of validation steps"
-            )
+            assert (
+                self.val_loader.batch_size is not None
+            ), "Validation batch size must be defined if we want to limit the number of validation steps"
             max_val_size = self.max_num_validation_steps * self.val_loader.batch_size
             self.num_val_samples = min(self.num_val_samples, max_val_size)
 

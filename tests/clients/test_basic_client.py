@@ -155,22 +155,28 @@ def test_stop_validation_iterations() -> None:
     client.max_num_validation_steps = 5
     client.setup_client({})
 
-    should_stop = client._should_stop_iteration(LoggingMode.TEST, 3)
-    assert not should_stop
+    assert len(client.val_loader) == 8
 
-    should_stop = client._should_stop_iteration(LoggingMode.VALIDATION, 3)
-    assert not should_stop
+    n_steps = client._get_num_eval_steps(LoggingMode.VALIDATION, client.val_loader)
+    assert n_steps == 5
 
-    should_stop = client._should_stop_iteration(LoggingMode.VALIDATION, 5)
-    assert should_stop
+    mock_data_loader = MagicMock()
+    mock_data_loader.__len__ = lambda _: 3
+    n_steps = client._get_num_eval_steps(LoggingMode.VALIDATION, mock_data_loader)
+    assert n_steps == 3
 
-    should_stop = client._should_stop_iteration(LoggingMode.VALIDATION, 20)
-    assert should_stop
+    mock_data_loader.__len__ = lambda _: 5
+    n_steps = client._get_num_eval_steps(LoggingMode.VALIDATION, mock_data_loader)
+    assert n_steps == 5
+
+    mock_data_loader.__len__ = lambda _: 8
+    n_steps = client._get_num_eval_steps(LoggingMode.TEST, mock_data_loader)
+    assert n_steps == 8
 
     client.max_num_validation_steps = None
 
-    should_stop = client._should_stop_iteration(LoggingMode.VALIDATION, 10)
-    assert not should_stop
+    n_steps = client._get_num_eval_steps(LoggingMode.VALIDATION, client.val_loader)
+    assert n_steps == 8
 
 
 class MockBasicClient(BasicClient):
@@ -215,6 +221,7 @@ class MockBasicClient(BasicClient):
         mock_data_loader = MagicMock()  # type: ignore
         mock_data_loader.batch_size = 4
         mock_data_loader.dataset = [None] * 32
+        mock_data_loader.__len__ = lambda _: len(mock_data_loader.dataset) // mock_data_loader.batch_size
         self.get_data_loaders.return_value = mock_data_loader, mock_data_loader
         self.get_test_data_loader = MagicMock()  # type: ignore
         self.get_test_data_loader.return_value = mock_data_loader

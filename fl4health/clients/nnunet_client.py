@@ -187,7 +187,7 @@ class NnunetClient(BasicClient):
         self.nnunet_trainer_class_kwargs = nnunet_trainer_class_kwargs
         self.nnunet_trainer: nnUNetTrainer
         self.nnunet_config: NnunetConfig
-        self.plans: dict[str, Any]
+        self.plans: dict[str, Any] | None = None
         self.steps_per_round: int  # N steps per server round
         self.max_steps: int  # N_rounds x steps_per_round
 
@@ -296,7 +296,7 @@ class NnunetClient(BasicClient):
         # Get accurate estimate of image shape so that we can get accurate dataloader length
         if self.plans is None:
             self.plans = self.create_plans(config)
-        shape = self.plans["configurations"][self.nnunet_config]["median_image_shape_in_voxels"]
+        shape = self.plans["configurations"][self.nnunet_config.value]["median_image_size_in_voxels"]
 
         # Wrap nnunet dataloaders to make them compatible with fl4health
         train_loader = nnUNetDataLoaderWrapper(
@@ -662,9 +662,9 @@ class NnunetClient(BasicClient):
         loss_targets = prepare_loss_arg(target)
 
         # Ensure we have the same number of predictions and targets
-        assert isinstance(loss_preds, type(loss_targets)), (
-            f"Got unexpected types for preds and targets: {type(loss_preds)} and {type(loss_targets)}"
-        )
+        assert isinstance(
+            loss_preds, type(loss_targets)
+        ), f"Got unexpected types for preds and targets: {type(loss_preds)} and {type(loss_targets)}"
 
         if isinstance(loss_preds, list):
             assert len(loss_preds) == len(loss_targets), (
