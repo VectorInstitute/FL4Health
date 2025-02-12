@@ -99,9 +99,9 @@ def narrow_dict_type_and_set_attribute(
 
 def make_dict_with_epochs_or_steps(local_epochs: int | None = None, local_steps: int | None = None) -> dict[str, int]:
     """
-    Given two optional variables, this function will determine which, if any are not None and create a dictionary
+    Given two optional variables, this function will determine which, if any, are not None and create a dictionary
     from the value. If both are not None, it will prioritize ``local_epochs``. If both are None, then the dictionary
-    is empty
+    is empty.
 
     Args:
         local_epochs (int | None, optional): Number of local epochs of training to perform in FL. Defaults to None.
