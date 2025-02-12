@@ -10,19 +10,19 @@
         },
         "2": {
             "eval_round_metrics_aggregated": {
-                "val - personal - accuracy": {"target_value": 0.6584, "custom_tolerance": 0.005},
-                "val - global - accuracy": 0.6031,
-                "val - local - accuracy": {"target_value": 0.614, "custom_tolerance": 0.005}
+                "val - personal - accuracy": {"target_value": 0.74766, "custom_tolerance": 0.005},
+                "val - global - accuracy": 0.72833,
+                "val - local - accuracy": {"target_value": 0.70288, "custom_tolerance": 0.005}
             },
-            "val - loss - aggregated": {"target_value": 1.0008, "custom_tolerance": 0.005}
+            "val - loss - aggregated": {"target_value": 0.86359, "custom_tolerance": 0.005}
         },
         "3": {
             "eval_round_metrics_aggregated": {
-                "val - personal - accuracy": {"target_value": 0.8218, "custom_tolerance": 0.005},
-                "val - global - accuracy": 0.8497,
-                "val - local - accuracy": {"target_value": 0.7508, "custom_tolerance": 0.005}
+                "val - personal - accuracy": {"target_value": 0.80833, "custom_tolerance": 0.005},
+                "val - global - accuracy": 0.75322,
+                "val - local - accuracy": {"target_value": 0.80711, "custom_tolerance": 0.005}
             },
-            "val - loss - aggregated": {"target_value": 0.6042, "custom_tolerance": 0.005}
+            "val - loss - aggregated": {"target_value": 0.65421, "custom_tolerance": 0.005}
         }
     }
 }

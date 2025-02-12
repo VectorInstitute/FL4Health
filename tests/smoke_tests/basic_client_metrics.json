@@ -31,10 +31,10 @@
                 "backward": 2.31093
             },
             "eval_round_metrics": {
-                "val - prediction - accuracy": 0.0936,
+                "val - prediction - accuracy": 0.0930,
                 "test - num_examples": 10000,
                 "test - checkpoint": 2.30109,
-                "test - prediction - accuracy": 0.0972
+                "test - prediction - accuracy": 0.096
             },
             "eval_round_loss": 2.2999
         }
