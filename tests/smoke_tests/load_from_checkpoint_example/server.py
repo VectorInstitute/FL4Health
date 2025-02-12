@@ -9,7 +9,6 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import Net
-from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.checkpointing.checkpointer import (
     BestLossTorchModuleCheckpointer,
     LatestTorchModuleCheckpointer,
@@ -19,7 +18,7 @@ from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateMo
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.reporting import JsonReporter
 from fl4health.servers.base_server import FlServer
-from fl4health.utils.config import load_config
+from fl4health.utils.config import load_config, make_dict_with_epochs_or_steps
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import set_all_random_seeds

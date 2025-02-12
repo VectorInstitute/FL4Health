@@ -207,8 +207,8 @@ class NnunetClient(BasicClient):
     def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
         """
         Given a single batch of input and target data, generate predictions, compute loss, update parameters and
-        optionally update metrics if they exist. (i.e. backprop on a single batch of data). Assumes self.model is in
-        train mode already.
+        optionally update metrics if they exist. (i.e. backprop on a single batch of data). Assumes ``self.model`` is
+        in train mode already.
 
         Overrides parent to include mixed precision training (autocasting and corresponding gradient scaling) as per
         the original ``nnUNetTrainer``.
@@ -319,11 +319,10 @@ class NnunetClient(BasicClient):
 
     def get_lr_scheduler(self, optimizer_key: str, config: Config) -> _LRScheduler:
         """
-        Creates an LR Scheduler similar to the nnunet default except we set max steps
-        to the total number of steps and update every step. Initial and final LR are
-        the same as nnunet, difference is nnunet sets max steps to num "epochs", but
-        they define an "epoch" as exactly 250 steps. Therefore they update every 250
-        steps. Override this method to set your own LR scheduler.
+        Creates an LR Scheduler similar to the nnunet default except we set max steps to the total number of steps
+        and update every step. Initial and final LR are the same as nnunet, difference is nnunet sets max steps to
+        num "epochs", but they define an "epoch" as exactly 250 steps. Therefore they update every 250 steps. Override
+        this method to set your own LR scheduler.
 
         Args:
             config (Config): The server config. This method will look for the
@@ -460,17 +459,16 @@ class NnunetClient(BasicClient):
     @use_default_signal_handlers  # Preprocessing spawns subprocesses
     def maybe_preprocess(self, nnunet_config: NnunetConfig) -> None:
         """
-        Checks if preprocessed data for current plans exists and if not
-        preprocesses the nnunet_raw dataset. The preprocessed data is saved in
-        '{nnUNet_preprocessed}/{dataset_name}/{data_identifier} where
-        nnUNet_preprocessed is the directory specified by the
-        nnUNet_preprocessed environment variable. dataset_name is the nnunet
-        dataset name (e.g. Dataset123_MyDataset) and data_identifier
-        is {self.data_identifier}_{self.nnunet_config}
+        Checks if preprocessed data for current plans exists and if not preprocesses the nnunet_raw dataset. The
+        preprocessed data is saved in '{nnUNet_preprocessed}/{dataset_name}/{data_identifier} where:
+
+        - ``nnUNet_preprocessed`` is the directory specified by the ``nnUNet_preprocessed`` environment variable.
+        - ``dataset_name`` is the nnunet dataset name (e.g. Dataset123_MyDataset)
+        - ``data_identifier`` is ``{self.data_identifier}_{self.nnunet_config}``
 
         Args:
-            nnunet_config (NnunetConfig): The nnunet config as a NnunetConfig
-                Enum. Enum type ensures nnunet config is valid
+            nnunet_config (NnunetConfig): The nnunet config as a ``NnunetConfig`` Enum. Enum type ensures nnunet
+                config is valid
         """
         assert self.data_identifier is not None, "Was expecting data identifier to be initialized in self.create_plans"
 
@@ -530,15 +528,13 @@ class NnunetClient(BasicClient):
     @use_default_signal_handlers
     def setup_client(self, config: Config) -> None:
         """
-        Ensures the necessary files for training are on disk and initializes
-        several class attributes that depend on values in the config from the
-        server. This is called once when the client is sampled by the server
-        for the first time.
+        Ensures the necessary files for training are on disk and initializes several class attributes that depend on
+        values in the config from the server. This is called once when the client is sampled by the server for the
+        first time.
 
         Args:
-            config (Config): The config file from the server. The nnUNetClient
-                expects the keys 'nnunet_config' and 'nnunet_plans' in
-                addition to those required by BasicClient
+            config (Config): The config file from the server. The ``nnUNetClient`` expects the keys 'nnunet_config'
+                and 'nnunet_plans' in addition to those required by ``BasicClient``
         """
         log(INFO, "Setting up the nnUNetClient")
 
@@ -722,13 +718,12 @@ class NnunetClient(BasicClient):
         metric_manager: MetricManager,
     ) -> None:
         """
-        Update the metrics with preds and target. Overridden because we might
-        need to manipulate inputs due to deep supervision
+        Update the metrics with preds and target. Overridden because we might need to manipulate inputs due to deep
+        supervision
 
         Args:
             preds (TorchPredType): dictionary of model outputs
-            target (TorchTargetType): the targets generated by the dataloader
-                to evaluate the preds with
+            target (TorchTargetType): the targets generated by the dataloader to evaluate the preds with
             metric_manager (MetricManager): the metric manager to update
         """
         if len(preds) > 1:
@@ -861,13 +856,13 @@ class NnunetClient(BasicClient):
 
     def shutdown_dataloader(self, dataloader: DataLoader | None, dl_name: str | None = None) -> None:
         """
-        The nnunet dataloader/augmenter uses multiprocessing under the hood, so the
-        shutdown method terminates the child processes gracefully
+        The nnunet dataloader/augmenter uses multiprocessing under the hood, so the shutdown method terminates the
+        child processes gracefully
 
         Args:
             dataloader (DataLoader): The dataloader to shutdown
-            dl_name (str | None): A string that identifies the dataloader
-                to shutdown. Used for logging purposes. Defaults to None
+            dl_name (str | None): A string that identifies the dataloader to shutdown. Used for logging purposes.
+                Defaults to None
         """
         if dataloader is not None and isinstance(dataloader, nnUNetDataLoaderWrapper):
             if self.verbose:
