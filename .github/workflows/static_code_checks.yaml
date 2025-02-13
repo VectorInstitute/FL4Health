@@ -41,7 +41,7 @@ jobs:
         uses: pypa/gh-action-pip-audit@v1.1.0
         with:
           virtual-environment: .venv/
-          # Ignoring vulnerability in cryptography
+          # Ignoring vulnerabilities in cryptography
           # Fix is 43.0.1 but flwr 1.9 depends on < 43
           # GHSA-cjgq-5qmw-rcj6 is a Keras vulnerability that has no fix yet
           ignore-vulns: |
@@ -49,3 +49,4 @@ jobs:
             GHSA-q34m-jh98-gwm2
             GHSA-f9vj-2wh5-fj8j
             GHSA-cjgq-5qmw-rcj6
+            GHSA-79v4-65xg-pq4g

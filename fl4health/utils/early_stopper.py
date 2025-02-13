@@ -163,7 +163,7 @@ class EarlyStopper:
         if steps % self.interval_steps != 0:
             return False
 
-        val_loss, _ = self.client._validate_or_test(
+        val_loss, _ = self.client._fully_validate_or_test(
             loader=self.client.val_loader,
             loss_meter=self.client.val_loss_meter,
             metric_manager=self.client.val_metric_manager,

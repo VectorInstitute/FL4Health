@@ -8,10 +8,9 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.models.moon_cnn import BaseCnn, HeadCnn, ProjectionCnn
-from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.model_bases.moon_base import MoonModel
 from fl4health.servers.base_server import FlServer
-from fl4health.utils.config import load_config
+from fl4health.utils.config import load_config, make_dict_with_epochs_or_steps
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 

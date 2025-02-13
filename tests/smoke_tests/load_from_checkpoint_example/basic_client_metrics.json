@@ -25,10 +25,10 @@
         },
         "3": {
             "fit_round_metrics": {
-                "train - prediction - accuracy": 0.096875
+                "train - prediction - accuracy": 0.109375
             },
             "fit_round_losses": {
-                "backward": 2.31093
+                "backward": 2.2998020
             },
             "eval_round_metrics": {
                 "val - prediction - accuracy": 0.0930,

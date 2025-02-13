@@ -2,13 +2,14 @@ import copy
 import os
 from collections.abc import Iterable
 from inspect import currentframe, getframeinfo
-from logging import INFO, LogRecord
+from logging import INFO, WARNING, LogRecord
 from typing import Any, TypeVar
 
 import torch
 import torch.nn as nn
 from flwr.common.logger import LOGGER_NAME, console_handler, log
 from flwr.common.typing import Config, Scalar
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from fl4health.utils.config import narrow_dict_type
@@ -155,3 +156,26 @@ def maybe_progress_bar(iterable: Iterable, display_progress_bar: bool) -> Iterab
             "bar_format": format,
         }
         return tqdm(iterable, **kwargs)
+
+
+def process_and_check_validation_steps(config: Config, val_loader: DataLoader) -> int | None:
+    if "num_validation_steps" in config:
+        log(
+            INFO,
+            "num_validation_steps specified in config. Only a subset of batches will be processed from the validation "
+            "set during evaluation. If num_validation_steps is greater than the number of batches in the validation "
+            "dataloader, datapoints may be evaluated twice",
+        )
+        num_validation_steps = narrow_dict_type(config, "num_validation_steps", int)
+        assert num_validation_steps > 0, "num_validation_steps must not be 0"
+        val_dataloader_len = len(val_loader)
+        assert val_dataloader_len > 0, "Dataloader must have length greater than 0."
+        if num_validation_steps > val_dataloader_len:
+            log(
+                WARNING,
+                f"num_validation_steps: {num_validation_steps} is larger than the length of the "
+                f"validation dataloader: {val_dataloader_len}",
+            )
+        return num_validation_steps
+    else:
+        return None
