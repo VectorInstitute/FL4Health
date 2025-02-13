@@ -1,0 +1,28 @@
+{
+    "rounds": {
+        "1": {
+            "eval_round_metrics_aggregated": {
+                "val - prediction - accuracy": 0.1031,
+                "test - prediction - accuracy": 0.1039,
+                "test - loss - aggregated": 2.3613
+            },
+            "val - loss - aggregated": 2.3567
+        },
+        "2": {
+            "eval_round_metrics_aggregated": {
+                "val - prediction - accuracy": 0.0942,
+                "test - prediction - accuracy": 0.0966,
+                "test - loss - aggregated": 2.3061
+            },
+            "val - loss - aggregated": 2.3042
+        },
+        "3": {
+            "eval_round_metrics_aggregated": {
+                "val - prediction - accuracy": 0.093,
+                "test - prediction - accuracy": 0.096,
+                "test - loss - aggregated": 2.3010
+            },
+            "val - loss - aggregated": 2.2999
+        }
+    }
+}

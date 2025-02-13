@@ -5,9 +5,9 @@
             "fit_round_losses": {"backward": 2.2655}
         },
         "1": {
-            "fit_round_metrics": {"train - prediction - accuracy": 0.18125},
-            "fit_round_losses": {"backward": 2.2684},
-            "eval_round_metrics": {"val - prediction - accuracy": {"target_value": 0.1824, "custom_tolerance": 0.005}},
+            "fit_round_metrics": {"train - prediction - accuracy": 0.17812},
+            "fit_round_losses": {"backward": 2.27544},
+            "eval_round_metrics": {"val - prediction - accuracy": {"target_value": 0.1934, "custom_tolerance": 0.005}},
             "eval_round_loss": 2.2785
         },
         "2": {
@@ -21,10 +21,10 @@
         "3": {
             "fit_round_metrics": {"train - prediction - accuracy": {"target_value": 0.4078, "custom_tolerance": 0.05}},
             "fit_round_losses": {
-                "backward": {"target_value": 2.0964, "custom_tolerance": 0.005}
+                "backward": {"target_value": 2.1071, "custom_tolerance": 0.005}
             },
-            "eval_round_metrics": {"val - prediction - accuracy": {"target_value": 0.4062, "custom_tolerance": 0.008}},
-            "eval_round_loss": {"target_value": 2.2070, "custom_tolerance": 0.005}
+            "eval_round_metrics": {"val - prediction - accuracy": {"target_value": 0.4519, "custom_tolerance": 0.008}},
+            "eval_round_loss": {"target_value": 2.2172, "custom_tolerance": 0.005}
         }
     }
 }

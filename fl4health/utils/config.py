@@ -95,3 +95,24 @@ def narrow_dict_type_and_set_attribute(
     val = narrow_dict_type(dictionary, dictionary_key, narrow_type_to)
     val = func(val) if func is not None else val
     setattr(self, attribute_name, val)
+
+
+def make_dict_with_epochs_or_steps(local_epochs: int | None = None, local_steps: int | None = None) -> dict[str, int]:
+    """
+    Given two optional variables, this function will determine which, if any, are not None and create a dictionary
+    from the value. If both are not None, it will prioritize ``local_epochs``. If both are None, then the dictionary
+    is empty.
+
+    Args:
+        local_epochs (int | None, optional): Number of local epochs of training to perform in FL. Defaults to None.
+        local_steps (int | None, optional): Number of local steps of training to perform in FL. Defaults to None.
+
+    Returns:
+        dict[str, int]: Dictionary with at most one of the non-none values, keyed by the name of the non-none variable
+    """
+    if local_epochs is not None:
+        return {"local_epochs": local_epochs}
+    if local_steps is not None:
+        return {"local_steps": local_steps}
+    else:
+        return {}

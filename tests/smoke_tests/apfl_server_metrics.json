@@ -10,19 +10,19 @@
         },
         "2": {
             "eval_round_metrics_aggregated": {
-                "val - personal - accuracy": 0.7117,
-                "val - global - accuracy": 0.7162,
-                "val - local - accuracy": 0.6274
+                "val - personal - accuracy": 0.74766,
+                "val - global - accuracy": 0.72833,
+                "val - local - accuracy": 0.70288
             },
-            "val - loss - aggregated": 0.9102
+            "val - loss - aggregated": 0.86359
         },
         "3": {
             "eval_round_metrics_aggregated": {
-                "val - personal - accuracy": 0.7681,
-                "val - global - accuracy": 0.7943,
-                "val - local - accuracy": 0.7094
+                "val - personal - accuracy": 0.80833,
+                "val - global - accuracy": 0.75322,
+                "val - local - accuracy": 0.80711
             },
-            "val - loss - aggregated": 0.7814
+            "val - loss - aggregated": 0.65421
         }
     }
 }

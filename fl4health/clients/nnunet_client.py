@@ -187,7 +187,7 @@ class NnunetClient(BasicClient):
         self.nnunet_trainer_class_kwargs = nnunet_trainer_class_kwargs
         self.nnunet_trainer: nnUNetTrainer
         self.nnunet_config: NnunetConfig
-        self.plans: dict[str, Any]
+        self.plans: dict[str, Any] | None = None
         self.steps_per_round: int  # N steps per server round
         self.max_steps: int  # N_rounds x steps_per_round
 
@@ -207,8 +207,8 @@ class NnunetClient(BasicClient):
     def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
         """
         Given a single batch of input and target data, generate predictions, compute loss, update parameters and
-        optionally update metrics if they exist. (i.e. backprop on a single batch of data). Assumes self.model is in
-        train mode already.
+        optionally update metrics if they exist. (i.e. backprop on a single batch of data). Assumes ``self.model`` is
+        in train mode already.
 
         Overrides parent to include mixed precision training (autocasting and corresponding gradient scaling) as per
         the original ``nnUNetTrainer``.
@@ -293,9 +293,20 @@ class NnunetClient(BasicClient):
         root_logger.handlers.clear()
         FLOWER_LOGGER.propagate = True
 
+        # Get accurate estimate of image shape so that we can get accurate dataloader length
+        if self.plans is None:
+            self.plans = self.create_plans(config)  # Local plans will have metadata we need
+        fullres_cfg = "3d_fullres" if "3d_fullres" in self.plans["configurations"].keys() else "2d"
+        shape = self.plans["configurations"][fullres_cfg]["median_image_size_in_voxels"]
+
         # Wrap nnunet dataloaders to make them compatible with fl4health
-        train_loader = nnUNetDataLoaderWrapper(nnunet_augmenter=train_loader, nnunet_config=self.nnunet_config)
-        val_loader = nnUNetDataLoaderWrapper(nnunet_augmenter=val_loader, nnunet_config=self.nnunet_config)
+        train_loader = nnUNetDataLoaderWrapper(
+            nnunet_augmenter=train_loader, nnunet_config=self.nnunet_config, ref_image_shape=shape
+        )
+        val_loader = nnUNetDataLoaderWrapper(
+            nnunet_augmenter=val_loader, nnunet_config=self.nnunet_config, ref_image_shape=shape
+        )
+        log(INFO, f"{len(val_loader)}, {len(val_loader.dataset)}, {val_loader.nnunet_dataloader.batch_size}")
 
         if self.verbose:
             log(INFO, f"\tDataloaders initialized in {time.time() - start_time:.1f}s")
@@ -319,11 +330,10 @@ class NnunetClient(BasicClient):
 
     def get_lr_scheduler(self, optimizer_key: str, config: Config) -> _LRScheduler:
         """
-        Creates an LR Scheduler similar to the nnunet default except we set max steps
-        to the total number of steps and update every step. Initial and final LR are
-        the same as nnunet, difference is nnunet sets max steps to num "epochs", but
-        they define an "epoch" as exactly 250 steps. Therefore they update every 250
-        steps. Override this method to set your own LR scheduler.
+        Creates an LR Scheduler similar to the nnunet default except we set max steps to the total number of steps
+        and update every step. Initial and final LR are the same as nnunet, difference is nnunet sets max steps to
+        num "epochs", but they define an "epoch" as exactly 250 steps. Therefore they update every 250 steps. Override
+        this method to set your own LR scheduler.
 
         Args:
             config (Config): The server config. This method will look for the
@@ -416,10 +426,13 @@ class NnunetClient(BasicClient):
         plans["original_median_shape_after_transp"] = [int(round(i)) for i in median_shape]
         plans["original_median_spacing_after_transp"] = [float(i) for i in median_spacing]
 
+        # Get the spacing that the network will resample to. Need to check if samples are 2d or 3d
+        fullres_cfg = "3d_fullres" if "3d_fullres" in plans["configurations"].keys() else "2d"
+        target_spacing = plans["configurations"][fullres_cfg]["spacing"]
+
         # Get the median shape after resampling to the desired/input voxel spacing
-        fullres_spacing = plans["configurations"]["3d_fullres"]["spacing"]
         resampled_shapes = [
-            compute_new_shape(i, j, fullres_spacing) for i, j in zip(fp["shapes_after_crop"], fp["spacings"])
+            compute_new_shape(i, j, target_spacing) for i, j in zip(fp["shapes_after_crop"], fp["spacings"])
         ]
         resampled_median_shape = np.median(resampled_shapes, axis=0)[plans["transpose_forward"]].tolist()
 
@@ -460,17 +473,16 @@ class NnunetClient(BasicClient):
     @use_default_signal_handlers  # Preprocessing spawns subprocesses
     def maybe_preprocess(self, nnunet_config: NnunetConfig) -> None:
         """
-        Checks if preprocessed data for current plans exists and if not
-        preprocesses the nnunet_raw dataset. The preprocessed data is saved in
-        '{nnUNet_preprocessed}/{dataset_name}/{data_identifier} where
-        nnUNet_preprocessed is the directory specified by the
-        nnUNet_preprocessed environment variable. dataset_name is the nnunet
-        dataset name (e.g. Dataset123_MyDataset) and data_identifier
-        is {self.data_identifier}_{self.nnunet_config}
+        Checks if preprocessed data for current plans exists and if not preprocesses the nnunet_raw dataset. The
+        preprocessed data is saved in '{nnUNet_preprocessed}/{dataset_name}/{data_identifier} where:
+
+        - ``nnUNet_preprocessed`` is the directory specified by the ``nnUNet_preprocessed`` environment variable.
+        - ``dataset_name`` is the nnunet dataset name (e.g. Dataset123_MyDataset)
+        - ``data_identifier`` is ``{self.data_identifier}_{self.nnunet_config}``
 
         Args:
-            nnunet_config (NnunetConfig): The nnunet config as a NnunetConfig
-                Enum. Enum type ensures nnunet config is valid
+            nnunet_config (NnunetConfig): The nnunet config as a ``NnunetConfig`` Enum. Enum type ensures nnunet
+                config is valid
         """
         assert self.data_identifier is not None, "Was expecting data identifier to be initialized in self.create_plans"
 
@@ -530,15 +542,13 @@ class NnunetClient(BasicClient):
     @use_default_signal_handlers
     def setup_client(self, config: Config) -> None:
         """
-        Ensures the necessary files for training are on disk and initializes
-        several class attributes that depend on values in the config from the
-        server. This is called once when the client is sampled by the server
-        for the first time.
+        Ensures the necessary files for training are on disk and initializes several class attributes that depend on
+        values in the config from the server. This is called once when the client is sampled by the server for the
+        first time.
 
         Args:
-            config (Config): The config file from the server. The nnUNetClient
-                expects the keys 'nnunet_config' and 'nnunet_plans' in
-                addition to those required by BasicClient
+            config (Config): The config file from the server. The ``nnUNetClient`` expects the keys 'nnunet_config'
+                and 'nnunet_plans' in addition to those required by ``BasicClient``
         """
         log(INFO, "Setting up the nnUNetClient")
 
@@ -552,7 +562,8 @@ class NnunetClient(BasicClient):
         self.maybe_extract_fingerprint()
 
         # Create the nnunet plans for the local client
-        self.plans = self.create_plans(config=config)
+        if self.plans is None:
+            self.plans = self.create_plans(config=config)
 
         # Unless log level is DEBUG or lower hide nnunet output
         with redirect_stdout(self.stream2debug):
@@ -722,13 +733,12 @@ class NnunetClient(BasicClient):
         metric_manager: MetricManager,
     ) -> None:
         """
-        Update the metrics with preds and target. Overridden because we might
-        need to manipulate inputs due to deep supervision
+        Update the metrics with preds and target. Overridden because we might need to manipulate inputs due to deep
+        supervision
 
         Args:
             preds (TorchPredType): dictionary of model outputs
-            target (TorchTargetType): the targets generated by the dataloader
-                to evaluate the preds with
+            target (TorchTargetType): the targets generated by the dataloader to evaluate the preds with
             metric_manager (MetricManager): the metric manager to update
         """
         if len(preds) > 1:
@@ -861,13 +871,13 @@ class NnunetClient(BasicClient):
 
     def shutdown_dataloader(self, dataloader: DataLoader | None, dl_name: str | None = None) -> None:
         """
-        The nnunet dataloader/augmenter uses multiprocessing under the hood, so the
-        shutdown method terminates the child processes gracefully
+        The nnunet dataloader/augmenter uses multiprocessing under the hood, so the shutdown method terminates the
+        child processes gracefully
 
         Args:
             dataloader (DataLoader): The dataloader to shutdown
-            dl_name (str | None): A string that identifies the dataloader
-                to shutdown. Used for logging purposes. Defaults to None
+            dl_name (str | None): A string that identifies the dataloader to shutdown. Used for logging purposes.
+                Defaults to None
         """
         if dataloader is not None and isinstance(dataloader, nnUNetDataLoaderWrapper):
             if self.verbose:
