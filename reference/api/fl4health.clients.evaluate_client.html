@@ -671,8 +671,8 @@ first fitting round.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.evaluate_client.EvaluateClient.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_loss_in_metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/evaluate_client.html#EvaluateClient.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.evaluate_client.EvaluateClient.validate" title="Link to this definition">¶</a></dt>
-<dd><p>Validate the current model on the entire validation and potentially an entire test dataset if it has been
-defined.</p>
+<dd><p>Validate the current model on the entire validation (or a subset thereof if num_validation_steps is not None)
+and potentially an entire test dataset if it has been defined.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>include_losses_in_metrics</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Determines whether to include the calculated losses into the

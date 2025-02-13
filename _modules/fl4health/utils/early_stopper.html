@@ -658,7 +658,7 @@
         <span class="k">if</span> <span class="n">steps</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_steps</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
 
-        <span class="n">val_loss</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">_validate_or_test</span><span class="p">(</span>
+        <span class="n">val_loss</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">_fully_validate_or_test</span><span class="p">(</span>
             <span class="n">loader</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">val_loader</span><span class="p">,</span>
             <span class="n">loss_meter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">val_loss_meter</span><span class="p">,</span>
             <span class="n">metric_manager</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">val_metric_manager</span><span class="p">,</span>

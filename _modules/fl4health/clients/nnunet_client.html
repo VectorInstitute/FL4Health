@@ -667,7 +667,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_trainer_class_kwargs</span> <span class="o">=</span> <span class="n">nnunet_trainer_class_kwargs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_trainer</span><span class="p">:</span> <span class="n">nnUNetTrainer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_config</span><span class="p">:</span> <span class="n">NnunetConfig</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">plans</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plans</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">steps_per_round</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># N steps per server round</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># N_rounds x steps_per_round</span>
 
@@ -690,8 +690,8 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">train_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">TorchInputType</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">TorchTargetType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TrainingLosses</span><span class="p">,</span> <span class="n">TorchPredType</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given a single batch of input and target data, generate predictions, compute loss, update parameters and</span>
-<span class="sd">        optionally update metrics if they exist. (i.e. backprop on a single batch of data). Assumes self.model is in</span>
-<span class="sd">        train mode already.</span>
+<span class="sd">        optionally update metrics if they exist. (i.e. backprop on a single batch of data). Assumes ``self.model`` is</span>
+<span class="sd">        in train mode already.</span>
 
 <span class="sd">        Overrides parent to include mixed precision training (autocasting and corresponding gradient scaling) as per</span>
 <span class="sd">        the original ``nnUNetTrainer``.</span>
@@ -777,9 +777,20 @@
         <span class="n">root_logger</span><span class="o">.</span><span class="n">handlers</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="n">FLOWER_LOGGER</span><span class="o">.</span><span class="n">propagate</span> <span class="o">=</span> <span class="kc">True</span>
 
+        <span class="c1"># Get accurate estimate of image shape so that we can get accurate dataloader length</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">plans</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plans</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_plans</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>  <span class="c1"># Local plans will have metadata we need</span>
+        <span class="n">fullres_cfg</span> <span class="o">=</span> <span class="s2">&quot;3d_fullres&quot;</span> <span class="k">if</span> <span class="s2">&quot;3d_fullres&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plans</span><span class="p">[</span><span class="s2">&quot;configurations&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;2d&quot;</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plans</span><span class="p">[</span><span class="s2">&quot;configurations&quot;</span><span class="p">][</span><span class="n">fullres_cfg</span><span class="p">][</span><span class="s2">&quot;median_image_size_in_voxels&quot;</span><span class="p">]</span>
+
         <span class="c1"># Wrap nnunet dataloaders to make them compatible with fl4health</span>
-        <span class="n">train_loader</span> <span class="o">=</span> <span class="n">nnUNetDataLoaderWrapper</span><span class="p">(</span><span class="n">nnunet_augmenter</span><span class="o">=</span><span class="n">train_loader</span><span class="p">,</span> <span class="n">nnunet_config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nnunet_config</span><span class="p">)</span>
-        <span class="n">val_loader</span> <span class="o">=</span> <span class="n">nnUNetDataLoaderWrapper</span><span class="p">(</span><span class="n">nnunet_augmenter</span><span class="o">=</span><span class="n">val_loader</span><span class="p">,</span> <span class="n">nnunet_config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nnunet_config</span><span class="p">)</span>
+        <span class="n">train_loader</span> <span class="o">=</span> <span class="n">nnUNetDataLoaderWrapper</span><span class="p">(</span>
+            <span class="n">nnunet_augmenter</span><span class="o">=</span><span class="n">train_loader</span><span class="p">,</span> <span class="n">nnunet_config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nnunet_config</span><span class="p">,</span> <span class="n">ref_image_shape</span><span class="o">=</span><span class="n">shape</span>
+        <span class="p">)</span>
+        <span class="n">val_loader</span> <span class="o">=</span> <span class="n">nnUNetDataLoaderWrapper</span><span class="p">(</span>
+            <span class="n">nnunet_augmenter</span><span class="o">=</span><span class="n">val_loader</span><span class="p">,</span> <span class="n">nnunet_config</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nnunet_config</span><span class="p">,</span> <span class="n">ref_image_shape</span><span class="o">=</span><span class="n">shape</span>
+        <span class="p">)</span>
+        <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">val_loader</span><span class="p">)</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">val_loader</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">val_loader</span><span class="o">.</span><span class="n">nnunet_dataloader</span><span class="o">.</span><span class="n">batch_size</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">Dataloaders initialized in </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">start_time</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
@@ -814,11 +825,10 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.get_lr_scheduler">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_lr_scheduler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optimizer_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_LRScheduler</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Creates an LR Scheduler similar to the nnunet default except we set max steps</span>
-<span class="sd">        to the total number of steps and update every step. Initial and final LR are</span>
-<span class="sd">        the same as nnunet, difference is nnunet sets max steps to num &quot;epochs&quot;, but</span>
-<span class="sd">        they define an &quot;epoch&quot; as exactly 250 steps. Therefore they update every 250</span>
-<span class="sd">        steps. Override this method to set your own LR scheduler.</span>
+<span class="sd">        Creates an LR Scheduler similar to the nnunet default except we set max steps to the total number of steps</span>
+<span class="sd">        and update every step. Initial and final LR are the same as nnunet, difference is nnunet sets max steps to</span>
+<span class="sd">        num &quot;epochs&quot;, but they define an &quot;epoch&quot; as exactly 250 steps. Therefore they update every 250 steps. Override</span>
+<span class="sd">        this method to set your own LR scheduler.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (Config): The server config. This method will look for the</span>
@@ -914,10 +924,13 @@
         <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;original_median_shape_after_transp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">median_shape</span><span class="p">]</span>
         <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;original_median_spacing_after_transp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">median_spacing</span><span class="p">]</span>
 
+        <span class="c1"># Get the spacing that the network will resample to. Need to check if samples are 2d or 3d</span>
+        <span class="n">fullres_cfg</span> <span class="o">=</span> <span class="s2">&quot;3d_fullres&quot;</span> <span class="k">if</span> <span class="s2">&quot;3d_fullres&quot;</span> <span class="ow">in</span> <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;configurations&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;2d&quot;</span>
+        <span class="n">target_spacing</span> <span class="o">=</span> <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;configurations&quot;</span><span class="p">][</span><span class="n">fullres_cfg</span><span class="p">][</span><span class="s2">&quot;spacing&quot;</span><span class="p">]</span>
+
         <span class="c1"># Get the median shape after resampling to the desired/input voxel spacing</span>
-        <span class="n">fullres_spacing</span> <span class="o">=</span> <span class="n">plans</span><span class="p">[</span><span class="s2">&quot;configurations&quot;</span><span class="p">][</span><span class="s2">&quot;3d_fullres&quot;</span><span class="p">][</span><span class="s2">&quot;spacing&quot;</span><span class="p">]</span>
         <span class="n">resampled_shapes</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">compute_new_shape</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">fullres_spacing</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">fp</span><span class="p">[</span><span class="s2">&quot;shapes_after_crop&quot;</span><span class="p">],</span> <span class="n">fp</span><span class="p">[</span><span class="s2">&quot;spacings&quot;</span><span class="p">])</span>
+            <span class="n">compute_new_shape</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">target_spacing</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">fp</span><span class="p">[</span><span class="s2">&quot;shapes_after_crop&quot;</span><span class="p">],</span> <span class="n">fp</span><span class="p">[</span><span class="s2">&quot;spacings&quot;</span><span class="p">])</span>
         <span class="p">]</span>
         <span class="n">resampled_median_shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">resampled_shapes</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="n">plans</span><span class="p">[</span><span class="s2">&quot;transpose_forward&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 
@@ -959,17 +972,16 @@
     <span class="nd">@use_default_signal_handlers</span>  <span class="c1"># Preprocessing spawns subprocesses</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">maybe_preprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nnunet_config</span><span class="p">:</span> <span class="n">NnunetConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Checks if preprocessed data for current plans exists and if not</span>
-<span class="sd">        preprocesses the nnunet_raw dataset. The preprocessed data is saved in</span>
-<span class="sd">        &#39;{nnUNet_preprocessed}/{dataset_name}/{data_identifier} where</span>
-<span class="sd">        nnUNet_preprocessed is the directory specified by the</span>
-<span class="sd">        nnUNet_preprocessed environment variable. dataset_name is the nnunet</span>
-<span class="sd">        dataset name (e.g. Dataset123_MyDataset) and data_identifier</span>
-<span class="sd">        is {self.data_identifier}_{self.nnunet_config}</span>
+<span class="sd">        Checks if preprocessed data for current plans exists and if not preprocesses the nnunet_raw dataset. The</span>
+<span class="sd">        preprocessed data is saved in &#39;{nnUNet_preprocessed}/{dataset_name}/{data_identifier} where:</span>
+
+<span class="sd">        - ``nnUNet_preprocessed`` is the directory specified by the ``nnUNet_preprocessed`` environment variable.</span>
+<span class="sd">        - ``dataset_name`` is the nnunet dataset name (e.g. Dataset123_MyDataset)</span>
+<span class="sd">        - ``data_identifier`` is ``{self.data_identifier}_{self.nnunet_config}``</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            nnunet_config (NnunetConfig): The nnunet config as a NnunetConfig</span>
-<span class="sd">                Enum. Enum type ensures nnunet config is valid</span>
+<span class="sd">            nnunet_config (NnunetConfig): The nnunet config as a ``NnunetConfig`` Enum. Enum type ensures nnunet</span>
+<span class="sd">                config is valid</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_identifier</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Was expecting data identifier to be initialized in self.create_plans&quot;</span>
 
@@ -1029,15 +1041,13 @@
     <span class="nd">@use_default_signal_handlers</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">setup_client</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Ensures the necessary files for training are on disk and initializes</span>
-<span class="sd">        several class attributes that depend on values in the config from the</span>
-<span class="sd">        server. This is called once when the client is sampled by the server</span>
-<span class="sd">        for the first time.</span>
+<span class="sd">        Ensures the necessary files for training are on disk and initializes several class attributes that depend on</span>
+<span class="sd">        values in the config from the server. This is called once when the client is sampled by the server for the</span>
+<span class="sd">        first time.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            config (Config): The config file from the server. The nnUNetClient</span>
-<span class="sd">                expects the keys &#39;nnunet_config&#39; and &#39;nnunet_plans&#39; in</span>
-<span class="sd">                addition to those required by BasicClient</span>
+<span class="sd">            config (Config): The config file from the server. The ``nnUNetClient`` expects the keys &#39;nnunet_config&#39;</span>
+<span class="sd">                and &#39;nnunet_plans&#39; in addition to those required by ``BasicClient``</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Setting up the nnUNetClient&quot;</span><span class="p">)</span>
 
@@ -1051,7 +1061,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">maybe_extract_fingerprint</span><span class="p">()</span>
 
         <span class="c1"># Create the nnunet plans for the local client</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">plans</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_plans</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">plans</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plans</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_plans</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
 
         <span class="c1"># Unless log level is DEBUG or lower hide nnunet output</span>
         <span class="k">with</span> <span class="n">redirect_stdout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stream2debug</span><span class="p">):</span>
@@ -1232,13 +1243,12 @@
         <span class="n">metric_manager</span><span class="p">:</span> <span class="n">MetricManager</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Update the metrics with preds and target. Overridden because we might</span>
-<span class="sd">        need to manipulate inputs due to deep supervision</span>
+<span class="sd">        Update the metrics with preds and target. Overridden because we might need to manipulate inputs due to deep</span>
+<span class="sd">        supervision</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            preds (TorchPredType): dictionary of model outputs</span>
-<span class="sd">            target (TorchTargetType): the targets generated by the dataloader</span>
-<span class="sd">                to evaluate the preds with</span>
+<span class="sd">            target (TorchTargetType): the targets generated by the dataloader to evaluate the preds with</span>
 <span class="sd">            metric_manager (MetricManager): the metric manager to update</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">preds</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
@@ -1383,13 +1393,13 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.shutdown_dataloader">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">shutdown_dataloader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">:</span> <span class="n">DataLoader</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">dl_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        The nnunet dataloader/augmenter uses multiprocessing under the hood, so the</span>
-<span class="sd">        shutdown method terminates the child processes gracefully</span>
+<span class="sd">        The nnunet dataloader/augmenter uses multiprocessing under the hood, so the shutdown method terminates the</span>
+<span class="sd">        child processes gracefully</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            dataloader (DataLoader): The dataloader to shutdown</span>
-<span class="sd">            dl_name (str | None): A string that identifies the dataloader</span>
-<span class="sd">                to shutdown. Used for logging purposes. Defaults to None</span>
+<span class="sd">            dl_name (str | None): A string that identifies the dataloader to shutdown. Used for logging purposes.</span>
+<span class="sd">                Defaults to None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">dataloader</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataloader</span><span class="p">,</span> <span class="n">nnUNetDataLoaderWrapper</span><span class="p">):</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>

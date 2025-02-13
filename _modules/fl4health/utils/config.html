@@ -586,6 +586,30 @@
     <span class="n">val</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">val</span>
     <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute_name</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span></div>
 
+
+
+<div class="viewcode-block" id="make_dict_with_epochs_or_steps">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.config.html#fl4health.utils.config.make_dict_with_epochs_or_steps">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_dict_with_epochs_or_steps</span><span class="p">(</span><span class="n">local_epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">local_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given two optional variables, this function will determine which, if any, are not None and create a dictionary</span>
+<span class="sd">    from the value. If both are not None, it will prioritize ``local_epochs``. If both are None, then the dictionary</span>
+<span class="sd">    is empty.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        local_epochs (int | None, optional): Number of local epochs of training to perform in FL. Defaults to None.</span>
+<span class="sd">        local_steps (int | None, optional): Number of local steps of training to perform in FL. Defaults to None.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict[str, int]: Dictionary with at most one of the non-none values, keyed by the name of the non-none variable</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">local_epochs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;local_epochs&quot;</span><span class="p">:</span> <span class="n">local_epochs</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">local_steps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;local_steps&quot;</span><span class="p">:</span> <span class="n">local_steps</span><span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span></div>
+
 </pre></div>
         </article>
       </div>

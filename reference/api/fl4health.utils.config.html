@@ -506,6 +506,28 @@
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="fl4health.utils.config.make_dict_with_epochs_or_steps">
+<span class="sig-name descname"><span class="pre">make_dict_with_epochs_or_steps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_epochs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">local_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/config.html#make_dict_with_epochs_or_steps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.config.make_dict_with_epochs_or_steps" title="Link to this definition">¶</a></dt>
+<dd><p>Given two optional variables, this function will determine which, if any, are not None and create a dictionary
+from the value. If both are not None, it will prioritize <code class="docutils literal notranslate"><span class="pre">local_epochs</span></code>. If both are None, then the dictionary
+is empty.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>local_epochs</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Number of local epochs of training to perform in FL. Defaults to None.</p></li>
+<li><p><strong>local_steps</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Number of local steps of training to perform in FL. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary with at most one of the non-none values, keyed by the name of the non-none variable</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)">int</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="fl4health.utils.config.narrow_dict_type">
 <span class="sig-name descname"><span class="pre">narrow_dict_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dictionary</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">narrow_type_to</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/config.html#narrow_dict_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.config.narrow_dict_type" title="Link to this definition">¶</a></dt>
 <dd><p>Checks if a key exists in dictionary and if so, verify it is of type <code class="docutils literal notranslate"><span class="pre">narrow_type_to</span></code>.</p>
@@ -631,6 +653,7 @@ dictionary[dictionary_key] has the wrong type, a <code class="docutils literal n
 <li><a class="reference internal" href="#fl4health.utils.config.InvalidConfigError"><code class="docutils literal notranslate"><span class="pre">InvalidConfigError</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.utils.config.check_config"><code class="docutils literal notranslate"><span class="pre">check_config()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.utils.config.load_config"><code class="docutils literal notranslate"><span class="pre">load_config()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.utils.config.make_dict_with_epochs_or_steps"><code class="docutils literal notranslate"><span class="pre">make_dict_with_epochs_or_steps()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.utils.config.narrow_dict_type"><code class="docutils literal notranslate"><span class="pre">narrow_dict_type()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.utils.config.narrow_dict_type_and_set_attribute"><code class="docutils literal notranslate"><span class="pre">narrow_dict_type_and_set_attribute()</span></code></a></li>
 </ul>

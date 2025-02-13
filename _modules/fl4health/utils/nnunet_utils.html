@@ -779,6 +779,8 @@
         <span class="n">nnunet_augmenter</span><span class="p">:</span> <span class="n">SingleThreadedAugmenter</span> <span class="o">|</span> <span class="n">NonDetMultiThreadedAugmenter</span> <span class="o">|</span> <span class="n">MultiThreadedAugmenter</span><span class="p">,</span>
         <span class="n">nnunet_config</span><span class="p">:</span> <span class="n">NnunetConfig</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">infinite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">set_len</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ref_image_shape</span><span class="p">:</span> <span class="n">Sequence</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Wraps nnunet dataloader classes using the pytorch dataloader to make them pytorch compatible. Also handles</span>
@@ -792,6 +794,14 @@
 <span class="sd">            infinite (bool, optional): Whether or not to treat the dataset as infinite. The dataloaders sample data</span>
 <span class="sd">                with replacement either way. The only difference is that if set to False, a ``StopIteration`` is</span>
 <span class="sd">                generated after ``num_samples``/``batch_size`` steps. Defaults to False.</span>
+<span class="sd">            set_len (int | None): If specified overrides the dataloaders estimate of its own length with the provided</span>
+<span class="sd">                value. A ``StopIteration`` will be raised after ``set_len`` steps. If not specified the length is</span>
+<span class="sd">                determined by scaling the number of samples by the ratio of image size to the networks input patch</span>
+<span class="sd">                size.</span>
+<span class="sd">            ref_image_shape (Sequence | None): The image shape to use when computing the scaling factor used in</span>
+<span class="sd">                determining the length of the dataloader. Should be representative of the median or average image size</span>
+<span class="sd">                in the data set. If not specified a random image is loaded and its shape is used in the calculation of</span>
+<span class="sd">                the scaling factor.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># The augmenter is a wrapper on the nnunet dataloader</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_augmenter</span> <span class="o">=</span> <span class="n">nnunet_augmenter</span>
@@ -810,7 +820,9 @@
 
         <span class="c1"># nnunet dataloaders are infinite by default so we have to track steps to stop iteration</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_step</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">infinite</span> <span class="o">=</span> <span class="n">infinite</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">infinite</span> <span class="o">=</span> <span class="n">infinite</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ref_image_shape</span> <span class="o">=</span> <span class="n">ref_image_shape</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_len</span> <span class="o">=</span> <span class="n">set_len</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
@@ -845,12 +857,21 @@
 <span class="sd">        of voxels in a patch and then using that factor to scale ``n_samples``. This is particularly important for</span>
 <span class="sd">        training 2d models on 3d data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">sample</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">load_case</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nnunet_dataloader</span><span class="o">.</span><span class="n">indices</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="n">n_image_voxels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">sample</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_len</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_len</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_image_shape</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Sample will have shape (n_channels, x, y, ...)</span>
+            <span class="n">sample</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">load_case</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nnunet_dataloader</span><span class="o">.</span><span class="n">indices</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ref_image_shape</span> <span class="o">=</span> <span class="n">sample</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>  <span class="c1"># Must remove the channel dimension</span>
+
+        <span class="n">n_image_voxels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_image_shape</span><span class="p">)</span>
         <span class="n">n_patch_voxels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nnunet_dataloader</span><span class="o">.</span><span class="n">final_patch_size</span><span class="p">)</span>
+
         <span class="c1"># Scale factor is at least one to prevent shrinking the dataset. We can have a</span>
         <span class="c1"># larger patch size sometimes because nnunet will do padding</span>
         <span class="n">scale</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">n_image_voxels</span> <span class="o">/</span> <span class="n">n_patch_voxels</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
         <span class="c1"># Scale n_samples and then divide by batch size to get n_steps per epoch</span>
         <span class="k">return</span> <span class="nb">round</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span> <span class="o">*</span> <span class="n">scale</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_dataloader</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span>
 

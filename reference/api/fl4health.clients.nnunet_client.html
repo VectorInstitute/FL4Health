@@ -696,11 +696,10 @@ and a PyTorch Validation DataLoader</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.nnunet_client.NnunetClient.get_lr_scheduler">
 <span class="sig-name descname"><span class="pre">get_lr_scheduler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimizer_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/nnunet_client.html#NnunetClient.get_lr_scheduler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.nnunet_client.NnunetClient.get_lr_scheduler" title="Link to this definition">¶</a></dt>
-<dd><p>Creates an LR Scheduler similar to the nnunet default except we set max steps
-to the total number of steps and update every step. Initial and final LR are
-the same as nnunet, difference is nnunet sets max steps to num “epochs”, but
-they define an “epoch” as exactly 250 steps. Therefore they update every 250
-steps. Override this method to set your own LR scheduler.</p>
+<dd><p>Creates an LR Scheduler similar to the nnunet default except we set max steps to the total number of steps
+and update every step. Initial and final LR are the same as nnunet, difference is nnunet sets max steps to
+num “epochs”, but they define an “epoch” as exactly 250 steps. Therefore they update every 250 steps. Override
+this method to set your own LR scheduler.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – The server config. This method will look for the</p>
@@ -874,14 +873,14 @@ Then set initialized attribute to True.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.nnunet_client.NnunetClient.shutdown_dataloader">
 <span class="sig-name descname"><span class="pre">shutdown_dataloader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dl_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/nnunet_client.html#NnunetClient.shutdown_dataloader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.nnunet_client.NnunetClient.shutdown_dataloader" title="Link to this definition">¶</a></dt>
-<dd><p>The nnunet dataloader/augmenter uses multiprocessing under the hood, so the
-shutdown method terminates the child processes gracefully</p>
+<dd><p>The nnunet dataloader/augmenter uses multiprocessing under the hood, so the shutdown method terminates the
+child processes gracefully</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dataloader</strong> (<em>DataLoader</em>) – The dataloader to shutdown</p></li>
-<li><p><strong>dl_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em>) – A string that identifies the dataloader
-to shutdown. Used for logging purposes. Defaults to None</p></li>
+<li><p><strong>dl_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em>) – A string that identifies the dataloader to shutdown. Used for logging purposes.
+Defaults to None</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -894,8 +893,8 @@ to shutdown. Used for logging purposes. Defaults to None</p></li>
 <dt class="sig sig-object py" id="fl4health.clients.nnunet_client.NnunetClient.train_step">
 <span class="sig-name descname"><span class="pre">train_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/nnunet_client.html#NnunetClient.train_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.nnunet_client.NnunetClient.train_step" title="Link to this definition">¶</a></dt>
 <dd><p>Given a single batch of input and target data, generate predictions, compute loss, update parameters and
-optionally update metrics if they exist. (i.e. backprop on a single batch of data). Assumes self.model is in
-train mode already.</p>
+optionally update metrics if they exist. (i.e. backprop on a single batch of data). Assumes <code class="docutils literal notranslate"><span class="pre">self.model</span></code> is
+in train mode already.</p>
 <p>Overrides parent to include mixed precision training (autocasting and corresponding gradient scaling) as per
 the original <code class="docutils literal notranslate"><span class="pre">nnUNetTrainer</span></code>.</p>
 <dl class="field-list simple">
@@ -949,14 +948,13 @@ For example, used by MOON and FENDA to save global modules after aggregation.</p
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.nnunet_client.NnunetClient.update_metric_manager">
 <span class="sig-name descname"><span class="pre">update_metric_manager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_manager</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/nnunet_client.html#NnunetClient.update_metric_manager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.nnunet_client.NnunetClient.update_metric_manager" title="Link to this definition">¶</a></dt>
-<dd><p>Update the metrics with preds and target. Overridden because we might
-need to manipulate inputs due to deep supervision</p>
+<dd><p>Update the metrics with preds and target. Overridden because we might need to manipulate inputs due to deep
+supervision</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>preds</strong> (<em>TorchPredType</em>) – dictionary of model outputs</p></li>
-<li><p><strong>target</strong> (<em>TorchTargetType</em>) – the targets generated by the dataloader
-to evaluate the preds with</p></li>
+<li><p><strong>target</strong> (<em>TorchTargetType</em>) – the targets generated by the dataloader to evaluate the preds with</p></li>
 <li><p><strong>metric_manager</strong> (<a class="reference internal" href="fl4health.utils.metrics.html#fl4health.utils.metrics.MetricManager" title="fl4health.utils.metrics.MetricManager"><em>MetricManager</em></a>) – the metric manager to update</p></li>
 </ul>
 </dd>
