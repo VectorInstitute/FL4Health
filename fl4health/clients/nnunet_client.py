@@ -295,8 +295,9 @@ class NnunetClient(BasicClient):
 
         # Get accurate estimate of image shape so that we can get accurate dataloader length
         if self.plans is None:
-            self.plans = self.create_plans(config)
-        shape = self.plans["configurations"][self.nnunet_config.value]["median_image_size_in_voxels"]
+            self.plans = self.create_plans(config)  # Local plans will have metadata we need
+        fullres_cfg = "3d_fullres" if "3d_fullres" in self.plans["configurations"].keys() else "2d"
+        shape = self.plans["configurations"][fullres_cfg]["median_image_size_in_voxels"]
 
         # Wrap nnunet dataloaders to make them compatible with fl4health
         train_loader = nnUNetDataLoaderWrapper(
@@ -425,10 +426,13 @@ class NnunetClient(BasicClient):
         plans["original_median_shape_after_transp"] = [int(round(i)) for i in median_shape]
         plans["original_median_spacing_after_transp"] = [float(i) for i in median_spacing]
 
+        # Get the spacing that the network will resample to. Need to check if samples are 2d or 3d
+        fullres_cfg = "3d_fullres" if "3d_fullres" in plans["configurations"].keys() else "2d"
+        target_spacing = plans["configurations"][fullres_cfg]["spacing"]
+
         # Get the median shape after resampling to the desired/input voxel spacing
-        fullres_spacing = plans["configurations"]["3d_fullres"]["spacing"]
         resampled_shapes = [
-            compute_new_shape(i, j, fullres_spacing) for i, j in zip(fp["shapes_after_crop"], fp["spacings"])
+            compute_new_shape(i, j, target_spacing) for i, j in zip(fp["shapes_after_crop"], fp["spacings"])
         ]
         resampled_median_shape = np.median(resampled_shapes, axis=0)[plans["transpose_forward"]].tolist()
 
@@ -662,9 +666,9 @@ class NnunetClient(BasicClient):
         loss_targets = prepare_loss_arg(target)
 
         # Ensure we have the same number of predictions and targets
-        assert isinstance(
-            loss_preds, type(loss_targets)
-        ), f"Got unexpected types for preds and targets: {type(loss_preds)} and {type(loss_targets)}"
+        assert isinstance(loss_preds, type(loss_targets)), (
+            f"Got unexpected types for preds and targets: {type(loss_preds)} and {type(loss_targets)}"
+        )
 
         if isinstance(loss_preds, list):
             assert len(loss_preds) == len(loss_targets), (
