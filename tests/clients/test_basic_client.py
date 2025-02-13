@@ -8,15 +8,30 @@ import torch
 from flwr.common import Scalar
 from flwr.common.typing import Config
 from freezegun import freeze_time
+from torch.utils.data import DataLoader
 
 from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting import JsonReporter
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.client import fold_loss_dict_into_metrics
+from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.logging import LoggingMode
+from fl4health.utils.losses import EvaluationLosses
+from fl4health.utils.random import set_all_random_seeds, unset_all_random_seeds
+from fl4health.utils.typing import TorchInputType, TorchTargetType
 from tests.test_utils.assert_metrics_dict import assert_metrics_dict
+from tests.test_utils.models_for_test import LinearModel
 
 freezegun.configure(extend_ignore_list=["transformers"])  # type: ignore
+
+
+def get_dummy_dataset() -> TensorDataset:
+    data = torch.randn(100, 10, 8)
+    targets = torch.randint(5, (100,))
+    return TensorDataset(data=data, targets=targets)
+
+
+DUMMY_DATASET = get_dummy_dataset()
 
 
 @freeze_time("2012-12-12 12:12:12")
@@ -137,6 +152,22 @@ def test_evaluate_after_fit_disabled() -> None:
     fl_client.validate.assert_not_called()  # type: ignore
 
 
+def test_validate_by_steps() -> None:
+    # Set the random seeds
+    set_all_random_seeds(2023)
+
+    fl_client = MockBasicClient()
+    fl_client.num_validation_steps = 2
+    fl_client.model = LinearModel()
+    fl_client.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    fl_client.val_loader = DataLoader(DUMMY_DATASET, batch_size=15, shuffle=False)
+    loss, metrics = fl_client._validate_by_steps(fl_client.val_loss_meter, fl_client.val_metric_manager)
+    assert loss == (1.0 + 2.0) / 2.0
+    assert fl_client.val_iterator is not None
+
+    unset_all_random_seeds()
+
+
 def test_num_val_samples_correct() -> None:
     fl_client_no_max = MockBasicClient()
     fl_client_no_max.setup_client({})
@@ -198,9 +229,15 @@ class MockBasicClient(BasicClient):
         self.get_test_data_loader.return_value = mock_data_loader
         self.get_optimizer = MagicMock()  # type: ignore
         self.get_criterion = MagicMock()  # type: ignore
+        self.val_step = MagicMock()  # type: ignore
+        self.val_step.side_effect = self.mock_val_step
 
         self._fully_validate_or_test = MagicMock()  # type: ignore
         self._fully_validate_or_test.side_effect = self.mock_validate_or_test
+
+    def mock_val_step(self, input: TorchInputType, target: TorchTargetType):  # type: ignore
+        loss_tensor = torch.randint(1, 4, (1,))
+        return EvaluationLosses(loss_tensor), self.mock_metrics
 
     def mock_validate_or_test(  # type: ignore
         self, loader, loss_meter, metric_manager, logging_mode=LoggingMode.VALIDATION, include_losses_in_metrics=False
