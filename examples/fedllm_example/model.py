@@ -10,16 +10,22 @@ from peft.utils import prepare_model_for_kbit_training
 from transformers import AutoModelForCausalLM, BitsAndBytesConfig
 
 from typing import Any, Dict
+from flwr.common.logger import log
+from logging import INFO
 
 
 
 def cosine_annealing(
     total_round: int,
-    current_round: int,
+    current_round: int = 0,
     lrate_max: float = 0.001,
     lrate_min: float = 0.0,
 ) -> float:
     """Implement cosine annealing learning rate schedule."""
+    log(INFO, f"Cosine annealing total_round {total_round}")
+    log(INFO, f"Cosine annealing current_round {current_round}")
+    log(INFO, f"Cosine annealing lrate_max {lrate_max}")
+    log(INFO, f"Cosine annealing lrate_min {lrate_min}")
 
     cos_inner = math.pi * current_round / total_round
     return lrate_min + 0.5 * (lrate_max - lrate_min) * (1 + math.cos(cos_inner))

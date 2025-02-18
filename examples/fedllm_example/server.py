@@ -14,7 +14,7 @@ from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.reporting import JsonReporter, WandBReporter
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchangerPeft
 from fl4health.servers.base_server import FlServer
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
@@ -31,6 +31,9 @@ def fit_config(
     n_server_rounds: int,
     current_round: int,
     reporting_config: dict[str, str] | None = None,
+    training_config: dict[str, Any] | None = None,
+    model_config: dict[str, Any] | None = None,
+    dataset_config: dict[str, Any] | None = None,
     local_epochs: int | None = None,
     local_steps: int | None = None,
 ) -> Config:
@@ -45,7 +48,30 @@ def fit_config(
         base_config["project"] = reporting_config.get("project", "")
         base_config["group"] = reporting_config.get("group", "")
         base_config["entity"] = reporting_config.get("entity", "")
-
+    if training_config is not None:
+        suffix = "train"
+        for key, value in training_config.items():
+            if not isinstance(value, dict):
+                base_config[f"{suffix}#{key}"] = value
+            else:
+                for k, v in value.items():
+                    base_config[f"{suffix}#{key}#{k}"] = v
+    if model_config is not None:
+        suffix = "model"
+        for key, value in model_config.items():
+            if not isinstance(value, dict):
+                base_config[f"{suffix}#{key}"] = value
+            else:
+                for k, v in value.items():
+                    base_config[f"{suffix}#{key}#{k}"] = v
+    if dataset_config is not None:
+        suffix = "dataset"
+        for key, value in dataset_config.items():
+            if not isinstance(value, dict):
+                base_config[f"{suffix}#{key}"] = value
+            else:
+                for k, v in value.items():
+                    base_config[f"{suffix}#{key}#{k}"] = v
     return base_config
 
 
@@ -56,6 +82,9 @@ def main(config: dict[str, Any], server_address: str, checkpoint_stub: str, run_
         config["batch_size"],
         config["n_server_rounds"],
         reporting_config=config.get("reporting_config"),
+        training_config=config.get("train"),
+        model_config=config.get("model"),
+        dataset_config=config.get("dataset"),
         local_epochs=config.get("local_epochs"),
         local_steps=config.get("local_steps"),
     )
@@ -63,16 +92,16 @@ def main(config: dict[str, Any], server_address: str, checkpoint_stub: str, run_
     cfg_model = config.get("model")
     assert cfg_model is not None, "Config must contain a 'model' key with a dictionary value."
     init_model = get_model(cfg_model)
-    parameter_exchanger = FullParameterExchanger()
+    parameter_exchanger = FullParameterExchangerPeft()
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
     last_checkpoint_name = "server_last_model.pkl"
     checkpointers = [
         LatestTorchModuleCheckpointer(checkpoint_dir, last_checkpoint_name),
     ]
 
-    checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
-        model=init_model, parameter_exchanger=parameter_exchanger, model_checkpointers=checkpointers
-    )
+#     checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
+#         model=init_model, parameter_exchanger=parameter_exchanger, model_checkpointers=checkpointers
+#     )
 
     # Server performs simple FedAveraging as its server-side optimization strategy and potentially adapts the
     # FedProx proximal weight mu
@@ -102,9 +131,9 @@ def main(config: dict[str, Any], server_address: str, checkpoint_stub: str, run_
         fl_config=config,
         strategy=strategy,
         reporters=reporters, 
-        checkpoint_and_state_module=checkpoint_and_state_module,
         accept_failures=False,
     )
+#     checkpoint_and_state_module=checkpoint_and_state_module,
 
     fl.server.start_server(
         server=server,

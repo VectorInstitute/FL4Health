@@ -34,7 +34,8 @@ def get_all_model_parameters_peft(model: nn.Module) -> Parameters:
         Parameters: Flower Parameters object containing all of the target models state.
     """
     # Extracting all model parameters and converting to Parameters object
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in get_peft_model_state_dict(model)])
+    state_dict = get_peft_model_state_dict(model)
+    return ndarrays_to_parameters([val.cpu().numpy() for _, val in state_dict.items()])
 
 
 def check_shape_match(params1: Iterable[torch.Tensor], params2: Iterable[torch.Tensor], error_message: str) -> None:

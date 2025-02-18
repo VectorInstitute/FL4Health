@@ -6,9 +6,9 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1
 #SBATCH --mem=40G
-#SBATCH --partition=a40
+#SBATCH --partition=t4v2
 #SBATCH --qos=m
-
+#SBATCH --time=8:00:00
 
 # Note:
 #	  ntasks: Total number of processes to use across world
@@ -27,6 +27,8 @@ if [[ "${SLURM_JOB_PARTITION}" == "t4v2" ]] || \
 fi
 
 # Process inputs
+
+export HF_HOME=/projects/fl4health/flower_env/temp
 
 SERVER_ADDRESS=$1
 ARTIFACT_DIR=$2
@@ -65,4 +67,5 @@ python -m examples.fedllm_example.client \
     --client_number ${CLIENT_NUMBER} \
     --server_address ${SERVER_ADDRESS} \
     --seed ${SEED} \
+    --run_name ${RUN_NAME} \
     > ${LOG_PATH} 2>&1

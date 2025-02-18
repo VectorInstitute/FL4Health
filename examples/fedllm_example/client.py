@@ -69,26 +69,39 @@ class LLMClient(BasicClient):
     ) -> None:
         super().__init__(data_path, metrics, device, reporters = reporters,
                          checkpoint_and_state_module = checkpoint_and_state_module)
+        log(INFO, "Init Client")
         self.client_number = client_number
         self.training_arguments: TrainingArguments 
         self.trainset: Dataset
         self.train_cfg: dict[str, Any]
-        self.cosine_annealing: Callable[[int, float, float], int]
+        self.cosine_annealing: Callable[..., float]
         self.tokenizer: PreTrainedTokenizer
         self.formatting_prompts_func: DataCollatorForCompletionOnlyLM
         self.data_collator: Callable
+            
+    def get_unflatten_config(self, flat_dict: dict[str, Scalar], prefix: str="train") -> dict[str, Any]:
+        dictionary: dict[str, Any] = {}
+
+        for key, value in flat_dict.items():
+            if key.startswith(f"{prefix}#"):
+                keys = key[len(prefix) + 1:].split('#')  # Remove 'train_' prefix and split
+                d = dictionary.setdefault(prefix, {})  # Ensure 'train' is the root key
+                for k in keys[:-1]:
+                    d = d.setdefault(k, {})
+                d[keys[-1]] = value
+
+        return dictionary
 
     def process_config(self, config: Config) -> tuple[int | None, int | None, int, bool, bool]:
+        log(INFO, "processing config")
 
     
         local_epochs, local_steps, current_server_round, evaluate_after_fit, pack_losses_with_val_metrics = super().process_config(config)
-        train_cfg = config.get("train")
-        if not isinstance(train_cfg, dict):
-            raise TypeError("Config must contain a 'train' key with a dictionary value.")
-        self.train_cfg = train_cfg
+        self.train_cfg = self.get_unflatten_config(config,"train")['train']
         assert isinstance(self.train_cfg, dict), "Config must contain a 'train' key with a dictionary value."
         self.training_arguments = TrainingArguments(**self.train_cfg.get("training_arguments", {}))
         self.training_arguments.per_device_train_batch_size = config.get("batch_size")
+        self.training_arguments.num_train_epochs = config["local_epochs"]
 
         self.cosine_annealing = partial(cosine_annealing, total_round= config["n_server_rounds"])
         # Either local epochs or local steps is none based on what key is passed in the config
@@ -103,6 +116,7 @@ class LLMClient(BasicClient):
         Args:
             current_server_round (int): The number of current server round.
         """
+        log(INFO, "Update before train")
         assert isinstance(self.train_cfg, dict), "train_cfg should be a dictionary"
         lrate_max = self.train_cfg.get("learning_rate_max")
         lrate_min = self.train_cfg.get("learning_rate_min")
@@ -110,47 +124,68 @@ class LLMClient(BasicClient):
         assert lrate_min is not None, "learning_rate_min is missing in train_cfg"
 
         self.lr = self.cosine_annealing(
-            current_server_round,
-            lrate_max,
-            lrate_min,
+            current_round = current_server_round,
+            lrate_max = float(lrate_max),
+            lrate_min = float(lrate_min),
         )
-        self.training_arguments["learning_rate"] = self.lr 
+        assert isinstance(self.training_arguments, TrainingArguments), "training_arguments should be a TrainingArguments object"
+        
+        self.training_arguments.learning_rate = self.lr 
+        
+        
+        self.training_arguments.max_seq_length = self.train_cfg.get("seq_length")
+        self.training_arguments.output_dir = '/projects/fl4health/fedllm/artifacts/huggingface'
+        
+        self.training_arguments.report_to = "none"
+        
+        ### train by epoch
+        # Construct trainer
+        self.trainer = SFTTrainer(
+            model=self.model,
+            tokenizer=self.tokenizer,
+            args=self.training_arguments,
+            train_dataset=self.client_trainset,
+            eval_dataset=self.client_testset, 
+            formatting_func=self.formatting_prompts_func,
+            data_collator=self.data_collator,
+        )
 
     def train_by_epochs(
         self,
         epochs: int,
         current_round: int | None = None,
     ) -> tuple[dict[str, float], dict[str, Scalar]]:
+        log(INFO, "Train by epochs")
         
-        assert isinstance(self.training_arguments, TrainingArguments), "training_arguments should be a TrainingArguments object"
-        
-        self.training_arguments.num_train_epochs = epochs
-        
-
-        ### train by epoch
-        # Construct trainer
-        trainer = SFTTrainer(
-            model=self.model,
-            tokenizer=self.tokenizer,
-            args=self.training_arguments,
-            max_seq_length=self.train_cfg.get("seq_length"),
-            train_dataset=self.trainset,
-            formatting_func=self.formatting_prompts_func,
-            data_collator=self.data_collator,
-        )
 
         # Do local training
-        results = trainer.train()
+        results = self.trainer.train()
         loss_dict = {"train_loss": results.training_loss}
         metrics = {"train_loss": results.training_loss}
 
-    
-
         # Return final training metrics
         return loss_dict, metrics
+    
+    def validate(self, include_losses_in_metrics: bool = False) -> tuple[float, dict[str, Scalar]]:
+        """
+        Validate the current model on the entire validation
+            and potentially an entire test dataset if it has been defined.
+
+        Returns:
+            tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics
+                from validation (and test if present).
+        """
+        results = self.trainer.evaluate()
+        val_loss = results.get("eval_loss")
+        val_metrics = {"val_loss": val_loss}
+
+
+        return val_loss, val_metrics
+
 
     
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
+        log(INFO, "Setting parameters")
         assert self.model is not None
 
         peft_state_dict_keys = get_peft_model_state_dict(self.model).keys()
@@ -161,6 +196,7 @@ class LLMClient(BasicClient):
     
     def get_parameters(self, config: Config) -> NDArrays:
         """Return the parameters of the current net."""
+        log(INFO, "Getting parameters")
         state_dict = get_peft_model_state_dict(self.model)
         return [val.cpu().numpy() for _, val in state_dict.items()]
     
@@ -179,23 +215,29 @@ class LLMClient(BasicClient):
         Raises:
             NotImplementedError: To be defined in child class.
         """
+        log(INFO, "Set train data")
         partition_id = self.client_number
         num_partitions = NUM_CLIENTS
 
         # Let's get the client partition
-        dataset_cfg= config.get("dataset")
+        dataset_cfg= self.get_unflatten_config(config,"dataset")['dataset']
         assert isinstance(dataset_cfg, dict), "Dataset configuration must be a dictionary"
-        self.client_trainset = load_data(partition_id, num_partitions, dataset_cfg["name"])
-        (
-            self.tokenizer,
-            self.data_collator,
-            self.formatting_prompts_func,
-        ) = get_tokenizer_and_data_collator_and_propt_formatting(config["model"]["name"])
+        dataset = load_data(partition_id, num_partitions, dataset_cfg["name"])
+        split_dataset = dataset.train_test_split(test_size=0.1)
+        self.client_trainset = split_dataset['train']
+        self.client_testset = split_dataset['test']
 
     
     def get_model(self, config: Config) -> nn.Module:
         ### Done
-        model_cfg = config.get("model")
+        log(INFO, "Getting model")
+        model_cfg = self.get_unflatten_config(config,"model")['model']
+        assert isinstance(model_cfg, dict), "Model configuration must be a dictionary"
+        (
+            self.tokenizer,
+            self.data_collator,
+            self.formatting_prompts_func,
+        ) = get_tokenizer_and_data_collator_and_propt_formatting(model_cfg["name"])
         assert isinstance(model_cfg, dict), "Model configuration must be a dictionary"
         return get_model(model_cfg)
     
@@ -207,6 +249,7 @@ class LLMClient(BasicClient):
         Args:
             config (Config): The config from the server.
         """
+        log(INFO, "Setting up client")
         # Explicitly send the model to the desired device. This is idempotent.
         self.model = self.get_model(config).to(self.device)
         
@@ -215,6 +258,7 @@ class LLMClient(BasicClient):
         # IE __len__ is considered optionally defined. In practice, it is almost always defined
         # and as such, we will make that assumption.
         self.num_train_samples = len(self.client_trainset)  # type: ignore
+        self.num_val_samples = len(self.client_testset)
 
         self.reports_manager.report({"host_type": "client", "initialized": str(datetime.datetime.now())})
         self.initialized = True
@@ -251,6 +295,12 @@ if __name__ == "__main__":
         help="Seed for the random number generators across python, torch, and numpy",
         required=False,
     )
+    parser.add_argument(
+        "--run_name",
+        action="store",
+        help="Name of the run, model checkpoints will be saved under a subfolder with this name",
+        required=True,
+    )
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -263,17 +313,16 @@ if __name__ == "__main__":
     # Adding extensive checkpointing for the client
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     pre_aggregation_last_checkpoint_name = f"pre_aggregation_client_{args.client_number}_last_model.pkl"
-    checkpoint_and_state_module = ClientCheckpointAndStateModule(
-        pre_aggregation=[
-            LatestTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_last_checkpoint_name),
-        ],
-    )
+#     checkpoint_and_state_module = ClientCheckpointAndStateModule(
+#         pre_aggregation=[
+#             LatestTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_last_checkpoint_name),
+#         ],
+#     )
 
     client = LLMClient(data_path=Path(" "), 
                         metrics=[Accuracy()],
                         device=device, 
                         reporters=[JsonReporter()], 
-                        client_number=args.client_number, 
-                        checkpoint_and_state_module=checkpoint_and_state_module)
+                        client_number=args.client_number)
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())

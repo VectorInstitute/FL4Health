@@ -95,6 +95,12 @@ einops = "0.8.0"
 [tool.poetry.group.llm.dependencies]
 trl = "^0.14.0"
 peft = "^0.14.0"
+tiktoken = "^0.8.0"
+blobfile = "^3.0.0"
+sentencepiece = "^0.2.0"
+evaluate = "^0.4.3"
+py7zr = "^0.22.0"
+rouge-score = "^0.1.2"
 
 [build-system]
 requires = ["poetry-core"]

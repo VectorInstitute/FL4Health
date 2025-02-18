@@ -12,7 +12,7 @@
 
 # examples/fedllm_example/training_script/run_fl_cluster.sh 8111 examples/fedllm_example/config.yaml \
 # /projects/fl4health/fedllm/artifacts/ /projects/fl4health/fedllm/distributed_logs/server_logs/ \
-# /projects/fl4health/fedllm/distributed_logs/client_logs/ \ /projects/fl4health/flower_env/temp_env/
+# /projects/fl4health/fedllm/distributed_logs/client_logs/ \ /projects/fl4health/fl4health_flamby/
 
 
 SERVER_PORT=$1
@@ -21,8 +21,6 @@ ARTIFACT_DIR=$3
 SERVER_LOG_DIR=$4
 CLIENT_LOG_DIR=$5
 VENV_PATH=$6
-
-export HF_HOME=/projects/fl4health/flower_env/temp
 
 echo "Server Port number: ${SERVER_PORT}"
 echo "Config Path: ${SERVER_CONFIG_PATH}"
@@ -86,7 +84,7 @@ SERVER_ADDRESS="${HOST_NAME}:$SERVER_PORT"
 echo "Extracted Server Address: ${SERVER_ADDRESS}"
 
 # Wait until the server is up and waiting for clients on the requested resources
-sleep 40
+sleep 20
 
 # Spin up the clients on each disparate node with the server address
 

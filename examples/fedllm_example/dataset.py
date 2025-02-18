@@ -10,7 +10,7 @@ from transformers import PreTrainedTokenizer
 from trl import DataCollatorForCompletionOnlyLM
 
 
-FDS = None  # Cache FederatedDataset
+FDS: FederatedDataset | None = None  # Cache FederatedDataset
 
 
 
