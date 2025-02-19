@@ -3,11 +3,7 @@ from collections import OrderedDict
 import torch
 import torch.nn as nn
 from flwr.common.typing import Config, NDArrays
-
-from peft import (
-    get_peft_model_state_dict,
-    set_peft_model_state_dict,
-)
+from peft import get_peft_model_state_dict, set_peft_model_state_dict
 
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 
@@ -26,8 +22,8 @@ class FullParameterExchanger(ParameterExchanger):
         params_dict = zip(model.state_dict().keys(), parameters)
         state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
         model.load_state_dict(state_dict, strict=True)
-        
-        
+
+
 class FullParameterExchangerPeft(ParameterExchanger):
     def push_parameters(
         self, model: nn.Module, initial_model: nn.Module | None = None, config: Config | None = None

@@ -10,20 +10,17 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
+from examples.fedllm_example.model import get_model
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.reporting import JsonReporter, WandBReporter
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchangerPeft
+from fl4health.reporting import JsonReporter, WandBReporter
 from fl4health.servers.base_server import FlServer
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters_peft
 from fl4health.utils.random import set_all_random_seeds
-
-from examples.fedllm_example.model import (
-    get_model,
-)
 
 
 def fit_config(
@@ -99,9 +96,9 @@ def main(config: dict[str, Any], server_address: str, checkpoint_stub: str, run_
         LatestTorchModuleCheckpointer(checkpoint_dir, last_checkpoint_name),
     ]
 
-#     checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
-#         model=init_model, parameter_exchanger=parameter_exchanger, model_checkpointers=checkpointers
-#     )
+    #     checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
+    #         model=init_model, parameter_exchanger=parameter_exchanger, model_checkpointers=checkpointers
+    #     )
 
     # Server performs simple FedAveraging as its server-side optimization strategy and potentially adapts the
     # FedProx proximal weight mu
@@ -130,10 +127,10 @@ def main(config: dict[str, Any], server_address: str, checkpoint_stub: str, run_
         client_manager=client_manager,
         fl_config=config,
         strategy=strategy,
-        reporters=reporters, 
+        reporters=reporters,
         accept_failures=False,
     )
-#     checkpoint_and_state_module=checkpoint_and_state_module,
+    #     checkpoint_and_state_module=checkpoint_and_state_module,
 
     fl.server.start_server(
         server=server,

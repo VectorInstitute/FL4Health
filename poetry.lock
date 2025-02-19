@@ -1506,6 +1506,41 @@ files = [
 ]
 
 [[package]]
+name = "deepspeed"
+version = "0.14.4"
+description = "DeepSpeed library"
+optional = false
+python-versions = "*"
+files = [
+    {file = "deepspeed-0.14.4.tar.gz", hash = "sha256:bb2f404b4a1d06aedd40c64d661f71307c22945d04a42d397ad39bbfeef9c8b8"},
+]
+
+[package.dependencies]
+hjson = "*"
+ninja = "*"
+numpy = "*"
+nvidia-ml-py = "*"
+packaging = ">=20.0"
+psutil = "*"
+py-cpuinfo = "*"
+pydantic = "*"
+torch = "*"
+tqdm = "*"
+
+[package.extras]
+1bit-mpi = ["mpi4py"]
+all = ["accelerate", "autodoc_pydantic", "clang-format (==16.0.2)", "comet_ml (>=3.41.0)", "deepspeed-kernels", "diffusers (>=0.25.0)", "docutils (<0.18)", "future", "google", "hjson", "importlib-metadata (>=4)", "lm-eval (==0.3.0)", "mpi4py", "mup", "neural-compressor (==2.1.0)", "packaging", "pre-commit (>=2.20.0)", "protobuf", "psutil", "py-cpuinfo", "pydantic (<2.0.0)", "pytest (>=7.2.0)", "pytest-forked", "pytest-randomly", "pytest-xdist", "qtorch", "qtorch (==0.3.0)", "recommonmark", "safetensors", "sentencepiece", "sphinx", "sphinx-rtd-theme", "sphinx_rtd_theme", "tabulate", "tensorboard", "torch", "torchvision", "tqdm", "transformers (>=4.32.1)", "transformers (>=4.39.0)", "triton (==1.0.0)", "triton (==2.1.0)", "triton (>=2.1.0)", "wandb", "xgboost"]
+autotuning = ["tabulate"]
+autotuning-ml = ["hjson", "tabulate", "xgboost"]
+dev = ["accelerate", "clang-format (==16.0.2)", "comet_ml (>=3.41.0)", "deepspeed-kernels", "docutils (<0.18)", "future", "importlib-metadata (>=4)", "mup", "pre-commit (>=2.20.0)", "pytest (>=7.2.0)", "pytest-forked", "pytest-randomly", "pytest-xdist", "qtorch (==0.3.0)", "recommonmark", "sphinx", "sphinx-rtd-theme", "tensorboard", "torchvision", "transformers (>=4.39.0)", "wandb"]
+inf = ["google", "lm-eval (==0.3.0)", "protobuf", "qtorch", "safetensors", "sentencepiece", "transformers (>=4.32.1)"]
+readthedocs = ["autodoc_pydantic", "docutils (<0.18)", "hjson", "packaging", "psutil", "py-cpuinfo", "pydantic (<2.0.0)", "recommonmark", "sphinx_rtd_theme", "torch", "tqdm"]
+sd = ["diffusers (>=0.25.0)", "triton (>=2.1.0)"]
+sparse = ["neural-compressor (==2.1.0)"]
+sparse-attn = ["triton (==1.0.0)"]
+triton = ["triton (==2.1.0)"]
+
+[[package]]
 name = "defusedxml"
 version = "0.7.1"
 description = "XML bomb protection for Python stdlib modules"
@@ -2681,6 +2716,17 @@ files = [
 
 [package.dependencies]
 numpy = ">=1.19.3"
+
+[[package]]
+name = "hjson"
+version = "3.1.0"
+description = "Hjson, a user interface for JSON."
+optional = false
+python-versions = "*"
+files = [
+    {file = "hjson-3.1.0-py3-none-any.whl", hash = "sha256:65713cdcf13214fb554eb8b4ef803419733f4f5e551047c9b711098ab7186b89"},
+    {file = "hjson-3.1.0.tar.gz", hash = "sha256:55af475a27cf83a7969c808399d7bccdec8fb836a07ddbd574587593b9cdcf75"},
+]
 
 [[package]]
 name = "html5lib"
@@ -4490,6 +4536,35 @@ typing = ["tox"]
 zstd = ["pyzstd (>=0.14.3)"]
 
 [[package]]
+name = "ninja"
+version = "1.11.1.3"
+description = "Ninja is a small build system with a focus on speed"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "ninja-1.11.1.3-py3-none-macosx_10_9_universal2.whl", hash = "sha256:2b4879ea3f1169f3d855182c57dcc84d1b5048628c8b7be0d702b81882a37237"},
+    {file = "ninja-1.11.1.3-py3-none-manylinux_2_12_i686.manylinux2010_i686.whl", hash = "sha256:bc3ebc8b2e47716149f3541742b5cd8e0b08f51013b825c05baca3e34854370d"},
+    {file = "ninja-1.11.1.3-py3-none-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:a27e78ca71316c8654965ee94b286a98c83877bfebe2607db96897bbfe458af0"},
+    {file = "ninja-1.11.1.3-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:2883ea46b3c5079074f56820f9989c6261fcc6fd873d914ee49010ecf283c3b2"},
+    {file = "ninja-1.11.1.3-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:8c4bdb9fd2d0c06501ae15abfd23407660e95659e384acd36e013b6dd7d8a8e4"},
+    {file = "ninja-1.11.1.3-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:114ed5c61c8474df6a69ab89097a20749b769e2c219a452cb2fadc49b0d581b0"},
+    {file = "ninja-1.11.1.3-py3-none-manylinux_2_28_armv7l.manylinux_2_31_armv7l.whl", hash = "sha256:7fa2247fce98f683bc712562d82b22b8a0a5c000738a13147ca2d1b68c122298"},
+    {file = "ninja-1.11.1.3-py3-none-musllinux_1_1_aarch64.whl", hash = "sha256:a38c6c6c8032bed68b70c3b065d944c35e9f903342875d3a3218c1607987077c"},
+    {file = "ninja-1.11.1.3-py3-none-musllinux_1_1_i686.whl", hash = "sha256:56ada5d33b8741d298836644042faddebc83ee669782d661e21563034beb5aba"},
+    {file = "ninja-1.11.1.3-py3-none-musllinux_1_1_ppc64le.whl", hash = "sha256:53409151da081f3c198bb0bfc220a7f4e821e022c5b7d29719adda892ddb31bb"},
+    {file = "ninja-1.11.1.3-py3-none-musllinux_1_1_s390x.whl", hash = "sha256:1ad2112c2b0159ed7c4ae3731595191b1546ba62316fc40808edecd0306fefa3"},
+    {file = "ninja-1.11.1.3-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:28aea3c1c280cba95b8608d50797169f3a34280e3e9a6379b6e340f0c9eaeeb0"},
+    {file = "ninja-1.11.1.3-py3-none-musllinux_1_2_armv7l.whl", hash = "sha256:b6966f83064a88a51693073eea3decd47e08c3965241e09578ef7aa3a7738329"},
+    {file = "ninja-1.11.1.3-py3-none-win32.whl", hash = "sha256:a4a3b71490557e18c010cbb26bd1ea9a0c32ee67e8f105e9731515b6e0af792e"},
+    {file = "ninja-1.11.1.3-py3-none-win_amd64.whl", hash = "sha256:04d48d14ea7ba11951c156599ab526bdda575450797ff57c6fdf99b2554d09c7"},
+    {file = "ninja-1.11.1.3-py3-none-win_arm64.whl", hash = "sha256:17978ad611d8ead578d83637f5ae80c2261b033db0b493a7ce94f88623f29e1b"},
+    {file = "ninja-1.11.1.3.tar.gz", hash = "sha256:edfa0d2e9d7ead1635b03e40a32ad56cc8f56798b6e2e9848d8300b174897076"},
+]
+
+[package.extras]
+test = ["coverage (>=4.2)", "importlib_metadata (>=2.0)", "pytest (>=6.0)", "pytest-cov (>=3)"]
+
+[[package]]
 name = "nltk"
 version = "3.9.1"
 description = "Natural Language Toolkit"
@@ -4797,6 +4872,17 @@ files = [
 
 [package.dependencies]
 nvidia-nvjitlink-cu12 = "*"
+
+[[package]]
+name = "nvidia-ml-py"
+version = "12.570.86"
+description = "Python Bindings for the NVIDIA Management Library"
+optional = false
+python-versions = "*"
+files = [
+    {file = "nvidia_ml_py-12.570.86-py3-none-any.whl", hash = "sha256:58907de35a845abd13dcb227f18298f3b5dd94a72d04c9e594e77711e95c0b51"},
+    {file = "nvidia_ml_py-12.570.86.tar.gz", hash = "sha256:0508d4a0c7b6d015cf574530b95a62ed4fc89da3b8b47e1aefe6777db170ec8b"},
+]
 
 [[package]]
 name = "nvidia-nccl-cu12"
@@ -5709,6 +5795,17 @@ files = [
 
 [package.extras]
 tests = ["pytest"]
+
+[[package]]
+name = "py-cpuinfo"
+version = "9.0.0"
+description = "Get CPU info with pure Python"
+optional = false
+python-versions = "*"
+files = [
+    {file = "py-cpuinfo-9.0.0.tar.gz", hash = "sha256:3cdbbf3fac90dc6f118bfd64384f309edeadd902d7c8fb17f02ffa1fc3f49690"},
+    {file = "py_cpuinfo-9.0.0-py3-none-any.whl", hash = "sha256:859625bc251f64e21f077d099d4162689c762b5d6a4c3c97553d56241c9674d5"},
+]
 
 [[package]]
 name = "py-serializable"
@@ -9529,4 +9626,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10.0,<3.11"
-content-hash = "1e3a0860ad91fab3fda83412973a03f0dc153952004d3e1788c55441ea4eba1b"
+content-hash = "dbc10b634d2855c990ee39becef0414f43705139cd4623e534a6fba318259790"

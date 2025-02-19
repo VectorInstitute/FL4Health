@@ -38,7 +38,7 @@ VENV_PATH=$5
 JOB_HASH=$6
 
 RUN_NAME="Run1"
-SEED=2021 
+SEED=2021
 
 echo "Server Port number: ${SERVER_PORT}"
 echo "Config Path: ${CONFIG_PATH}"
@@ -105,7 +105,7 @@ python -m examples.fedllm_example.server \
     --run_name ${RUN_NAME} \
     --server_address ${SERVER_ADDRESS} \
     --seed ${SEED} \
-    > ${LOG_PATH} 2>&1 
+    > ${LOG_PATH} 2>&1
 
 
 echo ${SERVER_ADDRESS}

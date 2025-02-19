@@ -9,7 +9,6 @@ import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Scalar
-
 from transformers import Trainer
 
 CheckpointScoreFunctionType = Callable[[float, dict[str, Scalar]], float]

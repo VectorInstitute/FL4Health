@@ -34,8 +34,7 @@
 
 #     def get_criterion(self, config: Config) -> _Loss:
 #         return torch.nn.CrossEntropyLoss()
-    
+
 
 # def get_client_fn(data_path: Path, device: torch.device) -> MnistDittoClient:
 #     return MnistDittoClient(data_path, [Accuracy()], device, reporters=[JsonReporter()])
-

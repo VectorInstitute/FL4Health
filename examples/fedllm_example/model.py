@@ -1,18 +1,12 @@
 import math
+from logging import INFO
+from typing import Any
 
 import torch
-from omegaconf import DictConfig
-from peft import (
-    LoraConfig,
-    get_peft_model,
-)
+from flwr.common.logger import log
+from peft import LoraConfig, get_peft_model
 from peft.utils import prepare_model_for_kbit_training
 from transformers import AutoModelForCausalLM, BitsAndBytesConfig
-
-from typing import Any, Dict
-from flwr.common.logger import log
-from logging import INFO
-
 
 
 def cosine_annealing(
@@ -31,7 +25,7 @@ def cosine_annealing(
     return lrate_min + 0.5 * (lrate_max - lrate_min) * (1 + math.cos(cos_inner))
 
 
-def get_model(model_cfg: Dict[str, Any]) -> torch.nn.Module:
+def get_model(model_cfg: dict[str, Any]) -> torch.nn.Module:
     """Load model with appropriate quantization config and other optimizations.
 
     Please refer to this example for `peft + BitsAndBytes`:
@@ -40,12 +34,10 @@ def get_model(model_cfg: Dict[str, Any]) -> torch.nn.Module:
     quantization_config = model_cfg["quantization"]
     if quantization_config == 4:
         quantization_config = BitsAndBytesConfig(load_in_4bit=True)
-    elif quantization_config  == 8:
+    elif quantization_config == 8:
         quantization_config = BitsAndBytesConfig(load_in_8bit=True)
     else:
-        raise ValueError(
-            f"Use 4-bit or 8-bit quantization. You passed: {quantization_config}/"
-        )
+        raise ValueError(f"Use 4-bit or 8-bit quantization. You passed: {quantization_config}/")
 
     model = AutoModelForCausalLM.from_pretrained(
         model_cfg["name"],
@@ -53,9 +45,7 @@ def get_model(model_cfg: Dict[str, Any]) -> torch.nn.Module:
         torch_dtype=torch.bfloat16,
     )
 
-    model = prepare_model_for_kbit_training(
-        model, use_gradient_checkpointing=model_cfg["gradient_checkpointing"]
-    )
+    model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=model_cfg["gradient_checkpointing"])
 
     lora_config = model_cfg["lora"]
     assert isinstance(lora_config, dict)

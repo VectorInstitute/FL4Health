@@ -101,6 +101,7 @@ sentencepiece = "^0.2.0"
 evaluate = "^0.4.3"
 py7zr = "^0.22.0"
 rouge-score = "^0.1.2"
+deepspeed = "0.14.4"
 
 [build-system]
 requires = ["poetry-core"]

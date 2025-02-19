@@ -112,7 +112,7 @@ do
     ${CLIENT_JOB_HASH}"
 
   sbatch ${SBATCH_COMMAND}
-  
+
   sleep 20
 done
 

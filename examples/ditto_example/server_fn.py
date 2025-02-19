@@ -66,4 +66,3 @@
 #     server = DittoServer(client_manager=client_manager, fl_config=config, strategy=strategy, accept_failures=False)
 
 #     return server
-

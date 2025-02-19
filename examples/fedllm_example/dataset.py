@@ -1,17 +1,12 @@
-from transformers import AutoTokenizer
-from trl import DataCollatorForCompletionOnlyLM # type: ignore
-from typing import List, Dict, Tuple, Callable
+from typing import Callable, Dict, List, Tuple
 
-from flwr_datasets.partitioner import IidPartitioner # type: ignore
-from flwr_datasets import FederatedDataset # type: ignore
 from datasets import Dataset
-
-from transformers import PreTrainedTokenizer
-from trl import DataCollatorForCompletionOnlyLM
-
+from flwr_datasets import FederatedDataset  # type: ignore
+from flwr_datasets.partitioner import IidPartitioner  # type: ignore
+from transformers import AutoTokenizer, PreTrainedTokenizer
+from trl import DataCollatorForCompletionOnlyLM  # type: ignore
 
 FDS: FederatedDataset | None = None  # Cache FederatedDataset
-
 
 
 def formatting_prompts_func(example: Dict[str, List[str]]) -> List[str]:
@@ -24,19 +19,15 @@ def formatting_prompts_func(example: Dict[str, List[str]]) -> List[str]:
     return output_texts
 
 
-def get_tokenizer_and_data_collator_and_propt_formatting(model_name: str) -> Tuple[PreTrainedTokenizer, DataCollatorForCompletionOnlyLM, Callable]:
+def get_tokenizer_and_data_collator_and_propt_formatting(
+    model_name: str,
+) -> Tuple[PreTrainedTokenizer, DataCollatorForCompletionOnlyLM, Callable]:
     # From: https://huggingface.co/docs/trl/en/sft_trainer
-    tokenizer = AutoTokenizer.from_pretrained(
-        model_name, use_fast=True, padding_side="right"
-    )
+    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, padding_side="right")
     tokenizer.pad_token = tokenizer.eos_token
     response_template_with_context = "\n### Response:"  # alpaca response tag
-    response_template_ids = tokenizer.encode(
-        response_template_with_context, add_special_tokens=False
-    )[2:]
-    data_collator = DataCollatorForCompletionOnlyLM(
-        response_template_ids, tokenizer=tokenizer
-    )
+    response_template_ids = tokenizer.encode(response_template_with_context, add_special_tokens=False)[2:]
+    data_collator = DataCollatorForCompletionOnlyLM(response_template_ids, tokenizer=tokenizer)
 
     return tokenizer, data_collator, formatting_prompts_func
 

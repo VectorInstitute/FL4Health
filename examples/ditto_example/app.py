@@ -49,7 +49,6 @@
 
 #     server = server_fn(config)
 
-    
 
 #     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 #     data_path = Path(args.dataset_path)
@@ -70,4 +69,3 @@
 #         client_app=client_app,
 #         num_supernodes=10,  # equivalent to setting `num-supernodes` in the pyproject.toml
 #     )
-
