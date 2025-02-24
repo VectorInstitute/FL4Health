@@ -69,7 +69,7 @@ which python
 echo "Server Address used by Client: ${SERVER_ADDRESS}"
 # Check if the deepspeed is installed
 ds_report
-ACCELERATE_CPU_AFFINITY=1 $TORCHRUN_PATH --nproc_per_node=2 --nnodes=1  \
+ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node=2 --nnodes=1  \
     -m examples.fedllm_example.client \
     --deepspeed examples/fedllm_example/training_script/zero_config/zero2.json \
     --artifact_dir ${ARTIFACT_DIR} \
