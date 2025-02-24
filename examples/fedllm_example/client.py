@@ -161,8 +161,11 @@ class LLMClient(BasicClient):
         loss_dict = {"train_loss": results.training_loss}
         metrics = {"train_loss": results.training_loss}
 
-        self.trainer.save_state()
+        return loss_dict, metrics
+    
+    def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
 
+        self.trainer.save_state()
         self.model.config.use_cache = True
 
         log(INFO, "Saving via self.training_arguments.lora_enable")
@@ -172,8 +175,8 @@ class LLMClient(BasicClient):
 
         else:
             safe_save_model_for_zero3(self.model, self.training_arguments)
-
-        return loss_dict, metrics
+            
+        return super().update_after_train(local_steps, loss_dict, config)
 
     def validate(self, include_losses_in_metrics: bool = False) -> tuple[float, dict[str, Scalar]]:
         """
