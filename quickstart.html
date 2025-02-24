@@ -591,7 +591,7 @@ as well as our <code class="docutils literal notranslate"><span class="pre">Serv
 <h3>Starting Clients<a class="headerlink" href="#starting-clients" title="Link to this heading">¶</a></h3>
 <p>Once the server has started and logged “FL starting,” the next step, in separate terminals, is to start the two
 clients. This is done by simply running (remembering to activate your environment)</p>
-<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>examples.basic_example.client<span class="w"> </span>/path/to/data
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>examples.basic_example.client<span class="w"> </span>--dataset_path<span class="w"> </span>/path/to/data
 </pre></div>
 </div>
 <p><strong>NOTE</strong>: The argument <code class="docutils literal notranslate"><span class="pre">dataset_path</span></code> has two functions, depending on whether the dataset exists locally or not. If
