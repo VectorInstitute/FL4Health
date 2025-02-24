@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Tuple
+from collections.abc import Callable
 
 from datasets import Dataset
 from flwr_datasets import FederatedDataset  # type: ignore
@@ -9,7 +9,7 @@ from trl import DataCollatorForCompletionOnlyLM  # type: ignore
 FDS: FederatedDataset | None = None  # Cache FederatedDataset
 
 
-def formatting_prompts_func(example: Dict[str, List[str]]) -> List[str]:
+def formatting_prompts_func(example: dict[str, list[str]]) -> list[str]:
     output_texts = []
     # Constructing a standard Alpaca (https://github.com/tatsu-lab/stanford_alpaca#data-release) prompt
     mssg = "Below is an instruction that describes a task. Write a response that appropriately completes the request."
@@ -21,7 +21,7 @@ def formatting_prompts_func(example: Dict[str, List[str]]) -> List[str]:
 
 def get_tokenizer_and_data_collator_and_propt_formatting(
     model_name: str,
-) -> Tuple[PreTrainedTokenizer, DataCollatorForCompletionOnlyLM, Callable]:
+) -> tuple[PreTrainedTokenizer, DataCollatorForCompletionOnlyLM, Callable]:
     # From: https://huggingface.co/docs/trl/en/sft_trainer
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, padding_side="right")
     tokenizer.pad_token = tokenizer.eos_token

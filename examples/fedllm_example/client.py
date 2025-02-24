@@ -26,7 +26,6 @@ from examples.fedllm_example.zero_utils import (
     get_peft_state_non_lora_maybe_zero_3,
     safe_save_model_for_hf_trainer,
 )
-from fl4health.checkpointing.checkpointer import LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting import JsonReporter
@@ -103,7 +102,7 @@ class LLMClient(BasicClient):
             else (torch.bfloat16 if self.training_arguments.bf16 else torch.float32)
         )
 
-        self.cosine_annealing = partial(cosine_annealing, total_round=config["n_server_rounds"])
+        self.cosine_annealing = partial(cosine_annealing, total_round=int(config["n_server_rounds"]))
         # Either local epochs or local steps is none based on what key is passed in the config
         return local_epochs, local_steps, current_server_round, evaluate_after_fit, pack_losses_with_val_metrics
 
@@ -139,7 +138,7 @@ class LLMClient(BasicClient):
 
         self.training_arguments.report_to = "none"
 
-        ### train by epoch
+        # train by epoch
         # Construct trainer
         self.trainer = SFTTrainer(
             model=self.model,
@@ -215,7 +214,7 @@ class LLMClient(BasicClient):
         return [val.cpu().numpy() for _, val in state_dict.items()]
 
     def set_train_dataset(self, config: Config) -> None:
-        ### Should be impelement
+        # Should be impelement
         """
         User defined method that returns a PyTorch Train DataLoader
         and a PyTorch Validation DataLoader
@@ -242,7 +241,7 @@ class LLMClient(BasicClient):
         self.client_testset = split_dataset["test"]
 
     def get_model(self, config: Config) -> nn.Module:
-        ### Done
+        # Done
         log(INFO, "Getting model")
         model_cfg = self.get_unflatten_config(config, "model")["model"]
         assert isinstance(model_cfg, dict), "Model configuration must be a dictionary"

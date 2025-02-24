@@ -1,5 +1,4 @@
 import argparse
-import os
 from functools import partial
 from logging import INFO
 from typing import Any
@@ -12,9 +11,6 @@ from flwr.server.strategy import FedAvg
 
 from examples.fedllm_example.model import get_model
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
-from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchangerPeft
 from fl4health.reporting import JsonReporter, WandBReporter
 from fl4health.servers.base_server import FlServer
 from fl4health.utils.config import load_config
@@ -89,16 +85,6 @@ def main(config: dict[str, Any], server_address: str, checkpoint_stub: str, run_
     cfg_model = config.get("model")
     assert cfg_model is not None, "Config must contain a 'model' key with a dictionary value."
     init_model = get_model(cfg_model)
-    parameter_exchanger = FullParameterExchangerPeft()
-    checkpoint_dir = os.path.join(checkpoint_stub, run_name)
-    last_checkpoint_name = "server_last_model.pkl"
-    checkpointers = [
-        LatestTorchModuleCheckpointer(checkpoint_dir, last_checkpoint_name),
-    ]
-
-    #     checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
-    #         model=init_model, parameter_exchanger=parameter_exchanger, model_checkpointers=checkpointers
-    #     )
 
     # Server performs simple FedAveraging as its server-side optimization strategy and potentially adapts the
     # FedProx proximal weight mu
@@ -130,7 +116,6 @@ def main(config: dict[str, Any], server_address: str, checkpoint_stub: str, run_
         reporters=reporters,
         accept_failures=False,
     )
-    #     checkpoint_and_state_module=checkpoint_and_state_module,
 
     fl.server.start_server(
         server=server,

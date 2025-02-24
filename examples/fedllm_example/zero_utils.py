@@ -1,4 +1,3 @@
-import os
 from collections.abc import Iterator
 from logging import WARNING
 from typing import Any

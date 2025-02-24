@@ -78,13 +78,10 @@ def main(
         aggregated_test_loader = torch.utils.data.DataLoader(aggregated_dataset, batch_size=BATCH_SIZE, shuffle=False)
         aggregated_num_examples = len(aggregated_dataset)
 
-    # print("aggregated_num_examples: ", aggregated_num_examples)
-
     for client_number in range(NUM_CLIENTS):
         test_loader, num_examples = load_rxrx1_test_data(
             data_path=Path(dataset_dir), client_num=client_number, batch_size=BATCH_SIZE
         )
-        # print("client Number: ", client_number, "length:", num_examples["eval_set"])
 
         pre_best_local_test_metrics = []
         pre_last_local_test_metrics = []
