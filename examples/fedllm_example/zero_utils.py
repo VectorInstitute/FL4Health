@@ -12,6 +12,17 @@ from torch.nn import Parameter
 
 
 def maybe_zero_3(param: Any, ignore_status: bool = False, name: str | None = None) -> Any:
+    """
+    If stage 3 ZeRo is enabled, gather the parameter and return the gathered parameter.
+
+    Args:
+        param (Any): The parameter to gather.
+        ignore_status (bool, optional): Whether to ignore the status of the parameter. Defaults to False.
+        name (str, optional): The name of the parameter. Defaults to None.
+
+    Returns:
+        Any: The gathered parameter.
+    """
 
     if hasattr(param, "ds_id"):
         if param.ds_status == ZeroParamStatus.NOT_AVAILABLE:
@@ -26,6 +37,16 @@ def maybe_zero_3(param: Any, ignore_status: bool = False, name: str | None = Non
 
 # Borrowed from peft.utils.get_peft_model_state_dict
 def get_peft_state_maybe_zero_3(named_params: Iterator[tuple[str, Parameter]], bias: str) -> dict[str, Any]:
+    """
+    Get the state dict for the PEFT model when stage 3 ZeRo is enabled.
+
+    Args:
+        named_params (Iterator[tuple[str, Parameter]]): The named parameters of the model.
+        bias (str): The bias to consider.
+
+    Returns:
+        dict[str, Any]: The state dict for the PEFT model.
+    """
     if bias == "none":
         to_return = {k: t for k, t in named_params if "lora_" in k}
     elif bias == "all":
@@ -53,6 +74,17 @@ def get_peft_state_maybe_zero_3(named_params: Iterator[tuple[str, Parameter]], b
 def get_peft_state_non_lora_maybe_zero_3(
     named_params: Iterator[tuple[str, Parameter]], require_grad_only: bool = True
 ) -> dict[str, Any]:
+    """
+    Get the state dict for the non-LoRA trainable parameters when stage 3 ZeRo is enabled.
+
+    Args:
+        named_params (Iterator[tuple[str, Parameter]]): The named parameters of the model.
+        require_grad_only (bool, optional): Whether to require gradients. Defaults to True.
+
+    Returns:
+        dict[str, Any]: The state dict for the non-LoRA trainable parameters.
+    """
+
     to_return = {k: t for k, t in named_params if "lora_" not in k}
     if require_grad_only:
         to_return = {k: t for k, t in to_return.items() if t.requires_grad}
@@ -62,7 +94,7 @@ def get_peft_state_non_lora_maybe_zero_3(
 
 def safe_save_model_for_zero3(model: torch.nn.Module, training_arguments: transformers.TrainingArguments) -> None:
     """
-    Saves PEFT model and non-LoRA trainable parameters.
+    Saves PEFT model and non-LoRA trainable parameters when stage 3 ZeRo is enabled.
 
     Args:
         model: The model to save.
@@ -78,7 +110,14 @@ def safe_save_model_for_zero3(model: torch.nn.Module, training_arguments: transf
 
 
 def safe_save_model_for_hf_trainer(trainer: transformers.Trainer, output_dir: str) -> None:
-    """Collects the state dict and dump to disk."""
+    """
+    Safely save the model for the Hugging Face Trainer. This module waits for all processes to synchronize
+    before saving the model.
+
+    Args:
+        trainer (transformers.Trainer): The trainer.
+        output_dir (str): The output directory.
+    """
     trainer.accelerator.wait_for_everyone()
     torch.cuda.synchronize()
 

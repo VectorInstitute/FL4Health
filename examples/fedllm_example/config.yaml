@@ -21,11 +21,10 @@ model:
     peft_lora_alpha: 64
 
 train:
-  save_every_round: 5
   learning_rate_max: 5e-5
   learning_rate_min: 1e-6
-  seq-length: 512
   training_arguments:
+    max_seq_length: 512
     gradient_accumulation_steps: 1
     logging_steps: 10
     save_steps: 500
