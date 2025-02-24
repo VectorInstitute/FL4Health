@@ -1,16 +1,17 @@
+import os
 from collections.abc import Iterator
 from logging import WARNING
 from typing import Any
 
 import torch
 import transformers
+from deepspeed import zero  # type: ignore
+from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus  # type: ignore
 from flwr.common.logger import log
 from torch.nn import Parameter
 
 
 def maybe_zero_3(param: Any, ignore_status: bool = False, name: str | None = None) -> Any:
-    from deepspeed import zero  # type: ignore
-    from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus  # type: ignore
 
     if hasattr(param, "ds_id"):
         if param.ds_status == ZeroParamStatus.NOT_AVAILABLE:
@@ -57,6 +58,23 @@ def get_peft_state_non_lora_maybe_zero_3(
         to_return = {k: t for k, t in to_return.items() if t.requires_grad}
     to_return = {k: maybe_zero_3(v, ignore_status=True).cpu() for k, v in to_return.items()}
     return to_return
+
+
+def safe_save_model_for_zero3(model: torch.nn.Module, training_arguments: transformers.TrainingArguments) -> None:
+    """
+    Saves PEFT model and non-LoRA trainable parameters.
+
+    Args:
+        model: The model to save.
+        training_arguments: Training arguments containing local_rank and output directory.
+    """
+    state_dict = get_peft_state_maybe_zero_3(model.named_parameters(), "none")
+    non_lora_state_dict = get_peft_state_non_lora_maybe_zero_3(model.named_parameters())
+
+    if training_arguments.local_rank in [0, -1]:  # Ensures only rank 0 or single-GPU saves
+        model.config.save_pretrained(training_arguments.output_dir)
+        model.save_pretrained(training_arguments.output_dir, state_dict=state_dict)
+        torch.save(non_lora_state_dict, os.path.join(training_arguments.output_dir, "non_lora_trainables.bin"))
 
 
 def safe_save_model_for_hf_trainer(trainer: transformers.Trainer, output_dir: str) -> None:

@@ -4,7 +4,7 @@
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
-#SBATCH --gres=gpu:4
+#SBATCH --gres=gpu:2
 #SBATCH --mem=40G
 #SBATCH --partition=t4v2
 #SBATCH --qos=m
@@ -31,7 +31,10 @@ fi
 
 # Process inputs
 
+# First one is for caching the huggingface pretrained models
 export HF_HOME=/projects/fl4health/flower_env/temp
+# Need to load for being able to run deepspeed on the cluster
+export CUDA_HOME="/pkgs/cuda-12.1"
 
 SERVER_ADDRESS=$1
 ARTIFACT_DIR=$2
@@ -64,9 +67,10 @@ echo "Active Environment:"
 which python
 
 echo "Server Address used by Client: ${SERVER_ADDRESS}"
-
-ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node="${NUM_GPUS}" --nnodes="${SLURM_NNODES}"  \
-    examples/fedllm_example/client.py \
+# Check if the deepspeed is installed
+ds_report
+ACCELERATE_CPU_AFFINITY=1 $TORCHRUN_PATH --nproc_per_node=2 --nnodes=1  \
+    -m examples.fedllm_example.client \
     --deepspeed examples/fedllm_example/training_script/zero_config/zero2.json \
     --artifact_dir ${ARTIFACT_DIR} \
     --client_number ${CLIENT_NUMBER} \

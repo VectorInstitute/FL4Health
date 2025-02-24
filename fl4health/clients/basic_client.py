@@ -290,7 +290,7 @@ class BasicClient(NumPyClient):
         fit_start_time = datetime.datetime.now()
         if local_epochs is not None:
             loss_dict, metrics = self.train_by_epochs(local_epochs, current_server_round)
-        #             local_steps = len(self.train_loader) * local_epochs  # total steps over training round
+            local_steps = len(self.train_loader) * local_epochs  # total steps over training round
         elif local_steps is not None:
             loss_dict, metrics = self.train_by_steps(local_steps, current_server_round)
         else:
@@ -298,15 +298,15 @@ class BasicClient(NumPyClient):
         fit_end_time = datetime.datetime.now()
 
         # Perform necessary updates after training has completed for the current FL round
-        #         self.update_after_train(local_steps, loss_dict, config)
+        self.update_after_train(local_steps, loss_dict, config)
 
         # Check if we should run an evaluation with validation data after fit
         # (for example, this is used by FedDGGA)
-        #         if self._should_evaluate_after_fit(evaluate_after_fit):
-        #             validation_loss, validation_metrics = self.validate(pack_losses_with_val_metrics)
-        #             metrics.update(validation_metrics)
-        #             # We perform a pre-aggregation checkpoint if applicable
-        #             self._maybe_checkpoint(validation_loss, validation_metrics, CheckpointMode.PRE_AGGREGATION)
+        if self._should_evaluate_after_fit(evaluate_after_fit):
+            validation_loss, validation_metrics = self.validate(pack_losses_with_val_metrics)
+            metrics.update(validation_metrics)
+            # We perform a pre-aggregation checkpoint if applicable
+            self._maybe_checkpoint(validation_loss, validation_metrics, CheckpointMode.PRE_AGGREGATION)
 
         # Notes on report values:
         #   - Train by steps: round metrics/losses are computed using all samples from the round

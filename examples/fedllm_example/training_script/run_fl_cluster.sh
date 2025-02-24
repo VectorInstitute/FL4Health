@@ -22,8 +22,6 @@ SERVER_LOG_DIR=$4
 CLIENT_LOG_DIR=$5
 VENV_PATH=$6
 
-export HF_HOME=/projects/fl4health/flower_env/temp
-
 echo "Server Port number: ${SERVER_PORT}"
 echo "Config Path: ${SERVER_CONFIG_PATH}"
 echo "Server Log Dir: ${SERVER_LOG_DIR}"
@@ -103,7 +101,7 @@ do
   CLIENT_ERROR_LOGS="client_log_${CLIENT_JOB_HASH}.err"
 
   SBATCH_COMMAND="--job-name=${CLIENT_JOB_NAME} --output=${CLIENT_OUT_LOGS} --error=${CLIENT_ERROR_LOGS} \
-    examples/fedllm_example/training_script/run_client.slrm \
+    examples/fedllm_example/training_script/run_client_zero.slrm \
     ${SERVER_ADDRESS} \
     ${EXPERIMENT_DIRECTORY} \
     ${CLIENT_LOG_DIR} \

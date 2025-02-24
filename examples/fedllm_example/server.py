@@ -11,7 +11,6 @@ from flwr.server.strategy import FedAvg
 
 from examples.fedllm_example.model import get_model
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.reporting import JsonReporter, WandBReporter
 from fl4health.servers.base_server import FlServer
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
@@ -101,19 +100,12 @@ def main(config: dict[str, Any], server_address: str, checkpoint_stub: str, run_
         initial_parameters=get_all_model_parameters_peft(init_model),
     )
 
-    json_reporter = JsonReporter()
     client_manager = SimpleClientManager()
-    if "reporting_config" in config:
-        wandb_reporter = WandBReporter("round", **config["reporting_config"])
-        reporters = [wandb_reporter, json_reporter]
-    else:
-        reporters = [json_reporter]
 
     server = FlServer(
         client_manager=client_manager,
         fl_config=config,
         strategy=strategy,
-        reporters=reporters,
         accept_failures=False,
     )
 

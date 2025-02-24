@@ -21,11 +21,7 @@ from trl import DataCollatorForCompletionOnlyLM, SFTTrainer  # type: ignore
 
 from examples.fedllm_example.dataset import get_tokenizer_and_data_collator_and_propt_formatting, load_data
 from examples.fedllm_example.model import cosine_annealing, get_model
-from examples.fedllm_example.zero_utils import (
-    get_peft_state_maybe_zero_3,
-    get_peft_state_non_lora_maybe_zero_3,
-    safe_save_model_for_hf_trainer,
-)
+from examples.fedllm_example.zero_utils import safe_save_model_for_hf_trainer, safe_save_model_for_zero3
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting import JsonReporter
@@ -54,6 +50,7 @@ class LLMClient(BasicClient):
         client_number: int,
         checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         deepspeed_config: str | None = None,
+        checkpoint_dir: str | None = None,
     ) -> None:
         super().__init__(
             data_path, metrics, device, reporters=reporters, checkpoint_and_state_module=checkpoint_and_state_module
@@ -68,6 +65,7 @@ class LLMClient(BasicClient):
         self.tokenizer: PreTrainedTokenizer
         self.formatting_prompts_func: DataCollatorForCompletionOnlyLM
         self.data_collator: Callable
+        self.checkpoint_dir = checkpoint_dir
 
     def get_unflatten_config(self, flat_dict: dict[str, Scalar], prefix: str = "train") -> dict[str, Any]:
         dictionary: dict[str, Any] = {}
@@ -93,6 +91,7 @@ class LLMClient(BasicClient):
         self.training_arguments = TrainingArguments(
             **self.train_cfg.get("training_arguments", {}), deepspeed=self.deepspeed_config
         )
+        self.training_arguments.max_steps = local_steps
         self.training_arguments.per_device_train_batch_size = config.get("batch_size")
         self.training_arguments.num_train_epochs = config["local_epochs"]
         log(INFO, f"Devive local rank: {self.training_arguments.local_rank}")
@@ -132,10 +131,10 @@ class LLMClient(BasicClient):
         ), "training_arguments should be a TrainingArguments object"
 
         self.training_arguments.learning_rate = self.lr
-
         self.training_arguments.max_seq_length = self.train_cfg.get("seq_length")
-        self.training_arguments.output_dir = "/projects/fl4health/fedllm/artifacts/huggingface"
+        self.training_arguments.output_dir = self.checkpoint_dir
 
+        # Disable reporting to avoid cluttering the logs
         self.training_arguments.report_to = "none"
 
         # train by epoch
@@ -166,21 +165,14 @@ class LLMClient(BasicClient):
 
         self.model.config.use_cache = True
 
-        log(INFO, f"Saving via {self.training_arguments.lora_enable} self.training_arguments.lora_enable")
+        log(INFO, "Saving via self.training_arguments.lora_enable")
 
-        if self.training_arguments.lora_enable:
-            state_dict = get_peft_state_maybe_zero_3(self.model.named_parameters(), self.training_arguments.lora_bias)
-            non_lora_state_dict = get_peft_state_non_lora_maybe_zero_3(self.model.named_parameters())
-            if self.training_arguments.local_rank == 0 or self.training_arguments.local_rank == -1:
-                self.model.config.save_pretrained(self.training_arguments.output_dir)
-                self.model.save_pretrained(self.training_arguments.output_dir, state_dict=state_dict)
-                torch.save(
-                    non_lora_state_dict, os.path.join(self.training_arguments.output_dir, "non_lora_trainables.bin")
-                )
-        else:
+        if not self.deepspeed_config or (self.deepspeed_config and "zero3" not in self.deepspeed_config):
             safe_save_model_for_hf_trainer(trainer=self.trainer, output_dir=self.training_arguments.output_dir)
 
-        # Return final training metrics
+        else:
+            safe_save_model_for_zero3(self.model, self.training_arguments)
+
         return loss_dict, metrics
 
     def validate(self, include_losses_in_metrics: bool = False) -> tuple[float, dict[str, Scalar]]:
@@ -329,12 +321,6 @@ if __name__ == "__main__":
 
     # Adding extensive checkpointing for the client
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
-    pre_aggregation_last_checkpoint_name = f"pre_aggregation_client_{args.client_number}_last_model.pkl"
-    #     checkpoint_and_state_module = ClientCheckpointAndStateModule(
-    #         pre_aggregation=[
-    #             LatestTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_last_checkpoint_name),
-    #         ],
-    #     )
 
     client = LLMClient(
         data_path=Path(" "),
@@ -343,6 +329,7 @@ if __name__ == "__main__":
         reporters=[JsonReporter()],
         client_number=args.client_number,
         deepspeed_config=args.deepspeed,
+        checkpoint_dir=checkpoint_dir,
     )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
