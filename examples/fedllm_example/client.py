@@ -117,8 +117,6 @@ class LLMClient(BasicClient):
         self.training_arguments.per_device_train_batch_size = config.get("batch_size")
         self.training_arguments.output_dir = self.checkpoint_dir
 
-        log(INFO, f"Device local rank is {self.training_arguments.local_rank}")
-
         # Set the dtype for the model
         self.compute_dtype = (
             torch.float16
@@ -133,8 +131,9 @@ class LLMClient(BasicClient):
         return local_epochs, local_steps, current_server_round, evaluate_after_fit, pack_losses_with_val_metrics
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
-        log(INFO, "Setting parameters")
-        assert self.model is not None
+        # We have to reset model on each new round as deepspeed would crash due to double initialization and
+        # partitioning of the model
+        self.model = get_model(self.model_cfg)
 
         peft_state_dict_keys = get_peft_model_state_dict(self.model).keys()
         params_dict = zip(peft_state_dict_keys, parameters)
@@ -143,7 +142,6 @@ class LLMClient(BasicClient):
 
     def get_parameters(self, config: Config) -> NDArrays:
         """Return the parameters of the current net."""
-        log(INFO, "Getting parameters")
         state_dict = get_peft_model_state_dict(self.model)
         return [val.cpu().numpy() for _, val in state_dict.items()]
 
@@ -177,15 +175,15 @@ class LLMClient(BasicClient):
             config (Config): The config from the server.
         """
 
-        model_cfg = self.get_unflatten_config(config, "model")["model"]
-        assert isinstance(model_cfg, dict), "Model configuration must be a dictionary"
+        self.model_cfg = self.get_unflatten_config(config, "model")["model"]
+        assert isinstance(self.model_cfg, dict), "Model configuration must be a dictionary"
         (
             self.tokenizer,
             self.data_collator,
-        ) = get_tokenizer_and_data_collator(model_cfg["name"])
+        ) = get_tokenizer_and_data_collator(self.model_cfg["name"])
 
-        assert isinstance(model_cfg, dict), "Model configuration must be a dictionary"
-        return get_model(model_cfg)
+        assert isinstance(self.model_cfg, dict), "Model configuration must be a dictionary"
+        return get_model(self.model_cfg)
 
     def setup_client(self, config: Config) -> None:
         """
@@ -194,7 +192,6 @@ class LLMClient(BasicClient):
         Args:
             config (Config): The config from the server.
         """
-        log(INFO, "Setting up client")
 
         self.model = self.get_model(config).to(self.device)
 
