@@ -55,7 +55,7 @@ def main(
     )
 
     model_checkpointer = BestMetricTorchModuleCheckpointer(
-        checkpoint_dir=Path("examples/nnunet_example/"),
+        checkpoint_dir="examples/nnunet_example/",
         checkpoint_name="checkpoint_best_ema_dice.pth",
         metric="EMA_DICE",
         maximize=True,

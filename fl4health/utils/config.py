@@ -138,6 +138,13 @@ def get_config_fn(config: Config, **kwargs: bool | bytes | float | int | str) ->
     local_epochs = cfg_copy.pop("local_epochs", None)
     local_steps = cfg_copy.pop("local_steps", None)
 
+    # Some type checks to appease mypy
+    if local_epochs is not None:
+        assert isinstance(local_epochs, int)
+    if local_steps is not None:
+        assert isinstance(local_steps, int)
+
+    # Create config function
     def fit_fn(current_server_round: int) -> Config:
         return {
             "current_server_round": current_server_round,

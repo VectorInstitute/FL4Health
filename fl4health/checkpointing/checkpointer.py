@@ -169,7 +169,7 @@ class LatestTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
         def null_score_function(loss: float, _: dict[str, Scalar]) -> float:
             return 0.0
 
-        super().__init__(checkpoint_dir, checkpoint_name, null_score_function, False)
+        super().__init__(checkpoint_dir, checkpoint_name, null_score_function, "Latest", False)
 
     def maybe_checkpoint(self, model: nn.Module, loss: float, _: dict[str, Scalar]) -> None:
         """
@@ -286,7 +286,7 @@ class BestMetricTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
             except KeyError as e:
                 log(ERROR, f"Could not find '{self.metric_key}' in metrics dict. Available keys are: {metrics.keys()}")
                 raise e
-            return val
+            return float(val)
 
         super().__init__(checkpoint_dir, checkpoint_name, metric_score_function, metric, maximize)
 

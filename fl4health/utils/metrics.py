@@ -244,10 +244,10 @@ class EMAMetric(Metric):
         self.previous_score: Metrics | None = None
         self.name = f"EMA_{self.metric.name}" if name is None else name
 
-    def update(self, input, target):
+    def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
         return self.metric.update(input, target)
 
-    def compute(self, name):
+    def compute(self, name: str | None) -> Metrics:
         # Compute current metric score.
         # Temporarily change name of the underlying metric so that we get the EMAMetric name in keys of metrics_dict
         metric_name = self.metric.name
@@ -262,12 +262,20 @@ class EMAMetric(Metric):
 
         # Otherwise compute EMA score for each 'metric' in Metrics dict
         for key, current_score in metrics_dict.items():
-            self.previous_score[key] = (
-                self.smoothing_factor * current_score + (1 - self.smoothing_factor) * self.previous_score[key]
-            )
-            return self.previous_score
+            previous_score = self.previous_score[key]
+            if (
+                not isinstance(current_score, str)
+                and not isinstance(current_score, bytes)
+                and not isinstance(previous_score, str)
+                and not isinstance(previous_score, bytes)
+            ):
+                self.previous_score[key] = (
+                    self.smoothing_factor * current_score + (1 - self.smoothing_factor) * previous_score
+                )
 
-    def clear(self):
+        return self.previous_score
+
+    def clear(self) -> None:
         # Clear accumulated inputs and targets but not the previous score
         return self.metric.clear()
 
@@ -308,15 +316,15 @@ class HardDICE(Metric):
         self.name = name
 
         # We will accumulate boolean tensors for TP, FP and FN to reduce memory overhead
-        self.tp = torch.tensor([], dtype=bool)
-        self.fp = torch.tensor([], dtype=bool)
-        self.fn = torch.tensor([], dtype=bool)
+        self.tp = torch.tensor([], dtype=torch.bool)
+        self.fp = torch.tensor([], dtype=torch.bool)
+        self.fn = torch.tensor([], dtype=torch.bool)
 
     def update(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
         # Assertions to prevent this metric being used improperly
-        assert preds.shape == targets.shape, (
-            f"Preds and targets must have the same shape but got {preds.shape} and {targets.shape} respectively."
-        )
+        assert (
+            preds.shape == targets.shape
+        ), f"Preds and targets must have the same shape but got {preds.shape} and {targets.shape} respectively."
 
         # Remove the background channel from the axis specified by ignore_background_axis
         if self.ignore_background_axis is not None:
@@ -330,7 +338,7 @@ class HardDICE(Metric):
         self.fp = torch.cat([self.fp.to(preds.device), preds * ~targets])
         self.fn = torch.cat([self.fn.to(preds.device), ~preds * targets])
 
-    def compute(self, name):
+    def compute(self, name: str | None) -> Metrics:
         # Compute union and intersection along specified axes
         sum_axes = tuple([i for i in range(self.tp.ndim) if i not in self.along_axes])
         intersection = self.tp.sum(dim=sum_axes) if len(sum_axes) > 0 else self.tp
@@ -349,11 +357,53 @@ class HardDICE(Metric):
         dice = 2 * intersection / union
         return {f"{name} - {self.name}": torch.mean(dice).item()}
 
-    def clear(self):
+    def clear(self) -> None:
         # Reset accumulated tp, fp and fn's.
-        self.tp = torch.tensor([], dtype=bool)
-        self.fp = torch.tensor([], dtype=bool)
-        self.fn = torch.tensor([], dtype=bool)
+        self.tp = torch.tensor([], dtype=torch.bool)
+        self.fp = torch.tensor([], dtype=torch.bool)
+        self.fn = torch.tensor([], dtype=torch.bool)
+
+
+class BinarySoftDiceCoefficient(SimpleMetric):
+    def __init__(
+        self,
+        name: str = "BinarySoftDiceCoefficient",
+        epsilon: float = 1.0e-7,
+        spatial_dimensions: tuple[int, ...] = (2, 3, 4),
+        logits_threshold: float | None = 0.5,
+    ):
+        """
+        Binary DICE Coefficient Metric with configurable spatial dimensions and logits threshold.
+
+        Args:
+            name (str): Name of the metric.
+            epsilon (float): Small float to add to denominator of DICE calculation to avoid divide by 0.
+            spatial_dimensions (tuple[int, ...]): The spatial dimensions of the image within the prediction tensors.
+                The default assumes that the images are 3D and have shape:
+                batch_size, channel, spatial, spatial, spatial.
+            logits_threshold: This is a threshold value where values above are classified as 1
+                and those below are mapped to 0. If the threshold is None, then no thresholding is performed
+                and a continuous or "soft" DICE coefficient is computed.
+        """
+        self.epsilon = epsilon
+        self.spatial_dimensions = spatial_dimensions
+
+        self.logits_threshold = logits_threshold
+        super().__init__(name)
+
+    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
+        # Assuming the logits are to be mapped to binary. Note that this assumes the logits have already been
+        # constrained to [0, 1]. The metric still functions if not, but results will be unpredictable.
+        if self.logits_threshold:
+            y_pred = (logits > self.logits_threshold).int()
+        else:
+            y_pred = logits
+        intersection = (y_pred * target).sum(dim=self.spatial_dimensions)
+        union = (0.5 * (y_pred + target)).sum(dim=self.spatial_dimensions)
+        dice = intersection / (union + self.epsilon)
+        # If both inputs are empty the dice coefficient should be equal 1
+        dice[union == 0] = 1
+        return torch.mean(dice).item()
 
 
 class Accuracy(SimpleMetric):
