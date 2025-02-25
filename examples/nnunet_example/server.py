@@ -60,10 +60,6 @@ def main(
         metric="EMA_DICE",
         maximize=True,
     )
-    # model_checkpointer = BestLossTorchModuleCheckpointer(
-    #     checkpoint_dir=Path("examples/nnunet_example/"),
-    #     checkpoint_name="best_loss_model",
-    # )
 
     state_checkpointer = (
         PerRoundStateCheckpointer(Path(intermediate_server_state_dir))
