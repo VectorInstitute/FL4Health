@@ -1,8 +1,8 @@
 from collections.abc import Callable
 from typing import Any, TypeVar
-from flwr.common.typing import Config
 
 import yaml
+from flwr.common.typing import Config
 
 REQUIRED_CONFIG = {
     "n_server_rounds": int,
@@ -122,7 +122,9 @@ def make_dict_with_epochs_or_steps(local_epochs: int | None = None, local_steps:
 def get_config_fn(config: Config, **kwargs: bool | bytes | float | int | str) -> Callable:
     """Creates a function that can be used as a on_fit_config_fn or on_evaluate_config_fn for flwr strategies.
 
-    Creates a function that when called with a current_server_round, will return a flwr Config dictionary with the current_server_round and any additional configuration parameters passed to this function. This function also ensures that only one of local_epochs or local_steps is present in the returned Config dictionary.
+    Creates a function that when called with a current_server_round, will return a flwr Config dictionary with the
+    current_server_round and any additional configuration parameters passed to this function. This function also
+    ensures that only one of local_epochs or local_steps is present in the returned Config dictionary.
 
     Args:
         config (Config): A Config with parameters that should be returned by the config function

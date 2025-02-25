@@ -665,9 +665,9 @@ class NnunetClient(BasicClient):
         loss_targets = prepare_loss_arg(target)
 
         # Ensure we have the same number of predictions and targets
-        assert isinstance(loss_preds, type(loss_targets)), (
-            f"Got unexpected types for preds and targets: {type(loss_preds)} and {type(loss_targets)}"
-        )
+        assert isinstance(
+            loss_preds, type(loss_targets)
+        ), f"Got unexpected types for preds and targets: {type(loss_preds)} and {type(loss_targets)}"
 
         if isinstance(loss_preds, list):
             assert len(loss_preds) == len(loss_targets), (

@@ -4,7 +4,6 @@ from collections.abc import Sequence
 from enum import Enum
 
 import numpy as np
-from numpy.typing import NDArray
 import torch
 from flwr.common.typing import Metrics, Scalar
 from sklearn import metrics as sklearn_metrics
@@ -273,7 +272,7 @@ class EMAMetric(Metric):
         return self.metric.clear()
 
 
-class MemoryEfficientHardDICE(Metric):
+class HardDICE(Metric):
     def __init__(
         self,
         name: str = "DICE",
@@ -318,8 +317,6 @@ class MemoryEfficientHardDICE(Metric):
         assert preds.shape == targets.shape, (
             f"Preds and targets must have the same shape but got {preds.shape} and {targets.shape} respectively."
         )
-        # assert torch.logical_or(preds == 0, preds == 1).all(), "Preds must be binary but found non 0 or 1 values."
-        # assert torch.logical_or(targets == 0, targets == 1).all(), "Target must be binary but found non 0 or 1 values."
 
         # Remove the background channel from the axis specified by ignore_background_axis
         if self.ignore_background_axis is not None:
@@ -357,84 +354,6 @@ class MemoryEfficientHardDICE(Metric):
         self.tp = torch.tensor([], dtype=bool)
         self.fp = torch.tensor([], dtype=bool)
         self.fn = torch.tensor([], dtype=bool)
-
-
-class HardDICE(SimpleMetric):
-    def __init__(
-        self,
-        name: str = "DICE",
-        along_axes: Sequence[int] = (0,),
-        ignore_background_axis: int | None = None,
-        ignore_null: bool = True,
-    ) -> None:
-        """
-        Computes the Mean DICE Coefficient between categorical (Hard) class predictions and targets.
-
-        Preds and targets passed to __call__ are assumed to contain only binary integers. Consider using
-        fl4health.utils.metrics.TransformsMetric to apply transforms to preds and targets before computing the DICE
-        score. For example you may need to use an argmax and one-hot-encoding function to convert predicted logits to
-        'hard' class predictions.
-
-        Args:
-
-            name (str): Name of the metric. Defaults to 'DICE'
-            along_axes (Sequence[int]): Sequence of indices specifying along which axes the individual DICE
-                coefficients should be computed. The final DICE Score is the mean of these DICE coefficients. Defaults
-                to (0,) since this is usually the batch dimension.
-            ignore_background_axis (int | None): If specified, the first channel of the specified axis is removed
-                prior to computing the DICE coefficients. Useful for removing background channels. Defaults to None.
-            ignore_null (bool): If True, null dice coefficients are removed before returning the mean dice score. If
-                False then null dice scores are set to 1. Null DICE scores are usually a result of the prediction and
-                target both being all-zero (True Negatives). How this argument affects the final DICE score will vary
-                depending along which axes the DICE coefficients were computed. Defaults to True.
-        """
-        self.ignore_background_axis = ignore_background_axis
-        self.along_axes = tuple([a for a in along_axes])
-        self.ignore_background_axis = ignore_background_axis
-        self.ignore_null = ignore_null
-        super().__init__(name)
-
-    def __call__(self, preds: torch.Tensor, targets: torch.Tensor) -> Scalar:
-        """Compute the mean DICE score between the preds and targets.
-
-        Implementation is in pytorch so that computation can be accelerated on the GPU.
-
-        Args:
-            preds (torch.Tensor): Tensor of hard class predictions. Should either be binary or one-hot encoded.
-            targets (torch.Tensor): Tensor of target labels. Should be binary or one-hot encoded.
-
-        Returns:
-            Scalar: Average of the DICE coefficients computed along the specified axes.
-        """
-        # Assertions to prevent this metric being used improperly
-        assert preds.shape == targets.shape, (
-            f"Preds and targets must have the same shape but got {preds.shape} and {targets.shape} respectively."
-        )
-        # I would like to have some sort of assertion ensuring preds are binary but every way I try to do it causes an OOM
-        # assert torch.logical_or(preds == 0, preds == 1).all(), "Preds must be binary but found non 0 or 1 values."
-        # assert torch.logical_or(targets == 0, targets == 1).all(), "Target must be binary but found non 0 or 1 values."
-
-        # Remove the background channel from the axis specified by ignore_background_axis
-        if self.ignore_background_axis is not None:
-            indices = torch.arange(1, preds.shape[self.ignore_background_axis], device=preds.device)
-            preds = torch.index_select(preds, self.ignore_background_axis, indices)
-            targets = torch.index_select(targets, self.ignore_background_axis, indices)
-
-        # Compute Union and intersection along specified axes. Used to compute dice later.
-        sum_axes = tuple([i for i in range(preds.ndim) if i not in self.along_axes])
-        intersection = (preds * targets).sum(axis=sum_axes)
-        union = (preds + targets).sum(axis=sum_axes)  # Dice scores are null only when union == 0
-
-        if self.ignore_null:  # Ignore dice scores that will be null by removing them from the union and intersection
-            union = union[union != 0]
-            intersection = intersection[union != 0]
-        else:  # Set dice scores that would be null to 1. This might be good if they are considered True Negatives.
-            union[union == 0] = 1
-            intersection[union == 0] = 1
-
-        # Compute dice coefficients and return mean
-        dice = 2 * intersection / union
-        return torch.mean(dice).item()
 
 
 class Accuracy(SimpleMetric):

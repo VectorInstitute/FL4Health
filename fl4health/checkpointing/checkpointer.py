@@ -153,85 +153,6 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
             )
 
 
-class EMAFunctionTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
-    def __init__(
-        self,
-        checkpoint_dir: str,
-        checkpoint_name: str,
-        checkpoint_score_function: CheckpointScoreFunctionType,
-        checkpoint_score_name: str | None = None,
-        maximize: bool = False,
-        smoothing_factor: float = 0.1,
-    ):
-        """
-        An extension of `FunctionTorchModuleChecpointer` that uses the Exponential Moving Average (EMA) of the score function to determine whether or not to checkpoint.
-
-        Args:
-            checkpoint_dir (str): Directory to which the model is saved. This directory should already exist. The
-                checkpointer will not create it if it does not.
-            checkpoint_name (str): Name of the checkpoint to be saved.
-            checkpoint_score_function (CheckpointScoreFunctionType): Function taking in a loss value and dictionary of
-                metrics and produces a score based on these.
-            checkpoint_score_name (str | None, optional): Name of the score produced by the scoring function. This is
-                used for logging purposes. If not provided, the name of the function will be used. Defaults to None.
-            maximize (bool, optional): Specifies whether we're trying to minimize or maximize the score produced
-                by the scoring function. Defaults to False.
-            smoothing_factor (float, optional): A float in the range [0, 1]. Smaller values **increase** the amount of
-                smoothing by weighting previous scores more strongly. If smoothing factor is 1 then no EMA smoothing is
-                applied and this checkpointer behaves the same as `FunctionTorchModuleCheckpointer`. Defaults to 0.1.
-        """
-        self.smoothing_factor = float(smoothing_factor)
-        assert self.smoothing_factor >= 0 and self.smoothing_factor <= 1, "Smoothing factor must be in range [0, 1]"
-        self.previous_score = None
-        self.n_previous_scores = 0
-        if checkpoint_score_name is None:
-            ema_score_name = f"EMA({checkpoint_score_function.__name__})"
-        else:
-            ema_score_name = f"EMA({checkpoint_score_name})"
-        super().__init__(checkpoint_dir, checkpoint_name, checkpoint_score_function, ema_score_name, maximize)
-
-    def get_ema_score(self, comparison_score) -> float:
-        # If this is the first score then just return it
-        if self.n_previous_scores == 0:
-            self.previous_score = comparison_score
-            self.n_previous_scores += 1
-            return comparison_score
-
-        # Compute EMA Score
-        alpha = self.smoothing_factor / (1 + self.n_previous_scores)
-        beta = 1 - (self.smoothing_factor / (1 + self.n_previous_scores))
-        ema_score = comparison_score * alpha + self.previous_score * beta
-
-        # Update previous ema score with new ema score
-        self.previous_score = ema_score
-        self.n_previous_scores += 1
-        return ema_score
-
-    def maybe_checkpoint(self, model: nn.Module, loss: float, metrics: dict[str, Scalar]) -> None:
-        # First we use the provided scoring function to produce a score
-        raw_score = self.checkpoint_score_function(loss, metrics)
-        comparison_score = self.get_ema_score(raw_score)
-        if self._should_checkpoint(comparison_score):
-            log(
-                INFO,
-                f"Checkpointing the model: Current {self.checkpoint_score_name} score ({comparison_score}) "
-                f"{self.comparison_str} Best score ({self.best_score})",
-            )
-            self.best_score = comparison_score
-            try:
-                log(WARNING, f"Saving checkpoint as {str(self.checkpoint_path)}")
-                torch.save(model, self.checkpoint_path)
-            except Exception as e:
-                log(ERROR, f"Encountered the following error while saving the checkpoint: {e}")
-                raise e
-        else:
-            log(
-                INFO,
-                f"Not checkpointing the model: Current {self.checkpoint_score_name} score ({comparison_score}) is not "
-                f"{self.comparison_str} Best score ({self.best_score})",
-            )
-
-
 class LatestTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
     def __init__(self, checkpoint_dir: str, checkpoint_name: str) -> None:
         """
@@ -368,40 +289,6 @@ class BestMetricTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
             return val
 
         super().__init__(checkpoint_dir, checkpoint_name, metric_score_function, metric, maximize)
-
-
-class BestEMAMetricTorchModuleCheckpointer(EMAFunctionTorchModuleCheckpointer):
-    def __init__(
-        self,
-        checkpoint_dir: str,
-        checkpoint_name: str,
-        metric: str,
-        prefix: str = "val - prediction - ",
-        maximize: bool = False,
-        smoothing_factor: float = 0.1,
-    ) -> None:
-        """Checkpointer that checkpoints based on the value of a user defined metric.
-
-        Args:
-            checkpoint_dir (str): Directory to which the model is saved. This directory should already exist. The
-                checkpointer will not create it if it does not.
-            checkpoint_name (str): Name of the checkpoint to be saved.
-            metric (str): The name of the metric to base checkpointing on. After prepending the prefix, should be a
-                key in the metrics dictionary passed in self.maybe_checkpoint. In BasicClient this is the 'name'
-                attribute of the corresponding fl4health.utils.metrics.Metric that was provided to the clients.
-            prefix (str, optional): A prefix to add to the metric name to create the key used to find the metric.
-                Usually a prefix is added by the client's metric manager. Defaults to 'val - prediction - '.
-            maximize (bool, optional): If True maximizes the metric instead of minimizing it. Defaults to False.
-            smoothing_factor (float, optional): A float in the range [0, 1]. Smaller values **increase** the amount of
-                smoothing by weighting previous scores more strongly. If smoothing factor is 1 then no EMA smoothing is
-                applied and this checkpointer behaves the same as `BestMetricTorchModuleCheckpointer`. Defaults to 0.1.
-        """
-        self.metric_key = f"{prefix}{metric}"
-
-        def metric_score_function(_: float, metrics: dict[str, Scalar]) -> float:
-            return metrics[self.metric_key]
-
-        super().__init__(checkpoint_dir, checkpoint_name, metric_score_function, metric, maximize, smoothing_factor)
 
 
 class PerRoundStateCheckpointer:

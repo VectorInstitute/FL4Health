@@ -950,9 +950,9 @@ class BasicClient(NumPyClient):
         # batch_size * num_validation_steps
         self.num_val_samples = len(self.val_loader.dataset)  # type: ignore
         if self.num_validation_steps is not None:
-            assert self.val_loader.batch_size is not None, (
-                "Validation batch size must be defined if we want to limit the number of validation steps"
-            )
+            assert (
+                self.val_loader.batch_size is not None
+            ), "Validation batch size must be defined if we want to limit the number of validation steps"
             self.num_val_samples = self.num_validation_steps * self.val_loader.batch_size
 
         if self.test_loader:

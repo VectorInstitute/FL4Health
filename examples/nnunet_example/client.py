@@ -1,29 +1,21 @@
 import argparse
 import os
-import warnings
 from logging import DEBUG, INFO
 from os.path import exists, join
 from pathlib import Path
-
-from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer, BestMetricTorchModuleCheckpointer
-from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
-
-with warnings.catch_warnings():
-    # Silence deprecation warnings from sentry sdk due to flwr and wandb
-    # https://github.com/adap/flower/issues/4086
-    warnings.filterwarnings("ignore", category=DeprecationWarning)
-    import wandb  # noqa: F401
 
 import torch
 from flwr.client import start_client
 from flwr.common.logger import log, update_console_handler
 from nnunetv2.dataset_conversion.convert_MSD_dataset import convert_msd_dataset
 
+from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.nnunet_client import NnunetClient
 from fl4health.utils.load_data import load_msd_dataset
-from fl4health.utils.metrics import TransformsMetric, HardDICE, EMAMetric, MemoryEfficientHardDICE
-from fl4health.utils.msd_dataset_sources import get_msd_dataset_enum, msd_num_labels
-from fl4health.utils.nnunet_utils import get_segs_from_probs, set_nnunet_env, get_segs_from_probs
+from fl4health.utils.metrics import EMAMetric, HardDICE, TransformsMetric
+from fl4health.utils.msd_dataset_sources import get_msd_dataset_enum
+from fl4health.utils.nnunet_utils import get_segs_from_probs, set_nnunet_env
 
 
 def main(
@@ -58,27 +50,17 @@ def main(
         log(INFO, f"Converting {msd_dataset_enum.value} into nnunet dataset")
         convert_msd_dataset(source_folder=join(nnUNet_raw, msd_dataset_enum.value))
 
-    # Create a metrics
-    # I believe all the MSD datasets do not have overlapping classes, hence has_regions is False
-    # dice = TransformsMetric(
-    #     metric=TorchMetric(
-    #         name="DICE",
-    #         metric=GeneralizedDiceScore(
-    #             num_classes=msd_num_labels[msd_dataset_enum], weight_type="square", include_background=False
-    #         ).to(device),
-    #     ),
-    #     pred_transforms=[get_segs_from_probs],
-    # )
-    # hard_dice = TransformsMetric(
-    #     metric=HardDICE(name="Hard-DICE", along_axes=(1,), ignore_background_axis=1, ignore_null=True),
-    #     pred_transforms=[get_segs_from_probs],
-    # )
+    # Create a metrics hard dice metric
+    # NnunetClient automatically ensures that preds and targets are one-hot-encoded
+    # Use transforms metric wrapper to convert model outputs to 'hard' predictions
+    # Don't technically need sigmoid since has_regions==False for all MSD datasets (I think) but we include it anyways.
     hard_dice = TransformsMetric(
-        metric=MemoryEfficientHardDICE(name="DICE", along_axes=(1,), ignore_background_axis=1, ignore_null=True),
-        pred_transforms=[get_segs_from_probs],
+        metric=HardDICE(name="DICE", along_axes=(1,), ignore_background_axis=1, ignore_null=True),
+        pred_transforms=[torch.sigmoid, get_segs_from_probs],
     )
     ema_dice = EMAMetric(metric=hard_dice, smoothing_factor=0.1)
 
+    # For state checkpointing. Allows training to be resumed from state checkpoint
     if intermediate_client_state_dir is not None:
         checkpoint_and_state_module = ClientCheckpointAndStateModule(
             state_checkpointer=PerRoundStateCheckpointer(Path(intermediate_client_state_dir))

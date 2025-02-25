@@ -1,55 +1,24 @@
 import argparse
 import json
 import pickle
-from functools import partial
 from pathlib import Path
 
 import flwr as fl
 import torch
 import yaml
 from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from fl4health.checkpointing.checkpointer import (
-    PerRoundStateCheckpointer,
     BestMetricTorchModuleCheckpointer,
-    BestLossTorchModuleCheckpointer,
+    PerRoundStateCheckpointer,
 )
 from fl4health.checkpointing.server_module import NnUnetServerCheckpointAndStateModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.nnunet_server import NnunetServer
 from fl4health.utils.config import get_config_fn
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-
-
-# def get_config(
-#     current_server_round: int,
-#     nnunet_config: str,
-#     n_server_rounds: int,
-#     batch_size: int,
-#     n_clients: int,
-#     nnunet_plans: str | None = None,
-#     local_epochs: int | None = None,
-#     local_steps: int | None = None,
-# ) -> Config:
-#     # Create config
-#     config: Config = {
-#         "n_clients": n_clients,
-#         "nnunet_config": nnunet_config,
-#         "n_server_rounds": n_server_rounds,
-#         "batch_size": batch_size,
-#         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
-#         "current_server_round": current_server_round,
-#     }
-
-#     # Check if plans were provided
-#     if nnunet_plans is not None:
-#         plans_bytes = pickle.dumps(json.load(open(nnunet_plans, "r")))
-#         config["nnunet_plans"] = plans_bytes
-
-#     return config
 
 
 def main(
