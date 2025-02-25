@@ -119,7 +119,7 @@ Once the server has started and logged "FL starting," the next step, in separate
 clients. This is done by simply running (remembering to activate your environment)
 
 ```sh
-python -m examples.basic_example.client /path/to/data
+python -m examples.basic_example.client --dataset_path /path/to/data
 ```
 
 **NOTE**: The argument `dataset_path` has two functions, depending on whether the dataset exists locally or not. If
