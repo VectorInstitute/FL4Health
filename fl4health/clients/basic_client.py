@@ -674,6 +674,10 @@ class BasicClient(NumPyClient):
             if not continue_training:
                 break
 
+        # Final clear to prevent memory build up
+        self.train_metric_manager.clear()
+        self.train_loss_meter.clear()
+
         # Return final training metrics
         return loss_dict, metrics
 
@@ -741,6 +745,10 @@ class BasicClient(NumPyClient):
         loss_dict = self.train_loss_meter.compute().as_dict()
         metrics = self.train_metric_manager.compute()
 
+        # Final clear to prevent memory build up
+        self.train_loss_meter.clear()
+        self.train_metric_manager.clear()
+
         # Log and report results
         self._log_results(loss_dict, metrics, current_round)
 
@@ -798,6 +806,10 @@ class BasicClient(NumPyClient):
         if include_losses_in_metrics:
             fold_loss_dict_into_metrics(metrics, loss_dict, LoggingMode.VALIDATION)
 
+        # Final clear to prevent memory build up
+        metric_manager.clear()
+        loss_meter.clear()
+
         return loss_dict["checkpoint"], metrics
 
     def _fully_validate_or_test(
@@ -843,6 +855,10 @@ class BasicClient(NumPyClient):
 
         if include_losses_in_metrics:
             fold_loss_dict_into_metrics(metrics, loss_dict, logging_mode)
+
+        # Final clear to prevent memory build up
+        metric_manager.clear()
+        loss_meter.clear()
 
         return loss_dict["checkpoint"], metrics
 
@@ -934,9 +950,9 @@ class BasicClient(NumPyClient):
         # batch_size * num_validation_steps
         self.num_val_samples = len(self.val_loader.dataset)  # type: ignore
         if self.num_validation_steps is not None:
-            assert (
-                self.val_loader.batch_size is not None
-            ), "Validation batch size must be defined if we want to limit the number of validation steps"
+            assert self.val_loader.batch_size is not None, (
+                "Validation batch size must be defined if we want to limit the number of validation steps"
+            )
             self.num_val_samples = self.num_validation_steps * self.val_loader.batch_size
 
         if self.test_loader:

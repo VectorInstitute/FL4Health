@@ -306,7 +306,6 @@ class NnunetClient(BasicClient):
         val_loader = nnUNetDataLoaderWrapper(
             nnunet_augmenter=val_loader, nnunet_config=self.nnunet_config, ref_image_shape=shape
         )
-        log(INFO, f"{len(val_loader)}, {len(val_loader.dataset)}, {val_loader.nnunet_dataloader.batch_size}")
 
         if self.verbose:
             log(INFO, f"\tDataloaders initialized in {time.time() - start_time:.1f}s")
@@ -666,9 +665,9 @@ class NnunetClient(BasicClient):
         loss_targets = prepare_loss_arg(target)
 
         # Ensure we have the same number of predictions and targets
-        assert isinstance(
-            loss_preds, type(loss_targets)
-        ), f"Got unexpected types for preds and targets: {type(loss_preds)} and {type(loss_targets)}"
+        assert isinstance(loss_preds, type(loss_targets)), (
+            f"Got unexpected types for preds and targets: {type(loss_preds)} and {type(loss_targets)}"
+        )
 
         if isinstance(loss_preds, list):
             assert len(loss_preds) == len(loss_targets), (
@@ -734,7 +733,7 @@ class NnunetClient(BasicClient):
     ) -> None:
         """
         Update the metrics with preds and target. Overridden because we might need to manipulate inputs due to deep
-        supervision
+        supervision.
 
         Args:
             preds (TorchPredType): dictionary of model outputs

@@ -66,6 +66,7 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
         checkpoint_dir: str,
         checkpoint_name: str,
         checkpoint_score_function: CheckpointScoreFunctionType,
+        checkpoint_score_name: str | None = None,
         maximize: bool = False,
     ) -> None:
         """
@@ -79,12 +80,15 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
             checkpoint_name (str): Name of the checkpoint to be saved.
             checkpoint_score_function (CheckpointScoreFunctionType): Function taking in a loss value and dictionary of
                 metrics and produces a score based on these.
+            checkpoint_score_name (str | None, optional): Name of the score produced by the scoring function. This is
+                used for logging purposes. If not provided, the name of the function will be used. Defaults to None.
             maximize (bool, optional): Specifies whether we're trying to minimize or maximize the score produced
                 by the scoring function. Defaults to False.
         """
         super().__init__(checkpoint_dir, checkpoint_name)
         self.best_score: float | None = None
         self.checkpoint_score_function = checkpoint_score_function
+        self.checkpoint_score_name = checkpoint_score_name or checkpoint_score_function.__name__
         # Whether we're looking to maximize (or minimize) the score produced by the checkpoint score function
         self.maximize = maximize
         self.comparison_str = ">=" if self.maximize else "<="
@@ -131,12 +135,12 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
         if self._should_checkpoint(comparison_score):
             log(
                 INFO,
-                f"Checkpointing the model: Current score ({comparison_score}) "
+                f"Checkpointing the model: Current {self.checkpoint_score_name} score ({comparison_score}) "
                 f"{self.comparison_str} Best score ({self.best_score})",
             )
             self.best_score = comparison_score
             try:
-                log(INFO, f"Saving checkpoint as {str(self.checkpoint_path)}")
+                log(WARNING, f"Saving checkpoint as {str(self.checkpoint_path)}")
                 torch.save(model, self.checkpoint_path)
             except Exception as e:
                 log(ERROR, f"Encountered the following error while saving the checkpoint: {e}")
@@ -144,7 +148,7 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
         else:
             log(
                 INFO,
-                f"Not checkpointing the model: Current score ({comparison_score}) is not "
+                f"Not checkpointing the model: Current {self.checkpoint_score_name} score ({comparison_score}) is not "
                 f"{self.comparison_str} Best score ({self.best_score})",
             )
 
@@ -155,6 +159,7 @@ class EMAFunctionTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
         checkpoint_dir: str,
         checkpoint_name: str,
         checkpoint_score_function: CheckpointScoreFunctionType,
+        checkpoint_score_name: str | None = None,
         maximize: bool = False,
         smoothing_factor: float = 0.1,
     ):
@@ -167,6 +172,8 @@ class EMAFunctionTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
             checkpoint_name (str): Name of the checkpoint to be saved.
             checkpoint_score_function (CheckpointScoreFunctionType): Function taking in a loss value and dictionary of
                 metrics and produces a score based on these.
+            checkpoint_score_name (str | None, optional): Name of the score produced by the scoring function. This is
+                used for logging purposes. If not provided, the name of the function will be used. Defaults to None.
             maximize (bool, optional): Specifies whether we're trying to minimize or maximize the score produced
                 by the scoring function. Defaults to False.
             smoothing_factor (float, optional): A float in the range [0, 1]. Smaller values **increase** the amount of
@@ -175,22 +182,54 @@ class EMAFunctionTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
         """
         self.smoothing_factor = float(smoothing_factor)
         assert self.smoothing_factor >= 0 and self.smoothing_factor <= 1, "Smoothing factor must be in range [0, 1]"
-        self.previous_score = 0  # Starting with a score of zero will automatically cancel out the term on first call
+        self.previous_score = None
         self.n_previous_scores = 0
-        super().__init__(checkpoint_dir, checkpoint_name, checkpoint_score_function, maximize)
+        if checkpoint_score_name is None:
+            ema_score_name = f"EMA({checkpoint_score_function.__name__})"
+        else:
+            ema_score_name = f"EMA({checkpoint_score_name})"
+        super().__init__(checkpoint_dir, checkpoint_name, checkpoint_score_function, ema_score_name, maximize)
 
-    def _should_checkpoint(self, comparison_score):
+    def get_ema_score(self, comparison_score) -> float:
+        # If this is the first score then just return it
+        if self.n_previous_scores == 0:
+            self.previous_score = comparison_score
+            self.n_previous_scores += 1
+            return comparison_score
+
         # Compute EMA Score
         alpha = self.smoothing_factor / (1 + self.n_previous_scores)
-        beta = (1 - self.smoothing_factor) / (1 + self.n_previous_scores)
+        beta = 1 - (self.smoothing_factor / (1 + self.n_previous_scores))
         ema_score = comparison_score * alpha + self.previous_score * beta
 
         # Update previous ema score with new ema score
         self.previous_score = ema_score
         self.n_previous_scores += 1
+        return ema_score
 
-        # Return result based on ema score
-        return super()._should_checkpoint(ema_score)
+    def maybe_checkpoint(self, model: nn.Module, loss: float, metrics: dict[str, Scalar]) -> None:
+        # First we use the provided scoring function to produce a score
+        raw_score = self.checkpoint_score_function(loss, metrics)
+        comparison_score = self.get_ema_score(raw_score)
+        if self._should_checkpoint(comparison_score):
+            log(
+                INFO,
+                f"Checkpointing the model: Current {self.checkpoint_score_name} score ({comparison_score}) "
+                f"{self.comparison_str} Best score ({self.best_score})",
+            )
+            self.best_score = comparison_score
+            try:
+                log(WARNING, f"Saving checkpoint as {str(self.checkpoint_path)}")
+                torch.save(model, self.checkpoint_path)
+            except Exception as e:
+                log(ERROR, f"Encountered the following error while saving the checkpoint: {e}")
+                raise e
+        else:
+            log(
+                INFO,
+                f"Not checkpointing the model: Current {self.checkpoint_score_name} score ({comparison_score}) is not "
+                f"{self.comparison_str} Best score ({self.best_score})",
+            )
 
 
 class LatestTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
@@ -323,7 +362,7 @@ class BestMetricTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
         def metric_score_function(_: float, metrics: dict[str, Scalar]) -> float:
             return metrics[self.metric_key]
 
-        super().__init__(checkpoint_dir, checkpoint_name, metric_score_function, maximize)
+        super().__init__(checkpoint_dir, checkpoint_name, metric_score_function, metric, maximize)
 
 
 class BestEMAMetricTorchModuleCheckpointer(EMAFunctionTorchModuleCheckpointer):
@@ -357,7 +396,7 @@ class BestEMAMetricTorchModuleCheckpointer(EMAFunctionTorchModuleCheckpointer):
         def metric_score_function(_: float, metrics: dict[str, Scalar]) -> float:
             return metrics[self.metric_key]
 
-        super().__init__(checkpoint_dir, checkpoint_name, metric_score_function, maximize, smoothing_factor)
+        super().__init__(checkpoint_dir, checkpoint_name, metric_score_function, metric, maximize, smoothing_factor)
 
 
 class PerRoundStateCheckpointer:

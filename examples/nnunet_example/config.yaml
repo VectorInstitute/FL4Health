@@ -1,8 +1,10 @@
 # Parameters that describe the server
-n_server_rounds: 1
+n_server_rounds: 3
 
 # Parameters that describe the clients
 n_clients: 1
-local_epochs: 1
+# local_epochs: 1
+local_steps: 250
+num_validation_steps: 50
 
-nnunet_config: 2d
+nnunet_config: 3d_fullres

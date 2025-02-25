@@ -12,40 +12,44 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
+from fl4health.checkpointing.checkpointer import (
+    PerRoundStateCheckpointer,
+    BestMetricTorchModuleCheckpointer,
+    BestLossTorchModuleCheckpointer,
+)
 from fl4health.checkpointing.server_module import NnUnetServerCheckpointAndStateModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.nnunet_server import NnunetServer
-from fl4health.utils.config import make_dict_with_epochs_or_steps
+from fl4health.utils.config import get_config_fn
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 
 
-def get_config(
-    current_server_round: int,
-    nnunet_config: str,
-    n_server_rounds: int,
-    batch_size: int,
-    n_clients: int,
-    nnunet_plans: str | None = None,
-    local_epochs: int | None = None,
-    local_steps: int | None = None,
-) -> Config:
-    # Create config
-    config: Config = {
-        "n_clients": n_clients,
-        "nnunet_config": nnunet_config,
-        "n_server_rounds": n_server_rounds,
-        "batch_size": batch_size,
-        **make_dict_with_epochs_or_steps(local_epochs, local_steps),
-        "current_server_round": current_server_round,
-    }
+# def get_config(
+#     current_server_round: int,
+#     nnunet_config: str,
+#     n_server_rounds: int,
+#     batch_size: int,
+#     n_clients: int,
+#     nnunet_plans: str | None = None,
+#     local_epochs: int | None = None,
+#     local_steps: int | None = None,
+# ) -> Config:
+#     # Create config
+#     config: Config = {
+#         "n_clients": n_clients,
+#         "nnunet_config": nnunet_config,
+#         "n_server_rounds": n_server_rounds,
+#         "batch_size": batch_size,
+#         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
+#         "current_server_round": current_server_round,
+#     }
 
-    # Check if plans were provided
-    if nnunet_plans is not None:
-        plans_bytes = pickle.dumps(json.load(open(nnunet_plans, "r")))
-        config["nnunet_plans"] = plans_bytes
+#     # Check if plans were provided
+#     if nnunet_plans is not None:
+#         plans_bytes = pickle.dumps(json.load(open(nnunet_plans, "r")))
+#         config["nnunet_plans"] = plans_bytes
 
-    return config
+#     return config
 
 
 def main(
@@ -54,17 +58,14 @@ def main(
     intermediate_server_state_dir: str | None = None,
     server_name: str | None = None,
 ) -> None:
+    # Check if plans were provided and pickle them if so
+    nnunet_plans = config.pop("nnunet_plans", None)
+    if nnunet_plans is not None:
+        plans_bytes = pickle.dumps(json.load(open(nnunet_plans, "r")))
+        config["nnunet_plans"] = plans_bytes
+
     # Partial function with everything set except current server round
-    fit_config_fn = partial(
-        get_config,
-        n_clients=config["n_clients"],
-        nnunet_config=config["nnunet_config"],
-        n_server_rounds=config["n_server_rounds"],
-        batch_size=0,  # Set this to 0 because we're not using it
-        nnunet_plans=config.get("nnunet_plans"),
-        local_epochs=config.get("local_epochs"),
-        local_steps=config.get("local_steps"),
-    )
+    fit_config_fn = get_config_fn(config, batch_size=0)  # Set batch size to 0 since we don't use it
 
     if config.get("starting_checkpoint"):
         model = torch.load(config["starting_checkpoint"])
@@ -84,13 +85,27 @@ def main(
         initial_parameters=params,
     )
 
+    # model_checkpointer = BestMetricTorchModuleCheckpointer(
+    #     checkpoint_dir=Path("examples/nnunet_example/"),
+    #     checkpoint_name="checkpoint_best_ema_dice",
+    #     metric="EMA_Hard-DICE",
+    #     maximize=True,
+    # )
+    # model_checkpointer = BestLossTorchModuleCheckpointer(
+    #     checkpoint_dir=Path("examples/nnunet_example/"),
+    #     checkpoint_name="best_loss_model",
+    # )
+
     state_checkpointer = (
         PerRoundStateCheckpointer(Path(intermediate_server_state_dir))
         if intermediate_server_state_dir is not None
         else None
     )
     checkpoint_and_state_module = NnUnetServerCheckpointAndStateModule(
-        model=None, parameter_exchanger=FullParameterExchanger(), state_checkpointer=state_checkpointer
+        model=None,
+        parameter_exchanger=FullParameterExchanger(),
+        state_checkpointer=state_checkpointer,
+        # model_checkpointers=[model_checkpointer],
     )
 
     server = NnunetServer(
