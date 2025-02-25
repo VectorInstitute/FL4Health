@@ -24,8 +24,8 @@ def get_all_model_parameters(model: nn.Module) -> Parameters:
 
 def get_all_model_parameters_peft(model: nn.Module) -> Parameters:
     """
-    Function to extract ALL parameters associated with a pytorch module, including any state parameters. These
-    values are converted from numpy arrays into a Flower Parameters object.
+    Function to extract ALL parameters associated with a peft pytorch module, including any state parameters.
+    These values are converted from numpy arrays into a Flower Parameters object.
 
     Args:
         model (nn.Module): PyTorch model whose parameters are to be extracted
