@@ -23,18 +23,17 @@ def construct_rxrx1_tensor_dataset(
     transform: Callable | None = None,
 ) -> tuple[TensorDataset, dict[int, int]]:
     """
-    Construct a TensorDataset for rxrx1 data.
+    Construct a ``TensorDataset`` for rxrx1 data (https://www.rxrx.ai/rxrx1)
 
     Args:
-        metadata (DataFrame): A DataFrame containing image metadata.
+        metadata (DataFrame): A ``DataFrame`` containing image metadata.
         data_path (Path): Root directory which the image data should be loaded.
         client_num (int): Client number to load data for.
-        dataset_type (str): 'train' or 'test' to specify dataset type.
+        dataset_type (str): "train" or "test" to specify dataset type.
         transform (Callable | None): Transformation function to apply to the images. Defaults to None.
 
     Returns:
-        tuple[TensorDataset, dict[int, int]]: A TensorDataset containing the processed images and label map.
-
+        tuple[TensorDataset, dict[int, int]]: A ``TensorDataset`` containing the processed images and label map.
     """
 
     label_map = {label: idx for idx, label in enumerate(sorted(metadata["sirna_id"].unique()))}
@@ -58,7 +57,6 @@ def label_frequency(dataset: TensorDataset | Subset, original_label_map: dict[in
     Args:
         dataset (TensorDataset | Subset): The dataset to analyze.
         original_label_map (dict[int, int]): A mapping of the original labels to their new labels.
-
     """
     # Extract metadata and label map
     if isinstance(dataset, TensorDataset):
@@ -89,11 +87,13 @@ def create_splits(
     Splits the dataset into training and validation sets.
 
     Args:
-        dataset (Dataset): The dataset to split.
-        train_fraction (float): Fraction of data to use for training.
+        dataset (TensorDataset): The dataset to split.
+        seed (int | None, optional): Seed meant to fix the sampling process associated with splitting.
+            Defaults to None.
+        train_fraction (float, optional): Fraction of data to use for training. Defaults to 0.8.
 
     Returns:
-        Tuple: (train_dataset, val_dataset)
+        tuple[list[int], list[int]]: Indices associated with the selected datapoints for the train and validation sets
     """
 
     # Group indices by label
@@ -127,6 +127,22 @@ def load_rxrx1_data(
     train_val_split: float = 0.8,
     num_workers: int = 0,
 ) -> tuple[DataLoader, DataLoader, dict[str, int]]:
+    """
+    Load and split the data into training and validation dataloaders.
+
+    Args:
+        data_path (Path): Path to the full set of data
+        client_num (int): Client number for the data you want to load
+        batch_size (int): batch size for the data loaders
+        seed (int | None, optional): Seed to fix randomness associated with data splitting. Defaults to None.
+        train_val_split (float, optional): Percentage of data to put in the training loader. The remainder flow to the
+            validation dataloader. Defaults to 0.8.
+        num_workers (int, optional): Number of threads to be used by the dataloaders. Defaults to 0.
+
+    Returns:
+        tuple[DataLoader, DataLoader, dict[str, int]]: Train and validation dataloaders and a dictionary holding the
+        size of each dataset.
+    """
 
     # Read the CSV file
     data = pd.read_csv(f"{data_path}/clients/meta_data_{client_num+1}.csv")
@@ -157,6 +173,18 @@ def load_rxrx1_data(
 def load_rxrx1_test_data(
     data_path: Path, client_num: int, batch_size: int, num_workers: int = 0
 ) -> tuple[DataLoader, dict[str, int]]:
+    """
+    Create a dataloader for the reserved rxrx1 dataset
+
+    Args:
+        data_path (Path): Path to the test data
+        client_num (int): Client number to be loaded.
+        batch_size (int): Batch size for processing of the test scripts
+        num_workers (int, optional): Number of workers associated with the test dataloader. Defaults to 0.
+
+    Returns:
+        tuple[DataLoader, dict[str, int]]: Test dataloader, dictionary containing count of the data points in the set
+    """
 
     # Read the CSV file
     data = pd.read_csv(f"{data_path}/clients/meta_data_{client_num+1}.csv")

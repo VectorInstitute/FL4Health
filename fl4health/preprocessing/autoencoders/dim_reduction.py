@@ -10,12 +10,13 @@ class AutoEncoderProcessing(ABC):
         checkpointing_path: Path,
         device: torch.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
     ) -> None:
-        """Abstract class for processors that work with a pre-trained and saved autoencoder model.
+        """
+        Abstract class for processors that work with a pre-trained and saved autoencoder model.
 
         Args:
             checkpointing_path (Path): Path to the saved model.
             device (torch.device, optional): Device indicator for where to send the model and data samples
-            for preprocessing.
+                for preprocessing.
         """
 
         self.checkpointing_path = checkpointing_path
@@ -55,7 +56,7 @@ class VaeProcessor(AutoEncoderProcessing):
         Args:
             checkpointing_path (Path): Path to the saved model.
             device (torch.device, optional): Device indicator for where to send the model and data samples
-            for preprocessing.
+                for preprocessing.
             return_mu_only (bool, optional): If true, only mu is returned. Defaults to False.
         """
         super().__init__(checkpointing_path, device)
@@ -73,7 +74,6 @@ class VaeProcessor(AutoEncoderProcessing):
 
 
 class CvaeFixedConditionProcessor(AutoEncoderProcessing):
-    """Transformer processor to encode the data using CVAE encoder with client-specific condition."""
 
     def __init__(
         self,
@@ -82,13 +82,14 @@ class CvaeFixedConditionProcessor(AutoEncoderProcessing):
         device: torch.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
         return_mu_only: bool = False,
     ) -> None:
-        """Transformer processor to encode the data using a CVAE encoder with a fixed condition.
+        """
+        Transformer processor to encode the data using a CVAE encoder with a fixed condition.
 
         Args:
             checkpointing_path (Path): Path to the saved model.
             condition (torch.Tensor): Fixed condition tensor.
             device (torch.device, optional):  Device indicator for where to send the model and data samples
-            for preprocessing.
+                for preprocessing.
             return_mu_only (bool, optional): If true, only mu is returned. Defaults to False.
         """
         super().__init__(checkpointing_path, device)
@@ -124,25 +125,26 @@ class CvaeVariableConditionProcessor(AutoEncoderProcessing):
         return_mu_only: bool = False,
     ) -> None:
         """
-        Transformer processor to encode the data using CVAE encoder with variable condition,
-        that is each data sample can have a specific condition.
+        Transformer processor to encode the data using CVAE encoder with variable condition, that is each data sample
+        can have a specific condition.
 
         Args:
             checkpointing_path (Path): Path to the saved model.
             device (torch.device, optional): Device indicator for where to send the model and data samples
-            for preprocessing.
+                for preprocessing.
             return_mu_only (bool, optional): If true, only mu is returned. Defaults to False.
         """
         super().__init__(checkpointing_path, device)
         self.return_mu_only = return_mu_only
 
     def __call__(self, sample: torch.Tensor, condition: torch.Tensor) -> torch.Tensor:
-        """Performs encoding.
+        """
+        Performs encoding.
 
         Args:
             sample (torch.Tensor): A single data sample or a batch of data.
-            condition (torch.Tensor): A single condition for the given sample,
-                or a batch of condition for a batch of data.
+            condition (torch.Tensor): A single condition for the given sample, or a batch of condition for a batch of
+                data.
 
         Returns:
             torch.Tensor: Encoded sample(s).

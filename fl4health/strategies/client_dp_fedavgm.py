@@ -62,11 +62,13 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         """
         This strategy implements the Federated Learning with client-level DP approach discussed in
         Differentially Private Learning with Adaptive Clipping. This function provides a noised version of unweighted
-        FedAvgM.
-        NOTE: It assumes that the models are packaging clipping bits along with the model parameters. If adaptive
-        clipping is false, these bits will simply be 0.
+        ``FedAvgM``.
 
         Paper: https://arxiv.org/abs/1905.03871
+
+        **NOTE**: It assumes that the models are packaging clipping bits along with the model parameters. If adaptive
+        clipping is false, these bits will simply be 0.
+
         If enabled, it performs adaptive clipping rather than fixed threshold clipping.
 
         Args:
@@ -76,11 +78,11 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
                 Defaults to 2.
             evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
-                Function used to configure training by providing a configuration dictionary. Defaults to None.
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                training by providing a configuration dictionary. Defaults to None.
             on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
-                Function used to configure client-side validation by providing a Config dictionary.
-               Defaults to None.
+                Function used to configure client-side validation by providing a ``Config`` dictionary.
+                Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             initial_parameters (Parameters | None, optional): Initial global model parameters. This strategy assumes
                 that the initial parameters is not None. So they need to be set in spite of the optional tag.
@@ -93,7 +95,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             weighted_eval_losses (bool, optional): Determines whether losses during evaluation are linearly weighted
                 averages or a uniform average. FedAvg default is weighted average of the losses by client dataset
                 counts. Defaults to True.
-            per_client_example_cap (float | None, optional): The maximum number samples per client. hat{w} in
+            per_client_example_cap (float | None, optional): The maximum number samples per client. :math:`\\hat{w}` in
                 https://arxiv.org/pdf/1710.06963.pdf. Defaults to None.
             adaptive_clipping (bool, optional): If enabled, the model expects the last entry of the parameter list to
                 be a binary value indicating whether or not the batch gradient was clipped. Defaults to False.
@@ -101,11 +103,14 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             clipping_learning_rate (float, optional): Learning rate for the clipping bound. Only used if adaptive
                 clipping is turned on. Defaults to 1.0.
             clipping_quantile (float, optional): Quantile we are trying to estimate in adaptive clipping.
-                i.e. P(||g|| < C_t) \approx clipping_quantile. Only used if adaptive clipping is turned on.
-                Defaults to 0.5.
+                i.e. :math:`P(\\Vert g \\Vert < C_t) \\approx` ``clipping_quantile``. Only used if adaptive clipping
+                is turned on. Defaults to 0.5.
             initial_clipping_bound (float, optional):  Initial guess for the clipping bound corresponding to the
-                clipping quantile described above. NOTE: If Adaptive clipping is turned off, this is the clipping
-                bound through out FL training.. Defaults to 0.1.
+                clipping quantile described above.
+
+                **NOTE**: If Adaptive clipping is turned off, this is the clipping bound through out FL training.
+
+                Defaults to 0.1.
             weight_noise_multiplier (float, optional): Noise multiplier for the noising of gradients. Defaults to 1.0.
             clipping_noise_multiplier (float, optional): Noise multiplier for the noising of clipping bits.
                 Defaults to 1.0.
@@ -179,9 +184,9 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         self, results: list[tuple[ClientProxy, FitRes]]
     ) -> tuple[list[tuple[NDArrays, int]], NDArrays]:
         """
-        Given results from an FL round of training, this function splits the result into sets of
-        (weights, training counts) and clipping bits. The split is required because the clipping bits are packed with
-        the weights in order to communicate them back to the server. The parameter packer facilitates this splitting.
+        Given results from an FL round of training, this function splits the result into sets of (weights,
+        training counts) and clipping bits. The split is required because the clipping bits are packed with the
+        weights in order to communicate them back to the server. The parameter packer facilitates this splitting.
 
         Args:
             results (list[tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
@@ -189,7 +194,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
                 aggregated along with a clipping bit calculated during training.
         Returns:
             tuple[list[tuple[NDArrays, int]], NDArrays]: The first tuple is the set of (weights, training counts) per
-                client. The second is a set of clipping bits, one for each client.
+            client. The second is a set of clipping bits, one for each client.
         """
         # Sorting the results by elements and sample counts. This is primarily to reduce numerical fluctuations in
         # summing the numpy arrays during aggregation. This ensures that addition will occur in the same order,
@@ -214,7 +219,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
 
         Args:
             weights_update (NDArrays): The current update after the weights have been aggregated from the training
-            round.
+                round.
         """
         if not self.m_t:
             self.m_t = weights_update
@@ -227,9 +232,10 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
 
     def update_current_weights(self) -> None:
         """
-        This function updates each of the layer weights using the server learning rate and the m_t values
+        This function updates each of the layer weights using the server learning rate and the :math:`m_t` values
         (computed with or without momentum).
-        NOTE: It assumes that the values in m_t are UPDATES rather than raw weights.
+
+        **NOTE:** It assumes that the values in :math:`m_t` are **UPDATES** rather than raw weights.
         """
         assert self.m_t is not None
         self.current_weights = [
@@ -243,7 +249,8 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
     ) -> None:
         """
         Update the clipping bound help by the server given the noised aggregated clipping bits returned by the clients
-        NOTE: The update formula may be found in the original paper.
+
+        **NOTE:** The update formula may be found in the original paper.
 
         Args:
             noised_clipping_bits (float): This is the aggregated noised clipping bits derived from the clients.
@@ -275,9 +282,11 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         """
         Aggregate fit using averaging of weights (can be unweighted or weighted) and inject noise and optionally
         perform adaptive clipping updates.
-        NOTE: This assumes that the model weights sent back by the clients are UPDATES rather than raw weights. That is
-        they are theta_client - theta_server rather than just theta_client.
-        NOTE: this function packs the clipping bound for clients as the last member of the parameters list.
+
+        **NOTE:** This assumes that the model weights sent back by the clients are **UPDATES** rather than raw weights.
+        That is they are ``theta_client - theta_server`` rather than just ``theta_client``.
+
+        **NOTE:** this function packs the clipping bound for clients as the last member of the parameters list.
 
         Args:
             server_round (int): Indicates the server round we're currently on.
@@ -289,8 +298,8 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
 
         Returns:
             tuple[Parameters | None, dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
-                For this strategy, the server also packs a clipping bound to be sent to the clients. This is sent even
-                if adaptive clipping is turned off and the value simply remains constant.
+            For this strategy, the server also packs a clipping bound to be sent to the clients. This is sent even
+            if adaptive clipping is turned off and the value simply remains constant.
         """
 
         if not results:
@@ -362,9 +371,9 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
     ) -> list[tuple[ClientProxy, FitIns]]:
         """
         This function configures a sample of clients for a training round. Due to the privacy accounting, this strategy
-        requires that the sampling manager be of type BaseFractionSamplingManager.
+        requires that the sampling manager be of type ``BaseFractionSamplingManager``.
 
-        The function follows the standard configuration flow where the on_fit_config_fn function is used to produce
+        The function follows the standard configuration flow where the ``on_fit_config_fn`` function is used to produce
         configurations to be sent to all clients. These are packaged with the provided parameters and set over to the
         clients.
 
@@ -372,11 +381,11 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             server_round (int): Indicates the server round we're currently on.
             parameters (Parameters): The parameters to be used to initialize the clients for the fit round.
             client_manager (ClientManager): The manager used to sample the clients. Currently we restrict this to
-                be BaseFractionSamplingManager, which has a sample_fraction function built in.
+                be ``BaseFractionSamplingManager``, which has a ``sample_fraction`` function built in.
 
         Returns:
             list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
-                be sent to each client (packaged as FitIns).
+            be sent to each client (packaged as ``FitIns``).
         """
         # This strategy requires the client manager to be of type at least BaseFractionSamplingManager
         assert isinstance(client_manager, BaseFractionSamplingManager)
@@ -399,9 +408,9 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
     ) -> list[tuple[ClientProxy, EvaluateIns]]:
         """
         This function configures a sample of clients for an eval round. Due to the privacy accounting, this strategy
-        requires that the sampling manager be of type BaseFractionSamplingManager.
+        requires that the sampling manager be of type ``BaseFractionSamplingManager``.
 
-        The function follows the standard configuration flow where the on_evaluate_config_fn function is used to
+        The function follows the standard configuration flow where the ``on_evaluate_config_fn`` function is used to
         produce configurations to be sent to all clients. These are packaged with the provided parameters and set over
         to the clients.
 
@@ -409,11 +418,11 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             server_round (int): Indicates the server round we're currently on.
             parameters (Parameters): The parameters to be used to initialize the clients for the eval round.
             client_manager (ClientManager): The manager used to grab all of the clients. Currently we restrict this to
-                be BaseFractionSamplingManager, which has a sample_fraction function built in.
+                be ``BaseFractionSamplingManager``, which has a ``sample_fraction`` function built in.
 
         Returns:
             list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
-                to be sent to each client (packaged as EvaluateIns)
+            to be sent to each client (packaged as ``EvaluateIns``)
         """
 
         # This strategy requires the client manager to be of type at least BaseFractionSamplingManager

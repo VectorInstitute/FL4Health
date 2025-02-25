@@ -23,19 +23,19 @@ def add_noise_to_array(layer: NDArray, noise_std_dev: float, denominator: int) -
 
 def add_noise_to_ndarrays(client_model_updates: list[NDArrays], sigma: float, n_clients: int) -> NDArrays:
     """
-    This function adds centered gaussian noise (with standard deviation sigma) to the uniform average  of the list
+    This function adds centered Gaussian noise (with standard deviation sigma) to the uniform average  of the list
     of the numpy arrays provided.
 
     Args:
         client_model_updates (list[NDArrays]): List of lists of numpy arrays. Each member of the list represents a
             set of numpy arrays, each of which should be averaged element-wise with the corresponding array from the
-            other lists. These will have centered gaussian noise added.
-        sigma (float): The standard deviation of the centered gaussian noise to be added to each element.
+            other lists. These will have centered Gaussian noise added.
+        sigma (float): The standard deviation of the centered Gaussian noise to be added to each element.
         n_clients (int): The number of arrays in the average. This should be the same as the size of
-            client_model_updates in almost all cases.
+            ``client_model_updates`` in almost all cases.
 
     Returns:
-        NDArrays: Average of the centered gaussian noised arrays.
+        NDArrays: Average of the centered Gaussian noised arrays.
     """
     layer_sums: NDArrays = [
         add_noise_to_array(reduce(np.add, layer_updates), sigma, n_clients)
@@ -48,7 +48,7 @@ def gaussian_noisy_unweighted_aggregate(
     results: list[tuple[NDArrays, int]], noise_multiplier: float, clipping_bound: float
 ) -> NDArrays:
     """
-    Compute unweighted average of weights. Apply gaussian noise to the sum of these weights prior to normalizing.
+    Compute unweighted average of weights. Apply Gaussian noise to the sum of these weights prior to normalizing.
 
     Args:
         results (list[tuple[NDArrays, int]]): List of tuples containing the model updates and the number of samples
@@ -77,7 +77,7 @@ def gaussian_noisy_weighted_aggregate(
     total_client_weight: float,
 ) -> NDArrays:
     """
-    Compute weighted average of weights. Apply gaussian noise to the sum of these weights prior to normalizing.
+    Compute weighted average of weights. Apply Gaussian noise to the sum of these weights prior to normalizing.
 
     Weighted Implementation based on https://arxiv.org/pdf/1710.06963.pdf.
 

@@ -15,7 +15,7 @@ from fl4health.utils.functions import decode_and_pseudo_sort_results
 
 
 class SignalForTypeException(Exception):
-    """Thrown when there is an error in `signal_for_type` function."""
+    """Thrown when there is an error in ``signal_for_type`` function."""
 
     pass
 
@@ -33,11 +33,13 @@ class FairnessMetricType(Enum):
         Return the default signal for the given metric type.
 
         Args:
-            fairness_metric_type: (FairnessMetricType) the fairness metric type.
+            fairness_metric_type (FairnessMetricType): the fairness metric type.
 
-        Returns: (float) -1.0 if FairnessMetricType.ACCURACY or 1.0 if FairnessMetricType.LOSS.
+        Raises:
+            SignalForTypeException: if type is ``CUSTOM`` as the signal has to be defined by the user.
 
-        Raises: (SignalForTypeException) if type is CUSTOM as the signal has to be defined by the user.
+        Returns:
+            float: -1.0 if ``FairnessMetricType.ACCURACY`` or 1.0 if ``FairnessMetricType.LOSS``.
         """
         # For loss values, large and **positive** gaps imply worse generalization of global
         # weights to local models. Therefore, we want to **increase** weight for these model
@@ -52,8 +54,6 @@ class FairnessMetricType(Enum):
 
 
 class FairnessMetric:
-    """Defines a fairness metric with attributes that can be overridden if needed."""
-
     def __init__(
         self,
         metric_type: FairnessMetricType,
@@ -61,16 +61,17 @@ class FairnessMetric:
         signal: float | None = None,
     ):
         """
-        Instantiates a fairness metric with a type and optional metric name and
-            signal if one wants to override them.
+        Defines a fairness metric with attributes that can be overridden if needed.
+
+        Instantiates a fairness metric with a type and optional metric name and signal if one wants to override them.
 
         Args:
-            metric_type: (FairnessMetricType) the fairness metric type. If CUSTOM, the metric_name and
+            metric_type (FairnessMetricType): the fairness metric type. If ``CUSTOM``, the ``metric_name`` and
                 signal should be provided.
-            metric_name: (str, optional) the name of the metric to be used as fairness metric.
-                Optional, default is metric_type.value. Mandatory if metric_type is CUSTOM.
-            signal: (float, optional) the signal of the fairness metric. Optional, default is
-                FairnessMetricType.signal_for_type(metric_type). Mandatory if metric_type is CUSTOM.
+            metric_name (str | None, optional): the name of the metric to be used as fairness metric.
+                Mandatory if ``metric_type`` is ``CUSTOM``. Defaults to None.
+            signal (float | None, optional): the signal of the fairness metric.
+                Mandatory if ``metric_type`` is ``CUSTOM``. Defaults to None.
         """
         self.metric_type = metric_type
         self.metric_name = metric_name
@@ -114,40 +115,33 @@ class FedDgGa(FedAvg):
         present and its value is set to True. These are to facilitate the exchange of evaluation information needed
         for the strategy to work correctly.
 
-        Args:
-            min_fit_clients : int, optional
-                Minimum number of clients used during training. Defaults to 2.
-            min_evaluate_clients : int, optional
-                Minimum number of clients used during validation. Defaults to 2.
-            min_available_clients : int, optional
-                Minimum number of total clients in the system. Defaults to 2.
-            evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
-                Optional function used for validation. Defaults to None.
-            on_fit_config_fn : Callable[[int], dict[str, Scalar]], optional
-                Function used to configure training. Must be specified for this strategy. Defaults to None.
-            on_evaluate_config_fn : Callable[[int], dict[str, Scalar]], optional
-                Function used to configure validation. Must be specified for this strategy. Defaults to None.
-            accept_failures : bool, optional
-                Whether or not accept rounds containing failures. Defaults to True.
-            initial_parameters : Parameters, optional
-                Initial global model parameters.
-            fit_metrics_aggregation_fn : MetricsAggregationFn | None
-                Metrics aggregation function, optional.
-            evaluate_metrics_aggregation_fn : MetricsAggregationFn | None
-                Metrics aggregation function, optional.
-            fairness_metric : FairnessMetric, optional.
-                The metric to evaluate the local model of each client against the global model in order to
-                determine their adjustment weight for aggregation. Can be set to any default metric in
-                FairnessMetricType or set to use a custom metric. Optional, default is
-                FairnessMetric(FairnessMetricType.LOSS).
-            adjustment_weight_step_size : float
-                The step size to determine the magnitude of change for the generalization adjustment weights. It has
-                to be 0 < adjustment_weight_step_size < 1. Optional, default is 0.2.
-        """
+        **NOTE**: For FedDG-GA, we require that ``fraction_fit`` and ``fraction_evaluate`` are 1.0, as behavior of the
+        FedDG-GA algorithm is not well-defined when participation in each round of training and evaluation is partial.
+        Thus, we force these values to be 1.0 in super and do not allow them to be set by the user.
 
-        # NOTE: For FedDG-GA, we require that fraction_fit and fraction_evaluate are 1.0, as behavior of the FedDG-GA
-        # algorithm is not well-defined when participation in each round of training and evaluation is partial. Thus,
-        # we force these values to be 1.0 in super and do not allow them to be set by the user.
+        Args:
+            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2.
+            min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
+            min_available_clients (int, optional): Minimum number of total clients in the system. Defaults to 2.
+            evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
+                Optional function used for validation.. Defaults to None.
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                training. Must be specified for this strategy.. Defaults to None.
+            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                validation. Must be specified for this strategy.. Defaults to None.
+            accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
+            initial_parameters (Parameters | None, optional): Initial global model parameters. Defaults to None.
+            fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
+                Defaults to None.
+            evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
+                Defaults to None.
+            fairness_metric (FairnessMetric | None, optional): The metric to evaluate the local model of each client
+                against the global model in order to determine their adjustment weight for aggregation. Can be set to
+                any default metric in ``FairnessMetricType`` or set to use a custom metric. Defaults to None.
+            adjustment_weight_step_size (float, optional): The step size to determine the magnitude of change for the
+                generalization adjustment weights. It has to be ``0 < adjustment_weight_step_size < 1``.
+                Defaults to 0.2.
+        """
 
         super().__init__(
             fraction_fit=1.0,
@@ -190,20 +184,18 @@ class FedDgGa(FedAvg):
         client_manager: ClientManager,
     ) -> list[tuple[ClientProxy, FitIns]]:
         """
-        Configure the next round of training.
-
-        Will also collect the number of rounds the training will run for in order
-        to calculate the adjustment weight step size. Fails if n_server_rounds is not set in the config
-        or if it's not an integer.
+        Configure the next round of training. Will also collect the number of rounds the training will run for in order
+        to calculate the adjustment weight step size. Fails if ``n_server_rounds`` is not set in the config or if it's
+        not an integer.
 
         Args:
-            server_round: (int) the current server round.
-            parameters: (Parameters) the model parameters.
-            client_manager: (ClientManager) The client manager which holds all currently
-                connected clients. It must be an instance of FixedSamplingClientManager.
+            server_round (int): the current server round.
+            parameters (Parameters): the model parameters.
+            client_manager (ClientManager): The client manager which holds all currently connected clients. It must
+                be an instance of ``FixedSamplingClientManager``.
 
         Returns:
-            (list[tuple[ClientProxy, FitIns]]) the input for the clients' fit function.
+            (list[tuple[ClientProxy, FitIns]]): the input for the clients' fit function.
         """
         assert isinstance(
             client_manager, FixedSamplingClientManager
@@ -265,13 +257,13 @@ class FedDgGa(FedAvg):
         Collects the fit metrics that will be used to change the adjustment weights for the next round.
 
         Args:
-            server_round: (int) the current server round.
-            results: (list[tuple[ClientProxy, FitRes]]) The clients' fit results.
-            failures: (list[tuple[ClientProxy, FitRes] | BaseException]) the clients' fit failures.
+            server_round (int): the current server round.
+            results (list[tuple[ClientProxy, FitRes]]): The clients' fit results.
+            failures (list[tuple[ClientProxy, FitRes] | BaseException]): the clients' fit failures.
 
         Returns:
-            (tuple[Parameters | None, dict[str, Scalar]]) A tuple containing the aggregated parameters
-                and the aggregated fit metrics.
+            (tuple[Parameters | None, dict[str, Scalar]]): A tuple containing the aggregated parameters and the
+            aggregated fit metrics.
         """
         if not results:
             return None, {}
@@ -304,17 +296,17 @@ class FedDgGa(FedAvg):
         """
         Aggregate evaluation losses using weighted average.
 
-        Collects the evaluation metrics and updates the adjustment weights, which will be used
-        when aggregating the results for the next round.
+        Collects the evaluation metrics and updates the adjustment weights, which will be used when aggregating the
+        results for the next round.
 
         Args:
-            server_round: (int) the current server round.
-            results: (list[tuple[ClientProxy, FitRes]]) The clients' evaluate results.
-            failures: (list[tuple[ClientProxy, FitRes] | BaseException]) the clients' evaluate failures.
+            server_round (int): the current server round.
+            results (list[tuple[ClientProxy, FitRes]]): The clients' evaluate results.
+            failures (list[tuple[ClientProxy, FitRes] | BaseException]): the clients' evaluate failures.
 
         Returns:
-            (tuple[float | None, dict[str, Scalar]]) A tuple containing the aggregated evaluation loss
-                and the aggregated evaluation metrics.
+            (tuple[float | None, dict[str, Scalar]]): A tuple containing the aggregated evaluation loss and the
+            aggregated evaluation metrics.
         """
 
         loss_aggregated, metrics_aggregated = super().aggregate_evaluate(server_round, results, failures)
@@ -338,10 +330,10 @@ class FedDgGa(FedAvg):
         Aggregate results by weighing them against the adjustment weights and then summing them.
 
         Args:
-            results: (list[tuple[ClientProxy, FitRes]]) The clients' fit results.
+            results (list[tuple[ClientProxy, FitRes]]): The clients' fit results.
 
         Returns:
-            (NDArrays) the weighted and aggregated results.
+            (NDArrays): the weighted and aggregated results.
         """
 
         if self.adjustment_weights:
@@ -385,12 +377,12 @@ class FedDgGa(FedAvg):
 
     def update_weights_by_ga(self, server_round: int, cids: list[str]) -> None:
         """
-        Update the self.adjustment_weights dictionary by calculating the new weights
-        based on the current server round, fit and evaluation metrics.
+        Update the ``self.adjustment_weights`` dictionary by calculating the new weights based on the current server
+        round, fit and evaluation metrics.
 
         Args:
-            server_round: (int) the current server round.
-            cids: (list[str]) the list of client ids that participated in this round.
+            server_round (int): the current server round.
+            cids (list[str]): the list of client ids that participated in this round.
         """
         generalization_gaps = []
         # calculating local vs global metric difference (generalization gaps)
@@ -456,13 +448,14 @@ class FedDgGa(FedAvg):
 
     def get_current_weight_step_size(self, server_round: int) -> float:
         """
-        Calculates the current weight step size based on the current server round,  weight
-        step size and total number of rounds.
+        Calculates the current weight step size based on the current server round,  weight step size and total number
+        of rounds.
 
         Args:
-            server_round: (int) the current server round
+            server_round (int): the current server round
 
-        Returns: (float) the current value for the weight step size.
+        Returns (float):
+            the current value for the weight step size.
         """
         # The implementation of d^r here differs from the definition in the paper
         # because our server round starts at 1 instead of 0.

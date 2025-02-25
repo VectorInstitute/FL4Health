@@ -9,7 +9,7 @@ from peft import get_peft_model_state_dict
 
 def get_all_model_parameters(model: nn.Module) -> Parameters:
     """
-    Function to extract ALL parameters associated with a pytorch module, including any state parameters. These
+    Function to extract **ALL** parameters associated with a pytorch module, including any state parameters. These
     values are converted from numpy arrays into a Flower Parameters object.
 
     Args:

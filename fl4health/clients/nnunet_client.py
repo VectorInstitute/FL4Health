@@ -16,7 +16,7 @@ import torch
 from flwr.common.logger import FLOWER_LOGGER, console_handler, log
 from flwr.common.typing import Config, Scalar
 from torch import nn
-from torch.cuda.amp import GradScaler
+from torch.amp import GradScaler
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
@@ -38,7 +38,6 @@ from fl4health.utils.nnunet_utils import (
     StreamToLogger,
     convert_deep_supervision_dict_to_list,
     convert_deep_supervision_list_to_dict,
-    get_dataset_n_voxels,
     nnUNetDataLoaderWrapper,
     prepare_loss_arg,
     use_default_signal_handlers,
@@ -53,11 +52,17 @@ with warnings.catch_warnings():
     from nnunetv2.experiment_planning.experiment_planners.default_experiment_planner import ExperimentPlanner
     from nnunetv2.experiment_planning.plan_and_preprocess_api import extract_fingerprints, preprocess_dataset
     from nnunetv2.paths import nnUNet_preprocessed, nnUNet_raw
+    from nnunetv2.preprocessing.resampling.default_resampling import compute_new_shape
     from nnunetv2.training.dataloading.utils import unpack_dataset
     from nnunetv2.training.loss.deep_supervision import DeepSupervisionWrapper
     from nnunetv2.training.lr_scheduler.polylr import PolyLRScheduler
     from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
     from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
+
+# grpcio currently has a log spamming bug that seems to be triggered by multithreading/multiprocessing
+# Issue: https://github.com/grpc/grpc/issues/37642
+# I tested versions 1.69.0 and 1.70.0 both exhibited log spams. Here is current workaround
+os.environ["GRPC_VERBOSITY"] = "NONE"
 
 
 class NnunetClient(BasicClient):
@@ -85,31 +90,34 @@ class NnunetClient(BasicClient):
         """
         A client for training nnunet models. Requires the nnunet environment variables to be set. Also requires the
         following additional keys in the config sent from the server:
-            'nnunet_plans': (serialized dict)
-            'nnunet_config': (str)
+
+        - "nnunet_plans": (serialized dict)
+        - "nnunet_config": (str)
 
         Args:
-            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
-                'cuda' or 'mps'
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
+                "cuda" or "mps"
             dataset_id (int): The nnunet dataset id for the local client dataset to use for training and validation.
             fold (int | str): Which fold of the local client dataset to use for validation. nnunet defaults to
-                5 folds (0 to 4). Can also be set to 'all' to use all the data for both training and validation.
+                5 folds (0 to 4). Can also be set to "all" to use all the data for both training and validation.
             data_identifier (str | None, optional): The nnunet data identifier prefix to use. The final data
-                identifier will be {data_identifier}_config where 'config' is the nnunet config (eg. 2d, 3d_fullres,
-                etc.). If preprocessed data already exists can be used to specify which preprocessed data to use.
-                The default data_identifier prefix is the plans name used during training (see the plans_identifier
-                argument).
+                identifier will be ``{data_identifier}_config`` where "config" is the nnunet config (e.g. 2d,
+                ``3d_fullres``, etc.). If preprocessed data already exists can be used to specify which preprocessed
+                data to use. By default, the ``plans_identifier`` is used as the ``data_identifier``.
             plans_identifier (str | None, optional): Specify what to save the client's local copy of the plans file
-                as. The client modifies the source plans json file sent from the server and makes a local copy.
-                If left as default None, the plans identifier will be set as 'FL_Dataset000_plansname' where 000 is
-                the dataset_id and plansname is the 'plans_name' value of the source plans file.
-            compile (bool, optional): If True, the client will jit compile the pytorch model. This requires some
-                overhead time at the beginning of training to compile the model, but results in faster training times.
-                Defaults to True
+                as. The client makes a local modified copy of the global source plans file sent by the server. If left
+                as default None, the plans identifier will be set as "FL-plansname-000local" where 000 is the
+                ``dataset_id`` and plansname is the "plans_name" value of the source plans file. The original plans
+                will be saved under the ``source_plans_name`` key in the modified plans file.
+            compile (bool, optional): If set to True, the client will Just-In-Time (JIT) compile the nnUNet model and
+                perform optimizations at the start of training. This process significantly reduces the runtime for
+                nnUNet models, especially for larger models or long-running jobs. However, it introduces some overhead
+                time and computation during the initial step. It is recommended to keep this option enabled. The
+                default value is True.
             always_preprocess (bool, optional): If True, will preprocess the local client dataset even if the
-                preprocessed data already seems to exist. Defaults to False. The existence of the preprocessed data
-                is determined by matching the provided data_identifier with that of the preprocessed data already on
-                the client.
+                preprocessed data already seems to exist. The existence of the preprocessed data is determined by
+                matching the provided ``data_identifier`` with that of the preprocessed data already  on the client.
+                Defaults to False.
             max_grad_norm (float, optional): The maximum gradient norm to use for gradient clipping. Defaults to 12
                 which is the nnunetv2 2.5.1 default.
             n_dataload_processes (int | None, optional): The number of processes to spawn for each nnunet
@@ -121,20 +129,21 @@ class NnunetClient(BasicClient):
             progress_bar (bool, optional): Whether or not to print a progress bar to stdout for training. Defaults
                 to False
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over each
-                batch. Defaults to LossMeterType.AVERAGE.
+                batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
                 No checkpointing (state or model) is done if not provided. Defaults to None.
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the client should
                 send data to.
-            nnunet_trainer_class (type[nnUNetTrainer]): A nnUNetTrainer constructor. Useful for passing custom
-                nnUNetTrainer. Defaults to the standard nnUNetTrainer class. Must match the nnunet_trainer_class
-                passed to the NnunetServer.
-            nnunet_trainer_class_kwargs (dict[str, Any]): Additional kwargs to pass to nnunet_trainer_class. Defaults
-                to empty dictionary.
+            nnunet_trainer_class (type[nnUNetTrainer]): A ``nnUNetTrainer`` constructor. Useful for passing custom
+                ``nnUNetTrainer``. Defaults to the standard nnUNetTrainer class. Must match the
+                ``nnunet_trainer_class`` passed to the ``NnunetServer``.
+            nnunet_trainer_class_kwargs (dict[str, Any]): Additional kwargs to pass to ``nnunet_trainer_class``.
+                Defaults to empty dictionary.
         """
         metrics = metrics if metrics else []
+
         # Parent method sets up several class attributes
         super().__init__(
             data_path=Path("dummy/path"),  # data_path not used by NnunetClient
@@ -155,6 +164,7 @@ class NnunetClient(BasicClient):
         self.always_preprocess = always_preprocess
         self.plans_name = plans_identifier
         self.fingerprint_extracted = False
+        self.grad_scaler = GradScaler()
         self.max_grad_norm = max_grad_norm
         self.n_dataload_proc = n_dataload_processes
         try:
@@ -172,50 +182,50 @@ class NnunetClient(BasicClient):
         # Used to redirect stdout to logger
         self.stream2debug = StreamToLogger(FLOWER_LOGGER, DEBUG)
 
-        # Used to scale gradients if using mixed precision training (true if device is cuda)
-        self.grad_scaler: GradScaler | None = GradScaler() if self.device.type == "cuda" else None
-
         # nnunet specific attributes to be initialized in setup_client
         self.nnunet_trainer_class = nnunet_trainer_class
         self.nnunet_trainer_class_kwargs = nnunet_trainer_class_kwargs
         self.nnunet_trainer: nnUNetTrainer
         self.nnunet_config: NnunetConfig
-        self.plans: dict[str, Any]
+        self.plans: dict[str, Any] | None = None
         self.steps_per_round: int  # N steps per server round
         self.max_steps: int  # N_rounds x steps_per_round
 
-        # Set nnunet compile environment variable. Nnunet default is to compile
-        if not compile:
-            if self.verbose:
-                log(INFO, "Switching pytorch model jit compile to OFF")
+        # Turn on/off model optimizations for decreasing runtime efficiency.
+        if compile:
+            # Turning on cudnn.benchmark reduces nnUNet runtimes by 2-3x in our experiments.
+            # Limit of 0 tells cudnn to benchmark all available conv algorithms (default is 10)
+            torch.backends.cudnn.benchmark = True
+            torch.backends.cudnn.benchmark_limit = 0
+            os.environ["nnUNet_compile"] = str("true")
+        else:
+            torch.backends.cudnn.benchmark = False
             os.environ["nnUNet_compile"] = str("false")
+            if self.verbose:
+                log(INFO, "Disabling model optimizations and JIT compilation. This may impact runtime performance.")
 
     def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
         """
         Given a single batch of input and target data, generate predictions, compute loss, update parameters and
-            optionally update metrics if they exist. (ie backprop on a single batch of data).
-            Assumes self.model is in train mode already.
+        optionally update metrics if they exist. (i.e. backprop on a single batch of data). Assumes ``self.model`` is
+        in train mode already.
 
-        Overrides parent to include mixed precision training (autocasting and corresponding gradient scaling)
-            as per the original nnUNetTrainer.
+        Overrides parent to include mixed precision training (autocasting and corresponding gradient scaling) as per
+        the original ``nnUNetTrainer``.
 
         Args:
             input (TorchInputType): The input to be fed into the model.
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            Tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
-                a dictionary of any predictions produced by the model.
+            Tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with a dictionary of any
+            predictions produced by the model.
         """
-        # If the device type is not cuda, we don't use mixed precision training
-        # So we are safe to use the BasicClient train_step method
-        # Note that transform_gradients is defined for the NnunetClient
+        # If the device type is not cuda, we don't use mixed precision training and therefore can use parent method.
         if self.device.type != "cuda":
             return super().train_step(input, target)
 
-        # If performing mixed precision training, scaler should be defined
-        assert self.grad_scaler is not None
-
+        # As in the nnUNetTrainer, we implement mixed precision using torch.autocast and torch.GradScaler
         # Clear gradients from optimizer if they exist
         self.optimizers["global"].zero_grad()
 
@@ -223,10 +233,6 @@ class NnunetClient(BasicClient):
         preds, features = self.predict(input)
         target = self.transform_target(target)
         losses = self.compute_training_loss(preds, features, target)
-
-        # Custom backward pass logic with gradient scaling adapted from nnUNetTrainer:
-        # https://github.com/MIC-DKFZ/nnUNet/blob/43349fa5f0680e8109a78dca7215c19e258c9dd7/ \
-        # nnunetv2/training/nnUNetTrainer/nnUNetTrainer.py#L999
 
         # Compute scaled loss and perform backward pass
         scaled_backward_loss = self.grad_scaler.scale(losses.backward["backward"])
@@ -245,15 +251,14 @@ class NnunetClient(BasicClient):
     @use_default_signal_handlers  # Dataloaders use multiprocessing
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         """
-        Gets the nnunet dataloaders and wraps them in another class to make them
-        pytorch iterators
+        Gets the nnunet dataloaders and wraps them in another class to make them pytorch iterators
 
         Args:
             config (Config): The config file from the server
 
         Returns:
-            tuple[DataLoader, DataLoader]: A tuple of length two. The client
-                train and validation dataloaders as pytorch dataloaders
+            tuple[DataLoader, DataLoader]: A tuple of length two. The client train and validation dataloaders as
+            pytorch dataloaders
         """
         start_time = time.time()
         # Set the number of processes for each dataloader.
@@ -272,26 +277,36 @@ class NnunetClient(BasicClient):
                     self.n_dataload_proc = 1
         os.environ["nnUNet_n_proc_DA"] = str(self.n_dataload_proc)
 
-        # The batchgenerators package used under the hood by the dataloaders creates an
-        # additional stream handler for the root logger Therefore all logs get printed
-        # twice. First we stop the flwr logger from passing logs to the root logger
-        # Issue: https://github.com/MIC-DKFZ/batchgenerators/issues/123
-        # PR: https://github.com/MIC-DKFZ/batchgenerators/pull/124
+        # The batchgenerators package used under the hood by the dataloaders creates an additional stream handler for
+        # the root logger Therefore all logs get printed twice. First stop flwr logger from propagating logs to root.
+        # Issue: https://github.com/MIC-DKFZ/batchgenerators/issues/123 PR:
+        # https://github.com/MIC-DKFZ/batchgenerators/pull/124
         FLOWER_LOGGER.propagate = False
 
-        # Redirect nnunet output to flwr logger at DEBUG level
+        # Redirect nnunet output to flwr logger at DEBUG level.
         with redirect_stdout(self.stream2debug):
             # Get the nnunet dataloader iterators. (Technically augmenter classes)
             train_loader, val_loader = self.nnunet_trainer.get_dataloaders()
 
-        # Now clear the root handler that was create and turn propagate back to true
+        # Now clear root handler that was created when get_dataloaders was called and reset flwr logger propagate
         root_logger = logging.getLogger()
         root_logger.handlers.clear()
         FLOWER_LOGGER.propagate = True
 
+        # Get accurate estimate of image shape so that we can get accurate dataloader length
+        if self.plans is None:
+            self.plans = self.create_plans(config)  # Local plans will have metadata we need
+        fullres_cfg = "3d_fullres" if "3d_fullres" in self.plans["configurations"].keys() else "2d"
+        shape = self.plans["configurations"][fullres_cfg]["median_image_size_in_voxels"]
+
         # Wrap nnunet dataloaders to make them compatible with fl4health
-        train_loader = nnUNetDataLoaderWrapper(nnunet_augmenter=train_loader, nnunet_config=self.nnunet_config)
-        val_loader = nnUNetDataLoaderWrapper(nnunet_augmenter=val_loader, nnunet_config=self.nnunet_config)
+        train_loader = nnUNetDataLoaderWrapper(
+            nnunet_augmenter=train_loader, nnunet_config=self.nnunet_config, ref_image_shape=shape
+        )
+        val_loader = nnUNetDataLoaderWrapper(
+            nnunet_augmenter=val_loader, nnunet_config=self.nnunet_config, ref_image_shape=shape
+        )
+        log(INFO, f"{len(val_loader)}, {len(val_loader.dataset)}, {val_loader.nnunet_dataloader.batch_size}")
 
         if self.verbose:
             log(INFO, f"\tDataloaders initialized in {time.time() - start_time:.1f}s")
@@ -315,11 +330,10 @@ class NnunetClient(BasicClient):
 
     def get_lr_scheduler(self, optimizer_key: str, config: Config) -> _LRScheduler:
         """
-        Creates an LR Scheduler similar to the nnunet default except we set max steps
-        to the total number of steps and update every step. Initial and final LR are
-        the same as nnunet, difference is nnunet sets max steps to num 'epochs', but
-        they define an 'epoch' as exactly 250 steps. Therefore they update every 250
-        steps. Override this method to set your own LR scheduler.
+        Creates an LR Scheduler similar to the nnunet default except we set max steps to the total number of steps
+        and update every step. Initial and final LR are the same as nnunet, difference is nnunet sets max steps to
+        num "epochs", but they define an "epoch" as exactly 250 steps. Therefore they update every 250 steps. Override
+        this method to set your own LR scheduler.
 
         Args:
             config (Config): The server config. This method will look for the
@@ -360,21 +374,37 @@ class NnunetClient(BasicClient):
 
     def create_plans(self, config: Config) -> dict[str, Any]:
         """
-        Modifies the provided plans file to work with the local client dataset
+        Modifies the provided plans file to work with the local client dataset and then saves it to disk. Requires the
+        local ``dataset_fingerprint.json`` to exist, the local ``dataset_name``, ``plans_name``, ``data_identifier``
+        and ``dataset_json``.
+
+        The following fields are modified:
+
+        - plans_name
+        - dataset_name
+        - original_median_shape_after_transp
+        - original_median_spacing_after_transp
+        - configurations.{config}.data_identifier
+        - configurations.{config}.batch_size
+        - configurations.{config}.median_image_size_in_voxels
+        - foreground_intensity_properties_per_channel
 
         Args:
-            config (Config): The config provided by the server. Expects the
-                'nnunet_plans' key with a pickled dictionary as the value
+            config (Config): The config provided by the server. Expects the "nnunet_plans" key with a pickled
+                dictionary as the value
 
         Returns:
             dict[str, Any]: The modified nnunet plans for the client
         """
-        # Get the nnunet plans specified by the server
+        # TODO: Make this an external function or part of another class and explicitly accept the required arguments
+        # rather than using class attributes.
+
+        # Get the source nnunet plans specified by the server
         plans = pickle.loads(narrow_dict_type(config, "nnunet_plans", bytes))
 
         # Change plans name.
         if self.plans_name is None:
-            self.plans_name = "FL_source-" + plans["plans_name"]
+            self.plans_name = f"FL-{plans['plans_name']}-{self.dataset_id}local"
 
         plans["source_plans_name"] = plans["plans_name"]
         plans["plans_name"] = self.plans_name
@@ -382,39 +412,59 @@ class NnunetClient(BasicClient):
         # Change dataset name
         plans["dataset_name"] = self.dataset_name
 
+        # Load the dataset fingerprint for the local client dataset
+        fp_path = Path(nnUNet_preprocessed) / self.dataset_name / "dataset_fingerprint.json"
+        assert fp_path.exists(), "Could not find the dataset fingerprint file"
+        fp = load_json(fp_path)
+
+        # Change the foreground intensity properties per channel
+        plans["foreground_intensity_properties_per_channel"] = fp["foreground_intensity_properties_per_channel"]
+
+        # Compute the median image size and spacing of the local client dataset
+        median_shape = np.median(fp["shapes_after_crop"], axis=0)[plans["transpose_forward"]]
+        median_spacing = np.median(fp["spacings"], axis=0)[plans["transpose_forward"]]
+        plans["original_median_shape_after_transp"] = [int(round(i)) for i in median_shape]
+        plans["original_median_spacing_after_transp"] = [float(i) for i in median_spacing]
+
+        # Get the spacing that the network will resample to. Need to check if samples are 2d or 3d
+        fullres_cfg = "3d_fullres" if "3d_fullres" in plans["configurations"].keys() else "2d"
+        target_spacing = plans["configurations"][fullres_cfg]["spacing"]
+
+        # Get the median shape after resampling to the desired/input voxel spacing
+        resampled_shapes = [
+            compute_new_shape(i, j, target_spacing) for i, j in zip(fp["shapes_after_crop"], fp["spacings"])
+        ]
+        resampled_median_shape = np.median(resampled_shapes, axis=0)[plans["transpose_forward"]].tolist()
+
         # Change data identifier
         if self.data_identifier is None:
             self.data_identifier = self.plans_name
 
-        # Get maximum number of voxels for a batch based on dataset size
-        # TODO: This function assumes the median image size of the local dataset is the
-        # same as the one from which the plans file was created. Better way to do it is
-        # to pass fingerprint as a param and compute median image size manually.
-        n_cases = self.dataset_json["numTraining"]
-        max_voxels = get_dataset_n_voxels(plans, n_cases) * 0.05  # Max is 5% of total
+        # To be consistent with nnunet, a batch cannot contain more than 5% of the voxels in the dataset.
+        max_voxels = np.prod(resampled_median_shape, dtype=np.float64) * self.dataset_json["numTraining"] * 0.05
 
         # Iterate through nnunet configs in plans file
         for c in plans["configurations"].keys():
             # Change the data identifier
             plans["configurations"][c]["data_identifier"] = self.data_identifier + "_" + c
-            # Ensure batch size is at least 2, then at most 5 percent of dataset
-            # TODO: Possible extension could be to increase batch size if possible
+
+            # Ensure batch size is at least 2 and at most 5 percent of dataset
+            # Otherwise we keep it the same as it affects the target VRAM consumption
             if "batch_size" in plans["configurations"][c].keys():
                 old_bs = plans["configurations"][c]["batch_size"]
-                bs_5percent = round(
-                    (  # Patch size is the input shape to the model
-                        max_voxels / np.prod(plans["configurations"][c]["patch_size"], dtype=np.float64)
-                    )
-                )
+                bs_5percent = round(max_voxels / np.prod(plans["configurations"][c]["patch_size"], dtype=np.float64))
                 new_bs = max(min(old_bs, bs_5percent), 2)
                 plans["configurations"][c]["batch_size"] = new_bs
             else:
-                log(
-                    WARNING,
-                    ("Did not find a 'batch_size' key in the nnunet plans " f"dict for nnunet config: {c}"),
-                )
+                log(WARNING, f"Did not find a 'batch_size' key in the nnunet plans dict for nnunet config: {c}")
 
-        # Can't run nnunet preprocessing without saving plans file
+            # Update median shape of resampled input images
+            if str(c).startswith("2d"):
+                plans["configurations"][c]["median_image_size_in_voxels"] = resampled_median_shape[1:]
+            else:
+                plans["configurations"][c]["median_image_size_in_voxels"] = resampled_median_shape
+
+        # Save local plans file
         os.makedirs(join(nnUNet_preprocessed, self.dataset_name), exist_ok=True)
         plans_save_path = join(nnUNet_preprocessed, self.dataset_name, self.plans_name + ".json")
         save_json(plans, plans_save_path, sort_keys=False)
@@ -423,17 +473,16 @@ class NnunetClient(BasicClient):
     @use_default_signal_handlers  # Preprocessing spawns subprocesses
     def maybe_preprocess(self, nnunet_config: NnunetConfig) -> None:
         """
-        Checks if preprocessed data for current plans exists and if not
-        preprocesses the nnunet_raw dataset. The preprocessed data is saved in
-        '{nnUNet_preprocessed}/{dataset_name}/{data_identifier} where
-        nnUNet_preprocessed is the directory specified by the
-        nnUNet_preprocessed environment variable. dataset_name is the nnunet
-        dataset name (eg. Dataset123_MyDataset) and data_identifier
-        is {self.data_identifier}_{self.nnunet_config}
+        Checks if preprocessed data for current plans exists and if not preprocesses the nnunet_raw dataset. The
+        preprocessed data is saved in '{nnUNet_preprocessed}/{dataset_name}/{data_identifier} where:
+
+        - ``nnUNet_preprocessed`` is the directory specified by the ``nnUNet_preprocessed`` environment variable.
+        - ``dataset_name`` is the nnunet dataset name (e.g. Dataset123_MyDataset)
+        - ``data_identifier`` is ``{self.data_identifier}_{self.nnunet_config}``
 
         Args:
-            nnunet_config (NnunetConfig): The nnunet config as a NnunetConfig
-                Enum. Enum type ensures nnunet config is valid
+            nnunet_config (NnunetConfig): The nnunet config as a ``NnunetConfig`` Enum. Enum type ensures nnunet
+                config is valid
         """
         assert self.data_identifier is not None, "Was expecting data identifier to be initialized in self.create_plans"
 
@@ -483,7 +532,7 @@ class NnunetClient(BasicClient):
         elif self.verbose:
             log(
                 INFO,
-                "\tThis client instance has already extracted the dataset fingerprint. Skipping.",
+                "\tThis client has already extracted the dataset fingerprint during this session. Skipping.",
             )
 
         # Avoid extracting fingerprint multiple times when always_preprocess is true
@@ -493,15 +542,13 @@ class NnunetClient(BasicClient):
     @use_default_signal_handlers
     def setup_client(self, config: Config) -> None:
         """
-        Ensures the necessary files for training are on disk and initializes
-        several class attributes that depend on values in the config from the
-        server. This is called once when the client is sampled by the server
-        for the first time.
+        Ensures the necessary files for training are on disk and initializes several class attributes that depend on
+        values in the config from the server. This is called once when the client is sampled by the server for the
+        first time.
 
         Args:
-            config (Config): The config file from the server. The nnUNetClient
-                expects the keys 'nnunet_config' and 'nnunet_plans' in
-                addition to those required by BasicClient
+            config (Config): The config file from the server. The ``nnUNetClient`` expects the keys 'nnunet_config'
+                and 'nnunet_plans' in addition to those required by ``BasicClient``
         """
         log(INFO, "Setting up the nnUNetClient")
 
@@ -515,7 +562,8 @@ class NnunetClient(BasicClient):
         self.maybe_extract_fingerprint()
 
         # Create the nnunet plans for the local client
-        self.plans = self.create_plans(config=config)
+        if self.plans is None:
+            self.plans = self.create_plans(config=config)
 
         # Unless log level is DEBUG or lower hide nnunet output
         with redirect_stdout(self.stream2debug):
@@ -559,22 +607,20 @@ class NnunetClient(BasicClient):
 
     def predict(self, input: TorchInputType) -> tuple[TorchPredType, dict[str, torch.Tensor]]:
         """
-        Generate model outputs. Overridden because nnunets output lists when
-            deep supervision is on so we have to reformat the output into dicts
-            If device type is cuda, loss computed in mixed precision.
+        Generate model outputs. Overridden because nnunets outputs lists when deep supervision is on so we have to
+        reformat the output into dicts.
+
+        Additionally if device type is cuda, loss computed in mixed precision.
 
         Args:
             input (TorchInputType): The model inputs
 
         Returns:
-            tuple[TorchPredType, dict[str, torch.Tensor]]: A tuple in which the
-            first element model outputs indexed by name. The second element is
-            unused by this subclass and therefore is always an empty dict
+            tuple[TorchPredType, dict[str, torch.Tensor]]: A tuple in which the first element model outputs indexed by
+            name. The second element is unused by this subclass and therefore is always an empty dict
         """
         if isinstance(input, torch.Tensor):
             # If device type is cuda, nnUNet defaults to mixed precision forward pass
-            # https://github.com/MIC-DKFZ/nnUNet/blob/43349fa5f0680e8109a78dca7215c19e258c9dd7 \
-            # nnunetv2/training/nnUNetTrainer/nnUNetTrainer.py#L993
             if self.device.type == "cuda":
                 with torch.autocast(self.device.type, enabled=True):
                     output = self.model(input)
@@ -585,6 +631,7 @@ class NnunetClient(BasicClient):
 
         if isinstance(output, torch.Tensor):
             return {"prediction": output}, {}
+        # If output is a list or tuple then deep supervision is on and we need to convert preds into a dict
         elif isinstance(output, (list, tuple)):
             num_spatial_dims = NNUNET_N_SPATIAL_DIMS[self.nnunet_config]
             preds = convert_deep_supervision_list_to_dict(output, num_spatial_dims)
@@ -601,23 +648,20 @@ class NnunetClient(BasicClient):
         target: TorchTargetType,
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor] | None]:
         """
-        Checks the pred and target types and computes the loss.
-            If device type is cuda, loss computed in mixed precision.
+        Checks the pred and target types and computes the loss. If device type is cuda, loss computed in mixed
+        precision.
 
         Args:
-            preds (TorchPredType): Dictionary of model output tensors indexed
-                by name
+            preds (TorchPredType): Dictionary of model output tensors indexed by name
             features (dict[str, torch.Tensor]): Not used by this subclass
-            target (TorchTargetType): The targets to evaluate the predictions
-                with. If multiple prediction tensors are given, target must be
-                a dictionary with the same number of tensors
+            target (TorchTargetType): The targets to evaluate the predictions with. If multiple prediction tensors
+                are given, target must be a dictionary with the same number of tensors
 
         Returns:
-            tuple[torch.Tensor, dict[str, torch.Tensor] | None]: A tuple
-                where the first element is the loss and the second element is an
-                optional additional loss
+            tuple[torch.Tensor, dict[str, torch.Tensor] | None]: A tuple where the first element is the loss and the
+            second element is an optional additional loss
         """
-        # prepare loss args check if deep supervision is on and returns list if so
+        # If deep supervision is turned on we must convert loss and target dicts into lists
         loss_preds = prepare_loss_arg(preds)
         loss_targets = prepare_loss_arg(target)
 
@@ -633,8 +677,6 @@ class NnunetClient(BasicClient):
             )
 
         # If device type is cuda, nnUNet defaults to compute loss in mixed precision
-        # https://github.com/MIC-DKFZ/nnUNet/blob/43349fa5f0680e8109a78dca7215c19e258c9dd7 \
-        # nnunetv2/training/nnUNetTrainer/nnUNetTrainer.py#L993
         if self.device.type == "cuda":
             with torch.autocast(self.device.type, enabled=True):
                 loss = self.criterion(loss_preds, loss_targets), None
@@ -645,22 +687,22 @@ class NnunetClient(BasicClient):
 
     def mask_data(self, pred: torch.Tensor, target: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
-        Masks the pred and target tensors according to nnunet ignore_label.
-        The number of classes in the input tensors should be at least 3
-        corresponding to 2 classes for binary segmentation and 1 class which is
-        the ignore class specified by ignore label. See nnunet documentation
-        for more info:
+        Masks the pred and target tensors according to nnunet ``ignore_label``. The number of classes in the input
+        tensors should be at least 3 corresponding to 2 classes for binary segmentation and 1 class which is
+        the ignore class specified by ignore label. See nnunet documentation for more info:
+
         https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/ignore_label.md
 
         Args:
-            pred (torch.Tensor): The one hot encoded predicted
-                segmentation maps with shape (batch, classes, x, y(, z))
-            target (torch.Tensor): The ground truth segmentation map with shape
-                (batch, classes, x, y(, z))
+            pred (torch.Tensor): The one hot encoded predicted segmentation maps with shape
+                ``(batch, classes, x, y(, z))``
+            target (torch.Tensor): The ground truth segmentation map with shape ``(batch, classes, x, y(, z))``
 
         Returns:
-            torch.Tensor: The masked one hot encoded predicted segmentation maps
-            torch.Tensor: The masked target segmentation maps
+            tuple[torch.Tensor, torch.Tensor]: Tuple of:
+
+            - torch.Tensor: The masked one hot encoded predicted segmentation maps
+            - torch.Tensor: The masked target segmentation maps
         """
         # create mask where 1 is where pixels in target are not ignore label
         # Modify target to remove the last class which is the ignore_label class
@@ -691,13 +733,12 @@ class NnunetClient(BasicClient):
         metric_manager: MetricManager,
     ) -> None:
         """
-        Update the metrics with preds and target. Overridden because we might
-        need to manipulate inputs due to deep supervision
+        Update the metrics with preds and target. Overridden because we might need to manipulate inputs due to deep
+        supervision
 
         Args:
             preds (TorchPredType): dictionary of model outputs
-            target (TorchTargetType): the targets generated by the dataloader
-                to evaluate the preds with
+            target (TorchTargetType): the targets generated by the dataloader to evaluate the preds with
             metric_manager (MetricManager): the metric manager to update
         """
         if len(preds) > 1:
@@ -783,58 +824,60 @@ class NnunetClient(BasicClient):
             config (Config): The config from the server
 
         Returns:
-            dict[str, Scalar]: A dictionary containing the train and
-                validation sample counts as well as the serialized nnunet plans
+            dict[str, Scalar]: A dictionary containing the train and validation sample counts as well as the
+            serialized nnunet plans
         """
         # Check if nnunet plans have already been initialized
-        if "nnunet_plans" in config.keys():
-            properties = super().get_properties(config)
-            properties["nnunet_plans"] = config["nnunet_plans"]
-            properties["num_input_channels"] = self.nnunet_trainer.num_input_channels
-            properties["num_segmentation_heads"] = self.nnunet_trainer.label_manager.num_segmentation_heads
-            properties["enable_deep_supervision"] = self.nnunet_trainer.enable_deep_supervision
-            return properties
+        if "nnunet_plans" not in config.keys():
+            log(INFO, "Initializing the global plans using local dataset")
+            # Local client will initialize global nnunet plans
+            # Check if local nnunet dataset fingerprint needs to be extracted
+            self.maybe_extract_fingerprint()
 
-        # Check if local nnunet dataset fingerprint needs to be extracted
-        self.maybe_extract_fingerprint()
+            # Create experiment planner and plans.
+            # Plans name must be temp_plans so that we can safely delete the generated plans file
+            planner = ExperimentPlanner(dataset_name_or_id=self.dataset_id, plans_name="temp_plans")
 
-        # Create experiment planner and plans. Plans name must be temp_plans so that we
-        # can safely delete the plans file generated by the experiment planner
-        planner = ExperimentPlanner(dataset_name_or_id=self.dataset_id, plans_name="temp_plans")
+            # Unless log level is DEBUG or lower, hide nnunet output
+            with redirect_stdout(self.stream2debug):
+                plans = planner.plan_experiment()
 
-        # Unless log level is DEBUG or lower hide nnunet output
-        with redirect_stdout(self.stream2debug):
-            plans = planner.plan_experiment()
+            # Set plans name to local dataset so we know the source
+            plans["plans_name"] = self.dataset_name + "_plans"
+            plans_bytes = pickle.dumps(plans)
 
-        # Set plans name to local dataset so we know the source
-        # Dataset name normally begins with Dataset123_, we remove it and keep suffix
-        plans["plans_name"] = self.dataset_name[11:] + "_plans"
-        plans_bytes = pickle.dumps(plans)
+            # Remove plans file . A new one will be generated in self.setup_client
+            plans_path = join(nnUNet_preprocessed, self.dataset_name, planner.plans_identifier + ".json")
+            if exists(plans_path):
+                os.remove(plans_path)
 
-        # Remove plans file . A new one will be generated in self.setup_client
-        plans_path = join(nnUNet_preprocessed, self.dataset_name, planner.plans_identifier + ".json")
-        if exists(plans_path):
-            os.remove(plans_path)
+            # Update local config with plans
+            config["nnunet_plans"] = plans_bytes
 
-        # return properties with initialized nnunet plans. Need to provide
-        # plans since client needs to be initialized to get properties
-        config["nnunet_plans"] = plans_bytes
+        # Get client properties. We are now sure that config contains plans
         properties = super().get_properties(config)
-        properties["nnunet_plans"] = plans_bytes
+        properties["nnunet_plans"] = config["nnunet_plans"]
+
+        # super.get_properties should setup the client anyways, but we can add a check here as a precaution.
+        if not self.initialized:
+            self.setup_client(config)  # Client must be setup in order to initialize nnunet_trainer
+
+        # Add additional properties from nnunet trainer to properties dict. We may want to add more keys later
         properties["num_input_channels"] = self.nnunet_trainer.num_input_channels
         properties["num_segmentation_heads"] = self.nnunet_trainer.label_manager.num_segmentation_heads
         properties["enable_deep_supervision"] = self.nnunet_trainer.enable_deep_supervision
+
         return properties
 
     def shutdown_dataloader(self, dataloader: DataLoader | None, dl_name: str | None = None) -> None:
         """
-        The nnunet dataloader/augmenter uses multiprocessing under the hood, so the
-        shutdown method terminates the child processes gracefully
+        The nnunet dataloader/augmenter uses multiprocessing under the hood, so the shutdown method terminates the
+        child processes gracefully
 
         Args:
             dataloader (DataLoader): The dataloader to shutdown
-            dl_name (str | None): A string that identifies the dataloader
-                to shutdown. Used for logging purposes. Defaults to None
+            dl_name (str | None): A string that identifies the dataloader to shutdown. Used for logging purposes.
+                Defaults to None
         """
         if dataloader is not None and isinstance(dataloader, nnUNetDataLoaderWrapper):
             if self.verbose:
@@ -872,7 +915,10 @@ class NnunetClient(BasicClient):
 
     def transform_gradients(self, losses: TrainingLosses) -> None:
         """
-        Apply the gradient clipping performed by the default nnunet trainer. This is
-        the default behavior for nnunet 2.5.1
+        Apply the gradient clipping performed by the default nnunet trainer. This is the default behavior for
+        nnunet 2.5.1
+
+        Args:
+            losses (TrainingLosses): Not used for this transformation.
         """
         nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)

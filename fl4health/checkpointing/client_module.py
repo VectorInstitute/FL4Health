@@ -25,14 +25,14 @@ class ClientCheckpointAndStateModule:
         state_checkpointer: PerRoundStateCheckpointer | None = None,
     ) -> None:
         """
-        This module is meant to hold up three major components that determine how clients handle model and state
+        This module is meant to hold up three to major components that determine how clients handle model and state
         checkpointing, where state checkpointing is meant to allow clients to restart if FL training is interrupted.
         For model checkpointing, there are two distinct types.
-            The first type, if defined, is used to checkpoint local models BEFORE server-side aggregation, but
-            after local training. **NOTE**: This is akin to "further fine-tuning" approaches for global models.
 
-            The second type, if defined, is used to checkpoint local models AFTER server-side aggregation, but
-            before local training **NOTE**: This is the "traditional" mechanism for global models.
+        - The first type, if defined, is used to checkpoint local models **BEFORE** server-side aggregation, but
+          after local training. **NOTE**: This is akin to "further fine-tuning" approaches for global models.
+        - The second type, if defined, is used to checkpoint local models **AFTER** server-side aggregation, but
+          before local training **NOTE**: This is the "traditional" mechanism for global models.
 
         As a final note, for some methods, such as Ditto or MR-MTL, these checkpoints will actually be identical.
         That's because the target model for these methods is never globally aggregated. That is, they remain local
@@ -123,7 +123,8 @@ class ClientCheckpointAndStateModule:
         """
         This function is meant to facilitate saving state required to restart an FL process on the client side. This
         function will simply save whatever information is passed in the state variable using the file name in
-        state_checkpoint_name. This function should only be called if a state_checkpointer exists in this module
+        ``state_checkpoint_name``. This function should only be called if a ``state_checkpointer`` exists in this
+        module
 
         Args:
             state_checkpoint_name (str): Name of the state checkpoint file. The checkpointer itself will have a
@@ -143,8 +144,8 @@ class ClientCheckpointAndStateModule:
 
     def maybe_load_state(self, state_checkpoint_name: str) -> dict[str, Any] | None:
         """
-        This function facilitates loading of any pre-existing state (with the name state_checkpoint_name) in the
-        directory of the state_checkpointer. If the state already exists at the proper path, the state is loaded
+        This function facilitates loading of any pre-existing state (with the name ``state_checkpoint_name``) in the
+        directory of the ``state_checkpointer``. If the state already exists at the proper path, the state is loaded
         and returned. If it doesn't exist, we return None.
 
         Args:
@@ -156,7 +157,7 @@ class ClientCheckpointAndStateModule:
 
         Returns:
             dict[str, Any] | None: If the state checkpoint properly exists and is loaded correctly, this dictionary
-                carries that state. Otherwise, we return a None (or throw an exception).
+            carries that state. Otherwise, we return a None (or throw an exception).
         """
 
         if self.state_checkpointer is not None:

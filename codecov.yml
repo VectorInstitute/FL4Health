@@ -1,0 +1,20 @@
+coverage:
+  status:
+    project: # https://docs.codecov.com/docs/commit-status
+      default:
+        target: 65%
+        threshold: 5%
+ignore:
+  - ".gitignore"
+  - ".flake8"
+  - "poetry.lock"
+  - "**/*.yaml"
+  - "**/*.yml"
+  - "**/*.toml"
+  - "**/*.md"
+  - "**/*.sh"
+  - "**/*.ini"
+  - "research"
+  - "**/Makefile"
+github_checks:
+    annotations: false

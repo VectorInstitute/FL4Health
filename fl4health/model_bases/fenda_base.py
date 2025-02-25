@@ -10,7 +10,7 @@ class FendaModel(PartialLayerExchangeModel, ParallelSplitModel):
         """
         This is the base model to be used when implementing FENDA-FL models and training. A FENDA model is essentially
         a parallel split model (i.e. it has two parallel feature extractors), where only one feature extractor is
-        exchanged with the server (the global_module) while the other remains local to the client itself.
+        exchanged with the server (the ``global_module``) while the other remains local to the client itself.
 
         Args:
             local_module (nn.Module): Feature extraction module that is NOT exchanged with the server
@@ -40,9 +40,9 @@ class FendaModelWithFeatureState(FendaModel):
         """
         This is the base model to be used when implementing FENDA-FL models and training when extraction and
         storage of the latent features produced by each of the parallel feature extractors is required/desired. This
-        is a FENDA model, but the feature space outputs are guaranteed to be stored with the keys 'local_features'
-        and 'global_features' along with the predictions. The user also has the option to "flatten" these features
-        to be of shape batch_size x all features
+        is a FENDA model, but the feature space outputs are guaranteed to be stored with the keys "local_features"
+        and "global_features" along with the predictions. The user also has the option to "flatten" these features
+        to be of shape ``batch_size`` x all features
 
         Args:
             local_module (nn.Module): Feature extraction module that is NOT exchanged with the server
@@ -51,13 +51,23 @@ class FendaModelWithFeatureState(FendaModel):
             model_head (ParallelSplitHeadModule): The model head that takes the output features from both the local
                 and global modules to produce a prediction.
             flatten_features (bool, optional): Whether the output features should be flattened to have shape
-                batch_size x all features. Defaults to False.
+                ``batch_size`` x all features. Defaults to False.
         """
         super().__init__(local_module=local_module, global_module=global_module, model_head=model_head)
         self.flatten_features = flatten_features
 
     def forward(self, input: torch.Tensor) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]:
-        # input is expected to be of shape (batch_size, *)
+        """
+        Mapping input through the FENDA model local and global feature extractors and the classification head
+
+        Args:
+            input (torch.Tensor): input is expected to be of shape (``batch_size``, \\*)
+
+        Returns:
+            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: Tuple of predictions and feature maps. FENDA
+            predictions are simply stored under the key "prediction." The features for the local and global feature
+            extraction modules are stored under keys "local_features" and "global_features," respectively.
+        """
         local_output = self.first_feature_extractor.forward(input)
         global_output = self.second_feature_extractor.forward(input)
         preds = {"prediction": self.model_head.forward(local_output, global_output)}
@@ -69,5 +79,4 @@ class FendaModelWithFeatureState(FendaModel):
                 "local_features": local_output.reshape(len(local_output), -1),
                 "global_features": global_output.reshape(len(global_output), -1),
             }
-        # Return preds and features as separate dictionary as in moon base
         return preds, features

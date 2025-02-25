@@ -50,7 +50,7 @@ def construct_skin_cancer_tensor_dataset(
     data: list[dict[str, Any]], transform: Callable | None = None, num_workers: int = 8
 ) -> TensorDataset:
     """
-    Construct a TensorDataset for skin cancer data.
+    Construct a ``TensorDataset`` for skin cancer data.
 
     Args:
         data (list[dict[str, Any]]): List of dictionaries containing image paths and labels.
@@ -58,7 +58,7 @@ def construct_skin_cancer_tensor_dataset(
         num_workers (int): Number of workers for parallel processing. Defaults to 8.
 
     Returns:
-        TensorDataset: A TensorDataset containing the processed images and labels.
+        TensorDataset: A ``TensorDataset`` containing the processed images and labels.
     """
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
         results = list(executor.map(lambda item: load_image(item, transform), data))
@@ -99,7 +99,7 @@ def load_skin_cancer_data(
 
     Returns:
         tuple[DataLoader, DataLoader, DataLoader, dict[str, int]]: DataLoaders for the training, validation,
-            and test sets, and a dictionary with the number of examples in each set.
+        and test sets, and a dictionary with the number of examples in each set.
     """
     if sum(split_percents) != 1.0:
         raise ValueError("The split percentages must sum to 1.0")

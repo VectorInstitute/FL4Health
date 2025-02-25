@@ -43,6 +43,7 @@ class FedRepClient(BasicClient):
     ) -> None:
         """
         Client implementing the training of FedRep (https://arxiv.org/abs/2303.05206).
+
         Similar to FedPer, FedRep trains a global feature extractor shared by all clients through FedAvg and a
         private classifier that is unique to each client. However, FedRep breaks up the client-side training of
         these components into two phases. First the local classifier is trained with the feature extractor frozen.
@@ -51,10 +52,10 @@ class FedRepClient(BasicClient):
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
             metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
-            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
-                'cuda'
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
+                "cuda"
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
-                each batch. Defaults to LossMeterType.AVERAGE.
+                each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
@@ -62,7 +63,7 @@ class FedRepClient(BasicClient):
             reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
                 should send data to. Defaults to None.
             progress_bar (bool, optional): Whether or not to display a progress bar during client training and
-                validation. Uses tqdm. Defaults to False
+                validation. Uses ``tqdm``. Defaults to False
             client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
@@ -83,9 +84,10 @@ class FedRepClient(BasicClient):
         """
         Handles the components switching needed to train the representation submodule as required by FedRep. This
         includes:
-            1) Setting the training mode enum to know which optimizer should be stepping during training
-            2) Unfreezing the base module, which represents the feature extractor (if frozen)
-            3) Freezing the weights of the head module representing the classification layers.
+
+        1. Setting the training mode enum to know which optimizer should be stepping during training
+        2. Unfreezing the base module, which represents the feature extractor (if frozen)
+        3. Freezing the weights of the head module representing the classification layers.
         """
         assert isinstance(self.model, FedRepModel)
         self.fedrep_train_mode = FedRepTrainMode.REPRESENTATION
@@ -96,9 +98,10 @@ class FedRepClient(BasicClient):
         """
         Handles the components switching needed to train the classification submodule as required by FedRep. This
         includes:
-            1) Setting the training mode enum to know which optimizer should be stepping during training
-            2) Freezing the base module, which represents the feature extractor.
-            3) Unfreezing the weights of the head module representing the classification layers (if frozen).
+
+        1. Setting the training mode enum to know which optimizer should be stepping during training
+        2. Freezing the base module, which represents the feature extractor.
+        3. Unfreezing the weights of the head module representing the classification layers (if frozen).
         """
         assert isinstance(self.model, FedRepModel)
         self.fedrep_train_mode = FedRepTrainMode.HEAD
@@ -128,7 +131,7 @@ class FedRepClient(BasicClient):
         Function parses the configuration specified and extracts the epochs or step based training values necessary
         to train a FedRep model. Note that we do not allow for mixed epoch and step based training. You must specify
         either epochs or steps for both the head and representation modules. The keys should be either
-        {local_head_epochs, local_rep_epochs} or {local_head_steps, local_rep_steps}
+        ``{local_head_epochs, local_rep_epochs}`` or ``{local_head_steps, local_rep_steps}``
 
         Args:
             config (Config): Configuration specifying all of the required parameters for training.
@@ -136,12 +139,13 @@ class FedRepClient(BasicClient):
         Raises:
             ValueError: This function raises a value error in two scenarios. The first is when both steps and epochs
                 have been specified for training the head and representation modules. The second is when epochs or
-                steps values have not been specified for BOTH modules. This could also mean that the keys are wrong.
+                steps values have not been specified for **BOTH** modules. This could also mean that the keys are
+                wrong.
 
         Returns:
             EpochsAndStepsTuple: Returns a tuple of epochs and steps for which to train the head and representation
-                modules. Only two of the four possible values will be defined, depending on whether we're doing
-                epoch-based or step based training.
+            modules. Only two of the four possible values will be defined, depending on whether we're doing
+            epoch-based or step based training.
         """
         epochs_specified = ("local_head_epochs" in config) and ("local_rep_epochs" in config)
         steps_specified = ("local_head_steps" in config) and ("local_rep_steps" in config)
@@ -179,20 +183,20 @@ class FedRepClient(BasicClient):
     def process_fed_rep_config(self, config: Config) -> tuple[EpochsAndStepsTuple, int, bool]:
         """
         Method to ensure the required keys are present in config and extracts values to be returned. We override this
-        functionality from the BasicClient, because FedRep has slightly different requirements. That is, one needs
-        to specify a number of epochs or steps to do for BOTH the head module AND the representation module
+        functionality from the ``BasicClient``, because ``FedRep`` has slightly different requirements. That is, one
+        needs to specify a number of epochs or steps to do for BOTH the head module **AND** the representation module.
 
         Args:
             config (Config): The config from the server.
 
         Returns:
-            tuple[int | None, int | None, int | None, int | None, int, bool]: Returns the local_epochs, local_steps,
-                current_server_round and evaluate_after_fit. Ensures only one of local_epochs and local_steps
-                is defined in the config and sets the one that is not to None.
+            tuple[int | None, int | None, int | None, int | None, int, bool]: Returns the ``local_epochs``,
+            ``local_steps``, ``current_server_round`` and ``evaluate_after_fit``. Ensures only one of
+            ``local_epochs`` and ``local_steps`` is defined in the config and sets the one that is not to None.
 
         Raises:
-            ValueError: If the config contains both local_steps and local epochs or if local_steps, local_epochs or
-                current_server_round is of the wrong type (int).
+            ValueError: If the config contains both local_steps and local epochs or if ``local_steps``,
+                ``local_epochs`` or ``current_server_round`` is of the wrong type (int).
         """
         current_server_round = narrow_dict_type(config, "current_server_round", int)
         steps_or_epochs_tuple = self._extract_epochs_or_steps_specified(config)
@@ -207,7 +211,7 @@ class FedRepClient(BasicClient):
 
     def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
         """
-        Returns a dictionary with global and local optimizers with string keys 'representation' and 'head'
+        Returns a dictionary with global and local optimizers with string keys "representation" and "head,"
         respectively.
         """
         raise NotImplementedError
@@ -235,7 +239,7 @@ class FedRepClient(BasicClient):
         """
         Processes config, initializes client (if first round) and performs training based on the passed config.
         For FedRep, this coordinates calling the right training functions based on the passed steps. We need to
-        override the functionality of the BasicClient to allow for two distinct training passes of the model, as
+        override the functionality of the ``BasicClient`` to allow for two distinct training passes of the model, as
         required by FedRep.
 
         Args:
@@ -316,7 +320,7 @@ class FedRepClient(BasicClient):
 
         Returns:
             tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
-                Loss is a dictionary of one or more losses that represent the different components of the loss.
+            Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         # First we train the head module for head_epochs with the representations frozen in place
         self._prepare_train_head()
@@ -354,7 +358,7 @@ class FedRepClient(BasicClient):
 
         Returns:
             tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
-                Loss is a dictionary of one or more losses that represent the different components of the loss.
+            Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         assert isinstance(self.model, FedRepModel)
         # First we train the head module for head_steps with the representations frozen in place
@@ -384,18 +388,18 @@ class FedRepClient(BasicClient):
 
     def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
         """
-        Mechanics of training loop follow the FedRep paper: https://arxiv.org/pdf/2102.07078.pdf
-        In order to reuse the train_step functionality, we switch between the appropriate optimizers depending on the
+        Mechanics of training loop follow the FedRep paper: https://arxiv.org/pdf/2102.07078.pdf. In order to reuse
+        the ``train_step`` functionality, we switch between the appropriate optimizers depending on the
         clients training mode (HEAD vs. REPRESENTATION)
 
         Args:
-            input (TorchInputType): input tensor to be run through the model. Here, TorchInputType is simply an alias
-                for the union of torch.Tensor and dict[str, torch.Tensor].
+            input (TorchInputType): input tensor to be run through the model. Here, ``TorchInputType`` is simply an
+                alias for the union of ``torch.Tensor`` and ``dict[str, torch.Tensor]``.
             target (torch.Tensor): target tensor to be used to compute a loss given the model's outputs.
 
         Returns:
             tuple[TrainingLosses, dict[str, torch.Tensor]]: The losses object from the train step along with
-                a dictionary of any predictions produced by the model.
+            a dictionary of any predictions produced by the model.
         """
 
         # Clear gradients from the optimizers if they exits. We do both regardless of the client mode.

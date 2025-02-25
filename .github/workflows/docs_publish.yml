@@ -1,0 +1,47 @@
+name: docs
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .pre-commit-config.yaml
+      - .github/workflows/code_checks.yml
+      - .github/workflows/docs_build.yml
+      - .github/workflows/docs_deploy.yml
+      - .github/workflows/integration_tests.yml
+      - '**.py'
+      - '**.ipynb'
+      - '**.html'
+      - '**.js'
+      - poetry.lock
+      - pyproject.toml
+      - '**.rst'
+      - '**.md'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.2.0
+        with:
+          submodules: 'true'
+      - name: Install dependencies and build docs
+        run: python3 -m pip install --upgrade pip && python3 -m pip install poetry
+      - uses: actions/setup-python@v5.2.0
+        with:
+          python-version: '3.10'
+          cache: 'poetry'
+      - name: Build Docs
+        run: |
+          python3 -m pip install --upgrade pip && python3 -m pip install poetry
+          poetry env use '3.10'
+          source $(poetry env info --path)/bin/activate
+          poetry install --with docs,test
+          cd docs && rm -rf source/reference/api/_autosummary && make html
+      - name: Deploy to Github pages
+        uses: JamesIves/github-pages-deploy-action@v4.7.2
+        with:
+          branch: github_pages
+          folder: docs/build/html

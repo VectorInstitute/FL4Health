@@ -42,10 +42,10 @@ class ScaffoldClient(BasicClient):
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
             metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
-            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
-                'cuda'
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
+                "cuda"
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
-                each batch. Defaults to LossMeterType.AVERAGE.
+                each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
@@ -53,7 +53,7 @@ class ScaffoldClient(BasicClient):
             reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
                 should send data to. Defaults to None.
             progress_bar (bool, optional): Whether or not to display a progress bar during client training and
-                validation. Uses tqdm. Defaults to False
+                validation. Uses ``tqdm``. Defaults to False
             client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
@@ -80,7 +80,13 @@ class ScaffoldClient(BasicClient):
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
-        Packs the parameters and control variates into a single NDArrays to be sent to the server for aggregation
+        Packs the parameters and control variates into a single ``NDArrays`` to be sent to the server for aggregation
+
+        Args:
+            config (Config): The config is sent by the FL server to allow for customization in the function if desired.
+
+        Returns:
+            NDArrays: Model parameters and control variates packed together.
         """
         if not self.initialized:
             log(
@@ -113,7 +119,8 @@ class ScaffoldClient(BasicClient):
         """
         Assumes that the parameters being passed contain model parameters concatenated with server control variates.
         They are unpacked for the clients to use in training. If it's the first time the model is being initialized,
-        we assume the full model is being initialized and use the FullParameterExchanger() to set all model weights
+        we assume the full model is being initialized and use the ``FullParameterExchanger()`` to set all model weights
+
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
                 model and also the server control variates (initial or after aggregation)
@@ -143,9 +150,13 @@ class ScaffoldClient(BasicClient):
 
     def update_control_variates(self, local_steps: int) -> None:
         """
-        Updates local control variates along with the corresponding updates
-        according to the option 2 in Equation 4 in https://arxiv.org/pdf/1910.06378.pdf
+        Updates local control variates along with the corresponding updates according to the option 2 in Equation 4 in
+        https://arxiv.org/pdf/1910.06378.pdf
+
         To be called after weights of local model have been updated.
+
+        Args:
+            local_steps (int): Number of local steps performed during training.
         """
         assert self.client_control_variates is not None
         assert self.server_control_variates is not None
@@ -177,9 +188,8 @@ class ScaffoldClient(BasicClient):
 
     def modify_grad(self) -> None:
         """
-        Modifies the gradient of the local model to correct for client drift.
-        To be called after the gradients have been computed on a batch of data.
-        Updates not applied to params until step is called on optimizer.
+        Modifies the gradient of the local model to correct for client drift. To be called after the gradients have
+        been computed on a batch of data. Updates not applied to params until step is called on optimizer.
         """
         assert self.client_control_variates is not None
         assert self.server_control_variates is not None
@@ -202,8 +212,20 @@ class ScaffoldClient(BasicClient):
 
     def compute_parameters_delta(self, params_1: NDArrays, params_2: NDArrays) -> NDArrays:
         """
-        Computes element-wise difference of two lists of NDarray
-        where elements in params_2 are subtracted from elements in params_1
+        Computes element-wise difference of two lists of ``NDarray`` where elements in ``params_2`` are subtracted from
+        elements in ``params_1``
+
+        Each ``NDArray`` in the list of ``NDArrays`` are subtracted as
+
+        .. math::
+            \\text{params}_{1, i} - \\text{params}_{2, i}
+
+        Args:
+            params_1 (NDArrays): First set of parameters
+            params_2 (NDArrays): Second set of parameters
+
+        Returns:
+            NDArrays: :math:`\\text{params}_1 - \\text{params}_2`
         """
         parameter_delta: NDArrays = [param_1 - param_2 for param_1, param_2 in zip(params_1, params_2)]
 
@@ -211,8 +233,11 @@ class ScaffoldClient(BasicClient):
 
     def transform_gradients(self, losses: TrainingLosses) -> None:
         """
-        Hook function for model training only called after backwards pass but before
-        optimizer step. Used to modify gradient to correct for client drift in Scaffold.
+        Hook function for model training only called after backwards pass but before optimizer step. Used to modify
+        gradient to correct for client drift in Scaffold.
+
+        Args:
+            losses (TrainingLosses): losses is not used in this transformation.
         """
         self.modify_grad()
 
@@ -223,7 +248,22 @@ class ScaffoldClient(BasicClient):
         delta_control_variates: NDArrays,
     ) -> NDArrays:
         """
-        Computes the updated local control variates according to option 2 in Equation 4 of paper
+        Computes the updated local control variates according to option 2 in Equation 4 of paper. The calculation is
+
+        .. math::
+            c_i^+ = c_i - c + \\frac{1}{(K \\cdot lr)} \\cdot (x - y_i)
+
+        where lr is the local learning rate.
+
+        Args:
+            local_steps (int): Number of local steps that were taken during local training (:math:`K`)
+            delta_model_weights (NDArrays): difference between the locally trained weights and the initial weights
+                prior to local training
+            delta_control_variates (NDArrays): difference between local (:math:`c_i`) and server (:math:`c`) control
+                variates :math:`c_i - c`.
+
+        Returns:
+            NDArrays: Updated client control variates
         """
 
         # coef = 1 / (K * eta_l)
@@ -244,16 +284,21 @@ class ScaffoldClient(BasicClient):
 
     def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
         """
-        Called after training with the number of local_steps performed over the FL round and
-        the corresponding loss dictionary.
+        Called after training with the number of ``local_steps`` performed over the FL round and the corresponding
+        loss dictionary.
+
+        Args:
+            local_steps (int): Number of local steps that were taken during local training (:math:`K`)
+            loss_dict (dict[str, float]): dictionary of losses computed during training
+            config (Config): The config from the server.
         """
         self.update_control_variates(local_steps)
 
     def setup_client(self, config: Config) -> None:
         """
-        Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
-        Then set initialized attribute to True. Extends the basic client to extract the learning rate
-        from the optimizer and set the learning_rate attribute (used to compute updated control variates).
+        Set dataloaders, optimizers, parameter exchangers and other attributes derived from these. Then set
+        initialized attribute to True. Extends the basic client to extract the learning rate from the optimizer and
+        set the ``learning_rate`` attribute (used to compute updated control variates).
 
         Args:
             config (Config): The config from the server.

@@ -40,14 +40,14 @@ class TabularDataClient(BasicClient):
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
             metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
-            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
-                'cuda'
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
+                "cuda"
             id_column (str): ID column. This is required for tabular encoding in cyclops, which we leverage. It should
                 be unique per row, but need not necessarily be a meaningful identifier (i.e. could be row number)
             targets (str | list[str]): The target column or columns name. This allows for multiple targets to
                 be specified if desired.
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
-                each batch. Defaults to LossMeterType.AVERAGE.
+                each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
@@ -55,7 +55,7 @@ class TabularDataClient(BasicClient):
             reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
                 should send data to. Defaults to None.
             progress_bar (bool, optional): Whether or not to display a progress bar during client training and
-                validation. Uses tqdm. Defaults to False
+                validation. Uses ``tqdm``. Defaults to False
             client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
@@ -84,15 +84,16 @@ class TabularDataClient(BasicClient):
 
     def setup_client(self, config: Config) -> None:
         """
-        Initialize the client by encoding the information of its tabular data
-        and initializing the corresponding TabularFeaturesPreprocessor.
+        Initialize the client by encoding the information of its tabular data and initializing the corresponding
+        ``TabularFeaturesPreprocessor``.
 
-        config[SOURCE_SPECIFIED] indicates whether the server has obtained
-        the source of information to perform feature alignment.
-        If it is True, it means the server has obtained such information
-        (either a priori or by polling a client).
-        So the client will encode that information and use it instead
-        to perform feature preprocessing.
+        ``config[SOURCE_SPECIFIED]`` indicates whether the server has obtained the source of information to perform
+        feature alignment. If it is True, it means the server has obtained such information (either a priori or by
+        polling a client). So the client will encode that information and use it instead to perform feature
+        preprocessing.
+
+        Args:
+            config (Config): Configuration sent by the server for customization of the function
         """
         source_specified = narrow_dict_type(config, SOURCE_SPECIFIED, bool)
         self.df = self.get_data_frame(config)
@@ -113,8 +114,7 @@ class TabularDataClient(BasicClient):
                 self.df
             )
 
-            # Obtain the input and output dimensions to be sent to
-            # the server for global model initialization. Assuming
+            # Obtain the input and output dimensions to be sent to the server for global model initialization. Assuming
             # that the first dimension is the number of rows.
             self.input_dimension = self.aligned_features.shape[1]
             self.output_dimension = self.tabular_features_info_encoder.get_target_dimension()
@@ -138,20 +138,24 @@ class TabularDataClient(BasicClient):
         User defined method that returns a pandas dataframe.
 
         Args:
-            config (Config): flower's config dictionary.
+            config (Config): Configuration sent by the server for customization of the function
 
         """
         raise NotImplementedError
 
     def get_properties(self, config: Config) -> dict[str, Scalar]:
         """
-        Return properties of client to be sent to the server.
-        Depending on whether the server has communicated the information
-        to be used for feature alignment, the client will send the input/output
-        dimensions so the server can use them to initialize the global model.
+        Return properties of client to be sent to the server. Depending on whether the server has communicated the
+        information to be used for feature alignment, the client will send the input/output dimensions so the server
+        can use them to initialize the global model.
 
-        First initializes the client because this is called prior to the first
-        federated learning round.
+        First initializes the client because this is called prior to the first federated learning round.
+
+        Args:
+            config (Config): Configuration sent by the server for customization of the function
+
+        Returns:
+            dict[str, Scalar]: Properties to be returned to the server, providing information about the client.
         """
         if not self.initialized:
             self.setup_client(config)
@@ -167,11 +171,20 @@ class TabularDataClient(BasicClient):
             }
 
     def preset_specific_pipeline(self, feature_name: str, pipeline: Pipeline) -> None:
-        # The user may use this method to specify a specific pipeline to be applied to a
-        # particular feature.
+        """
+        The user may use this method to specify a specific pipeline to be applied to a particular feature. This
+        function stores the provided pipeline associated with the provided ``feature_name``
+
+        Args:
+            feature_name (str): Name of the feature as a column in the dataframe
+            pipeline (Pipeline): Pipeline of transformations to be applied to the target feature
+        """
         self.feature_specific_pipelines[feature_name] = pipeline
 
     def set_feature_specific_pipelines(self) -> None:
+        """
+        Given the feature specific pipelines, at them to the tabular feature preprocessor.
+        """
         assert self.tabular_features_preprocessor is not None
         for feature_name, pipeline in self.feature_specific_pipelines.items():
             self.tabular_features_preprocessor.set_feature_pipeline(feature_name, pipeline)

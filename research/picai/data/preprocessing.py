@@ -96,12 +96,12 @@ class Case(ABC):
     @abstractmethod
     def write(self) -> tuple[Sequence[Path], Path]:
         """
-        Abstract method to be implemented by children that writes the preprocessed scans and annotation
-        to their destination and returns the file paths.
+        Abstract method to be implemented by children that writes the preprocessed scans and annotation to their
+        destination and returns the file paths.
 
         Returns:
-            tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths
-                for the scans and the second entry is the file path to the corresponding annotation.
+            tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths for the scans
+            and the second entry is the file path to the corresponding annotation.
 
         Raises:
             NotImplementedError
@@ -120,14 +120,14 @@ class PicaiCase(Case):
         Class representing a case from the PICAI dataset.
 
         scan_paths filenames are assumed to have the following format: <patient_id>_<study_id>_<modality>.mha
-        where modality is a three letter string of ['t2w', 'adc', 'hbv']. NOTE: the ordering self.scan_path
+        where modality is a three letter string of ['t2w', 'adc', 'hbv']. **NOTE:** the ordering self.scan_path
         and self.scans must remain consistent.
 
         annotation_path filename is assumed to have the following format: <patient_id>_<study_id>.nii.gz
 
         Args:
             scan_paths (Sequence[Path]): The set of paths where the scans associated with the Case are located.
-                NOTE: self.scans will inherit the ordering of scan_paths and must remain consistently ordered.
+                **NOTE:** self.scans will inherit the ordering of scan_paths and must remain consistently ordered.
             annotation_write_dir (Path): The path where the annotation associated with the Case is located.
             settings (PreprocessingSettings): The settings determining how the case is preprocessed.
         """
@@ -143,19 +143,19 @@ class PicaiCase(Case):
 
     def write(self) -> tuple[Sequence[Path], Path]:
         """
-        Writes preprocessed scans and annotations from PICAI dataset to disk
-        and returns the scan file paths and annotation file path in a tuple.
+        Writes preprocessed scans and annotations from PICAI dataset to disk and returns the scan file paths and
+        annotation file path in a tuple.
 
         Assumes scan_paths and annotation_path filenames follow the format specified in class constructor.
-        NOTE: self.scans will inherit the ordering of scan_paths and must remain consistently ordered.
+        **NOTE:** ``self.scans`` will inherit the ordering of scan_paths and must remain consistently ordered.
 
-        Output scan_paths will be located at: scans_write_dir/<patient_id>_<stud_id>_<modality_id>.nii.gz
-        where <modality_id> is a mapping from modality string to a 4 digit number specified by the mapping
+        Output ``scan_paths`` will be located at: ``scans_write_dir/<patient_id>_<stud_id>_<modality_id>.nii.gz``
+        where ``<modality_id>`` is a mapping from modality string to a 4 digit number specified by the mapping
         below.
 
         Returns:
-            tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths
-                for the scans and the second entry is the file path to the corresponding annotation.
+            tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths for the scans
+            and the second entry is the file path to the corresponding annotation.
         """
         modality_suffix_map = {"t2w": "0000", "adc": "0001", "hbv": "0002"}
         preprocessed_scan_paths = []

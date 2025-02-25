@@ -8,8 +8,10 @@ class VaeLoss(_Loss):
         latent_dim: int,
         base_loss: _Loss,
     ) -> None:
-        """The loss function used for training CVAEs and VAEs.
-        This loss computes the base_loss (defined by the user) between the input and generated output.
+        """
+        The loss function used for training CVAEs and VAEs.
+
+        This loss computes the ``base_loss`` (defined by the user) between the input and generated output.
         It then adds the KL divergence between the estimated distribution (represented by mu and logvar)
         and the standard normal distribution.
 
@@ -24,8 +26,8 @@ class VaeLoss(_Loss):
         self.latent_dim = latent_dim
 
     def standard_normal_kl_divergence_loss(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
-        """Calculates the analytical KL divergence between the normal distribution
-        and the estimated distribution.
+        """
+        Calculates the analytical KL divergence between the normal distribution and the estimated distribution.
 
         Args:
             mu (torch.Tensor): Mean of the estimated distribution.
@@ -38,7 +40,8 @@ class VaeLoss(_Loss):
         return kl_divergence_loss
 
     def unpack_model_output(self, preds: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Unpacks the model output tensor.
+        """
+        Unpacks the model output tensor.
 
         Args:
             preds (torch.Tensor): Model predictions.
@@ -59,7 +62,8 @@ class VaeLoss(_Loss):
         return preds, mu, logvar
 
     def forward(self, preds: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-        """Calculates the total loss.
+        """
+        Calculates the total loss.
 
         Args:
             preds (torch.Tensor): Model predictions.

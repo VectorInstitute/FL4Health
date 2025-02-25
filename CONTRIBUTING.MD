@@ -20,7 +20,7 @@ For development and testing, we use [Poetry](https://python-poetry.org/) for dep
 
 The easiest way to create and activate a virtual environment is by using the [virtualenv](https://pypi.org/project/virtualenv/) package:
 ```bash
-virtualenv "ENV_PATH"
+python -m venv <ENV_PATH>
 source "ENV_PATH/bin/activate"
 pip install --upgrade pip poetry
 poetry install --with "dev, dev-local, test, codestyle"
@@ -71,7 +71,8 @@ If you're using VS Code for development, pre-commit should setup git hooks that 
 
 For code documentation, we try to adhere to the Google docstring style (See [here](https://google.github.io/styleguide/pyguide.html), Section: Comments and Doc-strings). The implementation of an extensive set of comments for the code in this repository is a work-in-progress. However, we are continuing to work towards a better commented state for the code. For development, as stated in the style guide, __any non-trivial or non-obvious methods added to the library should have a doc string__. For our library this applies only to code added to the main library in `fl4health`. Examples, research code, and tests need not incorporate the strict rules of documentation, though clarifying and helpful comments in that code is also __strongly encouraged__.
 
-__NOTE__: As a matter of convention choice, classes are documented through their `__init__` functions rather than at the "class" level.
+> [!NOTE]
+> As a matter of convention choice, classes are documented through their `__init__` functions rather than at the "class" level.
 
 If you are using VS Code a very helpful integration is available to facilitate the creation of properly formatted doc-strings called autoDocstring [VS Code Page](https://marketplace.visualstudio.com/items?itemName=njpwerner.autodocstring) and [Documentation](https://github.com/NilsJPWerner/autoDocstring). This tool will automatically generate a docstring template when starting a docstring with triple quotation marks (`"""`). To get the correct format, the following settings should be prescribed in your VS Code settings JSON:
 
@@ -123,4 +124,9 @@ If you use VS Code for development, you can setup the tests with the testing int
 
 In addition to the unit and integration tests through `pytest` a number of **smoke tests** have been implemented and are run remotely on github as well. These tests are housed in `tests/smoke_tests`. All of these smoke tests must also pass for a PR to be eligible for merging to main. These smoke tests ensure that changes to note unintentionally break or alter the current functionality of many of our examples. This helps to ensure that code changes do not have unintended side-effects on already tested and/or working code.
 
-__NOTE__: The contents of the tests folder is not packed with the FL4Health library on release to PyPi
+### Code Coverage
+
+For code coverage, we use [Codecov](https://about.codecov.io/) (by Sentry) and have configured this tool to pass only if a PR's overall code coverage is above 80%.
+
+> [!NOTE]
+> The contents of the tests folder is not packed with the FL4Health library on release to PyPi

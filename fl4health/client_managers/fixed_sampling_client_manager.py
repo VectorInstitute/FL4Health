@@ -7,11 +7,15 @@ class FixedSamplingClientManager(SimpleClientManager):
     """Keeps sampling fixed until it's reset"""
 
     def __init__(self) -> None:
+        """
+        Client manager that samples the same set of clients each time until it receives a signal to resample the
+        clients to be selected. This class, for example, helps facilitate the requirements associated with FedDG-GA
+        """
         super().__init__()
         self.current_sample: list[ClientProxy] | None = None
 
     def reset_sample(self) -> None:
-        """Resets the saved sample so self.sample produces a new sample again."""
+        """Resets the saved sample so ``self.sample`` produces a new sample again."""
         self.current_sample = None
 
     def sample(
@@ -21,18 +25,18 @@ class FixedSamplingClientManager(SimpleClientManager):
         criterion: Criterion | None = None,
     ) -> list[ClientProxy]:
         """
-        Return a new client sample for the first time it runs. For subsequent runs,
-        it will return the same sampling until self.reset_sampling() is called.
+        Return a new client sample for the first time it runs. For subsequent runs, it will return the same sampling
+        until ``self.reset_sampling()`` is called.
 
         Args:
-            num_clients: (int) The number of clients to sample.
-            min_num_clients: (int | None) The minimum number of clients to return in the sample.
-                Optional, default is num_clients.
-            criterion: (Criterion | None) A criterion to filter clients to sample.
-                Optional, default is no criterion (no filter).
+            num_clients (int): The number of clients to sample.
+            min_num_clients (int | None, optional): The minimum number of clients to return in the sample.
+                Defaults to None.
+            criterion (Criterion | None, optional): A criterion to filter clients to sample. If None, no criterion is
+                applied during selection/sampling. Defaults to None.
 
         Returns:
-            list[ClientProxy]: A list of sampled clients as ClientProxy instances.
+            list[ClientProxy]: A list of sampled clients as ``ClientProxy`` instances.
         """
         if self.current_sample is None:
             self.current_sample = super().sample(num_clients, min_num_clients, criterion)

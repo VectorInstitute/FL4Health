@@ -21,8 +21,17 @@ class ParameterPacker(ABC, Generic[T]):
 
 class ParameterPackerWithControlVariates(ParameterPacker[NDArrays]):
     def __init__(self, size_of_model_params: int) -> None:
-        # Note model params exchanged and control variates can be different sizes, for example, when layers are frozen
-        # or the state dictionary contains things like Batch Normalization layers.
+        """
+        Class to handle the exchange of control variates for the SCAFFOLD FL method
+
+        **NOTE** model params exchanged and control variates can be different sizes, for example, when layers are
+        frozen or the state dictionary contains things like Batch Normalization layers.
+
+        Args:
+            size_of_model_params (int): This is the number of layers that are associated with the parameters of the
+                model itself. This is used to split the covariates from the model parameters during unpacking.
+        """
+
         self.size_of_model_params = size_of_model_params
         super().__init__()
 
@@ -66,8 +75,14 @@ class ParameterPackerWithLayerNames(ParameterPacker[list[str]]):
 
     def unpack_parameters(self, packed_parameters: NDArrays) -> tuple[NDArrays, list[str]]:
         """
-        Assumption: packed_parameters is a list containing model parameters followed by an NDArray that contains the
-        corresponding names of those parameters.
+        Function to separate the model parameters from the layer names that have been packed with them.
+
+        Args:
+            packed_parameters (NDArrays): packed_parameters is a list containing model parameters followed by an
+                NDArray that contains the corresponding names of those parameters.
+
+        Returns:
+            tuple[NDArrays, list[str]]: tuple of model parameters and the names of the layers to which they correspond
         """
         split_size = len(packed_parameters) - 1
         model_parameters = packed_parameters[:split_size]
@@ -77,16 +92,15 @@ class ParameterPackerWithLayerNames(ParameterPacker[list[str]]):
 
 class SparseCooParameterPacker(ParameterPacker[tuple[NDArrays, NDArrays, list[str]]]):
     """
-    This parameter packer is responsible for selecting an arbitrary set of parameters
-    and then representing them in the sparse COO tensor format, which requires knowing
-    the indices of the parameters within the tensor to which they belong,
-    the shape of that tensor, and also the name of it.
+    This parameter packer is responsible for selecting an arbitrary set of parameters and then representing them in
+    the sparse COO tensor format, which requires knowing the indices of the parameters within the tensor to which they
+    belong, the shape of that tensor, and also the name of it.
 
     For more information on the sparse COO format and sparse tensors in PyTorch, please see the following
     two pages:
-        1. https://pytorch.org/docs/stable/generated/torch.sparse_coo_tensor.html
-        2. https://pytorch.org/docs/stable/sparse.html
 
+    1. https://pytorch.org/docs/stable/generated/torch.sparse_coo_tensor.html
+    2. https://pytorch.org/docs/stable/sparse.html
     """
 
     def pack_parameters(
@@ -109,9 +123,8 @@ class SparseCooParameterPacker(ParameterPacker[tuple[NDArrays, NDArrays, list[st
     @staticmethod
     def extract_coo_info_from_dense(x: Tensor) -> tuple[NDArray, NDArray, NDArray]:
         """
-        Take a dense tensor x and extract the information required
-        (namely, its nonzero values, their indices within the tensor, and the shape of x)
-        in order to represent it in the sparse coo format.
+        Take a dense tensor x and extract the information required (namely, its nonzero values, their indices within
+        the tensor, and the shape of x) in order to represent it in the sparse coo format.
 
         The results are converted to numpy arrays.
 
@@ -119,8 +132,8 @@ class SparseCooParameterPacker(ParameterPacker[tuple[NDArrays, NDArrays, list[st
             x (Tensor): Input dense tensor.
 
         Returns:
-            tuple[NDArray, NDArray, NDArray]: The nonzero values of x,
-            the indices of those values within x, and the shape of x.
+            tuple[NDArray, NDArray, NDArray]: The nonzero values of x, the indices of those values within x, and the
+            shape of x.
         """
         selected_parameters = x[torch.nonzero(x, as_tuple=True)].cpu().numpy()
         selected_indices = torch.nonzero(x, as_tuple=False).cpu().numpy()

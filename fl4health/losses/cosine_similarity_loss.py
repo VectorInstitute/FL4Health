@@ -4,6 +4,13 @@ import torch.nn as nn
 
 class CosineSimilarityLoss(nn.Module):
     def __init__(self, device: torch.device, dim: int = -1) -> None:
+        """
+        Cosine similarity loss between two torch Tensors
+
+        Args:
+            device (torch.device): Which device this loss should be computed on
+            dim (int, optional): Dimension where cosine similarity is computed. Defaults to -1.
+        """
         super().__init__()
         self.cosine_similarity_function = nn.CosineSimilarity(dim=dim).to(device)
 
@@ -13,8 +20,8 @@ class CosineSimilarityLoss(nn.Module):
         value of the cosine similarity between features in x1 and x2
 
         Args:
-            x1 (torch.Tensor): First set of tensors to compute cosine sim, shape (batch_size, n_features)
-            x2 (torch.Tensor): Second set of tensors to compute cosine sim, shape (batch_size, n_features)
+            x1 (torch.Tensor): First set of tensors to compute cosine sim, shape (``batch_size``, ``n_features``)
+            x2 (torch.Tensor): Second set of tensors to compute cosine sim, shape (``batch_size``, ``n_features``)
 
         Returns:
             torch.Tensor: Mean absolute value of the cosine similarity between vectors across the mutual batch size.

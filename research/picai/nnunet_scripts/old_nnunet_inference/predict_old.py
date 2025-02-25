@@ -37,26 +37,22 @@ class MyNnUNetPredictor(nnUNetPredictor):
         self, data_iterator: Generator, return_probabilities: bool = False, num_processes: int = default_num_processes
     ) -> dict[str, Any]:
         """
-        Override of the predict from data iterator class so that we can have
-        it return the model outputs along with their output filenames and data
-        properties. The parent class method either saves the data and returns
-        nothing, or does not save the data and only returns the model outputs.
-        We are going to change as little as possible. This function is based
-        off of nnunetv2 version 2.4.2
+        Override of the predict from data iterator class so that we can have it return the model outputs along with
+        their output filenames and data properties. The parent class method either saves the data and returns
+        nothing, or does not save the data and only returns the model outputs. We are going to change as little as
+        possible. This function is based off of nnunetv2 version 2.4.2
 
         Args:
             data_iterator (Generator): The data iterator
-            return_probabilities (bool, optional): Whether or not to return the
-                predicted probability maps. Defaults to False.
-            num_processes (int, optional): The number of processes to use when
-                exporting predictions. Defaults to nnunet's default number of
-                processes (at time of writing this is 8)
+            return_probabilities (bool, optional): Whether or not to return the predicted probability maps.
+                Defaults to False.
+            num_processes (int, optional): The number of processes to use when exporting predictions.
+                Defaults to nnunet's default number of processes (at time of writing this is 8)
 
         Returns:
-            List: A dictionary containing the predicted annotations and the data
-                properties for each file. The dictionary may also contain the
-                predicted probabilities and the output file names associated
-                with each sample
+            List: A dictionary containing the predicted annotations and the data properties for each file. The
+            dictionary may also contain the predicted probabilities and the output file names associated with each
+            sample
         """
         with multiprocessing.get_context("spawn").Pool(num_processes) as pool:
             # Have to ignore errors when defining worker list because mypy
@@ -151,12 +147,11 @@ def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, 
     # Helper function to make code cleaner
     def check_for_ckpt_info(model: dict) -> tuple[str, bool]:
         """
-        Checks model dict for trainer name and inference_allowed_mirroring_axes
+        Checks model dict for trainer name and ``inference_allowed_mirroring_axes``
 
         Returns:
-            tuple[str | None, bool]: Tuple with elements trainer_name and
-                inference_allowed_mirroring_axes. Defaults to
-                ('nnUNetTrainer, False)
+            tuple[str | None, bool]: Tuple with elements trainer_name and ``inference_allowed_mirroring_axes``.
+            Defaults to ("nnUNetTrainer", False)
         """
         trainer_name = "nnUNetTrainer"
         inference_allowed_mirror_axes = False
@@ -237,7 +232,7 @@ def predict(
 
     Args:
         config_path (str): Path to a yaml config file. The three required keys
-            are plans, dataset_json and one or more nnunet_configs (eg. 2d,
+            are plans, dataset_json and one or more nnunet_configs (e.g. 2d,
             3d_fullres etc.). The nnunet config keys should contain a list of
             paths. If the path points to a file it should be a model
             checkpoint. The model checkpoints can be dicts with the
@@ -411,7 +406,7 @@ def main() -> None:
         required=True,
         type=str,
         help="""Path to a yaml config file. The three required keys are plans,
-            dataset_json and one or more nnunet_configs (eg. 2d, 3d_fullres
+            dataset_json and one or more nnunet_configs (e.g. 2d, 3d_fullres
             etc.). The nnunet config keys should contain a list of paths. If
             the path points to a file it should be a model checkpoint. The
             model checkpoints can be dicts with the 'network_weights' key or

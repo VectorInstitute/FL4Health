@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -21,43 +23,39 @@ class MaskedLayerNorm(nn.LayerNorm):
         dtype: torch.dtype | None = None,
     ) -> None:
         """
-        Implementation of the masked Layer Normalization module. When elementwise_affine is True,
-        nn.LayerNorm has a learnable weight and (optional) bias. For MaskedLayerNorm,
-        the weight and bias do not receive gradient in back propagation.
-        Instead, two score tensors - one for the weight and another for the bias - are maintained.
-        In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores,
-        which are then used to produce binary masks via bernoulli sampling.
-        Finally, the binary masks are applied to the weight and the bias. During training,
-        gradients with respect to the score tensors are computed and used to update the score tensors.
+        Implementation of the masked Layer Normalization module. When ``elementwise_affine`` is True, ``nn.LayerNorm``
+        has a learnable weight and (optional) bias. For ``MaskedLayerNorm``, the weight and bias do not receive
+        gradient in back propagation. Instead, two score tensors - one for the weight and another for the bias - are
+        maintained. In the forward pass, the score tensors are transformed by the Sigmoid function into probability
+        scores, which are then used to produce binary masks via Bernoulli sampling. Finally, the binary masks are
+        applied to the weight and the bias. During training, gradients with respect to the score tensors are computed
+        and used to update the score tensors.
 
-        When elementwise_affine is False, nn.LayerNorm does not have weight or bias.
-        Under this condition, both score tensors are None and MaskedLayerNorm acts in the same way as nn.LayerNorm.
+        When ``elementwise_affine`` is False, ``nn.LayerNorm`` does not have weight or bias. Under this condition, both
+        score tensors are None and ``MaskedLayerNorm`` acts in the same way as ``nn.LayerNorm``.
 
-        Note: the scores are not assumed to be bounded between 0 and 1.
+        **NOTE:** The scores are not assumed to be bounded between 0 and 1.
 
         Args:
-            normalized_shape (TorchShape): input shape from an expected input.
-
-                If a single integer is used, it is treated as a singleton list, and this module will
-                normalize over the last dimension which is expected to be of that specific size.
-            eps: a value added to the denominator for numerical stability. Default: 1e-5
-            elementwise_affine: a boolean value that when set to ``True``, this module
-                has learnable per-element affine parameters initialized to ones (for weights)
-                and zeros (for biases). Default: ``True``.
+            normalized_shape (TorchShape): Input shape from an expected input. If a single integer is used, it is
+                treated as a singleton list, and this module will normalize over the last dimension which is expected
+                to be of that specific size.
+            eps: A value added to the denominator for numerical stability. Default: 1e-5
+            elementwise_affine: A boolean value that when set to ``True``, this module has learnable per-element
+                affine parameters initialized to ones (for weights) and zeros (for biases). Default: ``True``.
             bias: If set to ``False``, the layer will not learn an additive bias (only relevant if
-                :attr:`elementwise_affine` is ``True``). Default: ``True``.
-
-        Attributes:
-            weight: the weights of the module. The values are initialized to 1.
-            bias:   the bias of the module. The values are initialized to 0.
-            weight_score: learnable scores for the weights. Has the same shape as weight. When applied
-                to the default initial values of self.weight (i.e., all ones), this is equivalent to
-                randomly dropping out certain features.
-            bias_score: learnable scores for the bias. Has the same shape as bias. When applied to
-                the default initial values of self.bias (i.e., all zeros), it does not have any actual
-                effect. Thus, bias_score only influences training when MaskedLayerNorm is created
-                from some pretrained nn.LayerNorm module whose bias is not all zeros.
+                ``elementwise_affine`` is ``True``). Default: ``True``.
         """
+        # Attributes:
+        # weight: the weights of the module. The values are initialized to 1.
+        # bias:   the bias of the module. The values are initialized to 0.
+        # weight_score: learnable scores for the weights. Has the same shape as weight. When applied
+        # to the default initial values of self.weight (i.e., all ones), this is equivalent to
+        # randomly dropping out certain features.
+        # bias_score: learnable scores for the bias. Has the same shape as bias. When applied to
+        # the default initial values of self.bias (i.e., all zeros), it does not have any actual
+        # effect. Thus, bias_score only influences training when MaskedLayerNorm is created
+        # from some pretrained nn.LayerNorm module whose bias is not all zeros.
         super().__init__(
             normalized_shape=normalized_shape,
             eps=eps,
@@ -80,6 +78,15 @@ class MaskedLayerNorm(nn.LayerNorm):
             self.register_parameter("bias_scores", None)
 
     def forward(self, input: Tensor) -> Tensor:
+        """
+        Mapping function for the ``MaskedLayerNorm``
+
+        Args:
+            input (Tensor): Tensor to be mapped by the layer
+
+        Returns:
+            Tensor: Output tensor after mapping of the input tensor
+        """
         if not self.elementwise_affine:
             return F.layer_norm(input, self.normalized_shape, self.weight, self.bias, self.eps)
         else:
@@ -96,9 +103,16 @@ class MaskedLayerNorm(nn.LayerNorm):
             return F.layer_norm(input, self.normalized_shape, masked_weight, masked_bias, self.eps)
 
     @classmethod
-    def from_pretrained(cls, layer_norm_module: nn.LayerNorm) -> "MaskedLayerNorm":
+    def from_pretrained(cls, layer_norm_module: nn.LayerNorm) -> MaskedLayerNorm:
         """
-        Return an instance of MaskedLayerNorm whose weight and bias have the same values as those of layer_norm_module.
+        Return an instance of ``MaskedLayerNorm`` whose weight and bias have the same values as those of
+        ``layer_norm_module``.
+
+        Args:
+            layer_norm_module (nn.LayerNorm): Target module to be converted
+
+        Returns:
+            MaskedLayerNorm: New copy of the provided module with mask layers added to enable FedPM
         """
         masked_layer_norm_module = cls(
             # layer_norm_module.normalized_shape is a tuple so we
@@ -138,46 +152,41 @@ class _MaskedBatchNorm(_BatchNorm):
     ) -> None:
         """
             Base class for masked batch normalization modules of various dimensions. When affine is True,
-            _BatchNorm has a learnable weight and bias. For _MaskedBatchNorm,
-            the weight and bias do not receive gradient in back propagation.
-            Instead, two score tensors - one for the weight and another for the bias - are maintained.
-            In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores,
-            which are then used to produce binary masks via bernoulli sampling.
-            Finally, the binary masks are applied to the weight and the bias. During training,
-            gradients with respect to the score tensors are computed and used to update the score tensors.
+            ``_BatchNorm`` has a learnable weight and bias. For ``_MaskedBatchNorm``, the weight and bias do not
+            receive gradient in back propagation. Instead, two score tensors - one for the weight and another for the
+            bias - are maintained. In the forward pass, the score tensors are transformed by the Sigmoid function
+            into probability scores, which are then used to produce binary masks via Bernoulli sampling. Finally, the
+            binary masks are applied to the weight and the bias. During training, gradients with respect to the score
+            tensors are computed and used to update the score tensors.
 
-            When affine is False, _BatchNorm does not have weight or bias.
-            Under this condition, both score tensors are None and _MaskedBatchNorm acts in the same way as _BatchNorm.
+            When affine is False, _BatchNorm does not have weight or bias. Under this condition, both score tensors
+            are None and ``_MaskedBatchNorm`` acts in the same way as ``_BatchNorm``.
 
-            Note: the scores are not assumed to be bounded between 0 and 1.
+            **NOTE:** The scores are not assumed to be bounded between 0 and 1.
 
         Args:
             num_features: number of features or channels :math:`C` of the input
-            eps: a value added to the denominator for numerical stability.
-                Default: 1e-5
-            momentum: the value used for the running_mean and running_var
-                computation. Can be set to ``None`` for cumulative moving average
-                (i.e. simple average). Default: 0.1
-            affine: a boolean value that when set to ``True``, this module has
-                learnable affine parameters. Default: ``True``
-            track_running_stats: a boolean value that when set to ``True``, this
-                module tracks the running mean and variance, and when set to ``False``,
-                this module does not track such statistics, and initializes statistics
-                buffers :attr:`running_mean` and :attr:`running_var` as ``None``.
-                When these buffers are ``None``, this module always uses batch statistics.
-                in both training and eval modes. Default: ``True``
-
-            Attributes:
-                weight: the weights of the module. The values are initialized to 1.
-                bias:   the bias of the module. The values are initialized to 0.
-                weight_score: learnable scores for the weights. Has the same shape as weight. When applied
-                    to the default initial values of self.weight (i.e., all ones), this is equivalent to
-                    randomly dropping out certain features.
-                bias_score: learnable scores for the bias. Has the same shape as bias. When applied to
-                    the default initial values of self.bias (i.e., all zeros), it does not have any actual
-                    effect. Thus, bias_score only influences training when MaskedLayerNorm is created
-                    from some pretrained nn.LayerNorm module whose bias is not all zeros.
+            eps: a value added to the denominator for numerical stability. Default: 1e-5
+            momentum: the value used for the running_mean and ``running_var`` computation. Can be set to ``None`` for
+                cumulative moving average (i.e. simple average). Default: 0.1
+            affine: a boolean value that when set to ``True``, this module has learnable affine parameters.
+                Default: ``True``
+            track_running_stats: a boolean value that when set to ``True``, this module tracks the running mean and
+                variance, and when set to ``False``, this module does not track such statistics, and initializes
+                statistics buffers :attr:`running_mean` and :attr:`running_var` as ``None``. When these buffers
+                are ``None``, this module always uses batch statistics. in both training and eval modes.
+                Default: ``True``
         """
+        # Attributes:
+        # weight: the weights of the module. The values are initialized to 1.
+        # bias:   the bias of the module. The values are initialized to 0.
+        # weight_score: learnable scores for the weights. Has the same shape as weight. When applied
+        # to the default initial values of self.weight (i.e., all ones), this is equivalent to
+        # randomly dropping out certain features.
+        # bias_score: learnable scores for the bias. Has the same shape as bias. When applied to
+        # the default initial values of self.bias (i.e., all zeros), it does not have any actual
+        # effect. Thus, bias_score only influences training when MaskedLayerNorm is created
+        # from some pretrained nn.LayerNorm module whose bias is not all zeros.
         super().__init__(num_features, eps, momentum, affine, track_running_stats, device=device, dtype=dtype)
         if self.affine:
             assert (self.weight is not None) and (self.bias is not None)
@@ -190,6 +199,15 @@ class _MaskedBatchNorm(_BatchNorm):
             self.register_parameter("bias_scores", None)
 
     def forward(self, input: Tensor) -> Tensor:
+        """
+        Mapping function for the ``_MaskedBatchNorm`` module
+
+        Args:
+            input (Tensor): Tensor to be mapped via the ``_MaskedBatchNorm``
+
+        Returns:
+            Tensor: Output tensor after mapping
+        """
         self._check_input_dim(input)
 
         if self.momentum is None:
@@ -241,7 +259,16 @@ class _MaskedBatchNorm(_BatchNorm):
         )
 
     @classmethod
-    def from_pretrained(cls, batch_norm_module: _BatchNorm) -> "_MaskedBatchNorm":
+    def from_pretrained(cls, batch_norm_module: _BatchNorm) -> _MaskedBatchNorm:
+        """
+        Mapping a ``_BatchNorm`` module to a ``_MaskedBatchNorm`` by injecting masked layers
+
+        Args:
+            batch_norm_module (_BatchNorm): Module to be transformed to a masked module through layer insertion
+
+        Returns:
+            _MaskedBatchNorm: New copy of the input module with masked layers to enable FedPM
+        """
         masked_batch_norm_module = cls(
             num_features=batch_norm_module.num_features,
             eps=batch_norm_module.eps,
@@ -264,9 +291,8 @@ class _MaskedBatchNorm(_BatchNorm):
 
 class MaskedBatchNorm1d(_MaskedBatchNorm):
     """
-    Applies (masked) Batch Normalization over a 2D or 3D input.
-    Input shape should be (N, C) or (N, C, L), where N is the batch size,
-    C is the number of features/channels, and L is the sequence length.
+    Applies (masked) Batch Normalization over a 2D or 3D input. Input shape should be ``(N, C)`` or ``(N, C, L)``,
+    where ``N`` is the batch size, ``C`` is the number of features/channels, and ``L`` is the sequence length.
     """
 
     def _check_input_dim(self, input: Tensor) -> None:
@@ -276,8 +302,7 @@ class MaskedBatchNorm1d(_MaskedBatchNorm):
 
 class MaskedBatchNorm2d(_MaskedBatchNorm):
     """
-    Applies (masked) Batch Normalization over a 4D input (a mini-batch of 2D inputs
-    with additional channel dimension).
+    Applies (masked) Batch Normalization over a 4D input (a mini-batch of 2D inputs with additional channel dimension).
     """
 
     def _check_input_dim(self, input: Tensor) -> None:
@@ -287,8 +312,7 @@ class MaskedBatchNorm2d(_MaskedBatchNorm):
 
 class MaskedBatchNorm3d(_MaskedBatchNorm):
     """
-    Applies (masked) Batch Normalization over a 5D input (a mini-batch of 3D inputs
-    with additional channel dimension).
+    Applies (masked) Batch Normalization over a 5D input (a mini-batch of 3D inputs with additional channel dimension).
     """
 
     def _check_input_dim(self, input: Tensor) -> None:

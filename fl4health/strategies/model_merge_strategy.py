@@ -48,36 +48,34 @@ class ModelMergeStrategy(Strategy):
         weighted_aggregation: bool = True
     ) -> None:
         """
-        Model Merging strategy in which weights are loaded from clients, averaged (weighted or unweighted)
-            and redistributed to the clients for evaluation.
+        Model Merging strategy in which weights are loaded from clients, averaged (weighted or unweighted) and
+        redistributed to the clients for evaluation.
 
         Args:
-            fraction_fit (float, optional): Fraction of clients used during training. In case `min_fit_clients` is
-                larger than `fraction_fit * available_clients`, `min_fit_clients` will still be sampled.
+            fraction_fit (float, optional): Fraction of clients used during training. In case ``min_fit_clients`` is
+                larger than ``fraction_fit * available_clients``, ``min_fit_clients`` will still be sampled.
                 Defaults to 1.0.
             fraction_evaluate (float, optional): Fraction of clients used during validation. In case
-                `min_evaluate_clients` is larger than `fraction_evaluate * available_clients`, `min_evaluate_clients`
-                will still be sampled. Defaults to 1.0.
-            min_fit_clients (int, optional): _description_. Defaults to 2.
+                ``min_evaluate_clients`` is larger than ``fraction_evaluate * available_clients``,
+                ``min_evaluate_clients`` will still be sampled. Defaults to 1.0.
+            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2
             min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             min_available_clients (int, optional): Minimum number of total clients in the system.
                 Defaults to 2.
             evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
-                Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
-                Function used to configure client-side validation by providing a Config dictionary.
-                Defaults to None.
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                training by providing a configuration dictionary. Defaults to None.
+            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                client-side validation by providing a ``Config`` dictionary. Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
             evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
-                counts. Defaults to True.
             weighted_aggregation (bool, optional): Determines whether parameter aggregation is a linearly weighted
                 average or a uniform average. Important to note that weighting is based on number of samples in the
-                test dataset for the ModelMergeStrategy. Defaults to True.
+                test dataset for the ``ModelMergeStrategy``. Defaults to True.
         """
         self.fraction_fit = fraction_fit
         self.fraction_evaluate = fraction_evaluate
@@ -98,8 +96,8 @@ class ModelMergeStrategy(Strategy):
         """
         Sample and configure clients for a fit round.
 
-        In ModelMergeStrategy, it is assumed that server side parameters are empty and clients will
-            be initialized with their weights locally.
+        In ``ModelMergeStrategy``, it is assumed that server side parameters are empty and clients will be initialized
+        with their weights locally.
 
         Args:
             server_round (int): Indicates the server round we're currently on.
@@ -108,7 +106,7 @@ class ModelMergeStrategy(Strategy):
 
         Returns:
             list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
-                be sent to each client (packaged as FitIns).
+            be sent to each client (packaged as ``FitIns``).
         """
         config = {}
         if self.on_fit_config_fn is not None:
@@ -133,14 +131,15 @@ class ModelMergeStrategy(Strategy):
         Sample and configure clients for a evaluation round.
 
         Args:
-            server_round (int): Indicates the server round we're currently on. Only one round for ModelMergeStrategy
+            server_round (int): Indicates the server round we're currently on. Only one round for
+                ``ModelMergeStrategy``
             parameters (Parameters): The parameters to be used to initialize the clients for the eval round.
                 This will only occur following model merging.
             client_manager (ClientManager): The manager used to sample from the available clients.
 
         Returns:
             list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
-                to be sent to each client (packaged as EvaluateIns).
+            to be sent to each client (packaged as ``EvaluateIns``).
         """
         # Do not configure federated evaluation if fraction eval is 0.
         if self.fraction_evaluate == 0.0:
@@ -173,7 +172,8 @@ class ModelMergeStrategy(Strategy):
         Performs model merging by taking an unweighted average of client weights and metrics.
 
         Args:
-            server_round (int): Indicates the server round we're currently on. Only one round for ModelMergeStrategy.
+            server_round (int): Indicates the server round we're currently on. Only one round for
+                ``ModelMergeStrategy``.
             results (list[tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local fit
                 that need to be aggregated on the server-side.
             failures (list[tuple[ClientProxy, FitRes] | BaseException]): These are the results and exceptions
@@ -217,8 +217,8 @@ class ModelMergeStrategy(Strategy):
         failures: list[tuple[ClientProxy, EvaluateRes] | BaseException],
     ) -> tuple[float | None, dict[str, Scalar]]:
         """
-        Aggregate the metrics returned from the clients as a result of the evaluation round.
-            ModelMergeStrategy assumes only metrics will be computed on client and loss is set to None.
+        Aggregate the metrics returned from the clients as a result of the evaluation round. ``ModelMergeStrategy``
+        assumes only metrics will be computed on client and loss is set to None.
 
         Args:
             results (list[tuple[ClientProxy, EvaluateRes]]): The client identifiers and the results of their local
@@ -229,7 +229,7 @@ class ModelMergeStrategy(Strategy):
 
         Returns:
             tuple[float | None, dict[str, Scalar]]: Aggregated loss values and the aggregated metrics. The metrics
-                are aggregated according to evaluate_metrics_aggregation_fn.
+            are aggregated according to ``evaluate_metrics_aggregation_fn``.
         """
         if not results:
             return None, {}
@@ -250,15 +250,15 @@ class ModelMergeStrategy(Strategy):
     def evaluate(self, server_round: int, parameters: Parameters) -> tuple[float, dict[str, Scalar]] | None:
         """
         Evaluate the model parameters after the merging has occurred. This function can be used to perform centralized
-            (i.e., server-side) evaluation of model parameters.
+        (i.e., server-side) evaluation of model parameters.
 
         Args:
-            server_round (int): Server round. Only one round in ModelMergeStrategy.
+            server_round (int): Server round. Only one round in ``ModelMergeStrategy``.
             parameters: Parameters The current model parameters after merging has occurred.
 
         Returns:
-            tuple[float, dict[str, Scalar]] | None: A Tuple containing loss and a
-                dictionary containing task-specific metrics (e.g., accuracy).
+            tuple[float, dict[str, Scalar]] | None: A Tuple containing loss and a dictionary containing task-specific
+            metrics (e.g., accuracy).
         """
         if self.evaluate_fn is None:
             return None
@@ -272,8 +272,8 @@ class ModelMergeStrategy(Strategy):
 
     def initialize_parameters(self, client_manager: ClientManager) -> Parameters | None:
         """
-        Required definition of parent class. ModelMergeStrategy does not support server side initialization.
-            Parameters are always set to None
+        Required definition of parent class. ``ModelMergeStrategy`` does not support server side initialization.
+        Parameters are always set to None
 
         Args:
             client_manager (ClientManager): Unused.

@@ -39,10 +39,10 @@ class NumpyClippingClient(BasicClient):
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
             metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
-            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
-                'cuda'
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
+                "cuda"
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
-                each batch. Defaults to LossMeterType.AVERAGE.
+                each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
@@ -50,7 +50,7 @@ class NumpyClippingClient(BasicClient):
             reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
                 should send data to. Defaults to None.
             progress_bar (bool, optional): Whether or not to display a progress bar during client training and
-                validation. Uses tqdm. Defaults to False
+                validation. Uses ``tqdm``. Defaults to False
             client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
@@ -70,11 +70,34 @@ class NumpyClippingClient(BasicClient):
         self.adaptive_clipping: bool | None = None
 
     def calculate_parameters_norm(self, parameters: NDArrays) -> float:
+        """
+        Given a set of parameters, compute the l2-norm of the parameters. This is a matrix norm: squared sum of all of
+        the weights
+
+        Args:
+            parameters (NDArrays): Tensor to measure with the norm
+
+        Returns:
+            float: Squared sum of all values in the NDArrays
+        """
         layer_inner_products = [pow(linalg.norm(layer_weights), 2) for layer_weights in parameters]
         # network Frobenius norm
         return pow(sum(layer_inner_products), 0.5)
 
     def clip_parameters(self, parameters: NDArrays) -> tuple[NDArrays, float]:
+        """
+        Performs "flat clipping" on the parameters according to
+
+        .. math::
+            \\text{parameters} \\cdot \\min \\left(1, \\frac{C}{\\Vert \\text{parameters} \\Vert_2} \\right)
+
+        Args:
+            parameters (NDArrays): Parameters to clip
+
+        Returns:
+            tuple[NDArrays, float]: Clipped parameters and the associated clipping bit indicating whether the norm
+            was below ``self.clipping_bound``. If ``self.adaptive_clipping`` is false, this bit is always 0.0
+        """
         assert self.clipping_bound is not None
         assert self.adaptive_clipping is not None
         # performs flat clipping (i.e. parameters * min(1, C/||parameters||_2))
@@ -90,6 +113,15 @@ class NumpyClippingClient(BasicClient):
         return [layer_weights * clip_scalar for layer_weights in parameters], 0.0
 
     def compute_weight_update_and_clip(self, parameters: NDArrays) -> tuple[NDArrays, float]:
+        """
+        Compute the weight delta (i.e. new weights - old weights) and clip according to `self.clipping_bound`
+
+        Args:
+            parameters (NDArrays): Updated parameters to compute the delta from and clip thereafter
+
+        Returns:
+            tuple[NDArrays, float]: Clipped weighted updates (weight deltas) and the associated clipping bit
+        """
         assert self.initial_weights is not None
         assert len(parameters) == len(self.initial_weights)
         weight_update: NDArrays = [
@@ -101,7 +133,7 @@ class NumpyClippingClient(BasicClient):
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
-        This function performs clipping through compute_weight_update_and_clip and stores the clipping bit
+        This function performs clipping through ``compute_weight_update_and_clip`` and stores the clipping bit
         as the last entry in the NDArrays
         """
         if not self.initialized:
@@ -124,7 +156,7 @@ class NumpyClippingClient(BasicClient):
         This function assumes that the parameters being passed contain model parameters followed by the last entry
         of the list being the new clipping bound. They are unpacked for the clients to use in training. If it is
         called in the first fitting round, we assume the full model is being initialized and use the
-        FullParameterExchanger() to set all model weights.
+        ``FullParameterExchanger()`` to set all model weights.
 
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client

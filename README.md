@@ -4,7 +4,7 @@
 
 ![FL4Health Logo](./assets/fl4health_rect_logo_no_background.png)
 
-Principally, this repository contains the federated learning (FL) engine aimed at facilitating FL research, experimentation, and exploration, with a specific focus on health applications.
+Principally, this repository contains the federated learning (FL) engine aimed at facilitating FL research, experimentation, and exploration, with a specific focus on health applications. **Documentation is hosted at**: https://vectorinstitute.github.io/FL4Health/index.html
 
 - [Summary of Approaches](#summary-of-approaches)
 - [Privacy Capabilities](#privacy-capabilities)
@@ -270,7 +270,8 @@ Note that these strategies are also responsible for unpacking and repacking info
 
 The examples folder contains an extensive set of ways to use the various components of the library, setup the different strategies implemented in the library, and how to run federated learning in general. These examples are an accessible way to learn what is required to experiment with different FL capabilities. Each example has some documentation describing what is being implemented and how to run the code to see it in action. The examples span basic FedAvg implementations to differentially private SCAFFOLD and beyond.
 
-__NOTE__: The contents of the examples folder is not packed with the FL4Health library on release to PyPi
+> [!NOTE]
+> The contents of the examples folder is not packed with the FL4Health library on release to PyPi
 
 ## Research Code
 
@@ -278,7 +279,8 @@ The research folder houses code associated with various research being conducted
 
 - [FENDA-FL](https://arxiv.org/pdf/2309.16825.pdf) FLamby and GEMINI Experiments (training scripts and model code only). There is a README in these folders that provide details on how to run the hyper-parameter sweeps, evaluations, and other experiments. The GEMINI experiments are not runnable in a general environment, as they require access to GEMINI data, which is securely held, due to patient privacy.
 
-__NOTE__: The contents of the research folder is not packed with the FL4Health library on release to PyPi
+> [!NOTE]
+> The contents of the research folder is not packed with the FL4Health library on release to PyPi
 
 ## Contributing
 
@@ -288,5 +290,5 @@ If you are interested in contributing to the library, please see [CONTRIBUTION.M
 
 We hope that the library will be useful to both FL practitioners and researchers working on cutting edge FL applications, with a specific interest in FL for healthcare. If you use FL4Health in a project or in your research, the citation below should be used.
 ```
-D. B. Emerson, J. Jewell, F. Tavakoli, Y. Zhang, S. Ayromlou, M. Lotif, and A. Krishnan (2023). FL4Health. https://github.com/vectorInstitute/FL4Health/. Computer Software, Vector Institute for Artificial Intelligence.
+D. B. Emerson, J. Jewell, S. Ayromlou, S. Carere, F. Tavakoli, Y. Zhang, M. Lotif, and A. Krishnan (2025). FL4Health. https://github.com/vectorInstitute/FL4Health/. Computer Software, Vector Institute for Artificial Intelligence.
 ```

@@ -32,10 +32,12 @@ class FedPm(FedAvgDynamicLayer):
     ) -> None:
         """
         A strategy that is used for aggregating probability masks in the "Federated Probabilistic Mask Training"
-        paradigm, as detailed in http://arxiv.org/pdf/2209.15328. The implementation here allows for simply averaging
-        the probability masks, as well as the more sophisticated Bayesian aggregation approach.
+        paradigm, as detailed in http://arxiv.org/pdf/2209.15328.
 
-        Note: since the parameters aggregated by this strategy are supposed to be binary masks, by default
+        The implementation here allows for simply averaging the probability masks, as well as the more sophisticated
+        Bayesian aggregation approach.
+
+        **NOTE:** Since the parameters aggregated by this strategy are supposed to be binary masks, by default
         FedPM performs uniformed averaging. The effect of weighted averaging is also not covered in the original work.
 
         Args:
@@ -46,11 +48,10 @@ class FedPm(FedAvgDynamicLayer):
             min_available_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
-                Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
-                Function used to configure client-side validation by providing a Config dictionary.
-                Defaults to None.
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                training by providing a configuration dictionary. Defaults to None.
+            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                client-side validation by providing a ``Config`` dictionary. Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             initial_parameters (Parameters | None, optional): Initial global model parameters. Defaults to None.
             fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
@@ -93,31 +94,40 @@ class FedPm(FedAvgDynamicLayer):
 
     def aggregate_bayesian(self, results: list[tuple[NDArrays, int]]) -> dict[str, NDArray]:
         """
-        Perform posterior update to the Beta distribution parameters based on the binary masks
-        sent by the clients.
+        Perform posterior update to the Beta distribution parameters based on the binary masks sent by the clients.
 
-        More precisely, each client maintains for each one of its parameter tensors
-        a "probability score tensor". These scores (after applying the Sigmoid function to them)
-        are Bernoulli probabilities which indicate how likely their corresponding parameters are
-        to be pruned or kept. Each client samples a binary mask for every one of its parameter tensors
-        based on the corresponding Bernoulli probabilities. These masks are sent to the server
-        for aggregation.
+        More precisely, each client maintains for each one of its parameter tensors a "probability score tensor".
+        These scores (after applying the Sigmoid function to them) are Bernoulli probabilities which indicate how
+        likely their corresponding parameters are to be pruned or kept. Each client samples a binary mask for every
+        one of its parameter tensors based on the corresponding Bernoulli probabilities. These masks are sent to the
+        server for aggregation.
 
-        Here, we assume that the bernoulli probabilities of each client themselves follow a Beta
-        distribution with parameters alpha and beta. Then the binary masks may be viewed as data that
-        can be used to update alpha and beta, and this corresponds to a posterior update.
-        Due to the conjugate relation between the Beta and Bernoulli distributions, the posterior distribution
-        is still a Beta distribution, so we can perform the aggregation in this manner every round.
+        Here, we assume that the bernoulli probabilities of each client themselves follow a Beta distribution with
+        parameters alpha and beta. Then the binary masks may be viewed as data that can be used to update alpha and
+        beta, and this corresponds to a posterior update. Due to the conjugate relation between the Beta and
+        Bernoulli distributions, the posterior distribution is still a Beta distribution, so we can perform the
+        aggregation in this manner every round.
 
         In this case, the updates performed are:
-            alpha_new = alpha + M
-            beta_new = beta + K * 1 - M
-            theta = (alpha_new - 1) / (alpha_new + beta_new - 2)
-        where M is the sum of all binary masks corresponding to a particular parameter tensor,
-        K is the number of clients, and "1" in the second equation refers to an array of all
-        ones of the same shape as M.
 
-        In the beginning, alpha and beta are initialized to arrays of all ones.
+        .. code:: python
+
+            alpha_new = alpha + M
+
+            beta_new = beta + K * 1 - M
+
+            theta = (alpha_new - 1) / (alpha_new + beta_new - 2)
+
+        where ``M`` is the sum of all binary masks corresponding to a particular parameter tensor, ``K`` is the number
+        of clients, and "1" in the second equation refers to an array of all ones of the same shape as ``M``.
+
+        In the beginning, alpha and beta are initialized to arrays of all ones
+
+        Args:
+            results (list[tuple[NDArrays, int]]): Binary masks sent to the server for aggregation
+
+        Returns:
+            dict[str, NDArray]: Aggregated binary masks
         """
         names_to_layers: defaultdict[str, list[NDArray]] = defaultdict(list)
         total_num_clients: defaultdict[str, int] = defaultdict(int)

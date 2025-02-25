@@ -14,11 +14,23 @@ class FixedSamplingByFractionClientManager(BaseFractionSamplingManager):
     def sample_fraction(
         self,
         sample_fraction: float,
-        # minimum number of clients required to be available
         min_num_clients: int | None = None,
         criterion: Criterion | None = None,
     ) -> list[ClientProxy]:
-        """Sample a number of Flower ClientProxy instances."""
+        """
+        Sample a number of Flower ClientProxy instances **WITHOUT** replacement.
+
+        Args:
+            sample_fraction (float): Fraction of clients to sample. Guaranteed to produce this fraction from
+                available clients
+            min_num_clients (int | None, optional): minimum number of clients required to be available.
+                Defaults to None.
+            criterion (Criterion | None, optional): Criterion to help with sampling. No filter is applied if None.
+                Defaults to None.
+
+        Returns:
+            list[ClientProxy]: List of ClientProxy objects representing the selected clients.
+        """
 
         available_cids = self.wait_and_filter(min_num_clients, criterion)
         n_available_cids = len(available_cids)

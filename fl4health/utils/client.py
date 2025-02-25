@@ -2,13 +2,14 @@ import copy
 import os
 from collections.abc import Iterable
 from inspect import currentframe, getframeinfo
-from logging import INFO, LogRecord
+from logging import INFO, WARNING, LogRecord
 from typing import Any, TypeVar
 
 import torch
 import torch.nn as nn
 from flwr.common.logger import LOGGER_NAME, console_handler, log
 from flwr.common.typing import Config, Scalar
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from fl4health.utils.config import narrow_dict_type
@@ -41,18 +42,18 @@ def set_pack_losses_with_val_metrics(config: Config) -> bool:
 
 def move_data_to_device(data: T, device: torch.device) -> T:
     """
-    _summary_
+    Moves data to the target device.
 
     Args:
-        data (T): The data to move to self.device. Can be a TorchInputType or a TorchTargetType
+        data (T): The data to move to self.device. Can be a ``TorchInputType`` or a ``TorchTargetType``
         device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
             'cuda'
 
     Raises:
-        TypeError: Raised if data is not one of the types specified by TorchInputType or TorchTargetType
+        TypeError: Raised if data is not one of the types specified by ``TorchInputType`` or ``TorchTargetType``
 
     Returns:
-        T: The data argument except now it's been moved to self.device
+        T: The data argument except now it's been moved to ``self.device``
     """
     # Currently we expect both inputs and targets to be either tensors
     # or dictionaries of tensors
@@ -71,15 +72,16 @@ def check_if_batch_is_empty_and_verify_input(input: TorchInputType) -> bool:
     """
     This function checks whether the provided batch (input) is empty. If the input is a dictionary of inputs, it
     first verifies that the length of all inputs is the same, then checks if they are non-empty.
-    NOTE: This function assumes the input is BATCH FIRST
+    **NOTE:** This function assumes the input is **BATCH FIRST**
 
     Args:
-        input (TorchInputType): Input batch. input can be of type torch.Tensor or dict[str, torch.Tensor], and in the
-        latter case, the batch is considered to be empty if all tensors in the dictionary have length zero.
+        input (TorchInputType): Input batch. input can be of type ``torch.Tensor`` or ``dict[str, torch.Tensor]``,
+            and in the latter case, the batch is considered to be empty if all tensors in the dictionary have length
+            zero.
 
     Raises:
-        TypeError: Raised if input is not of type torch.Tensor or dict[str, torch.Tensor].
-        ValueError: Raised if input has type dict[str, torch.Tensor] and not all tensors within the dictionary have
+        TypeError: Raised if input is not of type ``torch.Tensor`` or ``dict[str, torch.Tensor]``.
+        ValueError: Raised if input has type ``dict[str, torch.Tensor]`` and not all tensors within the dictionary have
             the same size.
 
     Returns:
@@ -120,16 +122,14 @@ def clone_and_freeze_model(model: nn.Module) -> nn.Module:
 
 def maybe_progress_bar(iterable: Iterable, display_progress_bar: bool) -> Iterable:
     """
-    Used to print progress bars during client training and validation. If
-    self.progress_bar is false, just returns the original input iterable
-    without modifying it.
+    Used to print progress bars during client training and validation. If ``self.progress_bar`` is false, just returns
+    the original input iterable without modifying it.
+
     Args:
         iterable (Iterable): The iterable to wrap
     Returns:
-        Iterable: an iterator which acts exactly like the original
-            iterable, but prints a dynamically updating progress bar every
-            time a value is requested. Or the original iterable if
-            self.progress_bar is False
+        Iterable: an iterator which acts exactly like the original iterable, but prints a dynamically updating
+        progress bar every time a value is requested. Or the original iterable if ``self.progress_bar`` is False
     """
     if not display_progress_bar:
         return iterable
@@ -156,3 +156,26 @@ def maybe_progress_bar(iterable: Iterable, display_progress_bar: bool) -> Iterab
             "bar_format": format,
         }
         return tqdm(iterable, **kwargs)
+
+
+def process_and_check_validation_steps(config: Config, val_loader: DataLoader) -> int | None:
+    if "num_validation_steps" in config:
+        log(
+            INFO,
+            "num_validation_steps specified in config. Only a subset of batches will be processed from the validation "
+            "set during evaluation. If num_validation_steps is greater than the number of batches in the validation "
+            "dataloader, datapoints may be evaluated twice",
+        )
+        num_validation_steps = narrow_dict_type(config, "num_validation_steps", int)
+        assert num_validation_steps > 0, "num_validation_steps must not be 0"
+        val_dataloader_len = len(val_loader)
+        assert val_dataloader_len > 0, "Dataloader must have length greater than 0."
+        if num_validation_steps > val_dataloader_len:
+            log(
+                WARNING,
+                f"num_validation_steps: {num_validation_steps} is larger than the length of the "
+                f"validation dataloader: {val_dataloader_len}",
+            )
+        return num_validation_steps
+    else:
+        return None

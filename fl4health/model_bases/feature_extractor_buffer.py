@@ -15,19 +15,21 @@ class FeatureExtractorBuffer:
         features are stored in a dictionary where the keys are the layer names and the values are the extracted
         features as torch Tensors.
 
+        Attributes:
+
+        - model (nn.Module): The neural network model.
+        - flatten_feature_extraction_layers (dict[str, bool]): A dictionary specifying whether to flatten the feature
+          extraction layers.
+        - fhooks (list[RemovableHandle]): A list to store the handles for removing hooks.
+        - accumulate_features (bool): A flag indicating whether to accumulate features.
+        - extracted_features_buffers (dict[str, list[torch.Tensor]]): A dictionary to store the extracted features
+          for each layer.
+
         Args:
             model (nn.Module): The neural network model.
-            flatten_feature_extraction_layers (dict[str, bool]): Dictionary of layers to extract features from them and
-            whether to flatten them. Keys are the layer names that are extracted from the named_modules and values are
-            boolean.
-        Attributes:
-            model (nn.Module): The neural network model.
-            flatten_feature_extraction_layers (dict[str, bool]): A dictionary specifying whether to flatten the feature
-                extraction layers.
-            fhooks (list[RemovableHandle]): A list to store the handles for removing hooks.
-            accumulate_features (bool): A flag indicating whether to accumulate features.
-            extracted_features_buffers (dict[str, list[torch.Tensor]]): A dictionary to store the extracted features
-                for each layer.
+            flatten_feature_extraction_layers (dict[str, bool]): Dictionary of layers to extract features from them
+                and whether to flatten them. Keys are the layer names that are extracted from the ``named_modules`` and
+                values are boolean.
         """
         self.model = model
         self.flatten_feature_extraction_layers = flatten_feature_extraction_layers
@@ -42,9 +44,9 @@ class FeatureExtractorBuffer:
         """
         Enables the accumulation of features in the buffers for multiple forward passes.
 
-        This method sets the `accumulate_features` flag to True, allowing the model to accumulate features
-        in the buffers for multiple forward passes. This can be useful in scenarios where you want to extract
-        features from intermediate layers of the model during inference.
+        This method sets the ``accumulate_features`` flag to True, allowing the model to accumulate features in the
+        buffers for multiple forward passes. This can be useful in scenarios where you want to extract features from
+        intermediate layers of the model during inference.
         """
         self.accumulate_features = True
 
@@ -52,7 +54,7 @@ class FeatureExtractorBuffer:
         """
         Disables the accumulation of features in the buffers.
 
-        This method sets the `accumulate_features` attribute to False, which prevents the buffers from accumulating
+        This method sets the ``accumulate_features`` attribute to False, which prevents the buffers from accumulating
         features and overwrites them for each forward pass.
         """
         self.accumulate_features = False
@@ -66,10 +68,10 @@ class FeatureExtractorBuffer:
     def get_hierarchical_attr(self, module: nn.Module, layer_hierarchy: list[str]) -> nn.Module:
         """
         Traverse the hierarchical attributes of the module to get the desired attribute. Hooks should be
-        registered to specific layers of the model, not to nn.Sequential or nn.ModuleList.
+        registered to specific layers of the model, not to nn.Sequential or ``nn.ModuleList``.
 
         Args:
-            module (nn.Module): The nn.Module object to traverse.
+            module (nn.Module): The ``nn.Module`` object to traverse.
             layer_hierarchy (list[str]): The hierarchical list of name of desired layer.
 
         Returns:
@@ -88,8 +90,8 @@ class FeatureExtractorBuffer:
         Args:
             prefix (str): The prefix of the layer name for registering the hook.
             layers_name (list[str]): The list of named modules of the model. The assumption is that list of
-            named modules is sorted in the order of the model's forward pass with depth-first traversal. This
-            will allow the user to specify the generic name of the layer instead of the full hierarchical name.
+                named modules is sorted in the order of the model's forward pass with depth-first traversal. This
+                will allow the user to specify the generic name of the layer instead of the full hierarchical name.
 
         Returns:
             str: The complete name of last named layer that matches the prefix.
@@ -154,14 +156,14 @@ class FeatureExtractorBuffer:
 
     def flatten(self, features: torch.Tensor) -> torch.Tensor:
         """
-        Flattens the input tensor along the batch dimension. The features are of shape (batch_size, *).
-        We flatten them across the batch dimension to get a 2D tensor of shape (batch_size, feature_size).
+        Flattens the input tensor along the batch dimension. The features are of shape (``batch_size``, \\*).
+        We flatten them across the batch dimension to get a 2D tensor of shape (``batch_size``, ``feature_size``).
 
         Args:
-            features (torch.Tensor): The input tensor of shape (batch_size, *).
+            features (torch.Tensor): The input tensor of shape (``batch_size``, \\*).
 
         Returns:
-            torch.Tensor: The flattened tensor of shape (batch_size, feature_size).
+            torch.Tensor: The flattened tensor of shape (``batch_size``, ``feature_size``).
         """
 
         return features.reshape(len(features), -1)
@@ -172,7 +174,7 @@ class FeatureExtractorBuffer:
 
         Returns:
             features (dict[str, torch.Tensor]): A dictionary where the keys are the layer names and the values are
-                the extracted features as torch Tensors.
+            the extracted features as torch Tensors.
         """
         features = {}
 

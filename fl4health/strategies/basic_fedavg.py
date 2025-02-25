@@ -59,23 +59,21 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         FedAvg Paper: https://arxiv.org/abs/1602.05629.
 
         Args:
-            fraction_fit (float, optional): Fraction of clients used during training. In case `min_fit_clients` is
-                larger than `fraction_fit * available_clients`, `min_fit_clients` will still be sampled.
+            fraction_fit (float, optional): Fraction of clients used during training. In case ``min_fit_clients`` is
+                larger than ``fraction_fit * available_clients``, ``min_fit_clients`` will still be sampled.
                 Defaults to 1.0.
             fraction_evaluate (float, optional): Fraction of clients used during validation. In case
-                `min_evaluate_clients` is larger than `fraction_evaluate * available_clients`, `min_evaluate_clients`
-                will still be sampled. Defaults to 1.0.
-            min_fit_clients (int, optional): _description_. Defaults to 2.
+                ``min_evaluate_clients`` is larger than ``fraction_evaluate * available_clients``,
+                ``min_evaluate_clients`` will still be sampled. Defaults to 1.0.
+            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2
             min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
-            min_available_clients (int, optional): Minimum number of total clients in the system.
-                Defaults to 2.
+            min_available_clients (int, optional): Minimum number of total clients in the system. Defaults to 2.
             evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
-                Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
-                Function used to configure client-side validation by providing a Config dictionary.
-                Defaults to None.
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                training by providing a configuration dictionary. Defaults to None.
+            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                client-side validation by providing a ``Config`` dictionary. Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             initial_parameters (Parameters | None, optional): Initial global model parameters. Defaults to None.
             fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
@@ -112,7 +110,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         """
         This function configures a sample of clients for a training round. It handles the case where the client
         manager has a sample fraction vs. a sample function (to allow for more flexible sampling).
-        The function follows the standard configuration flow where the on_fit_config_fn function is used to produce
+        The function follows the standard configuration flow where the ``on_fit_config_fn`` function is used to produce
         configurations to be sent to all clients. These are packaged with the provided parameters and set over to the
         clients.
 
@@ -123,7 +121,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
 
         Returns:
             list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
-                be sent to each client (packaged as FitIns).
+            be sent to each client (packaged as ``FitIns``).
         """
 
         if isinstance(client_manager, BaseFractionSamplingManager):
@@ -151,7 +149,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         """
         This function configures a sample of clients for a evaluation round. It handles the case where the client
         manager has a sample fraction vs. a sample function (to allow for more flexible sampling).
-        The function follows the standard configuration flow where the on_evaluate_config_fn function is used to
+        The function follows the standard configuration flow where the ``on_evaluate_config_fn`` function is used to
         produce configurations to be sent to all clients. These are packaged with the provided parameters and set over
         to the clients.
 
@@ -162,7 +160,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
 
         Returns:
             list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
-                to be sent to each client (packaged as EvaluateIns).
+            to be sent to each client (packaged as ``EvaluateIns``).
         """
 
         # Do not configure federated evaluation if fraction eval is 0.
@@ -193,7 +191,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         self, server_round: int, client_manager: ClientManager
     ) -> list[tuple[ClientProxy, GetPropertiesIns]]:
         """
-        This function configures everything required to request properties from ALL of the clients. The client
+        This function configures everything required to request properties from **ALL** of the clients. The client
         manger, regardless of type, is instructed to grab all available clients to perform the polling process.
 
         Args:
@@ -202,7 +200,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
 
         Returns:
             list[tuple[ClientProxy, GetPropertiesIns]]: List of sampled client identifiers and the configuration
-                to be sent to each client (packaged as GetPropertiesIns).
+            to be sent to each client (packaged as ``GetPropertiesIns``).
         """
         config = {}
         if self.on_fit_config_fn is not None:
@@ -287,7 +285,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
 
         Returns:
             tuple[float | None, dict[str, Scalar]]: Aggregated loss values and the aggregated metrics. The metrics
-                are aggregated according to evaluate_metrics_aggregation_fn.
+            are aggregated according to ``evaluate_metrics_aggregation_fn``.
         """
         if not results:
             return None, {}
@@ -337,30 +335,29 @@ class OpacusBasicFedAvg(BasicFedAvg):
     ) -> None:
         """
         This strategy is a simple extension of the BasicFedAvg strategy to force the model being federally trained to
-        be an valid Opacus GradSampleModule and, thereby, ensure that associated the parameters are aligned with
-        those of Opacus based models used by the InstanceLevelDpClient.
+        be an valid Opacus ``GradSampleModule`` and, thereby, ensure that associated the parameters are aligned with
+        those of Opacus based models used by the ``InstanceLevelDpClient``.
 
         Args:
             model (GradSampleModule): The model architecture to be federally trained. When using this strategy,
-                the model must be of type Opacus GradSampleModule. This model will then be used to set
-                initialize_parameters as the initial parameters to be used by all clients.
-            fraction_fit (float, optional): Fraction of clients used during training. In case `min_fit_clients` is
-                larger than `fraction_fit * available_clients`, `min_fit_clients` will still be sampled.
+                the model must be of type Opacus ``GradSampleModule``. This model will then be used to set
+                ``initialize_parameters`` as the initial parameters to be used by all clients.
+            fraction_fit (float, optional): Fraction of clients used during training. In case ``min_fit_clients`` is
+                larger than ``fraction_fit * available_clients``, ``min_fit_clients`` will still be sampled.
                 Defaults to 1.0.
             fraction_evaluate (float, optional): Fraction of clients used during validation. In case
-                `min_evaluate_clients` is larger than `fraction_evaluate * available_clients`, `min_evaluate_clients`
-                will still be sampled. Defaults to 1.0.
-            min_fit_clients (int, optional): _description_. Defaults to 2.
+                ``min_evaluate_clients`` is larger than ``fraction_evaluate * available_clients``,
+                ``min_evaluate_clients`` will still be sampled. Defaults to 1.0.
+            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2
             min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             min_available_clients (int, optional): Minimum number of total clients in the system.
                 Defaults to 2.
             evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
-                Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
-                Function used to configure client-side validation by providing a Config dictionary.
-                Defaults to None.
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                training by providing a configuration dictionary. Defaults to None.
+            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
+                client-side validation by providing a ``Config`` dictionary. Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
