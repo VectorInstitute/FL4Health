@@ -360,7 +360,12 @@ class BestMetricTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
         self.metric_key = f"{prefix}{metric}"
 
         def metric_score_function(_: float, metrics: dict[str, Scalar]) -> float:
-            return metrics[self.metric_key]
+            try:
+                val = metrics[self.metric_key]
+            except KeyError as e:
+                log(ERROR, f"Could not find '{self.metric_key}' in metrics dict. Available keys are: {metrics.keys()}")
+                raise e
+            return val
 
         super().__init__(checkpoint_dir, checkpoint_name, metric_score_function, metric, maximize)
 

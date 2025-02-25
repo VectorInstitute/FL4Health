@@ -187,6 +187,7 @@ class TransformsMetric(Metric):
         metric: Metric,
         pred_transforms: Sequence[TorchTransformFunction] | None = None,
         target_transforms: Sequence[TorchTransformFunction] | None = None,
+        name: str | None = None,
     ) -> None:
         """
         A thin wrapper class to allow transforms to be applied to preds and targets prior to calculating metrics.
@@ -200,11 +201,12 @@ class TransformsMetric(Metric):
             target_transforms (Sequence[TorchTransformFunction] | None, optional): A list of transform functions to
                 apply to the targets before computing the metrics. Each callable must accept and return a
                 ``torch.Tensor``. Use partial to set other arguments.
+            name (str | None, optional): Name of the Transformed Metric. If left as None defaults to metric.name
         """
         self.metric = metric
         self.pred_transforms = [] if pred_transforms is None else pred_transforms
         self.target_transforms = [] if target_transforms is None else target_transforms
-        super().__init__(name=self.metric.name)
+        self.name = self.metric.name if name is None else name
 
     def update(self, pred: torch.Tensor, target: torch.Tensor) -> None:
         for transform in self.pred_transforms:
@@ -216,35 +218,43 @@ class TransformsMetric(Metric):
         self.metric.update(pred, target)
 
     def compute(self, name: str | None) -> Metrics:
-        return self.metric.compute(name)
+        # Change the name of the original metric class temporarily s
+        original_metric_name = self.metric.name
+        self.metric.name = self.name
+        metrics_dict = self.metric.compute(name)
+        self.metric.name = original_metric_name
+        return metrics_dict
 
     def clear(self) -> None:
         return self.metric.clear()
 
 
 class EMAMetric(Metric):
-    def __init__(self, metric: Metric, smoothing_factor: float = 0.1):
+    def __init__(self, metric: Metric, name: str | None = None, smoothing_factor: float = 0.1):
         """
         Exponential Moving Average (EMA) metric wrapper to apply EMA to the computed metric.
 
         Args:
             metric (Metric): A FL4Health compatible metric
+            name (str | None, optional): Name of the EMAMetric. If left as None will default to 'EMA_{metric.name}'.
             smoothing_factor (float, optional): Smoothing factor in range [0, 1] for the EMA. Smaller values increase
                 smoothing by weighting previous scores more heavily. Defaults to 0.1.
         """
         self.metric = metric
         self.smoothing_factor = smoothing_factor
         self.previous_score: Metrics | None = None
+        self.name = f"EMA_{self.metric.name}" if name is None else name
 
     def update(self, input, target):
         return self.metric.update(input, target)
 
     def compute(self, name):
-        # Add EMA to the name
-        ema_name = f"{name} - EMA"
-
-        # Compute current metric score
-        metrics_dict = self.metric.compute(ema_name)
+        # Compute current metric score.
+        # Temporarily change name of the underlying metric so that we get the EMAMetric name in keys of metrics_dict
+        metric_name = self.metric.name
+        self.metric.name = self.name
+        metrics_dict = self.metric.compute(name)
+        self.metric.name = metric_name
 
         # Check if this is the first score
         if self.previous_score is None:
