@@ -85,12 +85,12 @@ def main(
         initial_parameters=params,
     )
 
-    # model_checkpointer = BestMetricTorchModuleCheckpointer(
-    #     checkpoint_dir=Path("examples/nnunet_example/"),
-    #     checkpoint_name="checkpoint_best_ema_dice",
-    #     metric="EMA_Hard-DICE",
-    #     maximize=True,
-    # )
+    model_checkpointer = BestMetricTorchModuleCheckpointer(
+        checkpoint_dir=Path("examples/nnunet_example/"),
+        checkpoint_name="checkpoint_best_ema_dice.pth",
+        metric="EMA_DICE",
+        maximize=True,
+    )
     # model_checkpointer = BestLossTorchModuleCheckpointer(
     #     checkpoint_dir=Path("examples/nnunet_example/"),
     #     checkpoint_name="best_loss_model",
@@ -105,7 +105,7 @@ def main(
         model=None,
         parameter_exchanger=FullParameterExchanger(),
         state_checkpointer=state_checkpointer,
-        # model_checkpointers=[model_checkpointer],
+        model_checkpointers=[model_checkpointer],
     )
 
     server = NnunetServer(
