@@ -12,6 +12,7 @@ from fl4health.utils.metrics import (
     BinarySoftDiceCoefficient,
     MetricManager,
     HardDICE,
+    SoftDICE,
 )
 
 
@@ -153,7 +154,7 @@ def test_hard_dice_metric_along_axes() -> None:
     result = hd.compute()
     assert result["DICE"] == approx(5 / 6)  # (1 + 2/3 + 2/3 + 1) / 4
 
-    # Test using along multiple axes
+    # Test using along multiple axes. Shape (3, 2, 4)
     hd = HardDICE(name="DICE", along_axes=(0, 1), ignore_background_axis=None, ignore_null=True)
     p = torch.tensor([[[0, 1, 0, 1], [1, 1, 1, 1]]])
     t = torch.tensor([[[0, 0, 1, 1], [1, 1, 1, 1]]])
@@ -297,6 +298,82 @@ def test_binary_soft_dice_coefficient_default_threshold() -> None:
     # Dice should be (100)/(100 + 0.1) and 0 for the two channels
     # Mean over the 10 examples is equivalent to 0.5*(100)/(100 + 0.1)
     pytest.approx(dice_coefficient, abs=0.001) == 0.5 * (100) / (100 + 0.1)
+
+
+def test_hard_dice_default_threshold() -> None:
+    # Test with the default spatial and epsilon values
+    metric = HardDICE(name="DICE", along_axes=(0, 1), ignore_null=False, binarize=0.5)
+    all_ones_targets = torch.ones((10, 1, 10, 10, 10))
+    all_ones_logits = torch.ones((10, 1, 10, 10, 10))
+    metric.update(all_ones_logits, all_ones_targets)
+    dice_of_one = metric.compute()["DICE"]
+    pytest.approx(dice_of_one, abs=0.001) == 1.0
+
+    # Test with random logits between 0 and 1
+    metric.clear()
+    np.random.seed(42)
+    random_logits = torch.Tensor(np.random.rand(10, 1, 10, 10, 10))
+    metric.update(random_logits, all_ones_targets)
+    random_dice = metric.compute()["DICE"]
+    pytest.approx(random_dice, abs=0.00001) == 0.6598031841976006
+
+    # Test with intersection of zero to ensure edge case is equal to 0.0
+    metric.clear()
+    all_zeros_logits = torch.zeros((10, 1, 10, 10, 10))
+    metric.update(all_zeros_logits, all_ones_targets)
+    dice_intersection_zero = metric.compute()["DICE"]
+    pytest.approx(dice_intersection_zero, abs=0.000001) == 0.0
+
+    # Test with union of zero to ensure edge case is equal to 1.0
+    metric.clear()
+    all_zeros_logits = torch.zeros((10, 1, 10, 10, 10))
+    all_zeros_target = torch.zeros((10, 1, 10, 10, 10))
+    metric.update(all_zeros_logits, all_zeros_target)
+    dice_union_zero = metric.compute()["DICE"]
+    pytest.approx(dice_union_zero, abs=0.000001) == 1.0
+
+    # Test with different spatial dimensions (i.e. a 2D target with two channels) and epsilon
+    metric.clear()
+    all_ones_targets = torch.ones((10, 2, 10, 10))
+    ones_and_zeros_logits = torch.ones((10, 2, 10, 10))
+    # Set entries in the second channel to zero
+    ones_and_zeros_logits[:, 1, :, :] = 0
+    metric.update(ones_and_zeros_logits, all_ones_targets)
+    dice_coefficient = metric.compute()["DICE"]
+    # Union should be 100 and 50 for the two channels
+    # Intersection should be 100 and 0 for the two channels
+    # Dice should be (100)/(100 + 0.1) and 0 for the two channels
+    # Mean over the 10 examples is equivalent to 0.5*(100)/(100 + 0.1)
+    pytest.approx(dice_coefficient, abs=0.001) == 0.5 * (100) / (100 + 0.1)
+
+
+def test_hard_and_soft_dice_alt_threshold() -> None:
+    # Change the threshold to 0.1
+    metric = HardDICE(name="DICE", along_axes=(0, 1), ignore_null=False, binarize=0.1)
+
+    # Test all TP's
+    all_ones_targets = torch.ones((10, 1, 10, 10, 10))
+    all_ones_logits = torch.ones((10, 1, 10, 10, 10))
+    metric.update(all_ones_logits, all_ones_targets)
+    dice_of_one = metric.compute()["DICE"]
+    pytest.approx(dice_of_one, abs=0.001) == 1.0
+
+    # Test with 0.25 in all entries, but with a lower threshold for classification as 1
+    metric.clear()
+    all_one_quarter_logits = 0.25 * torch.ones((10, 1, 10, 10, 10))
+    metric.update(all_one_quarter_logits, all_ones_logits)
+    dice_of_one = metric.compute()["DICE"]
+    pytest.approx(dice_of_one, abs=0.001) == 1.0
+
+    # Test with a none threshold to ensure that the continuous dice coefficient is calculated
+    metric = SoftDICE(name="DICE", along_axes=(0, 1), ignore_null=False)
+    all_one_tenth_logits = 0.1 * torch.ones((10, 1, 10, 10, 10))
+    metric.update(all_one_tenth_logits, all_ones_targets)
+    continuous_dice = metric.compute()["DICE"]
+    intersection = 100
+    union = 0.5 * 1.1 * 1000
+    dice_target = intersection / (union + 1e-7)
+    pytest.approx(continuous_dice, abs=0.001) == dice_target
 
 
 def test_binary_soft_dice_coefficient_alt_threshold() -> None:

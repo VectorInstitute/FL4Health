@@ -412,7 +412,8 @@ class SoftDICE(Metric):
         # Assertions to prevent this metric being used improperly
         assert preds.shape == targets.shape, (
             f"Preds and targets must have the same shape but got {preds.shape} and {targets.shape} respectively."
-        )
+        )  # NOTE: It would be cool to add a utility function that attempts to infer the channel dimension if the
+        # shapes are not the same and one-hot encodes the tensor with fewer dimensions.
         assert torch.min(preds) >= 0 and torch.max(preds) <= 1, "Expected preds to be in range [0, 1]."
         assert torch.min(targets) >= 0 and torch.max(targets) <= 1, "Expected targets to be in range [0, 1]."
 
@@ -421,6 +422,10 @@ class SoftDICE(Metric):
             indices = torch.arange(1, preds.shape[self.ignore_background_axis], device=preds.device)
             preds = torch.index_select(preds, self.ignore_background_axis, indices)
             targets = torch.index_select(targets, self.ignore_background_axis, indices)
+
+        # On the off chance were given booleans convert them to integers
+        preds = preds.to(torch.uint8) if preds.dtype == torch.bool else preds
+        targets = targets.to(torch.uint8) if targets.dtype == torch.bool else targets
 
         # Compute tp, fp and fn
         sum_axes = tuple([i for i in range(preds.ndim) if i not in self.along_axes])
@@ -476,14 +481,12 @@ class HardDICE(SoftDICE):
         along_axes: Sequence[int] = (0,),
         ignore_background_axis: int | None = None,
         ignore_null: bool = True,
+        binarize: float | int | None = None,
     ) -> None:
         """
         Computes the Mean DICE Coefficient between categorical (Hard) class predictions and targets.
 
-        Preds and targets passed to __call__ are assumed to contain only binary integers. Consider using
-        fl4health.utils.metrics.TransformsMetric to apply transforms to preds and targets before computing the DICE
-        score. For example you may need to use an argmax and one-hot-encoding function to convert predicted logits to
-        'hard' class predictions.
+        Preds and targets passed to __call__ are assumed to have the same shape and contain elements in range [0, 1]. For multiclass problems ensure they are both one-hot-encoded.
 
         Args:
 
@@ -497,9 +500,25 @@ class HardDICE(SoftDICE):
                 False then null dice scores are set to 1. Null DICE scores are usually a result of the prediction and
                 target both being all-zero (True Negatives). How this argument affects the final DICE score will vary
                 depending along which axes the DICE coefficients were computed. Defaults to True.
+            binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
+                index of the channel/class dimension. If a float is given, predictions below the
+                threshold are mapped to 0 and above are mapped to 1. If an integer is given, predictions are binarized
+                based on the class with the highest prediction. Default of None leaves preds and targets unchanged.
         """
         # Use int64 to prevent overflow
+        self.binarize = binarize
         super().__init__(name, along_axes, ignore_background_axis, ignore_null, dtype=torch.int64)
+
+    def update(self, preds: torch.Tensor, targets: torch.Tensor):
+        if isinstance(self.binarize, float):
+            preds = (preds > self.binarize).to(torch.uint8)
+        elif isinstance(self.binarize, int):
+            # Use argmax to get predicted class labels (hard_preds) and the one-hot-encode them.
+            hard_preds = preds.argmax(self.binarize, keepdim=True)
+            preds = torch.zeros_like(preds)
+            preds.scatter_(self.binarize, hard_preds, 1)
+
+        super().update(preds, targets)
 
 
 class BinarySoftDiceCoefficient(SimpleMetric):
