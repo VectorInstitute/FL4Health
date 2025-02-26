@@ -280,10 +280,199 @@ class EMAMetric(Metric):
         return self.metric.clear()
 
 
-class HardDICE(Metric):
+# class HardDICE(Metric):
+#     def __init__(
+#         self,
+#         name: str = "Hard-DICE",
+#         along_axes: Sequence[int] = (0,),
+#         ignore_background_axis: int | None = None,
+#         ignore_null: bool = True,
+#     ) -> None:
+#         """
+#         Computes the Mean DICE Coefficient between categorical (Hard) class predictions and targets.
+
+#         Preds and targets passed to __call__ are assumed to contain only binary integers. Consider using
+#         fl4health.utils.metrics.TransformsMetric to apply transforms to preds and targets before computing the DICE
+#         score. For example you may need to use an argmax and one-hot-encoding function to convert predicted logits to
+#         'hard' class predictions.
+
+#         Args:
+
+#             name (str): Name of the metric. Defaults to 'DICE'
+#             along_axes (Sequence[int]): Sequence of indices specifying along which axes the individual DICE
+#                 coefficients should be computed. The final DICE Score is the mean of these DICE coefficients. Defaults
+#                 to (0,) since this is usually the batch dimension. If provided an empty tuple then a single DICE coefficient will be computed over all axes.
+#             ignore_background_axis (int | None): If specified, the first channel of the specified axis is removed
+#                 prior to computing the DICE coefficients. Useful for removing background channels. Defaults to None.
+#             ignore_null (bool): If True, null dice coefficients are removed before returning the mean dice score. If
+#                 False then null dice scores are set to 1. Null DICE scores are usually a result of the prediction and
+#                 target both being all-zero (True Negatives). How this argument affects the final DICE score will vary
+#                 depending along which axes the DICE coefficients were computed. Defaults to True.
+#         """
+#         self.ignore_background_axis = ignore_background_axis
+#         self.along_axes = tuple([a for a in along_axes])
+#         self.ignore_background_axis = ignore_background_axis
+#         self.ignore_null = ignore_null
+#         self.name = name
+
+#         # We will accumulate boolean tensors for TP, FP and FN to reduce memory overhead
+#         self.tp = torch.tensor([], dtype=torch.bool)
+#         self.fp = torch.tensor([], dtype=torch.bool)
+#         self.fn = torch.tensor([], dtype=torch.bool)
+
+#     def update(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
+#         # Assertions to prevent this metric being used improperly
+#         assert preds.shape == targets.shape, (
+#             f"Preds and targets must have the same shape but got {preds.shape} and {targets.shape} respectively."
+#         )
+
+#         # Remove the background channel from the axis specified by ignore_background_axis
+#         if self.ignore_background_axis is not None:
+#             indices = torch.arange(1, preds.shape[self.ignore_background_axis], device=preds.device)
+#             preds = torch.index_select(preds, self.ignore_background_axis, indices)
+#             targets = torch.index_select(targets, self.ignore_background_axis, indices)
+
+#         # Save tp, fp and fn as boolean arrays to prevent memory build up
+#         preds, targets = preds.bool(), targets.bool()  # Convert to boolean tensors
+#         self.tp = torch.cat([self.tp.to(preds.device), preds * targets])
+#         self.fp = torch.cat([self.fp.to(preds.device), preds * ~targets])
+#         self.fn = torch.cat([self.fn.to(preds.device), ~preds * targets])
+
+#     def _compute_dice_coefficients(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor) -> torch.Tensor:
+#         # Compute union and intersection along specified axes
+#         sum_axes = tuple([i for i in range(tp.ndim) if i not in self.along_axes])
+#         numerator = 2 * tp.sum(dim=sum_axes)  # Equivalent to 2 times the intersection
+#         denominator = (2 * tp + fp + fn).sum(dim=sum_axes)  # Equivalent to the union
+
+#         # Prevent div by 0 by handling null scores
+#         if self.ignore_null:  # Ignore dice scores that will be null by removing them from the union and intersection
+#             numerator = numerator[denominator != 0]
+#             denominator = denominator[denominator != 0]
+#         else:  # Set dice scores that would be null to 1. This might be good if they are considered True Negatives.
+#             numerator[denominator == 0] = 1
+#             denominator[denominator == 0] = 1
+
+#         # Compute dice coefficients and return
+#         return numerator / denominator
+
+#     def compute(self, name: str | None = None) -> Metrics:
+#         # Compute dice coefficients and return mean DICE score
+#         dice = self._compute_dice_coefficients(self.tp, self.fp, self.fn)
+#         key = self.name if name is None else f"{name} - {self.name}"
+#         return {key: torch.mean(dice).item()}
+
+#     def clear(self) -> None:
+#         # Reset accumulated tp, fp and fn's.
+#         self.tp = torch.tensor([], dtype=torch.bool)
+#         self.fp = torch.tensor([], dtype=torch.bool)
+#         self.fn = torch.tensor([], dtype=torch.bool)
+
+
+class SoftDICE(Metric):
     def __init__(
         self,
-        name: str = "DICE",
+        name: str = "Soft-DICE",
+        along_axes: Sequence[int] = (0,),
+        ignore_background_axis: int | None = None,
+        ignore_null: bool = True,
+        dtype: torch.dtype = torch.float32,
+    ) -> None:
+        """
+        Computes the Mean DICE Coefficient between class predictions and targets.
+
+        Preds and targets passed to __call__ are assumed to have the same shape and contain elements in range [0, 1].
+        For multiclass problems ensure they are both one-hot-encoded.
+
+        Args:
+
+            name (str): Name of the metric. Defaults to 'DICE'
+            along_axes (Sequence[int]): Sequence of indices specifying along which axes the individual DICE
+                coefficients should be computed. The final DICE Score is the mean of these DICE coefficients. Defaults
+                to (0,) which is assumed to be the batch/sample dimension. If provided an empty tuple then a single
+                DICE coefficient will be computed over all axes. Note that intermediate values must be stored in memory
+                for each element along the specified axes, this may lead to memory build up in some instances.
+            ignore_background_axis (int | None): If specified, the first channel of the specified axis is removed
+                prior to computing the DICE coefficients. Useful for removing background channels. Defaults to None.
+            ignore_null (bool): If True, null dice coefficients are removed before returning the mean dice score. If
+                False then null dice scores are set to 1. Null DICE scores are usually a result of the prediction and
+                target both being all-zero (True Negatives). How this argument affects the final DICE score will vary
+                depending along which axes the DICE coefficients were computed. Defaults to True.
+            dtype (torch.dtype, optional): The torch dtype to use when storing the intermediate true postive (tp),
+                false positive (fp) and false negative (fn) sums. Must be a float if predictions are continious.
+        """
+        self.ignore_background_axis = ignore_background_axis
+        self.along_axes = tuple([a for a in along_axes])
+        self.ignore_background_axis = ignore_background_axis
+        self.ignore_null = ignore_null
+        self.name = name
+        self.dtype = dtype
+        self.tp_fp_fn_initialized = False
+
+    def update(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
+        # Assertions to prevent this metric being used improperly
+        assert preds.shape == targets.shape, (
+            f"Preds and targets must have the same shape but got {preds.shape} and {targets.shape} respectively."
+        )
+        assert torch.min(preds) >= 0 and torch.max(preds) <= 1, "Expected preds to be in range [0, 1]."
+        assert torch.min(targets) >= 0 and torch.max(targets) <= 1, "Expected targets to be in range [0, 1]."
+
+        # Remove the background channel from the axis specified by ignore_background_axis
+        if self.ignore_background_axis is not None:
+            indices = torch.arange(1, preds.shape[self.ignore_background_axis], device=preds.device)
+            preds = torch.index_select(preds, self.ignore_background_axis, indices)
+            targets = torch.index_select(targets, self.ignore_background_axis, indices)
+
+        # Compute tp, fp and fn
+        sum_axes = tuple([i for i in range(preds.ndim) if i not in self.along_axes])
+        tp = (preds * targets).sum(dim=sum_axes, dtype=self.dtype)
+        fp = (preds * (1 - targets)).sum(dim=sum_axes, dtype=self.dtype)
+        fn = ((1 - preds) * targets).sum(dim=sum_axes, dtype=self.dtype)
+
+        # If tp, fp and fn don't exist yet, then initialize them and exit function
+        if not self.tp_fp_fn_initialized:
+            self.tp, self.fp, self.fn = tp, fp, fn
+            self.tp_fp_fn_initialized = True
+            return
+
+        # If the batch/sample dimension is in self.along_axes, we must concatenate the values; otherwise, we sum them
+        self.tp = torch.cat([self.tp, tp], dim=0) if 0 in self.along_axes else self.tp + tp
+        self.fp = torch.cat([self.fp, fp], dim=0) if 0 in self.along_axes else self.fp + fp
+        self.fn = torch.cat([self.fn, fn], dim=0) if 0 in self.along_axes else self.fn + fn
+
+    def _compute_dice_coefficients(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor) -> torch.Tensor:
+        # Compute union and intersection
+        print(tp, fp, fn)
+        numerator = 2 * tp  # Equivalent to 2 times the intersection
+        denominator = 2 * tp + fp + fn  # Equivalent to the union
+
+        # Prevent div by 0 by handling null scores
+        if self.ignore_null:  # Ignore dice scores that will be null by removing them from the union and intersection
+            numerator = numerator[denominator != 0]
+            denominator = denominator[denominator != 0]
+        else:  # Set dice scores that would be null to 1. This might be good if they are considered True Negatives.
+            numerator[denominator == 0] = 1
+            denominator[denominator == 0] = 1
+
+        # Compute dice coefficients and return
+        return numerator / denominator
+
+    def compute(self, name: str | None = None) -> Metrics:
+        # Compute dice coefficients and return mean DICE score
+        dice = self._compute_dice_coefficients(self.tp, self.fp, self.fn)
+        print(dice)
+        key = self.name if name is None else f"{name} - {self.name}"
+        return {key: torch.mean(dice).item()}
+
+    def clear(self) -> None:
+        # Reset accumulated tp, fp and fn's.
+        del self.tp, self.fp, self.fn
+        self.tp_fp_fn_initialized = False
+
+
+class HardDICE(SoftDICE):
+    def __init__(
+        self,
+        name: str = "Hard-DICE",
         along_axes: Sequence[int] = (0,),
         ignore_background_axis: int | None = None,
         ignore_null: bool = True,
@@ -309,63 +498,8 @@ class HardDICE(Metric):
                 target both being all-zero (True Negatives). How this argument affects the final DICE score will vary
                 depending along which axes the DICE coefficients were computed. Defaults to True.
         """
-        self.ignore_background_axis = ignore_background_axis
-        self.along_axes = tuple([a for a in along_axes])
-        self.ignore_background_axis = ignore_background_axis
-        self.ignore_null = ignore_null
-        self.name = name
-
-        # We will accumulate boolean tensors for TP, FP and FN to reduce memory overhead
-        self.tp = torch.tensor([], dtype=torch.bool)
-        self.fp = torch.tensor([], dtype=torch.bool)
-        self.fn = torch.tensor([], dtype=torch.bool)
-
-    def update(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
-        # Assertions to prevent this metric being used improperly
-        assert preds.shape == targets.shape, (
-            f"Preds and targets must have the same shape but got {preds.shape} and {targets.shape} respectively."
-        )
-
-        # Remove the background channel from the axis specified by ignore_background_axis
-        if self.ignore_background_axis is not None:
-            indices = torch.arange(1, preds.shape[self.ignore_background_axis], device=preds.device)
-            preds = torch.index_select(preds, self.ignore_background_axis, indices)
-            targets = torch.index_select(targets, self.ignore_background_axis, indices)
-
-        # Save tp, fp and fn as boolean arrays to prevent memory build up
-        preds, targets = preds.bool(), targets.bool()  # Convert to boolean tensors
-        self.tp = torch.cat([self.tp.to(preds.device), preds * targets])
-        self.fp = torch.cat([self.fp.to(preds.device), preds * ~targets])
-        self.fn = torch.cat([self.fn.to(preds.device), ~preds * targets])
-
-    def _compute_dice_coefficients(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor) -> torch.Tensor:
-        # Compute union and intersection along specified axes
-        sum_axes = tuple([i for i in range(tp.ndim) if i not in self.along_axes])
-        numerator = 2 * tp.sum(dim=sum_axes)  # Equivalent to 2 times the intersection
-        denominator = (2 * tp + fp + fn).sum(dim=sum_axes)  # Equivalent to the union
-
-        # Prevent div by 0 by handling null scores
-        if self.ignore_null:  # Ignore dice scores that will be null by removing them from the union and intersection
-            numerator = numerator[denominator != 0]
-            denominator = denominator[denominator != 0]
-        else:  # Set dice scores that would be null to 1. This might be good if they are considered True Negatives.
-            numerator[denominator == 0] = 1
-            denominator[denominator == 0] = 1
-
-        # Compute dice coefficients and return
-        return numerator / denominator
-
-    def compute(self, name: str | None = None) -> Metrics:
-        # Compute dice coefficients and return mean DICE score
-        dice = self._compute_dice_coefficients(self.tp, self.fp, self.fn)
-        key = self.name if name is None else f"{name} - {self.name}"
-        return {key: torch.mean(dice).item()}
-
-    def clear(self) -> None:
-        # Reset accumulated tp, fp and fn's.
-        self.tp = torch.tensor([], dtype=torch.bool)
-        self.fp = torch.tensor([], dtype=torch.bool)
-        self.fn = torch.tensor([], dtype=torch.bool)
+        # Use int64 to prevent overflow
+        super().__init__(name, along_axes, ignore_background_axis, ignore_null, dtype=torch.int64)
 
 
 class BinarySoftDiceCoefficient(SimpleMetric):
