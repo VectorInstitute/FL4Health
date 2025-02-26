@@ -1,8 +1,171 @@
 import numpy as np
 import pytest
+from pytest import approx
 import torch
+import math
 
-from fl4health.utils.metrics import F1, ROC_AUC, Accuracy, BalancedAccuracy, BinarySoftDiceCoefficient, MetricManager
+from fl4health.utils.metrics import (
+    F1,
+    ROC_AUC,
+    Accuracy,
+    BalancedAccuracy,
+    BinarySoftDiceCoefficient,
+    MetricManager,
+    HardDICE,
+)
+
+
+def test_hard_dice_metric_1d_and_clear() -> None:
+    hd = HardDICE(name="DICE", along_axes=(0,), ignore_background_axis=None, ignore_null=True)
+
+    # Test with two 1D examples
+    p = torch.tensor([[0, 0, 0, 1, 1, 1, 1, 1]])
+    t = torch.tensor([[0, 0, 1, 0, 1, 1, 1, 1]])
+    hd.update(p, t)
+    result = hd.compute()
+    assert result["DICE"] == approx(0.8)
+
+    hd.clear()  # Clear to restart
+    p = torch.tensor([[0, 0, 0, 1, 0, 0, 1, 1]])
+    t = torch.tensor([[0, 0, 1, 0, 1, 1, 1, 1]])
+    hd.update(p, t)
+    result = hd.compute()
+    assert result["DICE"] == approx(0.5)
+
+
+def test_hard_dice_metric_1d_accumulation() -> None:
+    hd = HardDICE(name="DICE", along_axes=(0,), ignore_background_axis=None, ignore_null=True)
+
+    # Test accumulation
+    p = torch.tensor([[0, 0, 0, 1, 0, 0, 1, 1]])
+    t = torch.tensor([[0, 0, 1, 0, 1, 1, 1, 1]])
+    hd.update(p, t)
+    result = hd.compute()
+    assert result["DICE"] == approx(0.5)
+
+    p = torch.tensor([[0, 0, 0, 1, 1, 1, 1, 1]])
+    t = torch.tensor([[0, 0, 1, 0, 1, 1, 1, 1]])
+    hd.update(p, t)
+    result = hd.compute()
+    assert result["DICE"] == approx(0.65)  # Avg of 0.8 and 0.5
+
+
+def test_hard_dice_metric_2d() -> None:
+    # Test higher dimension examples. Shape is (1, 2, 4)
+    hd = HardDICE(name="DICE", along_axes=(0,), ignore_background_axis=None, ignore_null=True)
+    p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])
+    t = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]])
+    hd.update(p, t)
+    result = hd.compute()
+    assert result["DICE"] == approx(0.8)
+
+
+def test_hard_dice_metric_ignore_null_true() -> None:
+    hd = HardDICE(name="DICE", along_axes=(0,), ignore_background_axis=None, ignore_null=True)
+
+    # Initial test
+    p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])
+    t = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]])
+    hd.update(p, t)
+    result = hd.compute()
+    assert result["DICE"] == approx(0.8)
+
+    # Test that ignore null is working by adding a null sample
+    p = torch.tensor([[[0, 0, 0, 0], [0, 0, 0, 0]]])
+    t = torch.tensor([[[0, 0, 0, 0], [0, 0, 0, 0]]])
+    hd.update(p, t)
+    result = hd.compute()
+    assert result["DICE"] == approx(0.8)
+
+    # Test that NaN is returned when all dice coefficients are null and ignore_null is True. Should return NaN
+    hd.clear()
+    p = torch.tensor([[[0, 0, 0, 0], [0, 0, 0, 0]]])
+    t = torch.tensor([[[0, 0, 0, 0], [0, 0, 0, 0]]])
+    hd.update(p, t)
+    result = hd.compute()
+    assert math.isnan(result["DICE"])
+
+
+def test_hard_dice_metric_ignore_null_false() -> None:
+    hd = HardDICE(name="DICE", along_axes=(0,), ignore_background_axis=None, ignore_null=False)
+
+    # Initial test
+    p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])
+    t = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]])
+    hd.update(p, t)
+    result = hd.compute()
+    assert result["DICE"] == approx(0.8)
+
+    # Test that ignore null is working by adding a null sample. Should have dice score set to 1
+    p = torch.tensor([[[0, 0, 0, 0], [0, 0, 0, 0]]])
+    t = torch.tensor([[[0, 0, 0, 0], [0, 0, 0, 0]]])
+    hd.update(p, t)
+    result = hd.compute()
+    assert result["DICE"] == approx(0.9)
+
+    # Test that NaN is returned when all dice coefficients are null and ignore_null is True. Should return NaN
+    hd.clear()
+    p = torch.tensor([[[0, 0, 0, 0], [0, 0, 0, 0]]])
+    t = torch.tensor([[[0, 0, 0, 0], [0, 0, 0, 0]]])
+    hd.update(p, t)
+    result = hd.compute()
+    assert result["DICE"] == approx(1)
+
+
+def test_hard_dice_metric_ignore_background() -> None:
+    # Test ignore background
+    hd = HardDICE(name="DICE", along_axes=(0,), ignore_background_axis=1, ignore_null=True)
+    p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])
+    t = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]])
+    hd.update(p, t)
+    result = hd.compute()
+    assert result["DICE"] == approx(1)
+
+    # Test that accumulation works still
+    p = torch.tensor([[[0, 0, 0, 1], [0, 0, 0, 1]]])
+    t = torch.tensor([[[0, 0, 1, 0], [0, 1, 1, 1]]])
+    hd.update(p, t)
+    result = hd.compute()
+    assert result["DICE"] == approx(0.75)
+
+
+def test_hard_dice_metric_along_axes() -> None:
+    # Test computing dice coefficients along different axes. Shape (n, 2, 4)
+    hd = HardDICE(name="DICE", along_axes=(1,), ignore_background_axis=None, ignore_null=True)
+    p = torch.tensor([[[0, 1, 0, 1], [1, 1, 1, 1]]])
+    t = torch.tensor([[[0, 0, 1, 1], [1, 1, 1, 1]]])
+    hd.update(p, t)
+    result = hd.compute()
+    assert result["DICE"] == approx(0.75)  # (0.5 + 1) / 2
+
+    # Ensure first dimension is being summed over by adding another sample
+    p = torch.tensor([[[1, 1, 0, 0], [0, 0, 0, 0]]])
+    t = torch.tensor([[[0, 0, 1, 1], [1, 1, 1, 1]]])
+    hd.update(p, t)
+    result = hd.compute()
+    assert result["DICE"] == approx(11 / 24)  # (2/8 + 2/3) / 2
+
+    # Test along last dimension
+    hd = HardDICE(name="DICE", along_axes=(2,), ignore_background_axis=None, ignore_null=True)
+    p = torch.tensor([[[0, 1, 0, 1], [1, 1, 1, 1]]])
+    t = torch.tensor([[[0, 0, 1, 1], [1, 1, 1, 1]]])
+    hd.update(p, t)
+    result = hd.compute()
+    assert result["DICE"] == approx(5 / 6)  # (1 + 2/3 + 2/3 + 1) / 4
+
+    # Test using along multiple axes
+    hd = HardDICE(name="DICE", along_axes=(0, 1), ignore_background_axis=None, ignore_null=True)
+    p = torch.tensor([[[0, 1, 0, 1], [1, 1, 1, 1]]])
+    t = torch.tensor([[[0, 0, 1, 1], [1, 1, 1, 1]]])
+    hd.update(p, t)
+    p = torch.tensor([[[1, 1, 1, 1], [0, 0, 0, 1]]])
+    t = torch.tensor([[[1, 1, 1, 1], [0, 1, 1, 1]]])
+    hd.update(p, t)
+    p = torch.tensor([[[0, 0, 0, 0], [1, 1, 1, 1]]])
+    t = torch.tensor([[[0, 1, 1, 1], [1, 1, 1, 1]]])
+    hd.update(p, t)
+    result = hd.compute()
+    assert result["DICE"] == approx(4 / 6)  # (0.5 + 1 + 1 + 0.5 + 0 + 1) / 6
 
 
 def test_accuracy_metric() -> None:
