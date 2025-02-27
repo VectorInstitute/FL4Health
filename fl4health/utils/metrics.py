@@ -280,94 +280,6 @@ class EMAMetric(Metric):
         return self.metric.clear()
 
 
-# class HardDICE(Metric):
-#     def __init__(
-#         self,
-#         name: str = "Hard-DICE",
-#         along_axes: Sequence[int] = (0,),
-#         ignore_background_axis: int | None = None,
-#         ignore_null: bool = True,
-#     ) -> None:
-#         """
-#         Computes the Mean DICE Coefficient between categorical (Hard) class predictions and targets.
-
-#         Preds and targets passed to __call__ are assumed to contain only binary integers. Consider using
-#         fl4health.utils.metrics.TransformsMetric to apply transforms to preds and targets before computing the DICE
-#         score. For example you may need to use an argmax and one-hot-encoding function to convert predicted logits to
-#         'hard' class predictions.
-
-#         Args:
-
-#             name (str): Name of the metric. Defaults to 'DICE'
-#             along_axes (Sequence[int]): Sequence of indices specifying along which axes the individual DICE
-#                 coefficients should be computed. The final DICE Score is the mean of these DICE coefficients. Defaults
-#                 to (0,) since this is usually the batch dimension. If provided an empty tuple then a single DICE coefficient will be computed over all axes.
-#             ignore_background_axis (int | None): If specified, the first channel of the specified axis is removed
-#                 prior to computing the DICE coefficients. Useful for removing background channels. Defaults to None.
-#             ignore_null (bool): If True, null dice coefficients are removed before returning the mean dice score. If
-#                 False then null dice scores are set to 1. Null DICE scores are usually a result of the prediction and
-#                 target both being all-zero (True Negatives). How this argument affects the final DICE score will vary
-#                 depending along which axes the DICE coefficients were computed. Defaults to True.
-#         """
-#         self.ignore_background_axis = ignore_background_axis
-#         self.along_axes = tuple([a for a in along_axes])
-#         self.ignore_background_axis = ignore_background_axis
-#         self.ignore_null = ignore_null
-#         self.name = name
-
-#         # We will accumulate boolean tensors for TP, FP and FN to reduce memory overhead
-#         self.tp = torch.tensor([], dtype=torch.bool)
-#         self.fp = torch.tensor([], dtype=torch.bool)
-#         self.fn = torch.tensor([], dtype=torch.bool)
-
-#     def update(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
-#         # Assertions to prevent this metric being used improperly
-#         assert preds.shape == targets.shape, (
-#             f"Preds and targets must have the same shape but got {preds.shape} and {targets.shape} respectively."
-#         )
-
-#         # Remove the background channel from the axis specified by ignore_background_axis
-#         if self.ignore_background_axis is not None:
-#             indices = torch.arange(1, preds.shape[self.ignore_background_axis], device=preds.device)
-#             preds = torch.index_select(preds, self.ignore_background_axis, indices)
-#             targets = torch.index_select(targets, self.ignore_background_axis, indices)
-
-#         # Save tp, fp and fn as boolean arrays to prevent memory build up
-#         preds, targets = preds.bool(), targets.bool()  # Convert to boolean tensors
-#         self.tp = torch.cat([self.tp.to(preds.device), preds * targets])
-#         self.fp = torch.cat([self.fp.to(preds.device), preds * ~targets])
-#         self.fn = torch.cat([self.fn.to(preds.device), ~preds * targets])
-
-#     def _compute_dice_coefficients(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor) -> torch.Tensor:
-#         # Compute union and intersection along specified axes
-#         sum_axes = tuple([i for i in range(tp.ndim) if i not in self.along_axes])
-#         numerator = 2 * tp.sum(dim=sum_axes)  # Equivalent to 2 times the intersection
-#         denominator = (2 * tp + fp + fn).sum(dim=sum_axes)  # Equivalent to the union
-
-#         # Prevent div by 0 by handling null scores
-#         if self.ignore_null:  # Ignore dice scores that will be null by removing them from the union and intersection
-#             numerator = numerator[denominator != 0]
-#             denominator = denominator[denominator != 0]
-#         else:  # Set dice scores that would be null to 1. This might be good if they are considered True Negatives.
-#             numerator[denominator == 0] = 1
-#             denominator[denominator == 0] = 1
-
-#         # Compute dice coefficients and return
-#         return numerator / denominator
-
-#     def compute(self, name: str | None = None) -> Metrics:
-#         # Compute dice coefficients and return mean DICE score
-#         dice = self._compute_dice_coefficients(self.tp, self.fp, self.fn)
-#         key = self.name if name is None else f"{name} - {self.name}"
-#         return {key: torch.mean(dice).item()}
-
-#     def clear(self) -> None:
-#         # Reset accumulated tp, fp and fn's.
-#         self.tp = torch.tensor([], dtype=torch.bool)
-#         self.fp = torch.tensor([], dtype=torch.bool)
-#         self.fn = torch.tensor([], dtype=torch.bool)
-
-
 class SoftDICE(Metric):
     def __init__(
         self,
@@ -380,8 +292,8 @@ class SoftDICE(Metric):
         """
         Computes the Mean DICE Coefficient between class predictions and targets.
 
-        Preds and targets passed to __call__ are assumed to have the same shape and contain elements in range [0, 1].
-        For multiclass problems ensure they are both one-hot-encoded.
+        Preds and targets passed to the update method are assumed to have the same shape and contain elements in range
+        [0, 1]. For multiclass problems ensure they are both one-hot-encoded.
 
         Args:
 
@@ -400,20 +312,23 @@ class SoftDICE(Metric):
             dtype (torch.dtype, optional): The torch dtype to use when storing the intermediate true postive (tp),
                 false positive (fp) and false negative (fn) sums. Must be a float if predictions are continious.
         """
-        self.ignore_background_axis = ignore_background_axis
+        self.name = name
         self.along_axes = tuple([a for a in along_axes])
         self.ignore_background_axis = ignore_background_axis
         self.ignore_null = ignore_null
-        self.name = name
         self.dtype = dtype
+
+        # Create intermediate tensors. Will be initialized with tensors of correct shape on first update.
         self.tp_fp_fn_initialized = False
+        self.tp, self.fp, self.fn = torch.tensor([]), torch.tensor([]), torch.tensor([])
 
     def update(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
         # Assertions to prevent this metric being used improperly
-        assert preds.shape == targets.shape, (
-            f"Preds and targets must have the same shape but got {preds.shape} and {targets.shape} respectively."
-        )  # NOTE: It would be cool to add a utility function that attempts to infer the channel dimension if the
+        # NOTE: It would be cool to add a utility function that attempts to infer the channel dimension if the
         # shapes are not the same and one-hot encodes the tensor with fewer dimensions.
+        assert (
+            preds.shape == targets.shape
+        ), f"Preds and targets must have the same shape but got {preds.shape} and {targets.shape} respectively."
         assert torch.min(preds) >= 0 and torch.max(preds) <= 1, "Expected preds to be in range [0, 1]."
         assert torch.min(targets) >= 0 and torch.max(targets) <= 1, "Expected targets to be in range [0, 1]."
 
@@ -446,7 +361,6 @@ class SoftDICE(Metric):
 
     def _compute_dice_coefficients(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor) -> torch.Tensor:
         # Compute union and intersection
-        print(tp, fp, fn)
         numerator = 2 * tp  # Equivalent to 2 times the intersection
         denominator = 2 * tp + fp + fn  # Equivalent to the union
 
@@ -459,18 +373,18 @@ class SoftDICE(Metric):
             denominator[denominator == 0] = 1
 
         # Compute dice coefficients and return
+        # Denominator will always be larger than numerator, so no need to add small epsilon to denominator.
         return numerator / denominator
 
     def compute(self, name: str | None = None) -> Metrics:
         # Compute dice coefficients and return mean DICE score
         dice = self._compute_dice_coefficients(self.tp, self.fp, self.fn)
-        print(dice)
         key = self.name if name is None else f"{name} - {self.name}"
         return {key: torch.mean(dice).item()}
 
     def clear(self) -> None:
-        # Reset accumulated tp, fp and fn's.
-        del self.tp, self.fp, self.fn
+        # Reset accumulated tp, fp and fn's. They will be initialized with correct shape on next update
+        self.tp, self.fp, self.fn = torch.tensor([]), torch.tensor([]), torch.tensor([])
         self.tp_fp_fn_initialized = False
 
 
@@ -486,14 +400,17 @@ class HardDICE(SoftDICE):
         """
         Computes the Mean DICE Coefficient between categorical (Hard) class predictions and targets.
 
-        Preds and targets passed to __call__ are assumed to have the same shape and contain elements in range [0, 1]. For multiclass problems ensure they are both one-hot-encoded.
+        Preds and targets passed to the update method are assumed to have the same shape and contain elements in range
+        [0, 1]. For multiclass problems ensure they are both one-hot-encoded. The binarize argument can be used to
+        convert incoming continious ('soft') predictions in to categorical ('hard') predictions.
 
         Args:
 
             name (str): Name of the metric. Defaults to 'DICE'
-            along_axes (Sequence[int]): Sequence of indices specifying along which axes the individual DICE
-                coefficients should be computed. The final DICE Score is the mean of these DICE coefficients. Defaults
-                to (0,) since this is usually the batch dimension. If provided an empty tuple then a single DICE coefficient will be computed over all axes.
+            along_axes (Sequence[int]): Sequence of indices specifying *along* which axes the individual DICE
+                coefficients should be computed. The final DICE Score is the mean of these DICE coefficients computed
+                *over* the dimensions not specified. Defaults to (0,) since this is usually the batch dimension. If
+                provided an empty tuple then a single DICE coefficient will be computed *over* all axes.
             ignore_background_axis (int | None): If specified, the first channel of the specified axis is removed
                 prior to computing the DICE coefficients. Useful for removing background channels. Defaults to None.
             ignore_null (bool): If True, null dice coefficients are removed before returning the mean dice score. If
@@ -509,58 +426,16 @@ class HardDICE(SoftDICE):
         self.binarize = binarize
         super().__init__(name, along_axes, ignore_background_axis, ignore_null, dtype=torch.int64)
 
-    def update(self, preds: torch.Tensor, targets: torch.Tensor):
+    def update(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
         if isinstance(self.binarize, float):
             preds = (preds > self.binarize).to(torch.uint8)
-        elif isinstance(self.binarize, int):
+        elif isinstance(self.binarize, int):  # NOTE: Technically this works even if preds are unnormalized.
             # Use argmax to get predicted class labels (hard_preds) and the one-hot-encode them.
             hard_preds = preds.argmax(self.binarize, keepdim=True)
             preds = torch.zeros_like(preds)
             preds.scatter_(self.binarize, hard_preds, 1)
 
         super().update(preds, targets)
-
-
-class BinarySoftDiceCoefficient(SimpleMetric):
-    def __init__(
-        self,
-        name: str = "BinarySoftDiceCoefficient",
-        epsilon: float = 1.0e-7,
-        spatial_dimensions: tuple[int, ...] = (2, 3, 4),
-        logits_threshold: float | None = 0.5,
-    ):
-        """
-        Binary DICE Coefficient Metric with configurable spatial dimensions and logits threshold.
-
-        Args:
-            name (str): Name of the metric.
-            epsilon (float): Small float to add to denominator of DICE calculation to avoid divide by 0.
-            spatial_dimensions (tuple[int, ...]): The spatial dimensions of the image within the prediction tensors.
-                The default assumes that the images are 3D and have shape:
-                batch_size, channel, spatial, spatial, spatial.
-            logits_threshold: This is a threshold value where values above are classified as 1
-                and those below are mapped to 0. If the threshold is None, then no thresholding is performed
-                and a continuous or "soft" DICE coefficient is computed.
-        """
-        self.epsilon = epsilon
-        self.spatial_dimensions = spatial_dimensions
-
-        self.logits_threshold = logits_threshold
-        super().__init__(name)
-
-    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
-        # Assuming the logits are to be mapped to binary. Note that this assumes the logits have already been
-        # constrained to [0, 1]. The metric still functions if not, but results will be unpredictable.
-        if self.logits_threshold:
-            y_pred = (logits > self.logits_threshold).int()
-        else:
-            y_pred = logits
-        intersection = (y_pred * target).sum(dim=self.spatial_dimensions)
-        union = (0.5 * (y_pred + target)).sum(dim=self.spatial_dimensions)
-        dice = intersection / (union + self.epsilon)
-        # If both inputs are empty the dice coefficient should be equal 1
-        dice[union == 0] = 1
-        return torch.mean(dice).item()
 
 
 class Accuracy(SimpleMetric):

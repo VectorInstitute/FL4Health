@@ -19,7 +19,7 @@ from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.scaffold_client import ScaffoldClient
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import BinarySoftDiceCoefficient, Metric
+from fl4health.utils.metrics import HardDICE, Metric
 from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datasets
 
 
@@ -129,7 +129,7 @@ if __name__ == "__main__":
 
     client = FedIxiScaffoldClient(
         data_path=Path(args.dataset_dir),
-        metrics=[BinarySoftDiceCoefficient("FedIXI_dice")],
+        metrics=[HardDICE("FedIXI_dice", along_axes=(0, 1), ignore_null=False, binarize=0.5)],
         device=device,
         client_number=args.client_number,
         learning_rate=args.learning_rate,

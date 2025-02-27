@@ -21,7 +21,7 @@ from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import BinarySoftDiceCoefficient, Metric
+from fl4health.utils.metrics import HardDICE, Metric
 from fl4health.utils.random import set_all_random_seeds
 from research.flamby.fed_ixi.fedper.fedper_model import FedIxiFedPerModel
 from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datasets
@@ -155,7 +155,7 @@ if __name__ == "__main__":
 
     client = FedIxiFedPerClient(
         data_path=Path(args.dataset_dir),
-        metrics=[BinarySoftDiceCoefficient("FedIXI_dice")],
+        metrics=[HardDICE("FedIXI_dice", along_axes=(0, 1), ignore_null=False, binarize=0.5)],
         device=device,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
