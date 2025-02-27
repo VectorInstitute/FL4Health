@@ -163,8 +163,7 @@ def process_and_check_validation_steps(config: Config, val_loader: DataLoader) -
         log(
             INFO,
             "num_validation_steps specified in config. Only a subset of batches will be processed from the validation "
-            "set during evaluation. If num_validation_steps is greater than the number of batches in the validation "
-            "dataloader, datapoints may be evaluated twice",
+            "set during evaluation.",
         )
         num_validation_steps = narrow_dict_type(config, "num_validation_steps", int)
         assert num_validation_steps > 0, "num_validation_steps must not be 0"
@@ -174,7 +173,7 @@ def process_and_check_validation_steps(config: Config, val_loader: DataLoader) -
             log(
                 WARNING,
                 f"num_validation_steps: {num_validation_steps} is larger than the length of the "
-                f"validation dataloader: {val_dataloader_len}",
+                f"validation dataloader: {val_dataloader_len}. Datapoints may be evaluated twice.",
             )
         return num_validation_steps
     else:

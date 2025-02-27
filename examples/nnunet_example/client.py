@@ -13,7 +13,7 @@ from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.nnunet_client import NnunetClient
 from fl4health.utils.load_data import load_msd_dataset
-from fl4health.utils.metrics import EMAMetric, HardDICE
+from fl4health.utils.metrics import EMAMetric, HardDice
 from fl4health.utils.msd_dataset_sources import get_msd_dataset_enum
 from fl4health.utils.nnunet_utils import set_nnunet_env
 
@@ -53,7 +53,7 @@ def main(
     # Create a metrics hard dice metric
     # NnunetClient automatically ensures that preds and targets are one-hot-encoded
     # HardDice will binarize the preds along the channel dimension for us using an argmax.
-    hard_dice = HardDICE("DICE", along_axes=(1,), ignore_background_axis=1, ignore_null=True, binarize=int(1))
+    hard_dice = HardDice("DICE", along_axes=(1,), ignore_background_axis=1, ignore_null=True, binarize=int(1))
     ema_dice = EMAMetric(metric=hard_dice, smoothing_factor=0.1)
 
     # For state checkpointing. Allows training to be resumed from state checkpoint

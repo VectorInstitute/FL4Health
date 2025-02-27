@@ -115,71 +115,6 @@ class TorchMetric(Metric):
         self.metric.reset()
 
 
-class SimpleMetric(Metric, ABC):
-    def __init__(self, name: str) -> None:
-        """
-        Abstract metric class with base functionality to update, compute and clear metrics. User needs to define
-        ``__call__`` method which returns metric given inputs and target.
-
-        Args:
-            name (str): Name of the metric.
-        """
-        super().__init__(name)
-        self.accumulated_inputs: list[torch.Tensor] = []
-        self.accumulated_targets: list[torch.Tensor] = []
-
-    def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
-        """
-        This method updates the state of the metric by appending the passed input and target pairing to their
-        respective list.
-
-        Args:
-            input (torch.Tensor): The predictions of the model to be evaluated.
-            target (torch.Tensor): The ground truth target to evaluate predictions against.
-        """
-        self.accumulated_inputs.append(input)
-        self.accumulated_targets.append(target)
-
-    def compute(self, name: str | None = None) -> Metrics:
-        """
-        Compute metric on accumulated input and output over updates.
-
-        Args:
-            name (str | None): Optional name used in conjunction with class attribute name to define key in metrics
-                dictionary.
-
-        Raises:
-            AssertionError: Input and target lists must be non empty.
-
-        Returns:
-            Metrics: A dictionary of string and ``Scalar`` representing the computed metric and its associated key.
-        """
-        assert len(self.accumulated_inputs) > 0 and len(self.accumulated_targets) > 0
-        stacked_inputs = torch.cat(self.accumulated_inputs)
-        stacked_targets = torch.cat(self.accumulated_targets)
-        result = self.__call__(stacked_inputs, stacked_targets)
-        result_key = f"{name} - {self.name}" if name is not None else self.name
-
-        return {result_key: result}
-
-    def clear(self) -> None:
-        """
-        Resets metrics by clearing input and target lists.
-        """
-        self.accumulated_inputs = []
-        self.accumulated_targets = []
-
-    @abstractmethod
-    def __call__(self, input: torch.Tensor, target: torch.Tensor) -> Scalar:
-        """
-        User defined method that calculates the desired metric given the predictions and target.
-
-        Raises:
-            NotImplementedError: User must define this method.
-        """
-        raise NotImplementedError
-
-
 class TransformsMetric(Metric):
     def __init__(
         self,
@@ -280,7 +215,267 @@ class EMAMetric(Metric):
         return self.metric.clear()
 
 
-class SoftDICE(Metric):
+class SimpleMetric(Metric, ABC):
+    def __init__(self, name: str) -> None:
+        """
+        Abstract metric class with base functionality to update, compute and clear metrics. User needs to define
+        ``__call__`` method which returns metric given inputs and target.
+
+        WARNING: This class accumulates all the predictions and targets in memory throughout each FL server round. This
+        may lead to out of memory (OOM) issues. Subclassing SimpleMetric is recommended only for quickly prototyping
+        new metrics that have existing implementations in other packages. See the SimpleAccuracy class for an example.
+        In other scenarious it is generally recommended to subclass the base Metric class instead and implement a
+        custom update method that reduces the memory footprint of the metric. See the Accuracy clas for an example.
+
+        Args:
+            name (str): Name of the metric.
+        """
+        super().__init__(name)
+        self.accumulated_inputs: list[torch.Tensor] = []
+        self.accumulated_targets: list[torch.Tensor] = []
+
+    def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
+        """
+        This method updates the state of the metric by appending the passed input and target pairing to their
+        respective list.
+
+        Args:
+            input (torch.Tensor): The predictions of the model to be evaluated.
+            target (torch.Tensor): The ground truth target to evaluate predictions against.
+        """
+        self.accumulated_inputs.append(input)
+        self.accumulated_targets.append(target)
+
+    def compute(self, name: str | None = None) -> Metrics:
+        """
+        Compute metric on accumulated input and output over updates.
+
+        Args:
+            name (str | None): Optional name used in conjunction with class attribute name to define key in metrics
+                dictionary.
+
+        Raises:
+            AssertionError: Input and target lists must be non empty.
+
+        Returns:
+            Metrics: A dictionary of string and ``Scalar`` representing the computed metric and its associated key.
+        """
+        assert len(self.accumulated_inputs) > 0 and len(self.accumulated_targets) > 0
+        stacked_inputs = torch.cat(self.accumulated_inputs)
+        stacked_targets = torch.cat(self.accumulated_targets)
+        result = self.__call__(stacked_inputs, stacked_targets)
+        result_key = f"{name} - {self.name}" if name is not None else self.name
+
+        return {result_key: result}
+
+    def clear(self) -> None:
+        """
+        Resets metrics by clearing input and target lists.
+        """
+        self.accumulated_inputs = []
+        self.accumulated_targets = []
+
+    @abstractmethod
+    def __call__(self, input: torch.Tensor, target: torch.Tensor) -> Scalar:
+        """
+        User defined method that calculates the desired metric given the predictions and target.
+
+        Raises:
+            NotImplementedError: User must define this method.
+        """
+        raise NotImplementedError
+
+
+class SimpleAccuracy(SimpleMetric):
+    def __init__(self, name: str = "accuracy"):
+        """
+        Accuracy metric for classification tasks.
+
+        Args:
+            name (str): The name of the metric.
+
+        """
+        super().__init__(name)
+
+    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
+        # assuming batch first
+        assert logits.shape[0] == target.shape[0]
+        # Single value output, assume binary logits
+        if len(logits.shape) == 1 or logits.shape[1] == 1:
+            preds = (logits > 0.5).int()
+        else:
+            preds = torch.argmax(logits, 1)
+        target = target.cpu().detach()
+        preds = preds.cpu().detach()
+        return sklearn_metrics.accuracy_score(target, preds)
+
+
+# New base class that accumulates TP, FP, FN and TN. Pretty much all the current metrics in this library can inherit from it. Only downside is can we somehow ignore certain unneeded intermediates.
+
+
+class ClassificationMetric(Metric):
+    def __init__(
+        self, name: str, along_axes: Sequence[int], dtype: torch.dtype, discard: Sequence[str] | None = None
+    ) -> None:
+        """A Base class for classification metrics that can be computed using the true positives (tp), false positive
+        (fp), false negative (fn') and true negative (tn) counts.
+
+        On each update, the tp, fp, fn and tn counts are reduced along the specified axes before being accumulated into
+        ``self.tp``, ``self.fp``, ``self.fn`` and ``self.tn`` respectively. This reduces the memory footprint required
+        to compute metrics across rounds. The User needs to define the ``compute`` method which returns a dictionary of
+        metrics presumably computed from the accumulated tp, fp, fn and tn counts. The accumulated counts are reset by
+        the ``clear`` method.
+
+        NOTE: Preds and targets passed to the update method are assumed to have the same shape and contain elements in
+        range [0, 1]. For multiclass problems ensure they are both one-hot-encoded.
+
+        Args:
+            name (str): The name of the metric.
+            along_axes (Sequence[int]): Sequence of indices specifying axes *along* which to accumulate tp, fp, fn and
+                tn. The counts will be summed *over* the axes not specified. The 0th axis is assumed to be the
+                batch/sample dimension. If provided an empty sequence, then the counts are scalar values computed
+                *over* all axes.
+            dtype (torch.dtype): The dtype to store the counts as. If preds or targets can be continious, specify a
+                float type. Otherwise specify an integer type to prevent overflow.
+            discard (Sequence[str] | None, optional): One or several of ['tp', 'fp', 'fn', 'tn']. Specified counts 
+                will not be accumulated. Their associated attribute will remain as an empty pytorch tensor. Useful for
+                reducing the memory footprint of metrics that do not use all of the counts in their computation
+        """
+        self.name = name
+        self.along_axes = tuple([a for a in along_axes])
+        self.dtype = dtype
+
+        # Parse discard argument
+        count_ids = ['tp', 'fp', 'fn', 'tn']
+        discard = [] if discard is None else discard
+        for count_id in discard:
+            assert count_id in count_ids, f"Found unexpected string in discard list. Expected one of {count_ids}"
+
+        self.discard_tp = 'tp' in discard
+        self.discard_fp = 'fp' in discard
+        self.discard_fn = 'fn' in discard
+        self.discard_tn = 'tn' in discard
+
+        # Create intermediate tensors. Will be initialized with tensors of correct shape on first update.
+        self.counts_initialized = False
+        self.tp, self.fp, self.fn, self.tn = torch.tensor([]), torch.tensor([]), torch.tensor([]), torch.tensor([])
+
+    def update(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
+        # Assertions to prevent this metric being used improperly
+        assert (
+            preds.shape == targets.shape
+        ), f"Preds and targets must have the same shape but got {preds.shape} and {targets.shape} respectively."
+        assert torch.min(preds) >= 0 and torch.max(preds) <= 1, "Expected preds to be in range [0, 1]."
+        assert torch.min(targets) >= 0 and torch.max(targets) <= 1, "Expected targets to be in range [0, 1]."
+
+        # On the off chance were given booleans convert them to integers
+        preds = preds.to(torch.uint8) if preds.dtype == torch.bool else preds
+        targets = targets.to(torch.uint8) if targets.dtype == torch.bool else targets
+
+        # Compute tp, fp and fn
+        sum_axes = tuple([i for i in range(preds.ndim) if i not in self.along_axes])
+
+        # Compute counts. If were ignoring a count, set it as an empty tensor to avoid downstream errors.
+        tp = (preds * targets).sum(dim=sum_axes, dtype=self.dtype) if not self.discard_tp else torch.tensor([])
+        fp = (preds * (1 - targets)).sum(dim=sum_axes, dtype=self.dtype) if not self.discard_fp else torch.tensor([])
+        fn = ((1 - preds) * targets).sum(dim=sum_axes, dtype=self.dtype) if not self.discard_fn else torch.tensor([])
+        tn = ((1 - preds) * (1 - targets)).sum(sum_axes, dtype=self.dtype) if not self.discard_tn else torch.tensor([])
+
+        # If this is first update since init or clear, initialize intermediates and exit function
+        if not self.counts_initialized:
+            self.tp, self.fp, self.fn, self.tn = tp, fp, fn, tn
+            self.counts_initialized = True
+            return
+
+        # If the batch/sample dimension is in self.along_axes, we must concatenate the values; otherwise, we sum them
+        self.tp = torch.cat([self.tp, tp], dim=0) if 0 in self.along_axes else self.tp + tp
+        self.fp = torch.cat([self.fp, fp], dim=0) if 0 in self.along_axes else self.fp + fp
+        self.fn = torch.cat([self.fn, fn], dim=0) if 0 in self.along_axes else self.fn + fn
+        self.tn = torch.cat([self.tn, tn], dim=0) if 0 in self.along_axes else self.tn + tn
+
+    def clear(self) -> None:
+        # Reset accumulated tp, fp and fn's. They will be initialized with correct shape on next update
+        self.tp, self.fp, self.fn, self.tn = torch.tensor([]), torch.tensor([]), torch.tensor([]), torch.tensor([])
+        self.counts_initialized = False
+
+
+class SoftDice(ClassificationMetric):
+    def __init__(
+        self,
+        name: str = "SoftDice",
+        along_axes: Sequence[int] = (0,),
+        ignore_background_axis: int | None = None,
+        ignore_null: bool = True,
+        dtype: torch.dtype = torch.float32,
+    ) -> None:
+        """
+        Computes the Mean DICE Coefficient between class predictions and targets.
+
+        Preds and targets passed to the update method are assumed to have the same shape and contain elements in range
+        [0, 1]. For multiclass problems ensure they are both one-hot-encoded.
+
+        Args:
+
+            name (str): Name of the metric. Defaults to 'Soft-DICE'
+            along_axes (Sequence[int]): Sequence of indices specifying along which axes the individual DICE
+                coefficients should be computed. The final DICE Score is the mean of these DICE coefficients. Defaults
+                to (0,) which is assumed to be the batch/sample dimension. If provided an empty tuple then a single
+                DICE coefficient will be computed over all axes. Note that intermediate values must be stored in memory
+                for each element along the specified axes, this may lead to memory build up in some instances.
+            ignore_background_axis (int | None): If specified, the first channel of the specified axis is removed
+                prior to computing the DICE coefficients. Useful for removing background channels. Defaults to None.
+            ignore_null (bool): If True, null dice coefficients are removed before returning the mean dice score. If
+                False then null dice scores are set to 1. Null DICE scores are usually a result of the prediction and
+                target both being all-zero (True Negatives). How this argument affects the final DICE score will vary
+                depending along which axes the DICE coefficients were computed. Defaults to True.
+            dtype (torch.dtype, optional): The torch dtype to use when storing the intermediate true postive (tp),
+                false positive (fp) and false negative (fn) sums. Must be a float if predictions are continious.
+        """
+        super().__init__(name=name, along_axes=along_axes, dtype=dtype, discard=['tn'])
+        self.ignore_background_axis = ignore_background_axis
+        self.ignore_null = ignore_null
+
+
+    def update(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
+        # NOTE: It would be cool to add a utility function that attempts to infer the channel dimension if the
+        # shapes are not the same and one-hot encodes the tensor with fewer dimensions.
+        assert (
+            preds.shape == targets.shape
+        ), f"Preds and targets must have the same shape but got {preds.shape} and {targets.shape} respectively."
+
+        # Remove the background channel from the axis specified by ignore_background_axis
+        if self.ignore_background_axis is not None:
+            indices = torch.arange(1, preds.shape[self.ignore_background_axis], device=preds.device)
+            preds = torch.index_select(preds, self.ignore_background_axis, indices)
+            targets = torch.index_select(targets, self.ignore_background_axis, indices)
+
+        super().update(preds, targets)
+
+    def _compute_dice_coefficients(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor) -> torch.Tensor:
+        # Compute union and intersection
+        numerator = 2 * tp  # Equivalent to 2 times the intersection
+        denominator = 2 * tp + fp + fn  # Equivalent to the union
+
+        # Prevent div by 0 by handling null scores
+        if self.ignore_null:  # Ignore dice scores that will be null by removing them from the union and intersection
+            numerator = numerator[denominator != 0]
+            denominator = denominator[denominator != 0]
+        else:  # Set dice scores that would be null to 1. This might be good if they are considered True Negatives.
+            numerator[denominator == 0] = 1
+            denominator[denominator == 0] = 1
+
+        # Compute dice coefficients and return
+        # Denominator will always be larger than numerator, so no need to add small epsilon to denominator.
+        return numerator / denominator
+
+    def compute(self, name: str | None = None) -> Metrics:
+        # Compute dice coefficients and return mean DICE score
+        dice = self._compute_dice_coefficients(self.tp, self.fp, self.fn)
+        key = self.name if name is None else f"{name} - {self.name}"
+        return {key: torch.mean(dice).item()}
+
+
+class SoftDICEold(Metric):
     def __init__(
         self,
         name: str = "Soft-DICE",
@@ -388,10 +583,10 @@ class SoftDICE(Metric):
         self.tp_fp_fn_initialized = False
 
 
-class HardDICE(SoftDICE):
+class HardDice(SoftDice):
     def __init__(
         self,
-        name: str = "Hard-DICE",
+        name: str = "HardDice",
         along_axes: Sequence[int] = (0,),
         ignore_background_axis: int | None = None,
         ignore_null: bool = True,
@@ -436,30 +631,6 @@ class HardDICE(SoftDICE):
             preds.scatter_(self.binarize, hard_preds, 1)
 
         super().update(preds, targets)
-
-
-class Accuracy(SimpleMetric):
-    def __init__(self, name: str = "accuracy"):
-        """
-        Accuracy metric for classification tasks.
-
-        Args:
-            name (str): The name of the metric.
-
-        """
-        super().__init__(name)
-
-    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
-        # assuming batch first
-        assert logits.shape[0] == target.shape[0]
-        # Single value output, assume binary logits
-        if len(logits.shape) == 1 or logits.shape[1] == 1:
-            preds = (logits > 0.5).int()
-        else:
-            preds = torch.argmax(logits, 1)
-        target = target.cpu().detach()
-        preds = preds.cpu().detach()
-        return sklearn_metrics.accuracy_score(target, preds)
 
 
 class BalancedAccuracy(SimpleMetric):

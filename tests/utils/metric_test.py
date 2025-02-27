@@ -8,16 +8,16 @@ from pytest import approx
 from fl4health.utils.metrics import (
     F1,
     ROC_AUC,
-    Accuracy,
+    SimpleAccuracy,
     BalancedAccuracy,
-    HardDICE,
+    HardDice,
     MetricManager,
-    SoftDICE,
+    SoftDice,
 )
 
 
 def test_hard_dice_metric_1d_and_clear() -> None:
-    hd = HardDICE(name="DICE", along_axes=(0,), ignore_background_axis=None, ignore_null=True)
+    hd = HardDice(name="DICE", along_axes=(0,), ignore_background_axis=None, ignore_null=True)
 
     # Test with two 1D examples
     p = torch.tensor([[0, 0, 0, 1, 1, 1, 1, 1]])
@@ -35,7 +35,7 @@ def test_hard_dice_metric_1d_and_clear() -> None:
 
 
 def test_hard_dice_metric_1d_accumulation() -> None:
-    hd = HardDICE(name="DICE", along_axes=(0,), ignore_background_axis=None, ignore_null=True)
+    hd = HardDice(name="DICE", along_axes=(0,), ignore_background_axis=None, ignore_null=True)
 
     # Test accumulation
     p = torch.tensor([[0, 0, 0, 1, 0, 0, 1, 1]])
@@ -53,7 +53,7 @@ def test_hard_dice_metric_1d_accumulation() -> None:
 
 def test_hard_dice_metric_2d() -> None:
     # Test higher dimension examples. Shape is (1, 2, 4)
-    hd = HardDICE(name="DICE", along_axes=(0,), ignore_background_axis=None, ignore_null=True)
+    hd = HardDice(name="DICE", along_axes=(0,), ignore_background_axis=None, ignore_null=True)
     p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])
     t = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]])
     hd.update(p, t)
@@ -62,7 +62,7 @@ def test_hard_dice_metric_2d() -> None:
 
 
 def test_hard_dice_metric_ignore_null_true() -> None:
-    hd = HardDICE(name="DICE", along_axes=(0,), ignore_background_axis=None, ignore_null=True)
+    hd = HardDice(name="DICE", along_axes=(0,), ignore_background_axis=None, ignore_null=True)
 
     # Initial test
     p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])
@@ -89,7 +89,7 @@ def test_hard_dice_metric_ignore_null_true() -> None:
 
 
 def test_hard_dice_metric_ignore_null_false() -> None:
-    hd = HardDICE(name="DICE", along_axes=(0,), ignore_background_axis=None, ignore_null=False)
+    hd = HardDice(name="DICE", along_axes=(0,), ignore_background_axis=None, ignore_null=False)
 
     # Initial test
     p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])
@@ -116,7 +116,7 @@ def test_hard_dice_metric_ignore_null_false() -> None:
 
 def test_hard_dice_metric_ignore_background() -> None:
     # Test ignore background
-    hd = HardDICE(name="DICE", along_axes=(0,), ignore_background_axis=1, ignore_null=True)
+    hd = HardDice(name="DICE", along_axes=(0,), ignore_background_axis=1, ignore_null=True)
     p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])
     t = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]])
     hd.update(p, t)
@@ -133,7 +133,7 @@ def test_hard_dice_metric_ignore_background() -> None:
 
 def test_hard_dice_metric_along_axes() -> None:
     # Test computing dice coefficients along different axes. Shape (n, 2, 4)
-    hd = HardDICE(name="DICE", along_axes=(1,), ignore_background_axis=None, ignore_null=True)
+    hd = HardDice(name="DICE", along_axes=(1,), ignore_background_axis=None, ignore_null=True)
     p = torch.tensor([[[0, 1, 0, 1], [1, 1, 1, 1]]])
     t = torch.tensor([[[0, 0, 1, 1], [1, 1, 1, 1]]])
     hd.update(p, t)
@@ -148,7 +148,7 @@ def test_hard_dice_metric_along_axes() -> None:
     assert result["DICE"] == approx(11 / 24)  # (2/8 + 2/3) / 2
 
     # Test along last dimension
-    hd = HardDICE(name="DICE", along_axes=(2,), ignore_background_axis=None, ignore_null=True)
+    hd = HardDice(name="DICE", along_axes=(2,), ignore_background_axis=None, ignore_null=True)
     p = torch.tensor([[[0, 1, 0, 1], [1, 1, 1, 1]]])
     t = torch.tensor([[[0, 0, 1, 1], [1, 1, 1, 1]]])
     hd.update(p, t)
@@ -156,7 +156,7 @@ def test_hard_dice_metric_along_axes() -> None:
     assert result["DICE"] == approx(5 / 6)  # (1 + 2/3 + 2/3 + 1) / 4
 
     # Test using along multiple axes. Shape (3, 2, 4)
-    hd = HardDICE(name="DICE", along_axes=(0, 1), ignore_background_axis=None, ignore_null=True)
+    hd = HardDice(name="DICE", along_axes=(0, 1), ignore_background_axis=None, ignore_null=True)
     p = torch.tensor([[[0, 1, 0, 1], [1, 1, 1, 1]]])
     t = torch.tensor([[[0, 0, 1, 1], [1, 1, 1, 1]]])
     hd.update(p, t)
@@ -171,7 +171,7 @@ def test_hard_dice_metric_along_axes() -> None:
 
 
 def test_accuracy_metric() -> None:
-    accuracy_metric = Accuracy()
+    accuracy_metric = SimpleAccuracy()
 
     pred1 = torch.eye(5)
     target1 = torch.arange(0, 5)
@@ -185,7 +185,7 @@ def test_accuracy_metric() -> None:
 
 
 def test_binary_accuracy() -> None:
-    accuracy_metric = Accuracy()
+    accuracy_metric = SimpleAccuracy()
 
     pred1 = torch.Tensor([0, 1, 1, 0, 1])
     target1 = torch.Tensor([0, 0, 1, 1, 1])
@@ -264,7 +264,7 @@ def test_F1_metric() -> None:
 
 def test_hard_dice_default_threshold() -> None:
     # Test with the default spatial and epsilon values
-    metric = HardDICE(name="DICE", along_axes=(0, 1), ignore_null=False, binarize=0.5)
+    metric = HardDice(name="DICE", along_axes=(0, 1), ignore_null=False, binarize=0.5)
     all_ones_targets = torch.ones((10, 1, 10, 10, 10))
     all_ones_logits = torch.ones((10, 1, 10, 10, 10))
     metric.update(all_ones_logits, all_ones_targets)
@@ -311,7 +311,7 @@ def test_hard_dice_default_threshold() -> None:
 
 def test_hard_and_soft_dice_alt_threshold() -> None:
     # Change the threshold to 0.1
-    metric = HardDICE(name="DICE", along_axes=(0, 1), ignore_null=False, binarize=0.1)
+    metric = HardDice(name="DICE", along_axes=(0, 1), ignore_null=False, binarize=0.1)
 
     # Test all TP's
     all_ones_targets = torch.ones((10, 1, 10, 10, 10))
@@ -328,7 +328,7 @@ def test_hard_and_soft_dice_alt_threshold() -> None:
     pytest.approx(dice_of_one, abs=0.001) == 1.0
 
     # Test with a none threshold to ensure that the continuous dice coefficient is calculated
-    soft_metric = SoftDICE(name="DICE", along_axes=(0, 1), ignore_null=False)
+    soft_metric = SoftDice(name="DICE", along_axes=(0, 1), ignore_null=False)
     all_one_tenth_logits = 0.1 * torch.ones((10, 1, 10, 10, 10))
     soft_metric.update(all_one_tenth_logits, all_ones_targets)
     continuous_dice = soft_metric.compute()["DICE"]
@@ -339,7 +339,7 @@ def test_hard_and_soft_dice_alt_threshold() -> None:
 
 
 def test_metric_accumulation() -> None:
-    a = Accuracy()
+    a = SimpleAccuracy()
 
     pred1 = torch.eye(4)
     pred2 = torch.eye(4)
@@ -432,7 +432,7 @@ def test_metric_manager() -> None:
     logits_list = [logits1, logits2]
     target_list = [target1, target2]
 
-    mm = MetricManager([F1(), Accuracy()], "test")
+    mm = MetricManager([F1(), SimpleAccuracy()], "test")
 
     for logits, target in zip(logits_list, target_list):
         preds = {"prediction": logits}
