@@ -4,18 +4,6 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - .pre-commit-config.yaml
-      - .github/workflows/docs_build.yml
-      - '**.py'
-      - '**.ipynb'
-      - '**.js'
-      - '**.html'
-      - poetry.lock
-      - pyproject.toml
-      - '**.rst'
-      - '**.md'
-  workflow_dispatch:
 
 jobs:
   build:
