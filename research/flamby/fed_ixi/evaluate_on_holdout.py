@@ -6,7 +6,7 @@ from flamby.datasets.fed_ixi import BATCH_SIZE, NUM_CLIENTS, FedIXITiny
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
 
-from fl4health.utils.metrics import HardDICE
+from fl4health.utils.metrics import HardDice
 from research.flamby.utils import (
     evaluate_fed_ixi_model,
     get_all_run_folders,
@@ -28,7 +28,7 @@ def main(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     all_run_folder_dir = get_all_run_folders(artifact_dir)
     test_results: dict[str, float] = {}
-    metrics = [HardDICE("FedIXI_dice", along_axes=(0, 1), ignore_null=False, binarize=0.5)]
+    metrics = [HardDice("FedIXI_dice", along_axes=(0, 1), ignore_null=False, binarize=0.5)]
 
     all_local_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
     all_server_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}

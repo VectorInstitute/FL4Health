@@ -7,7 +7,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting import JsonReporter
 from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.utils.losses import LossMeter, TrainingLosses
-from fl4health.utils.metrics import Accuracy, MetricManager
+from fl4health.utils.metrics import ROC_AUC, Accuracy, MetricManager
 from fl4health.utils.snapshotter import (
     LRSchedulerSnapshotter,
     NumberSnapshotter,
@@ -138,7 +138,7 @@ def test_reports_manager_snapshotter() -> None:
 
 
 def test_metric_manager_snapshotter() -> None:
-    metrics = [Accuracy("accuracy")]
+    metrics = [ROC_AUC()]
     reporter = JsonReporter()
     fl_client = BasicClient(data_path=Path(""), metrics=metrics, device=torch.device(0), reporters=[reporter])
     snapshots = {}
@@ -153,8 +153,8 @@ def test_metric_manager_snapshotter() -> None:
     snapshots = copy.deepcopy(snapshots)
     old_train_metric_manager = copy.deepcopy(fl_client.train_metric_manager)
     fl_client.train_metric_manager.update(preds, target)
-    assert isinstance(fl_client.train_metric_manager.metrics_per_prediction_type["1"][0], Accuracy) and isinstance(
-        old_train_metric_manager.metrics_per_prediction_type["1"][0], Accuracy
+    assert isinstance(fl_client.train_metric_manager.metrics_per_prediction_type["1"][0], ROC_AUC) and isinstance(
+        old_train_metric_manager.metrics_per_prediction_type["1"][0], ROC_AUC
     )
     assert len(fl_client.train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_inputs) != len(
         old_train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_inputs

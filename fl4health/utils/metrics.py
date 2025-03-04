@@ -21,8 +21,82 @@ TEST_NUM_EXAMPLES_KEY = f"{MetricPrefix.TEST_PREFIX.value} num_examples"
 TEST_LOSS_KEY = f"{MetricPrefix.TEST_PREFIX.value} checkpoint"
 
 
-def align_pred_and_target_shapes(preds: torch.Tensor, targets: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-    # TODO: Add tests for this. Consider this a WIP.
+def infer_channel_dim(tensor1: torch.Tensor, tensor2: torch.Tensor) -> int:
+    """Infers the channel dimension given two related tensors of different shapes.
+
+    Generally useful for inferring the channel dimension when one tensor is one-hot-encoded and the other is not. The
+    channel dimension is inferred by looking for dimensions that either are not the same size, or are not present int
+    tensor 2. If a dimension adjacent to the
+
+    Args:
+        tensor1 (torch.Tensor): The reference tensor. Must have the same number of dimensions as tensor 2, or have
+            exactly 1 more dimension (the channel/class dim).
+        tensor2 (torch.Tensor): The non-reference tensor.
+
+    Raises:
+        AssertionError: If the the channel dimension cannot be inferred without ambigiuty.
+
+    Returns:
+        int: Index of the dimension along tensor 1 that is the channel/class dimensions
+    """
+    assert (
+        tensor1.shape != tensor2.shape and (tensor1.ndim - tensor2.ndim) <= 1
+    ), f"Could not infer the channel dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape})."
+
+    # Infer channel dimension.
+    idx2 = 0
+    candidate_channels = []
+    for idx1 in range(tensor1.ndim):
+        if idx2 >= tensor2.ndim:  # Just in case its the last channel we need to avoid indexing error
+            candidate_channels.append(idx1)
+        elif tensor1.shape[idx1] == tensor2.shape[idx2]:
+            idx2 += 1
+        else:
+            candidate_channels.append(idx1)
+            if tensor1.ndim == tensor2.ndim:
+                idx2 += 1
+
+    assert len(candidate_channels) == 1, (
+        f"Could not infer the channel dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape}). "
+        "Found multiple axes that could be the channel dimension."
+    )
+    ch = candidate_channels[0]
+
+    # Cover edge case where dim adjacent to channel dim has the same size.
+    # We will mistakenly resolve only a single candidate channel when technically it is ambiguous.
+    if tensor1.ndim > tensor2.ndim and ch > 0:
+        assert tensor1.shape[ch] != tensor1.shape[ch - 1], (
+            f"Could not infer the channel dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape}). "
+            "A dimension adjacent to the channel dimension appears to have the same size."
+        )
+
+    # If tensors have same ndim but diff shape, then this only works if channel dim was empty for one of them
+    if tensor1.ndim == tensor2.ndim:
+        assert (tensor1.shape[ch] == 1) or (tensor2.shape[ch]) == 1, (
+            f"Could not infer the channel dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape}). "
+            "The inferred candidate dimension has different sizes on each tensor, was expecting one to be empty."
+        )
+    return ch
+
+
+def align_pred_and_target_shapes(
+    preds: torch.Tensor, targets: torch.Tensor, channel_dim: int | None = None
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """
+    Attempts to correct shape mismatches between the given tensors by inferring which one to one-hot-encode.
+
+    If both input tensors are not one-hot-encoded, then they are returned unchanged. If one is one-hot-encoded but not
+    the other, then both are returned as one-hot-encoded tensors.
+
+    Args:
+        preds (torch.Tensor): The tensor with model predictions.
+        targets (torch.Tensor): The tensor with model targets.
+        channel_dim (int | None): Index of the channel dimension. If left as None then this method attempts to infer
+            the channel dimension if it is needed.
+
+    Returns:
+        tuple[torch.Tensor, torch.Tensor]: The pred and target tensors now ensured to have the same shape.
+    """
     swapped = False
     if preds.shape == targets.shape:
         return preds, targets  # Shapes are already aligned.
@@ -37,33 +111,19 @@ def align_pred_and_target_shapes(preds: torch.Tensor, targets: torch.Tensor) -> 
         tensor1, tensor2 = targets, preds
         swapped = not swapped
 
-    # Infer channel dimension.
-    # Only way this doesn't work is if channel dim has same size as both axes before and after itself.
-    idx2 = 0
-    candidate_channels = []
-    for idx1 in range(tensor1):
-        if tensor1.shape[idx1] == tensor2.shape[idx2]:
-            idx2 += 1
-        else:
-            candidate_channels.append(idx1)
-            if tensor1.ndim == tensor2.ndim:
-                idx2 += 1
+    # Determine channel dimension. This method also has a bunch of necessary assertions.
+    ch = infer_channel_dim(tensor1, tensor2) if channel_dim is None else channel_dim
 
-    assert len(candidate_channels) == 1, (
-        f"Could not resolve the channel dimension of preds ({preds.shape}) and targets ({targets.shape})"
-    )
-    ch = candidate_channels[0]
+    assert (
+        tensor1.ndim - tensor2.ndim
+    ) <= 1, f"Can not align pred and target tensors with shapes {preds.shape}, {targets.shape}"
 
     # Add channel dimension if there isn't one
     if tensor1.ndim != tensor2.ndim:
         tensor2 = tensor2.view((*tensor2.shape[:ch], 1, *tensor2.shape[ch:]))
-        assert tensor1.ndim == tensor2.ndim, (
-            f"Was expecting preds and targets to differ by only a single dimension but got {preds.shape} and {targets.shape} respectively"
-        )
 
-    # If tensors already had the same dimensionality but diff shape, then tensor2 might be the OHE reference tensor
-    if tensor2.shape[ch] > tensor1.shape[ch]:
-        assert tensor1.shape[ch] == 1, "Expected one of the channel dimensions to have size 1 to align tensor shapes."
+    # Swap tensors on off chance that the first one had an empty dim and the second didn't
+    if tensor1.shape[ch] < tensor2.shape[ch]:
         tensor1, tensor2 = tensor2, tensor1
         swapped = not swapped
 
@@ -73,14 +133,11 @@ def align_pred_and_target_shapes(preds: torch.Tensor, targets: torch.Tensor) -> 
         t2_ohe = torch.cat([1 - tensor2, tensor2], dim=ch)
     else:
         # If tensor2 is not continious then it must contain class labels. One hot encode the tensor.
-        t2_ohe = torch.zeros(tensor1.shape, device=tensor1.device, dtype=torch.bool)
-        t2_ohe.scatter_(ch, tensor2, 1)
+        t2_ohe = torch.zeros(tensor1.shape, device=tensor1.device)
+        t2_ohe.scatter_(ch, tensor2.to(torch.int64), 1)
 
     # Return modified tensors in their original positions.
-    if swapped:
-        return t2_ohe, tensor1
-    else:
-        return tensor1, t2_ohe
+    return (t2_ohe, tensor1) if swapped else (tensor1, t2_ohe)
 
 
 class Metric(ABC):
@@ -348,30 +405,6 @@ class SimpleMetric(Metric, ABC):
         raise NotImplementedError
 
 
-class SimpleAccuracy(SimpleMetric):
-    def __init__(self, name: str = "accuracy"):
-        """
-        Accuracy metric for classification tasks.
-
-        Args:
-            name (str): The name of the metric.
-
-        """
-        super().__init__(name)
-
-    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
-        # assuming batch first
-        assert logits.shape[0] == target.shape[0]
-        # Single value output, assume binary logits
-        if len(logits.shape) == 1 or logits.shape[1] == 1:
-            preds = (logits > 0.5).int()
-        else:
-            preds = torch.argmax(logits, 1)
-        target = target.cpu().detach()
-        preds = preds.cpu().detach()
-        return sklearn_metrics.accuracy_score(target, preds)
-
-
 class ClassificationMetric(Metric):
     def __init__(
         self,
@@ -387,12 +420,13 @@ class ClassificationMetric(Metric):
 
         On each update, the tp, fp, fn and tn counts are reduced along the specified axes before being accumulated into
         ``self.tp``, ``self.fp``, ``self.fn`` and ``self.tn`` respectively. This reduces the memory footprint required
-        to compute metrics across rounds. The User needs to define the ``compute`` method which returns a dictionary of
-        metrics presumably computed from the accumulated tp, fp, fn and tn counts. The accumulated counts are reset by
-        the ``clear`` method.
+        to compute metrics across rounds. The User needs to define the ``compute_from_counts`` method which returns a
+        dictionary of Scalar metrics given the tp, fp, fn, and tn counts. The accumulated counts are reset by the
+        ``clear`` method.
 
-        NOTE: Preds and targets passed to the update method are assumed to have the same shape and contain elements in
-        range [0, 1]. For multiclass problems ensure they are both one-hot-encoded.
+        NOTE: Preds and targets must have the same shape and only contain elements in range [0, 1]. If preds and
+        targets passed to update method have different shapes, this class will attempt to infer the channel dimension
+        and align the shapes by one-hot-encoding one of the tensors.
 
         Args:
             name (str): The name of the metric.
@@ -417,6 +451,7 @@ class ClassificationMetric(Metric):
         self.dtype = dtype
         self.binarize = binarize
         self.ignore_background = ignore_background
+        self.channel_dim = ignore_background  # If channel dim is None then it will be inferred
 
         # Parse discard argument
         count_ids = ["tp", "fp", "fn", "tn"]
@@ -433,53 +468,7 @@ class ClassificationMetric(Metric):
         self.counts_initialized = False
         self.tp, self.fp, self.fn, self.tn = torch.tensor([]), torch.tensor([]), torch.tensor([]), torch.tensor([])
 
-    def update(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
-        preds = preds if self.binarize is None else self.binarize_tensor(preds, self.binarize)
-
-        # Assertions to prevent this metric being used improperly
-        assert preds.shape == targets.shape, (
-            f"Preds and targets must have the same shape but got {preds.shape} and {targets.shape} respectively."
-        )
-        assert torch.min(preds) >= 0 and torch.max(preds) <= 1, "Expected preds to be in range [0, 1]."
-        assert torch.min(targets) >= 0 and torch.max(targets) <= 1, "Expected targets to be in range [0, 1]."
-
-        # Remove the background channel from the axis specified by ignore_background_axis
-        if self.ignore_background is not None:
-            indices = torch.arange(1, preds.shape[self.ignore_background], device=preds.device)
-            preds = torch.index_select(preds, self.ignore_background, indices)
-            targets = torch.index_select(targets, self.ignore_background, indices)
-
-        # On the off chance were given booleans convert them to integers
-        preds = preds.to(torch.uint8) if preds.dtype == torch.bool else preds
-        targets = targets.to(torch.uint8) if targets.dtype == torch.bool else targets
-
-        # Compute tp, fp and fn
-        sum_axes = tuple([i for i in range(preds.ndim) if i not in self.along_axes])
-
-        # Compute counts. If were ignoring a count, set it as an empty tensor to avoid downstream errors.
-        tp = (preds * targets).sum(dim=sum_axes, dtype=self.dtype) if not self.discard_tp else torch.tensor([])
-        fp = (preds * (1 - targets)).sum(dim=sum_axes, dtype=self.dtype) if not self.discard_fp else torch.tensor([])
-        fn = ((1 - preds) * targets).sum(dim=sum_axes, dtype=self.dtype) if not self.discard_fn else torch.tensor([])
-        tn = ((1 - preds) * (1 - targets)).sum(sum_axes, dtype=self.dtype) if not self.discard_tn else torch.tensor([])
-
-        # If this is first update since init or clear, initialize intermediates and exit function
-        if not self.counts_initialized:
-            self.tp, self.fp, self.fn, self.tn = tp, fp, fn, tn
-            self.counts_initialized = True
-            return
-
-        # If the batch/sample dimension is in self.along_axes, we must concatenate the values; otherwise, we sum them
-        self.tp = torch.cat([self.tp, tp], dim=0) if 0 in self.along_axes else self.tp + tp
-        self.fp = torch.cat([self.fp, fp], dim=0) if 0 in self.along_axes else self.fp + fp
-        self.fn = torch.cat([self.fn, fn], dim=0) if 0 in self.along_axes else self.fn + fn
-        self.tn = torch.cat([self.tn, tn], dim=0) if 0 in self.along_axes else self.tn + tn
-
-    def clear(self) -> None:
-        # Reset accumulated tp, fp and fn's. They will be initialized with correct shape on next update
-        self.tp, self.fp, self.fn, self.tn = torch.tensor([]), torch.tensor([]), torch.tensor([]), torch.tensor([])
-        self.counts_initialized = False
-
-    def binarize_tensor(self, input: torch.Tensor, binarize: float | int) -> tuple[torch.Tensor, torch.Tensor]:
+    def binarize_tensor(self, input: torch.Tensor, binarize: float | int) -> torch.Tensor:
         """Converts continious 'soft' tensors into categorical 'hard' ones.
 
         Args:
@@ -496,6 +485,11 @@ class ClassificationMetric(Metric):
             return (input > binarize).to(torch.uint8)
         elif isinstance(binarize, int):  # NOTE: Technically this works even if preds are unnormalized.
             # Use argmax to get predicted class labels (hard_preds) and the one-hot-encode them.
+            if binarize >= input.ndim:
+                raise ValueError(
+                    f"Cannot apply softmax to Tensor of shape {input.shape}."
+                    " If preds are not one-hot-encoded set the binarize argument to a float threshold or None."
+                )
             hard_input = input.argmax(binarize, keepdim=True)
             input = torch.zeros_like(input)
             input.scatter_(binarize, hard_input, 1)
@@ -503,44 +497,157 @@ class ClassificationMetric(Metric):
         else:
             raise ValueError(f"Was expecting binarize argument to be either a float or an int. Got {type(binarize)}")
 
+    def _transform_tensors(self, preds: torch.Tensor, targets: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        # Maybe convert continious 'soft' predictions into binary 'hard' predictions.
+        preds = preds if self.binarize is None else self.binarize_tensor(preds, self.binarize)
+
+        # Attempt automatically match pred and target shape.
+        # Added mainly because previous implementations of metrics assumed preds to be OHE but targets not to be OHE
+        # This supports any combination of hard/soft, OHE/not-OHE so long as channel dim can be inferred.
+        preds, targets = align_pred_and_target_shapes(preds, targets, self.channel_dim)
+
+        # Assertions to prevent this metric being used improperly.
+        assert (
+            preds.shape == targets.shape
+        ), f"Preds and targets must have the same shape but got {preds.shape} and {targets.shape} respectively."
+        assert torch.min(preds) >= 0 and torch.max(preds) <= 1, "Expected preds to be in range [0, 1]."
+        assert torch.min(targets) >= 0 and torch.max(targets) <= 1, "Expected targets to be in range [0, 1]."
+
+        # Remove the background channel from the axis specified by ignore_background_axis
+        if self.ignore_background is not None:
+            indices = torch.arange(1, preds.shape[self.ignore_background], device=preds.device)
+            preds = torch.index_select(preds, self.ignore_background, indices)
+            targets = torch.index_select(targets, self.ignore_background, indices)
+
+        # On the off chance were given booleans convert them to integers
+        preds = preds.to(torch.uint8) if preds.dtype == torch.bool else preds
+        targets = targets.to(torch.uint8) if targets.dtype == torch.bool else targets
+
+        return preds, targets
+
+    def count_tp_fp_fn_tn(
+        self, preds: torch.Tensor, targets: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        # Compute tp, fp and fn
+        sum_axes = tuple([i for i in range(preds.ndim) if i not in self.along_axes])
+
+        # Compute counts. If were ignoring a count, set it as an empty tensor to avoid downstream errors.
+        tp = (preds * targets) if not self.discard_tp else torch.tensor([])
+        fp = (preds * (1 - targets)) if not self.discard_fp else torch.tensor([])
+        fn = ((1 - preds) * targets) if not self.discard_fn else torch.tensor([])
+        tn = ((1 - preds) * (1 - targets)) if not self.discard_tn else torch.tensor([])
+
+        # Sum along specified axes only if there are axes to sum over.
+        tp = tp.sum(sum_axes, dtype=self.dtype) if len(sum_axes) > 0 and not self.discard_tp else tp
+        fp = fp.sum(sum_axes, dtype=self.dtype) if len(sum_axes) > 0 and not self.discard_fp else fp
+        fn = fn.sum(sum_axes, dtype=self.dtype) if len(sum_axes) > 0 and not self.discard_fn else fn
+        tn = tn.sum(sum_axes, dtype=self.dtype) if len(sum_axes) > 0 and not self.discard_tn else tn
+
+        return tp, fp, fn, tn
+
+    def update(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
+        # Transform preds and targets as necessary/specified before computing counts
+        preds, targets = self._transform_tensors(preds, targets)
+
+        # Get tp, fp, fn and tn counts for current update. If a count is discarded, then an empty tensor is returned.
+        tp, fp, fn, tn = self.count_tp_fp_fn_tn(preds, targets)
+
+        # If this is first update since init or clear, initialize counts and exit function
+        if not self.counts_initialized:
+            self.tp, self.fp, self.fn, self.tn = tp, fp, fn, tn
+            self.counts_initialized = True
+            return
+
+        # If the batch/sample dimension is in self.along_axes, we must concatenate the values; otherwise, we sum them
+        self.tp = torch.cat([self.tp, tp], dim=0) if 0 in self.along_axes else self.tp + tp
+        self.fp = torch.cat([self.fp, fp], dim=0) if 0 in self.along_axes else self.fp + fp
+        self.fn = torch.cat([self.fn, fn], dim=0) if 0 in self.along_axes else self.fn + fn
+        self.tn = torch.cat([self.tn, tn], dim=0) if 0 in self.along_axes else self.tn + tn
+
+    def clear(self) -> None:
+        # Reset accumulated tp, fp and fn's. They will be initialized with correct shape on next update
+        self.tp, self.fp, self.fn, self.tn = torch.tensor([]), torch.tensor([]), torch.tensor([]), torch.tensor([])
+        self.counts_initialized = False
+
+    def compute(self, name: str | None = None) -> Metrics:
+        metrics = self.compute_from_counts(tp=self.tp, fp=self.fp, fn=self.fn, tn=self.tn)
+        if name is not None:
+            metrics = {f"{name} - {k}": v for k, v in metrics.items()}
+        return metrics
+
+    def __call__(self, preds: torch.Tensor, targets: torch.Tensor) -> Scalar:
+        # Transform preds and targets as necessary/specified before computing counts
+        preds, targets = self._transform_tensors(preds, targets)
+
+        # Get tp, fp, fn and tn counts for current update
+        tp, fp, fn, tn = self.count_tp_fp_fn_tn(preds, targets)
+
+        metrics = self.compute_from_counts(tp, fp, fn, tn)
+
+        if all([isinstance(v, (int, float)) for v in metrics.values()]):
+            # If there are multiple metric scalars then try to return the mean for the call function
+            return float(np.mean(list(metrics.values())))  # type: ignore
+        else:  # Otherwise just return the first value
+            return list(metrics.values())[0]
+
+    def compute_from_counts(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor, tn: torch.Tensor) -> Metrics:
+        raise NotImplementedError
+
 
 class Accuracy(ClassificationMetric):
     def __init__(
         self,
         name: str = "Accuracy",
-        along_axes: Sequence[int] = (),
+        along_axes: Sequence[int] = (0,),
         dtype: torch.dtype = torch.float,
         binarize: float | int | None = 1,
-        ignore_background: int | None = 1,
+        ignore_background: int | None = None,
+        exact_match: bool = True,
     ) -> None:
         """
         Memory efficient accuracy metric.
 
-        Automatically assumes predictions are continious 'soft' and binarizes them using an argmax. Then removes the background channel from the one-hot-encoding. This behaviour can be turned off using the binarize and ignore_background arguments.
+        Automatically assumes predictions are continious 'soft' and binarizes them using an argmax. Then removes the
+        background channel from the one-hot-encoding. This behaviour can be turned off using the binarize and
+        ignore_background arguments.
+
+        NOTE: Preds and targets must have the same shape and only contain elements in range [0, 1]. If preds and
+        targets passed to update method have different shapes, this class will attempt to infer the channel dimension
+        and align the shapes by one-hot-encoding one of the tensors.
 
         Args:
             name (str): The name of the metric.
             along_axes (Sequence[int]): Sequence of indices specifying the axes *along* which to compute the
-                individual accuracy scores which will then be averaged to produce the final accuracy score. The default
-                is an empty tuple which will compute a single accuracy score *over* all dimensions. Note that the
-                individual accuracy scores must be stored in memory until cleared, this may cause memory build up in
-                some instances.
+                individual accuracy scores which will then be averaged to produce the final accuracy score. If given an
+                empty tuple, will compute a single accuracy score *over* all dimensions. Note that the individual
+                accuracy scores must be stored in memory until cleared, this may cause memory build up in some
+                instances. Default is to compute along the first dimension which is assumed to be the batch/n_samples
+                dimension.
             dtype (torch.dtype): The torch dtype to use when storing the individual accuracy scores in memory.
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
-                index of the channel/class dimension. If a float is given, predictions below the
-                threshold are mapped to 0 and above are mapped to 1. If an integer is given, predictions are binarized
-                based on the class with the highest prediction. If None leaves preds unchanged. Default is 1
+                index of the channel/class dimension. If a float is given, predictions below the threshold are mapped
+                to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
+                with the highest prediction. If None leaves preds unchanged. Default is 1 since this is usually the
+                channel dimension.
             ignore_background (int | None): If not None, the first channel of the specified axis is removed prior to
-                computing the counts. Useful for removing background channels. Defaults to 1.
+                computing the counts. Useful for removing background channels. Defaults to None.
+            exact_match (bool): If True computes the 'Subset Accuracy'/'Exact Match Ratio'. Individual accuracies that
+                are not prefect/exact (== 1) are set to 0 before computing the final accuracy score. This is useful for
+                multilabel tabular classification. Defaults to True.
+
+        NOTE: To make this behave like accuracy previous implementation using sklearn and SimpleMetric, set binarize
+        arg to the the channel dim (or to 0.5 if preds are not OHE *and* there are only 2 classes), ignore background
+        to None, and along axes to (0,) and exact_match to True.
         """
+        self.exact_match = exact_match
         super().__init__(
             name=name, along_axes=along_axes, dtype=dtype, binarize=binarize, ignore_background=ignore_background
         )
 
-    def compute(self, name: str | None = None) -> Metrics:
-        accuracy = self.tp / (self.tp + self.fp + self.fn + self.tn)
-        key = self.name if name is None else f"{name} - {self.name}"
-        return {key: torch.mean(accuracy).item()}
+    def compute_from_counts(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor, tn: torch.Tensor) -> Metrics:
+        accuracy = (tp + tn) / (tp + fp + fn + tn)
+        accuracy = (accuracy == 1).to(torch.float) if self.exact_match else accuracy
+        return {self.name: torch.mean(accuracy).item()}
 
 
 class Recall(ClassificationMetric):
@@ -552,10 +659,11 @@ class Recall(ClassificationMetric):
         binarize: float | int | None = None,
         ignore_background: int | None = None,
     ) -> None:
-        """Computes the Recall (also known as sensitivity).
+        """Computes the Recall (also known as sensitivity). Memory efficient.
 
-        NOTE: Preds and targets passed to the update method are assumed to have the same shape and contain elements in
-        range [0, 1]. For multiclass problems ensure they are both one-hot-encoded.
+        NOTE: Preds and targets must have the same shape and only contain elements in range [0, 1]. If preds and
+        targets passed to update method have different shapes, this class will attempt to infer the channel dimension
+        and align the shapes by one-hot-encoding one of the tensors.
 
         Args:
             name (str): The name of the metric.
@@ -568,7 +676,7 @@ class Recall(ClassificationMetric):
                 index of the channel/class dimension. If a float is given, predictions below the
                 threshold are mapped to 0 and above are mapped to 1. If an integer is given, predictions are binarized
                 based on the class with the highest prediction. Default of None leaves preds unchanged.
-            ignore_background (int | None, optional): If specified, the first channel of the specified axis is removed 
+            ignore_background (int | None, optional): If specified, the first channel of the specified axis is removed
                 prior to computing the counts. Useful for removing background channels. Defaults to None.
         """
         super().__init__(
@@ -580,11 +688,9 @@ class Recall(ClassificationMetric):
             discard=["fp", "tn"],
         )
 
-    def compute(self, name: str | None = None) -> Metrics:
-        recall = self.tp / (self.tp + self.fn)
-        key = self.name if name is None else f"{name} - {self.name}"
-        return {key: torch.mean(recall).item()}
-
+    def compute_from_counts(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor, tn: torch.Tensor) -> Metrics:
+        recall = tp / (tp + fn)
+        return {self.name: torch.mean(recall).item()}
 
 
 class Dice(ClassificationMetric):
@@ -600,8 +706,9 @@ class Dice(ClassificationMetric):
         """
         Computes the Mean DICE Coefficient between class predictions and targets.
 
-        Preds and targets passed to the update method are assumed to have the same shape and contain elements in range
-        [0, 1]. For multiclass problems ensure they are both one-hot-encoded.
+        NOTE: Preds and targets must have the same shape and only contain elements in range [0, 1]. If preds and
+        targets passed to update method have different shapes, this class will attempt to infer the channel dimension
+        and align the shapes by one-hot-encoding one of the tensors.
 
         Args:
 
@@ -612,9 +719,10 @@ class Dice(ClassificationMetric):
                 DICE coefficient will be computed over all axes. Note that intermediate values must be stored in memory
                 for each element along the specified axes, this may lead to memory build up in some instances.
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
-                index of the channel/class dimension. If a float is given, predictions below the
-                threshold are mapped to 0 and above are mapped to 1. If an integer is given, predictions are binarized
-                based on the class with the highest prediction. Default of None leaves preds unchanged and computes a 'Soft' Dice score, otherwise metric is equivalent to a 'Hard' Dice score.
+                index of the channel/class dimension. If a float is given, predictions below the threshold are mapped
+                to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
+                with the highest prediction. Default of None leaves preds unchanged and computes a 'Soft' Dice score,
+                otherwise metric is equivalent to a 'Hard' Dice score.
             ignore_background (int | None): If specified, the first channel of the specified axis is removed prior to
                 computing the DICE coefficients. Useful for removing background channels. Defaults to None.
             ignore_null (bool): If True, null dice coefficients are removed before returning the mean dice score. If
@@ -653,11 +761,9 @@ class Dice(ClassificationMetric):
         # Denominator will always be larger than numerator, so no need to add small epsilon to denominator.
         return numerator / denominator
 
-    def compute(self, name: str | None = None) -> Metrics:
-        # Compute dice coefficients and return mean DICE score
-        dice = self._compute_dice_coefficients(self.tp, self.fp, self.fn)
-        key = self.name if name is None else f"{name} - {self.name}"
-        return {key: torch.mean(dice).item()}
+    def compute_from_counts(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor, tn: torch.Tensor) -> Metrics:
+        dice = self._compute_dice_coefficients(tp, fp, fn)
+        return {self.name: torch.mean(dice).item()}
 
 
 class HardDice(Dice):
@@ -672,8 +778,9 @@ class HardDice(Dice):
         """
         Computes the Mean DICE Coefficient between categorical (Hard) class predictions and targets.
 
-        Preds and targets passed to the update method are assumed to have the same shape and contain elements in range
-        [0, 1]. For multiclass problems ensure they are both one-hot-encoded. The binarize argument can be used to
+        NOTE: Preds and targets must have the same shape and only contain elements in range [0, 1]. If preds and
+        targets passed to update method have different shapes, this class will attempt to infer the channel dimension
+        and align the shapes by one-hot-encoding one of the tensors. The binarize argument can be used to
         convert incoming continious ('soft') predictions in to categorical ('hard') predictions.
 
         Args:
@@ -712,13 +819,11 @@ class BalancedAccuracy(Recall):
         channel_dim: int = 1,
         dtype: torch.dtype = torch.float32,
         binarize: float | bool = True,
-        ignore_background: bool = True,
+        ignore_background: bool = False,
     ) -> None:
-        """Computes tthe balanced accuracy in binary and multiclass classification problems.
+        """Balanced accuracy metric for classification tasks. Used for the evaluation of imbalanced datasets.
 
-        Balanced accuracy is defined as the average recall obtained on each class. Preds and targets passed to the
-        update method are assumed to have the same shape and contain elements in range [0, 1]. For multiclass problems
-        ensure they are both one-hot-encoded.
+        Balanced accuracy is defined as the average recall obtained on each class.
 
         Args:
             name (str): The name of the metric.
@@ -729,41 +834,25 @@ class BalancedAccuracy(Recall):
                 based on the class with the highest prediction. Default of False leaves preds unchanged.
             ignore_background (bool, optional): If True, the first channel of the channel axis is removed prior to
                 computing the counts. Useful for removing background channels. Defaults to False.
+
+        NOTE: To get this to behave like the previous implementation of balanced accuracy using sklearn and
+        SimpleMetric, use kwargs {'channel_dim': 1, 'binarize': True, 'ignore_background': False}.
         """
         if isinstance(binarize, float):
-            binarize=binarize
+            binarize_arg = binarize
         elif binarize:
-            binarize=int(channel_dim)
+            binarize_arg = int(channel_dim)
         else:
-            binarize = None
+            binarize_arg = None
 
-        ignore_background = channel_dim if ignore_background else None
         super().__init__(
             name=name,
-            along_axes=(channel_dim,),
+            along_axes=[channel_dim],
             dtype=dtype,
-            binarize=binarize,
-            ignore_background=ignore_background,
+            binarize=binarize_arg,
+            ignore_background=channel_dim if ignore_background else None,
         )
-
-class SimpleBalancedAccuracy(SimpleMetric):
-    def __init__(self, name: str = "balanced_accuracy"):
-        """
-        Balanced accuracy metric for classification tasks. Used for the evaluation of imbalanced datasets. For more
-        information:
-
-        https://scikit-learn.org/stable/modules/generated/sklearn.metrics.balanced_accuracy_score.html
-        """
-        super().__init__(name)
-
-    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
-        # assuming batch first
-        assert logits.shape[0] == target.shape[0]
-        target = target.cpu().detach()
-        logits = logits.cpu().detach()
-        y_true = target.reshape(-1)
-        preds = np.argmax(logits, axis=1)
-        return sklearn_metrics.balanced_accuracy_score(y_true, preds)
+        self.channel_dim = channel_dim
 
 
 class ROC_AUC(SimpleMetric):
@@ -784,35 +873,55 @@ class ROC_AUC(SimpleMetric):
         return sklearn_metrics.roc_auc_score(y_true, prob, average="weighted", multi_class="ovr")
 
 
-class F1(SimpleMetric):
+class F1(ClassificationMetric):
     def __init__(
         self,
-        name: str = "F1 score",
-        average: str | None = "weighted",
-    ):
-        """
-        Computes the F1 score using the ``sklearn f1_score`` function. As such, the values of average correspond to
-        those of that function.
+        name: str = "F1",
+        along_axes: Sequence[int] = (),
+        dtype: torch.dtype = torch.float32,
+        binarize: float | int | None = None,
+        ignore_background: int | None = None,
+        weighted: bool = False,
+    ) -> None:
+        """Computes the F1 Score.
 
         Args:
-            name (str, optional): Name of the metric. Defaults to "F1 score".
-            average (str | None, optional): Whether to perform averaging of the F1 scores and how. The values of this
-                string corresponds to those of the ``sklearn f1_score function``. See:
+            name (str): The name of the metric.
+            along_axes (Sequence[int]): Sequence of indices specifying axes *along* which to compute the F1 score. The
+                F1 scores will be computed *over* the axes not specified and then averaged to produce the final F1
+                score. The 0th axis is assumed to be the batch/sample dimension. If provided an empty sequence, then a
+                single F1 score is computed *over* all axes.
+            dtype (torch.dtype, optional): The dtype to store the recall scores as in memory. Defaults
+            binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
+                index of the channel/class dimension. If a float is given, predictions below the
+                threshold are mapped to 0 and above are mapped to 1. If an integer is given, predictions are binarized
+                based on the class with the highest prediction. Default of None leaves preds unchanged.
+            ignore_background (int | None, optional): If specified, the first channel of the specified axis is removed
+                prior to computing the counts. Useful for removing background channels. Defaults to None.
+            weighted (bool, optional): If True, weights each of the individual F1 scores by their support (the number
+                of true positives and false negatives) before averaging them to compute the final F1 score.
 
-                https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html
-
-                Defaults to "weighted".
+        NOTE: To get this metric to behave like the previous implementation using sklearn and SimpleMetric, use kwargs
+        {'along_axes': 1, 'binarize': 1, 'ignore_background': None, 'weighted': True}. Setting weighted to False while
+        computing along the cclass/channel axis makes the metric behave like the 'macro' averaging.
         """
-        super().__init__(name)
-        self.average = average
+        self.weighted = weighted
+        super().__init__(
+            name=name,
+            along_axes=along_axes,
+            dtype=dtype,
+            binarize=binarize,
+            ignore_background=ignore_background,
+            discard=["tn"],
+        )
 
-    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
-        assert logits.shape[0] == target.shape[0]
-        target = target.cpu().detach()
-        logits = logits.cpu().detach()
-        y_true = target.reshape(-1)
-        preds = np.argmax(logits, axis=1)
-        return sklearn_metrics.f1_score(y_true, preds, average=self.average)
+    def compute_from_counts(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor, tn: torch.Tensor) -> Metrics:
+        f1 = 2 * tp / (2 * tp + fp + fn)  # Compute F1
+        if self.weighted:
+            f1 = (f1 * (tp + fn) / (tp.sum() + fn.sum())).sum()
+        else:
+            f1 = torch.mean(f1)
+        return {self.name: f1.item()}
 
 
 class MetricManager:

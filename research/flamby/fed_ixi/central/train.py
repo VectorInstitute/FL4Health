@@ -7,7 +7,7 @@ from flamby.datasets.fed_ixi import BATCH_SIZE, LR, NUM_EPOCHS_POOLED, Baseline,
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
 
-from fl4health.utils.metrics import HardDICE, MetricManager
+from fl4health.utils.metrics import HardDice, MetricManager
 from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datasets
 from research.flamby.single_node_trainer import SingleNodeTrainer
 from research.flamby.utils import summarize_model_info
@@ -73,7 +73,7 @@ if __name__ == "__main__":
         args.dataset_dir,
         args.run_name,
     )
-    metrics = [HardDICE("FedIXI_dice", along_axes=(0, 1), ignore_null=False, binarize=0.5)]
+    metrics = [HardDice("FedIXI_dice", along_axes=(0, 1), ignore_null=False, binarize=0.5)]
     train_metric_mngr = MetricManager(metrics, "train_meter")
     val_metric_mngr = MetricManager(metrics, "val_meter")
     # Central and local models in FLamby for FedIX are trained for 10 epochs

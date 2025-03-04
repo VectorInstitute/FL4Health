@@ -1,4 +1,5 @@
 import math
+import re
 
 import numpy as np
 import pytest
@@ -9,37 +10,132 @@ from torch.nn.functional import one_hot
 from fl4health.utils.metrics import (
     F1,
     ROC_AUC,
-    SimpleAccuracy,
+    Accuracy,
     BalancedAccuracy,
+    Dice,
     HardDice,
     MetricManager,
-    Dice,
-    align_pred_and_target_shapes
+    align_pred_and_target_shapes,
 )
 
 
-# def get_soft_and_hard_preds_and_targets(hard_shape: tuple[int], n_classes: int, channel_dim: int):
-#     # We'll use 3 channels. Add other dims with size 3 to make things difficult
-#     hard_preds = torch.randint(0, n_classes, size=hard_shape)
-#     hard_targets = torch.randint(0, n_classes, size=hard_shape)
-#     view_shape, soft_shape = list(hard_shape), list(hard_shape)
-#     view_shape.insert(channel_dim, 1)
-#     soft_shape.insert(channel_dim, n_classes)
-#     soft_preds = torch.zeros(size=soft_shape, dtype=torch.int)
-#     soft_preds.scatter_(1, hard_preds.view(view_shape).long(), 1)
-#     soft_targets = torch.zeros(size=soft_shape, dtype=torch.bool)
-#     soft_targets.scatter_(1, hard_targets.view(view_shape).long(), 1)
-#     return hard_preds, haa
+def get_dummy_classification_tensors(
+    ohe_shape: tuple[int, ...], class_dim: int
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    n_classes = ohe_shape[class_dim]
+    assert n_classes > 1, "Must have at least 2 classes"
+
+    # Create soft one-hot-encoded tensor
+    soft_ohe = torch.rand(size=ohe_shape)
+    soft_ohe = torch.softmax(soft_ohe, dim=class_dim)
+
+    # Create hard not one-hot-encoded tensor
+    hard_not_ohe = torch.argmax(soft_ohe, dim=class_dim)
+
+    # Create hard one-hot-encoded tensor
+    hard_ohe = torch.zeros(size=ohe_shape)
+    hard_ohe_view = hard_not_ohe.view((*hard_not_ohe.shape[:class_dim], 1, *hard_not_ohe.shape[class_dim:]))
+    hard_ohe.scatter_(class_dim, hard_ohe_view, 1)
+
+    soft_not_ohe = torch.tensor([])
+    if n_classes == 2:  # Only binary classification can have a continious tensor that is not one-hot-encoded.
+        soft_not_ohe = torch.select(soft_ohe, class_dim, 1)
+
+    return hard_ohe, soft_ohe, hard_not_ohe, soft_not_ohe
 
 
-# def test_multiclass_align() -> None:
-#     # We'll use 3 channels. Add other dims with size 3 to make things difficult
-#     hard_preds = torch.randint(0, 3, size=(10, 3, 9, 3))
-#     hard_targets = torch.randint(0, 3, size=(10, 3, 9, 3))
-#     soft_preds = torch.zeros(size=(10, 3, 3, 9, 3), dtype=torch.int)
-#     soft_preds.scatter_(1, hard_preds.view((10, 1, 3, 9, 3)).long(), 1)
-#     soft_targets = torch.zeros(size=(10, 3, 3, 9, 3), dtype=torch.bool)
-#     soft_targets.scatter_(1, hard_targets.long())
+def test_multiclass_align() -> None:
+    # Create dummy preds and targets
+    hard_preds_ohe, soft_preds_ohe, hard_preds, _ = get_dummy_classification_tensors((2, 3, 5, 9, 3), 1)
+    hard_targets_ohe, soft_targets_ohe, hard_targets, _ = get_dummy_classification_tensors((2, 3, 5, 9, 3), 1)
+
+    # Test align on different combinations of mismatched shapes
+    preds, targets = align_pred_and_target_shapes(soft_preds_ohe, hard_targets)
+    assert preds.shape == targets.shape == (2, 3, 5, 9, 3)
+    assert torch.isclose(preds, soft_preds_ohe).all()
+    assert torch.isclose(targets, hard_targets_ohe).all()
+
+    preds, targets = align_pred_and_target_shapes(hard_preds_ohe, hard_targets)
+    assert preds.shape == targets.shape == (2, 3, 5, 9, 3)
+    assert torch.isclose(preds, hard_preds_ohe).all()
+    assert torch.isclose(targets, hard_targets_ohe).all()
+
+    preds, targets = align_pred_and_target_shapes(hard_preds, hard_targets_ohe)
+    assert preds.shape == targets.shape == (2, 3, 5, 9, 3)
+    assert torch.isclose(preds, hard_preds_ohe).all()
+    assert torch.isclose(targets, hard_targets_ohe).all()
+
+    preds, targets = align_pred_and_target_shapes(hard_preds, soft_targets_ohe)
+    assert preds.shape == targets.shape == (2, 3, 5, 9, 3)
+    assert torch.isclose(preds, hard_preds_ohe).all()
+    assert torch.isclose(targets, soft_targets_ohe).all()
+
+    # Test that if shapes are the same outputs are unchanged
+    preds, targets = align_pred_and_target_shapes(hard_preds_ohe, soft_targets_ohe)
+    assert preds.shape == targets.shape == (2, 3, 5, 9, 3)
+    assert torch.isclose(preds, hard_preds_ohe).all()
+    assert torch.isclose(targets, soft_targets_ohe).all()
+
+    # Test that if shapes are the same outputs are unchanged
+    preds, targets = align_pred_and_target_shapes(soft_preds_ohe, hard_targets_ohe)
+    assert preds.shape == targets.shape == (2, 3, 5, 9, 3)
+    assert torch.isclose(preds, soft_preds_ohe).all()
+    assert torch.isclose(targets, hard_targets_ohe).all()
+
+
+def test_binary_align() -> None:
+    # Create dummy preds and targets. H stands for 'hard' and s stands for 'soft'
+    h_preds_ohe, s_preds_ohe, h_preds, s_preds = get_dummy_classification_tensors((4, 2, 5, 9, 3), 1)
+    h_targets_ohe, s_targets_ohe, h_targets, s_targets = get_dummy_classification_tensors((4, 2, 5, 9, 3), 1)
+
+    # Test align with soft tensors that are not one-hot-encoded
+    preds, targets = align_pred_and_target_shapes(s_preds, h_targets_ohe)
+    assert preds.shape == targets.shape == (4, 2, 5, 9, 3)
+    assert torch.isclose(preds, s_preds_ohe).all()
+    assert torch.isclose(targets, h_targets_ohe).all()
+
+    preds, targets = align_pred_and_target_shapes(s_preds, s_targets_ohe)
+    assert preds.shape == targets.shape == (4, 2, 5, 9, 3)
+    assert torch.isclose(preds, s_preds_ohe).all()
+    assert torch.isclose(targets, s_targets_ohe).all()
+
+    preds, targets = align_pred_and_target_shapes(h_preds_ohe, s_targets)
+    assert preds.shape == targets.shape == (4, 2, 5, 9, 3)
+    assert torch.isclose(preds, h_preds_ohe).all()
+    assert torch.isclose(targets, s_targets_ohe).all()
+
+    preds, targets = align_pred_and_target_shapes(s_preds_ohe, s_targets)
+    assert preds.shape == targets.shape == (4, 2, 5, 9, 3)
+    assert torch.isclose(preds, s_preds_ohe).all()
+    assert torch.isclose(targets, s_targets_ohe).all()
+
+    # If shapes of the input tensors are the same then the outputs should be as well
+    preds, targets = align_pred_and_target_shapes(s_preds, s_targets)
+    assert preds.shape == targets.shape == (4, 5, 9, 3)
+    assert torch.isclose(preds, s_preds).all()
+    assert torch.isclose(targets, s_targets).all()
+
+
+def test_align_exceptions() -> None:
+    # Define a pattern to ensure that the exception has something to do with inferring the channel dim.
+    pattern = re.compile("(infer.*channel)|(channel.*infer)", flags=re.IGNORECASE)
+
+    # Channel dim can not be resolved if shapes differ in more than 1 dimension
+    hard_preds_ohe, soft_preds_ohe, hard_preds, _ = get_dummy_classification_tensors((2, 3, 5, 9, 3), 1)
+    hard_targets_ohe, soft_targets_ohe, hard_targets, _ = get_dummy_classification_tensors((2, 3, 5, 9, 6), 1)
+
+    with pytest.raises(Exception, match=pattern):
+        preds, targets = align_pred_and_target_shapes(soft_preds_ohe, hard_targets)
+
+    with pytest.raises(Exception, match=pattern):
+        preds, targets = align_pred_and_target_shapes(hard_preds_ohe, hard_targets_ohe)
+
+    # Channel dim can not be resolved if the dimension directly afterwards has the same size
+    hard_preds_ohe, soft_preds_ohe, hard_preds, _ = get_dummy_classification_tensors((2, 3, 3, 9, 6), 1)
+    hard_targets_ohe, soft_targets_ohe, hard_targets, _ = get_dummy_classification_tensors((2, 3, 3, 9, 6), 1)
+
+    with pytest.raises(Exception, match=pattern):
+        preds, targets = align_pred_and_target_shapes(soft_preds_ohe, hard_targets)
 
 
 def test_hard_dice_metric_1d_and_clear() -> None:
@@ -197,26 +293,28 @@ def test_hard_dice_metric_along_axes() -> None:
 
 
 def test_accuracy_metric() -> None:
-    accuracy_metric = SimpleAccuracy()
+    accuracy_metric = Accuracy(along_axes=[0], exact_match=True)
 
-    pred1 = torch.eye(5)
-    target1 = torch.arange(0, 5)
-    accuracy1 = accuracy_metric(pred1, target1)
-    assert accuracy1 == 1.0
+    pred1 = one_hot(torch.arange(0, 6) % 5)
+    target1 = torch.tensor([0, 1, 2, 3, 4, 0])
+    accuracy_metric.update(pred1, target1)
+    result1 = accuracy_metric.compute()
+    assert result1["Accuracy"] == approx(1.0)
 
-    pred2 = torch.eye(4)
-    target2 = torch.tensor([0, 1, 1, 3])
+    accuracy_metric.clear()
+    pred2 = one_hot(torch.arange(0, 4) % 3)
+    target2 = torch.tensor([0, 1, 2, 2])
     accuracy2 = accuracy_metric(pred2, target2)
     assert accuracy2 == 0.75
 
 
 def test_binary_accuracy() -> None:
-    accuracy_metric = SimpleAccuracy()
+    accuracy_metric = Accuracy(binarize=None)
 
     pred1 = torch.Tensor([0, 1, 1, 0, 1])
     target1 = torch.Tensor([0, 0, 1, 1, 1])
     accuracy1 = accuracy_metric(pred1, target1)
-    assert accuracy1 == 3.0 / 5.0
+    assert accuracy1 == approx(3.0 / 5.0)
 
 
 def test_balanced_accuracy() -> None:
@@ -225,8 +323,11 @@ def test_balanced_accuracy() -> None:
     logits = torch.Tensor([[0.75, 0.25], [0.12, 0.88], [0.9, 0.1], [0.94, 0.06], [0.78, 0.22], [0.08, 0.92]])
     target = torch.Tensor([0, 1, 0, 0, 1, 0])
 
-    assert metric(logits, target) == 0.625
+    metric.update(logits, target)
+    result = metric.compute()
+    assert result["balanced_accuracy"] == approx(0.625)
 
+    metric.clear()
     logits = torch.Tensor(
         [
             [0.75, 0.20, 0.05],
@@ -238,8 +339,9 @@ def test_balanced_accuracy() -> None:
         ]
     )
     target = torch.Tensor([0, 1, 2, 0, 1, 2])
-
-    assert metric(logits, target) == 0.5
+    metric.update(logits, target)
+    result = metric.compute()
+    assert result["balanced_accuracy"] == approx(0.5)
 
 
 def test_ROC_AUC_metric() -> None:
@@ -273,9 +375,9 @@ def test_ROC_AUC_metric() -> None:
 
 
 def test_F1_metric() -> None:
-    metric = F1()
+    metric = F1(along_axes=[1], binarize=1, weighted=True)
 
-    logits1 = torch.Tensor(
+    logits = torch.Tensor(
         [
             [3.0, 1.0, 2.0],
             [0.88, 0.06, 0.06],
@@ -284,8 +386,10 @@ def test_F1_metric() -> None:
             [0.5, 3.0, 1.5],
         ]
     )
-    target1 = torch.Tensor([0, 0, 2, 0, 2])
-    assert metric(logits1, target1) == 0.68
+    target = torch.Tensor([0, 0, 2, 0, 2])
+    metric.update(logits, target)
+    result = metric.compute()
+    assert result["F1"] == approx(0.68)
 
 
 def test_hard_dice_default_threshold() -> None:
@@ -305,14 +409,14 @@ def test_hard_dice_default_threshold() -> None:
     random_dice = metric.compute()["DICE"]
     pytest.approx(random_dice, abs=0.00001) == 0.6598031841976006
 
-    # Test with intersection of zero to ensure edge case is equal to 0.0
+    # Test with intersection of zero to ensure edge case is isclose to 0.0
     metric.clear()
     all_zeros_logits = torch.zeros((10, 1, 10, 10, 10))
     metric.update(all_zeros_logits, all_ones_targets)
     dice_intersection_zero = metric.compute()["DICE"]
     pytest.approx(dice_intersection_zero, abs=0.000001) == 0.0
 
-    # Test with union of zero to ensure edge case is equal to 1.0
+    # Test with union of zero to ensure edge case is isclose to 1.0
     metric.clear()
     all_zeros_logits = torch.zeros((10, 1, 10, 10, 10))
     all_zeros_target = torch.zeros((10, 1, 10, 10, 10))
@@ -365,15 +469,15 @@ def test_hard_and_soft_dice_alt_threshold() -> None:
 
 
 def test_metric_accumulation() -> None:
-    a = SimpleAccuracy()
+    a = Accuracy(along_axes=[0], exact_match=True)
 
-    pred1 = torch.eye(4)
-    pred2 = torch.eye(4)
-    pred3 = torch.eye(4)
+    pred1 = one_hot(torch.arange(4) % 3)
+    pred2 = one_hot(torch.arange(4) % 3)
+    pred3 = one_hot(torch.arange(4) % 3)
 
-    target1 = torch.arange(4)
-    target2 = torch.arange(3, -1, -1)
-    target3 = torch.tensor([0, 1, 1, 1])
+    target1 = torch.tensor([0, 1, 2, 0])  # 1.0
+    target2 = torch.tensor([2, 0, 1, 2])  # 0.0
+    target3 = torch.tensor([0, 1, 1, 1])  # 0.5
 
     preds = [pred1, pred2, pred3]
     targets = [target1, target2, target3]
@@ -381,7 +485,7 @@ def test_metric_accumulation() -> None:
     for pred, target in zip(preds, targets):
         a.update(pred, target)
 
-    assert a.compute()["accuracy"] == 0.5
+    assert a.compute()["Accuracy"] == 0.5
 
     ba = BalancedAccuracy()
 
@@ -458,12 +562,14 @@ def test_metric_manager() -> None:
     logits_list = [logits1, logits2]
     target_list = [target1, target2]
 
-    mm = MetricManager([F1(), SimpleAccuracy()], "test")
+    mm = MetricManager(
+        [F1(along_axes=[1], binarize=1, weighted=True), Accuracy(along_axes=[0], binarize=1, exact_match=True)], "test"
+    )
 
     for logits, target in zip(logits_list, target_list):
         preds = {"prediction": logits}
         mm.update(preds, target)
     metrics = mm.compute()
 
-    assert metrics["test - prediction - F1 score"] == pytest.approx(0.80285714285, abs=0.00001)
-    assert metrics["test - prediction - accuracy"] == 0.8
+    assert metrics["test - prediction - F1"] == pytest.approx(0.80285714285, abs=0.00001)
+    assert metrics["test - prediction - Accuracy"] == approx(0.8)
