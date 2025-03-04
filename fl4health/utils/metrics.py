@@ -6,10 +6,10 @@ from logging import WARNING
 
 import numpy as np
 import torch
+from flwr.common.logger import log
 from flwr.common.typing import Metrics, Scalar
 from sklearn import metrics as sklearn_metrics
 from torchmetrics import Metric as TMetric
-from flwr.common.logger import log
 
 from fl4health.utils.typing import TorchPredType, TorchTargetType, TorchTransformFunction
 
@@ -501,8 +501,8 @@ class ClassificationMetric(Metric):
 
     def _transform_tensors(self, preds: torch.Tensor, targets: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
-        Does all the necessary transformations to preds and targets before computing the counts. 
-        
+        Does all the necessary transformations to preds and targets before computing the counts.
+
         This may or may not include binarizing the preds, one-hot-encoding either the preds or targets, removing the background channel, and or type conversions. Several assertions are also made to ensure inputs are as expected.
         """
         # Maybe convert continious 'soft' predictions into binary 'hard' predictions.
@@ -545,7 +545,7 @@ class ClassificationMetric(Metric):
             targets (torch.Tensor): Tensor containing prediction targets. Must be same shape as preds.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the 
+            tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
                 specified dimensions for each of tp, fp, fn, and tn respectively.
         """
         # Compute tp, fp and fn
@@ -599,7 +599,7 @@ class ClassificationMetric(Metric):
 
     def __call__(self, preds: torch.Tensor, targets: torch.Tensor) -> Scalar:
         """Convenience function for computing the metric on given preds and targets without modifying class state.
-        
+
         If there are multiple scalar values in the Metrics dictionary returned by `self.compute_from_counts` then this method will try to return the mean. If it can not it returns the first value in the dictionary.
         """
         # Transform preds and targets as necessary/specified before computing counts
@@ -633,8 +633,8 @@ class Accuracy(ClassificationMetric):
         dtype: torch.dtype = torch.float,
     ) -> None:
         """
-        Memory efficient accuracy metric. 
-        
+        Memory efficient accuracy metric.
+
         Computes accuracy from true positives (tp), false positive (fp), false negative (fn') and true negative (tn) counts so that preds and targets don't need to be accumulated in memory.
 
         NOTE: Preds and targets must have the same shape and only contain elements in range [0, 1]. If preds and
@@ -660,7 +660,7 @@ class Accuracy(ClassificationMetric):
             ignore_background (int | None): If not None, the first channel of the specified axis is removed prior to
                 computing the counts. Useful for removing background channels. Defaults to None.
             dtype (torch.dtype): Dtype used to store tp, fp, fn and tn counts in memory on on `self.update`.
-            
+
 
         NOTE: To make this behave like the previous accuracy implementation using sklearn and SimpleMetric, use args {'binarize': 1, 'along_axes': [0], 'exact_match': True}. Replace binarize with 0.5 if preds are binary *and* note one-hot-encoded.
         """
@@ -695,7 +695,7 @@ class Recall(ClassificationMetric):
 
         Args:
             name (str, optional): The name of the metric.
-            along_axes (Sequence[int], optional): Sequence of indices specifying axes *along* which to compute the 
+            along_axes (Sequence[int], optional): Sequence of indices specifying axes *along* which to compute the
                 Recall. The recall scores will be summed *over* the axes not specified. The final recall score will be
                 the mean of these recalls. The 0th axis is assumed to be the batch/sample dimension. If provided an
                 empty sequence, then a single recall score is computed *over* all axes.
@@ -705,7 +705,7 @@ class Recall(ClassificationMetric):
                 based on the class with the highest prediction. Default of None leaves preds unchanged.
             ignore_background (int | None, optional): If specified, the first channel of the specified axis is removed
                 prior to computing the counts. Useful for removing background channels. Defaults to None.
-            zero_division (float | None, optional): Set what the individual recall score should be when there is a 
+            zero_division (float | None, optional): Set what the individual recall score should be when there is a
                 zero division (only negative cases are present). If None, the resultant recall scores will be excluded
                 from the average/final recall score.
             dtype (torch.dtype, optional): Dtype used to store tp, fp, fn and tn counts in memory on on `self.update`.
@@ -729,7 +729,7 @@ class Recall(ClassificationMetric):
         else:
             tp[denominator == 0] = self.zero_division
             denominator[denominator == 0] = 1
-        
+
         # Compute recall scores and return mean
         recall = tp / denominator
         return {self.name: torch.mean(recall).item()}
@@ -765,9 +765,9 @@ class Dice(ClassificationMetric):
                 to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
                 with the highest prediction. Default of None leaves preds unchanged and computes a 'Soft' Dice score,
                 otherwise metric is equivalent to a 'Hard' Dice score.
-            ignore_background (int | None, optional): If specified, the first channel of the specified axis is removed 
+            ignore_background (int | None, optional): If specified, the first channel of the specified axis is removed
                 prior to computing the DICE coefficients. Useful for removing background channels. Defaults to None.
-            zero_division (float | None, optional): Set what the individual dice coefficients should be when there is 
+            zero_division (float | None, optional): Set what the individual dice coefficients should be when there is
                 a zero division (only true negatives present). How this argument affects the final DICE score will vary
                 depending along which axes the DICE coefficients were computed. If left as None, the resultant dice
                 coefficients will be excluded from the average/final dice score.
@@ -829,9 +829,9 @@ class HardDice(Dice):
                 coefficients should be computed. The final DICE Score is the mean of these DICE coefficients computed
                 *over* the dimensions not specified. Defaults to (0,) since this is usually the batch dimension. If
                 provided an empty tuple then a single DICE coefficient will be computed *over* all axes.
-            ignore_background (int | None, optional): If specified, the first channel of the specified axis is removed 
+            ignore_background (int | None, optional): If specified, the first channel of the specified axis is removed
                 prior to computing the DICE coefficients. Useful for removing background channels. Defaults to None.
-            zero_division (float | None, optional): Set what the individual dice coefficients should be when there is 
+            zero_division (float | None, optional): Set what the individual dice coefficients should be when there is
                 a zero division (only true negatives present). How this argument affects the final DICE score will vary
                 depending along which axes the DICE coefficients were computed. If left as None, the resultant dice
                 coefficients will be excluded from the average/final dice score.
@@ -893,7 +893,7 @@ class BalancedAccuracy(Recall):
             ignore_background=channel_dim if ignore_background else None,
         )
 
-        # We override the channe dim attribute since this subclass forces it to be known. 
+        # We override the channe dim attribute since this subclass forces it to be known.
         # Can prevent rare instances where channel dim is unable to be automatically inferred.
         self.channel_dim = channel_dim
 
@@ -931,7 +931,7 @@ class F1(ClassificationMetric):
 
         Args:
             name (str, optional): The name of the metric.
-            along_axes (Sequence[int], optional): Sequence of indices specifying axes *along* which to compute the F1 
+            along_axes (Sequence[int], optional): Sequence of indices specifying axes *along* which to compute the F1
                 score. The F1 scores will be computed *over* the axes not specified and then averaged to produce the
                 final F1 score. The 0th axis is assumed to be the batch/sample dimension. If provided an empty
                 sequence, then a single F1 score is computed *over* all axes.
@@ -941,7 +941,7 @@ class F1(ClassificationMetric):
                 based on the class with the highest prediction. Default of None leaves preds unchanged.
             weighted (bool, optional): If True, weights each of the individual F1 scores by their support (the number
                 of true positives and false negatives) before averaging them to compute the final F1 score.
-            zero_division (float | None, optional): Set what the individual F1 scores should be when there is a zero 
+            zero_division (float | None, optional): Set what the individual F1 scores should be when there is a zero
                 division (only true negatives present). How this argument affects the final F1 score will vary
                 depending along which axes the individual scores are computed. If left as None, the resultant F1 scores
                 will be excluded from the average/final F1 score.
@@ -967,7 +967,7 @@ class F1(ClassificationMetric):
     def compute_from_counts(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor, tn: torch.Tensor) -> Metrics:
         # Calculate numerator and denominator
         numerator = 2 * tp
-        denominator = (2 * tp + fp + fn)
+        denominator = 2 * tp + fp + fn
 
         # Remove or replace null F1 scores
         if self.zero_division is None:
