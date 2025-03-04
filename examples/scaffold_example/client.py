@@ -55,6 +55,6 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    client = MnistScaffoldClient(data_path, [Accuracy()], device, reporters=[JsonReporter()])
+    client = MnistScaffoldClient(data_path, [Accuracy("accuracy")], device, reporters=[JsonReporter()])
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()
