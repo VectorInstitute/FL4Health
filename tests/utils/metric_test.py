@@ -22,6 +22,7 @@ from fl4health.utils.metrics import (
 def get_dummy_classification_tensors(
     ohe_shape: tuple[int, ...], class_dim: int
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Returns 4 versions of the same dummy tensor to use for metric tests."""
     n_classes = ohe_shape[class_dim]
     assert n_classes > 1, "Must have at least 2 classes"
 
@@ -45,6 +46,7 @@ def get_dummy_classification_tensors(
 
 
 def test_multiclass_align() -> None:
+    """Tests the auto shape alignment used by the ClassificationMetric base class for multiclass classification."""
     # Create dummy preds and targets
     hard_preds_ohe, soft_preds_ohe, hard_preds, _ = get_dummy_classification_tensors((2, 3, 5, 9, 3), 1)
     hard_targets_ohe, soft_targets_ohe, hard_targets, _ = get_dummy_classification_tensors((2, 3, 5, 9, 3), 1)
@@ -84,6 +86,7 @@ def test_multiclass_align() -> None:
 
 
 def test_binary_align() -> None:
+    """Tests the auto shape alignment used by the ClassificationMetric base class for binary classification."""
     # Create dummy preds and targets. H stands for 'hard' and s stands for 'soft'
     h_preds_ohe, s_preds_ohe, h_preds, s_preds = get_dummy_classification_tensors((4, 2, 5, 9, 3), 1)
     h_targets_ohe, s_targets_ohe, h_targets, s_targets = get_dummy_classification_tensors((4, 2, 5, 9, 3), 1)
@@ -117,6 +120,7 @@ def test_binary_align() -> None:
 
 
 def test_align_exceptions() -> None:
+    """Tests that the proper exceptions are raised when attempting to align pred and target shapes."""
     # Define a pattern to ensure that the exception has something to do with inferring the channel dim.
     pattern = re.compile("(infer.*channel)|(channel.*infer)", flags=re.IGNORECASE)
 
@@ -139,7 +143,8 @@ def test_align_exceptions() -> None:
 
 
 def test_hard_dice_metric_1d_and_clear() -> None:
-    hd = HardDice(name="DICE", along_axes=(0,), ignore_background=None, ignore_null=True)
+    """Simple test of HardDice metric for 1D predictions."""
+    hd = HardDice(name="DICE", along_axes=(0,), ignore_background=None, zero_division=None)
 
     # Test with two 1D examples
     p = torch.tensor([[0, 0, 0, 1, 1, 1, 1, 1]])
@@ -157,7 +162,8 @@ def test_hard_dice_metric_1d_and_clear() -> None:
 
 
 def test_hard_dice_metric_1d_accumulation() -> None:
-    hd = HardDice(name="DICE", along_axes=(0,), ignore_background=None, ignore_null=True)
+    """Test that 1D predictions are properly accumulated."""
+    hd = HardDice(name="DICE", along_axes=(0,), ignore_background=None, zero_division=None)
 
     # Test accumulation
     p = torch.tensor([[0, 0, 0, 1, 0, 0, 1, 1]])
@@ -174,8 +180,9 @@ def test_hard_dice_metric_1d_accumulation() -> None:
 
 
 def test_hard_dice_metric_2d() -> None:
+    """Test that HardDice works with data that has more than 1 dimension."""
     # Test higher dimension examples. Shape is (1, 2, 4)
-    hd = HardDice(name="DICE", along_axes=(0,), ignore_background=None, ignore_null=True)
+    hd = HardDice(name="DICE", along_axes=(0,), ignore_background=None, zero_division=None)
     p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])
     t = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]])
     hd.update(p, t)
@@ -183,8 +190,9 @@ def test_hard_dice_metric_2d() -> None:
     assert result["DICE"] == approx(0.8)
 
 
-def test_hard_dice_metric_ignore_null_true() -> None:
-    hd = HardDice(name="DICE", along_axes=(0,), ignore_background=None, ignore_null=True)
+def test_hard_dice_metric_zero_div_ignore() -> None:
+    """Test that null scores are ignored when zero_division argument is set to None."""
+    hd = HardDice(name="DICE", along_axes=(0,), ignore_background=None, zero_division=None)
 
     # Initial test
     p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])
@@ -210,8 +218,9 @@ def test_hard_dice_metric_ignore_null_true() -> None:
     assert math.isnan(result["DICE"])
 
 
-def test_hard_dice_metric_ignore_null_false() -> None:
-    hd = HardDice(name="DICE", along_axes=(0,), ignore_background=None, ignore_null=False)
+def test_hard_dice_metric_zero_div_1() -> None:
+    """Test zero_division argument when a specific replacement score is specified."""
+    hd = HardDice(name="DICE", along_axes=(0,), ignore_background=None, zero_division=1.0)
 
     # Initial test
     p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])
@@ -237,8 +246,9 @@ def test_hard_dice_metric_ignore_null_false() -> None:
 
 
 def test_hard_dice_metric_ignore_background() -> None:
+    """Test ignore_background argument of HardDice metric"""
     # Test ignore background
-    hd = HardDice(name="DICE", along_axes=(0,), ignore_background=1, ignore_null=True)
+    hd = HardDice(name="DICE", along_axes=(0,), ignore_background=1, zero_division=None)
     p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])
     t = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]])
     hd.update(p, t)
@@ -254,8 +264,9 @@ def test_hard_dice_metric_ignore_background() -> None:
 
 
 def test_hard_dice_metric_along_axes() -> None:
+    """Test the along_axes argument of the HardDice metric."""
     # Test computing dice coefficients along different axes. Shape (n, 2, 4)
-    hd = HardDice(name="DICE", along_axes=(1,), ignore_background=None, ignore_null=True)
+    hd = HardDice(name="DICE", along_axes=(1,), ignore_background=None, zero_division=None)
     p = torch.tensor([[[0, 1, 0, 1], [1, 1, 1, 1]]])
     t = torch.tensor([[[0, 0, 1, 1], [1, 1, 1, 1]]])
     hd.update(p, t)
@@ -270,7 +281,7 @@ def test_hard_dice_metric_along_axes() -> None:
     assert result["DICE"] == approx(11 / 24)  # (2/8 + 2/3) / 2
 
     # Test along last dimension
-    hd = HardDice(name="DICE", along_axes=(2,), ignore_background=None, ignore_null=True)
+    hd = HardDice(name="DICE", along_axes=(2,), ignore_background=None, zero_division=None)
     p = torch.tensor([[[0, 1, 0, 1], [1, 1, 1, 1]]])
     t = torch.tensor([[[0, 0, 1, 1], [1, 1, 1, 1]]])
     hd.update(p, t)
@@ -278,7 +289,7 @@ def test_hard_dice_metric_along_axes() -> None:
     assert result["DICE"] == approx(5 / 6)  # (1 + 2/3 + 2/3 + 1) / 4
 
     # Test using along multiple axes. Shape (3, 2, 4)
-    hd = HardDice(name="DICE", along_axes=(0, 1), ignore_background=None, ignore_null=True)
+    hd = HardDice(name="DICE", along_axes=(0, 1), ignore_background=None, zero_division=None)
     p = torch.tensor([[[0, 1, 0, 1], [1, 1, 1, 1]]])
     t = torch.tensor([[[0, 0, 1, 1], [1, 1, 1, 1]]])
     hd.update(p, t)
@@ -393,8 +404,9 @@ def test_F1_metric() -> None:
 
 
 def test_hard_dice_default_threshold() -> None:
+    """Essentially a copy of a test for the old Dice metric class to ensure the new one can act as a stand in."""
     # Test with the default spatial and epsilon values
-    metric = HardDice(name="DICE", along_axes=(0, 1), ignore_null=False, binarize=0.5)
+    metric = HardDice(name="DICE", along_axes=(0, 1), zero_division=1.0, binarize=0.5)
     all_ones_targets = torch.ones((10, 1, 10, 10, 10))
     all_ones_logits = torch.ones((10, 1, 10, 10, 10))
     metric.update(all_ones_logits, all_ones_targets)
@@ -440,8 +452,9 @@ def test_hard_dice_default_threshold() -> None:
 
 
 def test_hard_and_soft_dice_alt_threshold() -> None:
+    """Essentially a copy of a test for the old Dice metric class to ensure the new one can act as a stand in."""
     # Change the threshold to 0.1
-    metric = HardDice(name="DICE", along_axes=(0, 1), ignore_null=False, binarize=0.1)
+    metric = HardDice(name="DICE", along_axes=(0, 1), zero_division=1.0, binarize=0.1)
 
     # Test all TP's
     all_ones_targets = torch.ones((10, 1, 10, 10, 10))
@@ -458,7 +471,7 @@ def test_hard_and_soft_dice_alt_threshold() -> None:
     pytest.approx(dice_of_one, abs=0.001) == 1.0
 
     # Test with a none threshold to ensure that the continuous dice coefficient is calculated
-    soft_metric = Dice(name="DICE", along_axes=(0, 1), ignore_null=False)
+    soft_metric = Dice(name="DICE", along_axes=(0, 1), zero_division=1.0)
     all_one_tenth_logits = 0.1 * torch.ones((10, 1, 10, 10, 10))
     soft_metric.update(all_one_tenth_logits, all_ones_targets)
     continuous_dice = soft_metric.compute()["DICE"]

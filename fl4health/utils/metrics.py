@@ -2,12 +2,14 @@ import copy
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from enum import Enum
+from logging import WARNING
 
 import numpy as np
 import torch
 from flwr.common.typing import Metrics, Scalar
 from sklearn import metrics as sklearn_metrics
 from torchmetrics import Metric as TMetric
+from flwr.common.logger import log
 
 from fl4health.utils.typing import TorchPredType, TorchTargetType, TorchTransformFunction
 
@@ -95,7 +97,7 @@ def align_pred_and_target_shapes(
             the channel dimension if it is needed.
 
     Returns:
-        tuple[torch.Tensor, torch.Tensor]: The pred and target tensors now ensured to have the same shape.
+        tuple[torch.Tensor, torch.Tensor]: The pred and target tensors respectively now ensured to have the same shape.
     """
     swapped = False
     if preds.shape == targets.shape:
@@ -422,7 +424,7 @@ class ClassificationMetric(Metric):
         ``self.tp``, ``self.fp``, ``self.fn`` and ``self.tn`` respectively. This reduces the memory footprint required
         to compute metrics across rounds. The User needs to define the ``compute_from_counts`` method which returns a
         dictionary of Scalar metrics given the tp, fp, fn, and tn counts. The accumulated counts are reset by the
-        ``clear`` method.
+        ``clear`` method. If your subclass returns multiple metrics you may need to override the `__call__` method.
 
         NOTE: Preds and targets must have the same shape and only contain elements in range [0, 1]. If preds and
         targets passed to update method have different shapes, this class will attempt to infer the channel dimension
@@ -431,9 +433,9 @@ class ClassificationMetric(Metric):
         Args:
             name (str): The name of the metric.
             along_axes (Sequence[int]): Sequence of indices specifying axes *along* which to accumulate tp, fp, fn and
-                tn. The counts will be summed *over* the axes not specified. The 0th axis is assumed to be the
-                batch/sample dimension. If provided an empty sequence, then the counts are scalar values computed
-                *over* all axes.
+                tn. The counts will be summed *over* the axes not specified. The 0th axis is assumed to be the batch or
+                sample dimension. If provided an empty sequence, then the counts are scalar values computed *over* all
+                axes.
             dtype (torch.dtype): The dtype to store the counts as. If preds or targets can be continious, specify a
                 float type. Otherwise specify an integer type to prevent overflow.
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
@@ -498,6 +500,11 @@ class ClassificationMetric(Metric):
             raise ValueError(f"Was expecting binarize argument to be either a float or an int. Got {type(binarize)}")
 
     def _transform_tensors(self, preds: torch.Tensor, targets: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Does all the necessary transformations to preds and targets before computing the counts. 
+        
+        This may or may not include binarizing the preds, one-hot-encoding either the preds or targets, removing the background channel, and or type conversions. Several assertions are also made to ensure inputs are as expected.
+        """
         # Maybe convert continious 'soft' predictions into binary 'hard' predictions.
         preds = preds if self.binarize is None else self.binarize_tensor(preds, self.binarize)
 
@@ -528,6 +535,19 @@ class ClassificationMetric(Metric):
     def count_tp_fp_fn_tn(
         self, preds: torch.Tensor, targets: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """
+        Given two tensors containing model predictions and targets, returns the number of true positives (tp), false positives (fp), false negatives (fn) and true negatives (tn).
+
+        If any of the tp, fp, fn or tn counts were specified to be discarded during initialization of the class, then that count will not be computed and an empty tensor will be returned in its place. The counts are summed along the axes specified in self.along_axes and there shape will be [pred.shape[a] for a in self.along_axes].
+
+        Args:
+            preds (torch.Tensor): Tensor containing model predictions. Must be the same shape and format as targets.
+            targets (torch.Tensor): Tensor containing prediction targets. Must be same shape as preds.
+
+        Returns:
+            tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the 
+                specified dimensions for each of tp, fp, fn, and tn respectively.
+        """
         # Compute tp, fp and fn
         sum_axes = tuple([i for i in range(preds.ndim) if i not in self.along_axes])
 
@@ -546,13 +566,14 @@ class ClassificationMetric(Metric):
         return tp, fp, fn, tn
 
     def update(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
+        """Updates the existing tp, fp, fn and tn counts with new counts computed from preds and targets."""
         # Transform preds and targets as necessary/specified before computing counts
         preds, targets = self._transform_tensors(preds, targets)
 
         # Get tp, fp, fn and tn counts for current update. If a count is discarded, then an empty tensor is returned.
         tp, fp, fn, tn = self.count_tp_fp_fn_tn(preds, targets)
 
-        # If this is first update since init or clear, initialize counts and exit function
+        # If this is first update since init or clear, initialize counts attributes and exit function
         if not self.counts_initialized:
             self.tp, self.fp, self.fn, self.tn = tp, fp, fn, tn
             self.counts_initialized = True
@@ -570,12 +591,17 @@ class ClassificationMetric(Metric):
         self.counts_initialized = False
 
     def compute(self, name: str | None = None) -> Metrics:
+        """Computes the metrics from the currently saved counts"""
         metrics = self.compute_from_counts(tp=self.tp, fp=self.fp, fn=self.fn, tn=self.tn)
         if name is not None:
             metrics = {f"{name} - {k}": v for k, v in metrics.items()}
         return metrics
 
     def __call__(self, preds: torch.Tensor, targets: torch.Tensor) -> Scalar:
+        """Convenience function for computing the metric on given preds and targets without modifying class state.
+        
+        If there are multiple scalar values in the Metrics dictionary returned by `self.compute_from_counts` then this method will try to return the mean. If it can not it returns the first value in the dictionary.
+        """
         # Transform preds and targets as necessary/specified before computing counts
         preds, targets = self._transform_tensors(preds, targets)
 
@@ -588,6 +614,8 @@ class ClassificationMetric(Metric):
             # If there are multiple metric scalars then try to return the mean for the call function
             return float(np.mean(list(metrics.values())))  # type: ignore
         else:  # Otherwise just return the first value
+            if len(metrics) > 1:
+                log(WARNING, "Could not aggregate all metrics from compute_from_counts. Defaulting to first in dict.")
             return list(metrics.values())[0]
 
     def compute_from_counts(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor, tn: torch.Tensor) -> Metrics:
@@ -599,45 +627,42 @@ class Accuracy(ClassificationMetric):
         self,
         name: str = "Accuracy",
         along_axes: Sequence[int] = (0,),
-        dtype: torch.dtype = torch.float,
         binarize: float | int | None = 1,
-        ignore_background: int | None = None,
         exact_match: bool = True,
+        ignore_background: int | None = None,
+        dtype: torch.dtype = torch.float,
     ) -> None:
         """
-        Memory efficient accuracy metric.
-
-        Automatically assumes predictions are continious 'soft' and binarizes them using an argmax. Then removes the
-        background channel from the one-hot-encoding. This behaviour can be turned off using the binarize and
-        ignore_background arguments.
+        Memory efficient accuracy metric. 
+        
+        Computes accuracy from true positives (tp), false positive (fp), false negative (fn') and true negative (tn) counts so that preds and targets don't need to be accumulated in memory.
 
         NOTE: Preds and targets must have the same shape and only contain elements in range [0, 1]. If preds and
         targets passed to update method have different shapes, this class will attempt to infer the channel dimension
         and align the shapes by one-hot-encoding one of the tensors.
 
         Args:
-            name (str): The name of the metric.
-            along_axes (Sequence[int]): Sequence of indices specifying the axes *along* which to compute the
+            name (str, optional): The name of the metric.
+            along_axes (Sequence[int], optional): Sequence of indices specifying the axes *along* which to compute the
                 individual accuracy scores which will then be averaged to produce the final accuracy score. If given an
                 empty tuple, will compute a single accuracy score *over* all dimensions. Note that the individual
                 accuracy scores must be stored in memory until cleared, this may cause memory build up in some
                 instances. Default is to compute along the first dimension which is assumed to be the batch/n_samples
                 dimension.
-            dtype (torch.dtype): The torch dtype to use when storing the individual accuracy scores in memory.
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
                 index of the channel/class dimension. If a float is given, predictions below the threshold are mapped
                 to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
                 with the highest prediction. If None leaves preds unchanged. Default is 1 since this is usually the
                 channel dimension.
-            ignore_background (int | None): If not None, the first channel of the specified axis is removed prior to
-                computing the counts. Useful for removing background channels. Defaults to None.
             exact_match (bool): If True computes the 'Subset Accuracy'/'Exact Match Ratio'. Individual accuracies that
                 are not prefect/exact (== 1) are set to 0 before computing the final accuracy score. This is useful for
                 multilabel tabular classification. Defaults to True.
+            ignore_background (int | None): If not None, the first channel of the specified axis is removed prior to
+                computing the counts. Useful for removing background channels. Defaults to None.
+            dtype (torch.dtype): Dtype used to store tp, fp, fn and tn counts in memory on on `self.update`.
+            
 
-        NOTE: To make this behave like accuracy previous implementation using sklearn and SimpleMetric, set binarize
-        arg to the the channel dim (or to 0.5 if preds are not OHE *and* there are only 2 classes), ignore background
-        to None, and along axes to (0,) and exact_match to True.
+        NOTE: To make this behave like the previous accuracy implementation using sklearn and SimpleMetric, use args {'binarize': 1, 'along_axes': [0], 'exact_match': True}. Replace binarize with 0.5 if preds are binary *and* note one-hot-encoded.
         """
         self.exact_match = exact_match
         super().__init__(
@@ -645,7 +670,9 @@ class Accuracy(ClassificationMetric):
         )
 
     def compute_from_counts(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor, tn: torch.Tensor) -> Metrics:
+        # Compute individual accuracy scores. Div by 0 shouldn't be possible here.
         accuracy = (tp + tn) / (tp + fp + fn + tn)
+        # If exact match is true, set all scores below 1 to 0.
         accuracy = (accuracy == 1).to(torch.float) if self.exact_match else accuracy
         return {self.name: torch.mean(accuracy).item()}
 
@@ -655,30 +682,35 @@ class Recall(ClassificationMetric):
         self,
         name: str = "Recall",
         along_axes: Sequence[int] = (),
-        dtype: torch.dtype = torch.float32,
         binarize: float | int | None = None,
         ignore_background: int | None = None,
+        zero_division: float | None = None,
+        dtype: torch.dtype = torch.float32,
     ) -> None:
-        """Computes the Recall (also known as sensitivity). Memory efficient.
+        """Memory efficient recall metric (aka sensitivity).
 
         NOTE: Preds and targets must have the same shape and only contain elements in range [0, 1]. If preds and
         targets passed to update method have different shapes, this class will attempt to infer the channel dimension
         and align the shapes by one-hot-encoding one of the tensors.
 
         Args:
-            name (str): The name of the metric.
-            along_axes (Sequence[int]): Sequence of indices specifying axes *along* which to compute the Recall. The
-                recall scores will be summed *over* the axes not specified. The final recall score will be the mean of
-                these recalls. The 0th axis is assumed to be the batch/sample dimension. If provided an empty sequence,
-                then a single recall score is computed *over* all axes.
-            dtype (torch.dtype, optional): The dtype to store the recall scores as in memory. Defaults
+            name (str, optional): The name of the metric.
+            along_axes (Sequence[int], optional): Sequence of indices specifying axes *along* which to compute the 
+                Recall. The recall scores will be summed *over* the axes not specified. The final recall score will be
+                the mean of these recalls. The 0th axis is assumed to be the batch/sample dimension. If provided an
+                empty sequence, then a single recall score is computed *over* all axes.
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
                 index of the channel/class dimension. If a float is given, predictions below the
                 threshold are mapped to 0 and above are mapped to 1. If an integer is given, predictions are binarized
                 based on the class with the highest prediction. Default of None leaves preds unchanged.
             ignore_background (int | None, optional): If specified, the first channel of the specified axis is removed
                 prior to computing the counts. Useful for removing background channels. Defaults to None.
+            zero_division (float | None, optional): Set what the individual recall score should be when there is a 
+                zero division (only negative cases are present). If None, the resultant recall scores will be excluded
+                from the average/final recall score.
+            dtype (torch.dtype, optional): Dtype used to store tp, fp, fn and tn counts in memory on on `self.update`.
         """
+        self.zero_division = zero_division
         super().__init__(
             name=name,
             along_axes=along_axes,
@@ -689,7 +721,17 @@ class Recall(ClassificationMetric):
         )
 
     def compute_from_counts(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor, tn: torch.Tensor) -> Metrics:
-        recall = tp / (tp + fn)
+        # Compute denominator and remove or replace scores that will be null.
+        denominator = tp + fn
+        if self.zero_division is None:
+            tp = tp[denominator != 0]
+            denominator = denominator[denominator != 0]
+        else:
+            tp[denominator == 0] = self.zero_division
+            denominator[denominator == 0] = 1
+        
+        # Compute recall scores and return mean
+        recall = tp / denominator
         return {self.name: torch.mean(recall).item()}
 
 
@@ -700,7 +742,7 @@ class Dice(ClassificationMetric):
         along_axes: Sequence[int] = (0,),
         binarize: float | int | None = None,
         ignore_background: int | None = None,
-        ignore_null: bool = True,
+        zero_division: float | None = None,
         dtype: torch.dtype = torch.float32,
     ) -> None:
         """
@@ -713,7 +755,7 @@ class Dice(ClassificationMetric):
         Args:
 
             name (str): Name of the metric. Defaults to 'Soft-DICE'
-            along_axes (Sequence[int]): Sequence of indices specifying along which axes the individual DICE
+            along_axes (Sequence[int], optional): Sequence of indices specifying along which axes the individual DICE
                 coefficients should be computed. The final DICE Score is the mean of these DICE coefficients. Defaults
                 to (0,) which is assumed to be the batch/sample dimension. If provided an empty tuple then a single
                 DICE coefficient will be computed over all axes. Note that intermediate values must be stored in memory
@@ -723,17 +765,14 @@ class Dice(ClassificationMetric):
                 to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
                 with the highest prediction. Default of None leaves preds unchanged and computes a 'Soft' Dice score,
                 otherwise metric is equivalent to a 'Hard' Dice score.
-            ignore_background (int | None): If specified, the first channel of the specified axis is removed prior to
-                computing the DICE coefficients. Useful for removing background channels. Defaults to None.
-            ignore_null (bool): If True, null dice coefficients are removed before returning the mean dice score. If
-                False then null dice scores are set to 1. Null DICE scores are usually a result of the prediction and
-                target both being all-zero (True Negatives). How this argument affects the final DICE score will vary
-                depending along which axes the DICE coefficients were computed. Defaults to True.
-            dtype (torch.dtype, optional): The torch dtype to use when storing the intermediate true postive (tp),
-                false positive (fp) and false negative (fn) sums. Must be a float if predictions are continious.
+            ignore_background (int | None, optional): If specified, the first channel of the specified axis is removed 
+                prior to computing the DICE coefficients. Useful for removing background channels. Defaults to None.
+            zero_division (float | None, optional): Set what the individual dice coefficients should be when there is 
+                a zero division (only true negatives present). How this argument affects the final DICE score will vary
+                depending along which axes the DICE coefficients were computed. If left as None, the resultant dice
+                coefficients will be excluded from the average/final dice score.
+            dtype (torch.dtype, optional): Dtype used to store tp, fp, fn and tn counts in memory on on `self.update`.
         """
-        # NOTE: It would be cool to add a utility function that attempts to infer the channel dimension if the
-        # shapes are not the same and one-hot encodes the tensor with fewer dimensions.
         super().__init__(
             name=name,
             along_axes=along_axes,
@@ -742,26 +781,26 @@ class Dice(ClassificationMetric):
             ignore_background=ignore_background,
             discard=["tn"],
         )
-        self.ignore_null = ignore_null
+        self.zero_division = zero_division
 
     def _compute_dice_coefficients(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor) -> torch.Tensor:
         # Compute union and intersection
         numerator = 2 * tp  # Equivalent to 2 times the intersection
         denominator = 2 * tp + fp + fn  # Equivalent to the union
 
-        # Prevent div by 0 by handling null scores
-        if self.ignore_null:  # Ignore dice scores that will be null by removing them from the union and intersection
+        # Remove or replace dice score that will be null due to zero division
+        if self.zero_division is None:
             numerator = numerator[denominator != 0]
             denominator = denominator[denominator != 0]
-        else:  # Set dice scores that would be null to 1. This might be good if they are considered True Negatives.
-            numerator[denominator == 0] = 1
+        else:
+            numerator[denominator == 0] = self.zero_division
             denominator[denominator == 0] = 1
 
-        # Compute dice coefficients and return
-        # Denominator will always be larger than numerator, so no need to add small epsilon to denominator.
+        # Return individual dice coefficients
         return numerator / denominator
 
     def compute_from_counts(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor, tn: torch.Tensor) -> Metrics:
+        # compute dice coefficients and return mean
         dice = self._compute_dice_coefficients(tp, fp, fn)
         return {self.name: torch.mean(dice).item()}
 
@@ -772,7 +811,7 @@ class HardDice(Dice):
         name: str = "HardDice",
         along_axes: Sequence[int] = (0,),
         ignore_background: int | None = None,
-        ignore_null: bool = True,
+        zero_division: float | None = None,
         binarize: float | int | None = None,
     ) -> None:
         """
@@ -786,28 +825,28 @@ class HardDice(Dice):
         Args:
 
             name (str): Name of the metric. Defaults to 'DICE'
-            along_axes (Sequence[int]): Sequence of indices specifying *along* which axes the individual DICE
+            along_axes (Sequence[int], optional): Sequence of indices specifying *along* which axes the individual DICE
                 coefficients should be computed. The final DICE Score is the mean of these DICE coefficients computed
                 *over* the dimensions not specified. Defaults to (0,) since this is usually the batch dimension. If
                 provided an empty tuple then a single DICE coefficient will be computed *over* all axes.
-            ignore_background (int | None): If specified, the first channel of the specified axis is removed prior to
-                computing the DICE coefficients. Useful for removing background channels. Defaults to None.
-            ignore_null (bool): If True, null dice coefficients are removed before returning the mean dice score. If
-                False then null dice scores are set to 1. Null DICE scores are usually a result of the prediction and
-                target both being all-zero (True Negatives). How this argument affects the final DICE score will vary
-                depending along which axes the DICE coefficients were computed. Defaults to True.
+            ignore_background (int | None, optional): If specified, the first channel of the specified axis is removed 
+                prior to computing the DICE coefficients. Useful for removing background channels. Defaults to None.
+            zero_division (float | None, optional): Set what the individual dice coefficients should be when there is 
+                a zero division (only true negatives present). How this argument affects the final DICE score will vary
+                depending along which axes the DICE coefficients were computed. If left as None, the resultant dice
+                coefficients will be excluded from the average/final dice score.
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
                 index of the channel/class dimension. If a float is given, predictions below the
                 threshold are mapped to 0 and above are mapped to 1. If an integer is given, predictions are binarized
                 based on the class with the highest prediction. Default of None leaves preds and targets unchanged.
         """
-        # Use int64 to prevent overflow
+        # This subclass used to do more but now just sets dtype to int64 to prevent overflow.
         super().__init__(
             name=name,
             along_axes=along_axes,
             binarize=binarize,
             ignore_background=ignore_background,
-            ignore_null=ignore_null,
+            zero_division=zero_division,
             dtype=torch.int64,
         )
 
@@ -817,9 +856,9 @@ class BalancedAccuracy(Recall):
         self,
         name: str = "balanced_accuracy",
         channel_dim: int = 1,
-        dtype: torch.dtype = torch.float32,
         binarize: float | bool = True,
         ignore_background: bool = False,
+        dtype: torch.dtype = torch.float32,
     ) -> None:
         """Balanced accuracy metric for classification tasks. Used for the evaluation of imbalanced datasets.
 
@@ -827,17 +866,18 @@ class BalancedAccuracy(Recall):
 
         Args:
             name (str): The name of the metric.
-            channel_dim: Index specifying the axis representing the channel dimension. Defaults to 1.
-            dtype (torch.dtype, optional): The dtype to store the recall scores as in memory. Defaults
+            channel_dim (int, optional): Index specifying the axis representing the channel dimension. Defaults to 1.
             binarize (float | bool, optional): If a float is given, predictions below the
                 value are mapped to 0 and above are mapped to 1. If True, predictions are binarized
-                based on the class with the highest prediction. Default of False leaves preds unchanged.
+                based on the class with the highest prediction. Defaults to True.
             ignore_background (bool, optional): If True, the first channel of the channel axis is removed prior to
                 computing the counts. Useful for removing background channels. Defaults to False.
+            dtype (torch.dtype, optional): Dtype used to store tp, fp, fn and tn counts in memory on on `self.update`.
 
         NOTE: To get this to behave like the previous implementation of balanced accuracy using sklearn and
         SimpleMetric, use kwargs {'channel_dim': 1, 'binarize': True, 'ignore_background': False}.
         """
+        # We simplified the binarize metric since channel dim is always known. Must reformat before passing to parent.
         if isinstance(binarize, float):
             binarize_arg = binarize
         elif binarize:
@@ -852,6 +892,9 @@ class BalancedAccuracy(Recall):
             binarize=binarize_arg,
             ignore_background=channel_dim if ignore_background else None,
         )
+
+        # We override the channe dim attribute since this subclass forces it to be known. 
+        # Can prevent rare instances where channel dim is unable to be automatically inferred.
         self.channel_dim = channel_dim
 
 
@@ -878,34 +921,40 @@ class F1(ClassificationMetric):
         self,
         name: str = "F1",
         along_axes: Sequence[int] = (),
-        dtype: torch.dtype = torch.float32,
         binarize: float | int | None = None,
-        ignore_background: int | None = None,
         weighted: bool = False,
+        zero_divison: float | None = None,
+        ignore_background: int | None = None,
+        dtype: torch.dtype = torch.float32,
     ) -> None:
         """Computes the F1 Score.
 
         Args:
-            name (str): The name of the metric.
-            along_axes (Sequence[int]): Sequence of indices specifying axes *along* which to compute the F1 score. The
-                F1 scores will be computed *over* the axes not specified and then averaged to produce the final F1
-                score. The 0th axis is assumed to be the batch/sample dimension. If provided an empty sequence, then a
-                single F1 score is computed *over* all axes.
-            dtype (torch.dtype, optional): The dtype to store the recall scores as in memory. Defaults
+            name (str, optional): The name of the metric.
+            along_axes (Sequence[int], optional): Sequence of indices specifying axes *along* which to compute the F1 
+                score. The F1 scores will be computed *over* the axes not specified and then averaged to produce the
+                final F1 score. The 0th axis is assumed to be the batch/sample dimension. If provided an empty
+                sequence, then a single F1 score is computed *over* all axes.
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
                 index of the channel/class dimension. If a float is given, predictions below the
                 threshold are mapped to 0 and above are mapped to 1. If an integer is given, predictions are binarized
                 based on the class with the highest prediction. Default of None leaves preds unchanged.
-            ignore_background (int | None, optional): If specified, the first channel of the specified axis is removed
-                prior to computing the counts. Useful for removing background channels. Defaults to None.
             weighted (bool, optional): If True, weights each of the individual F1 scores by their support (the number
                 of true positives and false negatives) before averaging them to compute the final F1 score.
+            zero_division (float | None, optional): Set what the individual F1 scores should be when there is a zero 
+                division (only true negatives present). How this argument affects the final F1 score will vary
+                depending along which axes the individual scores are computed. If left as None, the resultant F1 scores
+                will be excluded from the average/final F1 score.
+            ignore_background (int | None, optional): If specified, the first channel of the specified axis is removed
+                prior to computing the counts. Useful for removing background channels. Defaults to None.
+            dtype (torch.dtype, optional): The dtype to store the recall scores as in memory. Defaults
 
         NOTE: To get this metric to behave like the previous implementation using sklearn and SimpleMetric, use kwargs
-        {'along_axes': 1, 'binarize': 1, 'ignore_background': None, 'weighted': True}. Setting weighted to False while
-        computing along the cclass/channel axis makes the metric behave like the 'macro' averaging.
+        {'along_axes': 1, 'binarize': 1, 'ignore_background': None, 'weighted': True, 'zero_division': 0.0}. Setting
+        weighted to False the metric behave like the 'macro' averaging.
         """
         self.weighted = weighted
+        self.zero_division = zero_divison
         super().__init__(
             name=name,
             along_axes=along_axes,
@@ -916,7 +965,20 @@ class F1(ClassificationMetric):
         )
 
     def compute_from_counts(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor, tn: torch.Tensor) -> Metrics:
-        f1 = 2 * tp / (2 * tp + fp + fn)  # Compute F1
+        # Calculate numerator and denominator
+        numerator = 2 * tp
+        denominator = (2 * tp + fp + fn)
+
+        # Remove or replace null F1 scores
+        if self.zero_division is None:
+            numerator = numerator[denominator != 0]
+            denominator = denominator[denominator != 0]
+        else:
+            numerator[denominator == 0] = self.zero_division
+            denominator[denominator == 0] = 1
+
+        # Calculate individual F1 scores and aggregate into final score.
+        f1 = numerator / denominator
         if self.weighted:
             f1 = (f1 * (tp + fn) / (tp.sum() + fn.sum())).sum()
         else:
