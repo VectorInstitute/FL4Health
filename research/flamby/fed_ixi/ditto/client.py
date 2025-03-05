@@ -154,7 +154,7 @@ if __name__ == "__main__":
 
     client = FedIxiDittoClient(
         data_path=Path(args.dataset_dir),
-        metrics=[HardDice("FedIXI_dice", along_axes=(0, 1), ignore_null=False, binarize=0.5)],
+        metrics=[HardDice("FedIXI_dice", along_axes=(0, 1), zero_division=1.0, binarize=0.5)],
         device=device,
         client_number=args.client_number,
         learning_rate=args.learning_rate,

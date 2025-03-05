@@ -53,7 +53,7 @@ def main(
     # Create a metrics hard dice metric
     # NnunetClient automatically ensures that preds and targets are one-hot-encoded
     # HardDice will binarize the preds along the channel dimension for us using an argmax.
-    hard_dice = HardDice("DICE", along_axes=(1,), ignore_background=1, ignore_null=True, binarize=1)
+    hard_dice = HardDice("DICE", along_axes=(1,), ignore_background=1, zero_division=None, binarize=1)
     ema_dice = EMAMetric(metric=hard_dice, smoothing_factor=0.1)
 
     # For state checkpointing. Allows training to be resumed from state checkpoint

@@ -28,7 +28,7 @@ def main(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     all_run_folder_dir = get_all_run_folders(artifact_dir)
     test_results: dict[str, float] = {}
-    metrics = [HardDice("FedIXI_dice", along_axes=(0, 1), ignore_null=False, binarize=0.5)]
+    metrics = [HardDice("FedIXI_dice", along_axes=(0, 1), zero_division=1.0, binarize=0.5)]
 
     all_local_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
     all_server_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}

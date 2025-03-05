@@ -503,7 +503,8 @@ class ClassificationMetric(Metric):
         """
         Does all the necessary transformations to preds and targets before computing the counts.
 
-        This may or may not include binarizing the preds, one-hot-encoding either the preds or targets, removing the background channel, and or type conversions. Several assertions are also made to ensure inputs are as expected.
+        This may or may not include binarizing the preds, one-hot-encoding either the preds or targets, removing the
+        background channel, and or type conversions. Several assertions are also made to ensure inputs are as expected.
         """
         # Maybe convert continious 'soft' predictions into binary 'hard' predictions.
         preds = preds if self.binarize is None else self.binarize_tensor(preds, self.binarize)
@@ -536,9 +537,12 @@ class ClassificationMetric(Metric):
         self, preds: torch.Tensor, targets: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
-        Given two tensors containing model predictions and targets, returns the number of true positives (tp), false positives (fp), false negatives (fn) and true negatives (tn).
+        Given two tensors containing model predictions and targets, returns the number of true positives (tp), false
+        positives (fp), false negatives (fn) and true negatives (tn).
 
-        If any of the tp, fp, fn or tn counts were specified to be discarded during initialization of the class, then that count will not be computed and an empty tensor will be returned in its place. The counts are summed along the axes specified in self.along_axes and there shape will be [pred.shape[a] for a in self.along_axes].
+        If any of the tp, fp, fn or tn counts were specified to be discarded during initialization of the class, then
+        that count will not be computed and an empty tensor will be returned in its place. The counts are summed along
+        the axes specified in self.along_axes and there shape will be [pred.shape[a] for a in self.along_axes].
 
         Args:
             preds (torch.Tensor): Tensor containing model predictions. Must be the same shape and format as targets.
@@ -600,7 +604,8 @@ class ClassificationMetric(Metric):
     def __call__(self, preds: torch.Tensor, targets: torch.Tensor) -> Scalar:
         """Convenience function for computing the metric on given preds and targets without modifying class state.
 
-        If there are multiple scalar values in the Metrics dictionary returned by `self.compute_from_counts` then this method will try to return the mean. If it can not it returns the first value in the dictionary.
+        If there are multiple scalar values in the Metrics dictionary returned by `self.compute_from_counts` then this
+        method will try to return the mean. If it can not it returns the first value in the dictionary.
         """
         # Transform preds and targets as necessary/specified before computing counts
         preds, targets = self._transform_tensors(preds, targets)
@@ -635,7 +640,8 @@ class Accuracy(ClassificationMetric):
         """
         Memory efficient accuracy metric.
 
-        Computes accuracy from true positives (tp), false positive (fp), false negative (fn') and true negative (tn) counts so that preds and targets don't need to be accumulated in memory.
+        Computes accuracy from true positives (tp), false positive (fp), false negative (fn') and true negative (tn)
+        counts so that preds and targets don't need to be accumulated in memory.
 
         NOTE: Preds and targets must have the same shape and only contain elements in range [0, 1]. If preds and
         targets passed to update method have different shapes, this class will attempt to infer the channel dimension
@@ -662,7 +668,9 @@ class Accuracy(ClassificationMetric):
             dtype (torch.dtype): Dtype used to store tp, fp, fn and tn counts in memory on on `self.update`.
 
 
-        NOTE: To make this behave like the previous accuracy implementation using sklearn and SimpleMetric, use args {'binarize': 1, 'along_axes': [0], 'exact_match': True}. Replace binarize with 0.5 if preds are binary *and* note one-hot-encoded.
+        NOTE: To make this behave like the previous accuracy implementation using sklearn and SimpleMetric, use args
+        {'binarize': 1, 'along_axes': [0], 'exact_match': True}. Replace binarize with 0.5 if preds are binary *and*
+        note one-hot-encoded.
         """
         self.exact_match = exact_match
         super().__init__(

@@ -81,7 +81,7 @@ if __name__ == "__main__":
         args.dataset_dir,
         args.run_name,
     )
-    metrics = [HardDice("FedIXI_dice", along_axes=(0, 1), ignore_null=False, binarize=0.5)]
+    metrics = [HardDice("FedIXI_dice", along_axes=(0, 1), zero_division=1.0, binarize=0.5)]
     train_metric_mngr = MetricManager(metrics, "train_meter")
     val_metric_mngr = MetricManager(metrics, "val_meter")
     # Central and local models in FLamby for FedIXI are trained for 10 epochs
