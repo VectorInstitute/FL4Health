@@ -41,6 +41,6 @@ if __name__ == "__main__":
     # Load model and data
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
-    client = HospitalClient(data_path, [Accuracy("accuracy")], device)
+    client = HospitalClient(data_path, [Accuracy("accuracy", binarize=0.5)], device)
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()

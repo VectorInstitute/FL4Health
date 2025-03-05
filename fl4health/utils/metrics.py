@@ -670,7 +670,7 @@ class Accuracy(ClassificationMetric):
 
         NOTE: To make this behave like the previous accuracy implementation using sklearn and SimpleMetric, use args
         {'binarize': 1, 'along_axes': [0], 'exact_match': True}. Replace binarize with 0.5 if preds are binary *and*
-        note one-hot-encoded.
+        not one-hot-encoded.
         """
         self.exact_match = exact_match
         super().__init__(
