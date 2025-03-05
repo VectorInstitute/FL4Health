@@ -34,8 +34,8 @@ listening on the local IP and a specified port, they can interfere with communic
 you start with the same IP and port specifications.
 
 To alleviate this, you need to terminate these running processes before starting any new runs. The easiest way to do
-this is through `top/htop` via the terminal on Mac/Linux machines. On Windows machines, this can be accomplished
-via XXXX.
+this is through `top/htop` via the terminal on Mac/Linux machines. An analogous process should be followed on windows
+machines to shut such processes down.
 
 ### Scary Warnings On Startup
 
