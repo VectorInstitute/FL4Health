@@ -7,12 +7,12 @@ their fit with the four lectures given in the Lab/Learn phase of the bootcamp.
 
 #### docs/
 
-This folder simply houses are automatically built Sphinx documentation. To access a nicely rendered version of these
-docs, please visit: https://vectorinstitute.github.io/FL4Health/
+This folder simply houses our automatically built Sphinx documentation. To access a nicely rendered version of these
+docs, please visit: https://vectorinstitute.github.io/FL4Health/.
 
 The documentation remains a work-in-progress. However, if you're interested in reading rendered documentation for the
 various functions in the core library, they can be found at:
-https://vectorinstitute.github.io/FL4Health/reference/api/fl4health.html
+https://vectorinstitute.github.io/FL4Health/reference/api/fl4health.html.
 
 #### examples/
 
@@ -21,13 +21,12 @@ implementing various kinds of federated learning (FL) workflows. There are a lot
 
 In Section [Example Categorization](#example-categorization), we roughly organize these examples to correspond to the
 various materials covered in the lectures. There are also some brief descriptions of the different examples in the
-[README.MD](../examples/README.MD).
+Examples [README.MD](../examples/README.MD).
 
-Another important folder to note is `examples/utils` which houses a small script called `run_fl_local.sh`. This is a
+Another important folder to note is `examples/utils/` which houses a small script called `run_fl_local.sh`. This is a
 nice helper script that automates the process of starting up servers and clients for the examples. At present, it is
 set up to run the `examples/basic_example/` code with 2 clients. It can, however, be modified to run many of the
-examples and dump logs to the specified locations. To run this script, from the top level of the library one runs
-
+examples and dump logs to the specified locations. To run this script, from the top level of the library one executes
 ```bash
 bash examples/utils/run_fl_local.sh
 ```
@@ -38,7 +37,7 @@ The core components of the library are in the `fl4health/` folder. This is where
 associated with the FL engine and implementations of various FL clients, servers, aggregation
 strategies and other core components of FL. If you need to make custom additions, adding a metric, implementing your
 own strategy, or including custom functionality, it might fit properly here, but likely can be folded into code that
-your writing to support your experiments instead.
+you're writing to support your experiments instead.
 
 If you're interested in understanding what's happening under the hood or debugging certain failures, you'll likely be
 led into the various modules therein.
@@ -51,9 +50,9 @@ necessarily fit into the core library at present.
 
 #### tests/
 
-The folder isn't necessarily of significant interested to participants in the bootcamp. It houses are unit,
+This folder isn't necessarily of significant interested to participants in the bootcamp. It houses our unit,
 integration, and smoke tests meant to ensure code correctness associated with our implementations. There may be some
-value in seeing how certain tests are run for different functions in understanding the mechanics of certain
+value in seeing how certain tests are run for different functions in understanding the mechanics of various
 implementations. However, this isn't an area of the repository that is likely to be of significant interest.
 
 ### Example Categorization
@@ -65,8 +64,8 @@ given during the Lab/Learn phase of the bootcamp. As a reminder, these categorie
 * Personal(ized) Federated Learning
 * Beyond Better Optimization in Federated Learning
 
-There will also be an Other category where the remainder of examples that exist beyond the scope of that covered in
-the material that could be covered in the lectures given.
+There will also be an Other category where the remainder of examples that exist beyond the scope of the material that
+could be covered in the lectures given.
 
 #### Introduction to FL
 

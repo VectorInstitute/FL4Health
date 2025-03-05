@@ -25,16 +25,17 @@ The FL4Health library relies on the communication layer provided by Flower in or
 exchange between the server and client processes. While this process is generally robust, it can run aground in
 certain scenarios. If FL concludes cleanly, the server and client processes will be shutdown automatically. We also
 have functionality that can be used to terminate such processes when the server receives an exceptions or multiple
-exceptions from participating clients if `accept_failures=False`.
+exceptions from participating clients if `accept_failures=False` for the server class.
 
 However, in certain scenarios, such as (ctrl+c) stopping a process or a failure before clients have registered to the
 server, processes may be left running in the background. This is especially true if you're launching processes with
-`nohup`, as is done in the `examples/utils/run_fl_local.sh`. Because these processes will still be listening on the
-local IP and a specified port, they can intercept interfere with communication of new processes that you start with
-the same IP and port specifications.
+`nohup`, as is done in the `examples/utils/run_fl_local.sh` script. Because these orphaned processes will still be
+listening on the local IP and a specified port, they can interfere with communication of new processes that
+you start with the same IP and port specifications.
 
-To alleviate this, you need to terminate these running processes. The easiest way to do this is through `top/htop`
-through the terminal on Mac/Linux machines. On Windows machines, this can be accomplished via XXXX.
+To alleviate this, you need to terminate these running processes before starting any new runs. The easiest way to do
+this is through `top/htop` via the terminal on Mac/Linux machines. On Windows machines, this can be accomplished
+via XXXX.
 
 ### Scary Warnings On Startup
 
@@ -59,4 +60,4 @@ information and possible workarounds, please see
 While the above warnings might appear problematic, they are often harmless and pop out from various libraries
 leveraged under the hood to warn users of issues that might arise under certain conditions or provide them a chance
 to install pieces of software. For example, the first output is saying that performance on the CPU could be improved
-with the right tensorflow compilation.
+with the right tensorflow compilation. However, it isn't necessary to run the code properly.

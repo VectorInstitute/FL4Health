@@ -1,14 +1,14 @@
 # Bootcamp Repository Setup
 
 > [!NOTE]
-> These instructions assume you have already followed basic Vector cluster account setup, including initial access,
-changing your password, and setting up multifactor authentication. These instructions have been sent to you from the
+> These instructions assume you have already followed the basic Vector cluster account setup, including initial access,
+changing your password, and setting up multifactor authentication. These instructions have been sent to you by the
 Vector Ops Team. Multifactor authentication is now required upon all connections to the Vector cluster.
 
 ### Overview
 
 In this section, you will create ssh keys on the Vector cluster in order to connect to the
-[Fl4hHealth](https://github.com/VectorInstitute/FL4Health) GitHub repository. You will need to add these ssh keys to
+[Fl4Health](https://github.com/VectorInstitute/FL4Health) GitHub repository. You will need to add these ssh keys to
  your GitHub profile in order to clone the repository and access code. A similar process may be followed on your
  local machine to establish keys to clone the repository locally.
 
@@ -20,7 +20,10 @@ Otherwise, use Terminal.
 ```bash
 ssh username@v.vectorinstitute.ai
 ```
-Once logged into the Vaughan cluster, create ssh keys (**replace your_email@example.com with your GitHub account email address**). For additional reference, see information [here](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent).
+Once logged into the Vaughan cluster, create ssh keys
+(**replace your_email@example.com with your GitHub account email address**). For additional reference, see
+information
+[here](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent).
 ```bash
 ssh-keygen -t ed25519 -C "your_email@example.com"
 ```
@@ -44,7 +47,7 @@ Return to your terminal session and clone the fl4health repository into your hom
 cd ~/
 git clone git@github.com:/VectorInstitute/fl4health.git
 ```
-There should be a new folder in your home directory called FL4Health
+There should be a new folder in your home directory called FL4Health.
 
 Once you have successfully cloned the fl4health repository, please proceed to setting up your VS Code and Python
 Environment. These steps are outlined [ide_and_environment_guide.md](./ide_and_environment_guide.md)

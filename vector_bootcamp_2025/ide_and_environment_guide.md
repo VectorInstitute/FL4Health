@@ -13,10 +13,7 @@ See: [Repo Setup Guide](./repo_setup_guide.md)
 
 ### Setting up your Python Environment
 
-There are comprehensive instructions for setting up your IDE and environment in the CONTRIBUTING.md
-at: https://github.com/VectorInstitute/FL4Health/blob/main/CONTRIBUTING.MD.
-
-Reading this is optional, but it can be helpful if you run into issues.
+There are comprehensive instructions for setting up your IDE and environment in the [CONTRIBUTING.MD](../CONTRIBUTING.MD). Reading and following these steps is optional, but it can be helpful if you run into issues.
 
 You will need python 3.10 installed and available on your local machine to correctly create the python virtual
 environment locally in order to use the library. If you don’t already have it, there are multiple ways to obtain a
@@ -30,32 +27,33 @@ instructions here
 Thereafter, you run the commands (or variations if your system python is not 3.10 or you’re using an environment
 manager like `conda`).
 ```bash
-cd <path/to/fl4health>
-python -m venv <ENV_PATH>/env_name
+cd path/to/fl4health
+python -m venv ENV_PATH/env_name>
 source ENV_PATH/env_name/bin/activate
 pip install --upgrade pip poetry
 poetry install --with "dev, dev-local, test, codestyle"
 ```
 
 The environment creation step may be different depending on how 3.10 is installed on your system or whether you’re
-using the conda steps to create the environment.
+using, for example, the conda steps to create the environment.
 
 For example, if python 3.10 is not designated as your local systems python, you may need to adjust the path in the
 command
 ```bash
-python -m venv <ENV_PATH>/env_name
+python -m venv ENV_PATH/env_name
 ```
 to the right python path as, for example
 ```bash
-path/to/python -m venv <ENV_PATH>/env_name
+path/to/python -m venv ENV_PATH/env_name
 ```
-Here `<ENV_PATH>/env_name` is whatever you want to call the environment to be created. Mine is simply
+Here `ENV_PATH/env_name` is whatever you want to call the environment to be created. Mine is simply
 called `fl4health`.
 
 If you're using `conda` then you can specify a python version to use as
 ```bash
-conda create -n <env_name> python=3.10
+conda create -n env_name python=3.10
 ```
+where `env_name` is what you would like to call your environment.
 
 **Note that the above code must be run from the top level of the FL4Health directory.**
 
@@ -110,8 +108,8 @@ The process is nearly the same as on your local machine. However, prior to creat
 activate python 3.10 on the cluster. This makes the process one step longer as
 ```bash
 module load python/3.10.12
-cd <path/to/fl4health>
-python -m venv <ENV_PATH>
+cd path/to/fl4health
+python -m venv ENV_PATH
 source ENV_PATH/bin/activate
 pip install --upgrade pip poetry
 poetry install --with "dev, dev-local, test, codestyle"
@@ -119,7 +117,7 @@ poetry install --with "dev, dev-local, test, codestyle"
 
 ### Accessing a Cluster GPU through your Local VS Code
 
-You can also connect your local VS Code directly to a VS Code instance on a GPU on Vector’s cluster.
+You can also connect your local VS Code directly to a VS Code instance on a GPU or CPU on Vector’s cluster.
 
 #### Installing VS Code Server on the Cluster
 
@@ -146,8 +144,8 @@ After logging into the cluster, run the following.
 srun --gres=gpu:1 --qos=m -c 8 --mem 16G -p t4v2 --pty bash
 ```
 
-This will reserve an t4v2 GPU and provide you a terminal to run commands on that node. Note that `-p t4v2` requests
-an t4v2 GPU. You can also access larger `a40` and `rtx6000` GPUs this way, but you may face longer wait times for
+This will reserve a t4v2 GPU and provide you a terminal to run commands on that node. Note that `-p t4v2` requests
+a t4v2 GPU. You can also access larger `a40` and `rtx6000` GPUs this way, but you may face longer wait times for
 reservations. The `-c 8` requests 8 supporting CPUs and `--mem 16G` requests 16 GB of **CPU** memory (not GPU memory).
 There may be a brief waiting period if the cluster is busy and many people are using the GPU resources.
 
@@ -186,7 +184,7 @@ with the work, stop your session by pressing Control-C to release the GPU.
 **NOTE:** GPU reservations are time limited. The command `--qos=m` guarantees that you get the GPU for 1-hour
 uninterrupted. Thereafter, you may be preempted (kicked off), by other users hoping to use the resources.
 
-If you want to request more time, you can add `--time=4:00:00` to request, for example 4 hours of reservation.
+If you want to request more time, you can add `--time=4:00:00` to request, for example, 4 hours of reservation.
 
 ### Running an Example (Locally or On the Cluster)
 
