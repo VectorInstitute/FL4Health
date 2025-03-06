@@ -293,6 +293,8 @@ class AlignOriginAndDirection(PreprocessingTransform):
                 case_spacing = scan.GetSpacing()
             else:
                 # check if current scan's metadata is almost equal to the first scan
+                assert case_direction is not None
+                assert case_spacing is not None
                 np.testing.assert_allclose(scan.GetOrigin(), case_origin)
                 np.testing.assert_allclose(scan.GetDirection(), case_direction)
                 np.testing.assert_allclose(scan.GetSpacing(), case_spacing)

@@ -1,0 +1,22 @@
+[book]
+authors = ["David Emerson <david.emerson@vectorinstitute.ai>"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Vector FL Bootcamp 2025"
+
+[preprocessor]
+
+[preprocessor.admonish]
+command = "mdbook-admonish"
+assets_version = "3.0.3" # do not edit: managed by `mdbook-admonish install`
+
+[preprocessor.ai-pocket-reference]
+command = "mdbook-ai-pocket-reference"
+
+[output]
+
+[output.html]
+additional-css = ["./mdbook-admonish.css", "./mdbook-ai-pocket-reference.css"]
+git-repository-url = "https://github.com/VectorInstitute/FL4Health"
+git-repository-icon = "fa-github"
