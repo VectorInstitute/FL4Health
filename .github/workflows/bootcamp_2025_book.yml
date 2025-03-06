@@ -1,0 +1,43 @@
+name: Publish Bootcamp Book
+
+on:
+  push:
+    branches:
+      main
+    paths:
+      - vector-bootcamp-2025/**
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build, Test and Deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # To push a branch
+      pull-requests: write  # To create a PR from that branch
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Install mdbook if needed
+        run: |
+          (test -x $HOME/.cargo/bin/mdbook || cargo install --vers "^0.4" mdbook)
+          cargo install mdbook-ai-pocket-reference
+          cargo install mdbook-admonish
+
+      - name: Build books
+        run: |
+          mdbook build vector-bootcamp-2025
+
+      - name: Deploy to github pages
+        uses: JamesIves/github-pages-deploy-action@4.1.7
+        with:
+          repository-name: VectorInstitute/bootcamp-fl-2025
+          token: ${{ secrets.PAT_VECTOR_BOOTCAMP_FL_2025 }}
+          branch: gh-pages # The branch the action should deploy to.
+          folder: vector-bootcamp-2025/book # The folder the action should deploy.

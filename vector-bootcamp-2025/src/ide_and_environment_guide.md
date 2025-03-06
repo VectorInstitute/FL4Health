@@ -180,9 +180,10 @@ Code is logged into the GPU and should be able to see the file system there.
 Note that you will need to keep the SSH connection running in your terminal while using the tunnel. After you are done
 with the work, stop your session by pressing Control-C to release the GPU.
 
-
-**NOTE:** GPU reservations are time limited. The command `--qos=m` guarantees that you get the GPU for 1-hour
+```admonish
+GPU reservations are time limited. The command `--qos=m` guarantees that you get the GPU for 1-hour
 uninterrupted. Thereafter, you may be preempted (kicked off), by other users hoping to use the resources.
+```
 
 If you want to request more time, you can add `--time=4:00:00` to request, for example, 4 hours of reservation.
 
