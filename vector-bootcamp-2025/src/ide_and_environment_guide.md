@@ -18,11 +18,12 @@ There are comprehensive instructions for setting up your IDE and environment in 
 You will need python 3.10 installed and available on your local machine to correctly create the python virtual
 environment locally in order to use the library. If you don’t already have it, there are multiple ways to obtain a
 copy and use it to create a python environment with the specific version. A few examples are:
-1) Using `pyenv` following the readme here: [link](https://github.com/pyenv/pyenv/blob/master/README.md)
-2) Using `conda` following the installation instructions
+1) Using `miniconda` following the installation instructions
 ([link](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html)) and the environment create
 instructions here
-3) Homebrew via this [link](https://formulae.brew.sh/formula/python@3.10).
+2) Homebrew via this [link](https://formulae.brew.sh/formula/python@3.10).
+3) Using `pyenv` following the readme here: [link](https://github.com/pyenv/pyenv/blob/master/README.md). Note that
+`pyenv` can be somewhat involved to use.
 
 Thereafter, you run the commands (or variations if your system python is not 3.10 or you’re using an environment
 manager like `conda`).
@@ -34,6 +35,7 @@ pip install --upgrade pip poetry
 poetry install --with "dev, dev-local, test, codestyle"
 ```
 
+```admonish
 The environment creation step may be different depending on how 3.10 is installed on your system or whether you’re
 using, for example, the conda steps to create the environment.
 
@@ -53,7 +55,12 @@ If you're using `conda` then you can specify a python version to use as
 ```bash
 conda create -n env_name python=3.10
 ```
-where `env_name` is what you would like to call your environment.
+where `env_name` is what you would like to call your environment. Thereafter, you would activate your environment
+using
+```bash
+conda activate env_name
+```
+and proceed with the remainder of the instructions unaltered.
 
 **Note that the above code must be run from the top level of the FL4Health directory.**
 
@@ -141,7 +148,7 @@ rm vscode_cli.tar.gz
 
 After logging into the cluster, run the following.
 ```bash
-srun --gres=gpu:1 --qos=m -c 8 --mem 16G -p t4v2 --pty bash
+srun --gres=gpu:1 --qos=m --time=4:00:00 -c 8 --mem 16G -p t4v2 --pty bash
 ```
 
 This will reserve a t4v2 GPU and provide you a terminal to run commands on that node. Note that `-p t4v2` requests
@@ -181,11 +188,13 @@ Note that you will need to keep the SSH connection running in your terminal whil
 with the work, stop your session by pressing Control-C to release the GPU.
 
 ```admonish
-GPU reservations are time limited. The command `--qos=m` guarantees that you get the GPU for 1-hour
+GPU reservations are time limited. The command `--qos=m --time=4:00:00` guarantees that you get the GPU for 4 hours
 uninterrupted. Thereafter, you may be preempted (kicked off), by other users hoping to use the resources.
 ```
 
-If you want to request more time, you can add `--time=4:00:00` to request, for example, 4 hours of reservation.
+If you want to request more time, you can increase `--time=X:00:00` to request a longer time reservation. As the
+reservation time increases, so does the potential wait time to obtain the requested resources.
+
 
 ### Running an Example (Locally or On the Cluster)
 

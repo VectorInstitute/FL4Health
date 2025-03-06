@@ -50,10 +50,10 @@ necessarily fit into the core library at present.
 
 #### tests/
 
-This folder isn't necessarily of significant interested to participants in the bootcamp. It houses our unit,
-integration, and smoke tests meant to ensure code correctness associated with our implementations. There may be some
-value in seeing how certain tests are run for different functions in understanding the mechanics of various
-implementations. However, this isn't an area of the repository that is likely to be of significant interest.
+This folder houses our unit, integration, and smoke tests meant to ensure code correctness associated with our
+implementations. There may be some value in seeing how certain tests are run for different functions in understanding
+the mechanics of various implementations. However, this isn't an area of the repository that is likely to be of
+significant interest to participants.
 
 ### Example Categorization
 

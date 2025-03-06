@@ -10,14 +10,14 @@ Vector Ops Team. Multifactor authentication is now required upon all connections
 
 In this section, you will create ssh keys on the Vector cluster in order to connect to the
 [Fl4Health](https://github.com/VectorInstitute/FL4Health) GitHub repository. You will need to add these ssh keys to
- your GitHub profile in order to clone the repository and access code. A similar process may be followed on your
- local machine to establish keys to clone the repository locally.
+your GitHub profile in order to clone the repository and access code. A similar process may be followed on your
+local machine to establish keys to clone the repository locally.
 
 ### Creating Your SSH Keys
 
 First, login to Vaughan (Vector cluster) over ssh using your login credentials (replace username with your own Vector
-username). If you are using Windows, use Windows PowerShell to run local commands, including the following one.
-Otherwise, use Terminal.
+username). If you are using Windows, use Windows PowerShell to run local commands, including the following one. An
+alternative for Windows is to use [git-bash](https://gitforwindows.org/). Otherwise, use Terminal.
 
 ```bash
 ssh username@v.vectorinstitute.ai
