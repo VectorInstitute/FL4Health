@@ -12,6 +12,8 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
+from fl4health.checkpointing.checkpointer import LatestTorchModuleCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.reporting import JsonReporter
 from fl4health.utils.config import narrow_dict_type
@@ -52,6 +54,13 @@ if __name__ == "__main__":
         default="0.0.0.0:8080",
     )
     parser.add_argument(
+        "--name",
+        action="store",
+        type=str,
+        help="Name of the client",
+        required=True,
+    )
+    parser.add_argument(
         "--seed",
         action="store",
         type=int,
@@ -62,13 +71,17 @@ if __name__ == "__main__":
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
+    client_name = args.name
     log(INFO, f"Device to be used: {device}")
     log(INFO, f"Server Address: {args.server_address}")
 
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    client = MnistDittoClient(data_path, [Accuracy()], device, reporters=[JsonReporter()])
+    latest_checkpointer = LatestTorchModuleCheckpointer("./", f"latest_model_{client_name}")
+    checkpointer = ClientCheckpointAndStateModule(pre_aggregation=latest_checkpointer)
+
+    client = MnistDittoClient(data_path, [Accuracy()], device, reporters=[JsonReporter()], client_name=client_name)
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully
