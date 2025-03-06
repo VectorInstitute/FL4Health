@@ -78,10 +78,10 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    latest_checkpointer = LatestTorchModuleCheckpointer("./", f"latest_model_{client_name}")
+    latest_checkpointer = LatestTorchModuleCheckpointer("examples/ditt_example/", f"latest_model_{client_name}.pkl")
     checkpointer = ClientCheckpointAndStateModule(pre_aggregation=latest_checkpointer)
 
-    client = MnistDittoClient(data_path, [Accuracy()], device, reporters=[JsonReporter()], client_name=client_name)
+    client = MnistDittoClient(data_path, [Accuracy()], device, reporters=[JsonReporter()], client_name=client_name, checkpoint_and_state_module=checkpointer)
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully
