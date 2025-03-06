@@ -3,7 +3,7 @@ authors = ["David Emerson <david.emerson@vectorinstitute.ai>"]
 language = "en"
 multilingual = false
 src = "src"
-title = "Vector Bootcamp 2025"
+title = "Vector FL Bootcamp 2025"
 
 [preprocessor]
 
