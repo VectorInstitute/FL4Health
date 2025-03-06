@@ -42,7 +42,7 @@ machines to shut such processes down.
 On starting up the server and client processes, sometimes various warnings that look a bit scary front the log files.
 An example of one of these warnings appears below when running locally on CPU.
 
-```
+```sh
 2024-11-29 08:54:04.123569: I tensorflow/core/platform/cpu_feature_guard.cc:182] This TensorFlow binary is optimized
 to use available CPU instructions in performance-critical operations.
 To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler
