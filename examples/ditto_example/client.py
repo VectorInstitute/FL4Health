@@ -78,7 +78,7 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    latest_checkpointer = LatestTorchModuleCheckpointer("examples/ditt_example/", f"latest_model_{client_name}.pkl")
+    latest_checkpointer = LatestTorchModuleCheckpointer("examples/ditt0_example/", f"latest_model_{client_name}.pkl")
     checkpointer = ClientCheckpointAndStateModule(pre_aggregation=latest_checkpointer)
 
     client = MnistDittoClient(
