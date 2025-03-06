@@ -6,6 +6,9 @@ on:
       main
     paths:
       - vector-bootcamp-2025/**
+  pull_request:
+    branches:
+      dbe/bootcamp_materials
   workflow_dispatch:
 
 jobs:
