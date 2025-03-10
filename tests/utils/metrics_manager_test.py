@@ -38,28 +38,28 @@ LOGITS, TARGETS = get_logits_and_targets()
 
 def test_metric_manager() -> None:
 
-    metric_manager = MetricManager([F1(), Accuracy()], "test")
+    metric_manager = MetricManager([F1(along_axes=[1], binarize=1, weighted=True), Accuracy()], "test")
 
     for logits, target in zip(LOGITS, TARGETS):
         preds = {"prediction": logits}
         metric_manager.update(preds, target)
     metrics = metric_manager.compute()
 
-    assert metrics["test - prediction - F1 score"] == pytest.approx(0.80285714285, abs=0.00001)
-    assert metrics["test - prediction - accuracy"] == 0.8
+    assert metrics["test - prediction - F1"] == pytest.approx(0.80285714285, abs=0.00001)
+    assert metrics["test - prediction - Accuracy"] == pytest.approx(0.8)
 
 
 def test_metric_manager_clear() -> None:
 
-    metric_manager = MetricManager([F1(), Accuracy()], "test")
+    metric_manager = MetricManager([F1(along_axes=[1], binarize=1, weighted=True), Accuracy()], "test")
 
     for logits, target in zip(LOGITS, TARGETS):
         preds = {"prediction": logits}
         metric_manager.update(preds, target)
     metrics = metric_manager.compute()
 
-    assert metrics["test - prediction - F1 score"] == pytest.approx(0.80285714285, abs=0.00001)
-    assert metrics["test - prediction - accuracy"] == 0.8
+    assert metrics["test - prediction - F1"] == pytest.approx(0.80285714285, abs=0.00001)
+    assert metrics["test - prediction - Accuracy"] == pytest.approx(0.8)
 
     metric_manager.clear()
 
@@ -67,5 +67,5 @@ def test_metric_manager_clear() -> None:
     metric_manager.update(preds, TARGETS[0])
     metrics = metric_manager.compute()
 
-    assert metrics["test - prediction - F1 score"] == pytest.approx(0.68, abs=0.00001)
-    assert metrics["test - prediction - accuracy"] == 0.6
+    assert metrics["test - prediction - F1"] == pytest.approx(0.68, abs=0.00001)
+    assert metrics["test - prediction - Accuracy"] == pytest.approx(0.6)

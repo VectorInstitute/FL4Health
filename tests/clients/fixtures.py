@@ -92,7 +92,7 @@ def get_client(type: type, model: nn.Module) -> BasicClient:
 @pytest.fixture
 def get_evaluation_client(model: nn.Module) -> EvaluateClient:
     client = EvaluateClient(
-        data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"), model_checkpoint_path=None
+        data_path=Path(""), metrics=[Accuracy("accuracy")], device=torch.device("cpu"), model_checkpoint_path=None
     )
     client.parameter_exchanger = client.get_parameter_exchanger({})
     client.global_model = model

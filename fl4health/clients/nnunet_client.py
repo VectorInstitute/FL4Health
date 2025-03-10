@@ -306,7 +306,6 @@ class NnunetClient(BasicClient):
         val_loader = nnUNetDataLoaderWrapper(
             nnunet_augmenter=val_loader, nnunet_config=self.nnunet_config, ref_image_shape=shape
         )
-        log(INFO, f"{len(val_loader)}, {len(val_loader.dataset)}, {val_loader.nnunet_dataloader.batch_size}")
 
         if self.verbose:
             log(INFO, f"\tDataloaders initialized in {time.time() - start_time:.1f}s")
@@ -734,7 +733,7 @@ class NnunetClient(BasicClient):
     ) -> None:
         """
         Update the metrics with preds and target. Overridden because we might need to manipulate inputs due to deep
-        supervision
+        supervision.
 
         Args:
             preds (TorchPredType): dictionary of model outputs
