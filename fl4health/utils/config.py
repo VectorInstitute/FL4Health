@@ -119,7 +119,7 @@ def make_dict_with_epochs_or_steps(local_epochs: int | None = None, local_steps:
         return {}
 
 
-def get_config_fn(config: Config, **kwargs: bool | bytes | float | int | str) -> Callable:
+def get_config_fn(config: Config, **kwargs: bool | bytes | float | int | str) -> Callable[[int], Config]:
     """Creates a function that can be used as a on_fit_config_fn or on_evaluate_config_fn for flwr strategies.
 
     Creates a function that when called with a current_server_round, will return a flwr Config dictionary with the
@@ -131,8 +131,8 @@ def get_config_fn(config: Config, **kwargs: bool | bytes | float | int | str) ->
         **kwargs (bool | bytes | float | int | str): Additional parameters to be returned by the config function
 
     Returns:
-        Callable: A config function that takes a single integer argument (current_server_round) and returns a flwr
-            Config dictionary
+        Callable[[int], Config]: A config function that takes a single integer argument (current_server_round) and
+            returns a flwr Config dictionary
     """
     cfg_copy = config.copy()
     local_epochs = cfg_copy.pop("local_epochs", None)
@@ -145,7 +145,7 @@ def get_config_fn(config: Config, **kwargs: bool | bytes | float | int | str) ->
         assert isinstance(local_steps, int)
 
     # Create config function
-    def fit_fn(current_server_round: int) -> Config:
+    def cfg_fn(current_server_round: int) -> Config:
         return {
             "current_server_round": current_server_round,
             **make_dict_with_epochs_or_steps(local_epochs, local_steps),
@@ -153,4 +153,4 @@ def get_config_fn(config: Config, **kwargs: bool | bytes | float | int | str) ->
             **kwargs,
         }
 
-    return fit_fn
+    return cfg_fn

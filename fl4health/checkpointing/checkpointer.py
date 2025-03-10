@@ -140,7 +140,7 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
             )
             self.best_score = comparison_score
             try:
-                log(WARNING, f"Saving checkpoint as {str(self.checkpoint_path)}")
+                log(INFO, f"Saving checkpoint as {str(self.checkpoint_path)}")
                 torch.save(model, self.checkpoint_path)
             except Exception as e:
                 log(ERROR, f"Encountered the following error while saving the checkpoint: {e}")
@@ -187,9 +187,8 @@ class LatestTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
                 this context, so we explicitly surface the error with a try/except.
         """
         # Always checkpoint the latest model
-        log(INFO, "Saving latest checkpoint with LatestTorchCheckpointer")
+        log(INFO, f"Saving latest checkpoint with LatestTorchCheckpointer as {str(self.checkpoint_path)}")
         try:
-            log(INFO, f"Saving checkpoint as {str(self.checkpoint_path)}")
             torch.save(model, self.checkpoint_path)
         except Exception as e:
             log(ERROR, f"Encountered the following error while saving the checkpoint: {e}")
@@ -214,7 +213,11 @@ class BestLossTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
             return loss
 
         super().__init__(
-            checkpoint_dir, checkpoint_name, checkpoint_score_function=loss_score_function, maximize=False
+            checkpoint_dir=checkpoint_dir,
+            checkpoint_name=checkpoint_name,
+            checkpoint_score_function=loss_score_function,
+            checkpoint_score_name="Loss",
+            maximize=False,
         )
 
     def maybe_checkpoint(self, model: nn.Module, loss: float, metrics: dict[str, Scalar]) -> None:
@@ -238,12 +241,11 @@ class BestLossTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
         if self._should_checkpoint(comparison_score):
             log(
                 INFO,
-                f"Checkpointing the model: Current Loss ({comparison_score}) "
-                f"{self.comparison_str} Best Loss ({self.best_score})",
+                f"Current Loss ({comparison_score}) {self.comparison_str} Best Loss ({self.best_score}): "
+                f"Checkpointing the model as {self.checkpoint_path}",
             )
             self.best_score = comparison_score
             try:
-                log(INFO, f"Saving checkpoint as {str(self.checkpoint_path)}")
                 torch.save(model, self.checkpoint_path)
             except Exception as e:
                 log(ERROR, f"Encountered the following error while saving the checkpoint: {e}")
@@ -272,8 +274,8 @@ class BestMetricTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
                 checkpointer will not create it if it does not.
             checkpoint_name (str): Name of the checkpoint to be saved.
             metric (str): The name of the metric to base checkpointing on. After prepending the prefix, should be a
-                key in the metrics dictionary passed in self.maybe_checkpoint. In BasicClient this is the 'name'
-                attribute of the corresponding fl4health.utils.metrics.Metric that was provided to the clients.
+                key in the metrics dictionary passed in ``self.maybe_checkpoint``. In BasicClient this is the 'name'
+                attribute of the corresponding ``fl4health.utils.metrics.Metric`` that was provided to the clients.
             prefix (str, optional): A prefix to add to the metric name to create the key used to find the metric.
                 Usually a prefix is added by the client's metric manager. Defaults to 'val - prediction - '.
             maximize (bool, optional): If True maximizes the metric instead of minimizing it. Defaults to False.
@@ -286,7 +288,12 @@ class BestMetricTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
             except KeyError as e:
                 log(ERROR, f"Could not find '{self.metric_key}' in metrics dict. Available keys are: {metrics.keys()}")
                 raise e
-            return float(val)
+            try:
+                val_float = float(val)
+            except ValueError as e:
+                log(ERROR, f"Could not convert {self.metric_key} into a float score for best metric checkpointing.")
+                raise e
+            return val_float
 
         super().__init__(checkpoint_dir, checkpoint_name, metric_score_function, metric, maximize)
 

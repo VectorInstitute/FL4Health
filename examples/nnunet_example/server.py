@@ -70,7 +70,7 @@ def main(
         model=None,
         parameter_exchanger=FullParameterExchanger(),
         state_checkpointer=state_checkpointer,
-        model_checkpointers=[model_checkpointer],
+        model_checkpointers=model_checkpointer,
     )
 
     server = NnunetServer(

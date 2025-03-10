@@ -122,7 +122,7 @@ def test_binary_align() -> None:
 def test_align_exceptions() -> None:
     """Tests that the proper exceptions are raised when attempting to align pred and target shapes."""
     # Define a pattern to ensure that the exception has something to do with inferring the channel dim.
-    pattern = re.compile("(infer.*channel)|(channel.*infer)", flags=re.IGNORECASE)
+    pattern = re.compile("(infer.*class)|(class.*infer)", flags=re.IGNORECASE)
 
     # Channel dim can not be resolved if shapes differ in more than 1 dimension
     hard_preds_ohe, soft_preds_ohe, hard_preds, _ = get_dummy_classification_tensors((2, 3, 5, 9, 3), 1)

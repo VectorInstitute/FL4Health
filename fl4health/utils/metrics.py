@@ -23,12 +23,12 @@ TEST_NUM_EXAMPLES_KEY = f"{MetricPrefix.TEST_PREFIX.value} num_examples"
 TEST_LOSS_KEY = f"{MetricPrefix.TEST_PREFIX.value} checkpoint"
 
 
-def infer_channel_dim(tensor1: torch.Tensor, tensor2: torch.Tensor) -> int:
-    """Infers the channel dimension given two related tensors of different shapes.
+def infer_class_dim(tensor1: torch.Tensor, tensor2: torch.Tensor) -> int:
+    """Infers the class dimension given two related tensors of different shapes.
 
-    Generally useful for inferring the channel dimension when one tensor is one-hot-encoded and the other is not. The
-    channel dimension is inferred by looking for dimensions that either are not the same size, or are not present int
-    tensor 2. If a dimension adjacent to the
+    Generally useful for inferring the class dimension when one tensor is one-hot-encoded and the other is not. The
+    class dimension is inferred by looking for dimensions that either are not the same size, or are not present in
+    tensor 2.
 
     Args:
         tensor1 (torch.Tensor): The reference tensor. Must have the same number of dimensions as tensor 2, or have
@@ -36,14 +36,19 @@ def infer_channel_dim(tensor1: torch.Tensor, tensor2: torch.Tensor) -> int:
         tensor2 (torch.Tensor): The non-reference tensor.
 
     Raises:
-        AssertionError: If the the channel dimension cannot be inferred without ambigiuty.
+        AssertionError: If the the class dimension cannot be inferred without ambigiuty. For example if a dimension
+            next to the class dimension has the same size.
 
     Returns:
         int: Index of the dimension along tensor 1 that is the channel/class dimensions
     """
     assert (
-        tensor1.shape != tensor2.shape and (tensor1.ndim - tensor2.ndim) <= 1
-    ), f"Could not infer the channel dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape})."
+        tensor1.shape != tensor2.shape
+    ), f"Could not infer the class dimension of tensors with the same shape: {tensor1.shape}"
+    assert (tensor1.ndim - tensor2.ndim) <= 1, (
+        f"Could not infer the class dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape})."
+        " Expected tensors to differ by at most 1 dimension but foud multiple dimensions in tensor1 not in tensor2."
+    )
 
     # Infer channel dimension.
     idx2 = 0
@@ -59,7 +64,7 @@ def infer_channel_dim(tensor1: torch.Tensor, tensor2: torch.Tensor) -> int:
                 idx2 += 1
 
     assert len(candidate_channels) == 1, (
-        f"Could not infer the channel dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape}). "
+        f"Could not infer the class dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape}). "
         "Found multiple axes that could be the channel dimension."
     )
     ch = candidate_channels[0]
@@ -68,14 +73,14 @@ def infer_channel_dim(tensor1: torch.Tensor, tensor2: torch.Tensor) -> int:
     # We will mistakenly resolve only a single candidate channel when technically it is ambiguous.
     if tensor1.ndim > tensor2.ndim and ch > 0:
         assert tensor1.shape[ch] != tensor1.shape[ch - 1], (
-            f"Could not infer the channel dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape}). "
-            "A dimension adjacent to the channel dimension appears to have the same size."
+            f"Could not infer the class dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape}). "
+            "A dimension adjacent to the class dimension appears to have the same size."
         )
 
     # If tensors have same ndim but diff shape, then this only works if channel dim was empty for one of them
     if tensor1.ndim == tensor2.ndim:
         assert (tensor1.shape[ch] == 1) or (tensor2.shape[ch]) == 1, (
-            f"Could not infer the channel dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape}). "
+            f"Could not infer the class dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape}). "
             "The inferred candidate dimension has different sizes on each tensor, was expecting one to be empty."
         )
     return ch
@@ -93,36 +98,37 @@ def align_pred_and_target_shapes(
     Args:
         preds (torch.Tensor): The tensor with model predictions.
         targets (torch.Tensor): The tensor with model targets.
-        channel_dim (int | None): Index of the channel dimension. If left as None then this method attempts to infer
-            the channel dimension if it is needed.
+        channel_dim (int | None): Index of the class dimension. If left as None then this method attempts to infer
+            the class dimension if it is needed.
 
     Returns:
         tuple[torch.Tensor, torch.Tensor]: The pred and target tensors respectively now ensured to have the same shape.
     """
-    swapped = False
     if preds.shape == targets.shape:
         return preds, targets  # Shapes are already aligned.
 
     # If shapes are different then we assume one tensor is OHE and the other is not.
     # Tensor1 is the OHE reference and will not be modified, the other will be one-hot-encoded.
+    swapped = False
     if preds.ndim > targets.ndim:  # Preds must be one-hot encoded and targets are not
         tensor1, tensor2 = preds, targets
     else:
         # If targets have more dims than preds, then targets must be ohe and preds are not
         # If ndims are equal but shapes are not, then we can only determine reference tensor after finding channel dim.
         tensor1, tensor2 = targets, preds
-        swapped = not swapped
+        swapped = True
 
-    # Determine channel dimension. This method also has a bunch of necessary assertions.
-    ch = infer_channel_dim(tensor1, tensor2) if channel_dim is None else channel_dim
-
+    # Run this assertion before in case channel dim is defined.
     assert (
         tensor1.ndim - tensor2.ndim
     ) <= 1, f"Can not align pred and target tensors with shapes {preds.shape}, {targets.shape}"
 
+    # Determine channel dimension. This method also has a bunch of necessary assertions.
+    ch = infer_class_dim(tensor1, tensor2) if channel_dim is None else channel_dim
+
     # Add channel dimension if there isn't one
     if tensor1.ndim != tensor2.ndim:
-        tensor2 = tensor2.view((*tensor2.shape[:ch], 1, *tensor2.shape[ch:]))
+        tensor2 = tensor2.unsqueeze(ch)
 
     # Swap tensors on off chance that the first one had an empty dim and the second didn't
     if tensor1.shape[ch] < tensor2.shape[ch]:
@@ -135,7 +141,7 @@ def align_pred_and_target_shapes(
         t2_ohe = torch.cat([1 - tensor2, tensor2], dim=ch)
     else:
         # If tensor2 is not continious then it must contain class labels. One hot encode the tensor.
-        t2_ohe = torch.zeros(tensor1.shape, device=tensor1.device)
+        t2_ohe = torch.zeros(tensor1.shape, device=tensor2.device)
         t2_ohe.scatter_(ch, tensor2.to(torch.int64), 1)
 
     # Return modified tensors in their original positions.
@@ -319,12 +325,7 @@ class EMAMetric(Metric):
         # Otherwise compute EMA score for each 'metric' in Metrics dict
         for key, current_score in metrics_dict.items():
             previous_score = self.previous_score[key]
-            if (
-                not isinstance(current_score, str)
-                and not isinstance(current_score, bytes)
-                and not isinstance(previous_score, str)
-                and not isinstance(previous_score, bytes)
-            ):
+            if not isinstance(current_score, (str, bytes)) and not isinstance(previous_score, (str, bytes)):
                 self.previous_score[key] = (
                     self.smoothing_factor * current_score + (1 - self.smoothing_factor) * previous_score
                 )
@@ -345,8 +346,8 @@ class SimpleMetric(Metric, ABC):
         WARNING: This class accumulates all the predictions and targets in memory throughout each FL server round. This
         may lead to out of memory (OOM) issues. Subclassing SimpleMetric is recommended only for quickly prototyping
         new metrics that have existing implementations in other packages. See the ROC_AUC class for an example.
-        In other scenarious it is generally recommended to subclass the base Metric class instead and implement a
-        custom update method that reduces the memory footprint of the metric. See the Accuracy clas for an example.
+        In other scenarios it is generally recommended to subclass the base Metric class instead and implement a
+        custom update method that reduces the memory footprint of the metric. See the Accuracy class for an example.
 
         Args:
             name (str): Name of the metric.
@@ -418,7 +419,7 @@ class ClassificationMetric(Metric):
         discard: Sequence[str] | None = None,
     ) -> None:
         """A Base class for classification metrics that can be computed using the true positives (tp), false positive
-        (fp), false negative (fn') and true negative (tn) counts.
+        (fp), false negative (fn) and true negative (tn) counts.
 
         On each update, the tp, fp, fn and tn counts are reduced along the specified axes before being accumulated into
         ``self.tp``, ``self.fp``, ``self.fn`` and ``self.tn`` respectively. This reduces the memory footprint required
@@ -439,11 +440,12 @@ class ClassificationMetric(Metric):
             dtype (torch.dtype): The dtype to store the counts as. If preds or targets can be continious, specify a
                 float type. Otherwise specify an integer type to prevent overflow.
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
-                index of the channel/class dimension. If a float is given, predictions below the
-                threshold are mapped to 0 and above are mapped to 1. If an integer is given, predictions are binarized
-                based on the class with the highest prediction. Default of None leaves preds unchanged.
+                index of the channel/class dimension. If a float is given, predictions below the threshold are mapped
+                to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
+                with the highest prediction where the specified axis is assumed to contain a prediction for each class
+                (where its index along that dimension is the class label). Default of None leaves preds unchanged.
             ignore_background (int | None): If specified, the first channel of the specified axis is removed prior to
-                computing the counts. Useful for removing background channels. Defaults to None.
+                computing the counts. Useful for removing background classes. Defaults to None.
             discard (Sequence[str] | None, optional): One or several of ['tp', 'fp', 'fn', 'tn']. Specified counts
                 will not be accumulated. Their associated attribute will remain as an empty pytorch tensor. Useful for
                 reducing the memory footprint of metrics that do not use all of the counts in their computation
@@ -453,7 +455,7 @@ class ClassificationMetric(Metric):
         self.dtype = dtype
         self.binarize = binarize
         self.ignore_background = ignore_background
-        self.channel_dim = ignore_background  # If channel dim is None then it will be inferred
+        self.class_dim: int | None = None  # class dim will be inferred
 
         # Parse discard argument
         count_ids = ["tp", "fp", "fn", "tn"]
@@ -475,7 +477,7 @@ class ClassificationMetric(Metric):
 
         Args:
             input (torch.Tensor): The tensor to binarize.
-            binarize (float | int, optional): A float for thresholding values or an integer specifying the
+            binarize (float | int): A float for thresholding values or an integer specifying the
                 index of the channel/class dimension. If a float is given, elements below the threshold are mapped
                 to 0 and above are mapped to 1. If an integer is given, elements are binarized based on the class
                 with the highest prediction. If binarize is None then the input is returned unchanged
@@ -490,6 +492,7 @@ class ClassificationMetric(Metric):
             if binarize >= input.ndim:
                 raise ValueError(
                     f"Cannot apply softmax to Tensor of shape {input.shape}."
+                    f" Class dimension of {binarize} is out of range of tensor with {input.ndim} dimensions."
                     " If preds are not one-hot-encoded set the binarize argument to a float threshold or None."
                 )
             hard_input = input.argmax(binarize, keepdim=True)
@@ -509,10 +512,10 @@ class ClassificationMetric(Metric):
         # Maybe convert continious 'soft' predictions into binary 'hard' predictions.
         preds = preds if self.binarize is None else self.binarize_tensor(preds, self.binarize)
 
-        # Attempt automatically match pred and target shape.
+        # Attempt to automatically match pred and target shape.
         # Added mainly because previous implementations of metrics assumed preds to be OHE but targets not to be OHE
-        # This supports any combination of hard/soft, OHE/not-OHE so long as channel dim can be inferred.
-        preds, targets = align_pred_and_target_shapes(preds, targets, self.channel_dim)
+        # This supports any combination of hard/soft, OHE/not-OHE so long as class dim can be inferred.
+        preds, targets = align_pred_and_target_shapes(preds, targets, self.class_dim)
 
         # Assertions to prevent this metric being used improperly.
         assert (
@@ -542,7 +545,7 @@ class ClassificationMetric(Metric):
 
         If any of the tp, fp, fn or tn counts were specified to be discarded during initialization of the class, then
         that count will not be computed and an empty tensor will be returned in its place. The counts are summed along
-        the axes specified in self.along_axes and there shape will be [pred.shape[a] for a in self.along_axes].
+        the axes specified in self.along_axes and their shape will be [pred.shape[a] for a in self.along_axes].
 
         Args:
             preds (torch.Tensor): Tensor containing model predictions. Must be the same shape and format as targets.
@@ -590,7 +593,7 @@ class ClassificationMetric(Metric):
         self.tn = torch.cat([self.tn, tn], dim=0) if 0 in self.along_axes else self.tn + tn
 
     def clear(self) -> None:
-        # Reset accumulated tp, fp and fn's. They will be initialized with correct shape on next update
+        # Reset accumulated tp, fp, fn and tn's. They will be initialized with correct shape on next update
         self.tp, self.fp, self.fn, self.tn = torch.tensor([]), torch.tensor([]), torch.tensor([]), torch.tensor([])
         self.counts_initialized = False
 
@@ -658,13 +661,14 @@ class Accuracy(ClassificationMetric):
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
                 index of the channel/class dimension. If a float is given, predictions below the threshold are mapped
                 to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
-                with the highest prediction. If None leaves preds unchanged. Default is 1 since this is usually the
-                channel dimension.
+                with the highest prediction where the specified axis is assumed to contain a prediction for each class
+                (where its index along that dimension is the class label). Default of None leaves preds unchanged.
             exact_match (bool): If True computes the 'Subset Accuracy'/'Exact Match Ratio'. Individual accuracies that
-                are not prefect/exact (== 1) are set to 0 before computing the final accuracy score. This is useful for
-                multilabel tabular classification. Defaults to True.
+                are not perfect/exact (== 1) are set to 0 before computing the final accuracy score. This is useful for
+                multilabel tabular classification but tasks with higher dimensional outputs or where the confidence of
+                the predictions be accounted for in the evaluation may want to turn this off. Defaults to True.
             ignore_background (int | None): If not None, the first channel of the specified axis is removed prior to
-                computing the counts. Useful for removing background channels. Defaults to None.
+                computing the counts. Useful for removing background classes. Defaults to None.
             dtype (torch.dtype): Dtype used to store tp, fp, fn and tn counts in memory on on `self.update`.
 
 
@@ -708,11 +712,12 @@ class Recall(ClassificationMetric):
                 the mean of these recalls. The 0th axis is assumed to be the batch/sample dimension. If provided an
                 empty sequence, then a single recall score is computed *over* all axes.
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
-                index of the channel/class dimension. If a float is given, predictions below the
-                threshold are mapped to 0 and above are mapped to 1. If an integer is given, predictions are binarized
-                based on the class with the highest prediction. Default of None leaves preds unchanged.
+                index of the channel/class dimension. If a float is given, predictions below the threshold are mapped
+                to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
+                with the highest prediction where the specified axis is assumed to contain a prediction for each class
+                (where its index along that dimension is the class label). Default of None leaves preds unchanged.
             ignore_background (int | None, optional): If specified, the first channel of the specified axis is removed
-                prior to computing the counts. Useful for removing background channels. Defaults to None.
+                prior to computing the counts. Useful for removing background classes. Defaults to None.
             zero_division (float | None, optional): Set what the individual recall score should be when there is a
                 zero division (only negative cases are present). If None, the resultant recall scores will be excluded
                 from the average/final recall score.
@@ -762,7 +767,7 @@ class Dice(ClassificationMetric):
 
         Args:
 
-            name (str): Name of the metric. Defaults to 'Soft-DICE'
+            name (str): Name of the metric. Defaults to 'Dice'
             along_axes (Sequence[int], optional): Sequence of indices specifying along which axes the individual DICE
                 coefficients should be computed. The final DICE Score is the mean of these DICE coefficients. Defaults
                 to (0,) which is assumed to be the batch/sample dimension. If provided an empty tuple then a single
@@ -771,10 +776,11 @@ class Dice(ClassificationMetric):
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
                 index of the channel/class dimension. If a float is given, predictions below the threshold are mapped
                 to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
-                with the highest prediction. Default of None leaves preds unchanged and computes a 'Soft' Dice score,
-                otherwise metric is equivalent to a 'Hard' Dice score.
+                with the highest prediction where the specified axis is assumed to contain a prediction for each class
+                (where its index along that dimension is the class label). Default of None leaves preds unchanged and
+                computes a 'Soft' Dice score, otherwise metric is equivalent to a 'Hard' Dice score.
             ignore_background (int | None, optional): If specified, the first channel of the specified axis is removed
-                prior to computing the DICE coefficients. Useful for removing background channels. Defaults to None.
+                prior to computing the DICE coefficients. Useful for removing background classes. Defaults to None.
             zero_division (float | None, optional): Set what the individual dice coefficients should be when there is
                 a zero division (only true negatives present). How this argument affects the final DICE score will vary
                 depending along which axes the DICE coefficients were computed. If left as None, the resultant dice
@@ -838,15 +844,16 @@ class HardDice(Dice):
                 *over* the dimensions not specified. Defaults to (0,) since this is usually the batch dimension. If
                 provided an empty tuple then a single DICE coefficient will be computed *over* all axes.
             ignore_background (int | None, optional): If specified, the first channel of the specified axis is removed
-                prior to computing the DICE coefficients. Useful for removing background channels. Defaults to None.
+                prior to computing the DICE coefficients. Useful for removing background classes. Defaults to None.
             zero_division (float | None, optional): Set what the individual dice coefficients should be when there is
                 a zero division (only true negatives present). How this argument affects the final DICE score will vary
                 depending along which axes the DICE coefficients were computed. If left as None, the resultant dice
                 coefficients will be excluded from the average/final dice score.
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
-                index of the channel/class dimension. If a float is given, predictions below the
-                threshold are mapped to 0 and above are mapped to 1. If an integer is given, predictions are binarized
-                based on the class with the highest prediction. Default of None leaves preds and targets unchanged.
+                index of the channel/class dimension. If a float is given, predictions below the threshold are mapped
+                to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
+                with the highest prediction where the specified axis is assumed to contain a prediction for each class
+                (where its index along that dimension is the class label). Default of None leaves preds unchanged.
         """
         # This subclass used to do more but now just sets dtype to int64 to prevent overflow.
         super().__init__(
@@ -863,7 +870,7 @@ class BalancedAccuracy(Recall):
     def __init__(
         self,
         name: str = "balanced_accuracy",
-        channel_dim: int = 1,
+        class_dim: int = 1,
         binarize: float | bool = True,
         ignore_background: bool = False,
         dtype: torch.dtype = torch.float32,
@@ -874,10 +881,11 @@ class BalancedAccuracy(Recall):
 
         Args:
             name (str): The name of the metric.
-            channel_dim (int, optional): Index specifying the axis representing the channel dimension. Defaults to 1.
-            binarize (float | bool, optional): If a float is given, predictions below the
-                value are mapped to 0 and above are mapped to 1. If True, predictions are binarized
-                based on the class with the highest prediction. Defaults to True.
+            class_dim (int): Index specifying the axis representing the class dimension. Defaults to 1.
+            binarize (float | bool, optional): If a float is given, predictions below the value are mapped to 0 and
+                above are mapped to 1. If True, predictions are binarized based on the class with the highest
+                prediction where the specified axis is assumed to contain a prediction for each class (where its index
+                along that dimension is the class label). Defaults to True.
             ignore_background (bool, optional): If True, the first channel of the channel axis is removed prior to
                 computing the counts. Useful for removing background channels. Defaults to False.
             dtype (torch.dtype, optional): Dtype used to store tp, fp, fn and tn counts in memory on on `self.update`.
@@ -889,21 +897,21 @@ class BalancedAccuracy(Recall):
         if isinstance(binarize, float):
             binarize_arg = binarize
         elif binarize:
-            binarize_arg = int(channel_dim)
+            binarize_arg = int(class_dim)
         else:
             binarize_arg = None
 
         super().__init__(
             name=name,
-            along_axes=[channel_dim],
+            along_axes=[class_dim],
             dtype=dtype,
             binarize=binarize_arg,
-            ignore_background=channel_dim if ignore_background else None,
+            ignore_background=class_dim if ignore_background else None,
         )
 
         # We override the channe dim attribute since this subclass forces it to be known.
         # Can prevent rare instances where channel dim is unable to be automatically inferred.
-        self.channel_dim = channel_dim
+        self.class_dim = class_dim
 
 
 class ROC_AUC(SimpleMetric):
@@ -944,9 +952,10 @@ class F1(ClassificationMetric):
                 final F1 score. The 0th axis is assumed to be the batch/sample dimension. If provided an empty
                 sequence, then a single F1 score is computed *over* all axes.
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
-                index of the channel/class dimension. If a float is given, predictions below the
-                threshold are mapped to 0 and above are mapped to 1. If an integer is given, predictions are binarized
-                based on the class with the highest prediction. Default of None leaves preds unchanged.
+                index of the channel/class dimension. If a float is given, predictions below the threshold are mapped
+                to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
+                with the highest prediction where the specified axis is assumed to contain a prediction for each class
+                (where its index along that dimension is the class label). Default of None leaves preds unchanged.
             weighted (bool, optional): If True, weights each of the individual F1 scores by their support (the number
                 of true positives and false negatives) before averaging them to compute the final F1 score.
             zero_division (float | None, optional): Set what the individual F1 scores should be when there is a zero
@@ -954,7 +963,7 @@ class F1(ClassificationMetric):
                 depending along which axes the individual scores are computed. If left as None, the resultant F1 scores
                 will be excluded from the average/final F1 score.
             ignore_background (int | None, optional): If specified, the first channel of the specified axis is removed
-                prior to computing the counts. Useful for removing background channels. Defaults to None.
+                prior to computing the counts. Useful for removing background classes. Defaults to None.
             dtype (torch.dtype, optional): The dtype to store the recall scores as in memory. Defaults
 
         NOTE: To get this metric to behave like the previous implementation using sklearn and SimpleMetric, use kwargs
