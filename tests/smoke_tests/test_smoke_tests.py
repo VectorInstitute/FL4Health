@@ -10,10 +10,10 @@ from .run_smoke_test import (
     run_smoke_test,
 )
 
-# skip some tests that currently fail if running locallly
+# skip some tests that currently fail if running locally
 IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"
 
-# Marks all test coroutineutines in this module
+# Marks all test coroutines in this module
 pytestmark = pytest.mark.asyncio(loop_scope="module")
 
 
