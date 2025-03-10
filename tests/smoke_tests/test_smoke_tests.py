@@ -5,7 +5,6 @@ from pathlib import Path
 import pytest
 
 from .run_smoke_test import (
-    SmokeTestTimeoutError,
     load_metrics_from_file,
     run_fault_tolerance_smoke_test,
     run_smoke_test,
@@ -185,35 +184,16 @@ async def test_client_level_dp_cifar(tolerance: float) -> None:
 
 @pytest.mark.smoketest
 async def test_client_level_dp_breast_cancer(tolerance: float) -> None:
-
-    num_attempts = 3
-    for attempt in range(num_attempts):
-        try:
-            coroutine = run_smoke_test(
-                server_python_path="examples.dp_fed_examples.client_level_dp_weighted.server",
-                client_python_path="examples.dp_fed_examples.client_level_dp_weighted.client",
-                config_path="tests/smoke_tests/client_level_dp_weighted_config.yaml",
-                dataset_path="examples/datasets/breast_cancer_data/hospital_0.csv",
-                skip_assert_client_fl_rounds=True,
-                tolerance=tolerance,
-            )
-            task = asyncio.create_task(coroutine)
-            await task
-        except SmokeTestTimeoutError as e:
-            task.cancel()
-            await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
-            if attempt < num_attempts - 1:
-                # This test is a bit wonky and sometimes fails transiently where
-                # networking fails to communicate and timeout is reached. A simple
-                # retry should do the trick and so we do this automatically here
-                continue
-            else:
-                pytest.fail(f"Smoke test failed due to error after {attempt + 1} attempts. {e}")
-        except Exception as e:
-            task.cancel()
-            await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
-            pytest.fail(f"Smoke test failed due to error after {attempt + 1} attempts. {e}")
-
+    coroutine = run_smoke_test(
+        server_python_path="examples.dp_fed_examples.client_level_dp_weighted.server",
+        client_python_path="examples.dp_fed_examples.client_level_dp_weighted.client",
+        config_path="tests/smoke_tests/client_level_dp_weighted_config.yaml",
+        dataset_path="examples/datasets/breast_cancer_data/hospital_0.csv",
+        skip_assert_client_fl_rounds=True,
+        tolerance=tolerance,
+    )
+    task = asyncio.create_task(coroutine)
+    await try_running_test_task(task)
     assert_on_done_task(task)
 
 
