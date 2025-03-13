@@ -31,7 +31,7 @@ fi
 
 # Process inputs
 
-# First one is for caching the huggingface pretrained models
+# WARNING: Update the following paths to match your environment
 export HF_HOME=/projects/fl4health/flower_env/temp
 # Need to load for being able to run deepspeed on the cluster
 export CUDA_HOME="/pkgs/cuda-12.1"

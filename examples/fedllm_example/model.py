@@ -10,24 +10,25 @@ from transformers import AutoModelForCausalLM, BitsAndBytesConfig
 def cosine_annealing(
     total_round: int,
     current_round: int = 0,
-    lrate_max: float = 0.001,
-    lrate_min: float = 0.0,
+    learning_rate_max: float = 0.001,
+    learning_rate_min: float = 0.0,
 ) -> float:
     """
-    Implement cosine annealing learning rate schedule for different local rounds.
+    Cosine annealing learning rate schedule for different server rounds. Cosine annealing is computed as:
+    \\lr_t = \\lr_min + 0.5 * (\\lr_max - \\lr_min) (1 + \\cos(\frac{current_round}{total_round} * \\pi)
 
     Args:
         total_round (int): The total number of rounds.
         current_round (int, optional): The current round. Defaults to 0.
-        lrate_max (float, optional): The maximum learning rate. Defaults to 0.001.
-        lrate_min (float, optional): The minimum learning rate. Defaults to 0.0.
+        learning_rate_max (float, optional): The maximum learning rate. Defaults to 0.001.
+        learning_rate_min (float, optional): The minimum learning rate. Defaults to 0.0.
 
     Returns:
         float: The learning rate for the current round.
     """
 
     cos_inner = math.pi * current_round / total_round
-    return lrate_min + 0.5 * (lrate_max - lrate_min) * (1 + math.cos(cos_inner))
+    return learning_rate_min + 0.5 * (learning_rate_max - learning_rate_min) * (1 + math.cos(cos_inner))
 
 
 def get_model(model_cfg: dict[str, Any]) -> torch.nn.Module:

@@ -1,4 +1,5 @@
 import argparse
+import json
 from functools import partial
 from logging import INFO
 from typing import Any
@@ -40,29 +41,11 @@ def fit_config(
         base_config["group"] = reporting_config.get("group", "")
         base_config["entity"] = reporting_config.get("entity", "")
     if training_config is not None:
-        suffix = "train"
-        for key, value in training_config.items():
-            if not isinstance(value, dict):
-                base_config[f"{suffix}#{key}"] = value
-            else:
-                for k, v in value.items():
-                    base_config[f"{suffix}#{key}#{k}"] = v
+        base_config["train"] = json.dumps(training_config)
     if model_config is not None:
-        suffix = "model"
-        for key, value in model_config.items():
-            if not isinstance(value, dict):
-                base_config[f"{suffix}#{key}"] = value
-            else:
-                for k, v in value.items():
-                    base_config[f"{suffix}#{key}#{k}"] = v
+        base_config["model"] = json.dumps(model_config)
     if dataset_config is not None:
-        suffix = "dataset"
-        for key, value in dataset_config.items():
-            if not isinstance(value, dict):
-                base_config[f"{suffix}#{key}"] = value
-            else:
-                for k, v in value.items():
-                    base_config[f"{suffix}#{key}#{k}"] = v
+        base_config["dataset"] = json.dumps(dataset_config)
     return base_config
 
 
@@ -84,13 +67,12 @@ def main(config: dict[str, Any], server_address: str, checkpoint_stub: str, run_
     assert cfg_model is not None, "Config must contain a 'model' key with a dictionary value."
     init_model = get_model(cfg_model)
 
-    # Server performs simple FedAveraging as its server-side optimization strategy and potentially adapts the
-    # FedProx proximal weight mu
+    # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
-        min_fit_clients=config["n_clients"],
-        min_evaluate_clients=config["n_clients"],
+        min_fit_clients=config["n_clients"] * config["num_gpus_per_client"],
+        min_evaluate_clients=config["n_clients"] * config["num_gpus_per_client"],
         # Server waits for min_available_clients before starting FL rounds
-        min_available_clients=config["n_clients"],
+        min_available_clients=config["n_clients"] * config["num_gpus_per_client"],
         on_fit_config_fn=fit_config_fn,
         # We use the same fit config function, as nothing changes for eval
         on_evaluate_config_fn=fit_config_fn,

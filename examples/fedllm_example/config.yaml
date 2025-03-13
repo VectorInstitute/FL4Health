@@ -2,11 +2,12 @@
 n_server_rounds: 15 # The number of rounds to run FL
 
 # Parameters that describe clients
-n_clients: 4 # The number of clients in the FL experiment this should be num_gpus_per_client * num_clients
-local_steps: 500 # The number of epochs to complete for client
-batch_size: 1 # The batch size for client training
+n_clients: 2 # The number of clients in the FL experiment
+num_gpus_per_client: 2 # The number of GPUs per client
+local_steps: 500 # The number of steps to complete for client
+batch_size: 1 # This parameter is ignored when using the Hugging Face Trainer, as the batch size is determined by the training configuration.
 
-evaluate_after_fit: false # Whether to evaluate the model after trainingå
+evaluate_after_fit: false # Whether to evaluate the model after training
 
 
 dataset:

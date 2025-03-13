@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import json
 import os
 import warnings
 from collections import OrderedDict
@@ -19,7 +20,7 @@ from peft import get_peft_model_state_dict, set_peft_model_state_dict
 from transformers import PreTrainedTokenizer, TrainingArguments
 from trl import SFTTrainer
 
-from examples.fedllm_example.dataset import formatting_prompts_func, get_tokenizer_and_data_collator, load_data
+from examples.fedllm_example.dataset import formatting_prompts_func, get_alpaca_tokenizer_and_data_collator, load_data
 from examples.fedllm_example.model import cosine_annealing, get_model
 from examples.fedllm_example.zero_utils import safe_save_model_for_hf_trainer, safe_save_model_for_zero3
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
@@ -37,8 +38,6 @@ NUM_CLIENTS = 2
 
 
 class LLMClient(BasicClient):
-    """A client for training a generative large language model."""
-
     def __init__(
         self,
         data_path: Path,
@@ -47,14 +46,32 @@ class LLMClient(BasicClient):
         reporters: Sequence[BaseReporter],
         client_number: int,
         checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
-        deepspeed_config: str | None = None,
+        deepspeed_config_dir: str | None = None,
         checkpoint_dir: str | None = None,
     ) -> None:
+        """
+        A client for training a generative large language model for text generation.
+
+        Args:
+            data_path (Path): path to the data to be used to load the data for client-side training.
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
+                "cuda".
+            reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
+                should send data to. Defaults to None.
+            client_number (int): The client number that uniquely identifies a client.
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
+                both checkpointing and state saving. For now this is disabled as we are using the HF Trainer. Defaults
+                to None.
+            deepspeed_config (str | None, optional): The path to the deepspeed configuration file. Defaults to None.
+            checkpioint_dir (str | None, optional): The directory to save the model checkpoints. Defaults to None.
+        """
+
         super().__init__(
             data_path, metrics, device, reporters=reporters, checkpoint_and_state_module=checkpoint_and_state_module
         )
         self.client_number = client_number
-        self.deepspeed_config = deepspeed_config
+        self.deepspeed_config_dir = deepspeed_config_dir
 
         self.training_arguments: TrainingArguments
         self.trainset: Dataset
@@ -64,35 +81,9 @@ class LLMClient(BasicClient):
         self.cosine_annealing: Callable[..., float]
         self.checkpoint_dir = checkpoint_dir
 
-    def get_unflatten_config(self, flat_dict: dict[str, Scalar], prefix: str = "train") -> dict[str, Any]:
-        """
-        extract the sub-dictionary with the given prefix and unflatten the config resulting in a nested
-        dictionary. The flat dictionary is expected to have keys with the format 'prefix#key1#key2#...#keyN'
-        where the keys are split by '#'. The unflattened dictionary will have the prefix as the root key and
-        the sub-dictionary as the value.
-
-        Args:
-            flat_dict (dict[str, Scalar]): The flat dictionary to unflatten.
-            prefix (str, optional): The prefix to use for the unflattened dictionary. Defaults to "train".
-
-        Returns:
-            dict[str, Any]: The unflattened dictionary with the given prefix.
-        """
-        dictionary: dict[str, Any] = {}
-
-        for key, value in flat_dict.items():
-            if key.startswith(f"{prefix}#"):
-                keys = key[len(prefix) + 1 :].split("#")  # Remove 'train_' prefix and split
-                d = dictionary.setdefault(prefix, {})  # Ensure 'train' is the root key
-                for k in keys[:-1]:
-                    d = d.setdefault(k, {})
-                d[keys[-1]] = value
-
-        return dictionary
-
     def process_config(self, config: Config) -> tuple[int | None, int | None, int, bool, bool]:
         """
-        This function extend the original process_config method to extract the necessary values for training
+        This function extends the original process_config method to extract the necessary values for training
         with additional configurations for the SFTTrainer.
 
         Args:
@@ -107,14 +98,19 @@ class LLMClient(BasicClient):
         local_epochs, local_steps, current_server_round, evaluate_after_fit, pack_losses_with_val_metrics = (
             super().process_config(config)
         )
-        self.train_cfg = self.get_unflatten_config(config, "train")["train"]
-        assert isinstance(self.train_cfg, dict), "Config must contain values for train arguments."
+        assert isinstance(config["train"], str), "Config must contain values for train arguments."
+        self.train_cfg = json.loads(config["train"])
         self.training_arguments = TrainingArguments(
-            **self.train_cfg.get("training_arguments", {}), deepspeed=self.deepspeed_config
+            **self.train_cfg.get("training_arguments", {}), deepspeed=self.deepspeed_config_dir
         )
-        # We will set the number of max_steps to the local_steps
+
+        # Set the maximum number of steps to `local_steps` and the per-client batch size to the client's
+        # specified `batch_size`. This configuration results in training the model with a total batch size
+        # of `num_gpus_per_client * batch_size` for `local_steps` number of iterations.
         self.training_arguments.max_steps = local_steps
         self.training_arguments.per_device_train_batch_size = config.get("batch_size")
+
+        # Set the output directory for the model
         self.training_arguments.output_dir = self.checkpoint_dir
 
         # Set the dtype for the model
@@ -152,13 +148,12 @@ class LLMClient(BasicClient):
         Args:
             config (Config): The config from the server.
         """
-        partition_id = self.client_number
-        num_partitions = NUM_CLIENTS
 
         # Let's get the client partition
-        dataset_cfg = self.get_unflatten_config(config, "dataset")["dataset"]
+        assert isinstance(config["dataset"], str), "Config must contain values for dataset arguments."
+        dataset_cfg = json.loads(config["dataset"])
         assert isinstance(dataset_cfg, dict), "Dataset configuration must be a dictionary"
-        dataset = load_data(partition_id, num_partitions, dataset_cfg["name"])
+        dataset = load_data(self.client_number, int(config["n_clients"]), dataset_cfg["name"])
 
         # Split the dataset into train and validation
         split_dataset = dataset.train_test_split(test_size=0.1)
@@ -175,14 +170,18 @@ class LLMClient(BasicClient):
             config (Config): The config from the server.
         """
 
-        self.model_cfg = self.get_unflatten_config(config, "model")["model"]
+        assert isinstance(config["model"], str), "Config must contain values for model arguments."
+        self.model_cfg = json.loads(config["model"])
         assert isinstance(self.model_cfg, dict), "Model configuration must be a dictionary"
         (
             self.tokenizer,
             self.data_collator,
-        ) = get_tokenizer_and_data_collator(self.model_cfg["name"])
+        ) = get_alpaca_tokenizer_and_data_collator(self.model_cfg["name"])
 
         assert isinstance(self.model_cfg, dict), "Model configuration must be a dictionary"
+        assert self.model_cfg.get("gradient_checkpointing", False) == self.train_cfg.get(
+            "gradient_checkpointing", False
+        )
         return get_model(self.model_cfg)
 
     def setup_client(self, config: Config) -> None:
@@ -246,7 +245,7 @@ class LLMClient(BasicClient):
 
     def train_by_steps(
         self,
-        epochs: int,
+        steps: int,
         current_round: int | None = None,
     ) -> tuple[dict[str, float], dict[str, Scalar]]:
         """
@@ -284,10 +283,12 @@ class LLMClient(BasicClient):
         self.trainer.save_state()
         self.model.config.use_cache = True
 
-        if not self.deepspeed_config or (self.deepspeed_config and "zero3" not in self.deepspeed_config):
-            safe_save_model_for_hf_trainer(trainer=self.trainer, output_dir=self.training_arguments.output_dir)
+        # In deepspeed Stage 3, we need to save the model differently as all the gradients are also partitioned. We
+        # should make sure to gather all of these data before saving the model, for safe loading and resuming.
+        if not self.deepspeed_config_dir or (self.deepspeed_config_dir and "zero3" not in self.deepspeed_config_dir):
+            safe_save_model_for_hf_trainer(trainer=self.trainer)
         else:
-            safe_save_model_for_zero3(self.model, self.training_arguments)
+            safe_save_model_for_zero3(model=self.model, training_arguments=self.training_arguments)
 
         return super().update_after_train(local_steps, loss_dict, config)
 
@@ -358,7 +359,7 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    # Adding extensive checkpointing for the client
+    # Set the checkpoint directory
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
 
     client = LLMClient(
@@ -367,7 +368,7 @@ if __name__ == "__main__":
         device=device,
         reporters=[JsonReporter()],
         client_number=args.client_number,
-        deepspeed_config=args.deepspeed,
+        deepspeed_config_dir=args.deepspeed,
         checkpoint_dir=checkpoint_dir,
     )
 

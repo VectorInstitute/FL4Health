@@ -27,6 +27,7 @@ if [[ "${SLURM_JOB_PARTITION}" == "t4v2" ]] || \
     export NCCL_SOCKET_IFNAME=bond0
 fi
 
+# WARNING: Update the following paths to match your environment
 export HF_HOME=/projects/fl4health/flower_env/temp
 
 # Process inputs

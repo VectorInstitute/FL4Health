@@ -4,11 +4,11 @@ from logging import WARNING
 from typing import Any
 
 import torch
-import transformers
-from deepspeed import zero  # type: ignore
-from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus  # type: ignore
+from deepspeed import zero
+from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
 from flwr.common.logger import log
 from torch.nn import Parameter
+from transformers import Trainer, TrainingArguments
 
 
 def maybe_zero_3(param: Any, ignore_status: bool = False, name: str | None = None) -> Any:
@@ -67,6 +67,7 @@ def get_peft_state_maybe_zero_3(named_params: Iterator[tuple[str, Parameter]], b
                 to_return[bias_name] = t
     else:
         raise NotImplementedError
+    # We should gather all parametrs in the model
     to_return = {k: maybe_zero_3(v, ignore_status=True) for k, v in to_return.items()}
     return to_return
 
@@ -88,11 +89,12 @@ def get_peft_state_non_lora_maybe_zero_3(
     to_return = {k: t for k, t in named_params if "lora_" not in k}
     if require_grad_only:
         to_return = {k: t for k, t in to_return.items() if t.requires_grad}
+    # We should gather all parametrs in the model
     to_return = {k: maybe_zero_3(v, ignore_status=True).cpu() for k, v in to_return.items()}
     return to_return
 
 
-def safe_save_model_for_zero3(model: torch.nn.Module, training_arguments: transformers.TrainingArguments) -> None:
+def safe_save_model_for_zero3(model: torch.nn.Module, training_arguments: TrainingArguments) -> None:
     """
     Saves PEFT model and non-LoRA trainable parameters when stage 3 ZeRo is enabled.
 
@@ -109,24 +111,16 @@ def safe_save_model_for_zero3(model: torch.nn.Module, training_arguments: transf
         torch.save(non_lora_state_dict, os.path.join(training_arguments.output_dir, "non_lora_trainables.bin"))
 
 
-def safe_save_model_for_hf_trainer(trainer: transformers.Trainer, output_dir: str) -> None:
+def safe_save_model_for_hf_trainer(trainer: Trainer) -> None:
     """
     Safely save the model for the Hugging Face Trainer. This module waits for all processes to synchronize
     before saving the model.
 
     Args:
         trainer (transformers.Trainer): The trainer.
-        output_dir (str): The output directory.
     """
     trainer.accelerator.wait_for_everyone()
     torch.cuda.synchronize()
 
-    if trainer.deepspeed:
-        trainer.save_model(output_dir)
-        return
-
-    state_dict = trainer.model.state_dict()
-    if trainer.args.should_save:
-        cpu_state_dict = {key: value.cpu() for key, value in state_dict.items()}
-        del state_dict
-        trainer._save(output_dir, state_dict=cpu_state_dict)  # noqa
+    trainer.save_model(trainer.output_dir)
+    return
