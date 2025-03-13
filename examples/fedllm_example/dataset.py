@@ -1,8 +1,8 @@
 from datasets import Dataset
-from flwr_datasets import FederatedDataset  # type: ignore
-from flwr_datasets.partitioner import IidPartitioner  # type: ignore
+from flwr_datasets import FederatedDataset
+from flwr_datasets.partitioner import IidPartitioner
 from transformers import AutoTokenizer, PreTrainedTokenizer
-from trl import DataCollatorForCompletionOnlyLM  # type: ignore
+from trl import DataCollatorForCompletionOnlyLM
 
 
 def formatting_prompts_func(input: dict[str, list[str]]) -> list[str]:

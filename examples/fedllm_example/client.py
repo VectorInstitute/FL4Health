@@ -17,7 +17,7 @@ from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from peft import get_peft_model_state_dict, set_peft_model_state_dict
 from transformers import PreTrainedTokenizer, TrainingArguments
-from trl import SFTTrainer  # type: ignore
+from trl import SFTTrainer
 
 from examples.fedllm_example.dataset import formatting_prompts_func, get_tokenizer_and_data_collator, load_data
 from examples.fedllm_example.model import cosine_annealing, get_model
