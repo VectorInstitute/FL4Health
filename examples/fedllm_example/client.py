@@ -17,8 +17,8 @@ from datasets import Dataset
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from peft import get_peft_model_state_dict, set_peft_model_state_dict
-from transformers import PreTrainedTokenizer, TrainingArguments
-from trl import SFTTrainer
+from transformers import PreTrainedTokenizer
+from trl import SFTConfig, SFTTrainer
 
 from examples.fedllm_example.dataset import formatting_prompts_func, get_alpaca_tokenizer_and_data_collator, load_data
 from examples.fedllm_example.model import cosine_annealing, get_model
@@ -73,7 +73,7 @@ class LLMClient(BasicClient):
         self.client_number = client_number
         self.deepspeed_config_dir = deepspeed_config_dir
 
-        self.training_arguments: TrainingArguments
+        self.training_arguments: SFTConfig
         self.trainset: Dataset
         self.train_cfg: dict[str, Any]
         self.tokenizer: PreTrainedTokenizer
@@ -100,7 +100,7 @@ class LLMClient(BasicClient):
         )
         assert isinstance(config["train"], str), "Config must contain values for train arguments."
         self.train_cfg = json.loads(config["train"])
-        self.training_arguments = TrainingArguments(
+        self.training_arguments = SFTConfig(
             **self.train_cfg.get("training_arguments", {}), deepspeed=self.deepspeed_config_dir
         )
 
