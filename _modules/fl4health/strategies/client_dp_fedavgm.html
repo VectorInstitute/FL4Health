@@ -806,8 +806,9 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">accept_failures</span> <span class="ow">and</span> <span class="n">failures</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="p">{}</span>
 
-        <span class="c1"># If first round compute total expected client weight</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">weighted_aggregation</span> <span class="ow">and</span> <span class="n">server_round</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># If we&#39;re doing weighted aggregation, we need to compute a per_client_example_cap. If it has been provided</span>
+        <span class="c1"># manually, we skip this step. Otherwise, we perform the necessary calculations.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">weighted_aggregation</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">per_client_example_cap</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_counts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
             <span class="n">total_samples</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_counts</span><span class="p">)</span>
