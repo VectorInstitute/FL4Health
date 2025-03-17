@@ -14,7 +14,7 @@ from examples.fedllm_example.model import get_model
 from fl4health.servers.base_server import FlServer
 from fl4health.utils.config import load_config, make_dict_with_epochs_or_steps
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from fl4health.utils.parameter_extraction import get_all_model_parameters_peft
+from fl4health.utils.parameter_extraction import get_all_peft_parameters_from_model
 from fl4health.utils.random import set_all_random_seeds
 
 
@@ -78,7 +78,7 @@ def main(config: dict[str, Any], server_address: str, checkpoint_stub: str, run_
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_all_model_parameters_peft(init_model),
+        initial_parameters=get_all_peft_parameters_from_model(init_model),
     )
 
     client_manager = SimpleClientManager()
