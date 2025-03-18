@@ -103,7 +103,7 @@ def main(config: dict[str, Any], server_address: str) -> None:
         server_address=server_address,
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
         server=server,
-        grpc_max_message_length=2000000000,
+        grpc_max_message_length=1600000000,
     )
 
 
