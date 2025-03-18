@@ -120,5 +120,3 @@ wait
 # Create a file that verifies that the Run concluded properly
 touch "${ARTIFACT_DIR}done.out"
 echo "Finished FL Processes"
-
-

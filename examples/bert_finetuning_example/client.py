@@ -15,6 +15,7 @@ from transformers import BertForSequenceClassification
 from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.metrics import Accuracy
+
 from .client_data import construct_dataloaders
 
 

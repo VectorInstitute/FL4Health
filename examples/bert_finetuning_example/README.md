@@ -52,4 +52,3 @@ sbatch examples/bert_finetuning_example/run.sh \
   client_learning_rate_value \
   server_address
 ```
-
