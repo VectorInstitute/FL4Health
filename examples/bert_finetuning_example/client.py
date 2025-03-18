@@ -12,12 +12,10 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from transformers import BertForSequenceClassification
 
-from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
-from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.metrics import Accuracy
-from research.ag_news.client_data import construct_dataloaders
+from .client_data import construct_dataloaders
 
 
 class BertClient(BasicClient):
@@ -64,7 +62,7 @@ class BertClient(BasicClient):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
-    parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset", default="")
+    parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset", required=True)
     parser.add_argument(
         "--server_address",
         action="store",
@@ -91,7 +89,7 @@ if __name__ == "__main__":
         action="store",
         type=float,
         help="Learning rate used by the client",
-        default=0.00001,
+        default=0.0001,
     )
     args = parser.parse_args()
 
@@ -101,13 +99,8 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {device}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
-
-    # Checkpointing
-    checkpoint_dir = args.artifact_dir
-    checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpoint_and_state_module = ClientCheckpointAndStateModule(
-        post_aggregation=BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
-    )
+    log(INFO, f"Client Number: {args.client_number}")
+    log(INFO, f"Artifact Directory: {args.artifact_dir}")
 
     client = BertClient(
         data_path,
@@ -121,6 +114,6 @@ if __name__ == "__main__":
     fl.client.start_client(
         server_address=args.server_address,
         client=client.to_client(),
-        grpc_max_message_length=2000000000,
+        grpc_max_message_length=1600000000,
     )
     client.shutdown()
