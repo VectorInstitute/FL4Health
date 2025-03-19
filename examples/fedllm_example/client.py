@@ -179,7 +179,7 @@ class LLMClient(BasicClient):
         ) = get_alpaca_tokenizer_and_data_collator(self.model_cfg["name"])
 
         assert isinstance(self.model_cfg, dict), "Model configuration must be a dictionary"
-        assert self.model_cfg.get("gradient_checkpointing", False) == self.train_cfg['training_arguments'].get(
+        assert self.model_cfg.get("gradient_checkpointing", False) == self.train_cfg["training_arguments"].get(
             "gradient_checkpointing", False
         )
         return get_model(self.model_cfg)
