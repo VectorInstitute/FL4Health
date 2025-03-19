@@ -153,7 +153,7 @@ class LLMClient(BasicClient):
         assert isinstance(config["dataset"], str), "Config must contain values for dataset arguments."
         dataset_cfg = json.loads(config["dataset"])
         assert isinstance(dataset_cfg, dict), "Dataset configuration must be a dictionary"
-        dataset = load_data(self.client_number, int(config["n_clients"]), dataset_cfg["name"])
+        dataset = load_data(self.client_number, NUM_CLIENTS, dataset_cfg["name"])
 
         # Split the dataset into train and validation
         split_dataset = dataset.train_test_split(test_size=0.1)
@@ -179,7 +179,7 @@ class LLMClient(BasicClient):
         ) = get_alpaca_tokenizer_and_data_collator(self.model_cfg["name"])
 
         assert isinstance(self.model_cfg, dict), "Model configuration must be a dictionary"
-        assert self.model_cfg.get("gradient_checkpointing", False) == self.train_cfg.get(
+        assert self.model_cfg.get("gradient_checkpointing", False) == self.train_cfg['training_arguments'].get(
             "gradient_checkpointing", False
         )
         return get_model(self.model_cfg)
@@ -192,7 +192,7 @@ class LLMClient(BasicClient):
             config (Config): The config from the server.
         """
 
-        self.model = self.get_model(config).to(self.device)
+        self.model = self.get_model(config)
 
         self.set_train_dataset(config)
 
@@ -220,12 +220,12 @@ class LLMClient(BasicClient):
 
         self.lr = self.cosine_annealing(
             current_round=current_server_round,
-            lrate_max=float(lrate_max),
-            lrate_min=float(lrate_min),
+            learning_rate_max=float(lrate_max),
+            learning_rate_min=float(lrate_min),
         )
 
         assert isinstance(
-            self.training_arguments, TrainingArguments
+            self.training_arguments, SFTConfig
         ), "training_arguments should be a TrainingArguments object"
 
         self.training_arguments.learning_rate = self.lr
