@@ -107,7 +107,6 @@ do
     nohup python -m examples.bert_finetuning_example.client \
         --artifact_dir ${ARTIFACT_DIR} \
         --dataset_path ${DATASET_DIR} \
-        --client_number ${c} \
         --learning_rate ${CLIENT_LR} \
         --server_address ${SERVER_ADDRESS} \
         > ${CLIENT_LOG_PATH} 2>&1 &

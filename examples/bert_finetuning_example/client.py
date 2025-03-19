@@ -12,11 +12,10 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from transformers import BertForSequenceClassification
 
+from examples.bert_finetuning_example.client_data import construct_dataloaders
 from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.metrics import Accuracy
-
-from .client_data import construct_dataloaders
 
 
 class BertClient(BasicClient):
@@ -56,8 +55,7 @@ class BertClient(BasicClient):
         # Here the predict method is overwritten in order
         # to rename the key to match what comes with the hugging face datasets.
         outputs, features = super().predict(input)
-        preds = {}
-        preds["prediction"] = outputs["logits"]
+        preds = {"prediction": outputs["logits"]}
         return preds, features
 
 
@@ -70,13 +68,6 @@ if __name__ == "__main__":
         type=str,
         help="Server Address for the clients to communicate with the server through",
         default="0.0.0.0:8080",
-    )
-    parser.add_argument(
-        "--client_number",
-        action="store",
-        type=int,
-        help="Number of the client. Used for checkpointing",
-        required=True,
     )
     parser.add_argument(
         "--artifact_dir",
@@ -100,7 +91,6 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {device}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
-    log(INFO, f"Client Number: {args.client_number}")
     log(INFO, f"Artifact Directory: {args.artifact_dir}")
 
     client = BertClient(
