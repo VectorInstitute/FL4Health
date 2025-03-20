@@ -1,0 +1,80 @@
+#!/bin/bash
+
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=8
+#SBATCH --gres=gpu:2
+#SBATCH --mem=40G
+#SBATCH --partition=t4v2
+#SBATCH --qos=m
+#SBATCH --open-mode=append
+#SBATCH --wait-all-nodes=1
+#SBATCH --time=8:00:00
+
+# Note:
+#	  ntasks: Total number of processes to use across world
+#	  ntasks-per-node: How many processes each node should create
+
+# Set NCCL options
+# export NCCL_DEBUG=INFO
+# NCCL backend to communicate between GPU workers is not provided in vector's cluster.
+# Disable this option in slurm.
+export NCCL_IB_DISABLE=1
+export TORCH_NCCL_ASYNC_ERROR_HANDLING=1 # set to 1 for NCCL backend
+
+if [[ "${SLURM_JOB_PARTITION}" == "t4v2" ]] || \
+    [[ "${SLURM_JOB_PARTITION}" == "rtx6000" ]]; then
+    echo export NCCL_SOCKET_IFNAME=bond0 on "${SLURM_JOB_PARTITION}"
+    export NCCL_SOCKET_IFNAME=bond0
+fi
+
+# Process inputs
+
+# WARNING: Update the following paths to match your environment
+export HF_HOME=/projects/fl4health/flower_env/temp
+# Need to load for being able to run deepspeed on the cluster
+export CUDA_HOME="/pkgs/cuda-12.1"
+
+SERVER_ADDRESS=$1
+ARTIFACT_DIR=$2
+LOG_DIR=$3
+VENV_PATH=$4
+CLIENT_NUMBER=$5
+JOB_HASH=$6
+
+
+
+RUN_NAME="Run1"
+SEED=2021
+
+# Print relevant information for the client to connect to the server and run
+echo "Server Address: ${SERVER_ADDRESS}"
+echo "Python Venv Path: ${VENV_PATH}"
+echo "Job Hash: ${JOB_HASH}"
+
+LOG_PATH="${LOG_DIR}client_log_${JOB_HASH}.log"
+
+echo "Placing logs in: ${LOG_DIR}"
+echo "World size: ${SLURM_NTASKS}"
+echo "Number of nodes: ${SLURM_NNODES}"
+NUM_GPUs=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
+echo "GPUs per node: ${NUM_GPUs}"
+
+# Source the environment
+source ${VENV_PATH}bin/activate
+echo "Active Environment:"
+which python
+
+echo "Server Address used by Client: ${SERVER_ADDRESS}"
+# Check if the deepspeed is installed
+ds_report
+ACCELERATE_CPU_AFFINITY=1 torchrun --nproc_per_node=2 --nnodes=1  \
+    -m examples.fedllm_example.client \
+    --deepspeed examples/fedllm_example/training_script/zero_config/zero2.json \
+    --artifact_dir ${ARTIFACT_DIR} \
+    --client_number ${CLIENT_NUMBER} \
+    --server_address ${SERVER_ADDRESS} \
+    --seed ${SEED} \
+    --run_name ${RUN_NAME} \
+    > ${LOG_PATH} 2>&1
