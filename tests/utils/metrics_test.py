@@ -122,24 +122,31 @@ def test_binary_align() -> None:
 def test_align_exceptions() -> None:
     """Tests that the proper exceptions are raised when attempting to align pred and target shapes."""
     # Define a pattern to ensure that the exception has something to do with inferring the channel dim.
-    pattern = re.compile("(infer.*class)|(class.*infer)", flags=re.IGNORECASE)
+    multiple_axes_pattern = re.compile("Found multiple axes that could be the label dimension", flags=re.IGNORECASE)
+    same_shape_different_size_patter = re.compile(
+        "The inferred candidate dimension has different sizes on each tensor, " "was expecting one to be empty.",
+        flags=re.IGNORECASE,
+    )
+    axes_of_same_size_pattern = re.compile(
+        "A dimension adjacent to the label dimension appears to have the same size.", flags=re.IGNORECASE
+    )
 
     # Channel dim can not be resolved if shapes differ in more than 1 dimension
-    hard_preds_ohe, soft_preds_ohe, hard_preds, _ = get_dummy_classification_tensors((2, 3, 5, 9, 3), 1)
-    hard_targets_ohe, soft_targets_ohe, hard_targets, _ = get_dummy_classification_tensors((2, 3, 5, 9, 6), 1)
+    hard_preds_ohe, soft_preds_ohe, _, _ = get_dummy_classification_tensors((2, 3, 5, 9, 3), 1)
+    hard_targets_ohe, _, hard_targets, _ = get_dummy_classification_tensors((2, 3, 5, 9, 6), 1)
 
-    with pytest.raises(Exception, match=pattern):
-        preds, targets = align_pred_and_target_shapes(soft_preds_ohe, hard_targets)
+    with pytest.raises(Exception, match=multiple_axes_pattern):
+        align_pred_and_target_shapes(soft_preds_ohe, hard_targets)
 
-    with pytest.raises(Exception, match=pattern):
-        preds, targets = align_pred_and_target_shapes(hard_preds_ohe, hard_targets_ohe)
+    with pytest.raises(Exception, match=same_shape_different_size_patter):
+        align_pred_and_target_shapes(hard_preds_ohe, hard_targets_ohe)
 
     # Channel dim can not be resolved if the dimension directly afterwards has the same size
-    hard_preds_ohe, soft_preds_ohe, hard_preds, _ = get_dummy_classification_tensors((2, 3, 3, 9, 6), 1)
-    hard_targets_ohe, soft_targets_ohe, hard_targets, _ = get_dummy_classification_tensors((2, 3, 3, 9, 6), 1)
+    hard_preds_ohe, soft_preds_ohe, _, _ = get_dummy_classification_tensors((2, 3, 3, 9, 6), 1)
+    hard_targets_ohe, _, hard_targets, _ = get_dummy_classification_tensors((2, 3, 3, 9, 6), 1)
 
-    with pytest.raises(Exception, match=pattern):
-        preds, targets = align_pred_and_target_shapes(soft_preds_ohe, hard_targets)
+    with pytest.raises(Exception, match=axes_of_same_size_pattern):
+        align_pred_and_target_shapes(soft_preds_ohe, hard_targets)
 
 
 def test_hard_dice_metric_1d_and_clear() -> None:
