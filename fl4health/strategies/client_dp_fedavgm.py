@@ -308,8 +308,9 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         if not self.accept_failures and failures:
             return None, {}
 
-        # If first round compute total expected client weight
-        if self.weighted_aggregation and server_round == 1:
+        # If we're doing weighted aggregation, we need to compute a per_client_example_cap. If it has been provided
+        # manually, we skip this step. Otherwise, we perform the necessary calculations.
+        if self.weighted_aggregation and self.per_client_example_cap is None:
             assert self.sample_counts is not None
 
             total_samples = sum(self.sample_counts)
