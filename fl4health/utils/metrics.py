@@ -23,71 +23,71 @@ TEST_NUM_EXAMPLES_KEY = f"{MetricPrefix.TEST_PREFIX.value} num_examples"
 TEST_LOSS_KEY = f"{MetricPrefix.TEST_PREFIX.value} checkpoint"
 
 
-def infer_class_dim(tensor1: torch.Tensor, tensor2: torch.Tensor) -> int:
-    """Infers the class dimension given two related tensors of different shapes.
+def infer_label_dim(tensor1: torch.Tensor, tensor2: torch.Tensor) -> int:
+    """Infers the label dimension given two related tensors of different shapes.
 
-    Generally useful for inferring the class dimension when one tensor is one-hot-encoded and the other is not. The
-    class dimension is inferred by looking for dimensions that either are not the same size, or are not present in
+    Generally useful for inferring the label dimension when one tensor is one-hot-encoded and the other is not. The
+    label dimension is inferred by looking for dimensions that either are not the same size, or are not present in
     tensor 2.
 
     Args:
         tensor1 (torch.Tensor): The reference tensor. Must have the same number of dimensions as tensor 2, or have
-            exactly 1 more dimension (the channel/class dim).
+            exactly 1 more dimension (the channel/label dim).
         tensor2 (torch.Tensor): The non-reference tensor.
 
     Raises:
-        AssertionError: If the the class dimension cannot be inferred without ambigiuty. For example if a dimension
-            next to the class dimension has the same size.
+        AssertionError: If the the label dimension cannot be inferred without ambiguity. For example if a dimension
+            next to the label dimension has the same size.
 
     Returns:
-        int: Index of the dimension along tensor 1 that is the channel/class dimensions
+        int: Index of the dimension along tensor 1 that is the channel/label dimensions
     """
     assert (
         tensor1.shape != tensor2.shape
-    ), f"Could not infer the class dimension of tensors with the same shape: {tensor1.shape}"
+    ), f"Could not infer the label dimension of tensors with the same shape: {tensor1.shape}"
     assert (tensor1.ndim - tensor2.ndim) <= 1, (
-        f"Could not infer the class dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape})."
-        " Expected tensors to differ by at most 1 dimension but foud multiple dimensions in tensor1 not in tensor2."
+        f"Could not infer the label dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape}). "
+        "Expected tensors to differ by at most 1 dimension but found multiple dimensions in tensor1 not in tensor2."
     )
 
-    # Infer channel dimension.
+    # Infer label dimension.
     idx2 = 0
-    candidate_channels = []
+    candidate_label_dims = []
     for idx1 in range(tensor1.ndim):
-        if idx2 >= tensor2.ndim:  # Just in case its the last channel we need to avoid indexing error
-            candidate_channels.append(idx1)
+        if idx2 >= tensor2.ndim:  # Just in case its the last label we need to avoid indexing error
+            candidate_label_dims.append(idx1)
         elif tensor1.shape[idx1] == tensor2.shape[idx2]:
             idx2 += 1
         else:
-            candidate_channels.append(idx1)
+            candidate_label_dims.append(idx1)
             if tensor1.ndim == tensor2.ndim:
                 idx2 += 1
 
-    assert len(candidate_channels) == 1, (
-        f"Could not infer the class dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape}). "
-        "Found multiple axes that could be the channel dimension."
+    assert len(candidate_label_dims) == 1, (
+        f"Could not infer the label dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape}). "
+        "Found multiple axes that could be the label dimension."
     )
-    ch = candidate_channels[0]
+    label_dim = candidate_label_dims[0]
 
-    # Cover edge case where dim adjacent to channel dim has the same size.
-    # We will mistakenly resolve only a single candidate channel when technically it is ambiguous.
-    if tensor1.ndim > tensor2.ndim and ch > 0:
-        assert tensor1.shape[ch] != tensor1.shape[ch - 1], (
-            f"Could not infer the class dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape}). "
-            "A dimension adjacent to the class dimension appears to have the same size."
+    # Cover edge case where dim adjacent to label dim has the same size.
+    # We will mistakenly resolve only a single candidate label when technically it is ambiguous.
+    if tensor1.ndim > tensor2.ndim and label_dim > 0:
+        assert tensor1.shape[label_dim] != tensor1.shape[label_dim - 1], (
+            f"Could not infer the label dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape}). "
+            "A dimension adjacent to the label dimension appears to have the same size."
         )
 
-    # If tensors have same ndim but diff shape, then this only works if channel dim was empty for one of them
+    # If tensors have same ndim but diff shape, then this only works if label dim was empty for one of them
     if tensor1.ndim == tensor2.ndim:
-        assert (tensor1.shape[ch] == 1) or (tensor2.shape[ch]) == 1, (
-            f"Could not infer the class dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape}). "
+        assert (tensor1.shape[label_dim] == 1) or (tensor2.shape[label_dim]) == 1, (
+            f"Could not infer the label dimension of tensors with shapes: ({tensor1.shape}), ({tensor2.shape}). "
             "The inferred candidate dimension has different sizes on each tensor, was expecting one to be empty."
         )
-    return ch
+    return label_dim
 
 
 def align_pred_and_target_shapes(
-    preds: torch.Tensor, targets: torch.Tensor, channel_dim: int | None = None
+    preds: torch.Tensor, targets: torch.Tensor, label_dim: int | None = None
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Attempts to correct shape mismatches between the given tensors by inferring which one to one-hot-encode.
@@ -98,8 +98,8 @@ def align_pred_and_target_shapes(
     Args:
         preds (torch.Tensor): The tensor with model predictions.
         targets (torch.Tensor): The tensor with model targets.
-        channel_dim (int | None): Index of the class dimension. If left as None then this method attempts to infer
-            the class dimension if it is needed.
+        label_dim (int | None): Index of the label dimension. If left as None then this method attempts to infer
+            the label dimension if it is needed.
 
     Returns:
         tuple[torch.Tensor, torch.Tensor]: The pred and target tensors respectively now ensured to have the same shape.
@@ -114,19 +114,19 @@ def align_pred_and_target_shapes(
         tensor1, tensor2 = preds, targets
     else:
         # If targets have more dims than preds, then targets must be ohe and preds are not
-        # If ndims are equal but shapes are not, then we can only determine reference tensor after finding channel dim.
+        # If ndims are equal but shapes are not, then we can only determine reference tensor after finding label dim.
         tensor1, tensor2 = targets, preds
         swapped = True
 
-    # Run this assertion before in case channel dim is defined.
+    # Run this assertion before in case label dim is defined.
     assert (
         tensor1.ndim - tensor2.ndim
     ) <= 1, f"Can not align pred and target tensors with shapes {preds.shape}, {targets.shape}"
 
-    # Determine channel dimension. This method also has a bunch of necessary assertions.
-    ch = infer_class_dim(tensor1, tensor2) if channel_dim is None else channel_dim
+    # Determine label dimension. This method also has a bunch of necessary assertions.
+    ch = infer_label_dim(tensor1, tensor2) if label_dim is None else label_dim
 
-    # Add channel dimension if there isn't one
+    # Add label dimension if there isn't one
     if tensor1.ndim != tensor2.ndim:
         tensor2 = tensor2.unsqueeze(ch)
 
@@ -135,12 +135,12 @@ def align_pred_and_target_shapes(
         tensor1, tensor2 = tensor2, tensor1
         swapped = not swapped
 
-    # One-hot-encode tensor2. We know at this point that it has an empty dim along channel axis
+    # One-hot-encode tensor2. We know at this point that it has an empty dim along label axis
     if torch.is_floating_point(tensor2) and torch.frac(tensor2).sum() != 0:
-        # If tensor is continious it must be binary classification and elements must be probabilities in range [0, 1].
+        # If tensor is continuous it must be binary classification and elements must be probabilities in range [0, 1].
         t2_ohe = torch.cat([1 - tensor2, tensor2], dim=ch)
     else:
-        # If tensor2 is not continious then it must contain class labels. One hot encode the tensor.
+        # If tensor2 is not continuous then it must contain class labels. One hot encode the tensor.
         t2_ohe = torch.zeros(tensor1.shape, device=tensor2.device)
         t2_ohe.scatter_(ch, tensor2.to(torch.int64), 1)
 
@@ -428,7 +428,7 @@ class ClassificationMetric(Metric):
         ``clear`` method. If your subclass returns multiple metrics you may need to override the `__call__` method.
 
         NOTE: Preds and targets must have the same shape and only contain elements in range [0, 1]. If preds and
-        targets passed to update method have different shapes, this class will attempt to infer the channel dimension
+        targets passed to update method have different shapes, this class will attempt to infer the label dimension
         and align the shapes by one-hot-encoding one of the tensors.
 
         Args:
@@ -437,10 +437,10 @@ class ClassificationMetric(Metric):
                 tn. The counts will be summed *over* the axes not specified. The 0th axis is assumed to be the batch or
                 sample dimension. If provided an empty sequence, then the counts are scalar values computed *over* all
                 axes.
-            dtype (torch.dtype): The dtype to store the counts as. If preds or targets can be continious, specify a
+            dtype (torch.dtype): The dtype to store the counts as. If preds or targets can be continuous, specify a
                 float type. Otherwise specify an integer type to prevent overflow.
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
-                index of the channel/class dimension. If a float is given, predictions below the threshold are mapped
+                index of the channel/label dimension. If a float is given, predictions below the threshold are mapped
                 to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
                 with the highest prediction where the specified axis is assumed to contain a prediction for each class
                 (where its index along that dimension is the class label). Default of None leaves preds unchanged.
@@ -455,7 +455,7 @@ class ClassificationMetric(Metric):
         self.dtype = dtype
         self.binarize = binarize
         self.ignore_background = ignore_background
-        self.class_dim: int | None = None  # class dim will be inferred
+        self.label_dim: int | None = None  # label dim will be inferred
 
         # Parse discard argument
         count_ids = ["tp", "fp", "fn", "tn"]
@@ -473,12 +473,12 @@ class ClassificationMetric(Metric):
         self.tp, self.fp, self.fn, self.tn = torch.tensor([]), torch.tensor([]), torch.tensor([]), torch.tensor([])
 
     def binarize_tensor(self, input: torch.Tensor, binarize: float | int) -> torch.Tensor:
-        """Converts continious 'soft' tensors into categorical 'hard' ones.
+        """Converts continuous 'soft' tensors into categorical 'hard' ones.
 
         Args:
             input (torch.Tensor): The tensor to binarize.
             binarize (float | int): A float for thresholding values or an integer specifying the
-                index of the channel/class dimension. If a float is given, elements below the threshold are mapped
+                index of the channel/label dimension. If a float is given, elements below the threshold are mapped
                 to 0 and above are mapped to 1. If an integer is given, elements are binarized based on the class
                 with the highest prediction. If binarize is None then the input is returned unchanged
 
@@ -509,13 +509,13 @@ class ClassificationMetric(Metric):
         This may or may not include binarizing the preds, one-hot-encoding either the preds or targets, removing the
         background channel, and or type conversions. Several assertions are also made to ensure inputs are as expected.
         """
-        # Maybe convert continious 'soft' predictions into binary 'hard' predictions.
+        # Maybe convert continuous 'soft' predictions into binary 'hard' predictions.
         preds = preds if self.binarize is None else self.binarize_tensor(preds, self.binarize)
 
         # Attempt to automatically match pred and target shape.
         # Added mainly because previous implementations of metrics assumed preds to be OHE but targets not to be OHE
-        # This supports any combination of hard/soft, OHE/not-OHE so long as class dim can be inferred.
-        preds, targets = align_pred_and_target_shapes(preds, targets, self.class_dim)
+        # This supports any combination of hard/soft, OHE/not-OHE so long as label dim can be inferred.
+        preds, targets = align_pred_and_target_shapes(preds, targets, self.label_dim)
 
         # Assertions to prevent this metric being used improperly.
         assert (
@@ -659,13 +659,13 @@ class Accuracy(ClassificationMetric):
                 instances. Default is to compute along the first dimension which is assumed to be the batch/n_samples
                 dimension.
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
-                index of the channel/class dimension. If a float is given, predictions below the threshold are mapped
+                index of the channel/label dimension. If a float is given, predictions below the threshold are mapped
                 to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
                 with the highest prediction where the specified axis is assumed to contain a prediction for each class
                 (where its index along that dimension is the class label). Default of None leaves preds unchanged.
             exact_match (bool): If True computes the 'Subset Accuracy'/'Exact Match Ratio'. Individual accuracies that
                 are not perfect/exact (== 1) are set to 0 before computing the final accuracy score. This is useful for
-                multilabel tabular classification but tasks with higher dimensional outputs or where the confidence of
+                multi-label tabular classification but tasks with higher dimensional outputs or where the confidence of
                 the predictions be accounted for in the evaluation may want to turn this off. Defaults to True.
             ignore_background (int | None): If not None, the first channel of the specified axis is removed prior to
                 computing the counts. Useful for removing background classes. Defaults to None.
@@ -712,7 +712,7 @@ class Recall(ClassificationMetric):
                 the mean of these recalls. The 0th axis is assumed to be the batch/sample dimension. If provided an
                 empty sequence, then a single recall score is computed *over* all axes.
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
-                index of the channel/class dimension. If a float is given, predictions below the threshold are mapped
+                index of the channel/label dimension. If a float is given, predictions below the threshold are mapped
                 to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
                 with the highest prediction where the specified axis is assumed to contain a prediction for each class
                 (where its index along that dimension is the class label). Default of None leaves preds unchanged.
@@ -774,7 +774,7 @@ class Dice(ClassificationMetric):
                 DICE coefficient will be computed over all axes. Note that intermediate values must be stored in memory
                 for each element along the specified axes, this may lead to memory build up in some instances.
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
-                index of the channel/class dimension. If a float is given, predictions below the threshold are mapped
+                index of the channel/label dimension. If a float is given, predictions below the threshold are mapped
                 to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
                 with the highest prediction where the specified axis is assumed to contain a prediction for each class
                 (where its index along that dimension is the class label). Default of None leaves preds unchanged and
@@ -834,7 +834,7 @@ class HardDice(Dice):
         NOTE: Preds and targets must have the same shape and only contain elements in range [0, 1]. If preds and
         targets passed to update method have different shapes, this class will attempt to infer the channel dimension
         and align the shapes by one-hot-encoding one of the tensors. The binarize argument can be used to
-        convert incoming continious ('soft') predictions in to categorical ('hard') predictions.
+        convert incoming continuous ('soft') predictions in to categorical ('hard') predictions.
 
         Args:
 
@@ -850,7 +850,7 @@ class HardDice(Dice):
                 depending along which axes the DICE coefficients were computed. If left as None, the resultant dice
                 coefficients will be excluded from the average/final dice score.
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
-                index of the channel/class dimension. If a float is given, predictions below the threshold are mapped
+                index of the channel/label dimension. If a float is given, predictions below the threshold are mapped
                 to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
                 with the highest prediction where the specified axis is assumed to contain a prediction for each class
                 (where its index along that dimension is the class label). Default of None leaves preds unchanged.
@@ -870,7 +870,7 @@ class BalancedAccuracy(Recall):
     def __init__(
         self,
         name: str = "balanced_accuracy",
-        class_dim: int = 1,
+        label_dim: int = 1,
         binarize: float | bool = True,
         ignore_background: bool = False,
         dtype: torch.dtype = torch.float32,
@@ -881,7 +881,7 @@ class BalancedAccuracy(Recall):
 
         Args:
             name (str): The name of the metric.
-            class_dim (int): Index specifying the axis representing the class dimension. Defaults to 1.
+            label_dim (int): Index specifying the axis representing the label dimension. Defaults to 1.
             binarize (float | bool, optional): If a float is given, predictions below the value are mapped to 0 and
                 above are mapped to 1. If True, predictions are binarized based on the class with the highest
                 prediction where the specified axis is assumed to contain a prediction for each class (where its index
@@ -897,21 +897,21 @@ class BalancedAccuracy(Recall):
         if isinstance(binarize, float):
             binarize_arg = binarize
         elif binarize:
-            binarize_arg = int(class_dim)
+            binarize_arg = int(label_dim)
         else:
             binarize_arg = None
 
         super().__init__(
             name=name,
-            along_axes=[class_dim],
+            along_axes=[label_dim],
             dtype=dtype,
             binarize=binarize_arg,
-            ignore_background=class_dim if ignore_background else None,
+            ignore_background=label_dim if ignore_background else None,
         )
 
-        # We override the channe dim attribute since this subclass forces it to be known.
-        # Can prevent rare instances where channel dim is unable to be automatically inferred.
-        self.class_dim = class_dim
+        # We override the label dim attribute since this subclass forces it to be known.
+        # Can prevent rare instances where label dim is unable to be automatically inferred.
+        self.label_dim = label_dim
 
 
 class ROC_AUC(SimpleMetric):
@@ -939,7 +939,7 @@ class F1(ClassificationMetric):
         along_axes: Sequence[int] = (),
         binarize: float | int | None = None,
         weighted: bool = False,
-        zero_divison: float | None = None,
+        zero_division: float | None = None,
         ignore_background: int | None = None,
         dtype: torch.dtype = torch.float32,
     ) -> None:
@@ -952,7 +952,7 @@ class F1(ClassificationMetric):
                 final F1 score. The 0th axis is assumed to be the batch/sample dimension. If provided an empty
                 sequence, then a single F1 score is computed *over* all axes.
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
-                index of the channel/class dimension. If a float is given, predictions below the threshold are mapped
+                index of the channel/label dimension. If a float is given, predictions below the threshold are mapped
                 to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
                 with the highest prediction where the specified axis is assumed to contain a prediction for each class
                 (where its index along that dimension is the class label). Default of None leaves preds unchanged.
@@ -971,7 +971,7 @@ class F1(ClassificationMetric):
         weighted to False the metric behave like the 'macro' averaging.
         """
         self.weighted = weighted
-        self.zero_division = zero_divison
+        self.zero_division = zero_division
         super().__init__(
             name=name,
             along_axes=along_axes,
