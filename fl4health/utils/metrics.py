@@ -124,25 +124,25 @@ def align_pred_and_target_shapes(
     ) <= 1, f"Can not align pred and target tensors with shapes {preds.shape}, {targets.shape}"
 
     # Determine label dimension. This method also has a bunch of necessary assertions.
-    ch = infer_label_dim(tensor1, tensor2) if label_dim is None else label_dim
+    label_dim = infer_label_dim(tensor1, tensor2) if label_dim is None else label_dim
 
     # Add label dimension if there isn't one
     if tensor1.ndim != tensor2.ndim:
-        tensor2 = tensor2.unsqueeze(ch)
+        tensor2 = tensor2.unsqueeze(label_dim)
 
     # Swap tensors on off chance that the first one had an empty dim and the second didn't
-    if tensor1.shape[ch] < tensor2.shape[ch]:
+    if tensor1.shape[label_dim] < tensor2.shape[label_dim]:
         tensor1, tensor2 = tensor2, tensor1
         swapped = not swapped
 
     # One-hot-encode tensor2. We know at this point that it has an empty dim along label axis
     if torch.is_floating_point(tensor2) and torch.frac(tensor2).sum() != 0:
         # If tensor is continuous it must be binary classification and elements must be probabilities in range [0, 1].
-        t2_ohe = torch.cat([1 - tensor2, tensor2], dim=ch)
+        t2_ohe = torch.cat([1 - tensor2, tensor2], dim=label_dim)
     else:
         # If tensor2 is not continuous then it must contain class labels. One hot encode the tensor.
         t2_ohe = torch.zeros(tensor1.shape, device=tensor2.device)
-        t2_ohe.scatter_(ch, tensor2.to(torch.int64), 1)
+        t2_ohe.scatter_(label_dim, tensor2.to(torch.int64), 1)
 
     # Return modified tensors in their original positions.
     return (t2_ohe, tensor1) if swapped else (tensor1, t2_ohe)
