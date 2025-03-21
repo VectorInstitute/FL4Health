@@ -15,6 +15,7 @@ from fl4health.utils.metrics import (
     Dice,
     HardDice,
     MetricManager,
+    Recall,
     align_pred_and_target_shapes,
 )
 
@@ -415,6 +416,25 @@ def test_binary_accuracy() -> None:
     target1 = torch.Tensor([0, 0, 1, 1, 1])
     accuracy1 = accuracy_metric(pred1, target1)
     assert accuracy1 == approx(3.0 / 5.0)
+
+
+def test_binary_recall() -> None:
+    # Computes the standard recall for binary classification
+    r1 = Recall("recall", along_axes=(0,), binarize=None)
+    pred1 = torch.Tensor([0, 1, 1, 0, 1])
+    target1 = torch.Tensor([0, 0, 1, 1, 1])
+    r1.update(pred1, target1)
+    result = r1.compute()
+    assert result["recall"] == approx(2.0 / 3.0, abs=1e-4)
+
+    # This treats positive predictions that line up with a label as a TP, regardless of class. So there are 3 TPs
+    # for the provided input and 2 FNs for recall computed as TP/(TP+FN)
+    r2 = Recall("recall", along_axes=(0,), binarize=None)
+    pred1 = torch.Tensor([[1, 0], [0, 1], [0, 1], [1, 0], [0, 1]])
+    target1 = torch.Tensor([[1, 0], [1, 0], [0, 1], [0, 1], [0, 1]])
+    r2.update(pred1, target1)
+    result = r2.compute()
+    assert result["recall"] == approx(3.0 / 5.0, abs=1e-4)
 
 
 def test_balanced_accuracy() -> None:

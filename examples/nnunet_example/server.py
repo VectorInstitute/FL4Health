@@ -10,10 +10,7 @@ from flwr.common.parameter import ndarrays_to_parameters
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from fl4health.checkpointing.checkpointer import (
-    BestMetricTorchModuleCheckpointer,
-    PerRoundStateCheckpointer,
-)
+from fl4health.checkpointing.checkpointer import BestMetricTorchModuleCheckpointer, PerRoundStateCheckpointer
 from fl4health.checkpointing.server_module import NnUnetServerCheckpointAndStateModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.nnunet_server import NnunetServer
