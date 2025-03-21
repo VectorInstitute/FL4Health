@@ -88,7 +88,15 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
         super().__init__(checkpoint_dir, checkpoint_name)
         self.best_score: float | None = None
         self.checkpoint_score_function = checkpoint_score_function
-        self.checkpoint_score_name = checkpoint_score_name or checkpoint_score_function.__name__
+        if checkpoint_score_name is not None:
+            self.checkpoint_score_name = checkpoint_score_name
+        else:
+            log(
+                WARNING,
+                "No checkpoint_score_name provided. Name will default to the checkpoint score function "
+                f"name of {checkpoint_score_function.__name__}",
+            )
+            self.checkpoint_score_name = checkpoint_score_function.__name__
         # Whether we're looking to maximize (or minimize) the score produced by the checkpoint score function
         self.maximize = maximize
         self.comparison_str = ">=" if self.maximize else "<="
