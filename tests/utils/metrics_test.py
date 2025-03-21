@@ -326,6 +326,88 @@ def test_accuracy_metric() -> None:
     assert accuracy2 == 0.75
 
 
+def test_accuracy_accumulation_and_correctness() -> None:
+    # This implements the traditional accuracy metric, even for multi-class problems
+    accuracy_metric_1 = Accuracy(along_axes=(0,), exact_match=True)
+    # This implements macro-averaging of class-by-class accuracy, which is often much higher than raw accuracy
+    # because it counts true negative predictions, which are more prevalent as the number of classes grows
+    accuracy_metric_2 = Accuracy(along_axes=(1,), exact_match=False)
+
+    pred1 = torch.tensor([[0, 1, 0], [1, 0, 0], [0, 1, 0], [1, 0, 0], [0, 1, 0]])
+    target1 = torch.tensor([[0, 0, 1], [1, 0, 0], [0, 1, 0], [0, 0, 1], [0, 1, 0]])
+    accuracy_metric_1.update(pred1, target1)
+    accuracy_metric_2.update(pred1, target1)
+
+    pred2 = torch.tensor([[1, 0, 0], [0, 0, 1], [1, 0, 0], [1, 0, 0], [0, 1, 0]])
+    target2 = torch.tensor([[0, 0, 1], [0, 0, 1], [0, 1, 0], [0, 0, 1], [0, 1, 0]])
+    accuracy_metric_1.update(pred2, target2)
+    accuracy_metric_2.update(pred2, target2)
+
+    result1 = accuracy_metric_1.compute()
+    result2 = accuracy_metric_2.compute()
+
+    assert result1["Accuracy"] == approx(0.5)
+    assert result2["Accuracy"] == approx(0.6667, abs=1e-4)
+
+    accuracy_metric_1.clear()
+    accuracy_metric_2.clear()
+
+    # In the binary label case, these should be equal because incorrect or correct for one class implies the same for
+    # the other class.
+
+    pred1 = torch.tensor([[0, 1], [1, 0], [0, 1], [1, 0], [0, 1]])
+    target1 = torch.tensor(
+        [
+            [0, 1],
+            [
+                1,
+                0,
+            ],
+            [0, 1],
+            [0, 1],
+            [0, 1],
+        ]
+    )
+    accuracy_metric_1.update(pred1, target1)
+    accuracy_metric_2.update(pred1, target1)
+
+    pred2 = torch.tensor([[1, 0], [1, 0], [1, 0], [1, 0], [0, 1]])
+    target2 = torch.tensor([[0, 1], [0, 1], [0, 1], [1, 0], [0, 1]])
+    accuracy_metric_1.update(pred2, target2)
+    accuracy_metric_2.update(pred2, target2)
+
+    result1 = accuracy_metric_1.compute()
+    result2 = accuracy_metric_2.compute()
+
+    assert result1["Accuracy"] == approx(0.6)
+    assert result2["Accuracy"] == approx(0.6)
+
+    accuracy_metric_1.clear()
+    accuracy_metric_2.clear()
+
+    # Each should handle the multi-label, multi-class setting as well. Exact match would only consider those tuples
+    # that were FULL matches, i.e. all predictions matched all labels for each example.
+    # Binarize must be set to None so that it predictions as they are classes
+    accuracy_metric_1 = Accuracy(along_axes=(0,), exact_match=False, binarize=None)
+    accuracy_metric_2 = Accuracy(along_axes=(1,), exact_match=False, binarize=None)
+
+    pred1 = torch.tensor([[0, 1, 1], [1, 0, 0], [0, 1, 0], [1, 0, 0], [0, 1, 0]])
+    target1 = torch.tensor([[0, 0, 1], [1, 0, 0], [1, 1, 0], [0, 0, 1], [0, 1, 0]])
+    accuracy_metric_1.update(pred1, target1)
+    accuracy_metric_2.update(pred1, target1)
+
+    pred2 = torch.tensor([[1, 1, 1], [0, 0, 1], [1, 0, 0], [1, 0, 0], [0, 1, 0]])
+    target2 = torch.tensor([[0, 0, 1], [0, 0, 1], [0, 1, 0], [0, 0, 1], [0, 1, 0]])
+    accuracy_metric_1.update(pred2, target2)
+    accuracy_metric_2.update(pred2, target2)
+
+    result1 = accuracy_metric_1.compute()
+    result2 = accuracy_metric_2.compute()
+
+    assert result1["Accuracy"] == approx(0.6667, abs=1e-4)
+    assert result2["Accuracy"] == approx(0.6667, abs=1e-4)
+
+
 def test_binary_accuracy() -> None:
     accuracy_metric = Accuracy(binarize=None)
 

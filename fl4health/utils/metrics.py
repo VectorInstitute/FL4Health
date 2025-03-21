@@ -560,7 +560,7 @@ class ClassificationMetric(Metric):
             tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
                 specified dimensions for each of tp, fp, fn, and tn respectively.
         """
-        # Compute tp, fp and fn
+        # Compute tp, fp, fn and tn
         sum_axes = tuple([i for i in range(preds.ndim) if i not in self.along_axes])
 
         # Compute counts. If were ignoring a count, set it as an empty tensor to avoid downstream errors.
