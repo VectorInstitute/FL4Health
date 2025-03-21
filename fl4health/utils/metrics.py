@@ -497,7 +497,7 @@ class ClassificationMetric(Metric):
             if binarize >= input.ndim:
                 raise ValueError(
                     f"Cannot apply softmax to Tensor of shape {input.shape}."
-                    f" Class dimension of {binarize} is out of range of tensor with {input.ndim} dimensions."
+                    f" Label dimension of {binarize} is out of range of tensor with {input.ndim} dimensions."
                     " If preds are not one-hot-encoded set the binarize argument to a float threshold or None."
                 )
             hard_input = input.argmax(binarize, keepdim=True)
@@ -670,8 +670,8 @@ class Accuracy(ClassificationMetric):
                 (where its index along that dimension is the class label). Default of None leaves preds unchanged.
             exact_match (bool): If True computes the 'Subset Accuracy'/'Exact Match Ratio'. Individual accuracies that
                 are not perfect/exact (== 1) are set to 0 before computing the final accuracy score. This is useful for
-                multi-label tabular classification but tasks with higher dimensional outputs or where the confidence of
-                the predictions be accounted for in the evaluation may want to turn this off. Defaults to True.
+                some multi-label classification but tasks with higher dimensional outputs or where the confidence of
+                the predictions should be accounted for in the evaluation may want to turn this off. Defaults to True.
             ignore_background (int | None): If not None, the first channel of the specified axis is removed prior to
                 computing the counts. Useful for removing background classes. Defaults to None.
             dtype (torch.dtype): Dtype used to store tp, fp, fn and tn counts in memory on on `self.update`.
