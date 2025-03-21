@@ -311,7 +311,7 @@ def test_hard_dice_metric_along_axes() -> None:
 
 
 def test_accuracy_metric() -> None:
-    accuracy_metric = Accuracy(along_axes=[0], exact_match=True)
+    accuracy_metric = Accuracy(along_axes=(0,), exact_match=True)
 
     pred1 = one_hot(torch.arange(0, 6) % 5)
     target1 = torch.tensor([0, 1, 2, 3, 4, 0])
@@ -393,7 +393,7 @@ def test_ROC_AUC_metric() -> None:
 
 
 def test_F1_metric() -> None:
-    metric = F1(along_axes=[1], binarize=1, weighted=True)
+    metric = F1(along_axes=(1,), binarize=1, weighted=True)
 
     logits = torch.Tensor(
         [
@@ -489,7 +489,7 @@ def test_hard_and_soft_dice_alt_threshold() -> None:
 
 
 def test_metric_accumulation() -> None:
-    a = Accuracy(along_axes=[0], exact_match=True)
+    a = Accuracy(along_axes=(0,), exact_match=True)
 
     pred1 = one_hot(torch.arange(4) % 3)
     pred2 = one_hot(torch.arange(4) % 3)
@@ -583,7 +583,8 @@ def test_metric_manager() -> None:
     target_list = [target1, target2]
 
     mm = MetricManager(
-        [F1(along_axes=[1], binarize=1, weighted=True), Accuracy(along_axes=[0], binarize=1, exact_match=True)], "test"
+        [F1(along_axes=(1,), binarize=1, weighted=True), Accuracy(along_axes=(0,), binarize=1, exact_match=True)],
+        "test",
     )
 
     for logits, target in zip(logits_list, target_list):

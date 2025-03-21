@@ -164,9 +164,9 @@ if __name__ == "__main__":
     client = CifarFedProxClient(
         data_path=data_path,
         metrics=[
-            Accuracy("accuracy", along_axes=[0], binarize=1, exact_match=True),
-            F1("f1_score_macro", along_axes=[1], binarize=1, weighted=False),
-            F1("f1_score_weight", along_axes=[1], binarize=1, weighted=True),
+            Accuracy("accuracy", along_axes=(0,), binarize=1, exact_match=True),
+            F1("f1_score_macro", along_axes=(1,), binarize=1, weighted=False),
+            F1("f1_score_weight", along_axes=(1,), binarize=1, weighted=True),
         ],
         device=device,
         client_number=args.client_number,

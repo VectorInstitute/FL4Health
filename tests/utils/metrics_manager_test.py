@@ -38,7 +38,7 @@ LOGITS, TARGETS = get_logits_and_targets()
 
 def test_metric_manager() -> None:
 
-    metric_manager = MetricManager([F1(along_axes=[1], binarize=1, weighted=True), Accuracy()], "test")
+    metric_manager = MetricManager([F1(along_axes=(1,), binarize=1, weighted=True), Accuracy()], "test")
 
     for logits, target in zip(LOGITS, TARGETS):
         preds = {"prediction": logits}
@@ -51,7 +51,7 @@ def test_metric_manager() -> None:
 
 def test_metric_manager_clear() -> None:
 
-    metric_manager = MetricManager([F1(along_axes=[1], binarize=1, weighted=True), Accuracy()], "test")
+    metric_manager = MetricManager([F1(along_axes=(1,), binarize=1, weighted=True), Accuracy()], "test")
 
     for logits, target in zip(LOGITS, TARGETS):
         preds = {"prediction": logits}

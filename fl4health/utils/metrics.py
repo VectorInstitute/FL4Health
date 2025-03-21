@@ -419,7 +419,7 @@ class ClassificationMetric(Metric):
     def __init__(
         self,
         name: str,
-        along_axes: Sequence[int],
+        along_axes: tuple[int, ...],
         dtype: torch.dtype,
         binarize: float | int | None = None,
         ignore_background: int | None = None,
@@ -440,10 +440,10 @@ class ClassificationMetric(Metric):
 
         Args:
             name (str): The name of the metric.
-            along_axes (Sequence[int]): Sequence of indices specifying axes *along* which to accumulate tp, fp, fn and
-                tn. The counts will be summed *over* the axes not specified. The 0th axis is assumed to be the batch or
-                sample dimension. If provided an empty sequence, then the counts are scalar values computed *over* all
-                axes.
+            along_axes (tuple[int, ...], optional): Tuple of indices specifying axes *along* which to accumulate tp,
+                fp, fn and tn. The counts will be summed *over* the axes not specified. The 0th axis is assumed to be
+                the batch or sample dimension. If provided an empty sequence, then the counts are scalar values
+                computed *over* all axes.
             dtype (torch.dtype): The dtype to store the counts as. If preds or targets can be continuous, specify a
                 float type. Otherwise specify an integer type to prevent overflow.
             binarize (float | int | None, optional): A float for thresholding values or an integer specifying the
@@ -459,7 +459,7 @@ class ClassificationMetric(Metric):
                 computation
         """
         self.name = name
-        self.along_axes = tuple([a for a in along_axes])
+        self.along_axes = along_axes
         self.dtype = dtype
         self.binarize = binarize
         self.ignore_background = ignore_background
@@ -639,7 +639,7 @@ class Accuracy(ClassificationMetric):
     def __init__(
         self,
         name: str = "Accuracy",
-        along_axes: Sequence[int] = (0,),
+        along_axes: tuple[int, ...] = (0,),
         binarize: float | int | None = 1,
         exact_match: bool = True,
         ignore_background: int | None = None,
@@ -657,7 +657,7 @@ class Accuracy(ClassificationMetric):
 
         Args:
             name (str, optional): The name of the metric.
-            along_axes (Sequence[int], optional): Sequence of indices specifying the axes *along* which to compute the
+            along_axes (tuple[int, ...], optional): Tuple of indices specifying the axes *along* which to compute the
                 individual accuracy scores which will then be averaged to produce the final accuracy score. If given an
                 empty tuple, will compute a single accuracy score *over* all dimensions. Note that the individual
                 accuracy scores must be stored in memory until cleared, this may cause memory build up in some
@@ -678,7 +678,7 @@ class Accuracy(ClassificationMetric):
 
 
         NOTE: To make this behave like the previous accuracy implementation using sklearn and SimpleMetric, use args
-        {'binarize': 1, 'along_axes': [0], 'exact_match': True}. Replace binarize with 0.5 if preds are binary *and*
+        {'binarize': 1, 'along_axes': (0,), 'exact_match': True}. Replace binarize with 0.5 if preds are binary *and*
         not one-hot-encoded.
         """
         self.exact_match = exact_match
@@ -698,7 +698,7 @@ class Recall(ClassificationMetric):
     def __init__(
         self,
         name: str = "Recall",
-        along_axes: Sequence[int] = (),
+        along_axes: tuple[int, ...] = (),
         binarize: float | int | None = None,
         ignore_background: int | None = None,
         zero_division: float | None = None,
@@ -712,7 +712,7 @@ class Recall(ClassificationMetric):
 
         Args:
             name (str, optional): The name of the metric.
-            along_axes (Sequence[int], optional): Sequence of indices specifying axes *along* which to compute the
+            along_axes (tuple[int, ...], optional): Tuple of indices specifying axes *along* which to compute the
                 Recall. The recall scores will be summed *over* the axes not specified. The final recall score will be
                 the mean of these recalls. The 0th axis is assumed to be the batch/sample dimension. If provided an
                 empty sequence, then a single recall score is computed *over* all axes.
@@ -757,7 +757,7 @@ class Dice(ClassificationMetric):
     def __init__(
         self,
         name: str = "Dice",
-        along_axes: Sequence[int] = (0,),
+        along_axes: tuple[int, ...] = (0,),
         binarize: float | int | None = None,
         ignore_background: int | None = None,
         zero_division: float | None = None,
@@ -773,7 +773,7 @@ class Dice(ClassificationMetric):
         Args:
 
             name (str): Name of the metric. Defaults to 'Dice'
-            along_axes (Sequence[int], optional): Sequence of indices specifying along which axes the individual DICE
+            along_axes (tuple[int, ...], optional): Tuple of indices specifying along which axes the individual DICE
                 coefficients should be computed. The final DICE Score is the mean of these DICE coefficients. Defaults
                 to (0,) which is assumed to be the batch/sample dimension. If provided an empty tuple then a single
                 DICE coefficient will be computed over all axes. Note that intermediate values must be stored in memory
@@ -828,7 +828,7 @@ class HardDice(Dice):
     def __init__(
         self,
         name: str = "HardDice",
-        along_axes: Sequence[int] = (0,),
+        along_axes: tuple[int, ...] = (0,),
         ignore_background: int | None = None,
         zero_division: float | None = None,
         binarize: float | int | None = None,
@@ -844,7 +844,7 @@ class HardDice(Dice):
         Args:
 
             name (str): Name of the metric. Defaults to 'DICE'
-            along_axes (Sequence[int], optional): Sequence of indices specifying *along* which axes the individual DICE
+            along_axes (tuple[int, ...], optional): Tuple of indices specifying *along* which axes the individual DICE
                 coefficients should be computed. The final DICE Score is the mean of these DICE coefficients computed
                 *over* the dimensions not specified. Defaults to (0,) since this is usually the batch dimension. If
                 provided an empty tuple then a single DICE coefficient will be computed *over* all axes.
@@ -908,7 +908,7 @@ class BalancedAccuracy(Recall):
 
         super().__init__(
             name=name,
-            along_axes=[label_dim],
+            along_axes=(label_dim,),
             dtype=dtype,
             binarize=binarize_arg,
             ignore_background=label_dim if ignore_background else None,
@@ -941,7 +941,7 @@ class F1(ClassificationMetric):
     def __init__(
         self,
         name: str = "F1",
-        along_axes: Sequence[int] = (),
+        along_axes: tuple[int, ...] = (),
         binarize: float | int | None = None,
         weighted: bool = False,
         zero_division: float | None = None,
@@ -952,7 +952,7 @@ class F1(ClassificationMetric):
 
         Args:
             name (str, optional): The name of the metric.
-            along_axes (Sequence[int], optional): Sequence of indices specifying axes *along* which to compute the F1
+            along_axes (tuple[int, ...], optional): Tuple of indices specifying axes *along* which to compute the F1
                 score. The F1 scores will be computed *over* the axes not specified and then averaged to produce the
                 final F1 score. The 0th axis is assumed to be the batch/sample dimension. If provided an empty
                 sequence, then a single F1 score is computed *over* all axes.
@@ -972,7 +972,7 @@ class F1(ClassificationMetric):
             dtype (torch.dtype, optional): The dtype to store the recall scores as in memory. Defaults
 
         NOTE: To get this metric to behave like the previous implementation using sklearn and SimpleMetric, use kwargs
-        {'along_axes': 1, 'binarize': 1, 'ignore_background': None, 'weighted': True, 'zero_division': 0.0}. Setting
+        {'along_axes': (1,), 'binarize': 1, 'ignore_background': None, 'weighted': True, 'zero_division': 0.0}. Setting
         weighted to False the metric behave like the 'macro' averaging.
         """
         self.weighted = weighted
