@@ -19,6 +19,13 @@ class MetricPrefix(Enum):
     VAL_PREFIX = "val -"
 
 
+class MetricOutcome(Enum):
+    TRUE_POSITIVE = "true_positive"
+    FALSE_POSITIVE = "false_positive"
+    TRUE_NEGATIVE = "true_negative"
+    FALSE_NEGATIVE = "false_negative"
+
+
 TEST_NUM_EXAMPLES_KEY = f"{MetricPrefix.TEST_PREFIX.value} num_examples"
 TEST_LOSS_KEY = f"{MetricPrefix.TEST_PREFIX.value} checkpoint"
 
@@ -416,7 +423,7 @@ class ClassificationMetric(Metric):
         dtype: torch.dtype,
         binarize: float | int | None = None,
         ignore_background: int | None = None,
-        discard: Sequence[str] | None = None,
+        discard: set[MetricOutcome] | None = None,
     ) -> None:
         """A Base class for classification metrics that can be computed using the true positives (tp), false positive
         (fp), false negative (fn) and true negative (tn) counts.
@@ -446,27 +453,25 @@ class ClassificationMetric(Metric):
                 (where its index along that dimension is the class label). Default of None leaves preds unchanged.
             ignore_background (int | None): If specified, the first channel of the specified axis is removed prior to
                 computing the counts. Useful for removing background classes. Defaults to None.
-            discard (Sequence[str] | None, optional): One or several of ['tp', 'fp', 'fn', 'tn']. Specified counts
-                will not be accumulated. Their associated attribute will remain as an empty pytorch tensor. Useful for
-                reducing the memory footprint of metrics that do not use all of the counts in their computation
+            discard (set[MetricOutcome] | None, optional): One or several of MetricOutcome values. Specified outcome
+                counts will not be accumulated. Their associated attribute will remain as an empty pytorch tensor.
+                Useful for reducing the memory footprint of metrics that do not use all of the counts in their
+                computation
         """
         self.name = name
         self.along_axes = tuple([a for a in along_axes])
         self.dtype = dtype
         self.binarize = binarize
         self.ignore_background = ignore_background
-        self.label_dim: int | None = None  # label dim will be inferred
+        self.label_dim: int | None = None  # if None, label dim will be inferred
 
         # Parse discard argument
-        count_ids = ["tp", "fp", "fn", "tn"]
-        discard = [] if discard is None else discard
-        for count_id in discard:
-            assert count_id in count_ids, f"Found unexpected string in discard list. Expected one of {count_ids}"
+        discard = set() if discard is None else discard
 
-        self.discard_tp = "tp" in discard
-        self.discard_fp = "fp" in discard
-        self.discard_fn = "fn" in discard
-        self.discard_tn = "tn" in discard
+        self.discard_tp = MetricOutcome.TRUE_POSITIVE in discard
+        self.discard_fp = MetricOutcome.FALSE_POSITIVE in discard
+        self.discard_fn = MetricOutcome.FALSE_NEGATIVE in discard
+        self.discard_tn = MetricOutcome.TRUE_NEGATIVE in discard
 
         # Create intermediate tensors. Will be initialized with tensors of correct shape on first update.
         self.counts_initialized = False
@@ -730,7 +735,7 @@ class Recall(ClassificationMetric):
             dtype=dtype,
             binarize=binarize,
             ignore_background=ignore_background,
-            discard=["fp", "tn"],
+            discard={MetricOutcome.FALSE_POSITIVE, MetricOutcome.TRUE_NEGATIVE},
         )
 
     def compute_from_counts(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor, tn: torch.Tensor) -> Metrics:
@@ -793,7 +798,7 @@ class Dice(ClassificationMetric):
             dtype=dtype,
             binarize=binarize,
             ignore_background=ignore_background,
-            discard=["tn"],
+            discard={MetricOutcome.TRUE_NEGATIVE},
         )
         self.zero_division = zero_division
 
@@ -978,7 +983,7 @@ class F1(ClassificationMetric):
             dtype=dtype,
             binarize=binarize,
             ignore_background=ignore_background,
-            discard=["tn"],
+            discard={MetricOutcome.TRUE_NEGATIVE},
         )
 
     def compute_from_counts(self, tp: torch.Tensor, fp: torch.Tensor, fn: torch.Tensor, tn: torch.Tensor) -> Metrics:
