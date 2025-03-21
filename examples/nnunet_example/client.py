@@ -1,30 +1,21 @@
 import argparse
 import os
-import warnings
 from logging import DEBUG, INFO
 from os.path import exists, join
 from pathlib import Path
-
-from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
-from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
-
-with warnings.catch_warnings():
-    # Silence deprecation warnings from sentry sdk due to flwr and wandb
-    # https://github.com/adap/flower/issues/4086
-    warnings.filterwarnings("ignore", category=DeprecationWarning)
-    import wandb  # noqa: F401
 
 import torch
 from flwr.client import start_client
 from flwr.common.logger import log, update_console_handler
 from nnunetv2.dataset_conversion.convert_MSD_dataset import convert_msd_dataset
-from torchmetrics.segmentation import GeneralizedDiceScore
 
+from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.nnunet_client import NnunetClient
 from fl4health.utils.load_data import load_msd_dataset
-from fl4health.utils.metrics import TorchMetric, TransformsMetric
-from fl4health.utils.msd_dataset_sources import get_msd_dataset_enum, msd_num_labels
-from fl4health.utils.nnunet_utils import get_segs_from_probs, set_nnunet_env
+from fl4health.utils.metrics import EMAMetric, HardDice
+from fl4health.utils.msd_dataset_sources import get_msd_dataset_enum
+from fl4health.utils.nnunet_utils import set_nnunet_env
 
 
 def main(
@@ -59,17 +50,13 @@ def main(
         log(INFO, f"Converting {msd_dataset_enum.value} into nnunet dataset")
         convert_msd_dataset(source_folder=join(nnUNet_raw, msd_dataset_enum.value))
 
-    # Create a metric
-    dice = TransformsMetric(
-        metric=TorchMetric(
-            name="Pseudo DICE",
-            metric=GeneralizedDiceScore(
-                num_classes=msd_num_labels[msd_dataset_enum], weight_type="square", include_background=False
-            ).to(device),
-        ),
-        pred_transforms=[torch.sigmoid, get_segs_from_probs],
-    )
+    # Create a metrics hard dice metric
+    # NnunetClient automatically ensures that preds and targets are one-hot-encoded
+    # HardDice will binarize the preds along the channel dimension for us using an argmax.
+    hard_dice = HardDice("DICE", along_axes=(1,), ignore_background=1, zero_division=None, binarize=1)
+    ema_dice = EMAMetric(metric=hard_dice, smoothing_factor=0.1)
 
+    # For state checkpointing. Allows training to be resumed from state checkpoint
     if intermediate_client_state_dir is not None:
         checkpoint_and_state_module = ClientCheckpointAndStateModule(
             state_checkpointer=PerRoundStateCheckpointer(Path(intermediate_client_state_dir))
@@ -87,7 +74,7 @@ def main(
         compile=compile,
         # BaseClient Args
         device=device,
-        metrics=[dice],
+        metrics=[hard_dice, ema_dice],
         progress_bar=verbose,
         checkpoint_and_state_module=checkpoint_and_state_module,
         client_name=client_name,
@@ -102,7 +89,7 @@ def main(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog="nnunet_example/client.py",
-        description="An exampled of nnUNetClient on any of the Medical \
+        description="An example of nnUNetClient on any of the Medical \
             Segmentation Decathlon (MSD) datasets. Automatically generates a \
             nnunet segmentation model and trains it in a federated setting",
     )

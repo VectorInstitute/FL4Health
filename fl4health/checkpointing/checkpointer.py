@@ -66,6 +66,7 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
         checkpoint_dir: str,
         checkpoint_name: str,
         checkpoint_score_function: CheckpointScoreFunctionType,
+        checkpoint_score_name: str | None = None,
         maximize: bool = False,
     ) -> None:
         """
@@ -79,12 +80,23 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
             checkpoint_name (str): Name of the checkpoint to be saved.
             checkpoint_score_function (CheckpointScoreFunctionType): Function taking in a loss value and dictionary of
                 metrics and produces a score based on these.
+            checkpoint_score_name (str | None, optional): Name of the score produced by the scoring function. This is
+                used for logging purposes. If not provided, the name of the function will be used. Defaults to None.
             maximize (bool, optional): Specifies whether we're trying to minimize or maximize the score produced
                 by the scoring function. Defaults to False.
         """
         super().__init__(checkpoint_dir, checkpoint_name)
         self.best_score: float | None = None
         self.checkpoint_score_function = checkpoint_score_function
+        if checkpoint_score_name is not None:
+            self.checkpoint_score_name = checkpoint_score_name
+        else:
+            log(
+                WARNING,
+                "No checkpoint_score_name provided. Name will default to the checkpoint score function "
+                f"name of {checkpoint_score_function.__name__}",
+            )
+            self.checkpoint_score_name = checkpoint_score_function.__name__
         # Whether we're looking to maximize (or minimize) the score produced by the checkpoint score function
         self.maximize = maximize
         self.comparison_str = ">=" if self.maximize else "<="
@@ -131,7 +143,7 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
         if self._should_checkpoint(comparison_score):
             log(
                 INFO,
-                f"Checkpointing the model: Current score ({comparison_score}) "
+                f"Checkpointing the model: Current {self.checkpoint_score_name} score ({comparison_score}) "
                 f"{self.comparison_str} Best score ({self.best_score})",
             )
             self.best_score = comparison_score
@@ -144,7 +156,7 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
         else:
             log(
                 INFO,
-                f"Not checkpointing the model: Current score ({comparison_score}) is not "
+                f"Not checkpointing the model: Current {self.checkpoint_score_name} score ({comparison_score}) is not "
                 f"{self.comparison_str} Best score ({self.best_score})",
             )
 
@@ -165,7 +177,7 @@ class LatestTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
         def null_score_function(loss: float, _: dict[str, Scalar]) -> float:
             return 0.0
 
-        super().__init__(checkpoint_dir, checkpoint_name, null_score_function, False)
+        super().__init__(checkpoint_dir, checkpoint_name, null_score_function, "Latest", False)
 
     def maybe_checkpoint(self, model: nn.Module, loss: float, _: dict[str, Scalar]) -> None:
         """
@@ -183,9 +195,8 @@ class LatestTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
                 this context, so we explicitly surface the error with a try/except.
         """
         # Always checkpoint the latest model
-        log(INFO, "Saving latest checkpoint with LatestTorchCheckpointer")
+        log(INFO, f"Saving latest checkpoint with LatestTorchCheckpointer as {str(self.checkpoint_path)}")
         try:
-            log(INFO, f"Saving checkpoint as {str(self.checkpoint_path)}")
             torch.save(model, self.checkpoint_path)
         except Exception as e:
             log(ERROR, f"Encountered the following error while saving the checkpoint: {e}")
@@ -210,7 +221,11 @@ class BestLossTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
             return loss
 
         super().__init__(
-            checkpoint_dir, checkpoint_name, checkpoint_score_function=loss_score_function, maximize=False
+            checkpoint_dir=checkpoint_dir,
+            checkpoint_name=checkpoint_name,
+            checkpoint_score_function=loss_score_function,
+            checkpoint_score_name="Loss",
+            maximize=False,
         )
 
     def maybe_checkpoint(self, model: nn.Module, loss: float, metrics: dict[str, Scalar]) -> None:
@@ -234,12 +249,11 @@ class BestLossTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
         if self._should_checkpoint(comparison_score):
             log(
                 INFO,
-                f"Checkpointing the model: Current Loss ({comparison_score}) "
-                f"{self.comparison_str} Best Loss ({self.best_score})",
+                f"Current Loss ({comparison_score}) {self.comparison_str} Best Loss ({self.best_score}): "
+                f"Checkpointing the model as {self.checkpoint_path}",
             )
             self.best_score = comparison_score
             try:
-                log(INFO, f"Saving checkpoint as {str(self.checkpoint_path)}")
                 torch.save(model, self.checkpoint_path)
             except Exception as e:
                 log(ERROR, f"Encountered the following error while saving the checkpoint: {e}")
@@ -250,6 +264,46 @@ class BestLossTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
                 f"Not checkpointing the model: Current Loss ({comparison_score}) is not "
                 f"{self.comparison_str} Best Loss ({self.best_score})",
             )
+
+
+class BestMetricTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
+    def __init__(
+        self,
+        checkpoint_dir: str,
+        checkpoint_name: str,
+        metric: str,
+        prefix: str = "val - prediction - ",
+        maximize: bool = False,
+    ) -> None:
+        """Checkpointer that checkpoints based on the value of a user defined metric.
+
+        Args:
+            checkpoint_dir (str): Directory to which the model is saved. This directory should already exist. The
+                checkpointer will not create it if it does not.
+            checkpoint_name (str): Name of the checkpoint to be saved.
+            metric (str): The name of the metric to base checkpointing on. After prepending the prefix, should be a
+                key in the metrics dictionary passed in ``self.maybe_checkpoint``. In BasicClient this is the 'name'
+                attribute of the corresponding ``fl4health.utils.metrics.Metric`` that was provided to the clients.
+            prefix (str, optional): A prefix to add to the metric name to create the key used to find the metric.
+                Usually a prefix is added by the client's metric manager. Defaults to 'val - prediction - '.
+            maximize (bool, optional): If True maximizes the metric instead of minimizing it. Defaults to False.
+        """
+        self.metric_key = f"{prefix}{metric}"
+
+        def metric_score_function(_: float, metrics: dict[str, Scalar]) -> float:
+            try:
+                val = metrics[self.metric_key]
+            except KeyError as e:
+                log(ERROR, f"Could not find '{self.metric_key}' in metrics dict. Available keys are: {metrics.keys()}")
+                raise e
+            try:
+                val_float = float(val)
+            except ValueError as e:
+                log(ERROR, f"Could not convert {self.metric_key} into a float score for best metric checkpointing.")
+                raise e
+            return val_float
+
+        super().__init__(checkpoint_dir, checkpoint_name, metric_score_function, metric, maximize)
 
 
 class PerRoundStateCheckpointer:

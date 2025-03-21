@@ -173,7 +173,9 @@ def convert_deep_supervision_dict_to_list(tensor_dict: dict[str, torch.Tensor]) 
 
 def get_segs_from_probs(preds: torch.Tensor, has_regions: bool = False, threshold: float = 0.5) -> torch.Tensor:
     """
-    Converts the nnunet model output probabilities to predicted segmentations
+    Converts the nnunet model output probabilities to predicted segmentations.
+
+    If has_regions is False, then this function can be used on raw logits.
 
     Args:
         preds (torch.Tensor): The one hot encoded model output probabilities with shape (batch, classes,

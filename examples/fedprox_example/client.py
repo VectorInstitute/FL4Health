@@ -65,7 +65,7 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    client = MnistFedProxClient(data_path, [Accuracy()], device, reporters=[JsonReporter()])
+    client = MnistFedProxClient(data_path, [Accuracy("accuracy")], device, reporters=[JsonReporter()])
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully
