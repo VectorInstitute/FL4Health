@@ -22,7 +22,7 @@ from trl import SFTConfig, SFTTrainer
 
 from examples.fedllm_example.dataset import formatting_prompts_func, get_alpaca_tokenizer_and_data_collator, load_data
 from examples.fedllm_example.model import cosine_annealing, get_model
-from examples.fedllm_example.zero_utils import safe_save_model_for_hf_trainer, safe_save_model_for_zero3
+from examples.fedllm_example.zero_utils import safe_save_model_for_hf_trainer, safe_save_model_for_zero3, get_peft_state_maybe_zero_3
 from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting import JsonReporter
 from fl4health.reporting.base_reporter import BaseReporter
@@ -143,7 +143,13 @@ class LLMClient(BasicClient):
 
     def get_parameters(self, config: Config) -> NDArrays:
         """Return the parameters of the current net."""
-        state_dict = get_peft_model_state_dict(self.model)
+
+        # In deepspeed Stage 3, we need to get lora parameters differently as all the parameters are also partitioned. We
+        # should make sure to gather all of these parameters for sending them to server.
+        if not self.deepspeed_config_dir or (self.deepspeed_config_dir and "zero3" not in self.deepspeed_config_dir):
+            state_dict = get_peft_model_state_dict(self.model)
+        else:
+            state_dict = get_peft_state_maybe_zero_3(self.model.named_parameters(), "none")
         return [val.cpu().numpy() for _, val in state_dict.items()]
 
     def set_train_dataset(self, config: Config) -> None:
@@ -288,8 +294,8 @@ class LLMClient(BasicClient):
         self.trainer.save_state()
         self.model.config.use_cache = True
 
-        # In deepspeed Stage 3, we need to save the model differently as all the gradients are also partitioned. We
-        # should make sure to gather all of these data before saving the model, for safe loading and resuming.
+        # In deepspeed Stage 3, we need to save the model differently as all the parameters are also partitioned. We
+        # should make sure to gather all of these parameters before saving the model, for safe loading and resuming.
         if not self.deepspeed_config_dir or (self.deepspeed_config_dir and "zero3" not in self.deepspeed_config_dir):
             safe_save_model_for_hf_trainer(trainer=self.trainer)
         else:
