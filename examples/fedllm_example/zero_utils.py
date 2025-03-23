@@ -122,5 +122,5 @@ def safe_save_model_for_hf_trainer(trainer: Trainer) -> None:
     trainer.accelerator.wait_for_everyone()
     torch.cuda.synchronize()
 
-    trainer.save_model(trainer.output_dir)
+    trainer.save_model()
     return

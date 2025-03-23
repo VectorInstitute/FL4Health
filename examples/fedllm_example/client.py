@@ -23,7 +23,6 @@ from trl import SFTConfig, SFTTrainer
 from examples.fedllm_example.dataset import formatting_prompts_func, get_alpaca_tokenizer_and_data_collator, load_data
 from examples.fedllm_example.model import cosine_annealing, get_model
 from examples.fedllm_example.zero_utils import safe_save_model_for_hf_trainer, safe_save_model_for_zero3
-from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting import JsonReporter
 from fl4health.reporting.base_reporter import BaseReporter
@@ -45,12 +44,11 @@ class LLMClient(BasicClient):
         device: torch.device,
         reporters: Sequence[BaseReporter],
         client_number: int,
-        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         deepspeed_config_dir: str | None = None,
         checkpoint_dir: str | None = None,
     ) -> None:
         """
-        A client for training a generative large language model for text generation.
+        A client for finetuning a generative large language model for text generation using LoRA.
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training.
@@ -63,13 +61,12 @@ class LLMClient(BasicClient):
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. For now this is disabled as we are using the HF Trainer. Defaults
                 to None.
-            deepspeed_config (str | None, optional): The path to the deepspeed configuration file. Defaults to None.
+            deepspeed_config_dir (str | None, optional): The path to the deepspeed configuration file. Defaults to
+                None.
             checkpioint_dir (str | None, optional): The directory to save the model checkpoints. Defaults to None.
         """
 
-        super().__init__(
-            data_path, metrics, device, reporters=reporters, checkpoint_and_state_module=checkpoint_and_state_module
-        )
+        super().__init__(data_path, metrics, device, reporters=reporters, checkpoint_and_state_module=None)
         self.client_number = client_number
         self.deepspeed_config_dir = deepspeed_config_dir
 
@@ -104,11 +101,19 @@ class LLMClient(BasicClient):
             **self.train_cfg.get("training_arguments", {}), deepspeed=self.deepspeed_config_dir
         )
 
-        # Set the maximum number of steps to `local_steps` and the per-client batch size to the client's
-        # specified `batch_size`. This configuration results in training the model with a total batch size
-        # of `num_gpus_per_client * batch_size` for `local_steps` number of iterations.
+        # Set the maximum number of steps to `local_steps`
         self.training_arguments.max_steps = local_steps
-        self.training_arguments.per_device_train_batch_size = config.get("batch_size")
+
+        # Set the per_device_train_batch_size and per_device_eval_batch_sizee in training_arguments based on
+        # client's specified `batch_size`. This configuration results in training the model with a total
+        # `batch_size` for `local_steps` number of iterations.
+        batch_size = config.get("batch_size")
+        num_gpus_per_client = config.get("num_gpus_per_client")
+
+        assert isinstance(batch_size, int) and isinstance(num_gpus_per_client, int)
+        assert batch_size % num_gpus_per_client == 0, "Batch size must be divisible by number of GPUs per client"
+        self.training_arguments.per_device_train_batch_size = batch_size // num_gpus_per_client
+        self.training_arguments.per_device_eval_batch_size = batch_size // num_gpus_per_client
 
         # Set the output directory for the model
         self.training_arguments.output_dir = self.checkpoint_dir
