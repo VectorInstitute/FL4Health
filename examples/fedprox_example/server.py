@@ -9,7 +9,8 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import MnistNet
-from fl4health.reporting import JsonReporter, WandBReporter
+from fl4health.reporting import JsonReporter, WandBReporter, WandBStepType  # noqa: F401
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.servers.adaptive_constraint_servers.fedprox_server import FedProxServer
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config, make_dict_with_epochs_or_steps
@@ -75,11 +76,21 @@ def main(config: dict[str, Any], server_address: str) -> None:
 
     json_reporter = JsonReporter()
     client_manager = SimpleClientManager()
-    if "reporting_config" in config:
-        wandb_reporter = WandBReporter("round", **config["reporting_config"])
-        reporters = [wandb_reporter, json_reporter]
-    else:
-        reporters = [json_reporter]
+    reporters: list[BaseReporter] = [json_reporter]
+
+    # Uncomment to log results to W and B
+    # wandb_reporter = WandBReporter(
+    #     WandBStepType.ROUND,
+    #     project="FL4Health",  # Name of the project under which everything should be logged
+    #     name="Server",  # Name of the run on the server-side
+    #     group="FedProx Experiment",  # Group under which each of the FL run logging will be stored
+    #     entity="your-entity-here",  # WandB user name
+    #     tags=["Test", "FedProx"],
+    #     job_type="server",
+    #     notes="Testing WB reporting",
+    # )
+    # reporters = [wandb_reporter, json_reporter]
+
     server = FedProxServer(
         client_manager=client_manager, fl_config=config, strategy=strategy, reporters=reporters, accept_failures=False
     )

@@ -13,7 +13,8 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
 from fl4health.clients.fed_prox_client import FedProxClient
-from fl4health.reporting import JsonReporter
+from fl4health.reporting import JsonReporter, WandBReporter, WandBStepType  # noqa: F401
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy
@@ -65,7 +66,23 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    client = MnistFedProxClient(data_path, [Accuracy()], device, reporters=[JsonReporter()])
+    json_reporter = JsonReporter()
+    reporters: list[BaseReporter] = [json_reporter]
+
+    # # Uncomment to log results to W and B
+    # # NOTE: name/id will be set automatically and are not initialized here.
+    # wandb_reporter = WandBReporter(
+    #     WandBStepType.ROUND,
+    #     project="FL4Health",  # Name of the project under which everything should be logged
+    #     group="FedProx Experiment",  # Group under which each of the FL run logging will be stored
+    #     entity="your-entity-here",  # WandB user name
+    #     tags=["Test", "FedProx"],
+    #     job_type="client",
+    #     notes="Testing WB reporting",
+    # )
+    # reporters = [wandb_reporter, json_reporter]
+
+    client = MnistFedProxClient(data_path, [Accuracy()], device, reporters=reporters)
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully
