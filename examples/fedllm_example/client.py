@@ -22,7 +22,11 @@ from trl import SFTConfig, SFTTrainer
 
 from examples.fedllm_example.dataset import formatting_prompts_func, get_alpaca_tokenizer_and_data_collator, load_data
 from examples.fedllm_example.model import cosine_annealing, get_model
-from examples.fedllm_example.zero_utils import safe_save_model_for_hf_trainer, safe_save_model_for_zero3, get_peft_state_maybe_zero_3
+from examples.fedllm_example.zero_utils import (
+    get_peft_state_maybe_zero_3,
+    safe_save_model_for_hf_trainer,
+    safe_save_model_for_zero3,
+)
 from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting import JsonReporter
 from fl4health.reporting.base_reporter import BaseReporter
@@ -144,8 +148,8 @@ class LLMClient(BasicClient):
     def get_parameters(self, config: Config) -> NDArrays:
         """Return the parameters of the current net."""
 
-        # In deepspeed Stage 3, we need to get lora parameters differently as all the parameters are also partitioned. We
-        # should make sure to gather all of these parameters for sending them to server.
+        # In deepspeed Stage 3, we need to get lora parameters differently as all the parameters are also partitioned.
+        # We should make sure to gather all of these parameters for sending them to server.
         if not self.deepspeed_config_dir or (self.deepspeed_config_dir and "zero3" not in self.deepspeed_config_dir):
             state_dict = get_peft_model_state_dict(self.model)
         else:
