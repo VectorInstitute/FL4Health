@@ -1,19 +1,19 @@
 # Federated LoRA Instruction-tuning of Large Language Model Example
 This example provides LoRA instruction-tuning of LLaMA-3B in a federated learning setting over the Alpaca GPT4 dataset.
 The FL server expects two clients to be spun up (i.e. it will wait until two clients report in before starting training).
-Each client has a partition of the Alpaca dataset and can utilize one or multiple available GPUs, with the number of GPUs 
-set in the configuration file. Depending on the desired level of parallelism, the client can select an appropriate DeepSpeed 
-ZeRO optimization level. These configurations are stored in the `./training_script/zero_config` directory and are adapted 
+Each client has a partition of the Alpaca dataset and can utilize one or multiple available GPUs, with the number of GPUs
+set in the configuration file. Depending on the desired level of parallelism, the client can select an appropriate DeepSpeed
+ZeRO optimization level. These configurations are stored in the `./training_script/zero_config` directory and are adapted
 from LLaVA-NeXT repository (https://github.com/LLaVA-VL/LLaVA-NeXT/tree/main/scripts). Available configurations are:
 
 - `zero2.json`: Gradients and optimizer states are sharded across GPUs
 - `zero2_offload.json`: Gradients and optimizer states are sharded across GPUs and offloaded to CPU to reduce GPU memory usage
 - `zero3.json`: Gradients, optimizer states, and model parameters are sharded across GPUs
-- `zero3_offload.json`: Gradients, optimizer states, and model parameters are sharded across GPUs and offloaded to CPU to reduce 
+- `zero3_offload.json`: Gradients, optimizer states, and model parameters are sharded across GPUs and offloaded to CPU to reduce
 GPU memory usage
 - `zero3pp.json`: Has an impovement over ZeRO-3 by reducing the memory overhead through hierarchical partitioning and quantization
 
-**Note**: For more information on DeepSpeed ZeRO configurations, please refer to the DeepSpeed documentation 
+**Note**: For more information on DeepSpeed ZeRO configurations, please refer to the DeepSpeed documentation
 (https://www.deepspeed.ai/docs/config-json/).
 
 The server utilizes Federated Averaging as its optimization strategy. Before initiating the training process, it waits for additional
