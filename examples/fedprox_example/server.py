@@ -23,23 +23,15 @@ def fit_config(
     batch_size: int,
     n_server_rounds: int,
     current_round: int,
-    reporting_config: dict[str, str] | None = None,
     local_epochs: int | None = None,
     local_steps: int | None = None,
 ) -> Config:
-    base_config: Config = {
+    return {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
     }
-    if reporting_config is not None:
-        # NOTE: that name is not included, it will be set in the clients
-        base_config["project"] = reporting_config.get("project", "")
-        base_config["group"] = reporting_config.get("group", "")
-        base_config["entity"] = reporting_config.get("entity", "")
-
-    return base_config
 
 
 def main(config: dict[str, Any], server_address: str) -> None:
@@ -48,7 +40,6 @@ def main(config: dict[str, Any], server_address: str) -> None:
         fit_config,
         config["batch_size"],
         config["n_server_rounds"],
-        reporting_config=config.get("reporting_config"),
         local_epochs=config.get("local_epochs"),
         local_steps=config.get("local_steps"),
     )
