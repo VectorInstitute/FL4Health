@@ -148,7 +148,10 @@ def test_fix_of_loss_stateless_model_exception(tmp_path: Path) -> None:
     with pytest.raises(AttributeError) as attribute_exception:
         torch_checkpointer.maybe_checkpoint(model, 0.54, {})
 
-    assert str(attribute_exception.value) == "Can't pickle local object 'vmap.<locals>.wrapped'"
+    assert (
+        str(attribute_exception.value)
+        == "Can't pickle local object 'prepare_layer.<locals>.compute_loss_stateless_model'"
+    )
 
     # The OpacusCheckpointer should suffer no such attribute error
     checkpointer = BestLossOpacusCheckpointer(str(checkpoint_dir), "best_model_state.pkl")
