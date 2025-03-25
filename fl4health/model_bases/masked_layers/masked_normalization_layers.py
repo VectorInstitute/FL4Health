@@ -144,7 +144,7 @@ class _MaskedBatchNorm(_BatchNorm):
         self,
         num_features: int,
         eps: float = 1e-5,
-        momentum: float = 0.1,
+        momentum: float | None = 0.1,
         affine: bool = True,
         track_running_stats: bool = True,
         device: torch.device | None = None,
