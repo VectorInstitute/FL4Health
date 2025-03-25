@@ -29,7 +29,7 @@ class TabularFeatureAlignmentServer(FlServer):
         self,
         client_manager: ClientManager,
         config: Config,
-        initialize_parameters: Callable[..., Parameters],
+        initialize_parameters: Callable[[int, int], Parameters],
         strategy: BasicFedAvg,
         tabular_features_source_of_truth: TabularFeaturesInfoEncoder | None = None,
         reporters: Sequence[BaseReporter] | None = None,
@@ -48,20 +48,19 @@ class TabularFeatureAlignmentServer(FlServer):
                 In most cases it should be the "source of truth" for how FL alignment should proceed.
 
                 **NOTE:** This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
-            strategy (Strategy | None, optional): The aggregation strategy to be used by the server to handle.
+            initialize_parameters (Callable[[int, int], Parameters]): Function used to initialize the model to be
+                trained and used for the tabular task.
+
+                **NOTE**: The model architecture is not finalized until we are able to determine the dimensionality of
+                the input and output space during feature alignment.
+            strategy (BasicFedAvg): The aggregation strategy to be used by the server to handle.
                 client updates and other information potentially sent by the participating clients. If None the
                 strategy is FedAvg as set by the flwr Server.
-            wandb_reporter (ServerWandBReporter | None, optional): To be provided if the server is to log
-                information and results to a Weights and Biases account. If None is provided, no logging occurs.
-                Defaults to None.
-            checkpointer (TorchCheckpointer | None, optional): To be provided if the server should perform
-                server side checkpointing based on some criteria. If none, then no server-side checkpointing is
-                performed. Defaults to None.
-            tab_features_source_of_truth (TabularFeaturesInfoEncoder | None): The information that is required
-                for aligning client features. If it is not specified, then the server will randomly poll a client
-                and gather this information from its data source.
-            reporters (Sequence[BaseReporter] | None, optional): sequence of FL4Health reporters which the server
-                should send data to before and after each round. Defaults to None.
+            tabular_features_source_of_truth (TabularFeaturesInfoEncoder | None, optional): The information that is
+                required for aligning client features. If it is not specified, then the server will randomly poll a
+                client and gather this information from its data source. Defaults to None.
+            reporters (Sequence[BaseReporter] | None, optional): Sequence of FL4Health reporters which the server
+                should send data to before and after each round. Defaults to None
             checkpoint_and_state_module (BaseServerCheckpointAndStateModule | None, optional): This module is used
                 to handle both model checkpointing and state checkpointing. The former is aimed at saving model
                 artifacts to be used or evaluated after training. The latter is used to preserve training state
