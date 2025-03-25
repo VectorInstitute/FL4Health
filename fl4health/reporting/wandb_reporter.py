@@ -10,7 +10,7 @@ from flwr.common.logger import log
 from fl4health.reporting.base_reporter import BaseReporter
 
 
-class StepType(Enum):
+class WandBStepType(Enum):
     ROUND = "round"
     EPOCH = "epoch"
     STEP = "step"
@@ -21,7 +21,7 @@ class StepType(Enum):
 class WandBReporter(BaseReporter):
     def __init__(
         self,
-        wandb_step_type: StepType | str = StepType.ROUND,
+        wandb_step_type: WandBStepType | str = WandBStepType.ROUND,
         project: str | None = None,
         entity: str | None = None,
         config: dict | str | None = None,
@@ -73,7 +73,7 @@ class WandBReporter(BaseReporter):
 
         # Set attributes
         self.wandb_init_kwargs = kwargs
-        self.wandb_step_type = StepType(wandb_step_type)
+        self.wandb_step_type = WandBStepType(wandb_step_type)
         self.run_started = False
         self.initialized = False
         self.project = project
@@ -102,7 +102,11 @@ class WandBReporter(BaseReporter):
         """
         if self.id is None:
             self.id = kwargs.get("id")
-            self.initialized = True
+
+        if self.name is None:
+            self.name = kwargs.get("name")
+
+        self.initialized = True
 
     def define_metrics(self) -> None:
         """
@@ -234,11 +238,11 @@ class WandBReporter(BaseReporter):
             self.current_step = step
 
         # Log based on step type
-        if self.wandb_step_type == StepType.ROUND:
+        if self.wandb_step_type == WandBStepType.ROUND:
             self.run.log(data, step=round)
-        elif self.wandb_step_type == StepType.EPOCH:
+        elif self.wandb_step_type == WandBStepType.EPOCH:
             self.run.log(data, step=self.current_epoch)
-        elif self.wandb_step_type == StepType.STEP:
+        elif self.wandb_step_type == WandBStepType.STEP:
             self.run.log(data, step=self.current_step)
 
     def shutdown(self) -> None:

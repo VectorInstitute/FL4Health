@@ -13,7 +13,8 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
 from fl4health.clients.fed_prox_client import FedProxClient
-from fl4health.reporting import JsonReporter
+from fl4health.reporting import JsonReporter, WandBReporter, WandBStepType  # noqa: F401
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy
@@ -55,17 +56,43 @@ if __name__ == "__main__":
         help="Seed for the random number generators across python, torch, and numpy",
         required=False,
     )
+    parser.add_argument(
+        "--wandb_entity",
+        action="store",
+        type=str,
+        help="Entity to be used for W and B logging. If not provided, then no W and B logging is performed.",
+        required=False,
+    )
     args = parser.parse_args()
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
+    # Set the random seed for reproducibility
+    set_all_random_seeds(args.seed)
+    # Get wandb_entity if provided
+    wandb_entity = args.wandb_entity
+
     log(INFO, f"Device to be used: {device}")
     log(INFO, f"Server Address: {args.server_address}")
 
-    # Set the random seed for reproducibility
-    set_all_random_seeds(args.seed)
+    json_reporter = JsonReporter()
+    reporters: list[BaseReporter] = [json_reporter]
 
-    client = MnistFedProxClient(data_path, [Accuracy()], device, reporters=[JsonReporter()])
+    if wandb_entity:
+        # NOTE: name/id will be set automatically and are not initialized here.
+        log(INFO, f"Weights and Biases Entity Provided: {wandb_entity}")
+        wandb_reporter = WandBReporter(
+            WandBStepType.ROUND,
+            project="FL4Health",  # Name of the project under which everything should be logged
+            group="FedProx Experiment",  # Group under which each of the FL run logging will be stored
+            entity=wandb_entity,  # WandB user name
+            tags=["Test", "FedProx"],
+            job_type="client",
+            notes="Testing WB reporting",
+        )
+        reporters.append(wandb_reporter)
+
+    client = MnistFedProxClient(data_path, [Accuracy()], device, reporters=reporters)
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully
