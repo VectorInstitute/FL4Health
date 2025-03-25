@@ -56,31 +56,41 @@ if __name__ == "__main__":
         help="Seed for the random number generators across python, torch, and numpy",
         required=False,
     )
+    parser.add_argument(
+        "--wandb_entity",
+        action="store",
+        type=str,
+        help="Entity to be used for W and B logging. If not provided, then no W and B logging is performed.",
+        required=False,
+    )
     args = parser.parse_args()
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
-    log(INFO, f"Device to be used: {device}")
-    log(INFO, f"Server Address: {args.server_address}")
-
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
+    # Get wandb_entity if provided
+    wandb_entity = args.wandb_entity
+
+    log(INFO, f"Device to be used: {device}")
+    log(INFO, f"Server Address: {args.server_address}")
 
     json_reporter = JsonReporter()
     reporters: list[BaseReporter] = [json_reporter]
 
-    # # Uncomment to log results to W and B
-    # # NOTE: name/id will be set automatically and are not initialized here.
-    # wandb_reporter = WandBReporter(
-    #     WandBStepType.ROUND,
-    #     project="FL4Health",  # Name of the project under which everything should be logged
-    #     group="FedProx Experiment",  # Group under which each of the FL run logging will be stored
-    #     entity="your-entity-here",  # WandB user name
-    #     tags=["Test", "FedProx"],
-    #     job_type="client",
-    #     notes="Testing WB reporting",
-    # )
-    # reporters = [wandb_reporter, json_reporter]
+    if wandb_entity:
+        # NOTE: name/id will be set automatically and are not initialized here.
+        log(INFO, f"Weights and Biases Entity Provided: {wandb_entity}")
+        wandb_reporter = WandBReporter(
+            WandBStepType.ROUND,
+            project="FL4Health",  # Name of the project under which everything should be logged
+            group="FedProx Experiment",  # Group under which each of the FL run logging will be stored
+            entity=wandb_entity,  # WandB user name
+            tags=["Test", "FedProx"],
+            job_type="client",
+            notes="Testing WB reporting",
+        )
+        reporters.append(wandb_reporter)
 
     client = MnistFedProxClient(data_path, [Accuracy()], device, reporters=reporters)
     fl.client.start_client(server_address=args.server_address, client=client.to_client())

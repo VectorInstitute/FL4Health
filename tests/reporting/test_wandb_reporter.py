@@ -47,26 +47,25 @@ def test_wandb_reporter_initialize() -> None:
 
     assert wandb_reporter_with_name_id.id == "id1"
     assert wandb_reporter_with_name_id.name == "name1"
+    assert wandb_reporter_with_name_id.initialized
 
     # Should set the id but not name, as name was specified on construction
     wandb_reporter_with_name.initialize(id="id2", name="name2")
 
     assert wandb_reporter_with_name.id == "id2"
     assert wandb_reporter_with_name.name == "name1"
+    assert wandb_reporter_with_name.initialized
 
     # Should set the name but not id, as id was specified on construction
     wandb_reporter_with_id.initialize(id="id2", name="name2")
 
     assert wandb_reporter_with_id.id == "id1"
     assert wandb_reporter_with_id.name == "name2"
+    assert wandb_reporter_with_id.initialized
 
     # Should set id and name, as neither was specified at the start.
     wandb_reporter_with_none.initialize(id="id2", name="name2")
 
     assert wandb_reporter_with_none.id == "id2"
     assert wandb_reporter_with_none.name == "name2"
-
-    assert wandb_reporter_with_name_id.initialized
-    assert wandb_reporter_with_name.initialized
-    assert wandb_reporter_with_id.initialized
     assert wandb_reporter_with_none.initialized

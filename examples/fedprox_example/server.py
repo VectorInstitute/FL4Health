@@ -34,7 +34,7 @@ def fit_config(
     }
 
 
-def main(config: dict[str, Any], server_address: str) -> None:
+def main(config: dict[str, Any], server_address: str, wandb_entity: str | None) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -69,18 +69,18 @@ def main(config: dict[str, Any], server_address: str) -> None:
     client_manager = SimpleClientManager()
     reporters: list[BaseReporter] = [json_reporter]
 
-    # Uncomment to log results to W and B
-    # wandb_reporter = WandBReporter(
-    #     WandBStepType.ROUND,
-    #     project="FL4Health",  # Name of the project under which everything should be logged
-    #     name="Server",  # Name of the run on the server-side
-    #     group="FedProx Experiment",  # Group under which each of the FL run logging will be stored
-    #     entity="your-entity-here",  # WandB user name
-    #     tags=["Test", "FedProx"],
-    #     job_type="server",
-    #     notes="Testing WB reporting",
-    # )
-    # reporters = [wandb_reporter, json_reporter]
+    if wandb_entity:
+        wandb_reporter = WandBReporter(
+            WandBStepType.ROUND,
+            project="FL4Health",  # Name of the project under which everything should be logged
+            name="Server",  # Name of the run on the server-side
+            group="FedProx Experiment",  # Group under which each of the FL run logging will be stored
+            entity=wandb_entity,  # WandB user name
+            tags=["Test", "FedProx"],
+            job_type="server",
+            notes="Testing WB reporting",
+        )
+        reporters.append(wandb_reporter)
 
     server = FedProxServer(
         client_manager=client_manager, fl_config=config, strategy=strategy, reporters=reporters, accept_failures=False
@@ -118,12 +118,22 @@ if __name__ == "__main__":
         help="Seed for the random number generators across python, torch, and numpy",
         required=False,
     )
+    parser.add_argument(
+        "--wandb_entity",
+        action="store",
+        type=str,
+        help="Entity to be used for W and B logging. If not provided, then no W and B logging is performed.",
+        required=False,
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
 
+    if args.wandb_entity:
+        log(INFO, f"Weights and Biases Entity Provided: {args.wandb_entity}")
+
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    main(config, args.server_address)
+    main(config, args.server_address, args.wandb_entity)

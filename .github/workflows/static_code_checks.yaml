@@ -44,12 +44,9 @@ jobs:
           # Ignoring vulnerabilities in cryptography
           # Fix is 43.0.1 but flwr 1.9 depends on < 43
           # GHSA-cjgq-5qmw-rcj6 is a Keras vulnerability that has no fix yet
-          # GHSA-4vmg-rw8f-92f9 is a torch vulnerability that arises from the lack of security verification
-          # during the deserialization process of PythonUDF objects and has no fix yet
           ignore-vulns: |
             GHSA-h4gh-qq45-vh27
             GHSA-q34m-jh98-gwm2
             GHSA-f9vj-2wh5-fj8j
             GHSA-cjgq-5qmw-rcj6
             GHSA-79v4-65xg-pq4g
-            GHSA-4vmg-rw8f-92f9
