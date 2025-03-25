@@ -559,7 +559,10 @@
                 <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parameter_exchanger</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_checkpointers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">state_checkpointer</span><span class="o">=</span><span class="kc">None</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">on_init_parameters_config_fn</span> <span class="o">=</span> <span class="n">on_init_parameters_config_fn</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">server_name</span> <span class="o">=</span> <span class="n">server_name</span> <span class="k">if</span> <span class="n">server_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">generate_hash</span><span class="p">()</span>
+        <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Server Name: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">server_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpoint_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;server_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">server_name</span><span class="si">}</span><span class="s2">_state.pt&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">accept_failures</span> <span class="o">=</span> <span class="n">accept_failures</span>
 

@@ -557,7 +557,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="n">metrics</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">progress_bar</span> <span class="o">=</span> <span class="n">progress_bar</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">client_name</span> <span class="o">=</span> <span class="n">client_name</span> <span class="k">if</span> <span class="n">client_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">generate_hash</span><span class="p">()</span>
+        <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Client Name: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">client_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpoint_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;client_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">client_name</span><span class="si">}</span><span class="s2">_state.pt&quot;</span>
 
         <span class="k">if</span> <span class="n">checkpoint_and_state_module</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -570,7 +573,7 @@
 
         <span class="c1"># Initialize reporters with client information.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reports_manager</span> <span class="o">=</span> <span class="n">ReportsManager</span><span class="p">(</span><span class="n">reporters</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">reports_manager</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">client_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reports_manager</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">client_name</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">client_name</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># Whether or not the client has been setup</span>
 
