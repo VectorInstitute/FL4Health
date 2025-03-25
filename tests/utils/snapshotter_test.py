@@ -44,7 +44,7 @@ def test_optimizer_scheduler_model_snapshotter() -> None:
     input_data = torch.randn(32, 100)
     target_data = torch.randn(32, 2)
 
-    fl_client.optimizers = {"global": torch.optim.SGD(fl_client.model.parameters(), lr=0.001)}
+    fl_client.optimizers = {"global": torch.optim.SGD(fl_client.model.parameters(), lr=0.001, momentum=0.1)}
     fl_client.lr_schedulers = {
         "global": torch.optim.lr_scheduler.StepLR(fl_client.optimizers["global"], step_size=30, gamma=0.1)
     }

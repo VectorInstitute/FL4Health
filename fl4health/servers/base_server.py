@@ -79,7 +79,10 @@ class FlServer(Server):
                 model=None, parameter_exchanger=None, model_checkpointers=None, state_checkpointer=None
             )
         self.on_init_parameters_config_fn = on_init_parameters_config_fn
+
         self.server_name = server_name if server_name is not None else generate_hash()
+        log(INFO, f"Server Name: {self.server_name}")
+
         self.state_checkpoint_name = f"server_{self.server_name}_state.pt"
         self.accept_failures = accept_failures
 

@@ -17,8 +17,7 @@ with warnings.catch_warnings():
 import flwr as fl
 import torch
 from flwr.common.logger import log, update_console_handler
-from torchmetrics.classification import Dice
-from torchmetrics.segmentation import GeneralizedDiceScore
+from torchmetrics.segmentation import DiceScore, GeneralizedDiceScore
 
 from fl4health.clients.nnunet_client import NnunetClient
 from fl4health.metrics.metrics import TorchMetric, TransformsMetric
@@ -53,7 +52,7 @@ def main(
     )
     # The Dice class requires preds to be ohe, but targets to not be ohe
     dice2 = TransformsMetric(
-        metric=TorchMetric(name="dice2", metric=Dice(num_classes=2, ignore_index=0).to(device)),
+        metric=TorchMetric(name="dice2", metric=DiceScore(num_classes=2, include_background=False).to(device)),
         pred_transforms=[torch.sigmoid],
         target_transforms=[partial(collapse_one_hot_tensor, dim=1)],
     )

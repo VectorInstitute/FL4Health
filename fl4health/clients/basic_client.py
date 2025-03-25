@@ -78,7 +78,10 @@ class BasicClient(NumPyClient):
         self.device = device
         self.metrics = metrics
         self.progress_bar = progress_bar
+
         self.client_name = client_name if client_name is not None else generate_hash()
+        log(INFO, f"Client Name: {self.client_name}")
+
         self.state_checkpoint_name = f"client_{self.client_name}_state.pt"
 
         if checkpoint_and_state_module is not None:
@@ -91,7 +94,7 @@ class BasicClient(NumPyClient):
 
         # Initialize reporters with client information.
         self.reports_manager = ReportsManager(reporters)
-        self.reports_manager.initialize(id=self.client_name)
+        self.reports_manager.initialize(id=self.client_name, name=self.client_name)
 
         self.initialized = False  # Whether or not the client has been setup
 
