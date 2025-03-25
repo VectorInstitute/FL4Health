@@ -23,6 +23,23 @@ logger = logging.getLogger()
 DEFAULT_TOLERANCE = 0.0005
 DEFAULT_READ_LOGS_TIMEOUT = 300
 
+SERVER_STARTUP_MESSAGES = [
+    # printed by fedprox, apfl, basic_example, fedbn, fedper, fedrep, and ditto, FENDA, fl_plus_local_ft & moon
+    # Update this is no longer in output, examples are actually triggered by the [ROUND 1] startup message
+    "FL starting",
+    # printed by scaffold
+    "Using Warm Start Strategy. Waiting for clients to be available for polling",
+    # printed by client_level_dp, client_level_dp_weighted, instance_level_dp and dp_scaffold
+    "Polling Clients for sample counts",
+    # printed by federated_eval
+    "Federated Evaluation Starting",
+    "[ROUND 1]",
+    # As far as I can tell this is printed by most servers that inherit from FlServer
+    "Flower ECE: gRPC server running ",
+    "gRPC server running",
+    "server running",
+]
+
 
 # Custom Errors
 class SmokeTestAssertError(Exception):
@@ -55,6 +72,36 @@ def graceful_shutdown(processes: list[asyncio.subprocess.Process]) -> None:
             p.terminate()
         except ProcessLookupError:
             pass
+
+
+async def start_server_process_and_wait_for_stabilization(server_process: asyncio.subprocess.Process) -> str:
+    full_server_output = ""
+
+    output_found = False
+    while not output_found:
+        try:
+            if not (server_process.stdout is not None):
+                raise SmokeTestExecutionError("Server's process stdout is None")
+            server_output_in_bytes = await asyncio.wait_for(server_process.stdout.readline(), 20)
+            server_output = server_output_in_bytes.decode()
+            logger.info(f"Server output: {server_output}")
+            full_server_output += server_output
+        except asyncio.TimeoutError:
+            logger.error("Timeout waiting for server startup messages")
+            break
+
+        return_code = server_process.returncode
+        if return_code is not None and return_code != 0:
+            raise SmokeTestAssertError(f"[ASSERT ERROR] Server exited with code {return_code}.")
+
+        if any(startup_message in server_output for startup_message in SERVER_STARTUP_MESSAGES):
+            output_found = True
+
+    if not output_found:
+        raise SmokeTestAssertError("[ASSERT_ERROR] Startup log message not found in server output.")
+
+    logger.info("Server started")
+    return full_server_output
 
 
 async def run_smoke_test(
@@ -196,50 +243,9 @@ async def run_smoke_test(
             stderr=asyncio.subprocess.STDOUT,
         )
 
-        # reads lines from the server output in search of the startup log message
-        # times out after 20s of inactivity if it doesn't find the log message
-        full_server_output = ""
-        startup_messages = [
-            # printed by fedprox, apfl, basic_example, fedbn, fedper, fedrep, and ditto, FENDA, fl_plus_local_ft & moon
-            # Update this is no longer in output, examples are actually triggered by the [ROUND 1] startup message
-            "FL starting",
-            # printed by scaffold
-            "Using Warm Start Strategy. Waiting for clients to be available for polling",
-            # printed by client_level_dp, client_level_dp_weighted, instance_level_dp and dp_scaffold
-            "Polling Clients for sample counts",
-            # printed by federated_eval
-            "Federated Evaluation Starting",
-            "[ROUND 1]",
-            # As far as I can tell this is printed by most servers that inherit from FlServer
-            "Flower ECE: gRPC server running ",
-            "gRPC server running",
-            "server running",
-        ]
-
-        output_found = False
-        while not output_found:
-            try:
-                if not (server_process.stdout is not None):
-                    raise SmokeTestExecutionError("Server's process stdout is None")
-                server_output_in_bytes = await asyncio.wait_for(server_process.stdout.readline(), 20)
-                server_output = server_output_in_bytes.decode()
-                logger.info(f"Server output: {server_output}")
-                full_server_output += server_output
-            except asyncio.TimeoutError:
-                logger.error("Timeout waiting for server startup messages")
-                break
-
-            return_code = server_process.returncode
-            if return_code is not None and return_code != 0:
-                raise SmokeTestAssertError(f"[ASSERT ERROR] Server exited with code {return_code}.")
-
-            if any(startup_message in server_output for startup_message in startup_messages):
-                output_found = True
-
-        if not output_found:
-            raise SmokeTestAssertError("[ASSERT_ERROR] Startup log message not found in server output.")
-
-        logger.info("Server started")
+        # Reads lines from the server output in search of the startup log message. Times out after 20s of inactivity
+        # if it doesn't find the log message
+        _ = await start_server_process_and_wait_for_stabilization(server_process)
 
         # Start n number of clients and capture their process objects
         client_tasks = []
@@ -448,6 +454,10 @@ async def run_fault_tolerance_smoke_test(
             stderr=asyncio.subprocess.STDOUT,
         )
 
+        # Reads lines from the server output in search of the startup log message. Times out after 20s of inactivity
+        # if it doesn't find the log message
+        _ = await start_server_process_and_wait_for_stabilization(server_process)
+
         # Start n number of clients and capture their process objects
         client_tasks = []
         for i in range(config["n_clients"]):
@@ -487,7 +497,9 @@ async def run_fault_tolerance_smoke_test(
             stderr=asyncio.subprocess.STDOUT,
         )
 
-        logger.info("Server started")
+        # Reads lines from the server output in search of the startup log message. Times out after 20s of inactivity
+        # if it doesn't find the log message
+        _ = await start_server_process_and_wait_for_stabilization(server_process)
 
         # Start n number of clients and capture their process objects
         client_processes = []
