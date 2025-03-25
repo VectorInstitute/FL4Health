@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
 from fl4health.clients.fed_prox_client import FedProxClient
-from fl4health.reporting import JsonReporter, WandBReporter, WandBStepType  # noqa: F401
+from fl4health.reporting import JsonReporter, WandBReporter, WandBStepType
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_mnist_data

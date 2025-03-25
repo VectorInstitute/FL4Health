@@ -9,7 +9,7 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import MnistNet
-from fl4health.reporting import JsonReporter, WandBReporter, WandBStepType  # noqa: F401
+from fl4health.reporting import JsonReporter, WandBReporter, WandBStepType
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.servers.adaptive_constraint_servers.fedprox_server import FedProxServer
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
