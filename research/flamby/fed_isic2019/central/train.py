@@ -7,7 +7,8 @@ from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_EPOCHS_POOLED, Base
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
 
-from fl4health.utils.metrics import BalancedAccuracy, MetricManager
+from fl4health.metrics.metric_managers import MetricManager
+from fl4health.metrics.metrics import BalancedAccuracy
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
 from research.flamby.single_node_trainer import SingleNodeTrainer
 

@@ -12,8 +12,8 @@ from torch.utils.data import DataLoader
 from examples.dp_fed_examples.client_level_dp_weighted.data import load_data
 from examples.models.logistic_regression import LogisticRegression
 from fl4health.clients.clipping_client import NumpyClippingClient
+from fl4health.metrics.metrics import Accuracy
 from fl4health.utils.config import narrow_dict_type
-from fl4health.utils.metrics import Accuracy
 
 
 class HospitalClient(NumpyClippingClient):

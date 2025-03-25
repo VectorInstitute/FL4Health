@@ -12,11 +12,11 @@ from torch.utils.data import DataLoader
 
 from examples.models.parallel_split_cnn import GlobalCnn, LocalCnn, ParallelSplitHeadClassifier
 from fl4health.clients.perfcl_client import PerFclClient
+from fl4health.metrics.metrics import Accuracy, Metric
 from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode
 from fl4health.model_bases.perfcl_base import PerFclModel
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_mnist_data
-from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.sampler import MinorityLabelBasedSampler
 
 

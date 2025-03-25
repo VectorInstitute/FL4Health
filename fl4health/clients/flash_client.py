@@ -8,11 +8,11 @@ from flwr.common.typing import Config, Scalar
 
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
+from fl4health.metrics.metrics import Metric
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.client import check_if_batch_is_empty_and_verify_input, move_data_to_device
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import Metric
 
 
 class FlashClient(BasicClient):

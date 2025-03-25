@@ -11,9 +11,9 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
 from fl4health.clients.basic_client import BasicClient
+from fl4health.metrics.metrics import Accuracy
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_cifar10_data, load_cifar10_test_data
-from fl4health.utils.metrics import Accuracy
 
 
 class CifarClient(BasicClient):

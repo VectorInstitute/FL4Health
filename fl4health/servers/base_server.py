@@ -13,12 +13,12 @@ from flwr.server.server import EvaluateResultsAndFailures, FitResultsAndFailures
 from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
+from fl4health.metrics.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, MetricPrefix
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.servers.polling import poll_clients
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 from fl4health.utils.config import narrow_dict_type_and_set_attribute
-from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, MetricPrefix
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import generate_hash
 from fl4health.utils.typing import EvaluateFailures, FitFailures

@@ -3,7 +3,8 @@ import argparse
 import torch
 from torchmetrics.classification import MultilabelAveragePrecision
 
-from fl4health.utils.metrics import MetricManager, TorchMetric
+from fl4health.metrics.metric_managers import MetricManager
+from fl4health.metrics.metrics import TorchMetric
 from research.picai.data.data_utils import get_dataloader, get_img_and_seg_paths, get_img_transform, get_seg_transform
 from research.picai.losses import FocalLoss
 from research.picai.model_utils import get_model

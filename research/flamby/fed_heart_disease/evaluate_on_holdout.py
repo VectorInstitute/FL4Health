@@ -6,7 +6,7 @@ from flamby.datasets.fed_heart_disease import BATCH_SIZE, NUM_CLIENTS, FedHeartD
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
 
-from fl4health.utils.metrics import Accuracy
+from fl4health.metrics.metrics import Accuracy
 from research.flamby.utils import (
     evaluate_fed_heart_disease_model,
     get_all_run_folders,

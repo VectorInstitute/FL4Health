@@ -11,10 +11,10 @@ from flwr.common.logger import log
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.checkpointing.server_module import ScaffoldServerCheckpointAndStateModule
 from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingByFractionClientManager
+from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.servers.scaffold_server import ScaffoldServer
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
-from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from research.flamby.utils import fit_config, get_initial_model_info_with_control_variates
 
 

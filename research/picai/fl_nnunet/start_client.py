@@ -21,7 +21,7 @@ from torchmetrics.classification import Dice
 from torchmetrics.segmentation import GeneralizedDiceScore
 
 from fl4health.clients.nnunet_client import NnunetClient
-from fl4health.utils.metrics import TorchMetric, TransformsMetric
+from fl4health.metrics.metrics import TorchMetric, TransformsMetric
 from fl4health.utils.nnunet_utils import collapse_one_hot_tensor, get_segs_from_probs
 
 

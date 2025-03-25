@@ -8,12 +8,12 @@ from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.ditto_client import DittoClient
+from fl4health.metrics.metrics import Metric
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.sequential_split_models import SequentiallySplitModel
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType, TrainingLosses
-from fl4health.utils.metrics import Metric
 from fl4health.utils.parameter_extraction import check_shape_match
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 

@@ -17,9 +17,9 @@ from torch.utils.data import DataLoader
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.mkmmd_clients.ditto_mkmmd_client import DittoMkMmdClient
+from fl4health.metrics.metrics import BalancedAccuracy, Metric
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import BalancedAccuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
 

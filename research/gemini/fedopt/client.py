@@ -12,8 +12,8 @@ from flwr.common.typing import Config, NDArrays, Scalar
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.clients.numpy_fl_client import NumpyFlClient
+from fl4health.metrics.metrics import AccumulationMeter, Meter, Metric
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.utils.metrics import AccumulationMeter, Meter, Metric
 from research.gemini.delirium_models.NN import NN as delirium_model
 from research.gemini.metrics.metrics import Accuracy, Binary_F1, Binary_ROC_AUC
 from research.gemini.mortality_models.NN import NN as mortality_model

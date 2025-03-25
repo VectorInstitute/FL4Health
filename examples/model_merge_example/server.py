@@ -14,13 +14,14 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
 from fl4health.checkpointing.checkpointer import LatestTorchModuleCheckpointer
+from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.metrics.metric_managers import MetricManager
+from fl4health.metrics.metrics import Accuracy, Metric
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.model_merge_server import ModelMergeServer
 from fl4health.strategies.model_merge_strategy import ModelMergeStrategy
 from fl4health.utils.config import load_config
 from fl4health.utils.load_data import load_mnist_data
-from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from fl4health.utils.metrics import Accuracy, Metric, MetricManager
 
 
 def fit_config(batch_size: int, _: int) -> Config:

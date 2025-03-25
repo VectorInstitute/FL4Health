@@ -1,6 +1,6 @@
 from flwr.common.typing import Metrics
 
-from fl4health.utils.metric_aggregation import (
+from fl4health.metrics.metric_aggregation import (
     evaluate_metrics_aggregation_fn,
     fit_metrics_aggregation_fn,
     metric_aggregation,
