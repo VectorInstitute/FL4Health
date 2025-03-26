@@ -15,7 +15,10 @@ def cosine_annealing(
 ) -> float:
     """
     Cosine annealing learning rate schedule for different server rounds. Cosine annealing is computed as:
-    \\lr_t = \\lr_min + 0.5 * (\\lr_max - \\lr_min) (1 + \\cos(\frac{current_round}{total_round} * \\pi)
+
+    .. math::
+            \\text{lr}_t = \\text{lr}_{\\text{min}} + 0.5 \\cdot (\\text{lr}_{\\text{max}} - \\text{lr}_{\\text{min}})
+            (1 + \\cos(\\frac{\\text{current_round}}{\\text{total_round}} \\cdot \\pi)
 
     Args:
         total_round (int): The total number of rounds.
