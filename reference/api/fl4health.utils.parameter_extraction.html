@@ -513,6 +513,24 @@ values are converted from numpy arrays into a Flower Parameters object.</p>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="fl4health.utils.parameter_extraction.get_all_peft_parameters_from_model">
+<span class="sig-name descname"><span class="pre">get_all_peft_parameters_from_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/parameter_extraction.html#get_all_peft_parameters_from_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.parameter_extraction.get_all_peft_parameters_from_model" title="Link to this definition">¶</a></dt>
+<dd><p>Function to extract peft parameters associated with a pytorch module. These values are converted
+from numpy arrays into a Flower Parameters object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>nn.Module</em>) – PyTorch model whose parameters are to be extracted</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Flower Parameters object containing all of the target models state.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Parameters</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
         </article>
@@ -590,6 +608,7 @@ values are converted from numpy arrays into a Flower Parameters object.</p>
 <li><a class="reference internal" href="#">fl4health.utils.parameter_extraction module</a><ul>
 <li><a class="reference internal" href="#fl4health.utils.parameter_extraction.check_shape_match"><code class="docutils literal notranslate"><span class="pre">check_shape_match()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.utils.parameter_extraction.get_all_model_parameters"><code class="docutils literal notranslate"><span class="pre">get_all_model_parameters()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.utils.parameter_extraction.get_all_peft_parameters_from_model"><code class="docutils literal notranslate"><span class="pre">get_all_peft_parameters_from_model()</span></code></a></li>
 </ul>
 </li>
 </ul>
