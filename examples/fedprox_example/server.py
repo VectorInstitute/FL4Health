@@ -9,7 +9,8 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import MnistNet
-from fl4health.reporting import JsonReporter, WandBReporter
+from fl4health.reporting import JsonReporter, WandBReporter, WandBStepType
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.servers.adaptive_constraint_servers.fedprox_server import FedProxServer
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config, make_dict_with_epochs_or_steps
@@ -22,32 +23,23 @@ def fit_config(
     batch_size: int,
     n_server_rounds: int,
     current_round: int,
-    reporting_config: dict[str, str] | None = None,
     local_epochs: int | None = None,
     local_steps: int | None = None,
 ) -> Config:
-    base_config: Config = {
+    return {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
     }
-    if reporting_config is not None:
-        # NOTE: that name is not included, it will be set in the clients
-        base_config["project"] = reporting_config.get("project", "")
-        base_config["group"] = reporting_config.get("group", "")
-        base_config["entity"] = reporting_config.get("entity", "")
-
-    return base_config
 
 
-def main(config: dict[str, Any], server_address: str) -> None:
+def main(config: dict[str, Any], server_address: str, wandb_entity: str | None) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
         config["batch_size"],
         config["n_server_rounds"],
-        reporting_config=config.get("reporting_config"),
         local_epochs=config.get("local_epochs"),
         local_steps=config.get("local_steps"),
     )
@@ -75,11 +67,21 @@ def main(config: dict[str, Any], server_address: str) -> None:
 
     json_reporter = JsonReporter()
     client_manager = SimpleClientManager()
-    if "reporting_config" in config:
-        wandb_reporter = WandBReporter("round", **config["reporting_config"])
-        reporters = [wandb_reporter, json_reporter]
-    else:
-        reporters = [json_reporter]
+    reporters: list[BaseReporter] = [json_reporter]
+
+    if wandb_entity:
+        wandb_reporter = WandBReporter(
+            WandBStepType.ROUND,
+            project="FL4Health",  # Name of the project under which everything should be logged
+            name="Server",  # Name of the run on the server-side
+            group="FedProx Experiment",  # Group under which each of the FL run logging will be stored
+            entity=wandb_entity,  # WandB user name
+            tags=["Test", "FedProx"],
+            job_type="server",
+            notes="Testing WB reporting",
+        )
+        reporters.append(wandb_reporter)
+
     server = FedProxServer(
         client_manager=client_manager, fl_config=config, strategy=strategy, reporters=reporters, accept_failures=False
     )
@@ -116,12 +118,22 @@ if __name__ == "__main__":
         help="Seed for the random number generators across python, torch, and numpy",
         required=False,
     )
+    parser.add_argument(
+        "--wandb_entity",
+        action="store",
+        type=str,
+        help="Entity to be used for W and B logging. If not provided, then no W and B logging is performed.",
+        required=False,
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
 
+    if args.wandb_entity:
+        log(INFO, f"Weights and Biases Entity Provided: {args.wandb_entity}")
+
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    main(config, args.server_address)
+    main(config, args.server_address, args.wandb_entity)

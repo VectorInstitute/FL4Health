@@ -290,5 +290,5 @@ If you are interested in contributing to the library, please see [CONTRIBUTION.M
 
 We hope that the library will be useful to both FL practitioners and researchers working on cutting edge FL applications, with a specific interest in FL for healthcare. If you use FL4Health in a project or in your research, the citation below should be used.
 ```
-D. B. Emerson, J. Jewell, S. Ayromlou, S. Carere, F. Tavakoli, Y. Zhang, M. Lotif, and A. Krishnan (2025). FL4Health. https://github.com/vectorInstitute/FL4Health/. Computer Software, Vector Institute for Artificial Intelligence.
+D. B. Emerson, J. Jewell, S. Ayromlou, S. Carere, F. Tavakoli, Y. Zhang, M. Lotif, V. A. Fajardo, and A. Krishnan (2025). FL4Health. https://github.com/vectorInstitute/FL4Health/. Computer Software, Vector Institute for Artificial Intelligence.
 ```
