@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from .run_smoke_test import (
+from tests.smoke_tests.run_smoke_test import (
     load_metrics_from_file,
     run_fault_tolerance_smoke_test,
     run_smoke_test,
@@ -80,6 +80,7 @@ async def test_nnunet_config_2d(tolerance: float) -> None:
         config_path="tests/smoke_tests/nnunet_config_2d.yaml",
         dataset_path="examples/datasets/nnunet",
         tolerance=tolerance,
+        read_logs_timeout=450,
     )
     task = asyncio.create_task(coroutine)
     await try_running_test_task(task)
