@@ -5,11 +5,12 @@ from unittest.mock import Mock, patch
 import pytest
 import torch
 from flwr.common import Code, EvaluateRes, Status
-from flwr.common.parameter import ndarrays_to_parameters
+from flwr.common.parameter import ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.history import History
 from flwr.server.strategy import FedAvg
 from freezegun import freeze_time
+from peft import LoraConfig, get_peft_model
 
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, PerRoundStateCheckpointer
 from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
@@ -21,7 +22,7 @@ from fl4health.servers.base_server import FlServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, MetricPrefix
-from fl4health.utils.parameter_extraction import get_all_model_parameters
+from fl4health.utils.parameter_extraction import get_all_model_parameters, get_all_peft_parameters_from_model
 from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 from tests.test_utils.models_for_test import LinearTransform
@@ -95,6 +96,25 @@ def test_hydration_and_checkpointer(tmp_path: Path) -> None:
     assert isinstance(loaded_model, LinearTransform)
     # Correct loading tensors of the saved model
     assert torch.equal(model.linear.weight, loaded_model.linear.weight)
+
+
+def test_get_peft_parameters() -> None:
+    # Add peft parameters to the model
+    peft_config = LoraConfig(
+        inference_mode=False,
+        r=8,
+        lora_alpha=32,
+        lora_dropout=0.1,
+        target_modules=["linear"],
+    )
+    peft_model = get_peft_model(model, peft_config)
+
+    # Extracting peft model parameters and converting to NDArrays object
+    server_model = parameters_to_ndarrays(get_all_peft_parameters_from_model(peft_model))
+
+    # Extracted parameters should be a non-empty list of NDArray
+    assert isinstance(server_model, list)
+    assert len(server_model) > 0
 
 
 def test_fl_server_with_checkpointing(tmp_path: Path) -> None:
