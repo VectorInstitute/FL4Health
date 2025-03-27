@@ -9,7 +9,7 @@ type: software
 doi: 10.5281/zenodo.1234  # Placeholder for upcoming Zenodo DOI
 authors:
   - family-names: "Emerson"
-    given-names: "David B"
+    given-names: "David B."
     email: "david.emerson@vectorinstitute.ai"
   - family-names: "Jewell"
     given-names: "John"
@@ -20,13 +20,13 @@ authors:
   - family-names: "Tavakoli"
     given-names: "Fatemeh"
   - family-names: "Zhang"
-    given-names: "Y"
+    given-names: "Y."
   - family-names: "Lotif"
     given-names: "Marcello"
   - family-names: "Fajardo"
     given-names: "Val Andrei"
   - family-names: "Krishnan"
-    given-names: "A"
+    given-names: "A."
 abstract: "Federated Learning for Health"
 contact:
   email: "fl4health@vectorinstitute.ai"
