@@ -1525,13 +1525,13 @@ xml-validation = ["lxml (>=4,<5)"]
 
 [[package]]
 name = "databricks-sdk"
-version = "0.47.0"
+version = "0.48.0"
 description = "Databricks SDK for Python (Beta)"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "databricks_sdk-0.47.0-py3-none-any.whl", hash = "sha256:ec2cf2a019dcff444d905c7f16b8dea41076c70ef7fcae9c3779efac119e0b1d"},
-    {file = "databricks_sdk-0.47.0.tar.gz", hash = "sha256:886b6acee402a27ef9b843becab97a2683b400387804d35b3bd009f4f8754395"},
+    {file = "databricks_sdk-0.48.0-py3-none-any.whl", hash = "sha256:ef4a9253e8b1662ca596d09bfe97f27de44204fe2520e1a06bd4f947963794d8"},
+    {file = "databricks_sdk-0.48.0.tar.gz", hash = "sha256:e7e634c31ad4df9157084a3d40732e9195f9b72bff5e6cdfb08bfa22aa31cf38"},
 ]
 
 [package.dependencies]
@@ -1698,13 +1698,13 @@ dev = ["PyTest", "PyTest-Cov", "bump2version (<1)", "setuptools", "tox"]
 
 [[package]]
 name = "dicom2nifti"
-version = "2.5.1"
+version = "2.6.0"
 description = "package for converting dicom files to nifti"
 optional = false
 python-versions = "*"
 files = [
-    {file = "dicom2nifti-2.5.1-py3-none-any.whl", hash = "sha256:f28886b63ab8237349fc0224f1e55c6d671365f1f354d41e50a4904d82b57074"},
-    {file = "dicom2nifti-2.5.1.tar.gz", hash = "sha256:67d14d1544c9e9d1d8c17e1da88cab535ea5c8dab396343db0e94bc2ae13003e"},
+    {file = "dicom2nifti-2.6.0-py3-none-any.whl", hash = "sha256:1e7a5d259cc73b8467c80c804f752a97cf5d6aad6346df3ba841e167ea6fda15"},
+    {file = "dicom2nifti-2.6.0.tar.gz", hash = "sha256:8bb72839ba9cf75382696c92bd5a8f1c9bd9f02ddb876d69c56c07285a367dd8"},
 ]
 
 [package.dependencies]
@@ -5533,21 +5533,6 @@ spss = ["pyreadstat (>=1.2.0)"]
 sql-other = ["SQLAlchemy (>=2.0.0)", "adbc-driver-postgresql (>=0.8.0)", "adbc-driver-sqlite (>=0.8.0)"]
 test = ["hypothesis (>=6.46.1)", "pytest (>=7.3.2)", "pytest-xdist (>=2.2.0)"]
 xml = ["lxml (>=4.9.2)"]
-
-[[package]]
-name = "pandas-stubs"
-version = "2.2.3.250308"
-description = "Type annotations for pandas"
-optional = false
-python-versions = ">=3.10"
-files = [
-    {file = "pandas_stubs-2.2.3.250308-py3-none-any.whl", hash = "sha256:a377edff3b61f8b268c82499fdbe7c00fdeed13235b8b71d6a1dc347aeddc74d"},
-    {file = "pandas_stubs-2.2.3.250308.tar.gz", hash = "sha256:3a6e9daf161f00b85c83772ed3d5cff9522028f07a94817472c07b91f46710fd"},
-]
-
-[package.dependencies]
-numpy = ">=1.23.5"
-types-pytz = ">=2022.1.1"
 
 [[package]]
 name = "pandocfilters"
@@ -9507,13 +9492,13 @@ test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,
 
 [[package]]
 name = "transformers"
-version = "4.50.1"
+version = "4.50.2"
 description = "State-of-the-art Machine Learning for JAX, PyTorch and TensorFlow"
 optional = false
 python-versions = ">=3.9.0"
 files = [
-    {file = "transformers-4.50.1-py3-none-any.whl", hash = "sha256:e9b9bd274518150528c1d745c7ebba72d27e4e52f2deffaa1fddebad6912da5d"},
-    {file = "transformers-4.50.1.tar.gz", hash = "sha256:6ee542d2cce7e1b6a06ae350599c27ddf2e6e45ec9d0cb42915b37fca3d6399a"},
+    {file = "transformers-4.50.2-py3-none-any.whl", hash = "sha256:99bbcddd6570f080aee81f67844f4b46c8025bbdbdb86eafb82cc7d6aaafb190"},
+    {file = "transformers-4.50.2.tar.gz", hash = "sha256:dac6cef0e2698fb25b57edbc0b9af3732e4ca148ed008d3e3118203c4dd25055"},
 ]
 
 [package.dependencies]
@@ -9665,42 +9650,6 @@ doc = ["cairosvg (>=2.5.2,<3.0.0)", "mdx-include (>=1.4.1,<2.0.0)", "mkdocs (>=1
 test = ["black (>=22.3.0,<23.0.0)", "coverage (>=6.2,<7.0)", "isort (>=5.0.6,<6.0.0)", "mypy (==0.971)", "pytest (>=4.4.0,<8.0.0)", "pytest-cov (>=2.10.0,<5.0.0)", "pytest-sugar (>=0.9.4,<0.10.0)", "pytest-xdist (>=1.32.0,<4.0.0)", "rich (>=10.11.0,<14.0.0)", "shellingham (>=1.3.0,<2.0.0)"]
 
 [[package]]
-name = "types-cffi"
-version = "1.17.0.20250326"
-description = "Typing stubs for cffi"
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "types_cffi-1.17.0.20250326-py3-none-any.whl", hash = "sha256:5af4ecd7374ae0d5fa9e80864e8d4b31088cc32c51c544e3af7ed5b5ed681447"},
-    {file = "types_cffi-1.17.0.20250326.tar.gz", hash = "sha256:6c8fea2c2f34b55e5fb77b1184c8ad849d57cf0ddccbc67a62121ac4b8b32254"},
-]
-
-[package.dependencies]
-types-setuptools = "*"
-
-[[package]]
-name = "types-colorama"
-version = "0.4.15.20240311"
-description = "Typing stubs for colorama"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "types-colorama-0.4.15.20240311.tar.gz", hash = "sha256:a28e7f98d17d2b14fb9565d32388e419f4108f557a7d939a66319969b2b99c7a"},
-    {file = "types_colorama-0.4.15.20240311-py3-none-any.whl", hash = "sha256:6391de60ddc0db3f147e31ecb230006a6823e81e380862ffca1e4695c13a0b8e"},
-]
-
-[[package]]
-name = "types-defusedxml"
-version = "0.7.0.20240218"
-description = "Typing stubs for defusedxml"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "types-defusedxml-0.7.0.20240218.tar.gz", hash = "sha256:05688a7724dc66ea74c4af5ca0efc554a150c329cb28c13a64902cab878d06ed"},
-    {file = "types_defusedxml-0.7.0.20240218-py3-none-any.whl", hash = "sha256:2b7f3c5ca14fdbe728fab0b846f5f7eb98c4bd4fd2b83d25f79e923caa790ced"},
-]
-
-[[package]]
 name = "types-docutils"
 version = "0.21.0.20241128"
 description = "Typing stubs for docutils"
@@ -9709,54 +9658,6 @@ python-versions = ">=3.8"
 files = [
     {file = "types_docutils-0.21.0.20241128-py3-none-any.whl", hash = "sha256:e0409204009639e9b0bf4521eeabe58b5e574ce9c0db08421c2ac26c32be0039"},
     {file = "types_docutils-0.21.0.20241128.tar.gz", hash = "sha256:4dd059805b83ac6ec5a223699195c4e9eeb0446a4f7f2aeff1759a4a7cc17473"},
-]
-
-[[package]]
-name = "types-gevent"
-version = "24.11.0.20250305"
-description = "Typing stubs for gevent"
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "types_gevent-24.11.0.20250305-py3-none-any.whl", hash = "sha256:63eab6b2b823ccbb5ffc865c4fc97f45b1d0ab46af7b559eefbaa68b239b4bc3"},
-    {file = "types_gevent-24.11.0.20250305.tar.gz", hash = "sha256:dd19d524f1ebd1c8bb2136abd622d7200ca73bd14f6e8d6a56ab4051e5f8778f"},
-]
-
-[package.dependencies]
-types-greenlet = "*"
-types-psutil = "*"
-
-[[package]]
-name = "types-greenlet"
-version = "3.1.0.20250318"
-description = "Typing stubs for greenlet"
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "types_greenlet-3.1.0.20250318-py3-none-any.whl", hash = "sha256:7077aa3eed66034914cdd36b708cac8534baafe00d7d0ef97dc49953055f314f"},
-    {file = "types_greenlet-3.1.0.20250318.tar.gz", hash = "sha256:5e69fff0ea986363c59c5dc803cc7f0a07f915875cfb297bc73becace7b5ad40"},
-]
-
-[[package]]
-name = "types-mock"
-version = "5.2.0.20250306"
-description = "Typing stubs for mock"
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "types_mock-5.2.0.20250306-py3-none-any.whl", hash = "sha256:eb69fec98b8de26be1d7121623d05a2f117d1ea2e01dd30c123d07d204a15c95"},
-    {file = "types_mock-5.2.0.20250306.tar.gz", hash = "sha256:15882cb5cf9980587a7607e31890801223801d7997f559686805ce09b6536087"},
-]
-
-[[package]]
-name = "types-pexpect"
-version = "4.9.0.20241208"
-description = "Typing stubs for pexpect"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "types_pexpect-4.9.0.20241208-py3-none-any.whl", hash = "sha256:1928f478528454f0fea3495c16cf1ee2e67fca5c9fe97d60b868ac48c1fd5633"},
-    {file = "types_pexpect-4.9.0.20241208.tar.gz", hash = "sha256:bbca0d0819947a719989a5cfe83641d9212bef893e2f0a7a01e47926bc82401d"},
 ]
 
 [[package]]
@@ -9771,64 +9672,6 @@ files = [
 ]
 
 [[package]]
-name = "types-psutil"
-version = "7.0.0.20250218"
-description = "Typing stubs for psutil"
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "types_psutil-7.0.0.20250218-py3-none-any.whl", hash = "sha256:1447a30c282aafefcf8941ece854e1100eee7b0296a9d9be9977292f0269b121"},
-    {file = "types_psutil-7.0.0.20250218.tar.gz", hash = "sha256:1e642cdafe837b240295b23b1cbd4691d80b08a07d29932143cbbae30eb0db9c"},
-]
-
-[[package]]
-name = "types-pygments"
-version = "2.19.0.20250305"
-description = "Typing stubs for Pygments"
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "types_pygments-2.19.0.20250305-py3-none-any.whl", hash = "sha256:ca88aae5ec426f9b107c0f7adc36dc096d2882d930a49f679eaf4b8b643db35d"},
-    {file = "types_pygments-2.19.0.20250305.tar.gz", hash = "sha256:044c50e80ecd4128c00a7268f20355e16f5c55466d3d49dfda09be920af40b4b"},
-]
-
-[package.dependencies]
-types-docutils = "*"
-
-[[package]]
-name = "types-pymysql"
-version = "1.1.0.20241103"
-description = "Typing stubs for PyMySQL"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "types-PyMySQL-1.1.0.20241103.tar.gz", hash = "sha256:a7628542919a0ba87625fb79eefb2a2de45fb4ad32afe6e561e8f2f27fb58b8c"},
-    {file = "types_PyMySQL-1.1.0.20241103-py3-none-any.whl", hash = "sha256:1a32efd8a74b5bf74c4de92a86c1cc6edaf3802dcfd5546635ab501eb5e3c096"},
-]
-
-[[package]]
-name = "types-python-dateutil"
-version = "2.9.0.20241206"
-description = "Typing stubs for python-dateutil"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "types_python_dateutil-2.9.0.20241206-py3-none-any.whl", hash = "sha256:e248a4bc70a486d3e3ec84d0dc30eec3a5f979d6e7ee4123ae043eedbb987f53"},
-    {file = "types_python_dateutil-2.9.0.20241206.tar.gz", hash = "sha256:18f493414c26ffba692a72369fea7a154c502646301ebfe3d56a04b3767284cb"},
-]
-
-[[package]]
-name = "types-pytz"
-version = "2025.2.0.20250326"
-description = "Typing stubs for pytz"
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "types_pytz-2025.2.0.20250326-py3-none-any.whl", hash = "sha256:3c397fd1b845cd2b3adc9398607764ced9e578a98a5d1fbb4a9bc9253edfb162"},
-    {file = "types_pytz-2025.2.0.20250326.tar.gz", hash = "sha256:deda02de24f527066fc8d6a19e284ab3f3ae716a42b4adb6b40e75e408c08d36"},
-]
-
-[[package]]
 name = "types-pyyaml"
 version = "6.0.12.20250326"
 description = "Typing stubs for PyYAML"
@@ -9837,17 +9680,6 @@ python-versions = ">=3.9"
 files = [
     {file = "types_pyyaml-6.0.12.20250326-py3-none-any.whl", hash = "sha256:961871cfbdc1ad8ae3cb6ae3f13007262bcfc168adc513119755a6e4d5d7ed65"},
     {file = "types_pyyaml-6.0.12.20250326.tar.gz", hash = "sha256:5e2d86d8706697803f361ba0b8188eef2999e1c372cd4faee4ebb0844b8a4190"},
-]
-
-[[package]]
-name = "types-regex"
-version = "2024.11.6.20250318"
-description = "Typing stubs for regex"
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "types_regex-2024.11.6.20250318-py3-none-any.whl", hash = "sha256:9309fe5918ee7ffe859c04c18040697655fade366c4dc844bbebe86976a9980b"},
-    {file = "types_regex-2024.11.6.20250318.tar.gz", hash = "sha256:6d472d0acf37b138cb32f67bd5ab1e7a200e94da8c1aa93ca3625a63e2efe1f3"},
 ]
 
 [[package]]
@@ -9899,36 +9731,6 @@ files = [
     {file = "types_tabulate-0.9.0.20241207-py3-none-any.whl", hash = "sha256:b8dad1343c2a8ba5861c5441370c3e35908edd234ff036d4298708a1d4cf8a85"},
     {file = "types_tabulate-0.9.0.20241207.tar.gz", hash = "sha256:ac1ac174750c0a385dfd248edc6279fa328aaf4ea317915ab879a2ec47833230"},
 ]
-
-[[package]]
-name = "types-tensorflow"
-version = "2.18.0.20250319"
-description = "Typing stubs for tensorflow"
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "types_tensorflow-2.18.0.20250319-py3-none-any.whl", hash = "sha256:e9387e33aceef88f0557888788b182d4a03d742704d503da72fbb9c20a8bff19"},
-    {file = "types_tensorflow-2.18.0.20250319.tar.gz", hash = "sha256:e6e9cac5796b2780d184e81640e5effe3d101099b24ac5c67fb6cc13beae858d"},
-]
-
-[package.dependencies]
-numpy = ">=1.20"
-types-protobuf = "*"
-types-requests = "*"
-
-[[package]]
-name = "types-tqdm"
-version = "4.67.0.20250319"
-description = "Typing stubs for tqdm"
-optional = false
-python-versions = ">=3.9"
-files = [
-    {file = "types_tqdm-4.67.0.20250319-py3-none-any.whl", hash = "sha256:8705ef0dd431586e5ea6e010e15b73389b09bcc18186e8c1f530a14dfaa30e09"},
-    {file = "types_tqdm-4.67.0.20250319.tar.gz", hash = "sha256:ae947a64bd8d7ed7b7d2b7369df05f9181f847ec2828fdc8a2deb0bb8701adaa"},
-]
-
-[package.dependencies]
-types-requests = "*"
 
 [[package]]
 name = "typing-extensions"
@@ -10769,4 +10571,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10.0,<3.11"
-content-hash = "5108fa1d94dae9bf932143ff7adb0fc80e41aa1eed81e3ddb61510ba09eb076c"
+content-hash = "440553bcb633e4dfa4949da43af502258454f1f065019088c0189381b67a3fd9"
