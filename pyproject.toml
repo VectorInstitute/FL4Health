@@ -121,6 +121,12 @@ sphinx-design = "^0.6.1"
 sphinxcontrib-apidoc = "^0.5.0"
 sphinx-autobuild = "^2024.10.3"
 
+
+[tool.poetry.group.bootcamp.dependencies]
+dm-tree = "^0.1.9"
+cmake = "^3.31.6"
+matplotlib = "^3.10.1"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

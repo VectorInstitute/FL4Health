@@ -1525,13 +1525,13 @@ xml-validation = ["lxml (>=4,<5)"]
 
 [[package]]
 name = "databricks-sdk"
-version = "0.47.0"
+version = "0.48.0"
 description = "Databricks SDK for Python (Beta)"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "databricks_sdk-0.47.0-py3-none-any.whl", hash = "sha256:ec2cf2a019dcff444d905c7f16b8dea41076c70ef7fcae9c3779efac119e0b1d"},
-    {file = "databricks_sdk-0.47.0.tar.gz", hash = "sha256:886b6acee402a27ef9b843becab97a2683b400387804d35b3bd009f4f8754395"},
+    {file = "databricks_sdk-0.48.0-py3-none-any.whl", hash = "sha256:ef4a9253e8b1662ca596d09bfe97f27de44204fe2520e1a06bd4f947963794d8"},
+    {file = "databricks_sdk-0.48.0.tar.gz", hash = "sha256:e7e634c31ad4df9157084a3d40732e9195f9b72bff5e6cdfb08bfa22aa31cf38"},
 ]
 
 [package.dependencies]
@@ -1698,13 +1698,13 @@ dev = ["PyTest", "PyTest-Cov", "bump2version (<1)", "setuptools", "tox"]
 
 [[package]]
 name = "dicom2nifti"
-version = "2.5.1"
+version = "2.6.0"
 description = "package for converting dicom files to nifti"
 optional = false
 python-versions = "*"
 files = [
-    {file = "dicom2nifti-2.5.1-py3-none-any.whl", hash = "sha256:f28886b63ab8237349fc0224f1e55c6d671365f1f354d41e50a4904d82b57074"},
-    {file = "dicom2nifti-2.5.1.tar.gz", hash = "sha256:67d14d1544c9e9d1d8c17e1da88cab535ea5c8dab396343db0e94bc2ae13003e"},
+    {file = "dicom2nifti-2.6.0-py3-none-any.whl", hash = "sha256:1e7a5d259cc73b8467c80c804f752a97cf5d6aad6346df3ba841e167ea6fda15"},
+    {file = "dicom2nifti-2.6.0.tar.gz", hash = "sha256:8bb72839ba9cf75382696c92bd5a8f1c9bd9f02ddb876d69c56c07285a367dd8"},
 ]
 
 [package.dependencies]
@@ -4174,13 +4174,13 @@ dev = ["absl-py", "pyink", "pylint (>=2.6.0)", "pytest", "pytest-xdist"]
 
 [[package]]
 name = "mlflow"
-version = "2.21.1"
+version = "2.21.2"
 description = "MLflow is an open source platform for the complete machine learning lifecycle"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "mlflow-2.21.1-py3-none-any.whl", hash = "sha256:bdb825501fd8c8bab49cacb7ab6ca2bfebce678f57701924c345606c4f9e0d92"},
-    {file = "mlflow-2.21.1.tar.gz", hash = "sha256:ca023226df67c9ead60778c10ed67c207b9f9b581aa1c826a81d4ed3f61f5b41"},
+    {file = "mlflow-2.21.2-py3-none-any.whl", hash = "sha256:e1edb4b44e124d5bcf526d9880c5f4a96817bf384fa04089859bb8fc06698951"},
+    {file = "mlflow-2.21.2.tar.gz", hash = "sha256:ea6beaaa6cdf296db0c961f7269e6be90d409f5d48be743ecdce4b608d88297e"},
 ]
 
 [package.dependencies]
@@ -4195,7 +4195,7 @@ Jinja2 = [
 ]
 markdown = ">=3.3,<4"
 matplotlib = "<4"
-mlflow-skinny = "2.21.1"
+mlflow-skinny = "2.21.2"
 numpy = "<3"
 pandas = "<3"
 pyarrow = ">=4.0.0,<20"
@@ -4219,13 +4219,13 @@ xethub = ["mlflow-xethub"]
 
 [[package]]
 name = "mlflow-skinny"
-version = "2.21.1"
+version = "2.21.2"
 description = "MLflow is an open source platform for the complete machine learning lifecycle"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "mlflow_skinny-2.21.1-py3-none-any.whl", hash = "sha256:d3523b180f0af639b7e5346a9a9cbae55b75da595786456a767cf65907bdf08d"},
-    {file = "mlflow_skinny-2.21.1.tar.gz", hash = "sha256:e0f88aed198d1d8c5a3e40dc8d3c6b59162e547576371f25b4381f827a9d22fd"},
+    {file = "mlflow_skinny-2.21.2-py3-none-any.whl", hash = "sha256:8d735f7f15100d4b50834cc540e3e7da5833138a8147c9306cf03c4218b8afa3"},
+    {file = "mlflow_skinny-2.21.2.tar.gz", hash = "sha256:6e0ee8be1b38a8b02a5a0547a0c36b175d06590f78e38a3ff127cbc3be8e27d6"},
 ]
 
 [package.dependencies]
@@ -9492,13 +9492,13 @@ test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,
 
 [[package]]
 name = "transformers"
-version = "4.50.1"
+version = "4.50.2"
 description = "State-of-the-art Machine Learning for JAX, PyTorch and TensorFlow"
 optional = false
 python-versions = ">=3.9.0"
 files = [
-    {file = "transformers-4.50.1-py3-none-any.whl", hash = "sha256:e9b9bd274518150528c1d745c7ebba72d27e4e52f2deffaa1fddebad6912da5d"},
-    {file = "transformers-4.50.1.tar.gz", hash = "sha256:6ee542d2cce7e1b6a06ae350599c27ddf2e6e45ec9d0cb42915b37fca3d6399a"},
+    {file = "transformers-4.50.2-py3-none-any.whl", hash = "sha256:99bbcddd6570f080aee81f67844f4b46c8025bbdbdb86eafb82cc7d6aaafb190"},
+    {file = "transformers-4.50.2.tar.gz", hash = "sha256:dac6cef0e2698fb25b57edbc0b9af3732e4ca148ed008d3e3118203c4dd25055"},
 ]
 
 [package.dependencies]
@@ -10571,4 +10571,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10.0,<3.11"
-content-hash = "1a3829ea7c4398c1060bdae54d586d6bcc0b95abf58feafdf96601a65df27604"
+content-hash = "440553bcb633e4dfa4949da43af502258454f1f065019088c0189381b67a3fd9"
