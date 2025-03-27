@@ -294,13 +294,13 @@ As examples (the version may be out of date)
 
 ```
 # APA Sytle
-Emerson, D., Jewell, J., Ayromlou, S., Carere, S., Tavakoli, F., Zhang, Y., Lotif, M., Fajardo, V. A., & Krishnan, A. FL4Health (Version 0.3.0) [Computer software]. https://doi.org/10.5281/zenodo.1234
+Emerson, D.B., Jewell, J., Ayromlou, S., Carere, S., Tavakoli, F., Zhang, Y., Lotif, M., Fajardo, V. A., & Krishnan, A. FL4Health (Version 0.3.0) [Computer software]. https://doi.org/10.5281/zenodo.1234
 ```
 
 ```bibtex
 # Bibtex Entry
 @software{Emerson_FL4Health,
-author = {Emerson, David and Jewell, John and Ayromlou, Sana and Carere, Shawn and Tavakoli, Fatemeh and Zhang, Y. and Lotif, Marcello and Fajardo, Val Andrei and Krishnan, A.},
+author = {Emerson, David B. and Jewell, John and Ayromlou, Sana and Carere, Shawn and Tavakoli, Fatemeh and Zhang, Y. and Lotif, Marcello and Fajardo, Val Andrei and Krishnan, A.},
 doi = {10.5281/zenodo.1234},
 license = {Apache-2.0},
 title = {{FL4Health}},
