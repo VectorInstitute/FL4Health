@@ -9,7 +9,7 @@ type: software
 doi: 10.5281/zenodo.1234  # Placeholder for upcoming Zenodo DOI
 authors:
   - family-names: "Emerson"
-    given-names: "David B."
+    given-names: "D. B."
     email: "david.emerson@vectorinstitute.ai"
   - family-names: "Jewell"
     given-names: "John"
