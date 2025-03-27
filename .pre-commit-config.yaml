@@ -45,6 +45,7 @@ repos:
       - id: nbqa-check-ast
       - id: nbqa-flake8
       - id: nbqa-mypy
+        args: ["--ignore-missing-imports"]
 
   - repo: local
     hooks:
