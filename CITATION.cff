@@ -29,5 +29,5 @@ authors:
     given-names: "A."
 abstract: "Federated Learning for Health"
 contact:
-  email: "fl4health@vectorinstitute.ai"
-  name: "Vector AI Engineering"
+  - name: "Vector AI Engineering"
+    email: "fl4health@vectorinstitute.ai"
