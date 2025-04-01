@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointAndStateModule
 from fl4health.metrics.metric_managers import MetricManager
-from fl4health.metrics.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric
+from fl4health.metrics.metrics_base import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter

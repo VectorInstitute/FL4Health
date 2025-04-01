@@ -122,7 +122,7 @@ class LatestOpacusCheckpointer(OpacusCheckpointer):
         def latest_score_function(loss: float, _: dict[str, Scalar]) -> float:
             return 0.0
 
-        super().__init__(checkpoint_dir, checkpoint_name, latest_score_function, False)
+        super().__init__(checkpoint_dir, checkpoint_name, latest_score_function, "Latest", False)
 
     def maybe_checkpoint(self, model: GradSampleModule, loss: float, _: dict[str, Scalar]) -> None:
         assert isinstance(
@@ -150,9 +150,7 @@ class BestLossOpacusCheckpointer(OpacusCheckpointer):
         def loss_score_function(loss: float, _: dict[str, Scalar]) -> float:
             return loss
 
-        super().__init__(
-            checkpoint_dir, checkpoint_name, checkpoint_score_function=loss_score_function, maximize=False
-        )
+        super().__init__(checkpoint_dir, checkpoint_name, loss_score_function, "Loss", maximize=False)
 
     def maybe_checkpoint(self, model: GradSampleModule, loss: float, metrics: dict[str, Scalar]) -> None:
         assert isinstance(

@@ -1,6 +1,4 @@
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
-from enum import Enum
 
 import numpy as np
 import torch
@@ -8,69 +6,7 @@ from flwr.common.typing import Metrics, Scalar
 from sklearn import metrics as sklearn_metrics
 from torchmetrics import Metric as TMetric
 
-from fl4health.utils.typing import TorchTransformFunction
-
-
-class MetricPrefix(Enum):
-    TEST_PREFIX = "test -"
-    VAL_PREFIX = "val -"
-
-
-TEST_NUM_EXAMPLES_KEY = f"{MetricPrefix.TEST_PREFIX.value} num_examples"
-TEST_LOSS_KEY = f"{MetricPrefix.TEST_PREFIX.value} checkpoint"
-
-
-class Metric(ABC):
-    def __init__(self, name: str) -> None:
-        """
-        Base abstract Metric class to extend for metric accumulation and computation.
-
-        Args:
-            name (str): Name of the metric.
-        """
-        self.name = name
-
-    @abstractmethod
-    def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
-        """
-        This method updates the state of the metric by appending the passed input and target pairing to their
-        respective list.
-
-        Args:
-            input (torch.Tensor): The predictions of the model to be evaluated.
-            target (torch.Tensor): The ground truth target to evaluate predictions against.
-
-        Raises:
-            NotImplementedError: To be defined in the classes extending this class.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def compute(self, name: str | None) -> Metrics:
-        """
-        Compute metric on accumulated input and output over updates.
-
-        Args:
-            name (str | None): Optional name used in conjunction with class attribute name to define key in metrics
-                dictionary.
-
-        Raises:
-            NotImplementedError: To be defined in the classes extending this class.
-
-        Returns:
-           Metrics: A dictionary of string and ``Scalar`` representing the computed metric and its associated key.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def clear(self) -> None:
-        """
-        Resets metric.
-
-        Raises:
-            NotImplementedError: To be defined in the classes expending this class.
-        """
-        raise NotImplementedError
+from fl4health.metrics.metrics_base import Metric
 
 
 class TorchMetric(Metric):
@@ -95,7 +31,7 @@ class TorchMetric(Metric):
         """
         self.metric.update(input, target.long())
 
-    def compute(self, name: str | None) -> Metrics:
+    def compute(self, name: str | None = None) -> Metrics:
         """
         Compute value of underlying ``TorchMetric``.
 
@@ -178,47 +114,6 @@ class SimpleMetric(Metric, ABC):
             NotImplementedError: User must define this method.
         """
         raise NotImplementedError
-
-
-class TransformsMetric(Metric):
-    def __init__(
-        self,
-        metric: Metric,
-        pred_transforms: Sequence[TorchTransformFunction] | None = None,
-        target_transforms: Sequence[TorchTransformFunction] | None = None,
-    ) -> None:
-        """
-        A thin wrapper class to allow transforms to be applied to preds and targets prior to calculating metrics.
-        Transforms are applied in the order given
-
-        Args:
-            metric (Metric): A FL4Health compatible metric
-            pred_transforms (Sequence[TorchTransformFunction] | None, optional): A list of transform functions to
-                apply to the model predictions before computing the metrics. Each callable must accept and return a
-                ``torch.Tensor``. Use partial to set other arguments.
-            target_transforms (Sequence[TorchTransformFunction] | None, optional): A list of transform functions to
-                apply to the targets before computing the metrics. Each callable must accept and return a
-                ``torch.Tensor``. Use partial to set other arguments.
-        """
-        self.metric = metric
-        self.pred_transforms = [] if pred_transforms is None else pred_transforms
-        self.target_transforms = [] if target_transforms is None else target_transforms
-        super().__init__(name=self.metric.name)
-
-    def update(self, pred: torch.Tensor, target: torch.Tensor) -> None:
-        for transform in self.pred_transforms:
-            pred = transform(pred)
-
-        for transform in self.target_transforms:
-            target = transform(target)
-
-        self.metric.update(pred, target)
-
-    def compute(self, name: str | None) -> Metrics:
-        return self.metric.compute(name)
-
-    def clear(self) -> None:
-        return self.metric.clear()
 
 
 class BinarySoftDiceCoefficient(SimpleMetric):
