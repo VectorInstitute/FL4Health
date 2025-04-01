@@ -13,7 +13,7 @@ from fl4health.utils.typing import TorchTransformFunction
 T = TypeVar("T", bound=Metric)
 
 
-class EMAMetric(Metric, Generic[T]):
+class EmaMetric(Metric, Generic[T]):
     def __init__(self, metric: T, smoothing_factor: float = 0.1, name: str | None = None):
         """
         Exponential Moving Average (EMA) metric wrapper to apply EMA to the underlying metric.

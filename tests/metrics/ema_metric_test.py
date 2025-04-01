@@ -2,7 +2,7 @@ import torch
 from flwr.common.typing import Metrics
 from pytest import LogCaptureFixture, approx
 
-from fl4health.metrics.compound_metrics import EMAMetric
+from fl4health.metrics.compound_metrics import EmaMetric
 from fl4health.metrics.metrics import Accuracy
 from fl4health.metrics.metrics_base import Metric
 
@@ -34,7 +34,7 @@ def test_ema_metric_computation() -> None:
     targets_3 = torch.Tensor([1.0, 0.0, 1.0, 0.0])
 
     accuracy_metric = Accuracy("accuracy")
-    ema_accuracy_metric = EMAMetric(accuracy_metric, 0.2, name="ema_acc")
+    ema_accuracy_metric = EmaMetric(accuracy_metric, 0.2, name="ema_acc")
 
     # First accumulate two batches of updates before computation
     ema_accuracy_metric.update(preds_1, targets_1)
@@ -57,7 +57,7 @@ def test_ema_metric_computation() -> None:
 def test_ema_warning_on_bad_type(caplog: LogCaptureFixture) -> None:
 
     dummy_metric = DummyMetric("dummy")
-    ema_dummy_metric = EMAMetric(dummy_metric, 0.2, name="dummy")
+    ema_dummy_metric = EmaMetric(dummy_metric, 0.2, name="dummy")
 
     metrics_1 = ema_dummy_metric.compute("bad_ema")
     assert metrics_1["acc"] == 1.0
