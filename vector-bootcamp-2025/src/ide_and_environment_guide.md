@@ -213,3 +213,21 @@ bash examples/utils/run_fl_local.sh
 ```
 This should kick off the federated learning processes and train a model for 2 clients using FedAvg and place the logs
 in the folders specified in the script.
+
+### Cluster Datasets
+
+For convenience, we have stored some useful datasets on the cluster. These include datasets that your team identified
+as potentially useful for the target use-cases you will be working on during the bootcamp.
+
+These datasets are stored at `/projects/federated_learning/`.
+
+**NOTE**: This first `/` is important. Without it the folder will not be visible to you. You can see its contents with
+the command
+```bash
+ls /projects/federated_learning/
+```
+
+In the `/projects/federated_learning/public` folder, you will find all datasets used in the examples for the library
+including MNIST, CIFAR, and others. The remainder of the folders should loosely correspond to your team names and are
+populated with datasets relevant to your PoCs. You and your teammates should have access to these folders, but other
+teams will not. If you cannot access your folder, please let your facilitator know and we will get it sorted out.

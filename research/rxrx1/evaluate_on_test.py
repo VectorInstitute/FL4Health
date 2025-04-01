@@ -79,7 +79,7 @@ def main(
         aggregated_num_examples = len(aggregated_dataset)
 
     for client_number in range(NUM_CLIENTS):
-        test_loader, _ = load_rxrx1_test_data(
+        test_loader, num_examples = load_rxrx1_test_data(
             data_path=Path(dataset_dir), client_num=client_number, batch_size=BATCH_SIZE
         )
 

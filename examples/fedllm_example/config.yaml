@@ -1,0 +1,34 @@
+# Parameters that describe server
+n_server_rounds: 15 # The number of rounds to run FL
+
+# Parameters that describe clients
+n_clients: 2 # The number of clients in the FL experiment
+num_gpus_per_client: 2 # The number of GPUs per client
+local_steps: 500 # The number of steps to complete for client
+batch_size: 16 # The batch size for client
+
+evaluate_after_fit: false # Whether to evaluate the model after training
+
+
+dataset:
+  name: "vicgalle/alpaca-gpt4"
+
+model:
+  name: "openlm-research/open_llama_3b_v2"
+  quantization: 4
+  gradient_checkpointing: true
+  lora:
+    peft_lora_r: 32
+    peft_lora_alpha: 64
+
+train:
+  learning_rate_max: 5e-5
+  learning_rate_min: 1e-6
+  training_arguments:
+    max_seq_length: 512
+    gradient_accumulation_steps: 1
+    logging_steps: 10
+    save_steps: 500
+    save_total_limit: 10
+    gradient_checkpointing: true
+    lr_scheduler_type: "constant"

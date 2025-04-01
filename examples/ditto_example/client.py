@@ -23,7 +23,8 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 class MnistDittoClient(DittoClient):
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
-        sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
+        sample_percentage = narrow_dict_type(config, "downsampling_ratio", float)
+        sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=sample_percentage, beta=1)
         batch_size = narrow_dict_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader

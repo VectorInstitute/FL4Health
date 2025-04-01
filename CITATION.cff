@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "FL4Health"
+version: 0.3.0
+date-released: 2025
+license: Apache-2.0
+repository-code: "https://github.com/vectorInstitute/FL4Health/"
+type: software
+doi: 10.5281/zenodo.1234  # Placeholder for upcoming Zenodo DOI
+authors:
+  - family-names: "Emerson"
+    given-names: "D. B."
+    email: "david.emerson@vectorinstitute.ai"
+  - family-names: "Jewell"
+    given-names: "John"
+  - family-names: "Ayromlou"
+    given-names: "Sana"
+  - family-names: "Carere"
+    given-names: "Shawn"
+  - family-names: "Tavakoli"
+    given-names: "Fatemeh"
+  - family-names: "Zhang"
+    given-names: "Y."
+  - family-names: "Lotif"
+    given-names: "Marcelo"
+  - family-names: "Fajardo"
+    given-names: "Val Andrei"
+  - family-names: "Krishnan"
+    given-names: "A."
+abstract: "Federated Learning for Health"
+contact:
+  - name: "Vector AI Engineering"
+    email: "fl4health@vectorinstitute.ai"
