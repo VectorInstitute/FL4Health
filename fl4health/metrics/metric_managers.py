@@ -67,8 +67,17 @@ class MetricManager:
 
     def clear(self) -> None:
         """
-        Clears metrics for each of the prediction type.
+        Clears data accumulated in each metric for each of the prediction type.
         """
+        for metrics_for_prediction_type in self.metrics_per_prediction_type.values():
+            for metric in metrics_for_prediction_type:
+                metric.clear()
+
+    def reset(self) -> None:
+        """
+        Resets the metrics to their initial state.
+        """
+        # On next update, metrics will be recopied from self.original_metrics which are still in their initial state
         self.metrics_per_prediction_type = {}
 
     def check_target_prediction_keys_equal(
