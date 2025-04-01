@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from logging import WARNING
+from logging import INFO, WARNING
 
 import torch
 from flwr.common.logger import log
 from flwr.common.typing import Metrics, Scalar
 
 from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics.utils import align_pred_and_target_shapes
 
 
 class MetricOutcome(Enum):
@@ -491,6 +492,223 @@ class BinaryClassificationMetric(ClassificationMetric):
         if self.pos_label == 0:
             # Need to flip the label interpretations
             return true_negatives, false_negatives, false_positives, true_positives
+
+        return true_positives, false_positives, false_negatives, true_negatives
+
+    def compute_from_counts(
+        self,
+        true_positives: torch.Tensor,
+        false_positives: torch.Tensor,
+        false_negatives: torch.Tensor,
+        true_negatives: torch.Tensor,
+    ) -> Metrics:
+        raise NotImplementedError
+
+    def __call__(self, input: torch.Tensor, target: torch.Tensor) -> Scalar:
+        """
+        User defined method that calculates the desired metric given the predictions and target.
+
+        Raises:
+            NotImplementedError: User must define this method.
+        """
+        raise NotImplementedError
+
+
+class MultiClassificationMetric(ClassificationMetric):
+    def __init__(
+        self,
+        name: str,
+        label_dim: int,
+        batch_dim: int | None = None,
+        dtype: torch.dtype = torch.float32,
+        threshold: float | int | None = None,
+        ignore_background: int | None = None,
+        discard: set[MetricOutcome] | None = None,
+    ) -> None:
+        """A Base class for multi-class, multi-label classification metrics that can be computed using the true
+        positives (tp), false positive (fp), false negative (fn) and true negative (tn) counts. These counts are
+        computed for each class independently. How they are composed together for the metric is left to inheriting
+        classes.
+
+        On each update, the true_positives, false_positives, false_negatives and true_negatives counts for the
+        provided predictions and targets are accumulated into ``self.true_positives``, ``self.false_positives``,
+        ``self.false_negatives`` and ``self.true_negatives``, respectively, for each label type. This reduces the
+        memory footprint required to compute metrics across rounds. The user needs to define the
+        ``compute_from_counts`` method which returns a dictionary of Scalar metrics given the true_positives,
+        false_positives, false_negatives, and true_negatives counts. The accumulated counts are reset by the
+        ``clear`` method. If your subclass returns multiple metrics you may need to also override the `__call__`
+        method.
+
+        If the predictions provided are continuous in value, then the associated counts will also be continuous
+        ("soft"). For example, with a target of 1, a prediction of 0.8 contributes 0.8 to the true_positives count and
+        0.2 to the false_negatives.
+
+        NOTE: Preds and targets are expected to have elements in the interval [0, 1] or to be thresholded, using
+        that argument to be as such.
+
+        NOTE: If preds and targets passed to update method have different shapes, this class will attempt to align the
+        shapes by one-hot-encoding one of the tensors if possible.
+
+        Args:
+            name (str): The name of the metric.
+            label_dim (int): Specifies which dimension in the provided tensors corresponds to the label
+                dimension. During metric computation, this dimension must have size of AT LEAST 2.
+            batch_dim (int | None, optional): If None, then counts are aggregated across the batch dimension. If
+                specified, counts will be computed along the dimension specified. That is, counts are maintained for
+                each training sample INDIVIDUALLY. For example, if batch_dim = 1 and label_dim = 0, then
+
+                .. code-block:: python
+
+                    p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])
+
+                    t = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]])
+
+                    self.tp = torch.Tensor([[0], [4]])
+
+                    self.tn = torch.Tensor([[2], [0]])
+
+                    self.fp = torch.Tensor([[1], [0]])
+
+                    self.fn = torch.Tensor([[1], [0]])
+
+                NOTE: The resulting counts will always be presented batch dimension first, then label dimension,
+                regardless of input shape. Defaults to None
+            dtype (torch.dtype): The dtype to store the counts as. If preds or targets can be continuous, specify a
+                float type. Otherwise specify an integer type to prevent overflow. Defaults to torch.float32
+            threshold (float | int | None, optional): A float for thresholding values or an integer specifying the
+                index of the label dimension. If a float is given, predictions below the threshold are mapped
+                to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
+                with the highest prediction where the specified axis is assumed to contain a prediction for each class
+                (where its index along that dimension is the class label). Default of None leaves preds unchanged.
+            ignore_background (int | None): If specified, the FIRST channel of the specified axis is removed prior to
+                computing the counts. Useful for removing background classes. Defaults to None.
+            discard (set[MetricOutcome] | None, optional): One or several of MetricOutcome values. Specified outcome
+                counts will not be accumulated. Their associated attribute will remain as an empty pytorch tensor.
+                Useful for reducing the memory footprint of metrics that do not use all of the counts in their
+                computation
+        """
+        super().__init__(
+            name=name,
+            dtype=dtype,
+            label_dim=label_dim,
+            batch_dim=batch_dim,
+            threshold=threshold,
+            discard=discard,
+        )
+        if ignore_background is not None:
+            log(
+                INFO,
+                f"ignore_background has been specified. The first channel of dimension {ignore_background} "
+                "will be removed from both predictions and targets",
+            )
+        self.ignore_background = ignore_background
+
+    @classmethod
+    def _remove_background(
+        cls, ignore_background: int, preds: torch.Tensor, targets: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        indices = torch.arange(1, preds.shape[ignore_background], device=preds.device)
+        preds = torch.index_select(preds, ignore_background, indices)
+        targets = torch.index_select(targets, ignore_background, indices.to(targets.device))
+        return preds, targets
+
+    @classmethod
+    def _transpose_matrix_unless_empty(cls, matrix: torch.Tensor) -> torch.Tensor:
+        """
+        Helper function to transpose the provided matrix if it is 2D. This is mainly used to put the batch dimension
+        before the label dimension if required. The tensor might be empty if it corresponds to a discarded outcome
+        type. If so, it is returned unchanged. Otherwise, we throw an error, as the shape is unexpected.
+
+        Args:
+            matrix (torch.Tensor): tensor to be transposed
+
+        Returns:
+            torch.Tensor: transposed tensor if 2D, unchanged tensor if empty, and throw error if shape differs from
+                those two expected settings
+        """
+        if matrix.ndim == 2:
+            return matrix.transpose(0, 1)
+        elif matrix.numel() == 0:
+            return matrix
+        else:
+            raise ValueError(f"Expected tensor to either be 2D or empty but has shape {matrix}")
+
+    def _transform_tensors(self, preds: torch.Tensor, targets: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Does all the necessary transformations to preds and targets before computing the counts.
+
+        This may or may not include binarizing the preds, one-hot-encoding either the preds or targets, removing the
+        background channel, and or type conversions. Several assertions are also made to ensure inputs are as expected.
+        """
+
+        preds, targets = super()._transform_tensors(preds, targets)
+
+        # Attempt to automatically match pred and target shape.
+        # This supports any combination of hard/soft, vector/not-vector encoded so long as label dim can be inferred.
+        preds, targets = align_pred_and_target_shapes(preds, targets, self.label_dim)
+
+        super()._assert_correct_ranges(preds, targets)
+
+        # Remove the background channel from the axis specified by ignore_background_axis
+        if self.ignore_background is not None:
+            preds, targets = self._remove_background(self.ignore_background, preds, targets)
+
+        return preds, targets
+
+    def count_tp_fp_fn_tn(
+        self, preds: torch.Tensor, targets: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        """
+        Given two tensors containing model predictions and targets, returns the number of true positives (tp), false
+        positives (fp), false negatives (fn) and true negatives (tn).
+
+        If any of the true positives, false positives, false negative or true negative counts were specified to be
+        discarded during initialization of the class, then that count will not be computed and an empty tensor will be
+        returned in its place.
+
+        Args:
+            preds (torch.Tensor): Tensor containing model predictions. Must be the same shape and format as targets.
+            targets (torch.Tensor): Tensor containing prediction targets. Must be same shape as preds.
+
+        Returns:
+            tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
+                specified dimensions for each of true positives, false positives, false negative, and true negative
+                respectively.
+        """
+        # Assert that the label dimension for these tensors is not of size 1. This occurs either when considering
+        # binary predictions or when both the preds and targets are label index encoded
+        assert self.label_dim is not None
+        assert preds.shape[self.label_dim] > 1, (
+            "Label dimension for preds tensor is less than 2. Either your label dimension is a single float value "
+            "corresponding to a binary prediction or it is a class label that needs to be vector encoded."
+        )
+        assert targets.shape[self.label_dim] > 1, (
+            "Label dimension for targets tensor is less than 2. Either your label dimension is a single float value "
+            "corresponding to a binary prediction or it is a class label that needs to be vector encoded."
+        )
+
+        # Compute counts. If were ignoring a count, set it as an empty tensor to avoid downstream errors.
+        true_positives, false_positives, false_negatives, true_negatives = self._prepare_counts_from_preds_and_targets(
+            preds, targets
+        )
+
+        axes_to_ignore = {self.label_dim, self.batch_dim} if self.batch_dim is not None else {self.label_dim}
+
+        sum_axes = tuple([i for i in range(preds.ndim) if i not in axes_to_ignore])
+
+        if len(sum_axes) != 0:
+            true_positives, false_positives, false_negatives, true_negatives = self._sum_along_axes_or_discard(
+                sum_axes, true_positives, false_positives, false_negatives, true_negatives
+            )
+
+        # If batch dim is larger than label_dim, then we re-order them so that batch_dim comes first after summation
+        if self.batch_dim is not None and self.batch_dim > self.label_dim:
+            return (
+                self._transpose_matrix_unless_empty(true_positives),
+                self._transpose_matrix_unless_empty(false_positives),
+                self._transpose_matrix_unless_empty(false_negatives),
+                self._transpose_matrix_unless_empty(true_negatives),
+            )
 
         return true_positives, false_positives, false_negatives, true_negatives
 
