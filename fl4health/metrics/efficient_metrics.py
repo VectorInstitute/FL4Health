@@ -48,8 +48,7 @@ class BinaryDice(BinaryClassificationMetric):
         measured. In the image domain, for example, this means that the Dice score is computed for each image
         separately and then averaged across images (then classes) to produce a single score. This is accomplished
         by specifying your batch_dim here. If, however, you would like to compute the Dice score over ALL TP, FP, FNs
-        across all images (then classes) as a single count, batch_dim = None is appropriate. These two notions
-        are equivalent if all images are the same size, but ARE NOT the same if they differ.
+        across all images (then classes) as a single count, batch_dim = None is appropriate.
 
         NOTE: Preds and targets are expected to have elements in the interval [0, 1] or to be thresholded, using
         that argument to be as such.
