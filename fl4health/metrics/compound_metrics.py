@@ -18,6 +18,10 @@ class EmaMetric(Metric, Generic[T]):
         """
         Exponential Moving Average (EMA) metric wrapper to apply EMA to the underlying metric.
 
+        NOTE: If the underlying metric accumulates batches during update, then updating this metric without clearing
+        in between will result in previously seen inputs and targets being a part of subsequent computes
+        (i.e. present in both previous scores and current score).
+
         Args:
             metric (T): A FL4Health compatible metric
             smoothing_factor (float, optional): Smoothing factor in range [0, 1] for the EMA. Smaller values increase
