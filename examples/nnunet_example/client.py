@@ -21,7 +21,8 @@ from nnunetv2.dataset_conversion.convert_MSD_dataset import convert_msd_dataset
 from torchmetrics.segmentation import GeneralizedDiceScore
 
 from fl4health.clients.nnunet_client import NnunetClient
-from fl4health.metrics.metrics import TorchMetric, TransformsMetric
+from fl4health.metrics.compound_metrics import TransformsMetric
+from fl4health.metrics.metrics import TorchMetric
 from fl4health.utils.load_data import load_msd_dataset
 from fl4health.utils.msd_dataset_sources import get_msd_dataset_enum, msd_num_labels
 from fl4health.utils.nnunet_utils import get_segs_from_probs, set_nnunet_env
