@@ -198,10 +198,10 @@ def test_binary_dice_metric_accumulation() -> None:
 def test_binary_dice_with_high_dimensional_tensors() -> None:
     dice = BinaryDice(name="BinaryDice", batch_dim=None, label_dim=1, zero_division=1.0, threshold=0.5)
 
-    all_ones_targets = torch.ones((10, 1, 10, 10, 10))
-    all_ones_logits = torch.ones((10, 1, 10, 10, 10))
+    predictions = torch.ones((10, 1, 10, 10, 10))
+    targets = torch.ones((10, 1, 10, 10, 10))
 
-    dice.update(all_ones_logits, all_ones_targets)
+    dice.update(predictions, targets)
     result = dice.compute()
     assert result["BinaryDice"] == approx(1.0)
 
@@ -209,54 +209,54 @@ def test_binary_dice_with_high_dimensional_tensors() -> None:
 
     # Test with random logits between 0 and 1
     np.random.seed(42)
-    random_logits = torch.Tensor(np.random.rand(10, 1, 10, 10, 10))
+    predictions = torch.Tensor(np.random.rand(10, 1, 10, 10, 10))
 
-    dice.update(random_logits, all_ones_targets)
+    dice.update(predictions, targets)
     result = dice.compute()
     assert result["BinaryDice"] == approx(0.6598031841976006, abs=0.0001)
 
     dice.clear()
 
-    all_zeros_logits = torch.zeros((10, 1, 10, 10, 10))
+    predictions = torch.zeros((10, 1, 10, 10, 10))
 
-    dice.update(all_zeros_logits, all_ones_targets)
+    dice.update(predictions, targets)
     result = dice.compute()
     assert result["BinaryDice"] == approx(0.0)
 
     dice.clear()
 
     # Test with union of zero to ensure edge case is 1.0 when zero division = 1.0
-    all_zeros_logits = torch.zeros((10, 1, 10, 10, 10))
-    all_zeros_target = torch.zeros((10, 1, 10, 10, 10))
+    predictions = torch.zeros((10, 1, 10, 10, 10))
+    targets = torch.zeros((10, 1, 10, 10, 10))
 
-    dice.update(all_zeros_logits, all_zeros_target)
+    dice.update(predictions, targets)
     result = dice.compute()
     assert result["BinaryDice"] == approx(1.0)
 
     # Test all TP's added
-    all_ones_targets = torch.ones((10, 1, 10, 10, 10))
-    all_ones_logits = torch.ones((10, 1, 10, 10, 10))
+    targets = torch.ones((10, 1, 10, 10, 10))
+    predictions = torch.ones((10, 1, 10, 10, 10))
 
-    dice.update(all_ones_logits, all_ones_targets)
+    dice.update(predictions, targets)
     result = dice.compute()
     assert result["BinaryDice"] == approx(1.0)
 
     # Change the threshold to 0.1
     dice = BinaryDice(name="BinaryDice", batch_dim=None, label_dim=1, zero_division=1.0, threshold=0.1)
-    all_ones_targets = torch.ones((10, 1, 10, 10, 10))
-    all_ones_logits = torch.ones((10, 1, 10, 10, 10))
-    assert dice(all_ones_logits, all_ones_targets) == approx(1.0)
+    targets = torch.ones((10, 1, 10, 10, 10))
+    predictions = torch.ones((10, 1, 10, 10, 10))
+    assert dice(predictions, targets) == approx(1.0)
 
     # Test with 0.25 in all entries, but with a lower threshold for classification as 1
-    all_one_quarter_logits = 0.25 * torch.ones((10, 1, 10, 10, 10))
-    assert dice(all_one_quarter_logits, all_ones_targets) == approx(1.0)
+    predictions = 0.25 * torch.ones((10, 1, 10, 10, 10))
+    assert dice(predictions, targets) == approx(1.0)
 
     # Test with a none threshold to ensure that the continuous dice coefficient is calculated
     dice = BinaryDice(name="BinaryDice", batch_dim=None)
 
-    all_one_tenth_logits = 0.1 * torch.ones((10, 1, 10, 10, 10))
+    predictions = 0.1 * torch.ones((10, 1, 10, 10, 10))
 
     intersection = 100
     union = 0.5 * 1.1 * 1000
     dice_target = intersection / (union)
-    assert dice(all_one_tenth_logits, all_ones_targets) == approx(dice_target)
+    assert dice(predictions, targets) == approx(dice_target)
