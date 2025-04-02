@@ -249,7 +249,7 @@ class BestLossTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
         if self._should_checkpoint(comparison_score):
             log(
                 INFO,
-                f"Current Loss ({comparison_score}) {self.comparison_str} Best Loss ({self.best_score}): "
+                f"Current Loss ({comparison_score}) {self.comparison_str} Best Loss ({self.best_score})\n "
                 f"Checkpointing the model as {self.checkpoint_path}",
             )
             self.best_score = comparison_score
