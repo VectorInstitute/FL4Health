@@ -4,7 +4,7 @@ from collections.abc import Sequence
 import torch
 from flwr.common.typing import Metrics
 
-from fl4health.metrics.metrics import Metric
+from fl4health.metrics.metrics_base import Metric
 from fl4health.utils.typing import TorchPredType, TorchTargetType
 
 

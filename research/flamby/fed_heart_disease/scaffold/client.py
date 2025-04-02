@@ -17,7 +17,8 @@ from torch.utils.data import DataLoader
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.scaffold_client import ScaffoldClient
-from fl4health.metrics.metrics import Accuracy, Metric
+from fl4health.metrics.metrics import Accuracy
+from fl4health.metrics.metrics_base import Metric
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType
 from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets

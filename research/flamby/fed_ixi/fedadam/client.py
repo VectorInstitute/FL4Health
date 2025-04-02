@@ -17,7 +17,8 @@ from torch.utils.data import DataLoader
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
-from fl4health.metrics.metrics import BinarySoftDiceCoefficient, Metric
+from fl4health.metrics.metrics import BinarySoftDiceCoefficient
+from fl4health.metrics.metrics_base import Metric
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType
 from research.flamby.fed_ixi.fedadam.fedadam_model import FedAdamUNet

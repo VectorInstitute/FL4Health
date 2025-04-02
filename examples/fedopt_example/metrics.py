@@ -9,7 +9,7 @@ from flwr.common.typing import Metrics
 from sklearn.metrics import confusion_matrix
 
 from examples.fedopt_example.client_data import LabelEncoder
-from fl4health.metrics.metrics import Metric
+from fl4health.metrics.metrics_base import Metric
 
 
 class Outcome:
@@ -131,7 +131,7 @@ class CompoundMetric(Metric):
                     self.outcome_dict[true_class].false_negative += count
                     self.outcome_dict[pred_class].false_positive += count
 
-    def compute(self, name: str | None) -> Metrics:
+    def compute(self, name: str | None = None) -> Metrics:
         sum_f1 = 0.0
         results: Metrics = {"total_preds": self.total_preds, "true_preds": self.true_preds}
         log_string = ""
