@@ -739,6 +739,9 @@ class MultiClassificationMetric(ClassificationMetric):
                 specified dimensions for each of true positives, false positives, false negative, and true negative
                 respectively.
         """
+        # Transform preds and targets as necessary/specified before computing counts
+        preds, targets = self._transform_tensors(preds, targets)
+
         # Assert that the label dimension for these tensors is not of size 1. This occurs either when considering
         # binary predictions or when both the preds and targets are label index encoded
         assert self.label_dim is not None
