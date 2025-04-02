@@ -7,7 +7,7 @@ from fl4health.metrics.efficient_metrics_base import ClassificationMetric, Metri
 
 
 def test_tensor_thresholding() -> None:
-    tensor_to_threshold = torch.Tensor([[1, 2, 3, 4], [6, 7, 1, 2]])
+    tensor_to_threshold = torch.Tensor([[1, 2, 3, 4], [6, 7, 1, 2]])  # shape (2, 4)
     float_thresholded = ClassificationMetric._threshold_tensor(tensor_to_threshold, 4.0)
     int_thresholded = ClassificationMetric._threshold_tensor(tensor_to_threshold, 1)
 
@@ -16,11 +16,12 @@ def test_tensor_thresholding() -> None:
 
 
 def test_remove_background() -> None:
-    preds_tensor = torch.Tensor([[[1, 2], [3, 4]], [[6, 7], [1, 2]]])
-    targets_tensor = torch.Tensor([[[2, 2], [3, 5]], [[6, 8], [2, 2]]])
+    preds_tensor = torch.Tensor([[[1, 2], [3, 4]], [[6, 7], [1, 2]]])  # shape (2, 2, 2)
+    targets_tensor = torch.Tensor([[[2, 2], [3, 5]], [[6, 8], [2, 2]]])  # shape (2, 2, 2)
     preds_with_removal, targets_with_removal = MultiClassificationMetric._remove_background(
         0, preds_tensor, targets_tensor
     )
+    # Shape should be (1,2,2) for these tensors equivalent to original[1, :, :]
     assert torch.allclose(preds_with_removal, torch.Tensor([[[6, 7], [1, 2]]]))
     assert torch.allclose(targets_with_removal, torch.Tensor([[[6, 8], [2, 2]]]))
 
@@ -46,7 +47,8 @@ def test_classification_metric_counts() -> None:
         ]
     )
     targets = torch.Tensor([0, 0, 2, 0, 2])
-    # preds are vector encoded and need to be thresholded and targets are label encoded
+
+    # preds are vector encoded and are to be thresholded and targets are label encoded
     classification_metric = MultiClassificationMetric(name="metric", label_dim=1, threshold=1)
     classification_metric.update(logits, targets)
 
@@ -57,7 +59,7 @@ def test_classification_metric_counts() -> None:
 
     classification_metric.clear()
 
-    # preds are vector encoded and need to be thresholded (by float) and targets are label encoded
+    # preds are vector encoded and are to be thresholded (by float) and targets are label encoded
     classification_metric = MultiClassificationMetric(name="metric", label_dim=1, threshold=0.5)
     classification_metric.update(logits, targets)
 
@@ -117,7 +119,7 @@ def test_classification_metric_counts() -> None:
         ]
     )
 
-    # Accumulate more counts
+    # Accumulate more counts, which should be continuous valued
     classification_metric.update(logits, targets)
     assert torch.allclose(classification_metric.true_positives, tp_target, atol=1e-4)
     assert torch.allclose(classification_metric.true_negatives, tn_target, atol=1e-4)
@@ -150,7 +152,8 @@ def test_classification_metric_counts() -> None:
         ]
     )
     targets = torch.Tensor([0, 0, 2, 0, 2])
-    # preds are vector encoded and need to be thresholded and targets are label encoded
+
+    # preds are vector encoded and are to be thresholded, targets are label encoded
     classification_metric = MultiClassificationMetric(
         name="metric", label_dim=1, threshold=1, discard={MetricOutcome.FALSE_NEGATIVE}
     )
@@ -162,23 +165,24 @@ def test_classification_metric_counts() -> None:
     assert torch.allclose(classification_metric.false_negatives, torch.Tensor([]))
 
 
-def test_error_when_label_dimension_is_singleton_or_out_of_bounds() -> None:
+def test_appropriate_errors_thrown_when_using_class() -> None:
     binary_or_both_label_index_vectors = re.compile(
         "Label dimension for preds tensor is less than 2. Either your label dimension is a single float value",
         flags=re.IGNORECASE,
     )
     preds_out_of_bounds = re.compile("Expected preds to be in range \\[0, 1\\].", flags=re.IGNORECASE)
 
+    classification_metric = MultiClassificationMetric(name="metric", label_dim=2)
+
     # Binary setting
     logits = torch.rand((2, 3, 1))
     targets = torch.rand((2, 3, 1))
-    classification_metric = MultiClassificationMetric(name="metric", label_dim=2)
     with pytest.raises(Exception, match=binary_or_both_label_index_vectors):
         classification_metric.update(logits, targets)
 
     # Label index encoded setting
-    logits = torch.argmax(torch.rand((2, 3, 2)), dim=2).unsqueeze(2)
-    targets = torch.argmax(torch.rand((2, 3, 2)), dim=2).unsqueeze(2)
+    logits = torch.argmax(torch.rand((2, 3, 2)), dim=2).unsqueeze(2)  # shape (2,3,1)
+    targets = torch.argmax(torch.rand((2, 3, 2)), dim=2).unsqueeze(2)  # shape (2,3,1)
     with pytest.raises(Exception, match=binary_or_both_label_index_vectors):
         classification_metric.update(logits, targets)
 

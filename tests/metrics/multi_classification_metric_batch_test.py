@@ -19,10 +19,12 @@ def test_classification_metric_counts() -> None:
         ]
     )
     targets = torch.Tensor([0, 0, 2, 0, 2])
-    # preds are vector encoded and need to be thresholded and targets are label encoded
+
+    # preds are vector encoded and are to be thresholded, targets are label encoded
     classification_metric = MultiClassificationMetric(name="metric", label_dim=1, batch_dim=0, threshold=1)
     classification_metric.update(logits, targets)
 
+    # Batch dimension is preserved across the counts
     assert torch.allclose(
         classification_metric.true_positives, torch.Tensor([[1, 0, 0], [1, 0, 0], [0, 0, 1], [0, 0, 0], [0, 0, 0]])
     )
@@ -38,10 +40,11 @@ def test_classification_metric_counts() -> None:
 
     classification_metric.clear()
 
-    # preds are vector encoded and need to be thresholded (by float) and targets are label encoded
+    # preds are vector encoded and are to be thresholded (by float), targets are label encoded
     classification_metric = MultiClassificationMetric(name="metric", batch_dim=0, label_dim=1, threshold=0.5)
     classification_metric.update(logits, targets)
 
+    # Batch dimension is preserved across the counts
     assert torch.allclose(
         classification_metric.true_positives, torch.Tensor([[1, 0, 0], [1, 0, 0], [0, 0, 1], [1, 0, 0], [0, 0, 1]])
     )
@@ -126,7 +129,7 @@ def test_classification_metric_counts() -> None:
         dim=0,
     )
 
-    # Accumulate more counts
+    # Accumulate more counts, predictions remain soft, so continuous counts are expected
     classification_metric.update(logits, targets)
     assert torch.allclose(classification_metric.true_positives, tp_target, atol=1e-4)
     assert torch.allclose(classification_metric.true_negatives, tn_target, atol=1e-4)
@@ -178,6 +181,7 @@ def test_classification_metric_counts() -> None:
 
     # Test when label dim is less than batch dim that everything still comes out properly
     torch.manual_seed(42)
+    # Need to rearrange the tensors to maintain the meaning of labels and batch dim while having batch dim come after
     logits = torch.rand((2, 3, 2)).transpose(0, 1).transpose(1, 2)
     targets = torch.rand((2, 3, 2)).transpose(0, 1).transpose(1, 2)
     mask_1 = targets > 0.5
@@ -219,23 +223,24 @@ def test_classification_metric_counts() -> None:
     )
 
 
-def test_error_when_label_dimension_is_singleton_or_out_of_bounds() -> None:
+def test_appropriate_errors_thrown_when_using_class() -> None:
     binary_or_both_label_index_vectors = re.compile(
         "Label dimension for preds tensor is less than 2. Either your label dimension is a single float value",
         flags=re.IGNORECASE,
     )
     preds_out_of_bounds = re.compile("Expected preds to be in range \\[0, 1\\].", flags=re.IGNORECASE)
 
+    classification_metric = MultiClassificationMetric(name="metric", batch_dim=0, label_dim=2)
+
     # Binary setting
     logits = torch.rand((2, 3, 1))
     targets = torch.rand((2, 3, 1))
-    classification_metric = MultiClassificationMetric(name="metric", batch_dim=0, label_dim=2)
     with pytest.raises(Exception, match=binary_or_both_label_index_vectors):
         classification_metric.update(logits, targets)
 
     # Label index encoded setting
-    logits = torch.argmax(torch.rand((2, 3, 2)), dim=2).unsqueeze(2)
-    targets = torch.argmax(torch.rand((2, 3, 2)), dim=2).unsqueeze(2)
+    logits = torch.argmax(torch.rand((2, 3, 2)), dim=2).unsqueeze(2)  # shape (2,3,1)
+    targets = torch.argmax(torch.rand((2, 3, 2)), dim=2).unsqueeze(2)  # shape (2,3,1)
     with pytest.raises(Exception, match=binary_or_both_label_index_vectors):
         classification_metric.update(logits, targets)
 

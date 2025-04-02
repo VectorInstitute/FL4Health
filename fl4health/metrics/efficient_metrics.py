@@ -62,23 +62,22 @@ class MultiClassDice(MultiClassificationMetric):
         zero_division: float | None = None,
     ) -> None:
         """
-        Computes the Mean DICE Coefficient between class predictions and targets with multiple classes.
+        Computes the Mean Dice Coefficient between class predictions and targets with multiple classes.
 
-        NOTE: The default behavior for Dice Scores is to compute the mean over each sample of the dataset being
+        NOTE: The default behavior for Dice Scores is to compute the mean over each SAMPLE of the dataset being
         measured. In the image domain, for example, this means that the Dice score is computed for each image
         separately and then averaged across images (then classes) to produce a single score. This is accomplished
-        by specifying your batch_dim here. If, however, you would like to compute the Dice score over ALL TP, FP, FNs
-        across all images (then classes) as a single count, batch_dim = None is appropriate. These two notions
-        are equivalent if all images are the same size, but ARE NOT the same if they differ.
+        by specifying the batch_dim here. If, however, you would like to compute the Dice score over ALL TP, FP, FNs
+        across all samples (then classes) as a single count, batch_dim = None is appropriate.
 
         NOTE: Preds and targets are expected to have elements in the interval [0, 1] or to be thresholded, using
         that argument to be as such.
 
-        NOTE: If preds and targets passed to update method have different shapes, this class will attempt to align the
-        shapes by one-hot-encoding one of the tensors if possible.
+        NOTE: If preds and targets passed to the update method have different shapes, this class will attempt to align
+        the shapes by one-hot-encoding one (but not both) of the tensors if possible.
 
-        NOTE: In the case of BINARY predictions/targets with 2 channels, the result will be the AVERAGE of the Dice
-        score for the two channels. If you want single scores associated with one of the binary labels, use
+        NOTE: In the case of BINARY predictions/targets with 2 labels, the result will be the AVERAGE of the Dice
+        score for the two labels. If you want a single score associated with one of the binary labels, use
         BinaryDice.
 
         Args:
@@ -88,24 +87,25 @@ class MultiClassDice(MultiClassificationMetric):
 
                 .. code-block:: python
 
-                .. code-block:: python
+                    p = torch.tensor([[[1., 1., 1., 0.], [0., 0., 0., 0.]], [[0., 0., 0., 1.], [1., 1., 1., 1.]]])
 
-                    p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])
+                    t = torch.tensor([[[1., 1., 0., 0.], [0., 0., 0., 0.]], [[0., 0., 1., 1.], [1., 1., 1., 1.]]])
 
-                    t = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]])
+                    self.tp = torch.Tensor([[2, 1], [0, 4]])
 
-                    self.tp = torch.Tensor([[0], [4]])
+                    self.tn = torch.Tensor([[1, 2], [4, 0]])
 
-                    self.tn = torch.Tensor([[2], [0]])
+                    self.fp = torch.Tensor([[1, 0], [0, 0]])
 
-                    self.fp = torch.Tensor([[1], [0]])
+                    self.fn = torch.Tensor([[0, 1], [0, 0]])
 
-                    self.fn = torch.Tensor([[1], [0]])
-
-                NOTE: The resulting counts will always be presented batch dimension first, then label dimension,
-                regardless of input shape.
+                In computing the Dice score, we get scores for each sample, label pair as
+                    [[2*2/(2*2+1+0), 2*1/(2*1+0+1)], [0*2/(0*2+0+0), 2*4/(2*4+0+0)]].
+                Assuming zero_division = None, the undefined calculation at (1, 0) is dropped and the remainder of the
+                individual scores are averaged to be (1/3)*(4/5 + 2/3 + 8/8) = 0.8222
             label_dim (int): Specifies which dimension in the provided tensors corresponds to the label
-                dimension. During metric computation, this dimension must have size of AT LEAST 2.
+                dimension. During metric computation, this dimension must have size of AT LEAST 2 and is required for
+                this class.
             name (str): Name of the metric. Defaults to 'MultiClassDice'
             dtype (torch.dtype): The dtype to store the counts as. If preds or targets can be continuous, specify a
                 float type. Otherwise specify an integer type to prevent overflow. Defaults to torch.float32
@@ -116,10 +116,10 @@ class MultiClassDice(MultiClassificationMetric):
                 (where its index along that dimension is the class label). Default of None leaves preds unchanged.
             ignore_background (int | None): If specified, the FIRST channel of the specified axis is removed prior to
                 computing the counts. Useful for removing background classes. Defaults to None.
-            zero_division (float | None, optional): Set what the individual dice coefficients should be when there is
-                a zero division (only true negatives present). How this argument affects the final DICE score will vary
-                depending on the DICE scores for other labels. If left as None, the resultant dice coefficients will
-                be excluded from the average/final dice score.
+            zero_division (float | None, optional): Set what the individual Dice coefficients should be when there is
+                a zero division (only true negatives present). How this argument affects the final Dice score will vary
+                depending on the Dice scores for other labels. If left as None, the resultant Dice coefficients will
+                be excluded from the average/final Dice score.
         """
         super().__init__(
             name=name,

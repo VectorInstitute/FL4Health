@@ -540,9 +540,9 @@ class BinaryClassificationMetric(ClassificationMetric):
         axes_to_ignore: set[int] = {self.label_dim} if self.label_dim is not None else set()
         if self.batch_dim is not None:
             axes_to_ignore.add(self.batch_dim)
-
         sum_axes = tuple([i for i in range(preds.ndim) if i not in axes_to_ignore])
 
+        # If sum_axes is empty, then we have nothing to do.
         if len(sum_axes) != 0:
             true_positives, false_positives, false_negatives, true_negatives = self._sum_along_axes_or_discard(
                 sum_axes, true_positives, false_positives, false_negatives, true_negatives
@@ -570,7 +570,8 @@ class BinaryClassificationMetric(ClassificationMetric):
 
     def __call__(self, input: torch.Tensor, target: torch.Tensor) -> Scalar:
         """
-        User defined convenience method that calculates the desired metric given the predictions and target.
+        User defined convenience method that calculates the desired metric given the predictions and target without
+        accumulating it into the class itself
 
         Raises:
             NotImplementedError: User must define this method.
@@ -610,8 +611,9 @@ class MultiClassificationMetric(ClassificationMetric):
         NOTE: Preds and targets are expected to have elements in the interval [0, 1] or to be thresholded, using
         that argument to be as such.
 
-        NOTE: If preds and targets passed to update method have different shapes, this class will attempt to align the
-        shapes by one-hot-encoding one of the tensors if possible.
+        NOTE: If preds and targets passed to update method have different shapes, or end up with different shapes
+        after thresholding, this class will attempt to align the shapes by one-hot-encoding one of the tensors in the
+        label dimension, if possible.
 
         Args:
             name (str): The name of the metric.
@@ -623,17 +625,17 @@ class MultiClassificationMetric(ClassificationMetric):
 
                 .. code-block:: python
 
-                    p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])
+                    p = torch.tensor([[[1., 1., 1., 0.], [0., 0., 0., 0.]], [[0., 0., 0., 1.], [1., 1., 1., 1.]]])
 
-                    t = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]])
+                    t = torch.tensor([[[1., 1., 0., 0.], [0., 0., 0., 0.]], [[0., 0., 1., 1.], [1., 1., 1., 1.]]])
 
-                    self.tp = torch.Tensor([[0], [4]])
+                    self.tp = torch.Tensor([[2, 1], [0, 4]])
 
-                    self.tn = torch.Tensor([[2], [0]])
+                    self.tn = torch.Tensor([[1, 2], [4, 0]])
 
-                    self.fp = torch.Tensor([[1], [0]])
+                    self.fp = torch.Tensor([[1, 0], [0, 0]])
 
-                    self.fn = torch.Tensor([[1], [0]])
+                    self.fn = torch.Tensor([[0, 1], [0, 0]])
 
                 NOTE: The resulting counts will always be presented batch dimension first, then label dimension,
                 regardless of input shape. Defaults to None
@@ -643,13 +645,14 @@ class MultiClassificationMetric(ClassificationMetric):
                 index of the label dimension. If a float is given, predictions below the threshold are mapped
                 to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
                 with the highest prediction where the specified axis is assumed to contain a prediction for each class
-                (where its index along that dimension is the class label). Default of None leaves preds unchanged.
+                (where its index along that dimension is the class label). Value of None leaves preds unchanged.
+                Defaults to None.
             ignore_background (int | None): If specified, the FIRST channel of the specified axis is removed prior to
                 computing the counts. Useful for removing background classes. Defaults to None.
             discard (set[MetricOutcome] | None, optional): One or several of MetricOutcome values. Specified outcome
                 counts will not be accumulated. Their associated attribute will remain as an empty pytorch tensor.
                 Useful for reducing the memory footprint of metrics that do not use all of the counts in their
-                computation
+                computation.
         """
         super().__init__(
             name=name,
@@ -671,6 +674,25 @@ class MultiClassificationMetric(ClassificationMetric):
     def _remove_background(
         cls, ignore_background: int, preds: torch.Tensor, targets: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Removes the first element (channel) from the dimension specified in ignore_background for both the preds
+        and targets tensors. For example, if preds and targets have shape (64, 10, 10, 3) and ignore_background is 3,
+        then after removing the specified background, the shapes will be (64, 10, 10, 2)
+
+        The tensors should have the same shape before and after removing the background.
+
+        Args:
+            ignore_background (int): Which dimension should have the first element (channel) removed
+            preds (torch.Tensor): predictions tensor
+            targets (torch.Tensor): targets tensor
+
+        Returns:
+            tuple[torch.Tensor, torch.Tensor]: predictions and targets tensor with the appropriate background removed
+        """
+        assert (
+            preds.shape == targets.shape
+        ), f"Preds ({preds.shape}) and targets ({targets.shape}) should have the same shape but do not."
+
         indices = torch.arange(1, preds.shape[ignore_background], device=preds.device)
         preds = torch.index_select(preds, ignore_background, indices)
         targets = torch.index_select(targets, ignore_background, indices.to(targets.device))
@@ -695,27 +717,41 @@ class MultiClassificationMetric(ClassificationMetric):
         elif matrix.numel() == 0:
             return matrix
         else:
-            raise ValueError(f"Expected tensor to either be 2D or empty but has shape {matrix}")
+            raise ValueError(f"Expected tensor to either be 2D or empty but has shape {matrix.shape}")
 
     def _transform_tensors(self, preds: torch.Tensor, targets: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
-        Does all the necessary transformations to preds and targets before computing the counts.
+        Given the predictions and targets this function performs a few possible transformations. The first is to map
+        boolean tensors to integers for computation. The second is to potentially threshold the predictions if
+        self.threshold is not None. Both are facilitated by the base class.
 
-        This may or may not include binarizing the preds, one-hot-encoding either the preds or targets, removing the
-        background channel, and or type conversions. Several assertions are also made to ensure inputs are as expected.
+        Thereafter, we attempt to align the tensors if they aren't already of the same shape. This is done by
+        attempting to expand the label encodings for class indices to one-hot vectors. See documentation of
+        ``align_pred_and_target_shapes`` for more details.
+
+        As a last possible transformation, the background is removed if self.ignore_background is defined.
+
+        Finally, we assert that the preds and targets are in [0, 1] after transformation
+
+        Args:
+            preds (torch.Tensor): Predictions tensor
+            targets (torch.Tensor): Targets tensor
+
+        Returns:
+            tuple[torch.Tensor, torch.Tensor]: Potentially transformed predictions and targets tensors, in that order
         """
 
         preds, targets = super()._transform_tensors(preds, targets)
 
         # Attempt to automatically match pred and target shape.
-        # This supports any combination of hard/soft, vector/not-vector encoded so long as label dim can be inferred.
+        # This supports any combination of hard/soft, vector/not-vector encoded
         preds, targets = align_pred_and_target_shapes(preds, targets, self.label_dim)
-
-        super()._assert_correct_ranges(preds, targets)
 
         # Remove the background channel from the axis specified by ignore_background_axis
         if self.ignore_background is not None:
             preds, targets = self._remove_background(self.ignore_background, preds, targets)
+
+        super()._assert_correct_ranges(preds, targets)
 
         return preds, targets
 
@@ -731,8 +767,8 @@ class MultiClassificationMetric(ClassificationMetric):
         returned in its place.
 
         Args:
-            preds (torch.Tensor): Tensor containing model predictions. Must be the same shape and format as targets.
-            targets (torch.Tensor): Tensor containing prediction targets. Must be same shape as preds.
+            preds (torch.Tensor): Tensor containing model predictions.
+            targets (torch.Tensor): Tensor containing prediction targets.
 
         Returns:
             tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
@@ -743,7 +779,8 @@ class MultiClassificationMetric(ClassificationMetric):
         preds, targets = self._transform_tensors(preds, targets)
 
         # Assert that the label dimension for these tensors is not of size 1. This occurs either when considering
-        # binary predictions or when both the preds and targets are label index encoded
+        # binary predictions or when both the preds and targets are label index encoded, which is not admissible for
+        # this function
         assert self.label_dim is not None
         assert preds.shape[self.label_dim] > 1, (
             "Label dimension for preds tensor is less than 2. Either your label dimension is a single float value "
@@ -760,9 +797,9 @@ class MultiClassificationMetric(ClassificationMetric):
         )
 
         axes_to_ignore = {self.label_dim, self.batch_dim} if self.batch_dim is not None else {self.label_dim}
-
         sum_axes = tuple([i for i in range(preds.ndim) if i not in axes_to_ignore])
 
+        # If sum_axes is empty, then we have nothing to do.
         if len(sum_axes) != 0:
             true_positives, false_positives, false_negatives, true_negatives = self._sum_along_axes_or_discard(
                 sum_axes, true_positives, false_positives, false_negatives, true_negatives
@@ -790,7 +827,8 @@ class MultiClassificationMetric(ClassificationMetric):
 
     def __call__(self, input: torch.Tensor, target: torch.Tensor) -> Scalar:
         """
-        User defined method that calculates the desired metric given the predictions and target.
+        User defined convenience method that calculates the desired metric given the predictions and target without
+        accumulating it into the class itself
 
         Raises:
             NotImplementedError: User must define this method.
