@@ -245,7 +245,6 @@ class BinaryDice(BinaryClassificationMetric):
         return {self.name: torch.mean(dice).item()}
 
     def __call__(self, input: torch.Tensor, target: torch.Tensor) -> Scalar:
-        input, target = self._transform_tensors(input, target)
         true_positives, false_positives, false_negatives, _ = self.count_tp_fp_fn_tn(input, target)
         dice = compute_dice_on_count_tensors(true_positives, false_positives, false_negatives, self.zero_division)
         if dice.numel() == 0:
