@@ -12,10 +12,10 @@ from torchvision.transforms import transforms
 
 from examples.models.mnist_model import MnistNet
 from fl4health.clients.basic_client import BasicClient
+from fl4health.metrics.metrics import Accuracy
 from fl4health.preprocessing.pca_preprocessor import PcaPreprocessor
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import ToNumpy, get_train_and_val_mnist_datasets
-from fl4health.utils.metrics import Accuracy
 from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 

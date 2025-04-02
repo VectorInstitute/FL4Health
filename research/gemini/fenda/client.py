@@ -11,11 +11,11 @@ from flwr.common.typing import Config, NDArrays, Scalar
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.clients.numpy_fl_client import NumpyFlClient
+from fl4health.metrics.metrics import AccumulationMeter, Meter, Metric
 
 # FENDA imports
 from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
-from fl4health.utils.metrics import AccumulationMeter, Meter, Metric
 
 # delirium model
 from research.gemini.delirium_models.fenda_mlp import FendaClassifier_d, GlobalMLP_d, LocalMLP_d

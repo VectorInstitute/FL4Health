@@ -12,11 +12,11 @@ from torch.utils.data import DataLoader
 
 from examples.models.ssl_models import CifarSslEncoder, CifarSslPredictionHead, CifarSslProjectionHead
 from fl4health.clients.basic_client import BasicClient
+from fl4health.metrics.metrics import Accuracy
 from fl4health.model_bases.fedsimclr_base import FedSimClrModel
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.load_data import ToNumpy, get_cifar10_data_and_target_tensors, split_data_and_targets
-from fl4health.utils.metrics import Accuracy
 
 
 def get_finetune_dataset(data_dir: Path, batch_size: int) -> tuple[DataLoader, DataLoader]:

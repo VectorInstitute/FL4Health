@@ -9,7 +9,7 @@ from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
-from fl4health.utils.metrics import MetricManager
+from fl4health.metrics.metric_managers import MetricManager
 
 
 class SingleNodeTrainer:

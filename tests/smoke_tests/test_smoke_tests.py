@@ -4,11 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.smoke_tests.run_smoke_test import (
-    load_metrics_from_file,
-    run_fault_tolerance_smoke_test,
-    run_smoke_test,
-)
+from tests.smoke_tests.run_smoke_test import load_metrics_from_file, run_fault_tolerance_smoke_test, run_smoke_test
 
 # skip some tests that currently fail if running locally
 IN_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS") == "true"

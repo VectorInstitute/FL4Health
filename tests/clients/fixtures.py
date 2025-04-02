@@ -27,6 +27,7 @@ from fl4health.losses.fenda_loss_config import (
     MoonContrastiveLossContainer,
     PerFclLossContainer,
 )
+from fl4health.metrics.metrics import Accuracy
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.model_bases.fenda_base import FendaModel, FendaModelWithFeatureState
 from fl4health.model_bases.masked_layers.masked_layers_utils import convert_to_masked_model
@@ -40,7 +41,6 @@ from fl4health.parameter_exchange.parameter_packer import (
     ParameterPackerAdaptiveConstraint,
     ParameterPackerWithControlVariates,
 )
-from fl4health.utils.metrics import Accuracy
 from tests.test_utils.models_for_test import CompositeConvNet
 
 

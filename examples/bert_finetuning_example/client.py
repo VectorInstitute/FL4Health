@@ -14,8 +14,8 @@ from transformers import BertForSequenceClassification
 
 from examples.bert_finetuning_example.client_data import construct_dataloaders
 from fl4health.clients.basic_client import BasicClient, TorchInputType
+from fl4health.metrics.metrics import Accuracy
 from fl4health.utils.config import narrow_dict_type
-from fl4health.utils.metrics import Accuracy
 
 
 class BertClient(BasicClient):

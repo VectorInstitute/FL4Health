@@ -6,9 +6,9 @@ from pathlib import Path
 import torch
 from flwr.common.logger import log
 
+from fl4health.metrics.metrics import Accuracy
 from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.load_data import load_cifar10_test_data
-from fl4health.utils.metrics import Accuracy
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 from research.cifar10.preprocess import get_test_preprocessed_data
 from research.cifar10.utils import (
