@@ -7,7 +7,7 @@ from torch.optim import Optimizer
 
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
-from fl4health.metrics.metrics import Metric
+from fl4health.metrics.metrics_base import Metric
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.reporting.base_reporter import BaseReporter

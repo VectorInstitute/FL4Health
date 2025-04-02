@@ -15,7 +15,8 @@ from examples.models.sequential_split_models import (
     SequentialLocalPredictionHeadMnist,
 )
 from fl4health.clients.fedper_client import FedPerClient
-from fl4health.metrics.metrics import Accuracy, Metric
+from fl4health.metrics.metrics import Accuracy
+from fl4health.metrics.metrics_base import Metric
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_mnist_data

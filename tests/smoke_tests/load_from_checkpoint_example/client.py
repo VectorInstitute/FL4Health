@@ -14,7 +14,8 @@ from examples.models.cnn_model import Net
 from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
-from fl4health.metrics.metrics import Accuracy, Metric
+from fl4health.metrics.metrics import Accuracy
+from fl4health.metrics.metrics_base import Metric
 from fl4health.reporting import JsonReporter
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type

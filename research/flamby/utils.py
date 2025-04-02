@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from torchinfo import summary
 
 from fl4health.metrics.metric_managers import MetricManager
-from fl4health.metrics.metrics import Metric
+from fl4health.metrics.metrics_base import Metric
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
