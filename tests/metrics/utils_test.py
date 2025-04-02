@@ -23,7 +23,6 @@ SAME_SHAPE_PATTERN = re.compile(
 
 
 def test_infer_label_dim() -> None:
-
     preds = torch.randn((2, 5, 3))
     targets = torch.randn((2, 3))
     assert infer_label_dim(preds, targets) == 1
@@ -122,10 +121,11 @@ def get_dummy_classification_tensors(
 def test_map_label_index_tensor_to_one_hot() -> None:
     # Small example
     label_dim = 2
+    # Each of the entries corresponds to a label index
     label_index_tensor = torch.Tensor([[[1, 2], [3, 0]], [[1, 1], [2, 3]], [[0, 1], [1, 1]]])  # shape: (3, 2, 2)
     label_index_tensor = label_index_tensor.unsqueeze(label_dim)
     one_hot_tensor = map_label_index_tensor_to_one_hot(label_index_tensor, torch.Size([3, 2, 4, 2]), label_dim)
-    # We should have expanded the label indices into the 2nd dimension
+    # We should have expanded the label indices into the 3rd dimension
     assert torch.allclose(one_hot_tensor[0, 0, :, 0], torch.Tensor([0, 1, 0, 0]))
     assert torch.allclose(one_hot_tensor[0, 1, :, 0], torch.Tensor([0, 0, 0, 1]))
     assert torch.allclose(one_hot_tensor[1, 1, :, 1], torch.Tensor([0, 0, 0, 1]))
@@ -139,7 +139,7 @@ def test_map_label_index_tensor_to_one_hot() -> None:
     soft_vector_encoded = torch.rand(size=tensor_shape)
     soft_vector_encoded = torch.softmax(soft_vector_encoded, dim=label_dim)
 
-    label_index_encoded = torch.argmax(soft_vector_encoded, dim=label_dim)
+    label_index_encoded = torch.argmax(soft_vector_encoded, dim=label_dim)  # shape (2, 5, 9, 3)
 
     # Force soft_vector_encoded to be one-hot encoded
     one_hot_tensor = torch.zeros(size=tensor_shape)
@@ -208,21 +208,23 @@ def test_multiclass_align() -> None:
 
 
 def test_align_exceptions() -> None:
-    """Tests that the proper exceptions are raised when attempting to align pred and target shapes."""
 
-    # Channel dim can not be resolved if shapes differ in more than 1 dimension
-    hard_preds_ohe, soft_preds_ohe, _ = get_dummy_classification_tensors((2, 3, 5, 9, 3), 1)
-    hard_targets_ohe, _, hard_targets = get_dummy_classification_tensors((2, 3, 5, 9, 6), 1)
+    # Label dim can not be resolved if shapes differ in more than 1 dimension
+    one_hot_tensor_preds, soft_vector_encoded_preds, _ = get_dummy_classification_tensors((2, 3, 5, 9, 3), 1)
+    one_hot_tensor_targets, _, label_index_encoded_targets = get_dummy_classification_tensors((2, 3, 5, 9, 6), 1)
 
     with pytest.raises(Exception, match=MULTIPLE_AXES_PATTERN):
-        align_pred_and_target_shapes(soft_preds_ohe, hard_targets)
+        # soft_vector_encoded_preds: (2, 3, 5, 9, 3), label_index_encoded_targets: (2, 5, 9, 6)
+        align_pred_and_target_shapes(soft_vector_encoded_preds, label_index_encoded_targets)
 
     with pytest.raises(Exception, match=SAME_DIM_DIFFERENT_SIZE_PATTERN):
-        align_pred_and_target_shapes(hard_preds_ohe, hard_targets_ohe)
+        # one_hot_tensor_preds: (2, 3, 5, 9, 3), one_hot_tensor_targets: (2, 3, 5, 9, 6)
+        align_pred_and_target_shapes(one_hot_tensor_preds, one_hot_tensor_targets)
 
     # Channel dim can not be resolved if the dimension directly afterwards has the same size
-    hard_preds_ohe, soft_preds_ohe, _ = get_dummy_classification_tensors((2, 3, 3, 9, 6), 1)
-    hard_targets_ohe, _, hard_targets = get_dummy_classification_tensors((2, 3, 3, 9, 6), 1)
+    one_hot_tensor_preds, soft_vector_encoded_preds, _ = get_dummy_classification_tensors((2, 3, 3, 9, 6), 1)
+    one_hot_tensor_targets, _, label_index_encoded_targets = get_dummy_classification_tensors((2, 3, 3, 9, 6), 1)
 
     with pytest.raises(Exception, match=AXES_OF_SAME_SIZE_PATTERN):
-        align_pred_and_target_shapes(soft_preds_ohe, hard_targets)
+        # soft_vector_encoded_preds: (2, 3, 3, 9, 6), label_index_encoded_targets: (2, 3, 9, 6)
+        align_pred_and_target_shapes(soft_vector_encoded_preds, label_index_encoded_targets)
