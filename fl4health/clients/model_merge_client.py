@@ -10,7 +10,7 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch.utils.data import DataLoader
 
 from fl4health.metrics.metric_managers import MetricManager
-from fl4health.metrics.metrics import Metric
+from fl4health.metrics.metrics_base import Metric
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
