@@ -25,7 +25,7 @@ from torch.utils.data import DataLoader
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.metrics.metric_managers import MetricManager
-from fl4health.metrics.metrics import Metric
+from fl4health.metrics.metrics_base import Metric
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.logging import LoggingMode

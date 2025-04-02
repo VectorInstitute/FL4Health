@@ -6,12 +6,13 @@ import torch
 from fl4health.metrics.efficient_metrics_base import BinaryClassificationMetric, MetricOutcome
 
 
-def test_classification_metric_counts() -> None:
+def test_binary_classification_metric_counts() -> None:
     torch.manual_seed(42)
 
     logits = torch.Tensor([[3.0, 1.0], [0.88, 0.06], [0.1, 0.3], [0.9, 0.3], [0.5, 3.0]])
     targets = torch.Tensor([[1, 0], [1, 0], [0, 1], [1, 0], [0, 1]])
-    # preds are vector encoded and need to be thresholded and targets are also vector encoded
+
+    # preds are vector encoded and are to be thresholded and targets are also vector encoded
     classification_metric = BinaryClassificationMetric(name="metric", label_dim=1, batch_dim=0, threshold=1)
     classification_metric.update(logits, targets)
 
@@ -31,7 +32,7 @@ def test_classification_metric_counts() -> None:
     assert torch.allclose(classification_metric.false_negatives, torch.Tensor([[0], [0], [0], [0], [0]]))
     assert torch.allclose(classification_metric.false_positives, torch.Tensor([[0], [0], [0], [0], [0]]))
 
-    # preds are vector encoded and need to be thresholded (by float) and targets are label encoded
+    # preds are vector encoded and are to be thresholded (by float) and targets are label encoded
     classification_metric = BinaryClassificationMetric(name="metric", label_dim=1, batch_dim=0, threshold=0.5)
     classification_metric.update(logits, targets)
 
@@ -42,7 +43,7 @@ def test_classification_metric_counts() -> None:
 
     classification_metric.clear()
 
-    # # Predictions are SOFT and not thresholded. So we get continuous counts
+    # Predictions are SOFT and not {0, 1}. So we get continuous counts
     logits = torch.rand((2, 3, 2))
     targets = torch.rand((2, 3, 2))
     mask_1 = targets > 0.5
@@ -75,14 +76,14 @@ def test_classification_metric_counts() -> None:
         [[(1 - 0.9150) + (1 - 0.6009)], [(1 - 0.7936) + (1 - 0.5936)], [1 - 0.2695], [(1 - 0.0753) + (1 - 0.8090)]]
     )
 
-    # Accumulate more counts
+    # Accumulate more counts, which should be continuous valued
     classification_metric.update(logits, targets)
     assert torch.allclose(classification_metric.true_positives, tp_target, atol=1e-4)
     assert torch.allclose(classification_metric.true_negatives, tn_target, atol=1e-4)
     assert torch.allclose(classification_metric.false_positives, fp_target, atol=1e-4)
     assert torch.allclose(classification_metric.false_negatives, fn_target, atol=1e-4)
 
-    # Preds are label encoded and targets implicitly encoded
+    # Preds are continuous values, both preds and targets implicitly encoded (i.e. not vector encoded)
     logits = torch.rand((2, 3))
     targets = torch.rand((2, 3))
     mask_1 = targets > 0.5
@@ -125,6 +126,7 @@ def test_classification_metric_counts() -> None:
     # Test that discarding happens properly
     logits = torch.Tensor([[3.0, 1.0], [0.88, 0.06], [0.1, 0.3], [0.9, 0.3], [0.5, 3.0]])
     targets = torch.Tensor([[1, 0], [1, 0], [0, 1], [1, 0], [0, 1]])
+
     # preds are vector encoded and need to be thresholded and targets are also vector encoded
     classification_metric = BinaryClassificationMetric(
         name="metric",
@@ -142,6 +144,7 @@ def test_classification_metric_counts() -> None:
 
     # Test when label dim is less than batch dim that everything still comes out properly
     torch.manual_seed(42)
+    # Need to rearrange the tensors to maintain the meaning of labels and batch dim while having batch dim come after
     logits = torch.rand((2, 3, 2)).transpose(0, 1).transpose(1, 2)
     targets = torch.rand((2, 3, 2)).transpose(0, 1).transpose(1, 2)
     mask_1 = targets > 0.5
@@ -170,7 +173,7 @@ def test_appropriate_errors_thrown_when_using_class() -> None:
     bad_pos_label_value = re.compile("pos_label must be either 0 or 1", flags=re.IGNORECASE)
     preds_and_targets_different_shapes = re.compile("Preds and targets must have the same shape", flags=re.IGNORECASE)
 
-    # Multi-class setting
+    # Multi-class setting (binary class not valid)
     logits = torch.rand((2, 3, 3))
     targets = torch.rand((2, 3, 3))
     classification_metric = BinaryClassificationMetric(name="metric", label_dim=2, batch_dim=0)
@@ -188,6 +191,7 @@ def test_appropriate_errors_thrown_when_using_class() -> None:
     with pytest.raises(Exception, match=preds_out_of_bounds):
         classification_metric.update(logits, targets)
 
+    # Preds/targets are not of the same shape
     logits = torch.rand((2, 3))
     targets = torch.rand((2, 3, 1))
     classification_metric = BinaryClassificationMetric(name="metric", batch_dim=0)
