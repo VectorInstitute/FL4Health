@@ -242,14 +242,6 @@ class ClassificationMetric(Metric, ABC):
             preds (torch.Tensor): Predictions tensor
             targets (torch.Tensor): Targets tensor
         """
-        # Transform preds and targets as necessary/specified before computing counts
-        preds, targets = self._transform_tensors(preds, targets)
-
-        # Make sure after transformation the preds and targets have the right shape
-        assert (
-            preds.shape == targets.shape
-        ), f"Preds and targets must have the same shape but got {preds.shape} and {targets.shape} respectively."
-
         # Get tp, fp, fn and tn counts for current update. If a count is discarded, then an empty tensor is returned.
         tp, fp, fn, tn = self.count_tp_fp_fn_tn(preds, targets)
 
@@ -519,6 +511,14 @@ class BinaryClassificationMetric(ClassificationMetric):
                 specified dimensions for each of true positives, false positives, false negative, and true negative
                 respectively.
         """
+
+        # Transform preds and targets as necessary/specified before computing counts
+        preds, targets = self._transform_tensors(preds, targets)
+
+        # Make sure after transformation the preds and targets have the right shape
+        assert (
+            preds.shape == targets.shape
+        ), f"Preds and targets must have the same shape but got {preds.shape} and {targets.shape} respectively."
 
         # Assert that the label dimension for these tensors is of size 2 at most.
         if self.label_dim is not None:
