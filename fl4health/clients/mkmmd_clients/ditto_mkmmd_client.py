@@ -10,7 +10,7 @@ from flwr.common.typing import Config, Scalar
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointAndStateModule
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.losses.mkmmd_loss import MkMmdLoss
-from fl4health.metrics.metrics import Metric
+from fl4health.metrics.metrics_base import Metric
 from fl4health.model_bases.feature_extractor_buffer import FeatureExtractorBuffer
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.client import clone_and_freeze_model

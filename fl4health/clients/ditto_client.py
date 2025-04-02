@@ -10,7 +10,7 @@ from torch.optim import Optimizer
 
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.adaptive_drift_constraint_client import AdaptiveDriftConstraintClient
-from fl4health.metrics.metrics import Metric
+from fl4health.metrics.metrics_base import Metric
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type

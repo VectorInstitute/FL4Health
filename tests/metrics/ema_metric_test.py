@@ -59,10 +59,12 @@ def test_ema_warning_on_bad_type(caplog: LogCaptureFixture) -> None:
     dummy_metric = DummyMetric("dummy")
     ema_dummy_metric = EmaMetric(dummy_metric, 0.2, name="dummy")
 
-    metrics_1 = ema_dummy_metric.compute("bad_ema")
+    # Should get a warning about the DummyMetric returning a string value for a metric
+    metrics_1 = ema_dummy_metric.compute()
     assert metrics_1["acc"] == 1.0
 
     assert "These values will be ignored in subsequent computations." in caplog.text
 
-    metrics_2 = ema_dummy_metric.compute("bad_ema")
+    # Compute gets larger each time its called for this metric (we started at 1.0)
+    metrics_2 = ema_dummy_metric.compute()
     assert metrics_2["acc"] == approx(0.8 * 1.0 + 0.2 * 2.0)

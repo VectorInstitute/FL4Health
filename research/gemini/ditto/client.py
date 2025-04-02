@@ -19,7 +19,7 @@ from utils.random import set_all_random_seeds
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchModuleCheckpointer
 from fl4health.clients.ditto_client import DittoClient
-from fl4health.metrics.metrics import Metric
+from fl4health.metrics.metrics_base import Metric
 from fl4health.utils.losses import LossMeterType
 
 # Models

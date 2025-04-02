@@ -15,7 +15,7 @@ from examples.fedopt_example.metrics import CompoundMetric
 from examples.models.lstm_model import LSTM
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient, TorchInputType
-from fl4health.metrics.metrics import Metric
+from fl4health.metrics.metrics_base import Metric
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
 

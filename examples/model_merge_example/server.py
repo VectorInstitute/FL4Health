@@ -16,7 +16,8 @@ from examples.models.cnn_model import MnistNet
 from fl4health.checkpointing.checkpointer import LatestTorchModuleCheckpointer
 from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.metrics.metric_managers import MetricManager
-from fl4health.metrics.metrics import Accuracy, Metric
+from fl4health.metrics.metrics import Accuracy
+from fl4health.metrics.metrics_base import Metric
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.model_merge_server import ModelMergeServer
 from fl4health.strategies.model_merge_strategy import ModelMergeStrategy
