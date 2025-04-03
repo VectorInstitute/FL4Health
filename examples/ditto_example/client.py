@@ -43,15 +43,7 @@ class MnistClient(BasicClient):
         return torch.nn.CrossEntropyLoss()
 
 
-class MnistDittoClient(DittoPersonalizedMixin, MnistClient):
-
-    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
-        # Note that the global optimizer operates on self.global_model.parameters()
-        global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=0.01)
-        optimizer_dict = super().get_optimizer(config=Config)
-        optimizer_dict["global"] = global_optimizer
-        return optimizer_dict
-
+MnistDittoClient = make_it_personal(MnistClient, "ditto")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
