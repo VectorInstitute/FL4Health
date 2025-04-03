@@ -26,7 +26,7 @@ class BertClient(BasicClient):
         learning_rate: float,
     ) -> None:
         super().__init__(
-            data_path=Path("null"), # Path is ignored here, as we use HF load_dataset
+            data_path=Path("null"),  # Path is ignored here, as we use HF load_dataset
             metrics=metrics,
             device=device,
             progress_bar=True,
