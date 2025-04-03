@@ -496,7 +496,9 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">FedPCAClient</span><span class="p">(</span><span class="n">NumPyClient</span><span class="p">):</span>
 <div class="viewcode-block" id="FedPCAClient.__init__">
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.fed_pca_client.html#fl4health.clients.fed_pca_client.FedPCAClient.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">model_save_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">model_save_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">client_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Client that facilitates the execution of federated PCA.</span>
 
@@ -504,13 +506,14 @@
 <span class="sd">            data_path (Path): path to the data to be used to load the data for client-side training</span>
 <span class="sd">            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often &quot;cpu&quot; or</span>
 <span class="sd">                &quot;cuda&quot;</span>
-<span class="sd">            model_save_path (Path): Path to save the PCA components for use later, perhaps in dimensionality reduction</span>
+<span class="sd">            model_save_dir (Path): Dir to save the PCA components for use later, perhaps in dimensionality reduction</span>
+<span class="sd">            client_name (str | None, optional): client name, mainly used for saving components. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">client_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_hash</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_hash</span><span class="p">()</span> <span class="k">if</span> <span class="n">client_name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">client_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">:</span> <span class="n">PcaModule</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data_path</span> <span class="o">=</span> <span class="n">data_path</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">model_save_path</span> <span class="o">=</span> <span class="n">model_save_path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_save_dir</span> <span class="o">=</span> <span class="n">model_save_dir</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">train_data_tensor</span><span class="p">:</span> <span class="n">Tensor</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">val_data_tensor</span><span class="p">:</span> <span class="n">Tensor</span>
@@ -726,7 +729,7 @@
 <span class="sd">        Method to save the FedPCA computed principal components to disk. These can be reloaded to allow for</span>
 <span class="sd">        dimensionality reduction in subsequent FL training.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">final_model_save_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">model_save_path</span><span class="si">}</span><span class="s2">/client_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">generate_hash</span><span class="p">()</span><span class="si">}</span><span class="s2">_pca.pt&quot;</span>
+        <span class="n">final_model_save_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_save_dir</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;client_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">client_name</span><span class="si">}</span><span class="s2">_pca.pt&quot;</span>
         <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">final_model_save_path</span><span class="p">)</span>
         <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Model parameters saved to </span><span class="si">{</span><span class="n">final_model_save_path</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span></div>
 </div>
