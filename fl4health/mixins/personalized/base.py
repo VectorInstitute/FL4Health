@@ -1,8 +1,9 @@
 """Base Personalized Mixins"""
 
-from enum import Enum
-from fl4health.clients.basic_client import BasicClient
 from abc import ABC, abstractmethod
+from enum import Enum
+
+from fl4health.clients.basic_client import BasicClient
 
 
 class PersonalizedMethod(str, Enum):
