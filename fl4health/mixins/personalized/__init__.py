@@ -1,10 +1,9 @@
-from .ditto import DittoPersonalizedMixin
-from fl4health.clients.basic_client import BasicClient
-
 from abc import ABC, abstractmethod
 from enum import Enum
 
 from fl4health.clients.basic_client import BasicClient
+
+from .ditto import DittoPersonalizedMixin
 
 
 class PersonalizedModes(str, Enum):
