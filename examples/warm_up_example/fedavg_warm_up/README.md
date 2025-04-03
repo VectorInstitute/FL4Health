@@ -1,5 +1,5 @@
 # FedAvg Warm Up Federated Learning Example
-In this example, FedAvg is applied to a modified version of the MNIST dataset that is non--IID example as a warm up to other federated learning(FL) algorithms.
+In this example, FedAvg is applied to a modified version of the MNIST dataset that is non-IID example as a warm up to other federated learning(FL) algorithms.
 The FL server expects three clients to be spun up (i.e. it will wait until three clients report in before starting training). Each client has it's own modified version of the MNIST dataset. This modification essentially subsamples a certain number from the original training and validation sets of MNIST in order to synthetically induce local variations in the statistical properties of the clients training/validation data. In theory, the models should be able to perform well on their local data while learning from other clients data that has different statistical properties. The proportion of labels at each client is determined by Dirichlet distribution across the classes. The lower the beta parameter is for each class, the higher the degree of the label heterogeneity.
 
 The server has some custom metrics aggregation and uses Federated Averaging as its server-side optimization.
@@ -13,7 +13,7 @@ In order to run the example, first ensure you have [installed the dependencies i
 ## Starting Server
 
 The next step is to start the server by running
-```
+```bash
 python -m examples.fedprox_example.server --config_path /path/to/config.yaml --seed "SEED"
 ```
 
@@ -27,8 +27,8 @@ from the FL4Health directory. The following arguments must be present in the spe
 
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the three
 clients. This is done by simply running (remembering to activate your environment)
-```
-python3 -m examples.warm_up_example.fedavg_warm_up.client --dataset_path /path/to/data --seed "SEED" --checkpoint_dir /path/to/checkpointing/directory
+```bash
+python3 -m examples.warm_up_example.fedavg_warm_up.client --dataset_path /path/to/data --seed "SEED" --checkpoint_dir /path/to/checkpointing/directory --client_name "name_for_client"
 ```
 
 **NOTE**: The argument `dataset_path` has two functions, depending on whether the dataset exists locally or not. If the dataset already exists at the path specified, it will be loaded from there. Otherwise, the dataset will be automatically downloaded to the path specified and used in the run.

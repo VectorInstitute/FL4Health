@@ -11,7 +11,7 @@ In order to run the example, first ensure you have [installed the dependencies i
 ## Dataset Partitioning
 
 Before starting the example, one needs to partition the original news classification dataset, found under `examples/datasets/agnews_data/datasets/AG_NEWS/train.csv` into distinct datasets that will be read by each of the clients. This is done by running
-```
+```bash
 python -m examples.datasets.partition_dataset --original_dataset_path /path/to/ag_news/train.csv
 --partition_dir /path/to/partition/destination/
 --partitioner_config_path examples/datasets/agnews_data/partitioner_config.json
@@ -28,7 +28,7 @@ These arguments specify the following
 ## Starting Server
 
 The next step is to start the server by running something like
-```
+```bash
 python -m examples.fedopt_example.server   --config_path /path/to/config.yaml
 ```
 from the FL4Health directory. The following arguments must be present in the specified config file:
@@ -44,7 +44,7 @@ from the FL4Health directory. The following arguments must be present in the spe
 
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the `n_clients`
 clients expected by the server. This is done by simply running (remembering to activate your environment)
-```
+```bash
 python -m examples.fedopt_example.client --dataset_path <path_to_local_dataset>
 ```
 * `path_to_local_dataset` should correspond to the partition destination provide in running the partition_dataset script.

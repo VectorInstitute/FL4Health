@@ -1,3 +1,4 @@
+import os
 import random
 import string
 from logging import INFO
@@ -16,7 +17,7 @@ from fl4health.utils.config import narrow_dict_type
 
 
 class FedPCAClient(NumPyClient):
-    def __init__(self, data_path: Path, device: torch.device, model_save_path: Path) -> None:
+    def __init__(self, data_path: Path, device: torch.device, model_save_dir: Path) -> None:
         """
         Client that facilitates the execution of federated PCA.
 
@@ -24,13 +25,13 @@ class FedPCAClient(NumPyClient):
             data_path (Path): path to the data to be used to load the data for client-side training
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
                 "cuda"
-            model_save_path (Path): Path to save the PCA components for use later, perhaps in dimensionality reduction
+            model_save_dir (Path): Dir to save the PCA components for use later, perhaps in dimensionality reduction
         """
         self.client_name = self.generate_hash()
         self.model: PcaModule
         self.initialized = False
         self.data_path = data_path
-        self.model_save_path = model_save_path
+        self.model_save_dir = model_save_dir
         self.device = device
         self.train_data_tensor: Tensor
         self.val_data_tensor: Tensor
@@ -216,6 +217,6 @@ class FedPCAClient(NumPyClient):
         Method to save the FedPCA computed principal components to disk. These can be reloaded to allow for
         dimensionality reduction in subsequent FL training.
         """
-        final_model_save_path = f"{self.model_save_path}/client_{self.generate_hash()}_pca.pt"
+        final_model_save_path = os.path.join(self.model_save_dir, f"client_{self.generate_hash()}_pca.pt")
         torch.save(self.model, final_model_save_path)
         log(INFO, f"Model parameters saved to {final_model_save_path}.")
