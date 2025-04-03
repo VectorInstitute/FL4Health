@@ -6,6 +6,7 @@ from typing import cast
 
 import torch
 import torch.nn as nn
+from torch.optim import Optimizer
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 
@@ -37,6 +38,33 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixi
     def optimizer_keys(self) -> list[str]:
         """Returns the optimizer keys."""
         return ["local", "global"]
+
+    def _copy_optimizer_with_new_params(self, original_optimizer):
+        OptimClass = original_optimizer.__class__
+        state_dict = original_optimizer.state_dict()
+
+        # Extract hyperparameters from param_groups
+        # We only take the first group's hyperparameters, excluding 'params' and 'lr'
+        param_group = state_dict["param_groups"][0]
+        optimizer_kwargs = {k: v for k, v in param_group.items() if k not in ("params", "lr")}
+
+        return OptimClass(self.global_model.parameters(), lr=param_group["lr"], **optimizer_kwargs)
+
+    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
+        # Note that the global optimizer operates on self.global_model.parameters()
+        optimizer = super().get_optimizer(config=Config)
+        if isinstance(optimizer, dict):
+            try:
+                original_optimizer = next(el for el in optimizer.values() if isinstance(el, Optimizer))
+            except StopIteration:
+                raise ValueError("Unable to find an ~torch.optim.Optimizer object.")
+        elif isinstance(optimizer, Optimizer):
+            original_optimizer = optimizer
+        else:
+            raise ValueError("`super().get_optimizer()` returned an invalid type.")
+
+        global_optimizer = self._copy_optimizer_with_new_params(original_optimizer)
+        return {"local": original_optimizer, "global": global_optimizer}
 
     def get_global_model(self, config: Config) -> nn.Module:
         """
