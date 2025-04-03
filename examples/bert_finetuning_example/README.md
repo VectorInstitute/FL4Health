@@ -33,8 +33,9 @@ from the FL4Health directory. The following arguments must be present in the spe
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the two
 clients. This is done by simply running (remembering to activate your environment)
 ```bash
-python -m examples.bert_finetuning_example.client --dataset_path /path/to/data
+python -m examples.bert_finetuning_example.client
 ```
+NOTE: The dataset is loaded explicitly from Hugging Face and therefore the `data_path` is not specified.
 
 After both clients have been started, federated learning should commence.
 
