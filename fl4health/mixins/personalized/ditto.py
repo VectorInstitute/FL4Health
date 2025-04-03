@@ -6,9 +6,9 @@ from typing import cast
 
 import torch
 import torch.nn as nn
-from torch.optim import Optimizer
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
+from torch.optim import Optimizer
 
 from fl4health.mixins.adaptive_drift_contrained import AdaptiveDriftConstrainedMixin
 from fl4health.mixins.personalized.base import BasePersonalizedMixin
