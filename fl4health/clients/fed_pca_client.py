@@ -217,6 +217,6 @@ class FedPCAClient(NumPyClient):
         Method to save the FedPCA computed principal components to disk. These can be reloaded to allow for
         dimensionality reduction in subsequent FL training.
         """
-        final_model_save_path = os.path.join(self.model_save_dir, f"client_{self.generate_hash()}_pca.pt")
+        final_model_save_path = self.model_save_dir / f"client_{self.generate_hash()}_pca.pt"
         torch.save(self.model, final_model_save_path)
         log(INFO, f"Model parameters saved to {final_model_save_path}.")
