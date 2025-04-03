@@ -20,11 +20,10 @@ from typing import cast
 
 class AdaptiveDriftConstrainedMixin:
 
-    def __init__(self):
-        self._drift_penalty_tensors = None
-        self._parameter_exchanger = None
-        self._drift_penalty_weight = None
-        self._loss_for_adaptation = None
+    _drift_penalty_tensors = None
+    _parameter_exchanger = None
+    _drift_penalty_weight = None
+    _loss_for_adaptation = None
 
     @property
     def drift_penalty_tensors(self) -> list[torch.Tensor] | None:

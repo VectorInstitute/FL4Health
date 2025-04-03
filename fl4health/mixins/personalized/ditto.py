@@ -5,29 +5,32 @@ import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
-from fl4health.mixins.personalized.base import BasePersonalizedMixin
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
+from fl4health.mixins.personalized.base import BasePersonalizedMixin
+from fl4health.mixins.adaptive_drift_contrained import AdaptiveDriftConstrainedMixin
 
 from abc import abstractmethod, ABC
 from logging import INFO
 from typing import cast
 
 
-class DittoPersonalizedMixin(ABC, BasePersonalizedMixin):
+class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixin, ABC):
 
-    def get_parameter_exchanger(self) -> FullParameterExchanger:
-        if parameter_exchanger := self.parameter_exchanger:
-            return parameter_exchanger
-        else:
-            raise ValueError
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._global_model = None
 
     @property
-    @abstractmethod
-    def global_model(self) -> torch.nn.Module:
+    def global_model(self) -> torch.nn.Module | None:
         """Gets the global model."""
+        return self._global_model
+
+    @global_model.setter
+    def global_model(self, value: torch.nn.Module) -> None:
+        self._global_model = value
 
     @property
     def optimizer_keys(self) -> list[str]:
@@ -102,7 +105,6 @@ class DittoPersonalizedMixin(ABC, BasePersonalizedMixin):
             # to the same weights in initialize_all_model_weights
             return FullParameterExchanger().push_parameters(self.model, config=config)
         else:
-            parameter_exchanger = self.get_parameter_exchanger()
             parameter_exchanger = cast(FullParameterExchanger, self.parameter_exchanger)
             # NOTE: the global model weights are sent to the server here.
             global_model_weights = parameter_exchanger.push_parameters(self.global_model, config=config)
@@ -133,7 +135,6 @@ class DittoPersonalizedMixin(ABC, BasePersonalizedMixin):
         """
         # Make sure that the proper components exist.
         assert self.global_model is not None and self.model is not None and self.parameter_exchanger is not None
-        parameter_exchanger = self.get_parameter_exchanger()
         parameter_exchanger = cast(FullParameterExchanger, self.parameter_exchanger)
         server_model_state, self.drift_penalty_weight = parameter_exchanger.unpack_parameters(parameters)
         log(INFO, f"Lambda weight received from the server: {self.drift_penalty_weight}")
@@ -156,7 +157,7 @@ class DittoPersonalizedMixin(ABC, BasePersonalizedMixin):
             parameters (NDArrays): Model parameters to be injected into the client model
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
         """
-        parameter_exchanger = self.get_parameter_exchanger()
+        parameter_exchanger = cast(FullParameterExchanger, self.parameter_exchanger)
         parameter_exchanger.pull_parameters(parameters, self.model, config)
         parameter_exchanger.pull_parameters(parameters, self.global_model, config)
 

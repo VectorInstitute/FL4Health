@@ -9,10 +9,10 @@ class PersonalizedMethod(str, Enum):
     DITTO = "ditto"
 
 
-class BasePersonalizedMixin(ABC):
-    """A Mixin for transforming an FL Client to a personalized one."""
+class BasePersonalizedMixin:
+    """A Mixin for transforming an FL Client to a personalized one.
 
-    @abstractmethod
-    def to_personalized(self, method: PersonalizedMethod) -> BasicClient:
-        """Returns a personalized client."""
-        raise NotImplementedError
+    This mixin is used for validations.
+    """
+
+    pass
