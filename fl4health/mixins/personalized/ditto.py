@@ -1,20 +1,21 @@
 """Ditto Personalized Mixin"""
 
+from abc import ABC, abstractmethod
+from logging import INFO
+from typing import cast
+
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
-from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
+
+from fl4health.mixins.adaptive_drift_contrained import AdaptiveDriftConstrainedMixin
+from fl4health.mixins.personalized.base import BasePersonalizedMixin
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.config import narrow_dict_type
+from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
-from fl4health.mixins.personalized.base import BasePersonalizedMixin
-from fl4health.mixins.adaptive_drift_contrained import AdaptiveDriftConstrainedMixin
-
-from abc import abstractmethod, ABC
-from logging import INFO
-from typing import cast
 
 
 class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixin, ABC):

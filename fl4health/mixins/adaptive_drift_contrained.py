@@ -2,6 +2,7 @@
 
 from collections.abc import Sequence
 from logging import INFO
+from typing import cast
 
 import torch
 from flwr.common.logger import log
@@ -14,8 +15,6 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 from fl4health.utils.losses import TrainingLosses
 from fl4health.utils.typing import TorchFeatureType, TorchPredType, TorchTargetType
-
-from typing import cast
 
 
 class AdaptiveDriftConstrainedMixin:
