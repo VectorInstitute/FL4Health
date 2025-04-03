@@ -12,7 +12,8 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
-from fl4health.clients.ditto_client import DittoClient
+from fl4health.clients.basic_client import BasicClient
+from fl4health.mixins.personalized import make_it_personal
 from fl4health.reporting import JsonReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_mnist_data
@@ -21,7 +22,7 @@ from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
-class MnistDittoClient(DittoClient):
+class MnistClient(BasicClient):
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         sample_percentage = narrow_dict_type(config, "downsampling_ratio", float)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=sample_percentage, beta=1)
@@ -34,13 +35,14 @@ class MnistDittoClient(DittoClient):
 
     def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
         # Note that the global optimizer operates on self.global_model.parameters()
-        global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=0.01)
         local_optimizer = torch.optim.AdamW(self.model.parameters(), lr=0.01)
-        return {"global": global_optimizer, "local": local_optimizer}
+        return {"local": local_optimizer}
 
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
 
+
+MnistDittoClient = make_it_personal(MnistClient, "ditto")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
