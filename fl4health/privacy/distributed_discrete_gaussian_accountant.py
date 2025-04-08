@@ -17,6 +17,16 @@
 from typing import Any, Callable, Optional
 from math import comb, exp, log, pi, sqrt
 
+from dp_accounting import (
+    DpEvent,
+    DpEventBuilder,
+    GaussianDpEvent,
+    PoissonSampledDpEvent,
+    SampledWithoutReplacementDpEvent,
+    SelfComposedDpEvent,
+)
+from dp_accounting.rdp.rdp_privacy_accountant import NeighborRel, RdpAccountant
+
 def gaussian_rdp(rdp_order: float, standard_deviation: float) -> float:
     assert rdp_order > 1
 
@@ -94,7 +104,7 @@ class DDGaussAccountant:
             self.delta = 1 / n_trustworthy_clients**2
         else:
             self.delta = approximate_dp_delta
-
+    
     # this delta is different from the approximate dp delta
     def _delta_squared(self) -> float:
         """[DDG-J] Theorem 5"""

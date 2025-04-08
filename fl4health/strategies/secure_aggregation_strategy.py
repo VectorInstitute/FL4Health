@@ -150,10 +150,10 @@ class SecureAggregationStrategy(BasicFedAvg):
     def aggregate_fit(
         self,
         server_round: int,
-        results: List[Tuple[ClientProxy, FitRes]],
-        failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-        arithmetic_modulus: int = 1,
-    ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
+        results: list[tuple[ClientProxy, FitRes]],
+        failures: list[Union[tuple[ClientProxy, FitRes], BaseException]],
+        arithmetic_modulus: int = 2 ** 16,
+    ) -> tuple[Optional[Parameters], dict[str, Scalar]]:
 
         """
         Aggregate the results (with modular arithmetic) from the federated fit round. This is done with either weighted

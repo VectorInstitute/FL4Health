@@ -1,0 +1,28 @@
+# YAML parser's must-have configs
+n_server_rounds: 20
+
+# must have at least 3 clients
+n_clients: 3    # set this parameter in run.sh as well
+batch_size: 128
+
+
+# # optional parameter
+# model_integer_range: 9999
+
+# Other configs
+# local_epochs: None
+local_steps: 1
+checkpoint_path: "examples/ddgm_examples"
+
+# privacy parameters
+enable_dp: true
+clipping_bound: 0.03
+granularity: 3.5e-6
+noise_multiplier: 9.5e-4
+bias: 0.06
+private_vector_dimension: 1018174
+
+sign_vector_seed: 1
+
+# not used by client directly
+model_integer_range_exponent: 16   # modulus = 2^model_integer_range_exponent

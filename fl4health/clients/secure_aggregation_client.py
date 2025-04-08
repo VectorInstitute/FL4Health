@@ -82,14 +82,15 @@ class SecureAggregationClient(BasicClient):
         
         super().__init__(data_path, metrics, device, loss_meter_type)
         
-        
-
         self.client_id = client_id
         self.task_name = task_name
 
         self.num_mini_clients = num_mini_clients
         self.mini_clients_data_loaders: List[DataLoader]
         self.start_time:float
+        
+        self.noise_multiplier = privacy_settings['noise_multiplier']
+        self.clipping_bound = privacy_settings['clipping_bound']
 
         temporary_dir = os.path.join(
             os.path.dirname(checkpointer.checkpoint_path),
@@ -308,15 +309,15 @@ class SecureAggregationClient(BasicClient):
         self.clipping_bound = 1e16
 
         # Apply PrivacyEngine to model, optimizer, and train_loader
-        # self.model, self.optimizer, self.train_loader = privacy_engine.make_private(
-        #     module=self.model,
-        #     optimizer=self.optimizer,
-        #     data_loader=self.train_loader,
-        #     noise_multiplier=self.noise_multiplier,
-        #     max_grad_norm=self.clipping_bound,
-        #     clipping="flat",
-        #     poisson_sampling=False,
-        # )
+        self.model, self.optimizer, self.train_loader = privacy_engine.make_private(
+            module=self.model,
+            optimizer=self.optimizer,
+            data_loader=self.train_loader,
+            noise_multiplier=self.noise_multiplier,
+            max_grad_norm=self.clipping_bound,
+            clipping="flat",
+            poisson_sampling=False,
+        )
         log(DEBUG, f'train_loader length in `setup_opacus`: {len(self.train_loader.dataset)}')
 
         # Get the total size of the dataset
@@ -355,7 +356,7 @@ class SecureAggregationClient(BasicClient):
     
 
     # Orchestrates training
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+    def fit(self, parameters: NDArrays, config: Config) -> tuple[NDArrays, int, dict[str, Scalar]]:
         local_epochs, local_steps, current_server_round, _, _ = self.process_config(config)
         self.current_server_round = current_server_round
         log(INFO, f' start of client server round {current_server_round}')
@@ -526,7 +527,7 @@ class SecureAggregationClient(BasicClient):
 
 
         # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
-        self.update_after_train(local_steps, mean_losses)
+        self.update_after_train(local_steps, mean_losses, config)
 
         # NOTE uncomment for debugging
         # pickle.dump(self.model.state_dict(), open(f"examples/secure_aggregation_example/local_models/{random()}.pkl", "wb"))
@@ -655,7 +656,7 @@ class SecureAggregationClient(BasicClient):
         # TODO adjust clip to weighting
         # vector *= weight # weight for FedAvg, server divides out sum of client weights
 
-        c, g = self.privacy_settings['clipping_threshold'], self.privacy_settings['granularity']
+        c, g = self.clipping_bound, self.privacy_settings['granularity']
         
         # adjust for scaling of model vector by the weight (often the train data size)
         # weighted_clip = c * weight
@@ -701,20 +702,24 @@ class SecureAggregationClient(BasicClient):
         vector = randomized_rounding(vector, delta_squared, g)
         # self.echo('raw model server', vector)
         # log(DEBUG, f'casted type: {vector.dtype}')
-        v = (self.privacy_settings['noise_scale'] / g) ** 2
+        v = (self.noise_multiplier / g) ** 2
         # log(INFO, f'Adding noise')
 
         # noise = torch.from_numpy(generate_discrete_gaussian_vector(dim=self.padded_model_dim, variance=v)).to(device='cuda' if torch.cuda.is_available() else 'cpu')
         # self.echo('noise l_infinity_norm', torch.linalg.vector_norm(noise.to(torch.float64), ord=float('inf')))
-        # vector += noise
+        vector += noise
+        # module arithmetic
+        vector = vector % self.crypto.arithmetic_modulus
+        self.echo('model server', vector)
+        log(DEBUG, f'casted type: {vector.dtype}')
 
         # log(INFO, f'Adding mask')
         # log(DEBUG,'after noising')
         # log(INFO, vector)
         # TODO if dropout is turned on, then add selfmask below
         if mini_client_id == self.num_mini_clients:
-            tau = calculate_tau(g, self.privacy_settings['noise_scale'], mini_client_size * 3)
-            single_fl_round_concentrated_dp(delta_squared, self.model_dim, self.privacy_settings['noise_scale'], tau, mini_client_size * 3)
+            tau = calculate_tau(g, self.noise_multiplier, mini_client_size * 3)
+            single_fl_round_concentrated_dp(delta_squared, self.model_dim, self.noise_multiplier, tau, mini_client_size * 3)
             
         return vector
 

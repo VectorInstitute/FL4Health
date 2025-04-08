@@ -91,18 +91,20 @@ class SecureAggregationServer(FlServer):
         checkpoint_and_state_module = BaseServerCheckpointAndStateModule(model=model, parameter_exchanger=parameter_exchanger, model_checkpointers=[checkpointer])
         
         super().__init__(client_manager, fl_config, strategy, wandb_reporter, checkpoint_and_state_module,accept_failures=False)
+        
+        self.wandb_reporter = wandb_reporter
 
         self.layer_dtypes = get_model_layer_types(model)
-        
 
         self.timeout = timeout
         self.dropout_mode = dropout_mode
         self.task_name = task_name
 
-        self.crypto = ServerCryptoKit()
-        self.set_shamir_threshold(shamir_reconstruction_threshold)
-        self.set_model_integer_range(privacy_settings['model_integer_range'])
-        self.crypto.model_dimension = get_model_dimension(model)
+        # disable secret sharing temporarily
+        # self.crypto = ServerCryptoKit()
+        # self.set_shamir_threshold(shamir_reconstruction_threshold)
+        # self.set_model_integer_range(privacy_settings['model_integer_range'])
+        # self.crypto.model_dimension = get_model_dimension(model)
 
         temporary_dir = os.path.join(
             os.path.dirname(checkpointer.checkpoint_path),
@@ -152,7 +154,7 @@ class SecureAggregationServer(FlServer):
             }, file)
             
     # the 'main' function; orchestrates FL
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
+    def fit(self, num_rounds: int, timeout: Optional[float]) -> tuple[History, float]:
 
         log(INFO, "Initializing global parameters & starting FL.")
 
@@ -270,7 +272,9 @@ class SecureAggregationServer(FlServer):
 
         if self.wandb_reporter:
             self.wandb_reporter.report_metrics(num_rounds, history)
-        return history
+        
+        # TODO elapsed_time
+        return history, 0
 
     def secure_aggregation(self, current_round, timeout) -> Any:
         """Returns metrics"""
@@ -926,6 +930,7 @@ class SecureAggregationServer(FlServer):
         )
 
         parameters_aggregated, metrics_aggregated, aggregate_data_size, received_model_count = aggregated_result
+        
         return parameters_aggregated, metrics_aggregated, (results, failures), aggregate_data_size, received_model_count
 
     def proxys_to_ids(self, proxy_list: List[ClientProxy]) -> Set[ClientId]:

@@ -67,3 +67,13 @@ def change_model_dtypes(model: nn.Module, dtypes_list: List[torch.dtype]) -> nn.
 
     model.load_state_dict(model_state_dict)
     return model
+
+def get_arithmetic_modulus(
+    num_of_clients: int,
+    model_integer_range: int | None = 1 << 17,
+    ) -> int:
+        # stores and returns modulus of arithmetic
+        arithmetic_modulus = (num_of_clients + 1) * (model_integer_range - 1) + 1
+
+        # TODO temporary fix since modular clipping requires modulus to be even        
+        return arithmetic_modulus * 2

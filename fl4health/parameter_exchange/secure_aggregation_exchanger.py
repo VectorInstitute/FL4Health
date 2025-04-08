@@ -20,6 +20,30 @@ from fl4health.servers.secure_aggregation_utils import get_model_norm, vectorize
 
 
 class SecureAggregationExchanger(ParameterExchanger):
+    """
+    A class that handles secure aggregation of model parameters for federated learning.
+
+    This class provides methods to push and pull model parameters while ensuring
+    secure aggregation. It is designed to work with PyTorch models and assumes
+    that the order of parameters in the state dictionary is preserved.
+
+    Methods:
+        push_parameters(model, initial_model=None, config=None):
+            Extracts and returns all model parameters as a list of NumPy arrays.
+            The order of parameters is preserved to ensure compatibility with
+            the pull_parameters method.
+
+        pull_parameters(parameters, model, config=None):
+            Updates the model's state dictionary with the provided parameters.
+            Assumes that the parameters are provided as a list of NumPy arrays
+            in the same order as the model's state dictionary.
+
+    Notes:
+        - The order of parameters in the state dictionary is critical for the
+          correct functioning of the push_parameters and pull_parameters methods.
+        - This class is designed to be extended for more complex secure aggregation
+          mechanisms, such as those involving differential privacy or masking.
+    """
     # def push_parameters(
     #     self,
     #     *,
@@ -113,13 +137,13 @@ class SecureAggregationExchanger(ParameterExchanger):
     #     model.load_state_dict(state_dict, strict=True)
 
     def push_parameters(
-        self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
+        self, model: nn.Module, initial_model: nn.Module | None = None, config: Config | None = None
     ) -> NDArrays:
         # Sending all of parameters ordered by state_dict keys
         # NOTE: Order matters, because it is relied upon by pull_parameters below
         return [val.cpu().numpy() for _, val in model.state_dict().items()]
 
-    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Optional[Config] = None) -> None:
+    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Config | None = None) -> None:
         # Assumes all model parameters are contained in parameters
         # The state_dict is reconstituted because parameters is simply a list of bytes
         params_dict = zip(model.state_dict().keys(), parameters)
