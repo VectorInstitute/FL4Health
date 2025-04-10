@@ -518,6 +518,7 @@ class FlServer(Server):
             ins = GetParametersIns(config={})
         else:
             ins = GetParametersIns(config=self.on_init_parameters_config_fn(server_round))
+        log(INFO, f"Attempting to get params from random client with ins: {ins}")
         get_parameters_res = random_client.get_parameters(ins=ins, timeout=timeout, group_id=server_round)
         if get_parameters_res.status.code == Code.OK:
             log(INFO, "Received initial parameters from one random client")

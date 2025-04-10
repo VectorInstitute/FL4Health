@@ -22,7 +22,7 @@ class AdaptiveDriftConstrainedMixin:
     _drift_penalty_tensors = None
     _parameter_exchanger = None
     _drift_penalty_weight = None
-    _loss_for_adaptation = None
+    _loss_for_adaptation = 0.1
 
     @property
     def drift_penalty_tensors(self) -> list[torch.Tensor] | None:

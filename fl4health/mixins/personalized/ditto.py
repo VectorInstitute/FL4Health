@@ -46,11 +46,25 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixi
         # Extract hyperparameters from param_groups
         # We only take the first group's hyperparameters, excluding 'params' and 'lr'
         param_group = state_dict["param_groups"][0]
-        optimizer_kwargs = {k: v for k, v in param_group.items() if k not in ("params", "lr")}
 
-        return OptimClass(self.global_model.parameters(), lr=param_group["lr"], **optimizer_kwargs)
+        # store initial_lr to be used with schedulers
+        initial_lr = param_group.pop("initial_lr", param_group["lr"])
+
+        optimizer_kwargs = {k: v for k, v in param_group.items() if k not in ("params", "lr")}
+        global_optimizer = OptimClass(self.global_model.parameters(), lr=param_group["lr"], **optimizer_kwargs)
+
+        # If you need to maintain the initial_lr for schedulers:
+        for param_group in global_optimizer.param_groups:
+            param_group["initial_lr"] = initial_lr
+
+        return global_optimizer
 
     def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
+        if self.global_model is None:
+            # try set it here
+            self.global_model = self.get_global_model(config)  # is this the same config?
+            log(INFO, f"global model set: {type(self.global_model).__name__} within `get_optimizer`")
+
         # Note that the global optimizer operates on self.global_model.parameters()
         optimizer = super().get_optimizer(config=Config)
         if isinstance(optimizer, dict):
@@ -102,10 +116,15 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixi
         Args:
             config (Config): The config from the server.
         """
-        # Need to setup the global model here as well. It should be the same architecture as the local model.
-        self.global_model = self.get_global_model(config)
+        try:
+            self.global_model = self.get_global_model(config)
+            log(INFO, f"global model set: {type(self.global_model).__name__}")
+        except:
+            log(INFO, f"Couldn't set global model before super().setup_client(). Will try again within that setup.")
+            pass
         # The rest of the setup is the same
         super().setup_client(config)
+        # Need to setup the global model here as well. It should be the same architecture as the local model.
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
@@ -134,14 +153,14 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixi
             # to the same weights in initialize_all_model_weights
             return FullParameterExchanger().push_parameters(self.model, config=config)
         else:
-            parameter_exchanger = cast(FullParameterExchanger, self.parameter_exchanger)
             # NOTE: the global model weights are sent to the server here.
-            global_model_weights = parameter_exchanger.push_parameters(self.global_model, config=config)
+            global_model_weights = self.parameter_exchanger.push_parameters(self.global_model, config=config)
 
             # Weights and training loss sent to server for aggregation
             # Training loss sent because server will decide to increase or decrease the penalty weight, if adaptivity
             # is turned on
-            packed_params = parameter_exchanger.pack_parameters(global_model_weights, self.loss_for_adaptation)
+            packed_params = self.parameter_exchanger.pack_parameters(global_model_weights, self.loss_for_adaptation)
+            log(INFO, "Successfully packed parameters of global model")
             return packed_params
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
@@ -275,20 +294,26 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixi
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
                 forward.
         """
-        if isinstance(input, torch.Tensor):
-            global_preds = self.global_model(input)
-            local_preds = self.model(input)
-        elif isinstance(input, dict):
-            # If input is a dictionary, then we unpack it before computing the forward pass.
-            # Note that this assumes the keys of the input match (exactly) the keyword args
-            # of the forward method.
-            global_preds = self.global_model(**input)
-            local_preds = self.model(**input)
+
+        if hasattr(self, "_special_predict"):
+            log(INFO, "Using '_special_predict' to make predictions")
+            global_preds = self._special_predict(self.global_model, input)
+            local_preds = self._special_predict(self.model, input)
+        else:
+            if isinstance(input, torch.Tensor):
+                global_preds = self.global_model(input)
+                local_preds = self.model(input)
+            elif isinstance(input, dict):
+                # If input is a dictionary, then we unpack it before computing the forward pass.
+                # Note that this assumes the keys of the input match (exactly) the keyword args
+                # of the forward method.
+                global_preds = self.global_model(**input)
+                local_preds = self.model(**input)
 
         # Here we assume that global and local preds are simply tensors
         # TODO: Perhaps loosen this at a later date.
-        assert isinstance(global_preds, torch.Tensor)
-        assert isinstance(local_preds, torch.Tensor)
+        # assert isinstance(global_preds, torch.Tensor)
+        # assert isinstance(local_preds, torch.Tensor)
         return {"global": global_preds, "local": local_preds}, {}
 
     def compute_loss_and_additional_losses(

@@ -4,6 +4,7 @@ import warnings
 from logging import DEBUG, INFO
 from os.path import exists, join
 from pathlib import Path
+from typing import Literal
 
 from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
@@ -25,6 +26,9 @@ from fl4health.utils.load_data import load_msd_dataset
 from fl4health.utils.metrics import TorchMetric, TransformsMetric
 from fl4health.utils.msd_dataset_sources import get_msd_dataset_enum, msd_num_labels
 from fl4health.utils.nnunet_utils import get_segs_from_probs, set_nnunet_env
+from fl4health.mixins.personalized import make_it_personal
+
+personalized_client_classes = {"ditto": make_it_personal(NnunetClient, "ditto")}
 
 
 def main(
@@ -37,6 +41,7 @@ def main(
     compile: bool = True,
     intermediate_client_state_dir: str | None = None,
     client_name: str | None = None,
+    personalized_strategy: Literal["ditto"] | None = None,
 ) -> None:
     # Log device and server address
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -78,7 +83,8 @@ def main(
         checkpoint_and_state_module = None
 
     # Create client
-    client = NnunetClient(
+    client_kwargs = {}
+    client_kwargs.update(
         # Args specific to nnUNetClient
         dataset_id=dataset_id,
         fold=fold,
@@ -92,6 +98,14 @@ def main(
         checkpoint_and_state_module=checkpoint_and_state_module,
         client_name=client_name,
     )
+    if personalized_strategy:
+        log(INFO, f"Setting up client for personalized strategy: {personalized_strategy}")
+        client = personalized_client_classes[personalized_strategy](**client_kwargs)
+    else:
+        log(INFO, f"Setting up client without personalization")
+        client = NnunetClient(**client_kwargs)
+    log(INFO, f"Using client: {type(client).__name__}")
+    log(INFO, f"Parameter exchanger: {type(client.parameter_exchanger).__name__}")
 
     start_client(server_address=server_address, client=client.to_client())
 
@@ -189,6 +203,14 @@ if __name__ == "__main__":
         help="[OPTIONAL] Name of the client used to name client state checkpoint. \
         Defaults to None, in which case a random name is generated for the client",
     )
+    parser.add_argument(
+        "--personalized-strategy",
+        type=str,
+        required=False,
+        default=None,
+        help="[OPTIONAL] Personalized strategy to use. Can be 'ditto' or 'mr-mtl' \
+        Defaults to None, in which no personalized strategy is applied.",
+    )
 
     args = parser.parse_args()
 
@@ -218,4 +240,5 @@ if __name__ == "__main__":
         compile=not args.skip_compile,
         intermediate_client_state_dir=args.intermediate_client_state_dir,
         client_name=args.client_name,
+        personalized_strategy=args.personalized_strategy,
     )

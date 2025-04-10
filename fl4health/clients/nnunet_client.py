@@ -605,27 +605,14 @@ class NnunetClient(BasicClient):
         # We have to call parent method after setting up nnunet trainer
         super().setup_client(config)
 
-    def predict(self, input: TorchInputType) -> tuple[TorchPredType, dict[str, torch.Tensor]]:
-        """
-        Generate model outputs. Overridden because nnunets outputs lists when deep supervision is on so we have to
-        reformat the output into dicts.
-
-        Additionally if device type is cuda, loss computed in mixed precision.
-
-        Args:
-            input (TorchInputType): The model inputs
-
-        Returns:
-            tuple[TorchPredType, dict[str, torch.Tensor]]: A tuple in which the first element model outputs indexed by
-            name. The second element is unused by this subclass and therefore is always an empty dict
-        """
+    def _special_predict(self, model, input) -> tuple[TorchPredType, dict[str, torch.Tensor]]:
         if isinstance(input, torch.Tensor):
             # If device type is cuda, nnUNet defaults to mixed precision forward pass
             if self.device.type == "cuda":
                 with torch.autocast(self.device.type, enabled=True):
-                    output = self.model(input)
+                    output = model(input)
             else:
-                output = self.model(input)
+                output = model(input)
         else:
             raise TypeError('"input" must be of type torch.Tensor for nnUNetClient')
 
@@ -640,6 +627,43 @@ class NnunetClient(BasicClient):
             raise TypeError(
                 "Was expecting nnunet model output to be either a torch.Tensor or a list/tuple of torch.Tensors"
             )
+
+    def predict(self, input: TorchInputType) -> tuple[TorchPredType, dict[str, torch.Tensor]]:
+        """
+        Generate model outputs. Overridden because nnunets outputs lists when deep supervision is on so we have to
+        reformat the output into dicts.
+
+        Additionally if device type is cuda, loss computed in mixed precision.
+
+        Args:
+            input (TorchInputType): The model inputs
+
+        Returns:
+            tuple[TorchPredType, dict[str, torch.Tensor]]: A tuple in which the first element model outputs indexed by
+            name. The second element is unused by this subclass and therefore is always an empty dict
+        """
+        return self._special_predict(self.model, input)
+        # if isinstance(input, torch.Tensor):
+        #     # If device type is cuda, nnUNet defaults to mixed precision forward pass
+        #     if self.device.type == "cuda":
+        #         with torch.autocast(self.device.type, enabled=True):
+        #             output = self.model(input)
+        #     else:
+        #         output = self.model(input)
+        # else:
+        #     raise TypeError('"input" must be of type torch.Tensor for nnUNetClient')
+
+        # if isinstance(output, torch.Tensor):
+        #     return {"prediction": output}, {}
+        # # If output is a list or tuple then deep supervision is on and we need to convert preds into a dict
+        # elif isinstance(output, (list, tuple)):
+        #     num_spatial_dims = NNUNET_N_SPATIAL_DIMS[self.nnunet_config]
+        #     preds = convert_deep_supervision_list_to_dict(output, num_spatial_dims)
+        #     return preds, {}
+        # else:
+        #     raise TypeError(
+        #         "Was expecting nnunet model output to be either a torch.Tensor or a list/tuple of torch.Tensors"
+        #     )
 
     def compute_loss_and_additional_losses(
         self,

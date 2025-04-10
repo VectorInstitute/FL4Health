@@ -11,13 +11,19 @@ from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
+from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 
 from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.checkpointing.server_module import NnUnetServerCheckpointAndStateModule
+from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.nnunet_server import NnunetServer
 from fl4health.utils.config import make_dict_with_epochs_or_steps
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.parameter_extraction import get_all_model_parameters
+from fl4health.parameter_exchange.parameter_packer import (
+    ParameterPackerAdaptiveConstraint,
+)
 
 
 def get_config(
@@ -73,15 +79,30 @@ def main(
     else:
         params = None
 
-    strategy = FedAvg(
+    # strategy = FedAvg(
+    #     min_fit_clients=config["n_clients"],
+    #     min_evaluate_clients=config["n_clients"],
+    #     min_available_clients=config["n_clients"],
+    #     on_fit_config_fn=fit_config_fn,
+    #     on_evaluate_config_fn=fit_config_fn,  # Nothing changes for eval
+    #     fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
+    #     evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
+    #     initial_parameters=params,
+    # )
+
+    strategy = FedAvgWithAdaptiveConstraint(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
+        # Server waits for min_available_clients before starting FL rounds
         min_available_clients=config["n_clients"],
         on_fit_config_fn=fit_config_fn,
-        on_evaluate_config_fn=fit_config_fn,  # Nothing changes for eval
+        # We use the same fit config function, as nothing changes for eval
+        on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=params,
+        initial_loss_weight=0.1,
+        adapt_loss_weight=False,
     )
 
     state_checkpointer = (
@@ -91,6 +112,10 @@ def main(
     )
     checkpoint_and_state_module = NnUnetServerCheckpointAndStateModule(
         model=None, parameter_exchanger=FullParameterExchanger(), state_checkpointer=state_checkpointer
+    )
+
+    checkpoint_and_state_module.parameter_exchanger = FullParameterExchangerWithPacking(
+        ParameterPackerAdaptiveConstraint()
     )
 
     server = NnunetServer(
