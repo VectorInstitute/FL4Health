@@ -1,7 +1,7 @@
 """Ditto Personalized Mixin"""
 
 from abc import ABC, abstractmethod
-from logging import INFO
+from logging import INFO, DEBUG
 from typing import cast
 
 import torch
@@ -297,8 +297,9 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixi
 
         if hasattr(self, "_special_predict"):
             log(INFO, "Using '_special_predict' to make predictions")
-            global_preds = self._special_predict(self.global_model, input)
-            local_preds = self._special_predict(self.model, input)
+            global_preds, _ = self._special_predict(self.global_model, input)
+            local_preds, _ = self._special_predict(self.model, input)
+            log(INFO, f"Successfully predicted for global and local models")
         else:
             if isinstance(input, torch.Tensor):
                 global_preds = self.global_model(input)
@@ -338,12 +339,19 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixi
         """
 
         # Compute global model vanilla loss
-        assert "global" in preds
-        global_loss = self.criterion(preds["global"], target)
 
-        # Compute local model loss + ditto constraint term
-        assert "local" in preds
-        local_loss = self.criterion(preds["local"], target)
+        if hasattr(self, "_special_compute_loss_and_additional_losses"):
+            log(INFO, "Using '_special_compute_loss_and_additional_losses' to compute loss")
+            global_loss, _ = self._special_compute_loss_and_additional_losses(preds["global"], features, target)
+
+            # Compute local model loss + ditto constraint term
+            local_loss, _ = self._special_compute_loss_and_additional_losses(preds["local"], features, target)
+
+        else:
+            global_loss = self.criterion(preds["global"], target)
+
+            # Compute local model loss + ditto constraint term
+            local_loss = self.criterion(preds["local"], target)
 
         additional_losses = {"local_loss": local_loss.clone(), "global_loss": global_loss}
 
