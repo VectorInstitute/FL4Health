@@ -1,10 +1,11 @@
-from torch.utils.data import DataLoader, TensorDataset
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from pathlib import Path
 from typing import cast
+
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from torch.utils.data import DataLoader, TensorDataset
 
 ORIGINAL_FILENAME = "fraud_full.csv"
 DEFAULT_DIR = Path(__file__).parent.absolute()

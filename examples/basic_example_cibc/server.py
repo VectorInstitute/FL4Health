@@ -3,9 +3,12 @@ from functools import partial
 from typing import Any
 
 import flwr as fl
+import torch
+import torch.nn as nn
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
+from torch.utils.data import DataLoader, TensorDataset
 
 # from examples.models.cnn_model import Net
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
@@ -15,10 +18,6 @@ from fl4health.servers.base_server import FlServer
 from fl4health.utils.config import load_config, make_dict_with_epochs_or_steps
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
-
-import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader, TensorDataset
 
 
 def fit_config(

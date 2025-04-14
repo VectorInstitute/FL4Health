@@ -2,9 +2,12 @@ import argparse
 from pathlib import Path
 
 import flwr as fl
+import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 from flwr.common.typing import Config
+from sklearn.model_selection import train_test_split
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, TensorDataset
@@ -15,10 +18,6 @@ from fl4health.utils.config import narrow_dict_type
 
 # from fl4health.utils.load_data import load_cifar10_data, load_cifar10_test_data
 from fl4health.utils.metrics import Accuracy
-
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
 
 
 def load_fraud_data(file_path, batch_size):
