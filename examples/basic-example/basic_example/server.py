@@ -5,6 +5,7 @@ from basic_example.model import Net
 from flwr.common import Context
 from flwr.common.typing import Config
 from flwr.server import ServerApp, ServerAppComponents, ServerConfig
+from flwr.server.app import run_superlink
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
@@ -93,3 +94,6 @@ def server_fn(context: Context) -> ServerAppComponents:
 
 
 app = ServerApp(server_fn=server_fn)
+
+if __name__ == "__main__":
+    run_superlink()
