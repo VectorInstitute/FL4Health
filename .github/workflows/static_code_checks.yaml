@@ -43,6 +43,9 @@ jobs:
           virtual-environment: .venv/
           # GHSA-cjgq-5qmw-rcj6 is a Keras vulnerability that has no fix yet
           # PYSEC-2024-109 requires upgrading to DeepSpeed 0.15.1, which is currently blocked by pycyclops
+          # GHSA-3749-ghw9-m3mg and GHSA-887c-mr87-cxwp are pytorch vulnerabilities that have no fix yet
           ignore-vulns: |
             GHSA-cjgq-5qmw-rcj6
             PYSEC-2024-109
+            GHSA-3749-ghw9-m3mg
+            GHSA-887c-mr87-cxwp
