@@ -1,18 +1,18 @@
+import argparse
 from functools import partial
 from typing import Any
 
-from basic_example.model import Net
-from flwr.common import Context
+import flwr as fl
 from flwr.common.typing import Config
-from flwr.server import ServerApp, ServerAppComponents, ServerConfig
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
+from examples.models.cnn_model import Net
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.base_server import FlServer
-from fl4health.utils.config import make_dict_with_epochs_or_steps
+from fl4health.utils.config import load_config, make_dict_with_epochs_or_steps
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 
@@ -30,7 +30,7 @@ def fit_config(
     }
 
 
-def main(config: dict[str, Any]) -> FlServer:
+def main(config: dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -73,23 +73,24 @@ def main(config: dict[str, Any]) -> FlServer:
         accept_failures=False,
     )
 
-    return server
+    fl.server.start_server(
+        server=server,
+        server_address="0.0.0.0:8080",
+        config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
+    )
 
 
-def server_fn(context: Context) -> ServerAppComponents:
-    config = {
-        "n_server_rounds": context.run_config["n_server_rounds"],
-        "n_clients": context.run_config["n_clients"],
-        "local_epochs": context.run_config["local_epochs"],
-        "batch_size": context.run_config["batch_size"],
-        "checkpoint_path": context.run_config["checkpoint_path"],
-    }
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="FL Server Main")
+    parser.add_argument(
+        "--config_path",
+        action="store",
+        type=str,
+        help="Path to configuration file.",
+        default="examples/basic_example/config.yaml",
+    )
+    args = parser.parse_args()
 
-    assert isinstance(config["n_server_rounds"], int), "n_server_rounds must be an integer"
+    config = load_config(args.config_path)
 
-    server = main(config)
-    server_config = ServerConfig(num_rounds=config["n_server_rounds"])
-    return ServerAppComponents(server=server, config=server_config)
-
-
-app = ServerApp(server_fn=server_fn)
+    main(config)
