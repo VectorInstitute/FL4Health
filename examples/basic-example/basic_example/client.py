@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 from basic_example.model import Net
 from flwr.client import Client, ClientApp
-from flwr.client.supernode.app import run_supernode
 from flwr.common import Context
 from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
@@ -47,6 +46,3 @@ def client_fn(context: Context) -> Client:
 
 
 app = ClientApp(client_fn=client_fn)
-
-if __name__ == "__main__":
-    run_supernode()
