@@ -16,6 +16,7 @@ class SyntheticFedProxDataset(ABC):
         temperature: float = 1.0,
         input_dim: int = 60,
         output_dim: int = 10,
+        hidden_dim: int | None = None,
         samples_per_client: int = 1000,
     ) -> None:
         """
@@ -35,6 +36,8 @@ class SyntheticFedProxDataset(ABC):
                 FedProx paper. Defaults to 60.
             output_dim (int, optional): dimension of the output labels for the synthetic dataset. These are one-hot
                 encoding labels. Default is as in the FedProx paper. Defaults to 10.
+            hidden_dim (int | None, optional): dimension of the hidden layer for the two-layer mapping. If None, a
+                one-layer mapping is used. Defaults to None.
             samples_per_client (int, optional): Number of samples to generate in each client's dataset.
                 Defaults to 1000.
         """
@@ -42,6 +45,7 @@ class SyntheticFedProxDataset(ABC):
         self.temperature = temperature
         self.input_dim = input_dim
         self.output_dim = output_dim
+        self.hidden_dim = hidden_dim
         self.samples_per_client = samples_per_client
 
         # Sigma in the FedProx paper
@@ -62,7 +66,7 @@ class SyntheticFedProxDataset(ABC):
             sigma_diagonal[i] = math.pow((i + 1), -1.2)
         return torch.diag(sigma_diagonal)
 
-    def map_inputs_to_outputs(self, x: torch.Tensor, W: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+    def one_layer_map_inputs_to_outputs(self, x: torch.Tensor, W: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
         """
         This function maps features x to a label y as done in the original paper. The first stage is the affine
         transformation
@@ -86,7 +90,39 @@ class SyntheticFedProxDataset(ABC):
         """
         raw_y = (torch.matmul(x, W.T) + b.T.repeat(self.samples_per_client, 1)) / self.temperature
         distributions = F.softmax(raw_y, dim=1)
-        samples = torch.multinomial(distributions, 1)
+        samples = torch.argmax(distributions, 1)
+        return F.one_hot(samples, num_classes=self.output_dim).squeeze()
+
+    def two_layer_map_inputs_to_outputs(
+        self, x: torch.Tensor, W_1: torch.Tensor, b_1: torch.Tensor, W_2: torch.Tensor, b_2: torch.Tensor
+    ) -> torch.Tensor:
+        """
+        This function maps features x to a label y as done in the original paper. The first stage is the affine
+        transformation
+
+        .. math::
+            \\hat{y} = \\frac{1}{T} \\cdot (Wx + b).
+
+        Then :math:`y = \\text{softmax}(\\hat{y})`. Sampling from the distribution, we then
+        one hot encode the resulting label sample.
+
+        **NOTE:** This procedure differs slightly from that of the original paper, which simply took a one hot on the
+        softmax distribution. The current strategy allows for a bit more label stochasticity.
+
+        Args:
+            x (torch.Tensor): The input features to be mapped to output labels. Shape is (dataset size, ``input_dim``)
+            W_1 (torch.Tensor): The first linear transformation matrix. Shape is (``hidden_dim``, ``input_dim``)
+            b_1 (torch.Tensor): The bias in the first linear transformation. Shape is (``hidden_dim``, 1)
+            W_2 (torch.Tensor): The second linear transformation matrix. Shape is (``output_dim``, ``hidden_dim``)
+            b_2 (torch.Tensor): The bias in the second linear transformation. Shape is (``output_dim``, 1)
+
+        Returns:
+            torch.Tensor: The labels associated with each of the inputs. The shape is (dataset size, ``output_dim``)
+        """
+        latent = (torch.matmul(x, W_1.T) + b_1.T.repeat(self.samples_per_client, 1)) / self.temperature
+        raw_y = torch.matmul(latent, W_2.T) + b_2.T.repeat(self.samples_per_client, 1)
+        out_distributions = F.softmax(raw_y, dim=1)
+        samples = torch.argmax(out_distributions, 1)
         return F.one_hot(samples, num_classes=self.output_dim).squeeze()
 
     def generate(self) -> list[TensorDataset]:
@@ -125,6 +161,7 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
         temperature: float = 1.0,
         input_dim: int = 60,
         output_dim: int = 10,
+        hidden_dim: int | None = None,
         samples_per_client: int = 1000,
     ) -> None:
         """
@@ -156,6 +193,8 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
                 FedProx paper. Defaults to 60.
             output_dim (int, optional): dimension of the output labels for the synthetic dataset. These are one-hot
                 encoding labels. Default is as in the FedProx paper. Defaults to 10.
+            hidden_dim (int | None, optional): dimension of the hidden layer for the two-layer mapping. If None, a
+                one-layer mapping is used. Defaults to None.
             samples_per_client (int, optional): Number of samples to generate in each client's dataset.
                 Defaults to 1000.
         """
@@ -164,13 +203,15 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
             temperature=temperature,
             input_dim=input_dim,
             output_dim=output_dim,
+            hidden_dim=hidden_dim,
             samples_per_client=samples_per_client,
         )
+        self.two_layer_generation = hidden_dim is not None
         self.alpha = alpha
         self.beta = beta
 
     def get_input_output_tensors(
-        self, mu: float, v: torch.Tensor, sigma: torch.Tensor
+        self, mu: list[float], v: torch.Tensor, sigma: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         This function takes values for the center of elements in the affine transformation elements (``mu``), the
@@ -178,8 +219,8 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
         and produces the input, output tensor pairs with the appropriate dimensions
 
         Args:
-            mu (float): The mean value from which each element of :math:`W` and :math:`b` are to be drawn
-                ~ :math:`\\mathcal{N}(\\mu, 1)`
+            mu (list[float]): List of the mean values from which each element of :math:`W_i` and :math:`b_i` are to be
+                drawn ~ :math:`\\mathcal{N}(\\mu[i], 1)`
             v (torch.Tensor): This is assumed to be a 1D tensor of size self.input_dim and represents the mean for the
                 multivariate normal from which to draw the input ``x``
             sigma (torch.Tensor): This is assumed to be a 2D tensor of shape (``input_dim``, ``input_dim``) and
@@ -195,10 +236,19 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
         # size of x should be samples_per_client x input_dim
         x = multivariate_normal.sample(torch.Size((self.samples_per_client,)))
 
-        W = torch.normal(mu, torch.ones((self.output_dim, self.input_dim)))
-        b = torch.normal(mu, torch.ones(self.output_dim, 1))
+        if not self.two_layer_generation:
+            W = torch.normal(mu[0], torch.ones((self.output_dim, self.input_dim)))
+            b = torch.normal(mu[0], torch.ones(self.output_dim, 1))
 
-        return x, self.map_inputs_to_outputs(x, W, b)
+            return x, self.one_layer_map_inputs_to_outputs(x, W, b)
+        else:
+            assert self.hidden_dim is not None
+            W_1 = torch.normal(mu[0], torch.ones((self.hidden_dim, self.input_dim)))
+            b_1 = torch.normal(mu[0], torch.ones(self.hidden_dim, 1))
+            W_2 = torch.normal(mu[1], torch.ones((self.output_dim, self.hidden_dim)))
+            b_2 = torch.normal(mu[1], torch.ones(self.output_dim, 1))
+
+            return x, self.two_layer_map_inputs_to_outputs(x, W_1, b_1, W_2, b_2)
 
     def generate_client_tensors(self) -> list[tuple[torch.Tensor, torch.Tensor]]:
         """
@@ -218,7 +268,11 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
             input_means = torch.normal(B, torch.ones(self.input_dim))
 
             # u_k in the FedProx paper
-            affine_transform_means = torch.normal(0, self.alpha, (1,)).item()
+            affine_transform_means = []
+            affine_transform_means.append(torch.normal(0, self.alpha, (1,)).item())
+            if self.two_layer_generation:
+                affine_transform_means.append(torch.normal(0, self.alpha, (1,)).item())
+
             client_X, client_Y = self.get_input_output_tensors(
                 affine_transform_means, input_means, self.input_covariance
             )
@@ -287,7 +341,7 @@ class SyntheticIidFedProxDataset(SyntheticFedProxDataset):
         x = self.input_multivariate_normal.sample(torch.Size((self.samples_per_client,)))
         assert x.shape == (self.samples_per_client, self.input_dim)
 
-        return x, self.map_inputs_to_outputs(x, self.W, self.b)
+        return x, self.one_layer_map_inputs_to_outputs(x, self.W, self.b)
 
     def generate_client_tensors(self) -> list[tuple[torch.Tensor, torch.Tensor]]:
         """
