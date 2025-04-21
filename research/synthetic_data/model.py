@@ -3,7 +3,6 @@ import torch.nn as nn
 from torch.nn import Linear, Module
 
 
-
 class FullyConnectedNet(Module):
     def __init__(
         self,
@@ -21,9 +20,3 @@ class FullyConnectedNet(Module):
         x = self.linear_1(x)
         x = self.softmax_2(self.linear_2(x))
         return x
-
-
-
-
-
-

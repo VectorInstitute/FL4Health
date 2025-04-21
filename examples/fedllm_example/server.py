@@ -30,6 +30,8 @@ def fit_config(
     local_steps: int | None = None,
     num_gpus_per_client: int | None = None,
 ) -> Config:
+    if num_gpus_per_client is None:
+        num_gpus_per_client = 1
     base_config: Config = {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "batch_size": batch_size,

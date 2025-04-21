@@ -85,7 +85,6 @@ def main(
         test_loader, num_examples = get_test_preprocessed_data(
             Path(dataset_dir), client_number, BATCH_SIZE, heterogeneity_level, heterogeneity_level
         )
-    
 
         pre_best_local_test_metrics = []
         pre_last_local_test_metrics = []

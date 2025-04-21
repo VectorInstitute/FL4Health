@@ -45,7 +45,7 @@ def main(config: dict[str, Any], server_address: str, lam: float) -> None:
 
     client_manager = SimpleClientManager()
     # Initializing the model on the server side
-    model = FullyConnectedNet()    
+    model = FullyConnectedNet()
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvgWithAdaptiveConstraint(
         min_fit_clients=config["n_clients"],

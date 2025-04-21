@@ -8,17 +8,25 @@ import torch
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
 
+from fl4health.utils.data_generation import SyntheticNonIidFedProxDataset
 from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.load_data import split_data_and_targets
 from fl4health.utils.random import set_all_random_seeds
-from fl4health.utils.data_generation import SyntheticNonIidFedProxDataset
+
 
 def get_preprocessed_data(
     dataset_dir: Path, client_num: int, batch_size: int, alpha: float, beta: float
 ) -> tuple[DataLoader, DataLoader, dict[str, int]]:
     try:
-        train_data = torch.from_numpy(np.load(f"{dataset_dir}/alpha_{alpha}_beta_{beta}/client_{client_num}_train_data.npy")).to(torch.float32)
-        train_targets = torch.argmax(torch.from_numpy(np.load(f"{dataset_dir}/alpha_{alpha}_beta_{beta}/client_{client_num}_train_targets.npy")), dim=1)
+        train_data = torch.from_numpy(
+            np.load(f"{dataset_dir}/alpha_{alpha}_beta_{beta}/client_{client_num}_train_data.npy")
+        ).to(torch.float32)
+        train_targets = torch.argmax(
+            torch.from_numpy(
+                np.load(f"{dataset_dir}/alpha_{alpha}_beta_{beta}/client_{client_num}_train_targets.npy")
+            ),
+            dim=1,
+        )
     except FileNotFoundError:
         raise FileNotFoundError(f"Client {client_num} does not have partitioned train data")
 
@@ -28,9 +36,12 @@ def get_preprocessed_data(
         validation_data = torch.from_numpy(
             np.load(f"{dataset_dir}/alpha_{alpha}_beta_{beta}/client_{client_num}_validation_data.npy")
         ).to(torch.float32)
-        validation_targets = torch.argmax( torch.from_numpy(
-            np.load(f"{dataset_dir}/alpha_{alpha}_beta_{beta}/client_{client_num}_validation_targets.npy")
-        ),dim=1)
+        validation_targets = torch.argmax(
+            torch.from_numpy(
+                np.load(f"{dataset_dir}/alpha_{alpha}_beta_{beta}/client_{client_num}_validation_targets.npy")
+            ),
+            dim=1,
+        )
     except FileNotFoundError:
         raise FileNotFoundError(f"Client {client_num} does not have partitioned validation data")
 
@@ -50,8 +61,13 @@ def get_test_preprocessed_data(
     dataset_dir: Path, client_num: int, batch_size: int, alpha: float, beta: float
 ) -> tuple[DataLoader, dict[str, int]]:
     try:
-        data = torch.from_numpy(np.load(f"{dataset_dir}/alpha_{alpha}_beta_{beta}/client_{client_num}_test_data.npy")).to(torch.float32)
-        targets = torch.argmax(torch.from_numpy(np.load(f"{dataset_dir}/alpha_{alpha}_beta_{beta}/client_{client_num}_test_targets.npy")),dim=1)
+        data = torch.from_numpy(
+            np.load(f"{dataset_dir}/alpha_{alpha}_beta_{beta}/client_{client_num}_test_data.npy")
+        ).to(torch.float32)
+        targets = torch.argmax(
+            torch.from_numpy(np.load(f"{dataset_dir}/alpha_{alpha}_beta_{beta}/client_{client_num}_test_targets.npy")),
+            dim=1,
+        )
     except FileNotFoundError:
         raise FileNotFoundError(f"Client {client_num} does not have partitioned test data")
 
@@ -64,20 +80,23 @@ def get_test_preprocessed_data(
 
 
 def preprocess_data(
-    alpha: float, beta: float, num_clients: int = 5, 
+    alpha: float,
+    beta: float,
+    num_clients: int = 5,
 ) -> tuple[list[TensorDataset], list[TensorDataset], list[TensorDataset]]:
-    
+
     # Get raw data
     synth_data_generator = SyntheticNonIidFedProxDataset(
-        num_clients = num_clients,
-        alpha = alpha, 
-        beta = beta, 
-        temperature = 2.0,
-        input_dim = 60,
-        output_dim = 10,
-        hidden_dim = 20,
-        samples_per_client = 5000,)
-    
+        num_clients=num_clients,
+        alpha=alpha,
+        beta=beta,
+        temperature=2.0,
+        input_dim=60,
+        output_dim=10,
+        hidden_dim=20,
+        samples_per_client=5000,
+    )
+
     partitioned_client_datasets = synth_data_generator.generate()
 
     train_partitioned_datasets = []
@@ -103,7 +122,6 @@ def preprocess_data(
         validation_partitioned_datasets.append(validation_set)
         test_set = TensorDataset(test_data, test_targets, transform=None, target_transform=None)
         test_partitioned_datasets.append(test_set)
-        
 
     return train_partitioned_datasets, validation_partitioned_datasets, test_partitioned_datasets
 
@@ -169,8 +187,12 @@ if __name__ == "__main__":
     set_all_random_seeds(args.seed)
 
     train_partitioned_datasets, validation_partitioned_datasets, test_partitioned_datasets = preprocess_data(
-        args.alpha, args.beta, args.num_clients, 
+        args.alpha,
+        args.beta,
+        args.num_clients,
     )
     save_preprocessed_data(Path(args.save_dataset_dir), train_partitioned_datasets, args.alpha, args.beta, "train")
-    save_preprocessed_data(Path(args.save_dataset_dir), validation_partitioned_datasets, args.alpha, args.beta, "validation")
+    save_preprocessed_data(
+        Path(args.save_dataset_dir), validation_partitioned_datasets, args.alpha, args.beta, "validation"
+    )
     save_preprocessed_data(Path(args.save_dataset_dir), test_partitioned_datasets, args.alpha, args.beta, "test")

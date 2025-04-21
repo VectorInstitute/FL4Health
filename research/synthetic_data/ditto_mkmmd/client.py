@@ -86,7 +86,11 @@ class SynthDittoClient(DittoMkMmdClient):
         # The partitioned data should be generated prior to running the clients via preprocess_data function
         # in the research/synthetic_data/preprocess.py file
         test_loader, _ = get_test_preprocessed_data(
-            self.data_path, self.client_number, batch_size, self.heterogeneity_level, self.heterogeneity_level,
+            self.data_path,
+            self.client_number,
+            batch_size,
+            self.heterogeneity_level,
+            self.heterogeneity_level,
         )
         return test_loader
 
@@ -94,8 +98,12 @@ class SynthDittoClient(DittoMkMmdClient):
         return torch.nn.CrossEntropyLoss()
 
     def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
-        global_optimizer = torch.optim.SGD(self.global_model.parameters(), lr=self.learning_rate, momentum=0.9, weight_decay=0.001)
-        local_optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9, weight_decay=0.001)
+        global_optimizer = torch.optim.SGD(
+            self.global_model.parameters(), lr=self.learning_rate, momentum=0.9, weight_decay=0.001
+        )
+        local_optimizer = torch.optim.SGD(
+            self.model.parameters(), lr=self.learning_rate, momentum=0.9, weight_decay=0.001
+        )
         return {"global": global_optimizer, "local": local_optimizer}
 
     def get_model(self, config: Config) -> nn.Module:

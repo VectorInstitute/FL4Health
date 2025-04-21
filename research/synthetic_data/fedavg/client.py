@@ -76,7 +76,11 @@ class SynthFedAvgClient(BasicClient):
         # The partitioned data should be generated prior to running the clients via preprocess_data function
         # in the research/synthetic_data/preprocess.py file
         test_loader, _ = get_test_preprocessed_data(
-            self.data_path, self.client_number, batch_size, self.heterogeneity_level, self.heterogeneity_level,
+            self.data_path,
+            self.client_number,
+            batch_size,
+            self.heterogeneity_level,
+            self.heterogeneity_level,
         )
         return test_loader
 
