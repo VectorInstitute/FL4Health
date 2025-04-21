@@ -69,9 +69,9 @@ def main(config: dict[str, Any]) -> None:
 
     model = map_model_to_opacus_model(Net())
 
-    client_name = "".join(choices(string.ascii_uppercase, k=5))
+    server_name = "".join(choices(string.ascii_uppercase, k=5))
     checkpoint_dir = "examples/dp_fed_examples/instance_level_dp/"
-    checkpoint_name = f"server_{client_name}_best_model.pkl"
+    checkpoint_name = f"server_{server_name}_best_model.pkl"
     checkpointer = BestLossOpacusCheckpointer(checkpoint_dir=checkpoint_dir, checkpoint_name=checkpoint_name)
 
     checkpoint_and_state_module = OpacusServerCheckpointAndStateModule(
@@ -106,6 +106,7 @@ def main(config: dict[str, Any]) -> None:
         num_server_rounds=config["n_server_rounds"],
         checkpoint_and_state_module=checkpoint_and_state_module,
         accept_failures=False,
+        server_name=server_name,
     )
 
     fl.server.start_server(
