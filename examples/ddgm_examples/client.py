@@ -1,23 +1,22 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Dict, Tuple
 
 import torch
 import flwr as fl
 from flwr.common.typing import Config
 from torch.nn import CrossEntropyLoss, Module
 from torch.nn.modules.loss import _Loss
-from torch.optim import SGD, Optimizer, AdamW
+from torch.optim import SGD, Optimizer
 from torch.utils.data import DataLoader
 
-from examples.models.cnn_model import Net
+from examples.models.cnn_model import Net, MnistNet
 from fl4health.clients.ddgm_client import DDGMClient
 
-from logging import DEBUG, INFO, WARN
+from logging import INFO
 from flwr.common.logger import log
 
-from fl4health.utils.load_data import load_cifar10_data, load_cifar10_test_data
-# , poisson_subsampler_cifar10
+from fl4health.utils.load_data import load_mnist_data, load_cifar10_test_data
+
 from fl4health.utils.metrics import Accuracy
 from fl4health.utils.config import load_config
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
@@ -41,7 +40,7 @@ class SecAggClient(DDGMClient):
     """
 
     def get_model(self, config: Config) -> Module:
-        return Net()
+        return MnistNet().to(self.device)
 
     def get_criterion(self, config: Config) -> _Loss:
         return CrossEntropyLoss()
@@ -60,7 +59,7 @@ class SecAggClient(DDGMClient):
         log(INFO, f"Model dimension: {len_parameters}")
         padded_model_dim = 2**get_exponent(len_parameters)
         log(INFO, f"Padded model dimension: {padded_model_dim}")
-        self.sign_vector = generate_random_sign_vector(dim=padded_model_dim, seed=self.privacy_settings["sign_vector_seed"])
+        self.sign_vector = generate_random_sign_vector(dim=padded_model_dim, seed=self.privacy_settings["sign_vector_seed"]).to(self.device)
         log(INFO, "finished generating sign vector")
 
 
@@ -70,13 +69,15 @@ class SecAggClient(DDGMClient):
     
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
-        train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
+        train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size)
+        self.dataset_size = len(train_loader.dataset)
+        log(INFO, f'size of data: {self.dataset_size}')
         return train_loader, val_loader
 
-    def get_test_data_loader(self, config: Config) -> DataLoader | None:
-        batch_size = narrow_dict_type(config, "batch_size", int)
-        test_loader, _ = load_cifar10_test_data(self.data_path, batch_size)
-        return test_loader
+    # def get_test_data_loader(self, config: Config) -> DataLoader | None:
+    #     batch_size = narrow_dict_type(config, "batch_size", int)
+    #     test_loader, _ = load_cifar10_test_data(self.data_path, batch_size)
+    #     return test_loader
 
 
 if __name__ == "__main__":
@@ -86,7 +87,7 @@ if __name__ == "__main__":
         "--dataset_path",
         action="store",
         type=str,
-        default="examples/datasets",
+        default="examples/datasets/mnist_data/",
         help="Path to the local dataset, no need to encluse in quotes.",
     )
     parser.add_argument(
@@ -107,15 +108,17 @@ if __name__ == "__main__":
     data_path = Path(args.dataset_path)
 
     # compute resource
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # privacy settings 
     privacy_settings = {
+        'enable_dp': config['enable_dp'],
         'noise_multiplier': config['noise_multiplier'],
         'granularity': config['granularity'],
         'clipping_bound': config['clipping_bound'],
         'bias': config['bias'],
         'sign_vector_seed': config['sign_vector_seed'],
+        # 'local_steps': config['local_steps']
     }
 
     # checkpoint_dir = 'examples/secagg_non_private_example'
@@ -127,7 +130,7 @@ if __name__ == "__main__":
     client = SecAggClient(
         data_path=data_path, 
         metrics=[Accuracy("accuracy")], 
-        device=DEVICE,
+        device=device,
         privacy_settings=privacy_settings,
     )
 
@@ -135,5 +138,5 @@ if __name__ == "__main__":
     # RunClient(server_address="0.0.0.0:8080", client=client)
     # client.shutdown()
     
-    fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client(),insecure=True,)
+    fl.client.start_client(server_address="0.0.0.0:8081", client=client.to_client())
     client.shutdown()

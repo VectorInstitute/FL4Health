@@ -1,9 +1,9 @@
 # YAML parser's must-have configs
-n_server_rounds: 20
+n_server_rounds: 15
 
 # must have at least 3 clients
 n_clients: 3    # set this parameter in run.sh as well
-batch_size: 128
+batch_size: 512
 
 
 # # optional parameter
@@ -17,10 +17,10 @@ checkpoint_path: "examples/ddgm_examples"
 # privacy parameters
 enable_dp: true
 clipping_bound: 0.03
-granularity: 3.5e-6
-noise_multiplier: 9.5e-4
+granularity: 0.0015
+noise_multiplier: 1.2
 bias: 0.06
-private_vector_dimension: 1018174
+# private_vector_dimension: 1018174
 
 sign_vector_seed: 1
 

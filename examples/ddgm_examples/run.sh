@@ -41,7 +41,7 @@ else
     array=()    # PID
 
     nohup python -m examples.ddgm_examples.server > examples/ddgm_examples/log/server.out 2>&1 & array[${#array[@]}]=$!
-    sleep 10
+    sleep 20
 
     for (( i=1; i<=${num_clients}; i++ ))
     do
