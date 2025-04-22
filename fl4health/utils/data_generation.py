@@ -94,11 +94,11 @@ class SyntheticFedProxDataset(ABC):
         self, x: torch.Tensor, W_1: torch.Tensor, b_1: torch.Tensor, W_2: torch.Tensor, b_2: torch.Tensor
     ) -> torch.Tensor:
         """
-        This function maps features x to a label y in an alternative way to include two layers. The first stage is two 
+        This function maps features x to a label y in an alternative way to include two layers. The first stage is two
         affine transformations
 
         .. math::
-            latent = \\frac{1}{T} \\cdot (W_1 \\cdot x + b_1) 
+            latent = \\frac{1}{T} \\cdot (W_1 \\cdot x + b_1)
             \\hat{y} = \\cdot (W_2 \\cdot latent + b_2).
 
         Then :math:`y = \\text{softmax}(\\hat{y})`. Getting the argmax from the distribution, we then
