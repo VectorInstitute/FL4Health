@@ -74,11 +74,8 @@ class SyntheticFedProxDataset(ABC):
         .. math::
             \\hat{y} = \\frac{1}{T} \\cdot (Wx + b).
 
-        Then :math:`y = \\text{softmax}(\\hat{y})`. Sampling from the distribution, we then
+        Then :math:`y = \\text{softmax}(\\hat{y})`. Getting the argmax from the distribution, we then
         one hot encode the resulting label sample.
-
-        **NOTE:** This procedure differs slightly from that of the original paper, which simply took a one hot on the
-        softmax distribution. The current strategy allows for a bit more label stochasticity.
 
         Args:
             x (torch.Tensor): The input features to be mapped to output labels. Shape is (dataset size, ``input_dim``)
@@ -97,17 +94,16 @@ class SyntheticFedProxDataset(ABC):
         self, x: torch.Tensor, W_1: torch.Tensor, b_1: torch.Tensor, W_2: torch.Tensor, b_2: torch.Tensor
     ) -> torch.Tensor:
         """
-        This function maps features x to a label y as done in the original paper. The first stage is the affine
-        transformation
+        This function maps features x to a label y in an alternative way to include two layers. The first stage is two 
+        affine transformations
 
         .. math::
-            \\hat{y} = \\frac{1}{T} \\cdot (Wx + b).
+            latent = \\frac{1}{T} \\cdot (W_1 \\cdot x + b_1) 
+            \\hat{y} = \\cdot (W_2 \\cdot latent + b_2).
 
-        Then :math:`y = \\text{softmax}(\\hat{y})`. Sampling from the distribution, we then
+        Then :math:`y = \\text{softmax}(\\hat{y})`. Getting the argmax from the distribution, we then
         one hot encode the resulting label sample.
 
-        **NOTE:** This procedure differs slightly from that of the original paper, which simply took a one hot on the
-        softmax distribution. The current strategy allows for a bit more label stochasticity.
 
         Args:
             x (torch.Tensor): The input features to be mapped to output labels. Shape is (dataset size, ``input_dim``)
