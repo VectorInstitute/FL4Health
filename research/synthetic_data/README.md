@@ -9,8 +9,8 @@ python -m research.synthetic_data.preprocess --save_dataset_dir path_to_save_par
 Where:
 - `path_to_save_partitioned_dataset` is the path to save the partitioned dataset.
 - `seed` is the seed to use for the random number generator to have reproducible splits.
-- `alpha` is the imbalance level of the dataset. The highrt the value, the more imbalance in the data distribution
-- `beta` is the heterogeneity level of the dataset. The highrt the value, the more heterogeneity in the data distribution.
+- `alpha` is the imbalance level of the dataset. The higher the value, the more imbalance in the data distribution
+- `beta` is also the imbalance level of the dataset. The higher the value, the more imbalance in the data distribution.
 - `num_clients` is the number of clients to partition the dataset into.
 
 
@@ -46,9 +46,9 @@ For the global model (applied only to general federated approaches like FedAvg),
 
 ### Evaluating outputs of the hyperparameter search.
 
-The hyperparameter sweep conducts five training runs for each parameter pair in the sweep. The artifacts from these runs are stored in the same directory and processed together to compute the average performance on the test set. The evaluate_on_test.py script evaluates both the saved local client models and the global server models on the individual local clients' test sets, as well as on the pooled central test dataset. The script reports the average and standard deviation for both evaluations.
+The hyperparameter sweep conducts three training runs for each parameter pair in the sweep. The artifacts from these runs are stored in the same directory and processed together to compute the average performance on the test set. The evaluate_on_test.py script evaluates both the saved local client models and the global server models on the individual local clients' test sets, as well as on the pooled central test dataset. The script reports the average and standard deviation for both evaluations.
 
-To run this evaluation on a specific collection of five runs (i.e., for a fixed set of hyperparameters), use the following command:
+To run this evaluation on a specific collection of three runs (i.e., for a fixed set of hyperparameters), use the following command:
 
 ``` bash
 python -m research.synthetic_data.evaluate_on_test \
