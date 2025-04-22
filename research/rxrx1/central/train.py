@@ -60,7 +60,11 @@ class Rxrx1CentralizedTrainer(SingleNodeTrainer):
         self.train_loader = DataLoader(aggregated_train_dataset, batch_size=32, shuffle=True)
         self.val_loader = DataLoader(aggregated_val_dataset, batch_size=32, shuffle=False)
 
-        self.model: nn.Module = models.resnet18(pretrained=True).to(self.device)
+        self.model: nn.Module = models.resnet18(pretrained=True)
+        num_classes = 50
+        in_features = self.model.fc.in_features
+        self.model.fc = nn.Linear(in_features, num_classes)
+        self.model.to(self.device)
         # NOTE: The class weights specified by alpha in this baseline loss are precomputed based on the weights of
         # the pool dataset. This is a bit of cheating but FLamby does it in their paper.
         self.criterion = torch.nn.CrossEntropyLoss()

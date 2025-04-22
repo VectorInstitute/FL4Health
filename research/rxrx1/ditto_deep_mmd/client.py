@@ -98,7 +98,11 @@ class Rxrx1DittoClient(DittoDeepMmdClient):
         return {"global": global_optimizer, "local": local_optimizer}
 
     def get_model(self, config: Config) -> nn.Module:
-        return models.resnet18(pretrained=True).to(self.device)
+        model = models.resnet18(pretrained=True)
+        num_classes = 50
+        in_features = model.fc.in_features
+        model.fc = nn.Linear(in_features, num_classes)
+        return model.to(self.device)
 
 
 if __name__ == "__main__":

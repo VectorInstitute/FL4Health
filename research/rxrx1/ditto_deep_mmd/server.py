@@ -4,6 +4,7 @@ from logging import INFO
 from typing import Any
 
 import flwr as fl
+import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
@@ -46,6 +47,9 @@ def main(config: dict[str, Any], server_address: str, lam: float) -> None:
     client_manager = SimpleClientManager()
     # Initializing the model on the server side
     model = models.resnet18(pretrained=True)
+    num_classes = 50
+    in_features = model.fc.in_features
+    model.fc = nn.Linear(in_features, num_classes)
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvgWithAdaptiveConstraint(
         min_fit_clients=config["n_clients"],
