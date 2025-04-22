@@ -15,7 +15,8 @@
 """
 
 from typing import Any, Callable, Optional
-from math import comb, exp, log, pi, sqrt
+from math import comb, exp, log, pi, sqrt, pow
+import numpy as np
 
 from dp_accounting import (
     DpEvent,
@@ -71,6 +72,27 @@ def is_natural(*numbers: Any) -> None:
     for n in numbers:
         assert n > 0 and isinstance(n, int)
 
+def get_heuristic_granularity(noise_scale: float, l2_norm_clip: float, bits: int, num_clients: int, private_vector_dimension: int, k:int=4) -> float:
+    """
+    Heuristically set granularity to use up modulo field size, where we would like to have:
+
+        2k * sigma_hat / gamma <= 2 ** bits
+        where sigma_hat = sqrt( c^2 n^2 / d + (gamma^2 / 4 + sigma^2) * n).
+    """
+    c = l2_norm_clip
+    n = num_clients
+    d = private_vector_dimension
+    sigma = noise_scale
+
+    field_size_squared = pow(4, bits)
+    
+    assert field_size_squared > pow(k, 2) * n
+
+    granularity_squared = 4 * pow(k, 2) * (pow(c, 2) * pow(n, 2) / d + pow(sigma, 2) * n) / ( field_size_squared - pow(k, 2) * n )
+
+    return sqrt(granularity_squared)
+
+
 class DDGaussAccountant:
     def __init__(self, 
                 l2_norm_clip: float,
@@ -81,7 +103,9 @@ class DDGaussAccountant:
                 n_fl_rounds: int,
                 privacy_amplification_sampling_ratio: float,
                 bias: float = exp(-0.5), 
-                approximate_dp_delta: Optional[float] = None
+                bits: int | None = 4,
+                k: int = 2,
+                approximate_dp_delta: float | None = None
     ) -> None:
         
         is_natural(private_vector_dimension, n_trustworthy_clients, n_fl_rounds)
@@ -97,8 +121,10 @@ class DDGaussAccountant:
         self.gamma = granularity
         self.N = n_trustworthy_clients
         self.p = privacy_amplification_sampling_ratio
+        self.n = round(self.N * self.p) # the number of sampled client per round
         self.rounds = n_fl_rounds
         self.sigma = noise_scale
+
 
         if approximate_dp_delta is None:
             self.delta = 1 / n_trustworthy_clients**2
@@ -114,7 +140,7 @@ class DDGaussAccountant:
 
         arg1 = c**2 + g**2 * d/4 + sqrt(2 * log(1/b)) * g * (c + g*sqrt(d)/2)
         arg2 = (c + g * sqrt(d))**2
-
+        
         return min(arg1, arg2)
 
     def _tau(self) -> float:
@@ -123,24 +149,34 @@ class DDGaussAccountant:
         common = -2 * (pi * self.sigma / self.gamma)**2
 
         tau = 0
-        for k in range(1, self.N):
+        # for k in range(1, self.N):
+        for k in range(1, self.n):
             tau += exp(common * k/(k+1))
 
         return 10 * tau
 
-    def single_fl_round_concentrated_dp(self) -> float:
+    def _epsilon(self) -> float:
         """[DDG-J] Theorem 5"""
-
-        common = self._delta_squared() / (self.N * self.sigma**2)
+        common = self._delta_squared() / (self.n * self.sigma**2)
         d, t = self.d, self._tau()
 
         arg1 = sqrt(common + 2 * t * d)
         arg2 = sqrt(common) + t * sqrt(d)
 
-        epsilon = min(arg1, arg2)
+        return min(arg1, arg2) 
+    
+    def cdp_to_dp(self, cdp_rho) -> float:
+        """[DDG-J] Lemma 4"""
+        epsilon = sqrt(2 * cdp_rho)
+        return epsilon * (sqrt(2 * log(1/self.delta)) + epsilon/2)
 
+    def single_fl_round_concentrated_dp(self) -> float:
+        """[DDG-J] Theorem 5"""
+
+        epsilon = self._epsilon()
+        
         # 1 FL round satisfies (epsilon^2)/2 - concentrated differential privacy
-        return epsilon
+        return pow(epsilon, 2) / 2
     
     def single_fl_round_renyi_dp(self, rdp_order: float) -> float:
 
@@ -148,7 +184,8 @@ class DDGaussAccountant:
 
         # See [DDG-J] comment above Lemma 4
         cdp_epsilon = self.single_fl_round_concentrated_dp()
-        rdp_epsilon = rdp_order/2 * cdp_epsilon **2 
+        # rdp_epsilon = rdp_order/2 * cdp_epsilon **2 
+        rdp_epsilon = rdp_order * cdp_epsilon
 
         # 1 FL round satisfies (rdp_order, rdp_epsilon) - Renyi differential privacy
         return rdp_epsilon
@@ -215,12 +252,16 @@ class DDGaussAccountant:
     
     def __repr__(self) -> str:
 
-        rdp_order = 2
+        rdp_order = 60
         verbose = False
-        ndecimals = 2
+        ndecimals = 5
 
         single_round_cdp = round(self.single_fl_round_concentrated_dp(), ndecimals)
         single_round_rdp = round(self.single_fl_round_renyi_dp(rdp_order), ndecimals)
+        single_round_dp = round(self.cdp_to_dp(self.single_fl_round_concentrated_dp()), ndecimals)
+
+        # print(f'single_round_cdp, single_round_rdp = ({single_round_cdp}, {single_round_rdp})')
+        # print(f'single_round_cdp_to_dp = ({single_round_dp}, {self.delta})')
 
         fl_rdp_unamplified = round(self.fl_rdp(rdp_order=rdp_order, amplify=False), ndecimals)
         fl_adp_unamplified = round(self.fl_approximate_dp(amplify=False, verbose=verbose), ndecimals)
@@ -232,6 +273,7 @@ class DDGaussAccountant:
 
             report = f"""
                 single_round_cdp = {single_round_cdp}
+                single_round_cdp_to_dp = ({single_round_dp}, {self.delta})
                 (alpha, single_round_rdp) = ({rdp_order}, {single_round_rdp})
                 (alpha, fl_rdp_unamplified) = ({int(rdp_order)}, {fl_rdp_unamplified})
                 (alpha, fl_rdp_amplified) = ({rdp_order}, {fl_rdp_amplified})
@@ -241,6 +283,7 @@ class DDGaussAccountant:
         except OverflowError:
             report = f"""
                 single_round_cdp = {single_round_cdp}
+                single_round_cdp_to_dp = ({single_round_dp}, {self.delta})
                 (alpha, single_round_rdp) = ({rdp_order}, {single_round_rdp})
                 (alpha, fl_rdp_unamplified) = ({int(rdp_order)}, {fl_rdp_unamplified})
                 (alpha, fl_rdp_amplified) = (OverflowError)
@@ -253,38 +296,68 @@ class DDGaussAccountant:
 if __name__ == '__main__':
 
     # EMNIST
+    # parameters = {
+    #     'l2_norm_clip': 0.03,
+    #     'private_vector_dimension': 1_018_174,
+    #     'granularity': 3.5e-6, 
+    #     'noise_scale': 9.5e-4, 
+    #     'n_trustworthy_clients': 3400,
+    #     'n_fl_rounds': 1500,
+    #     'privacy_amplification_sampling_ratio': 1/34,
+    #     'bias': exp(-0.5), 
+    #     'approximate_dp_delta': 1/3400
+    # }
+
+    assert pow(4, 16) == 4 ** 16
+
     parameters = {
         'l2_norm_clip': 0.03,
         'private_vector_dimension': 1_018_174,
-        'granularity': 3.5e-6, 
-        'noise_scale': 9.5e-4, 
+        'noise_scale': 1.2, 
         'n_trustworthy_clients': 3400,
         'n_fl_rounds': 1500,
         'privacy_amplification_sampling_ratio': 1/34,
         'bias': exp(-0.5), 
-        'approximate_dp_delta': 1/3400
+        'approximate_dp_delta': 1/3400,
+        'bits': 16,
+        'k': 4
     }
+
+    print(parameters)
+
+    num_clients_per_round = round(parameters['n_trustworthy_clients'] * parameters['privacy_amplification_sampling_ratio'])
+
+    parameters['granularity'] = get_heuristic_granularity(parameters['noise_scale'], parameters['l2_norm_clip'], parameters['bits'], num_clients_per_round, parameters['private_vector_dimension'], parameters['k'])
+
+    print(f"heuristic g: {parameters['granularity']}")
 
     print('EMNIST (DDGauss paper)')
     accountant = DDGaussAccountant(**parameters)
     print(accountant)
 
-    # Fed-ISIC2019
-    isic_train_size = int(0.8 * 23247)
-    isic_batch_size = 6*8
-
-    parameters = {
-        'l2_norm_clip': 0.1,
-        'private_vector_dimension': 4_017_796,
-        'granularity': 1e-6, 
-        'noise_scale': 1.212e-3, 
-        'n_trustworthy_clients': 23247,
-        'n_fl_rounds': 100,
-        'privacy_amplification_sampling_ratio': isic_batch_size/isic_train_size,
-        'bias': exp(-0.5), 
-        'approximate_dp_delta': isic_train_size**-2
-    }
-
-    print('Fed-ISIC2019')
+    parameters['granularity'] = 1
+    print("try accounting again with gamma=1")
     accountant = DDGaussAccountant(**parameters)
     print(accountant)
+
+
+    # Fed-ISIC2019
+    # isic_train_size = int(0.8 * 23247)
+    # isic_batch_size = 6*8
+
+    # parameters = {
+    #     'l2_norm_clip': 0.1,
+    #     'private_vector_dimension': 4_017_796,
+    #     'granularity': 1e-6, 
+    #     'noise_scale': 1.212e-3, 
+    #     'n_trustworthy_clients': 23247,
+    #     'n_fl_rounds': 100,
+    #     'privacy_amplification_sampling_ratio': isic_batch_size/isic_train_size,
+    #     'bias': exp(-0.5), 
+    #     'approximate_dp_delta': isic_train_size**-2
+    # }
+
+    # print('Fed-ISIC2019')
+    # accountant = DDGaussAccountant(**parameters)
+    # print(accountant)
+

@@ -3,6 +3,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 from functools import reduce
 import numpy as np
 import torch
+import torch.nn as nn
 
 from flwr.common import (
     parameters_to_ndarrays,
@@ -25,10 +26,14 @@ from fl4health.client_managers.base_sampling_manager import BaseFractionSampling
 from fl4health.strategies.aggregate_utils import aggregate_results
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 
+from fl4health.servers.secure_aggregation_utils import vectorize_model, unvectorize_model,get_model_layer_types, change_model_dtypes
+from fl4health.utils.functions import decode_and_pseudo_sort_results
+
 from fl4health.privacy_mechanisms.discrete_gaussian_mechanism import (
     generate_discrete_gaussian_vector,
     fwht,
-    shift_transform
+    shift_transform,
+    shift_transform_torch
 )
 
 Requests = List[Tuple[ClientProxy, GetPropertiesIns]]
@@ -82,72 +87,43 @@ class DDGMStrategy(BasicFedAvg):
         self.granularity = ddgm_config['granularity']
         self.model_dim = ddgm_config['model_dim']
         
-    def aggregate_modular_sum(self, params: list[NDArrays], arithmetic_modulus: int) -> NDArrays:
+    def aggregate_modular_sum(self, params: list[torch.Tensor], arithmetic_modulus: int) -> torch.Tensor:
         """
         Aggregate the parameters from the clients.
         """
-        num_clients = len(params)
 
         # Compute sum of weights of each layer
-        params_prime: NDArrays = [reduce(np.add, layer_updates) for layer_updates in zip(*params)]
+        summed = torch.stack(params).sum(dim=0)
         
         # Apply modular arithmetic
-        params_prime = [param % arithmetic_modulus for param in params_prime]
+        aggregated = summed % arithmetic_modulus
         
-        return params_prime
+        return aggregated
     
-    
-    def aggregate_sum(self, params: list[NDArrays]) -> NDArrays:
+    def ddgm_server_aggregation(self, deltas: list[torch.Tensor], arithmetic_modulus: int, sign_vector: torch.Tensor) -> torch.Tensor:
         """
         Aggregate the parameters from the clients.
-        """
-        num_clients = len(params)
-
-        # Compute sum of weights of each layer
-        params_prime: NDArrays = [reduce(np.add, layer_updates) for layer_updates in zip(*params)]
-        
-        return params_prime
-    
-    def aggregate_avg(self, params: list[NDArrays]) -> NDArrays:
-        """
-        Aggregate the parameters from the clients.
-        """
-        num_clients = len(params)
-
-        # Compute average weights of each layer
-        params_prime: NDArrays = [reduce(np.add, layer_updates) / num_clients for layer_updates in zip(*params)]
-        
-        return params_prime
-    
-    def ddgm_server_aggregation(deltas: list[NDArrays], arithmetic_modulus: int, sign_vector: torch.Tensor) -> NDArrays:
-        """
-        Aggregate the parameters from the clients.
+        DDGM Server Process
         """
         num_clients = len(deltas)
         
         # aggregate (sum) the results
-        aggregated_deltas = self.aggregate_modular_sum(deltas, arithmetic_modulus) 
-        
-        vectorized_aggregated_deltas = vectorize_model(aggregated_deltas)
+        aggregated_vector = self.aggregate_modular_sum(deltas, arithmetic_modulus) 
         
         # server procedure
-        vector = shift_transform(vectorized_aggregated_deltas, arithmetic_modulus)
+        vector = shift_transform_torch(aggregated_vector, arithmetic_modulus)
         
-        assert arithmetic_modulus % 2 == 0
-        bound = arithmetic_modulus // 2
-        
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        vector = torch.from_numpy(vector).to(device=device)
-        vector = fwht(vector)
+        vector = fwht(vector).to(device)
         vector = torch.mul(
-            self.granularity * sign_vector,
-            vector
+            self.granularity * sign_vector.to(device),
+            vector.to(device)
         )
         
         vector = vector[:self.model_dim] 
         vector /= num_clients
 
-        return vector.cpu().numpy()
+        log(INFO, f'finished server procedure')
+        return vector
         
     
     def aggregate_fit(
@@ -157,6 +133,7 @@ class DDGMStrategy(BasicFedAvg):
         failures: list[tuple[ClientProxy, FitRes] | BaseException],
         arithmetic_modulus: int,
         sign_vector: torch.Tensor,
+        server_model: nn.Module
     ) -> tuple[Parameters | None, dict[str, Scalar]]:
         if not results:
             return None, {}
@@ -165,22 +142,23 @@ class DDGMStrategy(BasicFedAvg):
             return None, {}
         
         #  process the results
-        deltas = [parameters_to_ndarrays(client_response.parameters) for _, client_response in results]
+        # each element in deltas is a noisy vector from the client
+        deltas = [torch.from_numpy(parameters_to_ndarrays(client_response.parameters)[0]) for _, client_response in results]
+
+        log(INFO, f'type of element in results: {type(deltas[0])}')
         
         # apply the DDGM server aggregation
-        recovered_delta_avged = self.ddgm_server_aggregation(deltas, arithmetic_modulus)
+        recovered_delta_avged = self.ddgm_server_aggregation(deltas, arithmetic_modulus, sign_vector)
+
+        dtypes = get_model_layer_types(server_model)
         
-        self.server_model = unvectorize_model(self.checkpoint_and_state_module.model, recovered_delta_avged)
-        self.revert_layer_dtype()
+        server_model = unvectorize_model(server_model, recovered_delta_avged)
+
+        self.server_model = change_model_dtypes(server_model, dtypes)
+
         self.parameters = ndarrays_to_parameters(
             [layer.cpu().numpy() for layer in self.server_model.state_dict().values()]
         )
-        
-        updated_model_parameters = [original_param + update for original_param, update in zip(self.server_model_weights, aggregated_deltas)]
-        
-        
-        
-        self.server_model_weights = updated_model_parameters
         
         # Aggregate custom metrics if aggregation fn was provided
         metrics_aggregated = {}
@@ -190,7 +168,7 @@ class DDGMStrategy(BasicFedAvg):
         elif server_round == 1:  # Only log this warning once
             log(WARNING, "No fit_metrics_aggregation_fn provided")
 
-        return ndarrays_to_parameters(updated_model_parameters), metrics_aggregated
+        return self.parameters, metrics_aggregated
     
     def configure_fit(
         self, 
@@ -198,7 +176,6 @@ class DDGMStrategy(BasicFedAvg):
         parameters: Parameters, 
         client_manager: ClientManager,
         arithmetic_modulus: int,
-        # sign_vector: torch.Tensor,
     ) -> list[tuple[ClientProxy, FitIns]]:
         """
         Add the sign vector and the arithmetic modulus to the FitIns message.
@@ -209,6 +186,5 @@ class DDGMStrategy(BasicFedAvg):
         # Add the sign vector and the arithmetic modulus to the FitIns message
         for _, fit_ins in clients:
             fit_ins.config["arithmetic_modulus"] = arithmetic_modulus
-            # fit_ins.config["sign_vector"] = sign_vector
         
         return clients

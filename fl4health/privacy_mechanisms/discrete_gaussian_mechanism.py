@@ -73,12 +73,12 @@ def wiki_fwht(a) -> None:
         h *= 2
     return a
 
-def fwht(x):
+def fwht(x: torch.Tensor):
     dim=x.size()[0]
     assert math.log2(dim).is_integer()
     log2 = int(math.ceil(math.log2(dim)))
-    h_2x2 = torch.tensor([[1.0, 1.0], [1.0, -1.0]]).to(dtype=torch.float64)
-    permutation = torch.tensor([0,2,1])
+    h_2x2 = torch.tensor([[1.0, 1.0], [1.0, -1.0]]).to(dtype=torch.float64,device=x.device)
+    permutation = torch.tensor([0,2,1]).to(device=x.device)
 
     def _hadamard_step(x, dim):
         x_shape = x.size()
@@ -103,7 +103,8 @@ def fwht(x):
         index,x = body(index,x)
         
     xt2 = x.view(-1, dim)
-    return xt2[0] / torch.sqrt(torch.tensor(dim))
+    # return xt2[0] / torch.sqrt(torch.tensor(dim, device=xt2[0].device))
+    return xt2[0] / dim ** 0.5
     # xt2 = xt2.tolist()[0]
     
 @jit(nopython=True)
@@ -121,6 +122,30 @@ def shift_transform(vect: np.array, r: int) -> np.array:
             vect[i] = component - r
 
     return vect
+
+
+
+def shift_transform_torch(vect: torch.Tensor, r: int) -> torch.Tensor:
+    """
+    Apply a symmetric modular transform to a torch.Tensor.
+
+    For each element:
+    - If it's in [0, r//2], keep it
+    - If it's in (r//2, r), subtract r
+
+    Args:
+        vect: Input tensor (1D or any shape).
+        r: Modulus (must be even).
+
+    Returns:
+        Transformed tensor (same shape as input).
+    """
+    assert r % 2 == 0, "r must be even"
+
+    half = r // 2
+    vect_mod = vect % r
+
+    return torch.where(vect_mod <= half, vect_mod, vect_mod - r)
 
 @jit(nopython=True)
 def modular_clipping(vector: np.array, a: int, b: int) -> np.array:

@@ -5,7 +5,9 @@ import timeit
 from dataclasses import dataclass
 from itertools import product
 from logging import DEBUG, INFO, WARN
-from typing import Any, Dict, List, Optional, Set, Tuple
+# from typing import Any, Dict, List, Optional, Set, Tuple
+from flwr.common.typing import Code, Config, GetParametersIns, Scalar
+
 from numba import jit, prange
 import numpy as np
 import torch
@@ -15,7 +17,6 @@ from flwr.common.typing import NDArrays, Scalar
 from flwr.server.client_manager import ClientManager, ClientProxy
 from flwr.server.history import History
 from flwr.server.server import FitResultsAndFailures, fit_clients
-from flwr.common.typing import Config
 from torch.nn import Module
 
 from fl4health.checkpointing.checkpointer import TorchModuleCheckpointer
@@ -54,6 +55,8 @@ import os
 
 from fl4health.privacy_mechanisms.gaussian_mechanism import gaussian_mechanism
 
+from fl4health.privacy.distributed_discrete_gaussian_accountant import DDGaussAccountant
+
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -63,12 +66,10 @@ class DDGMServer(FlServer):
         client_manager: ClientManager,
         strategy: DDGMStrategy,
         fl_config: Config,
-        model: Module,
-        parameter_exchanger: ExchangerType,
-        privacy_settings,
-        wandb_reporter: Optional[WandBReporter] = None,
-        checkpointer: Optional[TorchModuleCheckpointer] = None,
-        timeout: Optional[float] = 30,
+        privacy_settings: dict[str, Scalar] | None,
+        checkpoint_and_state_module: BaseServerCheckpointAndStateModule | None = None,
+        wandb_reporter: WandBReporter | None = None,
+        timeout: float | None = 30,
         dropout_mode=False,
         task_name: str = '',
         sign_vector: torch.Tensor = None,
@@ -79,9 +80,9 @@ class DDGMServer(FlServer):
         log(INFO, 'secure aggregation server initializing...')
         assert isinstance(strategy, DDGMStrategy)
         
-        checkpoint_and_state_module = BaseServerCheckpointAndStateModule(model=model, parameter_exchanger=parameter_exchanger, model_checkpointers=[checkpointer])
-        
         super().__init__(client_manager, fl_config, strategy, wandb_reporter, checkpoint_and_state_module,accept_failures=False)
+
+        log(INFO, f'checkpointer exists: {self.checkpoint_and_state_module.state_checkpointer is not None}')
         
         self.sign_vector = sign_vector
         self.arithmetic_modulus = get_arithmetic_modulus(
@@ -94,110 +95,12 @@ class DDGMServer(FlServer):
         
         self.wandb_reporter = wandb_reporter
 
-        self.layer_dtypes = get_model_layer_types(model)
+        self.server_model =  checkpoint_and_state_module.model
 
         self.timeout = timeout
         self.dropout_mode = dropout_mode
         self.task_name = task_name
         
-        temporary_dir = os.path.join(
-            os.path.dirname(checkpointer.checkpoint_path),
-            'temp'
-        )
-
-        if not os.path.exists(temporary_dir):
-            os.makedirs(temporary_dir)
-
-        self.temporary_model_path = os.path.join(
-            temporary_dir,
-            f'server_initial_model.pth'
-        )
-
-        self.blackbox = BlackBox()
-        metrics_dir = os.path.join(os.path.dirname(
-            checkpointer.checkpoint_path), 
-            'metrics'
-        )
-
-        if not os.path.exists(metrics_dir):
-            os.makedirs(metrics_dir)
-
-        self.metrics_path = os.path.join(
-            metrics_dir,
-            'server_metrics.json'
-        )
-        
-    # def fit(self, num_rounds: int, timeout: float | None) -> tuple[History, float]:
-        
-    #     state_load_success = self._load_server_state()
-    #     if state_load_success:
-    #         log(INFO, "Server state checkpoint successfully loaded.")
-    #     else:
-    #         log(INFO, "Initializing server state and global parameters")
-    #         self.parameters = self._get_initial_parameters(server_round=0, timeout=timeout)
-    #         self.history = History()
-    #         self.current_round = 1
-
-    #     if self.current_round == 1:
-    #         log(INFO, "Evaluating initial parameters")
-    #         res = self.strategy.evaluate(0, parameters=self.parameters)
-    #         if res is not None:
-    #             log(
-    #                 INFO,
-    #                 "initial parameters (loss, other metrics): %s, %s",
-    #                 res[0],
-    #                 res[1],
-    #             )
-    #             self.history.add_loss_centralized(server_round=0, loss=res[0])
-    #             self.history.add_metrics_centralized(server_round=0, metrics=res[1])
-
-    #         # Run federated learning for num_rounds
-    #         log(INFO, "FL starting")
-
-    #     start_time = datetime.datetime.now()
-        
-    #     while self.current_round < (num_rounds + 1):
-    #         # Train model and replace previous global model
-    #         res_fit = self.fit_round(server_round=self.current_round, timeout=timeout)
-    #         if res_fit:
-    #             parameters_prime, fit_metrics, _ = res_fit  # fit_metrics_aggregated
-    #             if parameters_prime:
-    #                 self.parameters = parameters_prime
-    #             self.history.add_metrics_distributed_fit(server_round=self.current_round, metrics=fit_metrics)
-
-    #         # Evaluate model using strategy implementation
-    #         res_cen = self.strategy.evaluate(self.current_round, parameters=self.parameters)
-    #         if res_cen is not None:
-    #             loss_cen, metrics_cen = res_cen
-    #             log(
-    #                 INFO,
-    #                 "fit progress: (%s, %s, %s, %s)",
-    #                 self.current_round,
-    #                 loss_cen,
-    #                 metrics_cen,
-    #                 (datetime.datetime.now() - start_time).total_seconds(),
-    #             )
-    #             self.history.add_loss_centralized(server_round=self.current_round, loss=loss_cen)
-    #             self.history.add_metrics_centralized(server_round=self.current_round, metrics=metrics_cen)
-
-    #         # Evaluate model on a sample of available clients
-    #         res_fed = self.evaluate_round(server_round=self.current_round, timeout=timeout)
-    #         if res_fed:
-    #             loss_fed, evaluate_metrics_fed, _ = res_fed
-    #             if loss_fed:
-    #                 self.history.add_loss_distributed(server_round=self.current_round, loss=loss_fed)
-    #                 self.history.add_metrics_distributed(server_round=self.current_round, metrics=evaluate_metrics_fed)
-
-    #         self.current_round += 1
-
-    #         # Save checkpoint after training and testing
-    #         self._save_server_state()
-
-    #     # Bookkeeping
-    #     end_time = datetime.datetime.now()
-    #     elapsed_time = end_time - start_time
-    #     log(INFO, "FL finished in %s", str(elapsed_time))
-    #     return self.history, elapsed_time.total_seconds()
     
     def fit_round(
         self,
@@ -231,7 +134,6 @@ class DDGMServer(FlServer):
             parameters=self.parameters,
             client_manager=self._client_manager,
             arithmetic_modulus=self.arithmetic_modulus,
-            # sign_vector=self.sign_vector,
         )
 
         if not client_instructions:
@@ -260,16 +162,15 @@ class DDGMServer(FlServer):
 
         # Aggregate training results
         aggregated_result: tuple[
-            Optional[Parameters],
+            Parameters | None,
             dict[str, Scalar],
-        ] = self.strategy.aggregate_fit(server_round, results, failures,arithmetic_modulus=self.arithmetic_modulus, sign_vector=self.sign_vector)
+        ] = self.strategy.aggregate_fit(server_round, results, failures,arithmetic_modulus=self.arithmetic_modulus, sign_vector=self.sign_vector, server_model=self.server_model)
 
         parameters_aggregated, metrics_aggregated = aggregated_result
-        
-        round_end = datetime.datetime.now()
-        
         fit_round_results = parameters_aggregated, metrics_aggregated, (results, failures)
-        
+
+        round_end = datetime.datetime.now()
+                
         self.reports_manager.report(
             {
                 "fit_round_start": str(round_start),

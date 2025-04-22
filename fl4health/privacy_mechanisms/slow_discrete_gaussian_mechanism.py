@@ -147,23 +147,28 @@ def random_sign_vector(dim: int, sampling_probability: float) -> torch.Tensor:
 
 
 def generate_sign_diagonal_matrix(dim: int, sampling_probability=0.5, seed=0) -> torch.Tensor:
-    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+    else:
+        torch.manual_seed(seed)
     return torch.diag(random_sign_vector(dim=dim, sampling_probability=0.5))
 
 def generate_random_sign_vector(dim: int, sampling_probability=0.5, seed=0) -> torch.Tensor:
-    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+    else:
+        torch.manual_seed(seed)
     return random_sign_vector(dim=dim, sampling_probability=0.5)
 
 
-def pad_zeros(vector: torch.Tensor, dim=None) -> torch.Tensor:
+def pad_zeros(vector: torch.Tensor) -> torch.Tensor:
     """Elongate vector dimension to next power of two."""
     assert vector.dim() == 1
-    if dim is None:
-        dim = vector.numel()
+    dim = vector.numel()
     exp = get_exponent(dim)
     pad_len = torch.pow(torch.tensor(2), exp) - dim
     pad_len = pad_len.to(int).item()
-    return torch.cat((vector, torch.zeros(pad_len)))
+    return torch.cat((vector, torch.zeros(pad_len, device=vector.device)))
 
 def get_exponent(n: int) -> int:
     """Get exponent of the least power of two greater than or equal to n."""
@@ -185,7 +190,7 @@ def generate_walsh_hadamard_matrix(exponent: int) -> torch.Tensor:
     return torch.from_numpy(sylvester(exponent) / np.sqrt(2**exponent))
 
 
-def randomized_rounding(vector: torch.Tensor, delta_squared: float, granularity: float) -> torch.Tensor:
+def randomized_rounding_old(vector: torch.Tensor, delta_squared: float, granularity: float) -> torch.Tensor:
     """Random rounding for SecAgg client procedure using delta_squared.
 
     Ref http://proceedings.mlr.press/v139/kairouz21a/kairouz21a.pdf
@@ -229,19 +234,71 @@ def randomized_rounding(vector: torch.Tensor, delta_squared: float, granularity:
     log(DEBUG, f'Randomized Rounding finished in {t1-t0} sec')
     return rounded_vector
 
-def calculate_delta_squared(clip: float, granularity: float, unpadded_model_dim: int, bias: float, mini_client_size: int)-> float:
-    """Calculate the delta_squared value."""
+
+def randomized_rounding(vector: torch.Tensor, l2_upper_bound: float) -> torch.Tensor:
+    """Random rounding for SecAgg client procedure using delta_squared.
+
+    Ref http://proceedings.mlr.press/v139/kairouz21a/kairouz21a.pdf
+    """
+    device = vector.device
+    log(INFO, f'randomized rounding using device: {device}')
+    t0 = time.perf_counter()
+
+    rounder = torch.vmap(lambda x, coin: torch.where(coin==1, torch.floor(x), torch.ceil(x)))
+
+    down_probs = torch.ceil(vector) - vector
+    purse = torch.bernoulli(down_probs)
+
+    rounded_vector = rounder(vector, purse)
+    i = 0
+    while torch.linalg.vector_norm(rounded_vector, ord=2) > l2_upper_bound:
+        if i == 100:
+            log(DEBUG, f'Rounding not converging after 100 rounds.')
+            exit()
+        n  = torch.linalg.vector_norm(rounded_vector, ord=2)
+        log(INFO, f'round: {i} {n}>{l2_upper_bound}')
+        i+=1
+        purse = torch.bernoulli(down_probs)
+        rounded_vector = rounder(vector, purse)
+    log(DEBUG, f'Done rounding at iteration {i}')
+    t1 = time.perf_counter()
+    log(DEBUG, f'Randomized Rounding finished in {t1-t0} sec')
+    return rounded_vector
+
+
+def calculate_delta_squared_old(clip: float, granularity: float, padded_model_dim: int, bias: float, mini_client_size: int=1)-> float:
+    """
+    Calculate the delta_squared value.
+    delta_squared = gamma^2 x l_2_norm^2
+    where l_2_norm is in the original paper.
+    """
     assert 0 <= bias < 1
     
     clip_new = clip/mini_client_size
-    padded_dim = 2**get_exponent(unpadded_model_dim)
-    s = math.sqrt(padded_dim)
+    
+    s = math.sqrt(padded_model_dim)
 
     delta_squared_1 = (clip_new + granularity * s)**2
-    delta_squared_2 = clip_new**2 + granularity**2 * padded_dim/4 + math.sqrt(2 * math.log(1/bias)) * granularity * (clip_new + s/2)
+    delta_squared_2 = clip_new**2 + granularity**2 * padded_model_dim/4 + math.sqrt(2 * math.log(1/bias)) * granularity * (clip_new + granularity * s/2)
 
     delta_squared = min(delta_squared_1, delta_squared_2)
     return delta_squared
+
+def calculate_l2_upper_bound(clip: float, granularity: float, padded_model_dim: int, bias: float)-> float:
+    """Calculate the l2 upper bound value for randomized rounding.
+    """
+    assert 0 <= bias < 1
+    
+    sqrt_dim = math.sqrt(padded_model_dim)
+
+    clip_div_g = clip/granularity
+
+    l2_upper_1 = clip_div_g + sqrt_dim
+
+    l2_upper_2 = clip_div_g**2 + padded_model_dim/4 + math.sqrt(2 * math.log(1/bias)) * (clip_div_g + sqrt_dim/2)
+
+    l2_upper_bound = min(l2_upper_1, l2_upper_2)
+    return l2_upper_bound
 
 def calculate_tau(granularity: float, sigma: float, n: float) -> float:
         """[DDG-J] Theorem 5"""

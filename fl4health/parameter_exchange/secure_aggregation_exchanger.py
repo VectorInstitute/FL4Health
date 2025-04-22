@@ -5,7 +5,7 @@ from typing import List, Optional
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
-from flwr.common.typing import Config, NDArrays
+from flwr.common.typing import Config, NDArrays, NDArray
 
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.privacy_mechanisms.slow_discrete_gaussian_mechanism import (
@@ -149,3 +149,10 @@ class SecureAggregationExchanger(ParameterExchanger):
         params_dict = zip(model.state_dict().keys(), parameters)
         state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
         model.load_state_dict(state_dict, strict=True)
+
+    def push_noisy_parameters(
+            self, noisy_vector: torch.Tensor | NDArray
+    ) -> NDArrays:
+        # Converting the noisy vectorized vector into NDArrays and sending it to the server
+        return [noisy_vector] if noisy_vector.type() == NDArray else [noisy_vector.cpu().numpy()]
+    
