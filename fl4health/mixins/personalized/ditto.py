@@ -93,6 +93,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixi
         Returns:
             nn.Module: The PyTorch model serving as the global model for Ditto
         """
+        config["for_global"] = True
         return self.get_model(config).to(self.device)
 
     def set_optimizer(self, config: Config) -> None:
@@ -315,7 +316,24 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixi
         # TODO: Perhaps loosen this at a later date.
         # assert isinstance(global_preds, torch.Tensor)
         # assert isinstance(local_preds, torch.Tensor)
-        return {"global": global_preds, "local": local_preds}, {}
+        if isinstance(global_preds, torch.Tensor) and isinstance(local_preds, torch.Tensor):
+            return {"global": global_preds, "local": local_preds}, {}
+        elif isinstance(global_preds, dict) and isinstance(local_preds, dict):
+            retval = {f"global-{k}": v for k, v in global_preds.items()}
+            retval.update(**{f"local-{k}": v for k, v in local_preds.items()})
+            return retval, {}
+        else:
+            raise ValueError(f"Unsupported pred type: {type(global_preds)}.")
+
+    def _extract_pred(self, kind: str, preds: dict[str, torch.Tensor]):
+        if kind not in ["global", "local"]:
+            raise ValueError("Unsupported kind of prediction. Must be 'global' or 'local'.")
+
+        # filter
+        retval = {k: v for k, v in preds.items() if kind in k}
+        # remove prefix
+        retval = {k.replace(f"{kind}-", ""): v for k, v in retval.items()}
+        return retval
 
     def compute_loss_and_additional_losses(
         self,
@@ -338,20 +356,23 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixi
             - A dictionary with ``local_loss``, ``global_loss`` as additionally reported loss values.
         """
 
+        global_preds = self._extract_pred(kind="global", preds=preds)
+        local_preds = self._extract_pred(kind="local", preds=preds)
+
         # Compute global model vanilla loss
 
         if hasattr(self, "_special_compute_loss_and_additional_losses"):
             log(INFO, "Using '_special_compute_loss_and_additional_losses' to compute loss")
-            global_loss, _ = self._special_compute_loss_and_additional_losses(preds["global"], features, target)
+            global_loss, _ = self._special_compute_loss_and_additional_losses(global_preds, features, target)
 
             # Compute local model loss + ditto constraint term
-            local_loss, _ = self._special_compute_loss_and_additional_losses(preds["local"], features, target)
+            local_loss, _ = self._special_compute_loss_and_additional_losses(local_preds, features, target)
 
         else:
-            global_loss = self.criterion(preds["global"], target)
+            global_loss = self.criterion(global_preds, target)
 
             # Compute local model loss + ditto constraint term
-            local_loss = self.criterion(preds["local"], target)
+            local_loss = self.criterion(local_preds, target)
 
         additional_losses = {"local_loss": local_loss.clone(), "global_loss": global_loss}
 
