@@ -87,3 +87,27 @@ class SkinCancerNet(nn.Module):
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x
+
+class FEMnistNet(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding=0)  # -> 32×26×26
+        self.pool = nn.MaxPool2d(2, 2)                           # -> 32×13×13
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=0) # -> 64×11×11
+        self.dropout1 = nn.Dropout(p=0.25)
+
+        self.fc1 = nn.Linear(64 * 11 * 11, 128)
+        self.dropout2 = nn.Dropout(p=0.5)
+        self.fc2 = nn.Linear(128, 62)  # EMNIST "byclass" has 62 classes
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = F.relu(self.conv1(x))
+        x = self.pool(x)
+        x = F.relu(self.conv2(x))
+
+        x = self.dropout1(x)
+        x = x.view(x.size(0), -1)
+        x = F.relu(self.fc1(x))
+        x = self.dropout2(x)
+        x = self.fc2(x)
+        return x

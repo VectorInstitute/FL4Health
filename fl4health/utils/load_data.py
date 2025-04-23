@@ -10,6 +10,8 @@ import torchvision.transforms as transforms
 from flwr.common.logger import log
 from torch.utils.data import DataLoader, RandomSampler
 from torchvision.datasets import CIFAR10, MNIST
+from flwr_datasets import FederatedDataset
+from flwr_datasets.partitioner import NaturalIdPartitioner
 
 from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.dataset_converter import DatasetConverter
@@ -174,7 +176,7 @@ def load_mnist_test_data(
 
 
 def get_cifar10_data_and_target_tensors(data_dir: Path, train: bool) -> tuple[torch.Tensor, torch.Tensor]:
-    cifar_dataset = CIFAR10(data_dir, train=train, download=True)
+    cifar_dataset = CIFAR10(data_dir, train=train, download=False)
     data = torch.Tensor(cifar_dataset.data)
     targets = torch.Tensor(cifar_dataset.targets).long()
     return data, targets
@@ -352,3 +354,70 @@ def load_msd_dataset(data_path: str, msd_dataset_name: str) -> None:
     msd_hash = msd_md5_hashes[msd_enum]
     url = msd_urls[msd_enum]
     download_and_extract(url=url, output_dir=data_path, hash_val=msd_hash, hash_type="md5", progress=True)
+
+
+def load_femnist_data(
+    batch_size: int,
+    client_num: int,
+    partition_by: str = "writer_id",
+    # sampler: LabelBasedSampler | None = None,
+    transform: Callable | None = None,
+    target_transform: Callable | None = None,
+    # dataset_converter: DatasetConverter | None = None,
+    validation_proportion: float = 0.2,
+    # hash_key: int | None = None,
+) -> tuple[DataLoader, DataLoader, dict[str, int]]:
+    """
+    Load the federated extended MNIST (FEMNIST) dataset
+    """
+
+    log(INFO, f"Loading FEMNIST data...")
+
+    if transform is None:
+        transform = transforms.ToTensor()
+    
+    training_set, validation_set = get_train_and_val_femnist_datasets(
+        client_num, partition_by, transform, target_transform, validation_proportion
+    )
+
+    # if sampler is not None:
+    #     training_set = sampler.subsample(training_set)
+    #     validation_set = sampler.subsample(validation_set)
+
+    # if dataset_converter is not None:
+    #     training_set = dataset_converter.convert_dataset(training_set)
+    #     validation_set = dataset_converter.convert_dataset(validation_set)
+
+    train_loader = DataLoader(training_set, batch_size=batch_size, shuffle=True)
+    validation_loader = DataLoader(validation_set, batch_size=batch_size)
+
+    num_examples = {"train_set": len(training_set), "validation_set": len(validation_set)}
+    return train_loader, validation_loader, num_examples
+
+def get_train_and_val_femnist_datasets(
+    client_num: int,
+    partition_by: str = "writer_id",
+    transform: Callable | None = None,
+    target_transform: Callable | None = None,
+    validation_proportion: float = 0.2,
+    # hash_key: int | None = None,
+) -> tuple[TensorDataset, TensorDataset]:
+    
+    train_data, train_targets, val_data, val_targets = get_split_femnist_data_and_target_tensors(client_num, partition_by, validation_proportion)
+
+    training_set = TensorDataset(train_data, train_targets, transform=transform, target_transform=target_transform)
+    validation_set = TensorDataset(val_data, val_targets, transform=transform, target_transform=target_transform)
+
+    return training_set, validation_set
+
+def get_split_femnist_data_and_target_tensors(client_num: int, partition_by: str = "writer_id", validation_proportion: float = 0.2) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    femnist_dataset = FederatedDataset(
+        dataset="flwrlabs/femnist",
+        partitioners={"train": NaturalIdPartitioner(partition_by=partition_by)}
+    )
+    partition = femnist_dataset.load_partition(partition_id=client_num)
+
+    split_dict = partition.train_test_split(test_size = validation_proportion)
+    train, val = split_dict['train'], split_dict['test']
+
+    return train['image'], train['character'], val['image'], val['character']
