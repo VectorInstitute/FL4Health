@@ -40,6 +40,7 @@ class DDGMClient(BasicClient):
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
         client_name: str | None = None,
+        client_number: int | None = None,
         privacy_settings: dict[str, Scalar] = {},
     ) -> None:
         
@@ -53,10 +54,13 @@ class DDGMClient(BasicClient):
             progress_bar=progress_bar,
             client_name=client_name,
         )
-                
+        
+        self.client_number: int = client_number
+
         self.privacy_settings = privacy_settings
         self.clipping_bound: float = privacy_settings["clipping_bound"]
         self.noise_multiplier: float = privacy_settings["noise_multiplier"]
+        self.dataset_name: str = privacy_settings["dataset"]
                 
         self.parameter_exchanger = SecureAggregationExchanger()
         

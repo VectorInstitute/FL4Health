@@ -7,7 +7,11 @@ from flwr.common.typing import Config
 from flwr.server import ServerConfig
 from flwr.server.client_manager import SimpleClientManager
 
-from examples.models.cnn_model import Net, MnistNet
+from logging import INFO
+from flwr.common.logger import log
+
+import torch.nn as nn
+from examples.models.cnn_model import Net, MnistNet, FEMnistNet
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
@@ -69,7 +73,15 @@ if __name__ == "__main__":
     }
 
     # global model (server side)
-    model = MnistNet()
+    model: nn.Module
+    if config['dataset'] == 'mnist':
+        model = MnistNet()
+    elif config['dataset'] == 'femnist':
+        model = FEMnistNet()
+        log(INFO, f"Init Server Model with size {sum(p.numel() for p in model.parameters())}")
+    else:
+        raise NotImplementedError
+
     # To facilitate checkpointing
     parameter_exchanger = SecureAggregationExchanger()
     checkpointers = [

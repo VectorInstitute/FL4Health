@@ -9,38 +9,40 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import SGD, Optimizer
 from torch.utils.data import DataLoader
 
-from examples.models.cnn_model import Net, MnistNet
+from examples.models.cnn_model import Net, MnistNet, FEMnistNet
 from fl4health.clients.ddgm_client import DDGMClient
 
 from logging import INFO
 from flwr.common.logger import log
 
-from fl4health.utils.load_data import load_mnist_data, load_cifar10_test_data
+from fl4health.utils.load_data import load_mnist_data, load_femnist_data
 
 from fl4health.utils.metrics import Accuracy
 from fl4health.utils.config import load_config
-from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 
 from fl4health.utils.config import narrow_dict_type
 
 torch.set_default_dtype(torch.float64)
 
 from fl4health.servers.secure_aggregation_utils import (
-    get_model_dimension,
-    vectorize_model
+    get_model_dimension
 )
 
 from fl4health.privacy_mechanisms.slow_discrete_gaussian_mechanism import generate_random_sign_vector, get_exponent
 
 class SecAggClient(DDGMClient):
-    # Supply @abstractmethod implementations
-
     """
     model, loss, optimizer
     """
 
     def get_model(self, config: Config) -> Module:
-        return MnistNet().to(self.device)
+        if self.dataset_name == "mnist":
+            return MnistNet().to(self.device)
+        elif self.dataset_name == "femnist":
+            return FEMnistNet().to(self.device)
+        else:
+            raise NotImplementedError
+        
 
     def get_criterion(self, config: Config) -> _Loss:
         return CrossEntropyLoss()
@@ -54,7 +56,6 @@ class SecAggClient(DDGMClient):
         Set the sign vector for the client.
         """
         # Generate a random sign vector
-        # len_parameters = len(vectorize_model(self.model))
         len_parameters = get_model_dimension(self.model)
         log(INFO, f"Model dimension: {len_parameters}")
         padded_model_dim = 2**get_exponent(len_parameters)
@@ -66,18 +67,49 @@ class SecAggClient(DDGMClient):
     """
     training & validation data
     """
-    
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
-        batch_size = narrow_dict_type(config, "batch_size", int)
-        train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size)
-        self.dataset_size = len(train_loader.dataset)
-        log(INFO, f'size of data: {self.dataset_size}')
-        return train_loader, val_loader
 
-    # def get_test_data_loader(self, config: Config) -> DataLoader | None:
-    #     batch_size = narrow_dict_type(config, "batch_size", int)
-    #     test_loader, _ = load_cifar10_test_data(self.data_path, batch_size)
-    #     return test_loader
+        if self.dataset_name == "mnist":
+            log(INFO, f'loading {self.dataset_name} data')
+            batch_size = narrow_dict_type(config, "batch_size", int)
+            train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size)
+            self.dataset_size = len(train_loader.dataset)
+            log(INFO, f'size of data: {self.dataset_size}')
+
+            return train_loader, val_loader
+        elif self.dataset_name == "femnist":
+            log(INFO, f'loading {self.dataset_name} data for client partition {self.client_number}')
+            batch_size = narrow_dict_type(config, "batch_size", int)
+
+            train_loader, val_loader, _ = load_femnist_data(batch_size, self.client_number, partition_by="writer_id")
+
+            # fds = FederatedDataset(
+            #     dataset="flwrlabs/femnist",
+            #     partitioners={"train": NaturalIdPartitioner(partition_by="writer_id")}
+            # )
+            # partition = fds.load_partition(partition_id=self.client_number)
+
+            # # split into train and validation sets
+            # split_dict = partition.train_test_split(test_size = 0.2)
+            # train, val = split_dict['train'], split_dict['test']
+
+            # transforms = ToTensor()
+            # train_torch = train.map(
+            #     lambda img: {"image": transforms(img)}, input_columns="image"
+            # ).with_format("torch")
+            # val_torch = val.map(
+            #     lambda img: {"image": transforms(img)}, input_columns="image"
+            # ).with_format("torch")
+
+            # train_loader = DataLoader(train_torch, batch_size=batch_size)
+            # val_loader = DataLoader(val_torch, batch_size=batch_size)
+
+            self.dataset_size = len(train_loader.dataset)
+            log(INFO, f'size of data: {self.dataset_size}')
+            
+            return train_loader, val_loader
+        else:
+            raise NotImplementedError
 
 
 if __name__ == "__main__":
@@ -101,7 +133,8 @@ if __name__ == "__main__":
         "--client_number",
         action="store",
         type=int,
-        help="Client number. No enclosing quotes required.",
+        required=True,
+        help="Client number.",
     )
     args = parser.parse_args()
     config = load_config(args.config_path)
@@ -118,13 +151,8 @@ if __name__ == "__main__":
         'clipping_bound': config['clipping_bound'],
         'bias': config['bias'],
         'sign_vector_seed': config['sign_vector_seed'],
-        # 'local_steps': config['local_steps']
+        'dataset': config['dataset']
     }
-
-    # checkpoint_dir = 'examples/secagg_non_private_example'
-    # checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    # checkpointer = BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
-
 
     # instantiate Cifar client class with SecAgg as defined above
     client = SecAggClient(
@@ -132,11 +160,8 @@ if __name__ == "__main__":
         metrics=[Accuracy("accuracy")], 
         device=device,
         privacy_settings=privacy_settings,
+        client_number=args.client_number
     )
-
-    # # NOTE server needs to be started before clients
-    # RunClient(server_address="0.0.0.0:8080", client=client)
-    # client.shutdown()
     
     fl.client.start_client(server_address="0.0.0.0:8081", client=client.to_client())
     client.shutdown()

@@ -5,7 +5,6 @@ n_server_rounds: 15
 n_clients: 3    # set this parameter in run.sh as well
 batch_size: 20
 
-dataset: "femnist"
 
 # # optional parameter
 # model_integer_range: 9999

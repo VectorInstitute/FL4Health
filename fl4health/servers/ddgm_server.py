@@ -69,7 +69,7 @@ class DDGMServer(FlServer):
         privacy_settings: dict[str, Scalar] | None,
         checkpoint_and_state_module: BaseServerCheckpointAndStateModule | None = None,
         wandb_reporter: WandBReporter | None = None,
-        timeout: float | None = 30,
+        timeout: float | None = None,
         dropout_mode=False,
         task_name: str = '',
         sign_vector: torch.Tensor = None,
