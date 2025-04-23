@@ -1,7 +1,7 @@
 """Ditto Personalized Mixin"""
 
 from abc import ABC, abstractmethod
-from logging import INFO, DEBUG
+from logging import DEBUG, INFO
 from typing import cast
 
 import torch
