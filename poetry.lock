@@ -2195,13 +2195,13 @@ files = [
 
 [[package]]
 name = "flwr"
-version = "1.17.0"
+version = "1.18.0"
 description = "Flower: A Friendly Federated AI Framework"
 optional = false
 python-versions = "<4.0.0,>=3.9.2"
 files = [
-    {file = "flwr-1.17.0-py3-none-any.whl", hash = "sha256:585cf6fb85a5bc9b8435b5c29afd0ff3557dc13fdff0988cdddfae7fa3f99588"},
-    {file = "flwr-1.17.0.tar.gz", hash = "sha256:fffda168eea18810fb7e51542460523019b33ecc8c00db9bcab8d72ac27b2acf"},
+    {file = "flwr-1.18.0-py3-none-any.whl", hash = "sha256:d1a16188f1b45a8424761b519dade17b72516df2febf423f08e2d41d6f52355d"},
+    {file = "flwr-1.18.0.tar.gz", hash = "sha256:4ef96c91fbb5a02ec35a8e4350d2725299580d7e3779318ce4c9f594838cac48"},
 ]
 
 [package.dependencies]
@@ -10586,4 +10586,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10.0,<3.11"
-content-hash = "4310c7a39698d95c13eb9e2ba70c85220f713eb91e97aece7b7e9029d31d96bb"
+content-hash = "4b9521f64ac0e6c6b8f2344c6580102a8fd7b547574a5cff97c152f1d35046ab"
