@@ -41,14 +41,13 @@ jobs:
         uses: pypa/gh-action-pip-audit@v1.1.0
         with:
           virtual-environment: .venv/
-          # Ignoring vulnerabilities in cryptography
-          # Fix is 43.0.1 but flwr 1.9 depends on < 43
           # GHSA-cjgq-5qmw-rcj6 is a Keras vulnerability that has no fix yet
           # PYSEC-2024-109 requires upgrading to DeepSpeed 0.15.1, which is currently blocked by pycyclops
+          # GHSA-3749-ghw9-m3mg and GHSA-887c-mr87-cxwp are pytorch vulnerabilities that have no fix yet
+          # GHSA-53q9-r3pm-6pq6 is a pytorch vulnerability that has a fix in 2.6.0 which we can't upgrade to just yet
           ignore-vulns: |
-            GHSA-h4gh-qq45-vh27
-            GHSA-q34m-jh98-gwm2
-            GHSA-f9vj-2wh5-fj8j
             GHSA-cjgq-5qmw-rcj6
-            GHSA-79v4-65xg-pq4g
             PYSEC-2024-109
+            GHSA-3749-ghw9-m3mg
+            GHSA-887c-mr87-cxwp
+            GHSA-53q9-r3pm-6pq6
