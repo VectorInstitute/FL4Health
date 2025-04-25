@@ -1,14 +1,15 @@
 """AdaptiveDriftConstrainedMixin"""
 
+import warnings
 from collections.abc import Sequence
 from logging import INFO
 from typing import cast
 
 import torch
-import warnings
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 
+from fl4health.clients.basic_client import BasicClientProtocol
 from fl4health.losses.weight_drift_loss import WeightDriftLoss
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
@@ -16,8 +17,6 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 from fl4health.utils.losses import TrainingLosses
 from fl4health.utils.typing import TorchFeatureType, TorchPredType, TorchTargetType
-
-from fl4health.clients.basic_client import BasicClientProtocol
 
 
 class AdaptiveProtocol(BasicClientProtocol):
