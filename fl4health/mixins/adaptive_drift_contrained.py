@@ -24,6 +24,8 @@ class AdaptiveProtocol(BasicClientProtocol):
     drift_penalty_tensors: list[torch.Tensor] | None
     drift_penalty_weight: float | None
 
+    def compute_penalty_loss(self) -> torch.Tensor: ...
+
 
 class AdaptiveDriftConstrainedMixin:
     def __init_subclass__(cls, **kwargs):
