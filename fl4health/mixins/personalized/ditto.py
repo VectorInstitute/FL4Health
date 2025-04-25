@@ -34,9 +34,23 @@ class DittoProtocol(AdaptiveProtocol, Protocol):
 
 class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixin):
 
+    def __init__(self, *args, **kwargs):
+        # Initialize mixin-specific attributes
+        self.global_model = None
+        # Call parent's init
+        super().__init__(*args, **kwargs)
+
     def __init_subclass__(cls, **kwargs):
         """This method is called when a class inherits from AdaptiveMixin"""
         super().__init_subclass__(**kwargs)
+
+        # Skip check for other mixins
+        if cls.__name__.endswith("Mixin"):
+            return
+
+        # Skip validation for dynamically created classes
+        if hasattr(cls, "_dynamically_created"):
+            return
 
         # Check at class definition time if the parent class satisfies BasicClientProtocol
         for base in cls.__bases__:

@@ -9,7 +9,7 @@ import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 
-from fl4health.clients.basic_client import BasicClientProtocol
+from fl4health.clients.basic_client import BasicClient, BasicClientProtocol
 from fl4health.losses.weight_drift_loss import WeightDriftLoss
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
@@ -24,6 +24,8 @@ class AdaptiveProtocol(BasicClientProtocol, Protocol):
     loss_for_adaptation: float | None
     drift_penalty_tensors: list[torch.Tensor] | None
     drift_penalty_weight: float | None
+    penalty_loss_function: WeightDriftLoss
+    parameter_exchanger: FullParameterExchangerWithPacking[float]
 
     def compute_penalty_loss(self) -> torch.Tensor: ...
 
@@ -31,30 +33,47 @@ class AdaptiveProtocol(BasicClientProtocol, Protocol):
 
 
 class AdaptiveDriftConstrainedMixin:
+    def __init__(self, *args, **kwargs):
+        # Initialize mixin-specific attributes with default values
+        self.loss_for_adaptation = 0.1
+        self.drift_penalty_tensors = None
+        self.drift_penalty_weight = None
+
+        # Call parent's init
+        super().__init__(*args, **kwargs)
+
     def __init_subclass__(cls, **kwargs):
         """This method is called when a class inherits from AdaptiveMixin"""
         super().__init_subclass__(**kwargs)
 
+        # Skip check for other mixins
+        if cls.__name__.endswith("Mixin"):
+            return
+
+        # Skip validation for dynamically created classes
+        if hasattr(cls, "_dynamically_created"):
+            return
+
         # Check at class definition time if the parent class satisfies BasicClientProtocol
         for base in cls.__bases__:
-            if base is not AdaptiveDriftConstrainedMixin and isinstance(base, BasicClientProtocol):
+            if base is not AdaptiveDriftConstrainedMixin and isinstance(base, BasicClient):
                 return
 
         # If we get here, no compatible base was found
         warnings.warn(
             f"Class {cls.__name__} inherits from AdaptiveMixin but none of its other "
-            f"base classes implement BasicClientProtocol. This may cause runtime errors.",
+            f"base classes is a BasicClient. This may cause runtime errors.",
             RuntimeWarning,
         )
 
+    @property
+    def penalty_loss_function(self: AdaptiveProtocol) -> WeightDriftLoss:
+        return WeightDriftLoss(self.device)
+
     def ensure_protocol_compliance(self) -> None:
         """Call this after the object is fully initialized"""
-        if not isinstance(self, BasicClientProtocol):
+        if not isinstance(self, BasicClient):
             raise TypeError(f"Protocol requirements not met.")
-
-    def penalty_loss_function(self: AdaptiveProtocol) -> WeightDriftLoss:
-        """Function to compute the penalty loss."""
-        return WeightDriftLoss(self.device)
 
     def get_parameters(self: AdaptiveProtocol, config: Config) -> NDArrays:
         """

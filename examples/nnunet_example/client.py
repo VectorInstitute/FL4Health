@@ -106,7 +106,6 @@ def main(
             log(INFO, f"Setting up client without personalization")
             client = NnunetClient(**client_kwargs)
         log(INFO, f"Using client: {type(client).__name__}")
-        # log(INFO, f"Parameter exchanger: {type(client.parameter_exchanger).__name__}")
 
         start_client(server_address=server_address, client=client.to_client())
 
