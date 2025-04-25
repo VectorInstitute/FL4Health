@@ -33,6 +33,8 @@ from fl4health.privacy_mechanisms.slow_discrete_gaussian_mechanism import genera
 
 from fl4health.servers.secure_aggregation_utils import vectorize_model
 
+from fl4health.privacy.distributed_discrete_gaussian_accountant import get_heuristic_granularity
+
 
 torch.set_default_dtype(torch.float64)
 DEFAULT_MODEL_INTEGER_RANGE = 1 << 30
@@ -51,6 +53,8 @@ def fit_config(
 
 if __name__ == "__main__":
     # get configurations from command line
+    print("Server script: starting up.", flush=True)
+
     parser = ArgumentParser(description="DDGM server.")
     parser.add_argument(
         "--config_path",
@@ -58,6 +62,12 @@ if __name__ == "__main__":
         type=str,
         help="Path to configuration file. No enclosing quotes required.",
         default="examples/ddgm_examples/config.yaml",
+    )
+    parser.add_argument(
+        "--server_address",
+        action="store",
+        type=str,
+        default="0.0.0.0:8081",
     )
     args = parser.parse_args()
     config = load_config(args.config_path)
@@ -67,10 +77,15 @@ if __name__ == "__main__":
         'enable_dp': config['enable_dp'],
         'clipping_bound': config['clipping_bound'],
         'granularity': config['granularity'],
+        'sign_vector_seed': config['sign_vector_seed'],
+        'bits': config['model_integer_range_exponent'],
         'model_integer_range': 1 << config['model_integer_range_exponent'],   
         'noise_multiplier': config['noise_multiplier'],
         'bias': config['bias'],
+        'n_clients_round': round(config['n_clients'] * config['privacy_amplification_sampling_ratio']),
     }
+
+    
 
     # global model (server side)
     model: nn.Module
@@ -100,6 +115,8 @@ if __name__ == "__main__":
     
     config["model_dim"] = len_parameters
 
+    privacy_settings['granularity'] = get_heuristic_granularity(privacy_settings["noise_multiplier"], privacy_settings['clipping_bound'], privacy_settings['bits'], privacy_settings['n_clients_round'], padded_model_dim)
+
     # consumed by strategy below
     fit_config_fn = partial(
         fit_config,
@@ -109,9 +126,9 @@ if __name__ == "__main__":
     )
 
     strategy = DDGMStrategy(
-        min_fit_clients=config["n_clients"],
-        min_evaluate_clients=config["n_clients"],
-        min_available_clients=config["n_clients"],
+        min_fit_clients=privacy_settings['n_clients_round'],
+        min_evaluate_clients=privacy_settings['n_clients_round'],
+        min_available_clients=privacy_settings['n_clients_round'],
         on_fit_config_fn=fit_config_fn,
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
@@ -138,6 +155,6 @@ if __name__ == "__main__":
     # run server
     fl.server.start_server(
         server=server,
-        server_address="0.0.0.0:8081",
+        server_address=args.server_address,
         config=ServerConfig(num_rounds=config["n_server_rounds"]),
     )

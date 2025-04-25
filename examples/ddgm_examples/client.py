@@ -30,6 +30,8 @@ from fl4health.servers.secure_aggregation_utils import (
 
 from fl4health.privacy_mechanisms.slow_discrete_gaussian_mechanism import generate_random_sign_vector, get_exponent
 
+from fl4health.privacy.distributed_discrete_gaussian_accountant import get_heuristic_granularity
+
 class SecAggClient(DDGMClient):
     """
     model, loss, optimizer
@@ -60,8 +62,16 @@ class SecAggClient(DDGMClient):
         log(INFO, f"Model dimension: {len_parameters}")
         padded_model_dim = 2**get_exponent(len_parameters)
         log(INFO, f"Padded model dimension: {padded_model_dim}")
+
+        self.padded_model_dim = padded_model_dim
         self.sign_vector = generate_random_sign_vector(dim=padded_model_dim, seed=self.privacy_settings["sign_vector_seed"]).to(self.device)
         log(INFO, "finished generating sign vector")
+
+    def set_granularity(self) -> None:
+
+        self.granularity =  get_heuristic_granularity(self.noise_multiplier, self.clipping_bound, self.bits, self.n_clients_round, self.padded_model_dim,)
+
+        log(INFO, f"set granularity with heuritic method: {self.granularity}")
 
 
     """
@@ -136,6 +146,12 @@ if __name__ == "__main__":
         required=True,
         help="Client number.",
     )
+    parser.add_argument(
+        "--server_address",
+        action="store",
+        type=str,
+        default="0.0.0.0:8081",
+    )
     args = parser.parse_args()
     config = load_config(args.config_path)
     data_path = Path(args.dataset_path)
@@ -147,13 +163,14 @@ if __name__ == "__main__":
     privacy_settings = {
         'enable_dp': config['enable_dp'],
         'noise_multiplier': config['noise_multiplier'],
-        'granularity': config['granularity'],
         'clipping_bound': config['clipping_bound'],
         'bias': config['bias'],
         'sign_vector_seed': config['sign_vector_seed'],
-        'dataset': config['dataset']
+        'dataset': config['dataset'],
+        'bits': config['model_integer_range_exponent'],
+        'n_clients_round': round(config['n_clients'] * config['privacy_amplification_sampling_ratio'])
     }
-
+    
     # instantiate Cifar client class with SecAgg as defined above
     client = SecAggClient(
         data_path=data_path, 
@@ -163,5 +180,5 @@ if __name__ == "__main__":
         client_number=args.client_number
     )
     
-    fl.client.start_client(server_address="0.0.0.0:8081", client=client.to_client())
+    fl.client.start_client(server_address=args.server_address, client=client.to_client())
     client.shutdown()

@@ -2,58 +2,90 @@
 
 # pass in command line arg "clean" to kill all previous processes
 
-# rm examples/ddgm_examples/*.pkl
+set -euo pipefail
 
-# source .venv/bin/activate
-
-mkdir -p examples/ddgm_examples/log
-
+LOG_DIR="examples/ddgm_examples/log"
+PID_FILE="$LOG_DIR/running_pid.txt"
 num_clients=3
 
-clean()
-{
-    echo "killing processes"
-    cat < examples/ddgm_examples/log/running_pid.txt
 
-    PIDFile="examples/ddgm_examples/log/running_pid.txt"
-    kill $(<"$PIDFile")
+mkdir -p "$LOG_DIR"
+pids=()
+USER_ID="$(id -u)"
+echo "USERID: $USER_ID"
+
+declare -a pids
+
+clean() {
+  echo "→ Killing sessions from $PID_FILE:"
+  if [[ -f "$PID_FILE" ]]; then
+    while read -r sid; do
+      echo "   • killing PGID $sid"
+      # the leading “-” means “kill the whole process group”
+      kill -- -"$sid" 2>/dev/null \
+        || echo "     (already dead or owned by other user)"
+    done < "$PID_FILE"
+    rm -f "$PID_FILE"
+  else
+    echo "   No PID file to clean."
+  fi
 }
 
-if [ "$1" = "clean" ]
-then
+
+case "${1:-}" in
+  clean)
     clean
-elif [ "$1" = "ls" ]
-then
-    pidof python
-elif [ "$1" = "ls-kill" ]   # be careful, this kills EVERY python process
-then
-    echo "finding python pid"
-    pidof python
-    echo "killing ALL python pid"
-    for pid in $(pidof python)
-    do
-        kill -9 "$pid"
-    done
-    echo "done"
-else
-    echo "starting flower..."
+    exit 0
+    ;;
+  ls)
+    pgrep -u "$USER_ID" -lf python
+    exit 0
+    ;;
+  ls-kill)
+    echo "→ KILLING ALL python processes!"
+    pkill -u "$USER_ID" -f python
+    exit 0
+    ;;
+esac
 
-    array=()    # PID
+trap clean EXIT
 
-    nohup python -m examples.ddgm_examples.server > examples/ddgm_examples/log/server.out 2>&1 & array[${#array[@]}]=$!
-    sleep 20
+echo "→ Starting server…"
+# setsid makes the Python process its own session leader (PGID = PID)
+setsid python -m examples.ddgm_examples.server \
+  >"$LOG_DIR/server.out" 2>&1 &
+sid=$!
+pids+=( "$sid" )
+echo "   server session id = $sid"
 
-    for (( i=1; i<=${num_clients}; i++ ))
-    do
-        log_path="examples/ddgm_examples/log/client_${i}.out"
-        nohup python -m examples.ddgm_examples.client --client_number="$i" > ${log_path} 2>&1 & array[${#array[@]}]=$!
-    done
-    echo "saving pid to file"
-    echo "${array[*]}"
-    echo "${array[*]}" > examples/ddgm_examples/log/running_pid.txt
-    read -p "Press y to terminate session >>> " input
-    if [ "$input" = "y" ]
-    then
-        clean
-    fi
+sleep 20
+
+echo "→ Spawning $num_clients clients…"
+for i in $(seq 1 "$num_clients"); do
+  setsid python -m examples.ddgm_examples.client --client_number="$i" \
+    >"$LOG_DIR/client_${i}.out" 2>&1 &
+  sid=$!
+  pids+=( "$sid" )
+  echo "   client $i session id = $sid"
+done
+
+
+printf '%s\n' "${pids[@]}" > "$PID_FILE"
+echo "→ Recorded session IDs in $PID_FILE:"
+cat "$PID_FILE"
+
+echo "→ Active sessions just launched:"
+for pid in "${pids[@]}"; do
+  if ps -p "$pid" > /dev/null 2>&1; then
+    # -o args= prints just the invocation line, no headers or padding
+    cmd=$(ps -p "$pid" -o args=)
+    echo "   • [$pid] $cmd"
+  else
+    echo "   • [$pid] (no longer running)"
+  fi
+done
+
+read -rp "Press y to terminate all → " yn
+if [[ "$yn" =~ ^[Yy]$ ]]; then
+  clean
 fi

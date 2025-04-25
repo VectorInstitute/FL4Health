@@ -1,0 +1,83 @@
+#!/bin/bash
+
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=1
+#SBATCH --gres=gpu:1
+#SBATCH --mem=16G
+#SBATCH --partition=t4v2
+#SBATCH --qos=m
+
+# Note:
+#	  ntasks: Total number of processes to use across world
+#	  ntasks-per-node: How many processes each node should create
+
+# Set NCCL options
+# export NCCL_DEBUG=INFO
+# NCCL backend to communicate between GPU workers is not provided in vector's cluster.
+# Disable this option in slurm.
+export NCCL_IB_DISABLE=1
+
+if [[ "${SLURM_JOB_PARTITION}" == "t4v2" ]] || \
+    [[ "${SLURM_JOB_PARTITION}" == "rtx6000" ]]; then
+    echo export NCCL_SOCKET_IFNAME=bond0 on "${SLURM_JOB_PARTITION}"
+    export NCCL_SOCKET_IFNAME=bond0
+fi
+
+# Process inputs
+
+SERVER_ADDRESS=$1
+LOG_DIR=$2
+CLIENT_NUM_OFFSET=$3
+N_CLIENT=$4
+JOB_HASH=$5
+
+# CONDA_ENV="fl4health_ddgm"
+CONDA_BIN=$(which conda)
+CONDA_BASE=$(dirname "$(dirname "${CONDA_BIN}")")
+# source "${CONDA_BASE}/etc/profile.d/conda.sh"
+source $(conda info --base)/etc/profile.d/conda.sh
+
+conda activate fl4health_ddgm
+export PYTHONPATH=$(pwd):$PYTHONPATH
+
+
+echo "Active Environment:"
+echo "Current working directory: $(pwd)"
+echo "Python executable: $(which python)"
+echo "PYTHONPATH: $PYTHONPATH"
+
+python --version
+
+# Print relevant information for the client to connect to the server and run
+echo "Server Address: ${SERVER_ADDRESS}"
+echo "The starting number of the client id: ${CLIENT_NUM_OFFSET}"
+echo "Number of clients: ${N_CLIENT}"
+echo "Job Hash: ${JOB_HASH}"
+
+
+echo "Placing logs in: ${LOG_DIR}"
+echo "World size: ${SLURM_NTASKS}"
+echo "Number of nodes: ${SLURM_NNODES}"
+NUM_GPUs=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
+echo "GPUs per node: ${NUM_GPUs}"
+
+
+echo "Server Address used by Client: ${SERVER_ADDRESS}"
+
+start=$CLIENT_NUM_OFFSET
+end=$(( CLIENT_NUM_OFFSET + N_CLIENT - 1 ))
+
+for i in $(seq "$start" "$end"); do
+  # nohup python -u -m examples.ddgm_examples.client --client_number="$i" --server_address=${SERVER_ADDRESS} \
+  # > "$LOG_DIR/client_${i}.out" 2> "$LOG_DIR/client_${i}.err" &
+  nohup python -m examples.ddgm_examples.client --client_number ${i} --server_address ${SERVER_ADDRESS} \
+    >"$LOG_DIR/client_${i}.out" 2>&1 &
+  sid=$!
+  pids+=( "$sid" )
+  echo "   client $i session id = $sid"
+done
+
+
+wait

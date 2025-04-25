@@ -60,7 +60,10 @@ class DDGMClient(BasicClient):
         self.privacy_settings = privacy_settings
         self.clipping_bound: float = privacy_settings["clipping_bound"]
         self.noise_multiplier: float = privacy_settings["noise_multiplier"]
+        self.granularity: float | None = privacy_settings.get("granularity", None)
+        self.bits: int = privacy_settings['bits']
         self.dataset_name: str = privacy_settings["dataset"]
+        self.n_clients_round: int = privacy_settings["n_clients_round"]
                 
         self.parameter_exchanger = SecureAggregationExchanger()
         
@@ -76,6 +79,12 @@ class DDGMClient(BasicClient):
         Hook method to set the sign vector.
         """
         pass
+
+    def set_granularity(self) -> None:
+        """
+        Hook method to set granularity with heuristic method.
+        """
+        pass
         
     def setup_client(self, config: Config) -> None:
         # Ensure that clipping bound and noise multiplier is present in config
@@ -89,6 +98,8 @@ class DDGMClient(BasicClient):
         self.init_parameters_vectorized = vectorize_model(self.model).to(self.device)
         
         self.set_sign_vector()
+        if self.granularity is None:
+            self.set_granularity()
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         super().set_parameters(parameters, config, fitting_round)
@@ -116,7 +127,7 @@ class DDGMClient(BasicClient):
         log(INFO, f'Size of padded parameters: {len(padded_delta_parameters)}')
         
         # clip the vector as part of the steps to achieve client-level DP. Note that, we are clipping the model vector
-        c, g = self.clipping_bound, self.privacy_settings['granularity']
+        c, g = self.clipping_bound, self.granularity
         clipped_vector = clip_vector(vector=padded_delta_parameters, clip=c, granularity=g)
         
         # hadamard product

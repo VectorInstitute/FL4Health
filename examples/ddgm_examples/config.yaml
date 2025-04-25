@@ -1,8 +1,9 @@
 # YAML parser's must-have configs
-n_server_rounds: 15
+n_server_rounds: 1500
 
 # must have at least 3 clients
-n_clients: 3    # set this parameter in run.sh as well
+n_clients: 300    # set this parameter in run.sh as well
+privacy_amplification_sampling_ratio: 1
 batch_size: 20
 
 dataset: "femnist"
