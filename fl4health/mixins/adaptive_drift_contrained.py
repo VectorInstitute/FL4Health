@@ -3,7 +3,7 @@
 import warnings
 from collections.abc import Sequence
 from logging import INFO
-from typing import cast
+from typing import Protocol, runtime_checkable
 
 import torch
 from flwr.common.logger import log
@@ -19,12 +19,15 @@ from fl4health.utils.losses import TrainingLosses
 from fl4health.utils.typing import TorchFeatureType, TorchPredType, TorchTargetType
 
 
-class AdaptiveProtocol(BasicClientProtocol):
+@runtime_checkable
+class AdaptiveProtocol(BasicClientProtocol, Protocol):
     loss_for_adaptation: float | None
     drift_penalty_tensors: list[torch.Tensor] | None
     drift_penalty_weight: float | None
 
     def compute_penalty_loss(self) -> torch.Tensor: ...
+
+    def ensure_protocol_compliance(self) -> None: ...
 
 
 class AdaptiveDriftConstrainedMixin:
@@ -44,15 +47,10 @@ class AdaptiveDriftConstrainedMixin:
             RuntimeWarning,
         )
 
-    def __init__(self, *args, **kwargs):
-        # Verify at instance creation time
+    def ensure_protocol_compliance(self) -> None:
+        """Call this after the object is fully initialized"""
         if not isinstance(self, BasicClientProtocol):
-            raise TypeError(
-                f"Class {self.__class__.__name__} uses AdaptiveMixin but does not "
-                f"implement BasicClientProtocol. Make sure a parent class implements "
-                f"the required methods and attributes."
-            )
-        super().__init__(*args, **kwargs)
+            raise TypeError(f"Protocol requirements not met.")
 
     def penalty_loss_function(self: AdaptiveProtocol) -> WeightDriftLoss:
         """Function to compute the penalty loss."""

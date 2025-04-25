@@ -1,26 +1,26 @@
 """Ditto Personalized Mixin"""
 
+import warnings
 from logging import DEBUG, INFO
-from typing import cast, runtime_checkable
+from typing import Protocol, cast, runtime_checkable
 
 import torch
 import torch.nn as nn
-import warnings
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.optim import Optimizer
 
+from fl4health.clients.basic_client import BasicClientProtocol
 from fl4health.mixins.adaptive_drift_contrained import AdaptiveDriftConstrainedMixin, AdaptiveProtocol
 from fl4health.mixins.personalized.base import BasePersonalizedMixin
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import EvaluationLosses, TrainingLosses
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
-from fl4health.clients.basic_client import BasicClientProtocol
 
 
 @runtime_checkable
-class DittoProtocol(AdaptiveProtocol):
+class DittoProtocol(AdaptiveProtocol, Protocol):
     global_model: torch.nn.Module | None
 
     def get_global_model(self, config: Config) -> nn.Module: ...
@@ -49,16 +49,6 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixi
             f"base classes implement BasicClientProtocol. This may cause runtime errors.",
             RuntimeWarning,
         )
-
-    def __init__(self, *args, **kwargs):
-        # Verify at instance creation time
-        if not isinstance(self, BasicClientProtocol):
-            raise TypeError(
-                f"Class {self.__class__.__name__} uses AdaptiveMixin but does not "
-                f"implement BasicClientProtocol. Make sure a parent class implements "
-                f"the required methods and attributes."
-            )
-        super().__init__(*args, **kwargs)
 
     @property
     def optimizer_keys(self: DittoProtocol) -> list[str]:
@@ -143,6 +133,8 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixi
         Args:
             config (Config): The config from the server.
         """
+        self.ensure_protocol_compliance()
+
         try:
             self.global_model = self.get_global_model(config)
             log(INFO, f"global model set: {type(self.global_model).__name__}")
@@ -254,6 +246,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixi
         Args:
             current_server_round (int): Indicates which server round we are currently executing.
         """
+        self.ensure_protocol_compliance()
         self.set_initial_global_tensors()
 
         # Need to also set the global model to train mode before any training begins.
@@ -479,6 +472,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixi
             EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
             indexed by name.
         """
+        self.ensure_protocol_compliance()
         # Check that both models are in eval mode
         assert not self.global_model is None and not self.global_model.training and not self.model.training
         return super().compute_evaluation_loss(preds, features, target)

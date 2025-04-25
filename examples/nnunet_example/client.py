@@ -28,7 +28,6 @@ from fl4health.utils.metrics import TorchMetric, TransformsMetric
 from fl4health.utils.msd_dataset_sources import get_msd_dataset_enum, msd_num_labels
 from fl4health.utils.nnunet_utils import get_segs_from_probs, set_nnunet_env
 
-
 personalized_client_classes = {"ditto": make_it_personal(NnunetClient, "ditto")}
 
 
@@ -107,7 +106,7 @@ def main(
             log(INFO, f"Setting up client without personalization")
             client = NnunetClient(**client_kwargs)
         log(INFO, f"Using client: {type(client).__name__}")
-        log(INFO, f"Parameter exchanger: {type(client.parameter_exchanger).__name__}")
+        # log(INFO, f"Parameter exchanger: {type(client.parameter_exchanger).__name__}")
 
         start_client(server_address=server_address, client=client.to_client())
 
