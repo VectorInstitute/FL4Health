@@ -5,6 +5,7 @@ from logging import INFO
 from typing import cast
 
 import torch
+import warnings
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 
@@ -16,61 +17,47 @@ from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiv
 from fl4health.utils.losses import TrainingLosses
 from fl4health.utils.typing import TorchFeatureType, TorchPredType, TorchTargetType
 
+from fl4health.clients.basic_client import BasicClientProtocol
+
+
+class AdaptiveProtocol(BasicClientProtocol):
+    loss_for_adaptation: float | None
+    drift_penalty_tensors: list[torch.Tensor] | None
+    drift_penalty_weight: float | None
+
 
 class AdaptiveDriftConstrainedMixin:
+    def __init_subclass__(cls, **kwargs):
+        """This method is called when a class inherits from AdaptiveMixin"""
+        super().__init_subclass__(**kwargs)
 
-    _drift_penalty_tensors = None
-    _parameter_exchanger = None
-    _drift_penalty_weight = None
-    _loss_for_adaptation = 0.1
+        # Check at class definition time if the parent class satisfies BasicClientProtocol
+        for base in cls.__bases__:
+            if base is not AdaptiveDriftConstrainedMixin and isinstance(base, BasicClientProtocol):
+                return
 
-    @property
-    def drift_penalty_tensors(self) -> list[torch.Tensor] | None:
-        """These are the tensors that will be used to compute the penalty loss"""
-        return self._drift_penalty_tensors
+        # If we get here, no compatible base was found
+        warnings.warn(
+            f"Class {cls.__name__} inherits from AdaptiveMixin but none of its other "
+            f"base classes implement BasicClientProtocol. This may cause runtime errors.",
+            RuntimeWarning,
+        )
 
-    @drift_penalty_tensors.setter
-    def drift_penalty_tensors(self, value: list[torch.Tensor]) -> None:
-        self._drift_penalty_tensors = value
+    def __init__(self, *args, **kwargs):
+        # Verify at instance creation time
+        if not isinstance(self, BasicClientProtocol):
+            raise TypeError(
+                f"Class {self.__class__.__name__} uses AdaptiveMixin but does not "
+                f"implement BasicClientProtocol. Make sure a parent class implements "
+                f"the required methods and attributes."
+            )
+        super().__init__(*args, **kwargs)
 
-    @property
-    def parameter_exchanger(self) -> FullParameterExchangerWithPacking[float] | None:
-        """Exchanger with packing to be able to exchange the weights and auxiliary information with the server for adaptation"""
-        return self._parameter_exchanger
-
-    @parameter_exchanger.setter
-    def parameter_exchanger(self, value: FullParameterExchangerWithPacking[float]) -> None:
-        self._parameter_exchanger = value
-
-    @property
-    def drift_penalty_weight(self) -> float:
-        """Weight on the penalty loss to be used in backprop. This is what might be adapted via server calculations."""
-        return self._drift_penalty_weight
-
-    @drift_penalty_weight.setter
-    def drift_penalty_weight(self, value: float) -> None:
-        self._drift_penalty_weight = value
-
-    @property
-    def loss_for_adaptation(self) -> float | None:
-        """This is the loss value to be sent back to the server on which adaptation decisions will be made."""
-        return self._loss_for_adaptation
-
-    @loss_for_adaptation.setter
-    def loss_for_adaptation(self, value: float) -> None:
-        self._loss_for_adaptation = value
-
-    @property
-    def penalty_loss_function(self) -> WeightDriftLoss:
+    def penalty_loss_function(self: AdaptiveProtocol) -> WeightDriftLoss:
         """Function to compute the penalty loss."""
-        try:
-            device = self.device
-            device = cast(torch.device, device)
-            return WeightDriftLoss(self.device)
-        except AttributeError as err:
-            raise ValueError("Parent Client is missing a `device` attribute.") from err
+        return WeightDriftLoss(self.device)
 
-    def get_parameters(self, config: Config) -> NDArrays:
+    def get_parameters(self: AdaptiveProtocol, config: Config) -> NDArrays:
         """
         Packs the parameters and training loss into a single ``NDArrays`` to be sent to the server for aggregation. If
         the client has not been initialized, this means the server is requesting parameters for initialization and
@@ -109,7 +96,7 @@ class AdaptiveDriftConstrainedMixin:
             packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.loss_for_adaptation)
             return packed_params
 
-    def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
+    def set_parameters(self: AdaptiveProtocol, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
         Assumes that the parameters being passed contain model parameters concatenated with a penalty weight. They are
         unpacked for the clients to use in training. In the first fitting round, we assume the full model is being
@@ -132,7 +119,7 @@ class AdaptiveDriftConstrainedMixin:
         super().set_parameters(server_model_state, config, fitting_round)
 
     def compute_training_loss(
-        self,
+        self: AdaptiveProtocol,
         preds: TorchPredType,
         features: TorchFeatureType,
         target: TorchTargetType,
@@ -165,7 +152,7 @@ class AdaptiveDriftConstrainedMixin:
 
         return TrainingLosses(backward=loss + penalty_loss, additional_losses=additional_losses)
 
-    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+    def get_parameter_exchanger(self: AdaptiveProtocol, config: Config) -> ParameterExchanger:
         """
         Setting up the parameter exchanger to include the appropriate packing functionality.
         By default we assume that we're exchanging all parameters. Can be overridden for other behavior
@@ -179,7 +166,9 @@ class AdaptiveDriftConstrainedMixin:
 
         return FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
 
-    def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
+    def update_after_train(
+        self: AdaptiveProtocol, local_steps: int, loss_dict: dict[str, float], config: Config
+    ) -> None:
         """
         Called after training with the number of ``local_steps`` performed over the FL round and the corresponding loss
         dictionary. We use this to store the training loss that we want to use to adapt the penalty weight parameter
@@ -195,7 +184,7 @@ class AdaptiveDriftConstrainedMixin:
         self.loss_for_adaptation = loss_dict["loss_for_adaptation"]
         super().update_after_train(local_steps, loss_dict, config)
 
-    def compute_penalty_loss(self) -> torch.Tensor:
+    def compute_penalty_loss(self: AdaptiveProtocol) -> torch.Tensor:
         """
         Computes the drift loss for the client model and drift tensors
 
