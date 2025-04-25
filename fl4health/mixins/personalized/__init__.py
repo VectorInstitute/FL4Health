@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from enum import Enum
 
 from fl4health.clients.basic_client import BasicClient

@@ -1102,7 +1102,7 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            tuple[DataLoader, ...]: Tuple of length 2. The client train and validation loader.
+            tuple[DataLoader, pass]: Tuple of length 2. The client train and validation loader.
 
         Raises:
             NotImplementedError: To be defined in child class.
@@ -1391,55 +1391,70 @@ class BasicClientProtocol(Protocol):
     train_iterator: Iterator | None
     val_iterator: Iterator | None
 
-    def get_parameters(self, config: Config) -> NDArrays: ...
+    def get_parameters(self, config: Config) -> NDArrays:
+        pass
 
-    def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None: ...
+    def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
+        pass
 
-    def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None: ...
+    def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
+        pass
 
-    def shutdown(self) -> None: ...
+    def shutdown(self) -> None:
+        pass
 
-    def process_config(self, config: Config) -> tuple[int | None, int | None, int, bool, bool]: ...
+    def process_config(self, config: Config) -> tuple[int | None, int | None, int, bool, bool]:
+        pass
 
-    def fit(self, parameters: NDArrays, config: Config) -> tuple[NDArrays, int, dict[str, Scalar]]: ...
+    def fit(self, parameters: NDArrays, config: Config) -> tuple[NDArrays, int, dict[str, Scalar]]:
+        pass
 
-    def evaluate(self, parameters: NDArrays, config: Config) -> tuple[float, int, dict[str, Scalar]]: ...
+    def evaluate(self, parameters: NDArrays, config: Config) -> tuple[float, int, dict[str, Scalar]]:
+        pass
 
     def get_client_specific_logs(
         self,
         current_round: int | None,
         current_epoch: int | None,
         logging_mode: LoggingMode,
-    ) -> tuple[str, list[tuple[LogLevel, str]]]: ...
+    ) -> tuple[str, list[tuple[LogLevel, str]]]:
+        pass
 
-    def get_client_specific_reports(self) -> dict[str, Any]: ...
+    def get_client_specific_reports(self) -> dict[str, Any]:
+        pass
 
     def update_metric_manager(
         self,
         preds: TorchPredType,
         target: TorchTargetType,
         metric_manager: MetricManager,
-    ) -> None: ...
+    ) -> None:
+        pass
 
-    def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]: ...
+    def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
+        pass
 
-    def val_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[EvaluationLosses, TorchPredType]: ...
+    def val_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[EvaluationLosses, TorchPredType]:
+        pass
 
     def train_by_epochs(
         self,
         epochs: int,
         current_round: int | None = None,
-    ) -> tuple[dict[str, float], dict[str, Scalar]]: ...
+    ) -> tuple[dict[str, float], dict[str, Scalar]]:
+        pass
 
     def train_by_steps(
         self,
         steps: int,
         current_round: int | None = None,
-    ) -> tuple[dict[str, float], dict[str, Scalar]]: ...
+    ) -> tuple[dict[str, float], dict[str, Scalar]]:
+        pass
 
     def _validate_by_steps(
         self, loss_meter: LossMeter, metric_manager: MetricManager, include_losses_in_metrics: bool = False
-    ) -> tuple[float, dict[str, Scalar]]: ...
+    ) -> tuple[float, dict[str, Scalar]]:
+        pass
 
     def _fully_validate_or_test(
         self,
@@ -1448,62 +1463,86 @@ class BasicClientProtocol(Protocol):
         metric_manager: MetricManager,
         logging_mode: LoggingMode = LoggingMode.VALIDATION,
         include_losses_in_metrics: bool = False,
-    ) -> tuple[float, dict[str, Scalar]]: ...
+    ) -> tuple[float, dict[str, Scalar]]:
+        pass
 
-    def validate(self, include_losses_in_metrics: bool = False) -> tuple[float, dict[str, Scalar]]: ...
+    def validate(self, include_losses_in_metrics: bool = False) -> tuple[float, dict[str, Scalar]]:
+        pass
 
-    def get_properties(self, config: Config) -> dict[str, Scalar]: ...
+    def get_properties(self, config: Config) -> dict[str, Scalar]:
+        pass
 
-    def setup_client(self, config: Config) -> None: ...
+    def setup_client(self, config: Config) -> None:
+        pass
 
-    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger: ...
+    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+        pass
 
-    def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]: ...
+    def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
+        pass
 
     def compute_loss_and_additional_losses(
         self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
-    ) -> tuple[torch.Tensor, dict[str, torch.Tensor] | None]: ...
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor] | None]:
+        pass
 
     def compute_training_loss(
         self,
         preds: TorchPredType,
         features: TorchFeatureType,
         target: TorchTargetType,
-    ) -> TrainingLosses: ...
+    ) -> TrainingLosses:
+        pass
 
     def compute_evaluation_loss(
         self,
         preds: TorchPredType,
         features: TorchFeatureType,
         target: TorchTargetType,
-    ) -> EvaluationLosses: ...
+    ) -> EvaluationLosses:
+        pass
 
-    def set_optimizer(self, config: Config) -> None: ...
+    def set_optimizer(self, config: Config) -> None:
+        pass
 
-    def get_data_loaders(self, config: Config) -> tuple[DataLoader, ...]: ...
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, ...]:
+        pass
 
-    def get_test_data_loader(self, config: Config) -> DataLoader | None: ...
+    def get_test_data_loader(self, config: Config) -> DataLoader | None:
+        pass
 
-    def transform_target(self, target: TorchTargetType) -> TorchTargetType: ...
+    def transform_target(self, target: TorchTargetType) -> TorchTargetType:
+        pass
 
-    def get_criterion(self, config: Config) -> _Loss: ...
+    def get_criterion(self, config: Config) -> _Loss:
+        pass
 
-    def get_optimizer(self, config: Config) -> Optimizer | dict[str, Optimizer]: ...
+    def get_optimizer(self, config: Config) -> Optimizer | dict[str, Optimizer]:
+        pass
 
-    def get_model(self, config: Config) -> nn.Module: ...
+    def get_model(self, config: Config) -> nn.Module:
+        pass
 
-    def get_lr_scheduler(self, optimizer_key: str, config: Config) -> LRScheduler | None: ...
+    def get_lr_scheduler(self, optimizer_key: str, config: Config) -> LRScheduler | None:
+        pass
 
-    def update_lr_schedulers(self, step: int | None = None, epoch: int | None = None) -> None: ...
+    def update_lr_schedulers(self, step: int | None = None, epoch: int | None = None) -> None:
+        pass
 
-    def update_before_train(self, current_server_round: int) -> None: ...
+    def update_before_train(self, current_server_round: int) -> None:
+        pass
 
-    def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None: ...
+    def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
+        pass
 
-    def update_before_step(self, step: int, current_round: int | None = None) -> None: ...
+    def update_before_step(self, step: int, current_round: int | None = None) -> None:
+        pass
 
-    def update_after_step(self, step: int, current_round: int | None = None) -> None: ...
+    def update_after_step(self, step: int, current_round: int | None = None) -> None:
+        pass
 
-    def update_before_epoch(self, epoch: int) -> None: ...
+    def update_before_epoch(self, epoch: int) -> None:
+        pass
 
-    def transform_gradients(self, losses: TrainingLosses) -> None: ...
+    def transform_gradients(self, losses: TrainingLosses) -> None:
+        pass

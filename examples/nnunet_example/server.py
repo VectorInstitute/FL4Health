@@ -10,7 +10,6 @@ import yaml
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
-from flwr.server.strategy import FedAvg
 
 from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.checkpointing.server_module import NnUnetServerCheckpointAndStateModule
@@ -23,7 +22,6 @@ from fl4health.servers.nnunet_server import NnunetServer
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import make_dict_with_epochs_or_steps
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from fl4health.utils.parameter_extraction import get_all_model_parameters
 
 
 def get_config(

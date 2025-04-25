@@ -777,7 +777,7 @@ class NnunetClient(BasicClient):
         """
         preds = {k: v for k, v in preds.items() if "local" in k}
         # remove prefix
-        preds = {k.replace(f"local-", ""): v for k, v in preds.items()}
+        preds = {k.replace("local-", ""): v for k, v in preds.items()}
 
         if len(preds) > 1:
             # for nnunet the first pred in the output list is the main one

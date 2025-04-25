@@ -1,7 +1,7 @@
 """Ditto Personalized Mixin"""
 
 import warnings
-from logging import DEBUG, INFO
+from logging import INFO
 from typing import Protocol, cast, runtime_checkable
 
 import torch
@@ -23,13 +23,17 @@ from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredTy
 class DittoProtocol(AdaptiveProtocol, Protocol):
     global_model: torch.nn.Module | None
 
-    def get_global_model(self, config: Config) -> nn.Module: ...
+    def get_global_model(self, config: Config) -> nn.Module:
+        pass
 
-    def _copy_optimizer_with_new_params(self, original_optimizer: Optimizer): ...
+    def _copy_optimizer_with_new_params(self, original_optimizer: Optimizer):
+        pass
 
-    def set_initial_global_tensors(self) -> None: ...
+    def set_initial_global_tensors(self) -> None:
+        pass
 
-    def _extract_pred(self, kind: str, preds: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]: ...
+    def _extract_pred(self, kind: str, preds: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+        pass
 
 
 class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixin):
@@ -148,12 +152,11 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixi
             config (Config): The config from the server.
         """
         self.ensure_protocol_compliance()
-
         try:
             self.global_model = self.get_global_model(config)
             log(INFO, f"global model set: {type(self.global_model).__name__}")
-        except:
-            log(INFO, f"Couldn't set global model before super().setup_client(). Will try again within that setup.")
+        except AttributeError:
+            log(INFO, "Couldn't set global model before super().setup_client(). Will try again within that setup.")
             pass
         # The rest of the setup is the same
         super().setup_client(config)
@@ -336,7 +339,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixi
             log(INFO, "Using '_special_predict' to make predictions")
             global_preds, _ = self._special_predict(self.global_model, input)
             local_preds, _ = self._special_predict(self.model, input)
-            log(INFO, f"Successfully predicted for global and local models")
+            log(INFO, "Successfully predicted for global and local models")
         else:
             if isinstance(input, torch.Tensor):
                 global_preds = self.global_model(input)
@@ -488,5 +491,5 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin, BasePersonalizedMixi
         """
         self.ensure_protocol_compliance()
         # Check that both models are in eval mode
-        assert not self.global_model is None and not self.global_model.training and not self.model.training
+        assert self.global_model is not None and not self.global_model.training and not self.model.training
         return super().compute_evaluation_loss(preds, features, target)

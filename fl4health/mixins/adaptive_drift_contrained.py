@@ -1,9 +1,8 @@
 """AdaptiveDriftConstrainedMixin"""
 
 import warnings
-from collections.abc import Sequence
 from logging import INFO
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 import torch
 from flwr.common.logger import log
@@ -27,13 +26,13 @@ class AdaptiveProtocol(BasicClientProtocol, Protocol):
     penalty_loss_function: WeightDriftLoss
     parameter_exchanger: FullParameterExchangerWithPacking[float]
 
-    def compute_penalty_loss(self) -> torch.Tensor: ...
+    def compute_penalty_loss(self) -> torch.Tensor: ...  # noqa: E704
 
-    def ensure_protocol_compliance(self) -> None: ...
+    def ensure_protocol_compliance(self) -> None: ...  # noqa: E704
 
 
 class AdaptiveDriftConstrainedMixin:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
         # Initialize mixin-specific attributes with default values
         self.loss_for_adaptation = 0.1
         self.drift_penalty_tensors = None
@@ -42,7 +41,7 @@ class AdaptiveDriftConstrainedMixin:
         # Call parent's init
         super().__init__(*args, **kwargs)
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs: Any):
         """This method is called when a class inherits from AdaptiveMixin"""
         super().__init_subclass__(**kwargs)
 
@@ -73,7 +72,7 @@ class AdaptiveDriftConstrainedMixin:
     def ensure_protocol_compliance(self) -> None:
         """Call this after the object is fully initialized"""
         if not isinstance(self, BasicClient):
-            raise TypeError(f"Protocol requirements not met.")
+            raise TypeError("Protocol requirements not met.")
 
     def get_parameters(self: AdaptiveProtocol, config: Config) -> NDArrays:
         """
@@ -134,7 +133,7 @@ class AdaptiveDriftConstrainedMixin:
         server_model_state, self.drift_penalty_weight = self.parameter_exchanger.unpack_parameters(parameters)
         log(INFO, f"Penalty weight received from the server: {self.drift_penalty_weight}")
 
-        super().set_parameters(server_model_state, config, fitting_round)
+        super().set_parameters(server_model_state, config, fitting_round)  # type: ignore[safe-super]
 
     def compute_training_loss(
         self: AdaptiveProtocol,
@@ -200,7 +199,7 @@ class AdaptiveDriftConstrainedMixin:
         assert "loss_for_adaptation" in loss_dict
         # Store current loss which is the vanilla loss without the penalty term added in
         self.loss_for_adaptation = loss_dict["loss_for_adaptation"]
-        super().update_after_train(local_steps, loss_dict, config)
+        super().update_after_train(local_steps, loss_dict, config)  # type: ignore[safe-super]
 
     def compute_penalty_loss(self: AdaptiveProtocol) -> torch.Tensor:
         """

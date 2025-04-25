@@ -103,7 +103,7 @@ def main(
             log(INFO, f"Setting up client for personalized strategy: {personalized_strategy}")
             client = personalized_client_classes[personalized_strategy](**client_kwargs)
         else:
-            log(INFO, f"Setting up client without personalization")
+            log(INFO, "Setting up client without personalization")
             client = NnunetClient(**client_kwargs)
         log(INFO, f"Using client: {type(client).__name__}")
 
