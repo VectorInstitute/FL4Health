@@ -107,7 +107,7 @@ def test_get_peft_parameters() -> None:
         lora_dropout=0.1,
         target_modules=["linear"],
     )
-    peft_model = get_peft_model(model, peft_config)
+    peft_model = get_peft_model(model, peft_config)  # type: ignore
 
     # Extracting peft model parameters and converting to NDArrays object
     server_model = parameters_to_ndarrays(get_all_peft_parameters_from_model(peft_model))
