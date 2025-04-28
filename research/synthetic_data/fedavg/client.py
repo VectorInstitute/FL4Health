@@ -1,5 +1,4 @@
 import argparse
-import os
 from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
@@ -13,7 +12,6 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting.base_reporter import BaseReporter
