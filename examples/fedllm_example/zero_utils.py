@@ -120,8 +120,8 @@ def safe_save_model_for_hf_trainer(trainer: Trainer) -> None:
     Args:
         trainer (transformers.Trainer): The trainer.
     """
-    trainer.accelerator.wait_for_everyone()
+    trainer.accelerator.wait_for_everyone()  # type:ignore
     torch.cuda.synchronize()
 
-    trainer.save_model()
+    trainer.save_model()  # type:ignore
     return
