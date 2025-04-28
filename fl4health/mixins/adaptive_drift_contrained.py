@@ -20,7 +20,7 @@ from fl4health.utils.typing import TorchFeatureType, TorchPredType, TorchTargetT
 
 @runtime_checkable
 class AdaptiveProtocol(BasicClientProtocol, Protocol):
-    loss_for_adaptation: float | None
+    loss_for_adaptation: float
     drift_penalty_tensors: list[torch.Tensor] | None
     drift_penalty_weight: float | None
     penalty_loss_function: WeightDriftLoss

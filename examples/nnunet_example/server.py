@@ -112,7 +112,7 @@ def main(
         model=None, parameter_exchanger=FullParameterExchanger(), state_checkpointer=state_checkpointer
     )
 
-    checkpoint_and_state_module.parameter_exchanger = FullParameterExchangerWithPacking(
+    checkpoint_and_state_module.parameter_exchanger = FullParameterExchangerWithPacking(  # type:ignore [assignment]
         ParameterPackerAdaptiveConstraint()
     )
 

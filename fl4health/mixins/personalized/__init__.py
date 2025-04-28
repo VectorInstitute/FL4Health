@@ -12,7 +12,7 @@ class PersonalizedModes(str, Enum):
 PersonalizedMixinRegistry = {"ditto": DittoPersonalizedMixin}
 
 
-def make_it_personal(client_base_type: type[BasicClient], mode: PersonalizedModes) -> BasicClient:
+def make_it_personal(client_base_type: type[BasicClient], mode: PersonalizedModes) -> type[BasicClient]:
     if mode == "ditto":
 
         return type(

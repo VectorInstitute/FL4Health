@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
 from fl4health.clients.basic_client import BasicClient
-from fl4health.mixins.personalized import make_it_personal
+from fl4health.mixins.personalized import PersonalizedModes, make_it_personal
 from fl4health.reporting import JsonReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_mnist_data
@@ -42,7 +42,7 @@ class MnistClient(BasicClient):
         return torch.nn.CrossEntropyLoss()
 
 
-MnistDittoClient = make_it_personal(MnistClient, "ditto")
+MnistDittoClient = make_it_personal(MnistClient, PersonalizedModes.DITTO)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")

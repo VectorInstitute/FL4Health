@@ -611,9 +611,7 @@ class NnunetClient(BasicClient):
         # We have to call parent method after setting up nnunet trainer
         super().setup_client(config)
 
-    def _special_predict(
-        self, model: torch.nn.Module, input: torch.Tensor
-    ) -> tuple[TorchPredType, dict[str, torch.Tensor]]:
+    def _predict(self, model: torch.nn.Module, input: TorchInputType) -> tuple[TorchPredType, dict[str, torch.Tensor]]:
         if isinstance(input, torch.Tensor):
             # If device type is cuda, nnUNet defaults to mixed precision forward pass
             if self.device.type == "cuda":
@@ -650,7 +648,7 @@ class NnunetClient(BasicClient):
             tuple[TorchPredType, dict[str, torch.Tensor]]: A tuple in which the first element model outputs indexed by
             name. The second element is unused by this subclass and therefore is always an empty dict
         """
-        return self._special_predict(self.model, input)
+        return self._predict(self.model, input)
 
     def _special_compute_loss_and_additional_losses(
         self,

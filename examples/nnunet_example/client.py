@@ -4,7 +4,7 @@ import warnings
 from logging import DEBUG, INFO
 from os.path import exists, join
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
@@ -22,13 +22,13 @@ from nnunetv2.dataset_conversion.convert_MSD_dataset import convert_msd_dataset
 from torchmetrics.segmentation import GeneralizedDiceScore
 
 from fl4health.clients.nnunet_client import NnunetClient
-from fl4health.mixins.personalized import make_it_personal
+from fl4health.mixins.personalized import PersonalizedModes, make_it_personal
 from fl4health.utils.load_data import load_msd_dataset
 from fl4health.utils.metrics import TorchMetric, TransformsMetric
 from fl4health.utils.msd_dataset_sources import get_msd_dataset_enum, msd_num_labels
 from fl4health.utils.nnunet_utils import get_segs_from_probs, set_nnunet_env
 
-personalized_client_classes = {"ditto": make_it_personal(NnunetClient, "ditto")}
+personalized_client_classes = {"ditto": make_it_personal(NnunetClient, PersonalizedModes.DITTO)}
 
 
 def main(
@@ -84,7 +84,7 @@ def main(
             checkpoint_and_state_module = None
 
         # Create client
-        client_kwargs = {}
+        client_kwargs: dict[str, Any] = {}
         client_kwargs.update(
             # Args specific to nnUNetClient
             dataset_id=dataset_id,

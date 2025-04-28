@@ -1350,6 +1350,7 @@ class BasicClientProtocol(Protocol):
     checkpoint_and_state_module: ClientCheckpointAndStateModule | None
     reports_manager: ReportsManager
     initialized: bool
+    criterion: _Loss
 
     # Loss and Metric management
     train_loss_meter: LossMeter
