@@ -9,7 +9,6 @@ from flwr.common.logger import log
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
-from torchvision import models
 
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
@@ -19,6 +18,7 @@ from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import set_all_random_seeds
+from research.rxrx1.utils import get_model
 
 
 def fit_config(
@@ -47,7 +47,7 @@ def main(config: dict[str, Any], server_address: str, checkpoint_stub: str, run_
         config["n_clients"],
     )
     # Initializing the model on the server side
-    model = models.resnet18(pretrained=True)
+    model = get_model()
     parameter_exchanger = FullParameterExchanger()
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
     best_checkpoint_name = "server_best_model.pkl"
