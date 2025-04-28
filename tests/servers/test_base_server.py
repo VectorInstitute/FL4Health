@@ -22,7 +22,8 @@ from fl4health.servers.base_server import FlServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, MetricPrefix
-from fl4health.utils.parameter_extraction import get_all_model_parameters, get_all_peft_parameters_from_model
+from fl4health.utils.parameter_extraction import get_all_model_parameters
+from fl4health.utils.peft_parameter_extraction import get_all_peft_parameters_from_model
 from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 from tests.test_utils.models_for_test import LinearTransform
