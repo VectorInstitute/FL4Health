@@ -7,7 +7,6 @@ import flwr as fl
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
-from torchvision import models
 
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
@@ -15,6 +14,7 @@ from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, 
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import set_all_random_seeds
 from research.rxrx1.personal_server import PersonalServer
+from research.rxrx1.utils import get_model
 
 
 def fit_config(
@@ -45,7 +45,7 @@ def main(config: dict[str, Any], server_address: str, lam: float) -> None:
 
     client_manager = SimpleClientManager()
     # Initializing the model on the server side
-    model = models.resnet18(pretrained=True)
+    model = get_model()
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvgWithAdaptiveConstraint(
         min_fit_clients=config["n_clients"],

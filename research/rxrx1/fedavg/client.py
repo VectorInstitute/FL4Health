@@ -12,7 +12,6 @@ from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
-from torchvision import models
 
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
@@ -23,6 +22,7 @@ from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
+from research.rxrx1.utils import get_model
 
 
 class Rxrx1FedAvgClient(BasicClient):
@@ -83,7 +83,8 @@ class Rxrx1FedAvgClient(BasicClient):
         return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
 
     def get_model(self, config: Config) -> nn.Module:
-        return models.resnet18(pretrained=True).to(self.device)
+        model = get_model()
+        return model.to(self.device)
 
 
 if __name__ == "__main__":
