@@ -7,12 +7,12 @@ import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
-from torchvision import models
 
 from fl4health.datasets.rxrx1.load_data import load_rxrx1_data
 from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.metrics import Accuracy, MetricManager
 from research.rxrx1.single_node_trainer import SingleNodeTrainer
+from research.rxrx1.utils import get_model
 
 NUM_CLIENTS = 4
 EPOCHS = 100
@@ -60,10 +60,7 @@ class Rxrx1CentralizedTrainer(SingleNodeTrainer):
         self.train_loader = DataLoader(aggregated_train_dataset, batch_size=32, shuffle=True)
         self.val_loader = DataLoader(aggregated_val_dataset, batch_size=32, shuffle=False)
 
-        self.model: nn.Module = models.resnet18(pretrained=True)
-        num_classes = 50
-        in_features = self.model.fc.in_features
-        self.model.fc = nn.Linear(in_features, num_classes)
+        self.model: nn.Module = get_model()
         self.model.to(self.device)
         # NOTE: The class weights specified by alpha in this baseline loss are precomputed based on the weights of
         # the pool dataset. This is a bit of cheating but FLamby does it in their paper.
