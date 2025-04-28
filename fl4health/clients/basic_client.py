@@ -2,7 +2,7 @@ import datetime
 from collections.abc import Iterator, Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 import torch
 import torch.nn as nn
@@ -1102,7 +1102,7 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            tuple[DataLoader, ...]: Tuple of length 2. The client train and validation loader.
+            tuple[DataLoader, pass]: Tuple of length 2. The client train and validation loader.
 
         Raises:
             NotImplementedError: To be defined in child class.
@@ -1337,3 +1337,213 @@ class BasicClient(NumPyClient):
             self.lr_schedulers[key].load_state_dict(client_state["lr_schedulers_state"][key])
 
         return True
+
+
+@runtime_checkable
+class BasicClientProtocol(Protocol):
+    data_path: str
+    device: torch.device
+    metrics: Sequence[Metric]
+    progress_bar: bool
+    client_name: str
+    state_checkpoint_name: str
+    checkpoint_and_state_module: ClientCheckpointAndStateModule | None
+    reports_manager: ReportsManager
+    initialized: bool
+    criterion: _Loss
+
+    # Loss and Metric management
+    train_loss_meter: LossMeter
+    val_loss_meter: LossMeter
+    train_metric_manager: MetricManager
+    val_metric_manager: MetricManager
+    test_loss_meter: LossMeter
+    test_metric_manager: MetricManager
+
+    # Optional variable to store the weights that the client was initialized with during each round of training
+    initial_weights: NDArrays | None
+
+    total_steps: int
+    total_epochs: int
+
+    # Attributes to be initialized in setup_client
+    parameter_exchanger: ParameterExchanger
+    model: nn.Module
+    optimizers: dict[str, torch.optim.Optimizer]
+    train_loader: DataLoader
+    val_loader: DataLoader
+    test_loader: DataLoader | None
+    num_train_samples: int
+    num_val_samples: int
+    num_test_samples: int | None
+    learning_rate: float | None
+
+    # User can set the early stopper for the client by instantiating the EarlyStopper class
+    # and setting the patience and interval_steps attributes. The early stopper will be used to
+    # stop training if the validation loss does not improve for a certain number of steps.
+    early_stopper: EarlyStopper | None
+    # Config can contain num_validation_steps key, which determines an upper bound
+    # for the validation steps taken. If not specified, no upper bound will be enforced.
+    # By specifying this in the config we cannot guarantee the validation set is the same
+    # across rounds for clients.
+    num_validation_steps: int | None
+    # NOTE: These iterators are of type _BaseDataLoaderIter, which is not importable...so we're forced to use
+    # Iterator
+    train_iterator: Iterator | None
+    val_iterator: Iterator | None
+
+    def get_parameters(self, config: Config) -> NDArrays:
+        pass
+
+    def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
+        pass
+
+    def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
+        pass
+
+    def shutdown(self) -> None:
+        pass
+
+    def process_config(self, config: Config) -> tuple[int | None, int | None, int, bool, bool]:
+        pass
+
+    def fit(self, parameters: NDArrays, config: Config) -> tuple[NDArrays, int, dict[str, Scalar]]:
+        pass
+
+    def evaluate(self, parameters: NDArrays, config: Config) -> tuple[float, int, dict[str, Scalar]]:
+        pass
+
+    def get_client_specific_logs(
+        self,
+        current_round: int | None,
+        current_epoch: int | None,
+        logging_mode: LoggingMode,
+    ) -> tuple[str, list[tuple[LogLevel, str]]]:
+        pass
+
+    def get_client_specific_reports(self) -> dict[str, Any]:
+        pass
+
+    def update_metric_manager(
+        self,
+        preds: TorchPredType,
+        target: TorchTargetType,
+        metric_manager: MetricManager,
+    ) -> None:
+        pass
+
+    def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
+        pass
+
+    def val_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[EvaluationLosses, TorchPredType]:
+        pass
+
+    def train_by_epochs(
+        self,
+        epochs: int,
+        current_round: int | None = None,
+    ) -> tuple[dict[str, float], dict[str, Scalar]]:
+        pass
+
+    def train_by_steps(
+        self,
+        steps: int,
+        current_round: int | None = None,
+    ) -> tuple[dict[str, float], dict[str, Scalar]]:
+        pass
+
+    def _validate_by_steps(
+        self, loss_meter: LossMeter, metric_manager: MetricManager, include_losses_in_metrics: bool = False
+    ) -> tuple[float, dict[str, Scalar]]:
+        pass
+
+    def _fully_validate_or_test(
+        self,
+        loader: DataLoader,
+        loss_meter: LossMeter,
+        metric_manager: MetricManager,
+        logging_mode: LoggingMode = LoggingMode.VALIDATION,
+        include_losses_in_metrics: bool = False,
+    ) -> tuple[float, dict[str, Scalar]]:
+        pass
+
+    def validate(self, include_losses_in_metrics: bool = False) -> tuple[float, dict[str, Scalar]]:
+        pass
+
+    def get_properties(self, config: Config) -> dict[str, Scalar]:
+        pass
+
+    def setup_client(self, config: Config) -> None:
+        pass
+
+    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+        pass
+
+    def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
+        pass
+
+    def compute_loss_and_additional_losses(
+        self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor] | None]:
+        pass
+
+    def compute_training_loss(
+        self,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
+    ) -> TrainingLosses:
+        pass
+
+    def compute_evaluation_loss(
+        self,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
+    ) -> EvaluationLosses:
+        pass
+
+    def set_optimizer(self, config: Config) -> None:
+        pass
+
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, ...]:
+        pass
+
+    def get_test_data_loader(self, config: Config) -> DataLoader | None:
+        pass
+
+    def transform_target(self, target: TorchTargetType) -> TorchTargetType:
+        pass
+
+    def get_criterion(self, config: Config) -> _Loss:
+        pass
+
+    def get_optimizer(self, config: Config) -> Optimizer | dict[str, Optimizer]:
+        pass
+
+    def get_model(self, config: Config) -> nn.Module:
+        pass
+
+    def get_lr_scheduler(self, optimizer_key: str, config: Config) -> LRScheduler | None:
+        pass
+
+    def update_lr_schedulers(self, step: int | None = None, epoch: int | None = None) -> None:
+        pass
+
+    def update_before_train(self, current_server_round: int) -> None:
+        pass
+
+    def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
+        pass
+
+    def update_before_step(self, step: int, current_round: int | None = None) -> None:
+        pass
+
+    def update_after_step(self, step: int, current_round: int | None = None) -> None:
+        pass
+
+    def update_before_epoch(self, epoch: int) -> None:
+        pass
+
+    def transform_gradients(self, losses: TrainingLosses) -> None:
+        pass

@@ -1,3 +1,4 @@
+import copy
 import gc
 import logging
 import os
@@ -186,6 +187,7 @@ class NnunetClient(BasicClient):
         self.nnunet_trainer_class = nnunet_trainer_class
         self.nnunet_trainer_class_kwargs = nnunet_trainer_class_kwargs
         self.nnunet_trainer: nnUNetTrainer
+
         self.nnunet_config: NnunetConfig
         self.plans: dict[str, Any] | None = None
         self.steps_per_round: int  # N steps per server round
@@ -227,7 +229,7 @@ class NnunetClient(BasicClient):
 
         # As in the nnUNetTrainer, we implement mixed precision using torch.autocast and torch.GradScaler
         # Clear gradients from optimizer if they exist
-        self.optimizers["global"].zero_grad()
+        self.optimizers["local"].zero_grad()
 
         # Call user defined methods to get predictions and compute loss
         preds, features = self.predict(input)
@@ -239,11 +241,11 @@ class NnunetClient(BasicClient):
         scaled_backward_loss.backward()
 
         # Rescale gradients then clip based on specified norm
-        self.grad_scaler.unscale_(self.optimizers["global"])
+        self.grad_scaler.unscale_(self.optimizers["local"])
         self.transform_gradients(losses)
 
         # Update parameters and scaler
-        self.grad_scaler.step(self.optimizers["global"])
+        self.grad_scaler.step(self.optimizers["local"])
         self.grad_scaler.update()
 
         return losses, preds
@@ -314,7 +316,11 @@ class NnunetClient(BasicClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        return self.nnunet_trainer.network
+        for_global = config.get("for_global", False)
+        if for_global:
+            return copy.deepcopy(self.nnunet_trainer.network)
+        else:
+            return self.nnunet_trainer.network
 
     def get_criterion(self, config: Config) -> _Loss:
         if isinstance(self.nnunet_trainer.loss, DeepSupervisionWrapper):
@@ -605,27 +611,14 @@ class NnunetClient(BasicClient):
         # We have to call parent method after setting up nnunet trainer
         super().setup_client(config)
 
-    def predict(self, input: TorchInputType) -> tuple[TorchPredType, dict[str, torch.Tensor]]:
-        """
-        Generate model outputs. Overridden because nnunets outputs lists when deep supervision is on so we have to
-        reformat the output into dicts.
-
-        Additionally if device type is cuda, loss computed in mixed precision.
-
-        Args:
-            input (TorchInputType): The model inputs
-
-        Returns:
-            tuple[TorchPredType, dict[str, torch.Tensor]]: A tuple in which the first element model outputs indexed by
-            name. The second element is unused by this subclass and therefore is always an empty dict
-        """
+    def _predict(self, model: torch.nn.Module, input: TorchInputType) -> tuple[TorchPredType, dict[str, torch.Tensor]]:
         if isinstance(input, torch.Tensor):
             # If device type is cuda, nnUNet defaults to mixed precision forward pass
             if self.device.type == "cuda":
                 with torch.autocast(self.device.type, enabled=True):
-                    output = self.model(input)
+                    output = model(input)
             else:
-                output = self.model(input)
+                output = model(input)
         else:
             raise TypeError('"input" must be of type torch.Tensor for nnUNetClient')
 
@@ -641,7 +634,23 @@ class NnunetClient(BasicClient):
                 "Was expecting nnunet model output to be either a torch.Tensor or a list/tuple of torch.Tensors"
             )
 
-    def compute_loss_and_additional_losses(
+    def predict(self, input: TorchInputType) -> tuple[TorchPredType, dict[str, torch.Tensor]]:
+        """
+        Generate model outputs. Overridden because nnunets outputs lists when deep supervision is on so we have to
+        reformat the output into dicts.
+
+        Additionally if device type is cuda, loss computed in mixed precision.
+
+        Args:
+            input (TorchInputType): The model inputs
+
+        Returns:
+            tuple[TorchPredType, dict[str, torch.Tensor]]: A tuple in which the first element model outputs indexed by
+            name. The second element is unused by this subclass and therefore is always an empty dict
+        """
+        return self._predict(self.model, input)
+
+    def _special_compute_loss_and_additional_losses(
         self,
         preds: TorchPredType,
         features: dict[str, torch.Tensor],
@@ -664,6 +673,7 @@ class NnunetClient(BasicClient):
         # If deep supervision is turned on we must convert loss and target dicts into lists
         loss_preds = prepare_loss_arg(preds)
         loss_targets = prepare_loss_arg(target)
+        log(DEBUG, f"Prepared loss_preds: {type(loss_preds)}, loss_targets: {type(loss_targets)}")
 
         # Ensure we have the same number of predictions and targets
         assert isinstance(
@@ -684,6 +694,28 @@ class NnunetClient(BasicClient):
             loss = self.criterion(loss_preds, loss_targets), None
 
         return loss
+
+    def compute_loss_and_additional_losses(
+        self,
+        preds: TorchPredType,
+        features: dict[str, torch.Tensor],
+        target: TorchTargetType,
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor] | None]:
+        """
+        Checks the pred and target types and computes the loss. If device type is cuda, loss computed in mixed
+        precision.
+
+        Args:
+            preds (TorchPredType): Dictionary of model output tensors indexed by name
+            features (dict[str, torch.Tensor]): Not used by this subclass
+            target (TorchTargetType): The targets to evaluate the predictions with. If multiple prediction tensors
+                are given, target must be a dictionary with the same number of tensors
+
+        Returns:
+            tuple[torch.Tensor, dict[str, torch.Tensor] | None]: A tuple where the first element is the loss and the
+            second element is an optional additional loss
+        """
+        return self._special_compute_loss_and_additional_losses(preds, features, target)
 
     def mask_data(self, pred: torch.Tensor, target: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
@@ -741,8 +773,14 @@ class NnunetClient(BasicClient):
             target (TorchTargetType): the targets generated by the dataloader to evaluate the preds with
             metric_manager (MetricManager): the metric manager to update
         """
+        preds = {k: v for k, v in preds.items() if "local" in k}
+        # remove prefix
+        preds = {k.replace("local-", ""): v for k, v in preds.items()}
+
         if len(preds) > 1:
             # for nnunet the first pred in the output list is the main one
+            log(DEBUG, f"preds keys: {preds.keys()}")
+
             m_pred = convert_deep_supervision_dict_to_list(preds)[0]
 
         if isinstance(target, torch.Tensor):
@@ -799,7 +837,7 @@ class NnunetClient(BasicClient):
         logging_mode: LoggingMode,
     ) -> tuple[str, list[tuple[LogLevel, str]]]:
         if logging_mode == LoggingMode.TRAIN:
-            lr = float(self.optimizers["global"].param_groups[0]["lr"])
+            lr = float(self.optimizers["local"].param_groups[0]["lr"])
             if current_epoch is None:
                 # Assume training by steps
                 return f"Initial LR {lr}", []
@@ -809,7 +847,7 @@ class NnunetClient(BasicClient):
             return "", []
 
     def get_client_specific_reports(self) -> dict[str, Any]:
-        return {"learning_rate": float(self.optimizers["global"].param_groups[0]["lr"])}
+        return {"learning_rate": float(self.optimizers["local"].param_groups[0]["lr"])}
 
     @use_default_signal_handlers  # Experiment planner spawns a process I think
     def get_properties(self, config: Config) -> dict[str, Scalar]:
@@ -913,7 +951,7 @@ class NnunetClient(BasicClient):
             # freeze before the first pass, gc.collect has to check all those variables
             gc.freeze()
 
-    def transform_gradients(self, losses: TrainingLosses) -> None:
+    def transform_gradients(self, losses: TrainingLosses, model: nn.Module | None = None) -> None:
         """
         Apply the gradient clipping performed by the default nnunet trainer. This is the default behavior for
         nnunet 2.5.1
@@ -921,4 +959,5 @@ class NnunetClient(BasicClient):
         Args:
             losses (TrainingLosses): Not used for this transformation.
         """
-        nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
+        model = model if model else self.model
+        nn.utils.clip_grad_norm_(model.parameters(), self.max_grad_norm)
