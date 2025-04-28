@@ -29,7 +29,7 @@ BASELINE_LAYERS: OrderedDict[str, int] = OrderedDict()
 BASELINE_LAYERS["linear_1"] = 100
 
 
-class SynthDittoClient(DittoDeepMmdClient):
+class SyntheticDittoClient(DittoDeepMmdClient):
     def __init__(
         self,
         data_path: Path,
@@ -193,21 +193,15 @@ if __name__ == "__main__":
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     pre_aggregation_best_checkpoint_name = f"pre_aggregation_client_{args.client_number}_best_model.pkl"
     pre_aggregation_last_checkpoint_name = f"pre_aggregation_client_{args.client_number}_last_model.pkl"
-    post_aggregation_best_checkpoint_name = f"post_aggregation_client_{args.client_number}_best_model.pkl"
-    post_aggregation_last_checkpoint_name = f"post_aggregation_client_{args.client_number}_last_model.pkl"
     checkpoint_and_state_module = ClientCheckpointAndStateModule(
         pre_aggregation=[
             BestLossTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_best_checkpoint_name),
             LatestTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_last_checkpoint_name),
         ],
-        post_aggregation=[
-            BestLossTorchModuleCheckpointer(checkpoint_dir, post_aggregation_best_checkpoint_name),
-            LatestTorchModuleCheckpointer(checkpoint_dir, post_aggregation_last_checkpoint_name),
-        ],
     )
 
     data_path = Path(args.dataset_dir)
-    client = SynthDittoClient(
+    client = SyntheticDittoClient(
         data_path=data_path,
         metrics=[Accuracy("accuracy")],
         device=device,

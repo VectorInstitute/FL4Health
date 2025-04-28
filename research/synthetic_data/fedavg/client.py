@@ -25,7 +25,7 @@ from research.synthetic_data.model import FullyConnectedNet
 from research.synthetic_data.preprocess import get_preprocessed_data, get_test_preprocessed_data
 
 
-class SynthFedAvgClient(BasicClient):
+class SyntheticFedAvgClient(BasicClient):
     def __init__(
         self,
         data_path: Path,
@@ -158,32 +158,14 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    # Adding extensive checkpointing for the client
-    checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
-    pre_aggregation_best_checkpoint_name = f"pre_aggregation_client_{args.client_number}_best_model.pkl"
-    pre_aggregation_last_checkpoint_name = f"pre_aggregation_client_{args.client_number}_last_model.pkl"
-    post_aggregation_best_checkpoint_name = f"post_aggregation_client_{args.client_number}_best_model.pkl"
-    post_aggregation_last_checkpoint_name = f"post_aggregation_client_{args.client_number}_last_model.pkl"
-    checkpoint_and_state_module = ClientCheckpointAndStateModule(
-        pre_aggregation=[
-            BestLossTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_best_checkpoint_name),
-            LatestTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_last_checkpoint_name),
-        ],
-        post_aggregation=[
-            BestLossTorchModuleCheckpointer(checkpoint_dir, post_aggregation_best_checkpoint_name),
-            LatestTorchModuleCheckpointer(checkpoint_dir, post_aggregation_last_checkpoint_name),
-        ],
-    )
-
     data_path = Path(args.dataset_dir)
-    client = SynthFedAvgClient(
+    client = SyntheticFedAvgClient(
         data_path=data_path,
         metrics=[Accuracy("accuracy")],
         device=device,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         heterogeneity_level=args.alpha_beta,
-        checkpoint_and_state_module=checkpoint_and_state_module,
     )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())

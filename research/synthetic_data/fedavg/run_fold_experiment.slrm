@@ -135,11 +135,13 @@ do
     sleep 20
 
     # Start n number of clients and divert the outputs to their own files
-    n_clients=5
+    n_clients=8
     for (( c=0; c<${n_clients}; c++ ))
     do
         CLIENT_NAME="client_${c}"
         echo "Launching ${CLIENT_NAME}"
+
+
 
         CLIENT_LOG_PATH="${RUN_DIR}${CLIENT_NAME}.out"
         echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
