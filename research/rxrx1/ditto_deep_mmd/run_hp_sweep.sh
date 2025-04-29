@@ -14,7 +14,7 @@
 #   research/rxrx1/ditto_deep_mmd/config.yaml \
 #   research/rxrx1/ditto_deep_mmd \
 #   /datasets/rxrx1 \
-#   /h/xxx/vector_repositories/fl4health_env/
+#   /h/xxx/yyy/zzz/
 #
 # Notes:
 # 1) The bash command above should be run from the top level directory of the repository.

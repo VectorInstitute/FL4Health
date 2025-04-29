@@ -20,7 +20,7 @@ cd <FLamby_repository>
 pip install albumentations==1.4.20
 pip install -e ".[cam16, heart, isic2019, ixi, lidc, tcga]"
 ```
-__NOTE__: The forced install of albumentations 1.4.20 avoids an issue where versions > 1.4.20 rely on simsimd which does not compile on the Vector cluster
+
 __NOTE__: We avoid installing Fed-KITS2019, as it requires a fairly old version on nnUnet, which we no longer support in our library.
 
 In addition, you'll have to edit the code for `FedIXITiny` in `flamby/datasets/fed_ixi/datasets.py` replacing the following

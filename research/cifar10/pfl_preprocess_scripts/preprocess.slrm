@@ -18,7 +18,7 @@
 
 # Set NCCL options
 # export NCCL_DEBUG=INFO
-# NCCL backend to communicate between GPU workers is not provided in vector's cluster.
+# NCCL backend to communicate between GPU workers is not provided in   cluster.
 # Disable this option in slurm.
 export NCCL_IB_DISABLE=1
 

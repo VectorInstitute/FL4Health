@@ -25,7 +25,7 @@
 # sbatch research/rxrx1/central/run_fold_experiment.slrm \
 #   research/rxrx1/central/results/ \
 #   /projects//fl4health/datasets/rxrx1_v1.0 \
-#   /h/xxx/vector_repositories/fl4health_env/
+#   /h/xxx/yyy/zzz/
 #
 # Notes:
 # 1) The sbatch command above should be run from the top level directory of the repository.
@@ -40,7 +40,7 @@
 
 # Set NCCL options
 # export NCCL_DEBUG=INFO
-# NCCL backend to communicate between GPU workers is not provided in vector's cluster.
+# NCCL backend to communicate between GPU workers is not provided in   cluster.
 # Disable this option in slurm.
 export NCCL_IB_DISABLE=1
 

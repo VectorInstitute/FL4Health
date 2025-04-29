@@ -14,7 +14,7 @@
 #   research/cifar10/fedavg/config.yaml \
 #   research/cifar10/fedavg \
 #   /datasets/cifar10 \
-#   /h/xxx/vector_repositories/fl4health_env/
+#   /h/xxx/yyy/zzz/
 #
 # Notes:
 # 1) The bash command above should be run from the top level directory of the repository.

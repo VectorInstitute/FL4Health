@@ -14,7 +14,7 @@
 #   research/synthetic_data/ditto_mkmmd/config.yaml \
 #   research/synthetic_data/ditto_mkmmd \
 #   /datasets/synthetic_data \
-#   /h/xxx/vector_repositories/fl4health_env/
+#   /h/xxx/yyy/zzz/
 #
 # Notes:
 # 1) The bash command above should be run from the top level directory of the repository.

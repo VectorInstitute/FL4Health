@@ -33,7 +33,7 @@
 #   research/cifar10/ditto_deep_mmd/config.yaml \
 #   research/cifar10/ditto_deep_mmd/hp_results/ \
 #   /datasets/cifar10 \
-#   /h/xxx/vector_repositories/fl4health_env/ \
+#   /h/xxx/yyy/zzz/ \
 #   0.0001 \
 #   0.01 \
 #   0.1 \
@@ -54,7 +54,7 @@
 
 # Set NCCL options
 # export NCCL_DEBUG=INFO
-# NCCL backend to communicate between GPU workers is not provided in vector's cluster.
+# NCCL backend to communicate between GPU workers is not provided in   cluster.
 # Disable this option in slurm.
 export NCCL_IB_DISABLE=1
 

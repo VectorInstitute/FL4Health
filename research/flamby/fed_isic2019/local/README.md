@@ -20,5 +20,5 @@ An example is something like
 ./research/flamby/fed_isic2019/local/run_all_clients.sh \
    research/flamby/fed_isic2019/local/ \
    /Users/xxx/Desktop/FLambyDatasets/fedisic2019/ \
-   /h/xxx/vector_repositories/fl4health_env/
+   /h/xxx/yyy/zzz/
 ```

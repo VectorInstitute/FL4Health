@@ -18,7 +18,7 @@ An example is something like
    research/flamby/fed_isic2019/perfcl/config.yaml \
    research/flamby/fed_isic2019/perfcl/ \
    /Users/xxx/Desktop/FLambyDatasets/fedisic2019/ \
-   /h/xxx/vector_repositories/fl4health_env/
+   /h/xxx/yyy/zzz/
 ```
 
 In order to manipulate the grid search being conducted, you need to change the parameters for `lr`, `mu`, or `gamma`, in the `run_hp_sweep.sh` script directly. These represent the client-side learning rate and the two PerFCL loss weights respectively.

@@ -4,7 +4,7 @@
 
 ![FL4Health Logo](./assets/fl4health_rect_logo_no_background.png)
 
-Principally, this repository contains the federated learning (FL) engine aimed at facilitating FL research, experimentation, and exploration, with a specific focus on health applications. **Documentation is hosted at**: https://vectorinstitute.github.io/FL4Health/index.html
+Principally, this repository contains the federated learning (FL) engine aimed at facilitating FL research, experimentation, and exploration, with a specific focus on health applications.
 
 - [Summary of Approaches](#summary-of-approaches)
 - [Privacy Capabilities](#privacy-capabilities)
@@ -270,15 +270,6 @@ The examples folder contains an extensive set of ways to use the various compone
 
 > [!NOTE]
 > The contents of the examples folder is not packed with the FL4Health library on release to PyPi
-
-## Research Code
-
-The research folder houses code associated with various research being conducted by the team at Vector. It may be used to perform experiments on the Cluster or to reproduce experiments from our research. The current research is:
-
-- [FENDA-FL](https://arxiv.org/pdf/2309.16825.pdf) FLamby and GEMINI Experiments (training scripts and model code only). There is a README in these folders that provide details on how to run the hyper-parameter sweeps, evaluations, and other experiments. The GEMINI experiments are not runnable in a general environment, as they require access to GEMINI data, which is securely held, due to patient privacy.
-
-> [!NOTE]
-> The contents of the research folder is not packed with the FL4Health library on release to PyPi
 
 ## Contributing
 

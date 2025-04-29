@@ -18,7 +18,7 @@ An example is something like
    research/flamby/fed_isic2019/apfl/config.yaml \
    research/flamby/fed_isic2019/apfl/ \
    /Users/xxx/Desktop/FLambyDatasets/fedisic2019/ \
-   /h/xxx/vector_repositories/fl4health_env/
+   /h/xxx/yyy/zzz/
 ```
 
 In order to manipulate the grid search being conducted, you need to change the parameters for `alpha` and `lr`, the apfl interpolation value and the learning rate, respectively, in the `run_hp_sweep.sh` script directly.
