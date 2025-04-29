@@ -1,5 +1,5 @@
 import argparse
-import json
+import os
 from functools import partial
 from logging import INFO
 from typing import Any
@@ -10,47 +10,31 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from examples.fedllm_example.model import get_model
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
+from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.base_server import FlServer
-from fl4health.utils.config import load_config, make_dict_with_epochs_or_steps
+from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from fl4health.utils.parameter_extraction import get_all_peft_parameters_from_model
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import set_all_random_seeds
+from research.synthetic_data.model import FullyConnectedNet
 
 
 def fit_config(
     batch_size: int,
+    local_epochs: int,
     n_server_rounds: int,
-    current_round: int,
-    reporting_config: dict[str, str] | None = None,
-    training_config: dict[str, Any] | None = None,
-    model_config: dict[str, Any] | None = None,
-    dataset_config: dict[str, Any] | None = None,
-    local_epochs: int | None = None,
-    local_steps: int | None = None,
-    num_gpus_per_client: int | None = None,
+    n_clients: int,
+    current_server_round: int,
 ) -> Config:
-    if num_gpus_per_client is None:
-        num_gpus_per_client = 1
-    base_config: Config = {
-        **make_dict_with_epochs_or_steps(local_epochs, local_steps),
+    return {
         "batch_size": batch_size,
+        "local_epochs": local_epochs,
         "n_server_rounds": n_server_rounds,
-        "current_server_round": current_round,
-        "num_gpus_per_client": num_gpus_per_client,
+        "n_clients": n_clients,
+        "current_server_round": current_server_round,
     }
-    if reporting_config is not None:
-        # NOTE: that name is not included, it will be set in the clients
-        base_config["project"] = reporting_config.get("project", "")
-        base_config["group"] = reporting_config.get("group", "")
-        base_config["entity"] = reporting_config.get("entity", "")
-    if training_config is not None:
-        base_config["train"] = json.dumps(training_config)
-    if model_config is not None:
-        base_config["model"] = json.dumps(model_config)
-    if dataset_config is not None:
-        base_config["dataset"] = json.dumps(dataset_config)
-    return base_config
 
 
 def main(config: dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
@@ -58,41 +42,45 @@ def main(config: dict[str, Any], server_address: str, checkpoint_stub: str, run_
     fit_config_fn = partial(
         fit_config,
         config["batch_size"],
+        config["local_epochs"],
         config["n_server_rounds"],
-        reporting_config=config.get("reporting_config"),
-        training_config=config.get("train"),
-        model_config=config.get("model"),
-        dataset_config=config.get("dataset"),
-        local_epochs=config.get("local_epochs"),
-        local_steps=config.get("local_steps"),
-        num_gpus_per_client=config.get("num_gpus_per_client"),
+        config["n_clients"],
     )
 
-    cfg_model = config.get("model")
-    assert cfg_model is not None, "Config must contain a 'model' key with a dictionary value."
-    init_model = get_model(cfg_model)
+    # Initializing the model on the server side
+    model = FullyConnectedNet()
+    parameter_exchanger = FullParameterExchanger()
+    checkpoint_dir = os.path.join(checkpoint_stub, run_name)
+    best_checkpoint_name = "server_best_model.pkl"
+    last_checkpoint_name = "server_last_model.pkl"
+    checkpointers = [
+        BestLossTorchModuleCheckpointer(checkpoint_dir, best_checkpoint_name),
+        LatestTorchModuleCheckpointer(checkpoint_dir, last_checkpoint_name),
+    ]
 
+    checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
+        model=model, parameter_exchanger=parameter_exchanger, model_checkpointers=checkpointers
+    )
+
+    client_manager = SimpleClientManager()
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
-        min_fit_clients=config["n_clients"] * config["num_gpus_per_client"],
-        min_evaluate_clients=config["n_clients"] * config["num_gpus_per_client"],
+        min_fit_clients=config["n_clients"],
+        min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
-        min_available_clients=config["n_clients"] * config["num_gpus_per_client"],
+        min_available_clients=config["n_clients"],
         on_fit_config_fn=fit_config_fn,
         # We use the same fit config function, as nothing changes for eval
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_all_peft_parameters_from_model(init_model),
+        initial_parameters=get_all_model_parameters(model),
     )
-
-    client_manager = SimpleClientManager()
-
     server = FlServer(
         client_manager=client_manager,
         fl_config=config,
         strategy=strategy,
-        accept_failures=False,
+        checkpoint_and_state_module=checkpoint_and_state_module,
     )
 
     fl.server.start_server(
@@ -100,6 +88,10 @@ def main(config: dict[str, Any], server_address: str, checkpoint_stub: str, run_
         server_address=server_address,
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
+
+    assert isinstance(checkpointers[0], BestLossTorchModuleCheckpointer)
+    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointers[0].best_score}")
+
     # Shutdown the server gracefully
     server.shutdown()
 
@@ -124,7 +116,7 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="examples/fedllm_example/config.yaml",
+        default="config.yaml",
     )
     parser.add_argument(
         "--server_address",
