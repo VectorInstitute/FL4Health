@@ -21,15 +21,15 @@ from fl4health.utils.config import narrow_dict_type
 class BertClient(BasicClient):
     def __init__(
         self,
-        data_path: Path,
         metrics: list,
         device: torch.device,
         learning_rate: float,
     ) -> None:
         super().__init__(
-            data_path=data_path,
+            data_path=Path("null"),  # Path is ignored here, as we use HF load_dataset
             metrics=metrics,
             device=device,
+            progress_bar=True,
         )
         self.learning_rate: float = learning_rate
 
@@ -61,7 +61,6 @@ class BertClient(BasicClient):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
-    parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset", required=True)
     parser.add_argument(
         "--server_address",
         action="store",
@@ -86,7 +85,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    data_path = Path(args.dataset_path)
 
     log(INFO, f"Device to be used: {device}")
     log(INFO, f"Server Address: {args.server_address}")
@@ -94,7 +92,6 @@ if __name__ == "__main__":
     log(INFO, f"Artifact Directory: {args.artifact_dir}")
 
     client = BertClient(
-        data_path,
         [Accuracy("accuracy")],
         device,
         learning_rate=args.learning_rate,
