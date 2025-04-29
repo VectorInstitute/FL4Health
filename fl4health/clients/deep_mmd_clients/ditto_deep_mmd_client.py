@@ -62,7 +62,7 @@ class DittoDeepMmdClient(DittoClient):
             deep_mmd_loss_weight (float, optional): weight applied to the Deep MMD loss. Defaults to 10.0.
             feature_extraction_layers_with_size (dict[str, int] | None, optional): Dictionary of layers to extract
                 features from them and their respective feature size. Defaults to None.
-            mmd_kernel_update_interval (int, optional): interval at which to train and update the Deep MMD kernel. If
+            mmd_kernel_train_interval (int, optional): interval at which to train and update the Deep MMD kernel. If
                 set to above 0, the kernel will be train based on whole distribution of latent features of data with
                 the given train interval. If set to 0, the kernel will not be trained. If set to -1, the kernel will
                 be trained after each individual batch based on only that individual batch. Defaults to 20.
