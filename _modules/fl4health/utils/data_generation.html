@@ -496,6 +496,7 @@
         <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
         <span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span>
         <span class="n">output_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">hidden_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">samples_per_client</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -515,6 +516,8 @@
 <span class="sd">                FedProx paper. Defaults to 60.</span>
 <span class="sd">            output_dim (int, optional): dimension of the output labels for the synthetic dataset. These are one-hot</span>
 <span class="sd">                encoding labels. Default is as in the FedProx paper. Defaults to 10.</span>
+<span class="sd">            hidden_dim (int | None, optional): dimension of the hidden layer for the two-layer mapping. If None, a</span>
+<span class="sd">                one-layer mapping is used. Defaults to None.</span>
 <span class="sd">            samples_per_client (int, optional): Number of samples to generate in each client&#39;s dataset.</span>
 <span class="sd">                Defaults to 1000.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -522,6 +525,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span> <span class="o">=</span> <span class="n">temperature</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span> <span class="o">=</span> <span class="n">input_dim</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span> <span class="o">=</span> <span class="n">output_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span> <span class="o">=</span> <span class="n">hidden_dim</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">samples_per_client</span> <span class="o">=</span> <span class="n">samples_per_client</span>
 
         <span class="c1"># Sigma in the FedProx paper</span>
@@ -546,9 +550,9 @@
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">sigma_diagonal</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="SyntheticFedProxDataset.map_inputs_to_outputs">
-<a class="viewcode-back" href="../../../reference/api/fl4health.utils.data_generation.html#fl4health.utils.data_generation.SyntheticFedProxDataset.map_inputs_to_outputs">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">map_inputs_to_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">W</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="SyntheticFedProxDataset.one_layer_map_inputs_to_outputs">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.data_generation.html#fl4health.utils.data_generation.SyntheticFedProxDataset.one_layer_map_inputs_to_outputs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">one_layer_map_inputs_to_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">W</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This function maps features x to a label y as done in the original paper. The first stage is the affine</span>
 <span class="sd">        transformation</span>
@@ -556,11 +560,8 @@
 <span class="sd">        .. math::</span>
 <span class="sd">            \\hat{y} = \\frac{1}{T} \\cdot (Wx + b).</span>
 
-<span class="sd">        Then :math:`y = \\text{softmax}(\\hat{y})`. Sampling from the distribution, we then</span>
+<span class="sd">        Then :math:`y = \\text{softmax}(\\hat{y})`. Getting the argmax from the distribution, we then</span>
 <span class="sd">        one hot encode the resulting label sample.</span>
-
-<span class="sd">        **NOTE:** This procedure differs slightly from that of the original paper, which simply took a one hot on the</span>
-<span class="sd">        softmax distribution. The current strategy allows for a bit more label stochasticity.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x (torch.Tensor): The input features to be mapped to output labels. Shape is (dataset size, ``input_dim``)</span>
@@ -572,7 +573,41 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">raw_y</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">W</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">+</span> <span class="n">b</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">samples_per_client</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span>
         <span class="n">distributions</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">raw_y</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">samples</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">multinomial</span><span class="p">(</span><span class="n">distributions</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">distributions</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">one_hot</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="SyntheticFedProxDataset.two_layer_map_inputs_to_outputs">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.data_generation.html#fl4health.utils.data_generation.SyntheticFedProxDataset.two_layer_map_inputs_to_outputs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">two_layer_map_inputs_to_outputs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">W_1</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">b_1</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">W_2</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">b_2</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function maps features x to a label y in an alternative way to include two layers. The first stage is two</span>
+<span class="sd">        affine transformations</span>
+
+<span class="sd">        .. math::</span>
+<span class="sd">            latent = \\frac{1}{T} \\cdot (W_1 \\cdot x + b_1)</span>
+<span class="sd">            \\hat{y} = \\cdot (W_2 \\cdot latent + b_2).</span>
+
+<span class="sd">        Then :math:`y = \\text{softmax}(\\hat{y})`. Getting the argmax from the distribution, we then</span>
+<span class="sd">        one hot encode the resulting label sample.</span>
+
+
+<span class="sd">        Args:</span>
+<span class="sd">            x (torch.Tensor): The input features to be mapped to output labels. Shape is (dataset size, ``input_dim``)</span>
+<span class="sd">            W_1 (torch.Tensor): The first linear transformation matrix. Shape is (``hidden_dim``, ``input_dim``)</span>
+<span class="sd">            b_1 (torch.Tensor): The bias in the first linear transformation. Shape is (``hidden_dim``, 1)</span>
+<span class="sd">            W_2 (torch.Tensor): The second linear transformation matrix. Shape is (``output_dim``, ``hidden_dim``)</span>
+<span class="sd">            b_2 (torch.Tensor): The bias in the second linear transformation. Shape is (``output_dim``, 1)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            torch.Tensor: The labels associated with each of the inputs. The shape is (dataset size, ``output_dim``)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">latent</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">W_1</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">+</span> <span class="n">b_1</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">samples_per_client</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span>
+        <span class="n">raw_y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">latent</span><span class="p">,</span> <span class="n">W_2</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">+</span> <span class="n">b_2</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">samples_per_client</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">out_distributions</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">raw_y</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">out_distributions</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">one_hot</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span></div>
 
 
@@ -623,6 +658,7 @@
         <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
         <span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span>
         <span class="n">output_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">hidden_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">samples_per_client</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -654,6 +690,8 @@
 <span class="sd">                FedProx paper. Defaults to 60.</span>
 <span class="sd">            output_dim (int, optional): dimension of the output labels for the synthetic dataset. These are one-hot</span>
 <span class="sd">                encoding labels. Default is as in the FedProx paper. Defaults to 10.</span>
+<span class="sd">            hidden_dim (int | None, optional): dimension of the hidden layer for the two-layer mapping. If None, a</span>
+<span class="sd">                one-layer mapping is used. Defaults to None.</span>
 <span class="sd">            samples_per_client (int, optional): Number of samples to generate in each client&#39;s dataset.</span>
 <span class="sd">                Defaults to 1000.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -662,8 +700,10 @@
             <span class="n">temperature</span><span class="o">=</span><span class="n">temperature</span><span class="p">,</span>
             <span class="n">input_dim</span><span class="o">=</span><span class="n">input_dim</span><span class="p">,</span>
             <span class="n">output_dim</span><span class="o">=</span><span class="n">output_dim</span><span class="p">,</span>
+            <span class="n">hidden_dim</span><span class="o">=</span><span class="n">hidden_dim</span><span class="p">,</span>
             <span class="n">samples_per_client</span><span class="o">=</span><span class="n">samples_per_client</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">two_layer_generation</span> <span class="o">=</span> <span class="n">hidden_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">=</span> <span class="n">beta</span></div>
 
@@ -671,7 +711,7 @@
 <div class="viewcode-block" id="SyntheticNonIidFedProxDataset.get_input_output_tensors">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.data_generation.html#fl4health.utils.data_generation.SyntheticNonIidFedProxDataset.get_input_output_tensors">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_input_output_tensors</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">v</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This function takes values for the center of elements in the affine transformation elements (``mu``), the</span>
@@ -679,8 +719,8 @@
 <span class="sd">        and produces the input, output tensor pairs with the appropriate dimensions</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            mu (float): The mean value from which each element of :math:`W` and :math:`b` are to be drawn</span>
-<span class="sd">                ~ :math:`\\mathcal{N}(\\mu, 1)`</span>
+<span class="sd">            mu (list[float]): List of the mean values from which each element of :math:`W_i` and :math:`b_i` are to be</span>
+<span class="sd">                drawn ~ :math:`\\mathcal{N}(\\mu[i], 1)`</span>
 <span class="sd">            v (torch.Tensor): This is assumed to be a 1D tensor of size self.input_dim and represents the mean for the</span>
 <span class="sd">                multivariate normal from which to draw the input ``x``</span>
 <span class="sd">            sigma (torch.Tensor): This is assumed to be a 2D tensor of shape (``input_dim``, ``input_dim``) and</span>
@@ -696,10 +736,19 @@
         <span class="c1"># size of x should be samples_per_client x input_dim</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">multivariate_normal</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">samples_per_client</span><span class="p">,)))</span>
 
-        <span class="n">W</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span><span class="p">)))</span>
-        <span class="n">b</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">two_layer_generation</span><span class="p">:</span>
+            <span class="n">W</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span><span class="p">)))</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
 
-        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_inputs_to_outputs</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span></div>
+            <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">one_layer_map_inputs_to_outputs</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">W</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="n">W_1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span><span class="p">)))</span>
+            <span class="n">b_1</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">W_2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_dim</span><span class="p">)))</span>
+            <span class="n">b_2</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mu</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_dim</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+            <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">two_layer_map_inputs_to_outputs</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">W_1</span><span class="p">,</span> <span class="n">b_1</span><span class="p">,</span> <span class="n">W_2</span><span class="p">,</span> <span class="n">b_2</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SyntheticNonIidFedProxDataset.generate_client_tensors">
@@ -722,7 +771,11 @@
             <span class="n">input_means</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span><span class="p">))</span>
 
             <span class="c1"># u_k in the FedProx paper</span>
-            <span class="n">affine_transform_means</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,))</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="n">affine_transform_means</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">affine_transform_means</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,))</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">two_layer_generation</span><span class="p">:</span>
+                <span class="n">affine_transform_means</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,))</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+
             <span class="n">client_X</span><span class="p">,</span> <span class="n">client_Y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_input_output_tensors</span><span class="p">(</span>
                 <span class="n">affine_transform_means</span><span class="p">,</span> <span class="n">input_means</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_covariance</span>
             <span class="p">)</span>
@@ -800,7 +853,7 @@
         <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_multivariate_normal</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">samples_per_client</span><span class="p">,)))</span>
         <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">samples_per_client</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_inputs_to_outputs</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">one_layer_map_inputs_to_outputs</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">W</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SyntheticIidFedProxDataset.generate_client_tensors">
