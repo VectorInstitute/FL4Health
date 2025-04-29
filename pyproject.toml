@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fl4health"
-version = "0.3.0"
+version = "0.3.1"
 description = "Federated Learning for Health"
 authors = ["Vector AI Engineering <fl4health@vectorinstitute.ai>"]
 license = "Apache-2.0"
@@ -15,7 +15,7 @@ classifiers = [
 python = ">=3.10.0,<3.11"
 numpy = "^1.24"
 pandas = "^2.0"
-flwr = "1.9.0"
+flwr = "~1.18.0"
 opacus = "^1.3.0"
 torch = "^2.4.1"
 pycyclops = "^0.2.12"
@@ -32,6 +32,7 @@ nnunetv2 = "^2.3.1"
 wandb = "^0.18.0"
 acvl_utils = "0.2" # Pin as it was causing an issue with nnunet (ModuleNotFoundError: No module named 'blosc2')
 scikit-learn = "1.5.0" # Pin as it was causing issues with nnunet
+peft = "^0.14.0"
 
 # Problematic grpcio versions cause issues, should be fixed in next flwr update
 # See https://github.com/adap/flower/pull/3853
@@ -92,10 +93,8 @@ fire = "^0.6.0"
 einops = "0.8.0"
 
 
-
 [tool.poetry.group.llm.dependencies]
 trl = "^0.14.0"
-peft = "^0.14.0"
 tiktoken = "^0.8.0"
 blobfile = "^3.0.0"
 sentencepiece = "^0.2.0"

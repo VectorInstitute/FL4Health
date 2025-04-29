@@ -138,7 +138,7 @@ The commands below downloads and saves VSCode in your home folder on the cluster
 ```bash
 cd ~/
 
-curl -Lk 'https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-x64' --output vscode_cli.tar.gz
+curl -Lk 'https://update.code.visualstudio.com/1.98.2/cli-alpine-x64/stable' --output vscode_cli.tar.gz
 
 tar -xf vscode_cli.tar.gz
 rm vscode_cli.tar.gz

@@ -14,7 +14,7 @@ from examples.fedllm_example.model import get_model
 from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.servers.base_server import FlServer
 from fl4health.utils.config import load_config, make_dict_with_epochs_or_steps
-from fl4health.utils.parameter_extraction import get_all_peft_parameters_from_model
+from fl4health.utils.peft_parameter_extraction import get_all_peft_parameters_from_model
 from fl4health.utils.random import set_all_random_seeds
 
 
@@ -28,12 +28,16 @@ def fit_config(
     dataset_config: dict[str, Any] | None = None,
     local_epochs: int | None = None,
     local_steps: int | None = None,
+    num_gpus_per_client: int | None = None,
 ) -> Config:
+    if num_gpus_per_client is None:
+        num_gpus_per_client = 1
     base_config: Config = {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
+        "num_gpus_per_client": num_gpus_per_client,
     }
     if reporting_config is not None:
         # NOTE: that name is not included, it will be set in the clients
@@ -61,6 +65,7 @@ def main(config: dict[str, Any], server_address: str, checkpoint_stub: str, run_
         dataset_config=config.get("dataset"),
         local_epochs=config.get("local_epochs"),
         local_steps=config.get("local_steps"),
+        num_gpus_per_client=config.get("num_gpus_per_client"),
     )
 
     cfg_model = config.get("model")

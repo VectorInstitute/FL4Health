@@ -11,7 +11,7 @@ In order to run the example, first ensure you have [installed the dependencies i
 ## Starting Server
 
 The next step is to start the server by running
-```
+```bash
 python -m examples.fedpca_examples.dim_reduction.server  --config_path /path/to/config.yaml
 ```
 from the FL4Health directory. The following arguments must be present in the specified config file:
@@ -25,7 +25,7 @@ from the FL4Health directory. The following arguments must be present in the spe
 
 Once the server has started and logged "FL starting," the next step is to start three
 clients in separate terminals. This is done by simply running (remembering to activate your environment)
-```
+```bash
 python -m examples.fedpca_examples.dim_reduction.client --dataset_path /path/to/data
 ```
 **NOTE**:

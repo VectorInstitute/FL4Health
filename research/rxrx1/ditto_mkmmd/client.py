@@ -12,7 +12,6 @@ from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
-from torchvision import models
 
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
@@ -24,6 +23,7 @@ from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.random import set_all_random_seeds
+from research.rxrx1.utils import get_model
 
 BASELINE_LAYERS = ["layer1", "layer2", "layer3", "layer4", "avgpool"]
 
@@ -99,7 +99,8 @@ class Rxrx1DittoClient(DittoMkMmdClient):
         return {"global": global_optimizer, "local": local_optimizer}
 
     def get_model(self, config: Config) -> nn.Module:
-        return models.resnet18(pretrained=True).to(self.device)
+        model = get_model()
+        return model.to(self.device)
 
 
 if __name__ == "__main__":
@@ -196,16 +197,10 @@ if __name__ == "__main__":
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     pre_aggregation_best_checkpoint_name = f"pre_aggregation_client_{args.client_number}_best_model.pkl"
     pre_aggregation_last_checkpoint_name = f"pre_aggregation_client_{args.client_number}_last_model.pkl"
-    post_aggregation_best_checkpoint_name = f"post_aggregation_client_{args.client_number}_best_model.pkl"
-    post_aggregation_last_checkpoint_name = f"post_aggregation_client_{args.client_number}_last_model.pkl"
     checkpoint_and_state_module = ClientCheckpointAndStateModule(
         pre_aggregation=[
             BestLossTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_best_checkpoint_name),
             LatestTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_last_checkpoint_name),
-        ],
-        post_aggregation=[
-            BestLossTorchModuleCheckpointer(checkpoint_dir, post_aggregation_best_checkpoint_name),
-            LatestTorchModuleCheckpointer(checkpoint_dir, post_aggregation_last_checkpoint_name),
         ],
     )
 
