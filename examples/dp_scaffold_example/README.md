@@ -10,7 +10,7 @@ In order to run the example, first ensure you have [installed the dependencies i
 ## Starting Server
 
 The next step is to start the server by running
-```
+```bash
 python -m examples.dp_scaffold_example.server  --config_path /path/to/config.yaml
 ```
 
@@ -18,7 +18,7 @@ python -m examples.dp_scaffold_example.server  --config_path /path/to/config.yam
 
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the three
 clients. This is done by simply running (remembering to activate your environment)
-```
+```bash
 python -m examples.dp_scaffold_example.client --dataset_path /path/to/data
 ```
 **NOTE**: The argument `dataset_path` has two functions, depending on whether the dataset exists locally or not. If

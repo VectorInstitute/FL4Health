@@ -244,7 +244,7 @@ async def test_fed_eval(tolerance: float) -> None:
         client_python_path="examples.federated_eval_example.client",
         config_path="tests/smoke_tests/federated_eval_config.yaml",
         dataset_path="examples/datasets/cifar_data/",
-        checkpoint_path="examples/assets/fed_eval_example/best_checkpoint_fczjmljm.pkl",
+        checkpoint_path="examples/assets/fed_eval_example/best_checkpoint_global.pkl",
         assert_evaluation_logs=True,
         tolerance=tolerance,
     )
