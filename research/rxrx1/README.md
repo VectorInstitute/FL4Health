@@ -1,25 +1,13 @@
-### Generate the synthetic dataset
+### Downloading and preprocessing the RxRx1 dataset
 
-To do so we should run the following script:
+Information about how to download and preprocess the RxRx1 dataset can be found in the `fl4health/datasets/rxrx1/README.md` file. 
 
-```bash
-python -m research.synthetic_data.preprocess --save_dataset_dir path_to_save_partitioned_dataset --seed seed --alpha alpha --beta beta --num_clients num_clients
-```
-
-Where:
-- `path_to_save_partitioned_dataset` is the path to save the partitioned dataset.
-- `seed` is the seed to use for the random number generator to have reproducible splits.
-- `alpha` is the imbalance level of the dataset. The higher the value, the more imbalance in the data distribution
-- `beta` is also the imbalance level of the dataset. The higher the value, the more imbalance in the data distribution.
-- `num_clients` is the number of clients to partition the dataset into.
-
-
-### Training federated models on synthetic data
+### Training federated models on Rxrx1 data
 
 The training scripts for each federated learning approach are located in the run_fold_experiment.slrm file. To perform a hyperparameter sweep for a specific approach, execute the corresponding bash script, such as run_hp_sweep.sh. For instance, to run a hyperparameter sweep for the FedAvg approach, use the following command:
 
 ```bash
-./research/synthetic_data/fedavg/run_hp_sweep.sh \
+./research/rxrx1/fedavg/run_hp_sweep.sh \
    path_to_config.yaml \
    path_to_folder_for_artifacts/ \
    path_to_folder_for_dataset/ \
@@ -29,7 +17,7 @@ The training scripts for each federated learning approach are located in the run
 Where:
 - `path_to_config.yaml` is the path to the configuration file for the approach.
 - `path_to_folder_for_artifacts/` is the path to the folder where the artifacts of the hyperparameter sweep will be saved.
-- `path_to_folder_for_dataset/` is the path to the folder where the partitioned synthetic dataset is saved.
+- `path_to_folder_for_dataset/` is the path to the folder where the RxRx1 dataset is saved.
 - `path_to_desired_venv/` is the path to the virtual environment.
 
 #### Checkpointing the models during training
@@ -51,12 +39,10 @@ The hyperparameter sweep conducts three training runs for each parameter pair in
 To run this evaluation on a specific collection of three runs (i.e., for a fixed set of hyperparameters), use the following command:
 
 ``` bash
-python -m research.synthetic_data.evaluate_on_test \
+python -m research.rxrx1.evaluate_on_test \
     --artifact_dir path/to/runs/to/analyze/ \
     --dataset_dir path_to_folder_for_dataset \
     --eval_write_path path_to_write_eval_results_to.txt \
-    --alpha alpha \
-    --beta beta \
     --eval_best_pre_aggregation_local_models \
     --eval_last_pre_aggregation_local_models \
     --eval_best_post_aggregation_local_models \

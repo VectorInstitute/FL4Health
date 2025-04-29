@@ -5,7 +5,7 @@ This is the codebase used for our submission to NeurIPS 2025, titled "Adaptive L
 
 The codebase consists of two main parts:
 
-1. **FL4Health**: The main library used to implement our method. It is a fork of the original FL4Health library, a PyTorch-based framework for Federated Learning in healthcare.
+1. **FL4Health**: The main library used to implement our method. You can find MK-MMD and D-MMD loss implementation from scrath in `fl4health/losses/`. Also their integration with FL algorithms is implemented in `fl4health/clients/deep_mmd_clients` and `fl4health/clients/mkmmd_clients`.
 2. **researh**: This folder contains training and evaluation scripts for each dataset used in the paper. Each dataset includes its own `README.md` file with instructions on how to run the experiments, including steps for downloading, generating, or partitioning the dataset, as well as running hyperparameter sweeps and evaluation scripts.
 
 **Model checkpoints are available upon request and will be made publicly accessible after the paper is accepted.**
