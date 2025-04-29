@@ -14,10 +14,10 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
+from fl4health.metrics.metrics import Accuracy, Metric
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
 from research.synthetic_data.model import FullyConnectedNet
 from research.synthetic_data.preprocess import get_preprocessed_data, get_test_preprocessed_data
