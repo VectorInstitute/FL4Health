@@ -205,7 +205,6 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         heterogeneity_level=args.beta,
-        checkpoint_and_state_module=None,
         use_partitioned_data=args.use_partitioned_data,
     )
 
