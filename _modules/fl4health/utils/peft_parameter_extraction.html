@@ -13,7 +13,7 @@
     
     <meta name="msvalidate.01" content="8D2A5032F006424CAF54C0DDCD16F666" />
       
-        <title>fl4health.utils.privacy_utilities - FL4Health</title>
+        <title>fl4health.utils.peft_parameter_extraction - FL4Health</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -474,102 +474,28 @@
           </label>
         </div>
         <article role="main">
-          <h1>Source code for fl4health.utils.privacy_utilities</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">INFO</span><span class="p">,</span> <span class="n">WARNING</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">opacus</span><span class="w"> </span><span class="kn">import</span> <span class="n">GradSampleModule</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">opacus.grad_sample.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">wrap_model</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">opacus.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModuleValidator</span>
+          <h1>Source code for fl4health.utils.peft_parameter_extraction</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.parameter</span><span class="w"> </span><span class="kn">import</span> <span class="n">ndarrays_to_parameters</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameters</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">peft</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_peft_model_state_dict</span>
 
 
-<div class="viewcode-block" id="privacy_validate_and_fix_modules">
-<a class="viewcode-back" href="../../../reference/api/fl4health.utils.privacy_utilities.html#fl4health.utils.privacy_utilities.privacy_validate_and_fix_modules">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">privacy_validate_and_fix_modules</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+<div class="viewcode-block" id="get_all_peft_parameters_from_model">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.peft_parameter_extraction.html#fl4health.utils.peft_parameter_extraction.get_all_peft_parameters_from_model">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_all_peft_parameters_from_model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parameters</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    This function runs Opacus model validation to ensure that the provided models layers are compatible with the</span>
-<span class="sd">    privacy mechanisms in Opacus. The function attempts to use Opacus to replace any incompatible layers if possible.</span>
-<span class="sd">    For example ``BatchNormalization`` layers are not &quot;DP Compliant&quot; and will be replaced by compliant layers such as</span>
-<span class="sd">    ``GroupNormalization`` with this function. Note that this uses the default &quot;fix&quot; functionality in Opacus. For more</span>
-<span class="sd">    custom options, defining your own ``setup_opacus_objects`` function is required.</span>
+<span class="sd">    Function to extract peft parameters associated with a pytorch module. These values are converted</span>
+<span class="sd">    from numpy arrays into a Flower Parameters object.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        model (nn.Module): The model to be validated and potentially modified to be Opacus compliant.</span>
+<span class="sd">        model (nn.Module): PyTorch model whose parameters are to be extracted</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        tuple[nn.Module, bool]: Returns a (possibly) modified pytorch model and a boolean indicating whether a</span>
-<span class="sd">            reinitialization of any optimizers associated with the model will be required. Reinitialization of the</span>
-<span class="sd">            optimizer parameters is required, for example, when the model layers are modified, yielding a mismatch</span>
-<span class="sd">            in the optimizer parameters and the new model parameters.</span>
+<span class="sd">        Parameters: Flower Parameters object containing all of the target models state.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">errors</span> <span class="o">=</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="n">reinitialize_optimizer</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
-    <span class="c1"># Due to a bug in Opacus, it&#39;s possible that we need to run multiple rounds fo module validator fix for</span>
-    <span class="c1"># complex nested models to fully replace all layers within a model (for example, in the Fed-IXI model)</span>
-    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">error</span> <span class="ow">in</span> <span class="n">errors</span><span class="p">:</span>
-            <span class="n">opacus_warning</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="s2">&quot;Opacus has found layers within your model that do not comply with DP training. &quot;</span>
-                <span class="s2">&quot;These layers will automatically be replaced with DP compliant layers. &quot;</span>
-                <span class="s2">&quot;If you would like to perform this replacement yourself, please adjust your model manually.&quot;</span>
-            <span class="p">)</span>
-            <span class="n">log</span><span class="p">(</span><span class="n">WARNING</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">opacus_warning</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="n">log</span><span class="p">(</span><span class="n">WARNING</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Opacus error: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">fix</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-        <span class="n">errors</span> <span class="o">=</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="c1"># If we made changes to the underlying model, we may need to reinitialize an optimizer</span>
-    <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="n">reinitialize_optimizer</span></div>
-
-
-
-<div class="viewcode-block" id="convert_model_to_opacus_model">
-<a class="viewcode-back" href="../../../reference/api/fl4health.utils.privacy_utilities.html#fl4health.utils.privacy_utilities.convert_model_to_opacus_model">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">convert_model_to_opacus_model</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">grad_sample_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;hooks&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GradSampleModule</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    This function converts a standard pytorch model to an Opacus ``GradSampleModule``, which Opacus uses to perform</span>
-<span class="sd">    efficient DP-SGD operations. It uses the wrap_model functionality and mimics its defaults.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        model (nn.Module): Pytorch model to be converted to an Opacus ``GradSampleModule``</span>
-<span class="sd">        grad_sample_mode (str, optional): This determines how Opacus performs the conversion under the hood. The</span>
-<span class="sd">            standard mechanism is indicated by &quot;hooks&quot; but other approaches may be necessary depending on how the</span>
-<span class="sd">            pytorch module is defined. Defaults to &quot;hooks&quot;.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        GradSampleModule: The Opacus wrapped ``GradSampleModule``</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">GradSampleModule</span><span class="p">):</span>
-        <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Provided model is already of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2">, skipping conversion to Opacus model type&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">model</span>
-    <span class="k">return</span> <span class="n">wrap_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">grad_sample_mode</span><span class="o">=</span><span class="n">grad_sample_mode</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="map_model_to_opacus_model">
-<a class="viewcode-back" href="../../../reference/api/fl4health.utils.privacy_utilities.html#fl4health.utils.privacy_utilities.map_model_to_opacus_model">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">map_model_to_opacus_model</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">grad_sample_mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;hooks&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GradSampleModule</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Performs an validation and modifications necessary to make the provided pytorch model &quot;Opacus Compliant&quot; via the</span>
-<span class="sd">    call to ``privacy_validate_and_fix_modules``. The resulting model is then converted to an Opacus</span>
-<span class="sd">    ``GradSampleModule`` via ``convert_model_to_opacus_model``.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        model (nn.Module): Pytorch model to be converted to an Opacus compliant ``GradSampleModule``</span>
-<span class="sd">        grad_sample_mode (str, optional): This determines how Opacus performs the conversion under the hood. The</span>
-<span class="sd">            standard mechanism is indicated by &quot;hooks&quot; but other approaches may be necessary depending on how the</span>
-<span class="sd">            pytorch module is defined. Defaults to &quot;hooks&quot;.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        GradSampleModule: The Opacus-compliant, wrapped ``GradSampleModule``</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">model</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">privacy_validate_and_fix_modules</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">convert_model_to_opacus_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">grad_sample_mode</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+    <span class="n">state_dict</span> <span class="o">=</span> <span class="n">get_peft_model_state_dict</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ndarrays_to_parameters</span><span class="p">([</span><span class="n">val</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()])</span></div>
 
 </pre></div>
         </article>

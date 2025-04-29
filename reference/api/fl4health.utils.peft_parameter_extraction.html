@@ -7,14 +7,14 @@
 
     
       <meta name="description" content="aieng-template Python API documentation">
-    <link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="fl4health.privacy.fl_accountants module" href="fl4health.privacy.fl_accountants.html" /><link rel="prev" title="fl4health.preprocessing.warmed_up_module module" href="fl4health.preprocessing.warmed_up_module.html" />
+    <link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="fl4health.utils.privacy_utilities module" href="fl4health.utils.privacy_utilities.html" /><link rel="prev" title="fl4health.utils.partitioners module" href="fl4health.utils.partitioners.html" />
 
     <meta name="generator" content="sphinx-8.1.3, furo 2024.08.06"/>
 
     
     <meta name="msvalidate.01" content="8D2A5032F006424CAF54C0DDCD16F666" />
       
-        <title>fl4health.privacy package - FL4Health</title>
+        <title>fl4health.utils.peft_parameter_extraction module - FL4Health</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -364,7 +364,7 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.preprocessing.warmed_up_module.html">fl4health.preprocessing.warmed_up_module module</a></li>
 </ul>
 </li>
-<li class="toctree-l3 current has-children current-page"><a class="current reference internal" href="#">fl4health.privacy package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" role="switch" type="checkbox"/><label for="toctree-checkbox-20"><div class="visually-hidden">Toggle navigation of fl4health.privacy package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.privacy.html">fl4health.privacy package</a><input class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" role="switch" type="checkbox"/><label for="toctree-checkbox-20"><div class="visually-hidden">Toggle navigation of fl4health.privacy package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.privacy.fl_accountants.html">fl4health.privacy.fl_accountants module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.privacy.moments_accountant.html">fl4health.privacy.moments_accountant module</a></li>
 </ul>
@@ -413,7 +413,7 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.strategy_with_poll.html">fl4health.strategies.strategy_with_poll module</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.utils.html">fl4health.utils package</a><input class="toctree-checkbox" id="toctree-checkbox-25" name="toctree-checkbox-25" role="switch" type="checkbox"/><label for="toctree-checkbox-25"><div class="visually-hidden">Toggle navigation of fl4health.utils package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 current has-children"><a class="reference internal" href="fl4health.utils.html">fl4health.utils package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-25" name="toctree-checkbox-25" role="switch" type="checkbox"/><label for="toctree-checkbox-25"><div class="visually-hidden">Toggle navigation of fl4health.utils package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="fl4health.utils.client.html">fl4health.utils.client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.utils.config.html">fl4health.utils.config module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.utils.data_generation.html">fl4health.utils.data_generation module</a></li>
@@ -430,7 +430,7 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.utils.nnunet_utils.html">fl4health.utils.nnunet_utils module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.utils.parameter_extraction.html">fl4health.utils.parameter_extraction module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.utils.partitioners.html">fl4health.utils.partitioners module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.peft_parameter_extraction.html">fl4health.utils.peft_parameter_extraction module</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">fl4health.utils.peft_parameter_extraction module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.utils.privacy_utilities.html">fl4health.utils.privacy_utilities module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.utils.random.html">fl4health.utils.random module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.utils.sampler.html">fl4health.utils.sampler module</a></li>
@@ -476,62 +476,26 @@
           </label>
         </div>
         <article role="main">
-          <section id="module-fl4health.privacy">
-<span id="fl4health-privacy-package"></span><h1>fl4health.privacy package<a class="headerlink" href="#module-fl4health.privacy" title="Link to this heading">¶</a></h1>
-<section id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="fl4health.privacy.fl_accountants.html">fl4health.privacy.fl_accountants module</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.ClientLevelAccountant"><code class="docutils literal notranslate"><span class="pre">ClientLevelAccountant</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.ClientLevelAccountant.get_delta"><code class="docutils literal notranslate"><span class="pre">ClientLevelAccountant.get_delta()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.ClientLevelAccountant.get_epsilon"><code class="docutils literal notranslate"><span class="pre">ClientLevelAccountant.get_epsilon()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlClientLevelAccountantFixedSamplingNoReplacement"><code class="docutils literal notranslate"><span class="pre">FlClientLevelAccountantFixedSamplingNoReplacement</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlClientLevelAccountantFixedSamplingNoReplacement.__init__"><code class="docutils literal notranslate"><span class="pre">FlClientLevelAccountantFixedSamplingNoReplacement.__init__()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlClientLevelAccountantFixedSamplingNoReplacement.get_delta"><code class="docutils literal notranslate"><span class="pre">FlClientLevelAccountantFixedSamplingNoReplacement.get_delta()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlClientLevelAccountantFixedSamplingNoReplacement.get_epsilon"><code class="docutils literal notranslate"><span class="pre">FlClientLevelAccountantFixedSamplingNoReplacement.get_epsilon()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlClientLevelAccountantPoissonSampling"><code class="docutils literal notranslate"><span class="pre">FlClientLevelAccountantPoissonSampling</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlClientLevelAccountantPoissonSampling.__init__"><code class="docutils literal notranslate"><span class="pre">FlClientLevelAccountantPoissonSampling.__init__()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlClientLevelAccountantPoissonSampling.get_delta"><code class="docutils literal notranslate"><span class="pre">FlClientLevelAccountantPoissonSampling.get_delta()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlClientLevelAccountantPoissonSampling.get_epsilon"><code class="docutils literal notranslate"><span class="pre">FlClientLevelAccountantPoissonSampling.get_epsilon()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlInstanceLevelAccountant"><code class="docutils literal notranslate"><span class="pre">FlInstanceLevelAccountant</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlInstanceLevelAccountant.__init__"><code class="docutils literal notranslate"><span class="pre">FlInstanceLevelAccountant.__init__()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlInstanceLevelAccountant.get_delta"><code class="docutils literal notranslate"><span class="pre">FlInstanceLevelAccountant.get_delta()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlInstanceLevelAccountant.get_epsilon"><code class="docutils literal notranslate"><span class="pre">FlInstanceLevelAccountant.get_epsilon()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="fl4health.privacy.moments_accountant.html">fl4health.privacy.moments_accountant module</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.FixedSamplingWithoutReplacement"><code class="docutils literal notranslate"><span class="pre">FixedSamplingWithoutReplacement</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.FixedSamplingWithoutReplacement.get_dp_event"><code class="docutils literal notranslate"><span class="pre">FixedSamplingWithoutReplacement.get_dp_event()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.MomentsAccountant"><code class="docutils literal notranslate"><span class="pre">MomentsAccountant</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.MomentsAccountant.__init__"><code class="docutils literal notranslate"><span class="pre">MomentsAccountant.__init__()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.MomentsAccountant.get_delta"><code class="docutils literal notranslate"><span class="pre">MomentsAccountant.get_delta()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.MomentsAccountant.get_epsilon"><code class="docutils literal notranslate"><span class="pre">MomentsAccountant.get_epsilon()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.PoissonSampling"><code class="docutils literal notranslate"><span class="pre">PoissonSampling</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.PoissonSampling.get_dp_event"><code class="docutils literal notranslate"><span class="pre">PoissonSampling.get_dp_event()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.SamplingStrategy"><code class="docutils literal notranslate"><span class="pre">SamplingStrategy</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.SamplingStrategy.get_dp_event"><code class="docutils literal notranslate"><span class="pre">SamplingStrategy.get_dp_event()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</div>
-</section>
+          <section id="module-fl4health.utils.peft_parameter_extraction">
+<span id="fl4health-utils-peft-parameter-extraction-module"></span><h1>fl4health.utils.peft_parameter_extraction module<a class="headerlink" href="#module-fl4health.utils.peft_parameter_extraction" title="Link to this heading">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="fl4health.utils.peft_parameter_extraction.get_all_peft_parameters_from_model">
+<span class="sig-name descname"><span class="pre">get_all_peft_parameters_from_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/peft_parameter_extraction.html#get_all_peft_parameters_from_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.peft_parameter_extraction.get_all_peft_parameters_from_model" title="Link to this definition">¶</a></dt>
+<dd><p>Function to extract peft parameters associated with a pytorch module. These values are converted
+from numpy arrays into a Flower Parameters object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>nn.Module</em>) – PyTorch model whose parameters are to be extracted</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Flower Parameters object containing all of the target models state.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Parameters</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
         </article>
@@ -539,23 +503,23 @@
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="fl4health.privacy.fl_accountants.html">
+          <a class="next-page" href="fl4health.utils.privacy_utilities.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">fl4health.privacy.fl_accountants module</div>
+                <div class="title">fl4health.utils.privacy_utilities module</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="fl4health.preprocessing.warmed_up_module.html">
+          <a class="prev-page" href="fl4health.utils.partitioners.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">fl4health.preprocessing.warmed_up_module module</div>
+                <div class="title">fl4health.utils.partitioners module</div>
                 
               </div>
             </a>
@@ -606,8 +570,8 @@
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">fl4health.privacy package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#">fl4health.utils.peft_parameter_extraction module</a><ul>
+<li><a class="reference internal" href="#fl4health.utils.peft_parameter_extraction.get_all_peft_parameters_from_model"><code class="docutils literal notranslate"><span class="pre">get_all_peft_parameters_from_model()</span></code></a></li>
 </ul>
 </li>
 </ul>
