@@ -35,7 +35,7 @@
 #   research/synthetic_data/ditto_mkmmd/config.yaml \
 #   research/synthetic_data/ditto_mkmmd/hp_results/ \
 #   /datasets/synthetic_data \
-#   /h/demerson/vector_repositories/fl4health_env/ \
+#   /h/xxx/vector_repositories/fl4health_env/ \
 #   0.0001 \
 #   0.01 \
 #   0.1 \

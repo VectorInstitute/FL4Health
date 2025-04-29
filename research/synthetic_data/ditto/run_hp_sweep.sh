@@ -14,7 +14,7 @@
 #   research/synthetic_data/ditto/config.yaml \
 #   research/synthetic_data/ditto \
 #   /datasets/synthetic_data \
-#   /h/demerson/vector_repositories/fl4health_env/
+#   /h/xxx/vector_repositories/fl4health_env/
 #
 # Notes:
 # 1) The bash command above should be run from the top level directory of the repository.

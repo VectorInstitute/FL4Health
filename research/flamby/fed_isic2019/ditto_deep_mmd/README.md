@@ -17,8 +17,8 @@ An example is something like
 ./research/flamby/fed_isic2019/ditto_deep_mmd/run_hp_sweep.sh \
    research/flamby/fed_isic2019/ditto_deep_mmd/config.yaml \
    research/flamby/fed_isic2019/ditto_deep_mmd/ \
-   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
-   /h/demerson/vector_repositories/fl4health_env/
+   /Users/xxx/Desktop/FLambyDatasets/fedisic2019/ \
+   /h/xxx/vector_repositories/fl4health_env/
 ```
 
 In order to manipulate the grid search being conducted, you need to change the parameters for `lr`, the client-side learning rate, and  `lam`, the ditto loss weight for local training, `mu`, the Deep MMD loss weight, and `deep_mmd_loss_depth`, the number of layers to use for the Deep MMD loss in the `run_hp_sweep.sh` script directly.

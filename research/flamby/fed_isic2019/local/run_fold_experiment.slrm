@@ -24,8 +24,8 @@
 # Example:
 # sbatch research/flamby/fed_isic2019/local/run_fold_experiment.slrm \
 #   research/flamby/fed_isic2019/local/results/ \
-#   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
-#   /h/demerson/vector_repositories/fl4health_env/ \
+#   /Users/xxx/Desktop/FLambyDatasets/fedisic2019/ \
+#   /h/xxx/vector_repositories/fl4health_env/ \
 #   3
 #
 # Notes:

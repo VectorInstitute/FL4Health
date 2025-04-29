@@ -17,8 +17,8 @@ An example is something like
 ./research/flamby/fed_isic2019/ditto_mkmmd/run_hp_sweep.sh \
    research/flamby/fed_isic2019/ditto_mkmmd/config.yaml \
    research/flamby/fed_isic2019/ditto_mkmmd/ \
-   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
-   /h/demerson/vector_repositories/fl4health_env/
+   /Users/xxx/Desktop/FLambyDatasets/fedisic2019/ \
+   /h/xxx/vector_repositories/fl4health_env/
 ```
 
 In order to manipulate the grid search being conducted, you need to change the parameters for `lr`, the client-side learning rate, and  `lam`, the ditto loss weight for local training, `mu`, the mkmmd loss for ditto model structure and `l2`, the l2 regularization parameter for features, in the `run_hp_sweep.sh` script directly.

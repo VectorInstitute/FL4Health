@@ -33,7 +33,7 @@
 #   research/cifar10/adaptive_pfl/fenda_ditto/config.yaml \
 #   research/cifar10/adaptive_pfl/fenda_ditto/hp_results/ \
 #   /datasets/cifar10 \
-#   /h/demerson/vector_repositories/fl4health_env/ \
+#   /h/xxx/vector_repositories/fl4health_env/ \
 #   0.0001 \
 #   0.01 \
 #   0.0.0.0:8080 \

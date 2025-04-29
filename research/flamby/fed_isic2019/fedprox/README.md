@@ -17,8 +17,8 @@ An example is something like
 ./research/flamby/fed_isic2019/fedprox/run_hp_sweep.sh \
    research/flamby/fed_isic2019/fedprox/config.yaml \
    research/flamby/fed_isic2019/fedprox/ \
-   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
-   /h/demerson/vector_repositories/fl4health_env/
+   /Users/xxx/Desktop/FLambyDatasets/fedisic2019/ \
+   /h/xxx/vector_repositories/fl4health_env/
 ```
 
 In order to manipulate the grid search being conducted, you need to change the parameters for `mu` and `lr`, the FedProx penalty weight and the learning rate, respectively, in the `run_hp_sweep.sh` script directly.

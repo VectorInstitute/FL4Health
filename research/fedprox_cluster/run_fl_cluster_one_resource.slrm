@@ -23,7 +23,7 @@
 #   examples/fedprox_example/config.yaml \
 #   research/fedprox_cluster/server_logs/ \
 #   research/fedprox_cluster/client_logs/ \
-#   /h/demerson/vector_repositories/fl4health_env/
+#   /h/xxx/vector_repositories/fl4health_env/
 #
 # Notes:
 # 1) The sbatch command above should be run from the top level directory of the repository.

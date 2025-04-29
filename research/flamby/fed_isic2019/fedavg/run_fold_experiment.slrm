@@ -27,8 +27,8 @@
 # sbatch research/flamby/fed_isic2019/fedavg/run_fold_experiment.slrm \
 #   research/flamby/fed_isic2019/fedavg/config.yaml \
 #   research/flamby/fed_isic2019/fedavg/hp_results/ \
-#   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
-#   /h/demerson/vector_repositories/fl4health_env/ \
+#   /Users/xxx/Desktop/FLambyDatasets/fedisic2019/ \
+#   /h/xxx/vector_repositories/fl4health_env/ \
 #   0.0001 \
 #   0.0.0.0:8080
 #

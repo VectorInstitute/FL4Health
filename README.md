@@ -16,8 +16,6 @@ Principally, this repository contains the federated learning (FL) engine aimed a
 
 The library source code is housed in the `fl4health` folder. This library is built on the foundational components of [Flower](https://flower.dev/), an open-source FL library in its own right. The documentation is [here](https://flower.dev/docs/framework/index.html). This library contains a number of unique components that extend the functionality of Flower in a number of directions.
 
-If you have questions about the library or suggestions for new additions feel free to reach out to david.emerson@vectorinstitute.ai
-
 ## Summary of Currently Implemented Approaches
 
 The present set of FL approaches implemented in the library are:
@@ -295,16 +293,4 @@ As examples (the version may be out of date)
 ```
 # APA Sytle
 Emerson, D.B., Jewell, J., Ayromlou, S., Carere, S., Tavakoli, F., Zhang, Y., Lotif, M., Fajardo, V. A., & Krishnan, A. FL4Health (Version 0.3.0) [Computer software]. https://doi.org/10.5281/zenodo.1234
-```
-
-```bibtex
-# Bibtex Entry
-@software{Emerson_FL4Health,
-author = {Emerson, David B. and Jewell, John and Ayromlou, Sana and Carere, Shawn and Tavakoli, Fatemeh and Zhang, Y. and Lotif, Marcello and Fajardo, Val Andrei and Krishnan, A.},
-doi = {10.5281/zenodo.1234},
-license = {Apache-2.0},
-title = {{FL4Health}},
-url = {https://github.com/vectorInstitute/FL4Health/},
-version = {0.3.0}
-}
 ```

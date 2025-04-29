@@ -28,8 +28,8 @@
 # sbatch research/flamby/fed_isic2019/fedper/run_fold_experiment.slrm \
 #   research/flamby/fed_isic2019/fedper/config.yaml \
 #   research/flamby/fed_isic2019/fedper/hp_results/ \
-#   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
-#   /h/demerson/vector_repositories/fl4health_env/ \
+#   /Users/xxx/Desktop/FLambyDatasets/fedisic2019/ \
+#   /h/xxx/vector_repositories/fl4health_env/ \
 #   0.0001 \
 #   0.0.0.0:8080
 #

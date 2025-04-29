@@ -25,7 +25,7 @@
 # sbatch research/rxrx1/central/run_fold_experiment.slrm \
 #   research/rxrx1/central/results/ \
 #   /projects//fl4health/datasets/rxrx1_v1.0 \
-#   /h/demerson/vector_repositories/fl4health_env/
+#   /h/xxx/vector_repositories/fl4health_env/
 #
 # Notes:
 # 1) The sbatch command above should be run from the top level directory of the repository.

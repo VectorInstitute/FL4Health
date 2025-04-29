@@ -14,7 +14,7 @@
 #   research/cifar10/ditto_deep_mmd/config.yaml \
 #   research/cifar10/ditto_deep_mmd \
 #   /datasets/cifar10 \
-#   /h/demerson/vector_repositories/fl4health_env/
+#   /h/xxx/vector_repositories/fl4health_env/
 #
 # Notes:
 # 1) The bash command above should be run from the top level directory of the repository.
