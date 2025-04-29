@@ -275,13 +275,3 @@ The examples folder contains an extensive set of ways to use the various compone
 
 If you are interested in contributing to the library, please see [CONTRIBUTION.MD](CONTRIBUTING.MD). This file contains many details around contributing to the code base, including are development practices, code checks, tests, and more.
 
-## Citation
-
-We hope that the library will be useful to both FL practitioners and researchers working on cutting edge FL applications, with a specific interest in FL for healthcare. If you use FL4Health in a project or in your research, the citation provided by the "Cite this Repository" widget should be used.
-
-As examples (the version may be out of date)
-
-```
-# APA Sytle
-Emerson, D.B., Jewell, J., Ayromlou, S., Carere, S., Tavakoli, F., Zhang, Y., Lotif, M., Fajardo, V. A., & Krishnan, A. FL4Health (Version 0.3.0) [Computer software]. https://doi.org/10.5281/zenodo.1234
-```
