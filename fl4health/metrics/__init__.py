@@ -1,13 +1,4 @@
-from .metrics import (
-    F1,
-    ROC_AUC,
-    Accuracy,
-    BalancedAccuracy,
-    BinarySoftDiceCoefficient,
-    SimpleMetric,
-    TorchMetric,
-    TransformsMetric,
-)
+from .metrics import F1, ROC_AUC, Accuracy, BalancedAccuracy, BinarySoftDiceCoefficient, SimpleMetric, TorchMetric
 
 __all__ = [
     "Accuracy",
@@ -15,7 +6,6 @@ __all__ = [
     "BalancedAccuracy",
     "TorchMetric",
     "SimpleMetric",
-    "TransformsMetric",
     "BinarySoftDiceCoefficient",
     "ROC_AUC",
 ]
