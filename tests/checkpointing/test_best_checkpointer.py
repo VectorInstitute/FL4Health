@@ -79,6 +79,12 @@ def test_best_metric_checkpointer(tmp_path: Path) -> None:
     with pytest.raises(KeyError):
         best_metric_checkpointer.maybe_checkpoint(linear_1, -1.0, metrics={"bad key": 0.78})
 
+    # Test that it throws and error upon unsuccessful conversion of metric to float
+    with pytest.raises(ValueError):
+        best_metric_checkpointer.maybe_checkpoint(
+            linear_1, -1.0, metrics={"val - prefix - dummy_metric": "bad metric value"}
+        )
+
 
 def test_default_naming_of_score() -> None:
     def score_func_with_name(_: float, metrics: dict[str, Scalar]) -> float:
