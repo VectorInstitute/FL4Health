@@ -2,9 +2,9 @@ import torch
 from flwr.common.typing import Metrics
 from pytest import LogCaptureFixture, approx
 
-from fl4health.metrics import Accuracy
 from fl4health.metrics.base_metrics import Metric
 from fl4health.metrics.compound_metrics import EmaMetric
+from tests.metrics.metric_utility import AccuracyForTest
 
 
 class DummyMetric(Metric):
@@ -33,7 +33,7 @@ def test_ema_metric_computation() -> None:
     preds_3 = torch.Tensor([0.19, 0.75, 0.26, 0.49])
     targets_3 = torch.Tensor([1.0, 0.0, 1.0, 0.0])
 
-    accuracy_metric = Accuracy("accuracy")
+    accuracy_metric = AccuracyForTest("accuracy")
     ema_accuracy_metric = EmaMetric(accuracy_metric, 0.2, name="ema_acc")
 
     # First accumulate two batches of updates before computation
