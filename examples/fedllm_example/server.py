@@ -11,9 +11,9 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.fedllm_example.model import get_model
+from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.servers.base_server import FlServer
 from fl4health.utils.config import load_config, make_dict_with_epochs_or_steps
-from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.peft_parameter_extraction import get_all_peft_parameters_from_model
 from fl4health.utils.random import set_all_random_seeds
 

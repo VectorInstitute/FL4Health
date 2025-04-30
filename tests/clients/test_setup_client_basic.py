@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.dataset import TensorDataset
 
 from fl4health.clients.basic_client import BasicClient
-from fl4health.utils.metrics import Accuracy
+from fl4health.metrics import Accuracy
 from tests.test_utils.models_for_test import LinearModel
 
 

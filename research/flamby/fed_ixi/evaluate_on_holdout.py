@@ -6,7 +6,7 @@ from flamby.datasets.fed_ixi import BATCH_SIZE, NUM_CLIENTS, FedIXITiny
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
 
-from fl4health.utils.metrics import BinarySoftDiceCoefficient
+from fl4health.metrics import BinarySoftDiceCoefficient
 from research.flamby.utils import (
     evaluate_fed_ixi_model,
     get_all_run_folders,

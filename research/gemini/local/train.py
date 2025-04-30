@@ -9,7 +9,7 @@ from data.data import load_train_delirium, load_train_mortality
 from flwr.common.logger import log
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.utils.metrics import AccumulationMeter, Metric
+from fl4health.metrics import AccumulationMeter, Metric
 from research.gemini.delirium_models.NN import NN as delirium_model
 from research.gemini.metrics.metrics import Accuracy, Binary_F1, Binary_ROC_AUC
 from research.gemini.mortality_models.NN import NN as mortality_model

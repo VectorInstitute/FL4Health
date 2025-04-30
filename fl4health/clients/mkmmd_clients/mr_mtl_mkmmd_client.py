@@ -9,10 +9,10 @@ from flwr.common.typing import Config, Scalar
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointAndStateModule
 from fl4health.clients.mr_mtl_client import MrMtlClient
 from fl4health.losses.mkmmd_loss import MkMmdLoss
+from fl4health.metrics.base_metrics import Metric
 from fl4health.model_bases.feature_extractor_buffer import FeatureExtractorBuffer
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType, TrainingLosses
-from fl4health.utils.metrics import Metric
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 

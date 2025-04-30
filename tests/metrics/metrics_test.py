@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import torch
 
-from fl4health.utils.metrics import F1, ROC_AUC, Accuracy, BalancedAccuracy, BinarySoftDiceCoefficient
+from fl4health.metrics import F1, ROC_AUC, Accuracy, BalancedAccuracy, BinarySoftDiceCoefficient
 
 
 def test_accuracy_metric() -> None:

@@ -9,8 +9,9 @@ from flwr.common.logger import log
 from torch.utils.data import DataLoader
 
 from fl4health.datasets.rxrx1.load_data import load_rxrx1_data
+from fl4health.metrics import Accuracy
+from fl4health.metrics.metric_managers import MetricManager
 from fl4health.utils.dataset import TensorDataset
-from fl4health.utils.metrics import Accuracy, MetricManager
 from research.rxrx1.single_node_trainer import SingleNodeTrainer
 from research.rxrx1.utils import get_model
 

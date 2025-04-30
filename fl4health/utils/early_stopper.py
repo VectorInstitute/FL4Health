@@ -12,10 +12,10 @@ from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
 
 from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
+from fl4health.metrics.metric_managers import MetricManager
 from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.utils.logging import LoggingMode
 from fl4health.utils.losses import TrainingLosses
-from fl4health.utils.metrics import MetricManager
 from fl4health.utils.snapshotter import (
     AbstractSnapshotter,
     LRSchedulerSnapshotter,
