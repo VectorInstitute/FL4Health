@@ -1,0 +1,18 @@
+fl4health.metrics package
+=========================
+
+.. automodule:: fl4health.metrics
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   fl4health.metrics.base_metrics
+   fl4health.metrics.metric_aggregation
+   fl4health.metrics.metric_managers
+   fl4health.metrics.metrics

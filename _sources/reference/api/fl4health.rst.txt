@@ -18,6 +18,7 @@ Subpackages
    fl4health.datasets
    fl4health.feature_alignment
    fl4health.losses
+   fl4health.metrics
    fl4health.model_bases
    fl4health.parameter_exchange
    fl4health.preprocessing
