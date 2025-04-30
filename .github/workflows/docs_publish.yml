@@ -23,6 +23,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write  # Work with github pages
     steps:
       - uses: actions/checkout@v4.2.0
         with:
