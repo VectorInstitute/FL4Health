@@ -11,7 +11,7 @@ from flwr.common.typing import Config, NDArrays, Scalar
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.clients.numpy_fl_client import NumpyFlClient
-from fl4health.metrics.metrics import AccumulationMeter, Meter, Metric
+from fl4health.metrics import AccumulationMeter, Meter, Metric
 
 # FENDA imports
 from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel

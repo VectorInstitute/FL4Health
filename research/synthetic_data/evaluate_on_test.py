@@ -6,7 +6,7 @@ from pathlib import Path
 import torch
 from flwr.common.logger import log
 
-from fl4health.metrics.metrics import Accuracy
+from fl4health.metrics import Accuracy
 from fl4health.utils.dataset import TensorDataset
 from research.synthetic_data.preprocess import get_test_preprocessed_data
 from research.synthetic_data.utils import (

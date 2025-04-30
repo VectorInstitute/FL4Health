@@ -17,8 +17,8 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from examples.models.mlp_classifier import MLP
 from fl4health.clients.tabular_data_client import TabularDataClient
-from fl4health.metrics.metrics import Accuracy
-from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics import Accuracy
+from fl4health.metrics.base_metrics import Metric
 from fl4health.utils.config import narrow_dict_type
 
 

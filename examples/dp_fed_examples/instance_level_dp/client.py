@@ -15,7 +15,7 @@ from examples.models.cnn_model import Net
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.checkpointing.opacus_checkpointer import BestLossOpacusCheckpointer
 from fl4health.clients.instance_level_dp_client import InstanceLevelDpClient
-from fl4health.metrics.metrics import Accuracy
+from fl4health.metrics import Accuracy
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_cifar10_data
 

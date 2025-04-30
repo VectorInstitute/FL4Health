@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
 from fl4health.clients.partial_weight_exchange_client import PartialWeightExchangeClient
-from fl4health.metrics.metrics import Accuracy
+from fl4health.metrics import Accuracy
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_selection_criteria import largest_final_magnitude_scores
 from fl4health.parameter_exchange.sparse_coo_parameter_exchanger import SparseCooParameterExchanger

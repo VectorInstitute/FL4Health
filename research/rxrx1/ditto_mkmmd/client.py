@@ -17,8 +17,8 @@ from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.mkmmd_clients.ditto_mkmmd_client import DittoMkMmdClient
 from fl4health.datasets.rxrx1.load_data import load_rxrx1_data, load_rxrx1_test_data
-from fl4health.metrics.metrics import Accuracy
-from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics import Accuracy
+from fl4health.metrics.base_metrics import Metric
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
