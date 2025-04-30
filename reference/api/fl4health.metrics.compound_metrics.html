@@ -7,14 +7,14 @@
 
     
       <meta name="description" content="aieng-template Python API documentation">
-    <link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="fl4health.feature_alignment.tabular_type module" href="fl4health.feature_alignment.tabular_type.html" /><link rel="prev" title="fl4health.feature_alignment.tab_features_preprocessor module" href="fl4health.feature_alignment.tab_features_preprocessor.html" />
+    <link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="fl4health.metrics.metric_aggregation module" href="fl4health.metrics.metric_aggregation.html" /><link rel="prev" title="fl4health.metrics.base_metrics module" href="fl4health.metrics.base_metrics.html" />
 
     <meta name="generator" content="sphinx-8.1.3, furo 2024.08.06"/>
 
     
     <meta name="msvalidate.01" content="8D2A5032F006424CAF54C0DDCD16F666" />
       
-        <title>fl4health.feature_alignment.tabular_feature module - FL4Health</title>
+        <title>fl4health.metrics.compound_metrics module - FL4Health</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -300,12 +300,12 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l3 current has-children"><a class="reference internal" href="fl4health.feature_alignment.html">fl4health.feature_alignment package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><div class="visually-hidden">Toggle navigation of fl4health.feature_alignment package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.feature_alignment.html">fl4health.feature_alignment package</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><div class="visually-hidden">Toggle navigation of fl4health.feature_alignment package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.constants.html">fl4health.feature_alignment.constants module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.string_columns_transformer.html">fl4health.feature_alignment.string_columns_transformer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html">fl4health.feature_alignment.tab_features_info_encoder module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html">fl4health.feature_alignment.tab_features_preprocessor module</a></li>
-<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">fl4health.feature_alignment.tabular_feature module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.tabular_feature.html">fl4health.feature_alignment.tabular_feature module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.tabular_type.html">fl4health.feature_alignment.tabular_type module</a></li>
 </ul>
 </li>
@@ -319,9 +319,9 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.losses.weight_drift_loss.html">fl4health.losses.weight_drift_loss module</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.metrics.html">fl4health.metrics package</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of fl4health.metrics package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 current has-children"><a class="reference internal" href="fl4health.metrics.html">fl4health.metrics package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of fl4health.metrics package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.base_metrics.html">fl4health.metrics.base_metrics module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.compound_metrics.html">fl4health.metrics.compound_metrics module</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">fl4health.metrics.compound_metrics module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metric_aggregation.html">fl4health.metrics.metric_aggregation module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metric_managers.html">fl4health.metrics.metric_managers module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics.html">fl4health.metrics.metrics module</a></li>
@@ -483,108 +483,84 @@
           </label>
         </div>
         <article role="main">
-          <section id="module-fl4health.feature_alignment.tabular_feature">
-<span id="fl4health-feature-alignment-tabular-feature-module"></span><h1>fl4health.feature_alignment.tabular_feature module<a class="headerlink" href="#module-fl4health.feature_alignment.tabular_feature" title="Link to this heading">¶</a></h1>
+          <section id="module-fl4health.metrics.compound_metrics">
+<span id="fl4health-metrics-compound-metrics-module"></span><h1>fl4health.metrics.compound_metrics module<a class="headerlink" href="#module-fl4health.metrics.compound_metrics" title="Link to this heading">¶</a></h1>
 <dl class="py class">
-<dt class="sig sig-object py" id="fl4health.feature_alignment.tabular_feature.TabularFeature">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TabularFeature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tabular_feature.html#TabularFeature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tabular_feature.TabularFeature" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dt class="sig sig-object py" id="fl4health.metrics.compound_metrics.TransformsMetric">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TransformsMetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pred_transforms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_transforms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/compound_metrics.html#TransformsMetric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.compound_metrics.TransformsMetric" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric" title="fl4health.metrics.base_metrics.Metric"><code class="xref py py-class docutils literal notranslate"><span class="pre">Metric</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Generic" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code></a>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">T</span></code>]</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="fl4health.feature_alignment.tabular_feature.TabularFeature.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tabular_feature.html#TabularFeature.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tabular_feature.TabularFeature.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>Information that represents a tabular feature.</p>
+<dt class="sig sig-object py" id="fl4health.metrics.compound_metrics.TransformsMetric.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pred_transforms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_transforms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/compound_metrics.html#TransformsMetric.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.compound_metrics.TransformsMetric.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>A thin wrapper class to allow transforms to be applied to preds and targets prior to calculating metrics.
+Transforms are applied in the order given</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>feature_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – name of the feature.</p></li>
-<li><p><strong>feature_type</strong> (<a class="reference internal" href="fl4health.feature_alignment.tabular_type.html#fl4health.feature_alignment.tabular_type.TabularType" title="fl4health.feature_alignment.tabular_type.TabularType"><em>TabularType</em></a>) – data type of the feature.</p></li>
-<li><p><strong>fill_value</strong> (<em>Scalar</em><em> | </em><em>None</em>) – the default fill value for this feature when it is missing in a dataframe.</p></li>
-<li><p><strong>metadata</strong> (<em>MetaData</em><em>, </em><em>optional</em>) – metadata associated with this feature.
-For example, if the feature is categorical, then metadata would be all the categories.
-Defaults to None.</p></li>
+<li><p><strong>metric</strong> (<a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric" title="fl4health.metrics.base_metrics.Metric"><em>Metric</em></a>) – A FL4Health compatible metric</p></li>
+<li><p><strong>pred_transforms</strong> (<em>Sequence</em><em>[</em><em>TorchTransformFunction</em><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – A list of transform functions to
+apply to the model predictions before computing the metrics. Each callable must accept and return a
+<code class="docutils literal notranslate"><span class="pre">torch.Tensor</span></code>. Use partial to set other arguments.</p></li>
+<li><p><strong>target_transforms</strong> (<em>Sequence</em><em>[</em><em>TorchTransformFunction</em><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – A list of transform functions to
+apply to the targets before computing the metrics. Each callable must accept and return a
+<code class="docutils literal notranslate"><span class="pre">torch.Tensor</span></code>. Use partial to set other arguments.</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="fl4health.feature_alignment.tabular_feature.TabularFeature.from_json">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">json_str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tabular_feature.html#TabularFeature.from_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tabular_feature.TabularFeature.from_json" title="Link to this definition">¶</a></dt>
-<dd><p>Provided a JSON string, this function reconstructs the <code class="docutils literal notranslate"><span class="pre">TabularFeature</span></code> class to which it corresponds.</p>
+<dt class="sig sig-object py" id="fl4health.metrics.compound_metrics.TransformsMetric.clear">
+<span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/compound_metrics.html#TransformsMetric.clear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.compound_metrics.TransformsMetric.clear" title="Link to this definition">¶</a></dt>
+<dd><p>Resets metric.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>json_str</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – json string with all of the information necessary to construct the <code class="docutils literal notranslate"><span class="pre">TabularFeature</span></code>
-object</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Reconstructed <code class="docutils literal notranslate"><span class="pre">TabularFeature</span></code> object from the provided JSON</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="#fl4health.feature_alignment.tabular_feature.TabularFeature" title="fl4health.feature_alignment.tabular_feature.TabularFeature">TabularFeature</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.feature_alignment.tabular_feature.TabularFeature.get_feature_name">
-<span class="sig-name descname"><span class="pre">get_feature_name</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tabular_feature.html#TabularFeature.get_feature_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tabular_feature.TabularFeature.get_feature_name" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.feature_alignment.tabular_feature.TabularFeature.get_feature_type">
-<span class="sig-name descname"><span class="pre">get_feature_type</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tabular_feature.html#TabularFeature.get_feature_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tabular_feature.TabularFeature.get_feature_type" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="fl4health.feature_alignment.tabular_type.html#fl4health.feature_alignment.tabular_type.TabularType" title="fl4health.feature_alignment.tabular_type.TabularType"><code class="xref py py-class docutils literal notranslate"><span class="pre">TabularType</span></code></a></span></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.feature_alignment.tabular_feature.TabularFeature.get_fill_value">
-<span class="sig-name descname"><span class="pre">get_fill_value</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tabular_feature.html#TabularFeature.get_fill_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tabular_feature.TabularFeature.get_fill_value" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#bytes" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.feature_alignment.tabular_feature.TabularFeature.get_metadata">
-<span class="sig-name descname"><span class="pre">get_metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tabular_feature.html#TabularFeature.get_metadata"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tabular_feature.TabularFeature.get_metadata" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>] | <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#bytes" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]</span></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.feature_alignment.tabular_feature.TabularFeature.get_metadata_dimension">
-<span class="sig-name descname"><span class="pre">get_metadata_dimension</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tabular_feature.html#TabularFeature.get_metadata_dimension"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tabular_feature.TabularFeature.get_metadata_dimension" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.feature_alignment.tabular_feature.TabularFeature.to_json">
-<span class="sig-name descname"><span class="pre">to_json</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tabular_feature.html#TabularFeature.to_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tabular_feature.TabularFeature.to_json" title="Link to this definition">¶</a></dt>
-<dd><p>Converge the information in this class to json format for serialization</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Json with all of the pieces of information in this class</p>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#NotImplementedError" title="(in Python v3.10)"><strong>NotImplementedError</strong></a> – To be defined in the classes expending this class.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a></p>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.metrics.compound_metrics.TransformsMetric.compute">
+<span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/compound_metrics.html#TransformsMetric.compute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.compound_metrics.TransformsMetric.compute" title="Link to this definition">¶</a></dt>
+<dd><p>Compute metric on state accumulated over updates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em>) – Optional name used in conjunction with class attribute name to define key in metrics
+dictionary.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#NotImplementedError" title="(in Python v3.10)"><strong>NotImplementedError</strong></a> – To be defined in the classes extending this class.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A dictionary of string and <code class="docutils literal notranslate"><span class="pre">Scalar</span></code> representing the computed metric and its associated key.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Metrics</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.metrics.compound_metrics.TransformsMetric.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/compound_metrics.html#TransformsMetric.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.compound_metrics.TransformsMetric.update" title="Link to this definition">¶</a></dt>
+<dd><p>This method updates the state of the metric by appending the passed input and target pairing to their
+respective list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input</strong> (<em>torch.Tensor</em>) – The predictions of the model to be evaluated.</p></li>
+<li><p><strong>target</strong> (<em>torch.Tensor</em>) – The ground truth target to evaluate predictions against.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#NotImplementedError" title="(in Python v3.10)"><strong>NotImplementedError</strong></a> – To be defined in the classes extending this class.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -598,23 +574,23 @@ object</p>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="fl4health.feature_alignment.tabular_type.html">
+          <a class="next-page" href="fl4health.metrics.metric_aggregation.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">fl4health.feature_alignment.tabular_type module</div>
+                <div class="title">fl4health.metrics.metric_aggregation module</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="fl4health.feature_alignment.tab_features_preprocessor.html">
+          <a class="prev-page" href="fl4health.metrics.base_metrics.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">fl4health.feature_alignment.tab_features_preprocessor module</div>
+                <div class="title">fl4health.metrics.base_metrics module</div>
                 
               </div>
             </a>
@@ -665,16 +641,12 @@ object</p>
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">fl4health.feature_alignment.tabular_feature module</a><ul>
-<li><a class="reference internal" href="#fl4health.feature_alignment.tabular_feature.TabularFeature"><code class="docutils literal notranslate"><span class="pre">TabularFeature</span></code></a><ul>
-<li><a class="reference internal" href="#fl4health.feature_alignment.tabular_feature.TabularFeature.__init__"><code class="docutils literal notranslate"><span class="pre">TabularFeature.__init__()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.feature_alignment.tabular_feature.TabularFeature.from_json"><code class="docutils literal notranslate"><span class="pre">TabularFeature.from_json()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.feature_alignment.tabular_feature.TabularFeature.get_feature_name"><code class="docutils literal notranslate"><span class="pre">TabularFeature.get_feature_name()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.feature_alignment.tabular_feature.TabularFeature.get_feature_type"><code class="docutils literal notranslate"><span class="pre">TabularFeature.get_feature_type()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.feature_alignment.tabular_feature.TabularFeature.get_fill_value"><code class="docutils literal notranslate"><span class="pre">TabularFeature.get_fill_value()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.feature_alignment.tabular_feature.TabularFeature.get_metadata"><code class="docutils literal notranslate"><span class="pre">TabularFeature.get_metadata()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.feature_alignment.tabular_feature.TabularFeature.get_metadata_dimension"><code class="docutils literal notranslate"><span class="pre">TabularFeature.get_metadata_dimension()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.feature_alignment.tabular_feature.TabularFeature.to_json"><code class="docutils literal notranslate"><span class="pre">TabularFeature.to_json()</span></code></a></li>
+<li><a class="reference internal" href="#">fl4health.metrics.compound_metrics module</a><ul>
+<li><a class="reference internal" href="#fl4health.metrics.compound_metrics.TransformsMetric"><code class="docutils literal notranslate"><span class="pre">TransformsMetric</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.metrics.compound_metrics.TransformsMetric.__init__"><code class="docutils literal notranslate"><span class="pre">TransformsMetric.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.metrics.compound_metrics.TransformsMetric.clear"><code class="docutils literal notranslate"><span class="pre">TransformsMetric.clear()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.metrics.compound_metrics.TransformsMetric.compute"><code class="docutils literal notranslate"><span class="pre">TransformsMetric.compute()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.metrics.compound_metrics.TransformsMetric.update"><code class="docutils literal notranslate"><span class="pre">TransformsMetric.update()</span></code></a></li>
 </ul>
 </li>
 </ul>

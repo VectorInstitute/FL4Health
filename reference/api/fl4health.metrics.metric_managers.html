@@ -321,6 +321,7 @@
 </li>
 <li class="toctree-l3 current has-children"><a class="reference internal" href="fl4health.metrics.html">fl4health.metrics package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of fl4health.metrics package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.base_metrics.html">fl4health.metrics.base_metrics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.compound_metrics.html">fl4health.metrics.compound_metrics module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metric_aggregation.html">fl4health.metrics.metric_aggregation module</a></li>
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">fl4health.metrics.metric_managers module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics.html">fl4health.metrics.metrics module</a></li>
@@ -515,7 +516,7 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.metrics.metric_managers.MetricManager.clear">
 <span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/metric_managers.html#MetricManager.clear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.metric_managers.MetricManager.clear" title="Link to this definition">¶</a></dt>
-<dd><p>Clears metrics for each of the prediction type.</p>
+<dd><p>Clears data accumulated in each metric for each of the prediction type.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
@@ -533,6 +534,17 @@
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>Metrics</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.metrics.metric_managers.MetricManager.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/metric_managers.html#MetricManager.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.metric_managers.MetricManager.reset" title="Link to this definition">¶</a></dt>
+<dd><p>Resets the metrics to their initial state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -639,6 +651,7 @@ used for all predictions.</p></li>
 <li><a class="reference internal" href="#fl4health.metrics.metric_managers.MetricManager.check_target_prediction_keys_equal"><code class="docutils literal notranslate"><span class="pre">MetricManager.check_target_prediction_keys_equal()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.metrics.metric_managers.MetricManager.clear"><code class="docutils literal notranslate"><span class="pre">MetricManager.clear()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.metrics.metric_managers.MetricManager.compute"><code class="docutils literal notranslate"><span class="pre">MetricManager.compute()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.metrics.metric_managers.MetricManager.reset"><code class="docutils literal notranslate"><span class="pre">MetricManager.reset()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.metrics.metric_managers.MetricManager.update"><code class="docutils literal notranslate"><span class="pre">MetricManager.update()</span></code></a></li>
 </ul>
 </li>

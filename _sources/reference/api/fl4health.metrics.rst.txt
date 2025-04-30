@@ -13,6 +13,7 @@ Submodules
    :maxdepth: 4
 
    fl4health.metrics.base_metrics
+   fl4health.metrics.compound_metrics
    fl4health.metrics.metric_aggregation
    fl4health.metrics.metric_managers
    fl4health.metrics.metrics

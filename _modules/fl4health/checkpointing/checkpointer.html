@@ -320,6 +320,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/fl4health.metrics.html">fl4health.metrics package</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of fl4health.metrics package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.metrics.base_metrics.html">fl4health.metrics.base_metrics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.metrics.compound_metrics.html">fl4health.metrics.compound_metrics module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.metrics.metric_aggregation.html">fl4health.metrics.metric_aggregation module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.metrics.metric_managers.html">fl4health.metrics.metric_managers module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.metrics.metrics.html">fl4health.metrics.metrics module</a></li>
@@ -565,6 +566,7 @@
         <span class="n">checkpoint_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">checkpoint_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">checkpoint_score_function</span><span class="p">:</span> <span class="n">CheckpointScoreFunctionType</span><span class="p">,</span>
+        <span class="n">checkpoint_score_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -578,12 +580,23 @@
 <span class="sd">            checkpoint_name (str): Name of the checkpoint to be saved.</span>
 <span class="sd">            checkpoint_score_function (CheckpointScoreFunctionType): Function taking in a loss value and dictionary of</span>
 <span class="sd">                metrics and produces a score based on these.</span>
+<span class="sd">            checkpoint_score_name (str | None, optional): Name of the score produced by the scoring function. This is</span>
+<span class="sd">                used for logging purposes. If not provided, the name of the function will be used. Defaults to None.</span>
 <span class="sd">            maximize (bool, optional): Specifies whether we&#39;re trying to minimize or maximize the score produced</span>
 <span class="sd">                by the scoring function. Defaults to False.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">checkpoint_dir</span><span class="p">,</span> <span class="n">checkpoint_name</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">best_score</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_score_function</span> <span class="o">=</span> <span class="n">checkpoint_score_function</span>
+        <span class="k">if</span> <span class="n">checkpoint_score_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_score_name</span> <span class="o">=</span> <span class="n">checkpoint_score_name</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log</span><span class="p">(</span>
+                <span class="n">WARNING</span><span class="p">,</span>
+                <span class="s2">&quot;No checkpoint_score_name provided. Name will default to the checkpoint score function &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;name of </span><span class="si">{</span><span class="n">checkpoint_score_function</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_score_name</span> <span class="o">=</span> <span class="n">checkpoint_score_function</span><span class="o">.</span><span class="vm">__name__</span>
         <span class="c1"># Whether we&#39;re looking to maximize (or minimize) the score produced by the checkpoint score function</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span> <span class="o">=</span> <span class="n">maximize</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">comparison_str</span> <span class="o">=</span> <span class="s2">&quot;&gt;=&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">maximize</span> <span class="k">else</span> <span class="s2">&quot;&lt;=&quot;</span></div>
@@ -633,7 +646,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_should_checkpoint</span><span class="p">(</span><span class="n">comparison_score</span><span class="p">):</span>
             <span class="n">log</span><span class="p">(</span>
                 <span class="n">INFO</span><span class="p">,</span>
-                <span class="sa">f</span><span class="s2">&quot;Checkpointing the model: Current score (</span><span class="si">{</span><span class="n">comparison_score</span><span class="si">}</span><span class="s2">) &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Checkpointing the model: Current </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_score_name</span><span class="si">}</span><span class="s2"> score (</span><span class="si">{</span><span class="n">comparison_score</span><span class="si">}</span><span class="s2">) &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">comparison_str</span><span class="si">}</span><span class="s2"> Best score (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">best_score</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">best_score</span> <span class="o">=</span> <span class="n">comparison_score</span>
@@ -646,7 +659,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">log</span><span class="p">(</span>
                 <span class="n">INFO</span><span class="p">,</span>
-                <span class="sa">f</span><span class="s2">&quot;Not checkpointing the model: Current score (</span><span class="si">{</span><span class="n">comparison_score</span><span class="si">}</span><span class="s2">) is not &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Not checkpointing the model: Current </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_score_name</span><span class="si">}</span><span class="s2"> score (</span><span class="si">{</span><span class="n">comparison_score</span><span class="si">}</span><span class="s2">) is not &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">comparison_str</span><span class="si">}</span><span class="s2"> Best score (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">best_score</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
             <span class="p">)</span></div>
 </div>
@@ -673,7 +686,7 @@
         <span class="k">def</span><span class="w"> </span><span class="nf">null_score_function</span><span class="p">(</span><span class="n">loss</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
             <span class="k">return</span> <span class="mf">0.0</span>
 
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">checkpoint_dir</span><span class="p">,</span> <span class="n">checkpoint_name</span><span class="p">,</span> <span class="n">null_score_function</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">checkpoint_dir</span><span class="p">,</span> <span class="n">checkpoint_name</span><span class="p">,</span> <span class="n">null_score_function</span><span class="p">,</span> <span class="s2">&quot;Latest&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="LatestTorchModuleCheckpointer.maybe_checkpoint">
@@ -694,9 +707,8 @@
 <span class="sd">                this context, so we explicitly surface the error with a try/except.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Always checkpoint the latest model</span>
-        <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Saving latest checkpoint with LatestTorchCheckpointer&quot;</span><span class="p">)</span>
+        <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Saving latest checkpoint with LatestTorchCheckpointer as </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_path</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Saving checkpoint as </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_path</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_path</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">log</span><span class="p">(</span><span class="n">ERROR</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Encountered the following error while saving the checkpoint: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -727,7 +739,11 @@
             <span class="k">return</span> <span class="n">loss</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">checkpoint_dir</span><span class="p">,</span> <span class="n">checkpoint_name</span><span class="p">,</span> <span class="n">checkpoint_score_function</span><span class="o">=</span><span class="n">loss_score_function</span><span class="p">,</span> <span class="n">maximize</span><span class="o">=</span><span class="kc">False</span>
+            <span class="n">checkpoint_dir</span><span class="o">=</span><span class="n">checkpoint_dir</span><span class="p">,</span>
+            <span class="n">checkpoint_name</span><span class="o">=</span><span class="n">checkpoint_name</span><span class="p">,</span>
+            <span class="n">checkpoint_score_function</span><span class="o">=</span><span class="n">loss_score_function</span><span class="p">,</span>
+            <span class="n">checkpoint_score_name</span><span class="o">=</span><span class="s2">&quot;Loss&quot;</span><span class="p">,</span>
+            <span class="n">maximize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 
@@ -754,12 +770,11 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_should_checkpoint</span><span class="p">(</span><span class="n">comparison_score</span><span class="p">):</span>
             <span class="n">log</span><span class="p">(</span>
                 <span class="n">INFO</span><span class="p">,</span>
-                <span class="sa">f</span><span class="s2">&quot;Checkpointing the model: Current Loss (</span><span class="si">{</span><span class="n">comparison_score</span><span class="si">}</span><span class="s2">) &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">comparison_str</span><span class="si">}</span><span class="s2"> Best Loss (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">best_score</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;Current Loss (</span><span class="si">{</span><span class="n">comparison_score</span><span class="si">}</span><span class="s2">) </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">comparison_str</span><span class="si">}</span><span class="s2"> Best Loss (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">best_score</span><span class="si">}</span><span class="s2">)</span><span class="se">\n</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Checkpointing the model as </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">best_score</span> <span class="o">=</span> <span class="n">comparison_score</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Saving checkpoint as </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_path</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_path</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                 <span class="n">log</span><span class="p">(</span><span class="n">ERROR</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Encountered the following error while saving the checkpoint: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -770,6 +785,58 @@
                 <span class="sa">f</span><span class="s2">&quot;Not checkpointing the model: Current Loss (</span><span class="si">{</span><span class="n">comparison_score</span><span class="si">}</span><span class="s2">) is not &quot;</span>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">comparison_str</span><span class="si">}</span><span class="s2"> Best Loss (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">best_score</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
             <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="BestMetricTorchModuleCheckpointer">
+<a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.BestMetricTorchModuleCheckpointer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BestMetricTorchModuleCheckpointer</span><span class="p">(</span><span class="n">FunctionTorchModuleCheckpointer</span><span class="p">):</span>
+<div class="viewcode-block" id="BestMetricTorchModuleCheckpointer.__init__">
+<a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.BestMetricTorchModuleCheckpointer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">checkpoint_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">checkpoint_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;val - prediction - &quot;</span><span class="p">,</span>
+        <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Checkpointer that checkpoints based on the value of a user defined metric.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            checkpoint_dir (str): Directory to which the model is saved. This directory should already exist. The</span>
+<span class="sd">                checkpointer will not create it if it does not.</span>
+<span class="sd">            checkpoint_name (str): Name of the checkpoint to be saved.</span>
+<span class="sd">            metric (str): The name of the metric to base checkpointing on. After prepending the prefix, should be a</span>
+<span class="sd">                key in the metrics dictionary passed in ``self.maybe_checkpoint``. In BasicClient this is the &#39;name&#39;</span>
+<span class="sd">                attribute of the corresponding ``fl4health.utils.metrics.Metric`` that was provided to the clients.</span>
+<span class="sd">            prefix (str, optional): A prefix to add to the metric name to create the key used to find the metric.</span>
+<span class="sd">                Usually a prefix is added by the client&#39;s metric manager. Defaults to &#39;val - prediction - &#39;.</span>
+<span class="sd">            maximize (bool, optional): If True maximizes the metric instead of minimizing it. Defaults to False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metric_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">metric</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">metric_score_function</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_key</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">log</span><span class="p">(</span><span class="n">ERROR</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Could not find &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_key</span><span class="si">}</span><span class="s2">&#39; in metrics dict. Available keys are: </span><span class="si">{</span><span class="n">metrics</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">e</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">val_float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">log</span><span class="p">(</span><span class="n">ERROR</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Could not convert </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">metric_key</span><span class="si">}</span><span class="s2"> into a float score for best metric checkpointing.&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">e</span>
+            <span class="k">return</span> <span class="n">val_float</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">checkpoint_dir</span><span class="o">=</span><span class="n">checkpoint_dir</span><span class="p">,</span>
+            <span class="n">checkpoint_name</span><span class="o">=</span><span class="n">checkpoint_name</span><span class="p">,</span>
+            <span class="n">checkpoint_score_function</span><span class="o">=</span><span class="n">metric_score_function</span><span class="p">,</span>
+            <span class="n">checkpoint_score_name</span><span class="o">=</span><span class="n">metric</span><span class="p">,</span>
+            <span class="n">maximize</span><span class="o">=</span><span class="n">maximize</span><span class="p">,</span>
+        <span class="p">)</span></div>
 </div>
 
 

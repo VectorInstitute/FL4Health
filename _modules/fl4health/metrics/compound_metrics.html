@@ -13,7 +13,7 @@
     
     <meta name="msvalidate.01" content="8D2A5032F006424CAF54C0DDCD16F666" />
       
-        <title>fl4health.parameter_exchange.parameter_exchanger_base - FL4Health</title>
+        <title>fl4health.metrics.compound_metrics - FL4Health</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -481,36 +481,73 @@
           </label>
         </div>
         <article role="main">
-          <h1>Source code for fl4health.parameter_exchange.parameter_exchanger_base</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeVar</span>
+          <h1>Source code for fl4health.metrics.compound_metrics</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">TypeVar</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span><span class="p">,</span> <span class="n">NDArrays</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Metrics</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.metrics.base_metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Metric</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TorchTransformFunction</span>
 
-<div class="viewcode-block" id="ParameterExchanger">
-<a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.parameter_exchanger_base.html#fl4health.parameter_exchange.parameter_exchanger_base.ParameterExchanger">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">ParameterExchanger</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-<div class="viewcode-block" id="ParameterExchanger.push_parameters">
-<a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.parameter_exchanger_base.html#fl4health.parameter_exchange.parameter_exchanger_base.ParameterExchanger.push_parameters">[docs]</a>
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">push_parameters</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">initial_model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArrays</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Metric</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="ParameterExchanger.pull_parameters">
-<a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.parameter_exchanger_base.html#fl4health.parameter_exchange.parameter_exchanger_base.ParameterExchanger.pull_parameters">[docs]</a>
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">pull_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="n">NDArrays</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+<div class="viewcode-block" id="TransformsMetric">
+<a class="viewcode-back" href="../../../reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.TransformsMetric">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransformsMetric</span><span class="p">(</span><span class="n">Metric</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+<div class="viewcode-block" id="TransformsMetric.__init__">
+<a class="viewcode-back" href="../../../reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.TransformsMetric.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">metric</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span>
+        <span class="n">pred_transforms</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TorchTransformFunction</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">target_transforms</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TorchTransformFunction</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A thin wrapper class to allow transforms to be applied to preds and targets prior to calculating metrics.</span>
+<span class="sd">        Transforms are applied in the order given</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            metric (Metric): A FL4Health compatible metric</span>
+<span class="sd">            pred_transforms (Sequence[TorchTransformFunction] | None, optional): A list of transform functions to</span>
+<span class="sd">                apply to the model predictions before computing the metrics. Each callable must accept and return a</span>
+<span class="sd">                ``torch.Tensor``. Use partial to set other arguments.</span>
+<span class="sd">            target_transforms (Sequence[TorchTransformFunction] | None, optional): A list of transform functions to</span>
+<span class="sd">                apply to the targets before computing the metrics. Each callable must accept and return a</span>
+<span class="sd">                ``torch.Tensor``. Use partial to set other arguments.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">metric</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pred_transforms</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">pred_transforms</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">pred_transforms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_transforms</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">target_transforms</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">target_transforms</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TransformsMetric.update">
+<a class="viewcode-back" href="../../../reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.TransformsMetric.update">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pred</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">transform</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pred_transforms</span><span class="p">:</span>
+            <span class="n">pred</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">transform</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_transforms</span><span class="p">:</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TransformsMetric.compute">
+<a class="viewcode-back" href="../../../reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.TransformsMetric.compute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Metrics</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TransformsMetric.clear">
+<a class="viewcode-back" href="../../../reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.TransformsMetric.clear">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
 </div>
 
-
-
-<span class="n">ExchangerType</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;ExchangerType&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">ParameterExchanger</span><span class="p">)</span>
 </pre></div>
         </article>
       </div>

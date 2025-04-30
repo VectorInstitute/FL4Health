@@ -320,6 +320,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/fl4health.metrics.html">fl4health.metrics package</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of fl4health.metrics package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.metrics.base_metrics.html">fl4health.metrics.base_metrics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.metrics.compound_metrics.html">fl4health.metrics.compound_metrics module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.metrics.metric_aggregation.html">fl4health.metrics.metric_aggregation module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.metrics.metric_managers.html">fl4health.metrics.metric_managers module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.metrics.metrics.html">fl4health.metrics.metrics module</a></li>
@@ -621,7 +622,7 @@
         <span class="k">def</span><span class="w"> </span><span class="nf">latest_score_function</span><span class="p">(</span><span class="n">loss</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
             <span class="k">return</span> <span class="mf">0.0</span>
 
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">checkpoint_dir</span><span class="p">,</span> <span class="n">checkpoint_name</span><span class="p">,</span> <span class="n">latest_score_function</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">checkpoint_dir</span><span class="p">,</span> <span class="n">checkpoint_name</span><span class="p">,</span> <span class="n">latest_score_function</span><span class="p">,</span> <span class="s2">&quot;Latest&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="LatestOpacusCheckpointer.maybe_checkpoint">
@@ -658,9 +659,7 @@
         <span class="k">def</span><span class="w"> </span><span class="nf">loss_score_function</span><span class="p">(</span><span class="n">loss</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">loss</span>
 
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">checkpoint_dir</span><span class="p">,</span> <span class="n">checkpoint_name</span><span class="p">,</span> <span class="n">checkpoint_score_function</span><span class="o">=</span><span class="n">loss_score_function</span><span class="p">,</span> <span class="n">maximize</span><span class="o">=</span><span class="kc">False</span>
-        <span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">checkpoint_dir</span><span class="p">,</span> <span class="n">checkpoint_name</span><span class="p">,</span> <span class="n">loss_score_function</span><span class="p">,</span> <span class="s2">&quot;Loss&quot;</span><span class="p">,</span> <span class="n">maximize</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="BestLossOpacusCheckpointer.maybe_checkpoint">

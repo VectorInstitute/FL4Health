@@ -322,6 +322,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.metrics.html">fl4health.metrics package</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of fl4health.metrics package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.base_metrics.html">fl4health.metrics.base_metrics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.compound_metrics.html">fl4health.metrics.compound_metrics module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metric_aggregation.html">fl4health.metrics.metric_aggregation module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metric_managers.html">fl4health.metrics.metric_managers module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics.html">fl4health.metrics.metrics module</a></li>
@@ -493,6 +494,7 @@
 <li class="toctree-l2"><a class="reference internal" href="fl4health.checkpointing.html#submodules">Submodules</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.checkpointer.html">fl4health.checkpointing.checkpointer module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.BestLossTorchModuleCheckpointer"><code class="docutils literal notranslate"><span class="pre">BestLossTorchModuleCheckpointer</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.BestMetricTorchModuleCheckpointer"><code class="docutils literal notranslate"><span class="pre">BestMetricTorchModuleCheckpointer</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.FunctionTorchModuleCheckpointer"><code class="docutils literal notranslate"><span class="pre">FunctionTorchModuleCheckpointer</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.LatestTorchModuleCheckpointer"><code class="docutils literal notranslate"><span class="pre">LatestTorchModuleCheckpointer</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer"><code class="docutils literal notranslate"><span class="pre">PerRoundStateCheckpointer</span></code></a></li>
@@ -775,17 +777,14 @@
 <li class="toctree-l3"><a class="reference internal" href="fl4health.metrics.html#fl4health.metrics.TorchMetric.update"><code class="docutils literal notranslate"><span class="pre">TorchMetric.update()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="fl4health.metrics.html#fl4health.metrics.TransformsMetric"><code class="docutils literal notranslate"><span class="pre">TransformsMetric</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.metrics.html#fl4health.metrics.TransformsMetric.__init__"><code class="docutils literal notranslate"><span class="pre">TransformsMetric.__init__()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.metrics.html#fl4health.metrics.TransformsMetric.clear"><code class="docutils literal notranslate"><span class="pre">TransformsMetric.clear()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.metrics.html#fl4health.metrics.TransformsMetric.compute"><code class="docutils literal notranslate"><span class="pre">TransformsMetric.compute()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.metrics.html#fl4health.metrics.TransformsMetric.update"><code class="docutils literal notranslate"><span class="pre">TransformsMetric.update()</span></code></a></li>
-</ul>
-</li>
 <li class="toctree-l2"><a class="reference internal" href="fl4health.metrics.html#submodules">Submodules</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.metrics.base_metrics.html">fl4health.metrics.base_metrics module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric"><code class="docutils literal notranslate"><span class="pre">Metric</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.MetricPrefix"><code class="docutils literal notranslate"><span class="pre">MetricPrefix</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.metrics.compound_metrics.html">fl4health.metrics.compound_metrics module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.TransformsMetric"><code class="docutils literal notranslate"><span class="pre">TransformsMetric</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.metrics.metric_aggregation.html">fl4health.metrics.metric_aggregation module</a><ul>
@@ -810,7 +809,6 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics.html#fl4health.metrics.metrics.ROC_AUC"><code class="docutils literal notranslate"><span class="pre">ROC_AUC</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics.html#fl4health.metrics.metrics.SimpleMetric"><code class="docutils literal notranslate"><span class="pre">SimpleMetric</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics.html#fl4health.metrics.metrics.TorchMetric"><code class="docutils literal notranslate"><span class="pre">TorchMetric</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics.html#fl4health.metrics.metrics.TransformsMetric"><code class="docutils literal notranslate"><span class="pre">TransformsMetric</span></code></a></li>
 </ul>
 </li>
 </ul>

@@ -320,6 +320,7 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/fl4health.metrics.html">fl4health.metrics package</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of fl4health.metrics package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.metrics.base_metrics.html">fl4health.metrics.base_metrics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.metrics.compound_metrics.html">fl4health.metrics.compound_metrics module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.metrics.metric_aggregation.html">fl4health.metrics.metric_aggregation module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.metrics.metric_managers.html">fl4health.metrics.metric_managers module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.metrics.metrics.html">fl4health.metrics.metrics module</a></li>
@@ -563,8 +564,20 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.metrics.metric_managers.html#fl4health.metrics.metric_managers.MetricManager.clear">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Clears metrics for each of the prediction type.</span>
+<span class="sd">        Clears data accumulated in each metric for each of the prediction type.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">metrics_for_prediction_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metrics_per_prediction_type</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics_for_prediction_type</span><span class="p">:</span>
+                <span class="n">metric</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="MetricManager.reset">
+<a class="viewcode-back" href="../../../reference/api/fl4health.metrics.metric_managers.html#fl4health.metrics.metric_managers.MetricManager.reset">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resets the metrics to their initial state.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># On next update, metrics will be recopied from self.original_metrics which are still in their initial state</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metrics_per_prediction_type</span> <span class="o">=</span> <span class="p">{}</span></div>
 
 
