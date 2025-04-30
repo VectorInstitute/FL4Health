@@ -17,9 +17,10 @@ from torch.utils.data import DataLoader
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.moon_client import MoonClient
+from fl4health.metrics import BinarySoftDiceCoefficient
+from fl4health.metrics.base_metrics import Metric
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import BinarySoftDiceCoefficient, Metric
 from fl4health.utils.random import set_all_random_seeds
 from research.flamby.fed_ixi.moon.moon_model import FedIxiMoonModel
 from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datasets

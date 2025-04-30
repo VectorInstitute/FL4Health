@@ -10,9 +10,9 @@ from torch.optim.lr_scheduler import LRScheduler
 if TYPE_CHECKING:
     from fl4health.clients.basic_client import BasicClient
 
+from fl4health.metrics.metric_managers import MetricManager
 from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.utils.losses import LossMeter
-from fl4health.utils.metrics import MetricManager
 
 T = TypeVar("T")
 

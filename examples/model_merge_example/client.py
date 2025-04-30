@@ -9,9 +9,9 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
 from fl4health.clients.model_merge_client import ModelMergeClient
+from fl4health.metrics import Accuracy
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_mnist_test_data
-from fl4health.utils.metrics import Accuracy
 
 
 class MnistModelMergeClient(ModelMergeClient):

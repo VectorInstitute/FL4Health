@@ -12,9 +12,9 @@ from flwr.common.typing import Config, Scalar
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+from fl4health.metrics.base_metrics import MetricPrefix
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.logging import LoggingMode
-from fl4health.utils.metrics import MetricPrefix
 from fl4health.utils.typing import TorchInputType, TorchTargetType
 
 T = TypeVar("T", TorchInputType, TorchTargetType)

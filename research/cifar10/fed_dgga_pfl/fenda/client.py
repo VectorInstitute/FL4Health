@@ -15,11 +15,12 @@ from torch.utils.data import DataLoader
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.fenda_client import FendaClient
+from fl4health.metrics import F1, Accuracy
+from fl4health.metrics.base_metrics import Metric
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import F1, Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
 from research.cifar10.model import ConvNetFendaModel
 from research.cifar10.preprocess import get_preprocessed_data

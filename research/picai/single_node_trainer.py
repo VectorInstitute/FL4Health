@@ -11,7 +11,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, PerRoundStateCheckpointer
-from fl4health.utils.metrics import MetricManager
+from fl4health.metrics.metric_managers import MetricManager
 
 
 class SingleNodeTrainer:

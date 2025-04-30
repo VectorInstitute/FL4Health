@@ -17,9 +17,10 @@ from torch.utils.data import DataLoader
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.perfcl_client import PerFclClient
+from fl4health.metrics import Accuracy
+from fl4health.metrics.base_metrics import Metric
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
 from research.flamby.fed_heart_disease.perfcl.perfcl_model import FedHeartDiseasePerFclModel
 from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets

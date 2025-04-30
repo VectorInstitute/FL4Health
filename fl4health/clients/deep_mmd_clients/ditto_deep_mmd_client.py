@@ -10,11 +10,11 @@ from flwr.common.typing import Config, Scalar
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointAndStateModule
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.losses.deep_mmd_loss import DeepMmdLoss
+from fl4health.metrics.base_metrics import Metric
 from fl4health.model_bases.feature_extractor_buffer import FeatureExtractorBuffer
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.client import clone_and_freeze_model
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
-from fl4health.utils.metrics import Metric
 from fl4health.utils.random import restore_random_state, save_random_state
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 

@@ -6,7 +6,7 @@ from flamby.datasets.fed_isic2019 import BATCH_SIZE, NUM_CLIENTS, FedIsic2019
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
 
-from fl4health.utils.metrics import BalancedAccuracy
+from fl4health.metrics import BalancedAccuracy
 from research.flamby.utils import (
     evaluate_fed_isic_model,
     get_all_run_folders,
