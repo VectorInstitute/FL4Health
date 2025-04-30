@@ -7,7 +7,7 @@ import torch
 from flwr.common.logger import log
 
 from fl4health.datasets.rxrx1.load_data import load_rxrx1_test_data
-from fl4health.metrics.metrics import Accuracy
+from fl4health.metrics import Accuracy
 from fl4health.utils.dataset import TensorDataset
 from research.rxrx1.utils import (
     evaluate_rxrx1_model,

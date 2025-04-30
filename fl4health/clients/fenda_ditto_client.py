@@ -8,7 +8,7 @@ from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.ditto_client import DittoClient
-from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics.base_metrics import Metric
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.sequential_split_models import SequentiallySplitModel
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking

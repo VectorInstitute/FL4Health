@@ -6,7 +6,7 @@ from flwr.common.typing import Metrics, Scalar
 from sklearn import metrics as sklearn_metrics
 from torchmetrics import Metric as TMetric
 
-from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics.base_metrics import Metric
 
 
 class TorchMetric(Metric):

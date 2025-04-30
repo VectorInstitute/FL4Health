@@ -1,8 +1,26 @@
 import torch
+from flwr.common.typing import Scalar
 from pytest import approx
+from sklearn import metrics as sklearn_metrics
 
 from fl4health.metrics.compound_metrics import TransformsMetric
-from fl4health.metrics.metrics import Accuracy
+from fl4health.metrics.metrics import SimpleMetric
+
+
+class AccuracyForTest(SimpleMetric):
+    """
+    Accuracy class strictly reserved for testing the TransformsMetric. More strongly decouples the test from any
+    of our metrics implementations
+    """
+
+    def __init__(self, name: str = "accuracy"):
+        super().__init__(name)
+
+    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
+        preds = (logits > 0.5).int()
+        target = target.cpu().detach()
+        preds = preds.cpu().detach()
+        return sklearn_metrics.accuracy_score(target, preds)
 
 
 def test_none_transform_metric_computation() -> None:
@@ -15,7 +33,7 @@ def test_none_transform_metric_computation() -> None:
     preds_3 = torch.Tensor([0.19, 0.75, 0.26, 0.49])
     targets_3 = torch.Tensor([1.0, 0.0, 1.0, 0.0])
 
-    accuracy_metric = Accuracy("accuracy")
+    accuracy_metric = AccuracyForTest("accuracy")
     transform_accuracy_metric = TransformsMetric(accuracy_metric, None, None)
 
     # First accumulate two batches of updates before computation
@@ -46,7 +64,7 @@ def test_identity_transforms_metric_computation() -> None:
     preds_3 = torch.Tensor([0.19, 0.75, 0.26, 0.49])
     targets_3 = torch.Tensor([1.0, 0.0, 1.0, 0.0])
 
-    accuracy_metric = Accuracy("accuracy")
+    accuracy_metric = AccuracyForTest("accuracy")
     transform_accuracy_metric = TransformsMetric(
         accuracy_metric, [lambda x: x, lambda x: x], [lambda x: x, lambda x: x]
     )
@@ -87,7 +105,7 @@ def test_multiple_transforms_metric_computation() -> None:
     preds_3 = torch.Tensor([0.19, 0.75, 0.26, 0.49])
     targets_3 = torch.Tensor([1.0, 0.0, 1.0, 0.0])
 
-    accuracy_metric = Accuracy("accuracy")
+    accuracy_metric = AccuracyForTest("accuracy")
     transform_accuracy_metric = TransformsMetric(
         accuracy_metric,
         [lambda x: x + 1.0, lambda x: binarize(x)],
@@ -122,7 +140,7 @@ def test_transforms_changing_metric_computation() -> None:
     preds_3 = torch.Tensor([0.19, 0.75, 0.26, 0.49])
     targets_3 = torch.Tensor([1.0, 0.0, 1.0, 0.0])
 
-    accuracy_metric = Accuracy("accuracy")
+    accuracy_metric = AccuracyForTest("accuracy")
     transform_accuracy_metric = TransformsMetric(
         accuracy_metric,
         [lambda x: x + 1.0],

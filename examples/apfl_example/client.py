@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from fl4health.clients.apfl_client import ApflClient
-from fl4health.metrics.metrics import Accuracy
+from fl4health.metrics import Accuracy
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.reporting import JsonReporter
 from fl4health.utils.config import narrow_dict_type

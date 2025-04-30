@@ -1,8 +1,8 @@
 import pytest
 import torch
 
+from fl4health.metrics import F1, Accuracy
 from fl4health.metrics.metric_managers import MetricManager
-from fl4health.metrics.metrics import F1, Accuracy
 
 
 def get_logits_and_targets() -> tuple[list[torch.Tensor], list[torch.Tensor]]:

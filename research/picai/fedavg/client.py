@@ -16,8 +16,8 @@ from torchmetrics.classification import MultilabelAveragePrecision
 from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
-from fl4health.metrics.metrics import TorchMetric
-from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics import TorchMetric
+from fl4health.metrics.base_metrics import Metric
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType
 from research.picai.data.data_utils import (
