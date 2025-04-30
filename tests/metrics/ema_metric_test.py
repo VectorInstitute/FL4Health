@@ -2,9 +2,9 @@ import torch
 from flwr.common.typing import Metrics
 from pytest import LogCaptureFixture, approx
 
+from fl4health.metrics import Accuracy
+from fl4health.metrics.base_metrics import Metric
 from fl4health.metrics.compound_metrics import EmaMetric
-from fl4health.metrics.metrics import Accuracy
-from fl4health.metrics.metrics_base import Metric
 
 
 class DummyMetric(Metric):

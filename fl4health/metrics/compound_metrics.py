@@ -29,7 +29,8 @@ class EmaMetric(Metric, Generic[T]):
             name (str | None, optional): Name of the EMAMetric. If left as None will default to 'EMA_{metric.name}'.
 
         """
-        self.metric = metric
+        # Create a copy of the metrics object so that we do not inadvertently change the provided object elsewhere
+        self.metric = copy.deepcopy(metric)
         assert 0.0 <= smoothing_factor <= 1.0, f"smoothing_factor should be in [0, 1] but was {smoothing_factor}"
         self.smoothing_factor = smoothing_factor
         self.previous_score: Metrics | None = None
@@ -115,7 +116,8 @@ class TransformsMetric(Metric, Generic[T]):
                 apply to the targets before computing the metrics. Each callable must accept and return a
                 ``torch.Tensor``. Use partial to set other arguments.
         """
-        self.metric = metric
+        # Create a copy of the metrics object so that we do not inadvertently change the provided object elsewhere
+        self.metric = copy.deepcopy(metric)
         self.pred_transforms = [] if pred_transforms is None else pred_transforms
         self.target_transforms = [] if target_transforms is None else target_transforms
         super().__init__(name=self.metric.name)

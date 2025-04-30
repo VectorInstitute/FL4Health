@@ -3,8 +3,8 @@ from flwr.common.typing import Scalar
 from pytest import approx
 from sklearn import metrics as sklearn_metrics
 
+from fl4health.metrics import SimpleMetric
 from fl4health.metrics.compound_metrics import TransformsMetric
-from fl4health.metrics.metrics import SimpleMetric
 
 
 class AccuracyForTest(SimpleMetric):
