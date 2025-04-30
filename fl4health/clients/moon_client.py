@@ -8,7 +8,7 @@ from flwr.common.logger import log
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient, Config
 from fl4health.losses.contrastive_loss import MoonContrastiveLoss
-from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics.base_metrics import Metric
 from fl4health.model_bases.sequential_split_models import SequentiallySplitModel
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.client import clone_and_freeze_model

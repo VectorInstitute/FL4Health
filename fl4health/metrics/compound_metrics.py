@@ -4,7 +4,7 @@ from typing import Generic, TypeVar
 import torch
 from flwr.common.typing import Metrics
 
-from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics.base_metrics import Metric
 from fl4health.utils.typing import TorchTransformFunction
 
 T = TypeVar("T", bound=Metric)

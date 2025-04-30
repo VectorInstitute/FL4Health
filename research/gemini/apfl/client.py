@@ -11,7 +11,7 @@ from flwr.common.typing import Config, NDArrays, Scalar
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.clients.apfl_client import ApflClient
-from fl4health.metrics.metrics import AccumulationMeter, Meter, Metric
+from fl4health.metrics import AccumulationMeter, Meter, Metric
 from fl4health.model_bases.apfl_base import APFLModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from research.gemini.delirium_models.NN import NN as delirium_model

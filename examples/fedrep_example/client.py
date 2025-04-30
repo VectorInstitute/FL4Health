@@ -14,7 +14,7 @@ from examples.models.sequential_split_models import (
     SequentialLocalPredictionHeadCifar,
 )
 from fl4health.clients.fedrep_client import FedRepClient
-from fl4health.metrics.metrics import Accuracy
+from fl4health.metrics import Accuracy
 from fl4health.model_bases.fedrep_base import FedRepModel
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_cifar10_data

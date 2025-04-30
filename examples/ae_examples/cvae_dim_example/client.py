@@ -13,8 +13,8 @@ from torch.utils.data import DataLoader
 
 from examples.models.mnist_model import MnistNet
 from fl4health.clients.basic_client import BasicClient
-from fl4health.metrics.metrics import Accuracy
-from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics import Accuracy
+from fl4health.metrics.base_metrics import Metric
 from fl4health.preprocessing.autoencoders.dim_reduction import CvaeFixedConditionProcessor
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import ToNumpy, load_mnist_data

@@ -28,8 +28,8 @@ from examples.fedllm_example.zero_utils import (
     safe_save_model_for_zero3,
 )
 from fl4health.clients.basic_client import BasicClient
-from fl4health.metrics.metrics import Accuracy
-from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics import Accuracy
+from fl4health.metrics.base_metrics import Metric
 from fl4health.reporting import JsonReporter
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.random import set_all_random_seeds
