@@ -17,8 +17,8 @@ from torch.utils.data import DataLoader
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.apfl_client import ApflClient
-from fl4health.metrics.metrics import BalancedAccuracy
-from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics import BalancedAccuracy
+from fl4health.metrics.base_metrics import Metric
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType

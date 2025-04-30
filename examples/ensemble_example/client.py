@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 
 from examples.models.ensemble_cnn import ConfigurableMnistNet
 from fl4health.clients.ensemble_client import EnsembleClient
-from fl4health.metrics.metrics import Accuracy
+from fl4health.metrics import Accuracy
 from fl4health.model_bases.ensemble_base import EnsembleModel
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_mnist_data

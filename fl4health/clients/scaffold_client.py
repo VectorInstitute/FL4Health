@@ -11,7 +11,7 @@ from opacus.optimizers.optimizer import DPOptimizer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.clients.instance_level_dp_client import InstanceLevelDpClient
-from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics.base_metrics import Metric
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger

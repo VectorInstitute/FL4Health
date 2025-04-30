@@ -7,8 +7,8 @@ from flamby.datasets.fed_heart_disease import BATCH_SIZE, LR, NUM_EPOCHS_POOLED,
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
 
+from fl4health.metrics import Accuracy
 from fl4health.metrics.metric_managers import MetricManager
-from fl4health.metrics.metrics import Accuracy
 from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
 from research.flamby.single_node_trainer import SingleNodeTrainer
 from research.flamby.utils import summarize_model_info

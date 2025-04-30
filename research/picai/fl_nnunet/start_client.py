@@ -20,7 +20,7 @@ from flwr.common.logger import log, update_console_handler
 from torchmetrics.segmentation import DiceScore, GeneralizedDiceScore
 
 from fl4health.clients.nnunet_client import NnunetClient
-from fl4health.metrics.metrics import TorchMetric, TransformsMetric
+from fl4health.metrics import TorchMetric, TransformsMetric
 from fl4health.utils.nnunet_utils import collapse_one_hot_tensor, get_segs_from_probs
 
 

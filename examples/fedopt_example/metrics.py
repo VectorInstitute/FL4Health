@@ -9,7 +9,7 @@ from flwr.common.typing import Metrics
 from sklearn.metrics import confusion_matrix
 
 from examples.fedopt_example.client_data import LabelEncoder
-from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics.base_metrics import Metric
 
 
 class Outcome:

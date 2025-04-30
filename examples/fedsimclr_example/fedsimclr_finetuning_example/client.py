@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 
 from examples.models.ssl_models import CifarSslEncoder, CifarSslPredictionHead, CifarSslProjectionHead
 from fl4health.clients.basic_client import BasicClient
-from fl4health.metrics.metrics import Accuracy
+from fl4health.metrics import Accuracy
 from fl4health.model_bases.fedsimclr_base import FedSimClrModel
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.dataset import TensorDataset

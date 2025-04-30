@@ -11,7 +11,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from fl4health.clients.scaffold_client import InstanceLevelDpClient
-from fl4health.metrics.metrics import Accuracy
+from fl4health.metrics import Accuracy
 from fl4health.utils.dataset import BaseDataset
 from fl4health.utils.privacy_utilities import privacy_validate_and_fix_modules
 from tests.clients.fixtures import get_client  # noqa

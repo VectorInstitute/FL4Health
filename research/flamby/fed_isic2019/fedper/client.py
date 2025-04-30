@@ -17,8 +17,8 @@ from torch.utils.data import DataLoader
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.moon_client import MoonClient
-from fl4health.metrics.metrics import BalancedAccuracy
-from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics import BalancedAccuracy
+from fl4health.metrics.base_metrics import Metric
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
