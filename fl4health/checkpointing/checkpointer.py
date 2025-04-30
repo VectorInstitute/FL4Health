@@ -303,7 +303,13 @@ class BestMetricTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
                 raise e
             return val_float
 
-        super().__init__(checkpoint_dir, checkpoint_name, metric_score_function, metric, maximize)
+        super().__init__(
+            checkpoint_dir=checkpoint_dir,
+            checkpoint_name=checkpoint_name,
+            checkpoint_score_function=metric_score_function,
+            checkpoint_score_name=metric,
+            maximize=maximize,
+        )
 
 
 class PerRoundStateCheckpointer:
