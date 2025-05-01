@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 
 from examples.ae_examples.cvae_examples.conv_cvae_example.models import ConvConditionalDecoder, ConvConditionalEncoder
 from fl4health.clients.basic_client import BasicClient
-from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics.base_metrics import Metric
 from fl4health.model_bases.autoencoders_base import ConditionalVae
 from fl4health.preprocessing.autoencoders.loss import VaeLoss
 from fl4health.utils.config import narrow_dict_type

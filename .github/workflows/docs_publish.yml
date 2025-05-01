@@ -8,8 +8,6 @@ on:
       - .pre-commit-config.yaml
       - .github/workflows/code_checks.yml
       - .github/workflows/docs_build.yml
-      - .github/workflows/docs_deploy.yml
-      - .github/workflows/integration_tests.yml
       - '**.py'
       - '**.ipynb'
       - '**.html'
@@ -23,6 +21,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write  # Work with github pages
     steps:
       - uses: actions/checkout@v4.2.0
         with:

@@ -7,8 +7,8 @@ from flamby.datasets.fed_ixi import BATCH_SIZE, LR, NUM_EPOCHS_POOLED, Baseline,
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
 
+from fl4health.metrics import BinarySoftDiceCoefficient
 from fl4health.metrics.metric_managers import MetricManager
-from fl4health.metrics.metrics import BinarySoftDiceCoefficient
 from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datasets
 from research.flamby.single_node_trainer import SingleNodeTrainer
 from research.flamby.utils import summarize_model_info

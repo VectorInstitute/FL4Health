@@ -6,8 +6,8 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
+from fl4health.metrics.base_metrics import Metric
 from fl4health.metrics.metric_managers import MetricManager
-from fl4health.metrics.metrics_base import Metric
 
 
 def get_all_run_folders(artifact_dir: str) -> list[str]:

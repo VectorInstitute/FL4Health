@@ -7,7 +7,7 @@ import torch
 from flwr.common.logger import log
 from flwr.common.typing import Metrics
 
-from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics.base_metrics import Metric
 from fl4health.utils.typing import TorchTransformFunction
 
 T = TypeVar("T", bound=Metric)
@@ -19,17 +19,42 @@ class EmaMetric(Metric, Generic[T]):
         Exponential Moving Average (EMA) metric wrapper to apply EMA to the underlying metric.
 
         NOTE: If the underlying metric accumulates batches during update, then updating this metric without clearing
-        in between will result in previously seen inputs and targets being a part of subsequent computes
-        (i.e. present in both previous scores and current score).
+        in between will result in previously seen inputs and targets being a part of subsequent computations. For
+        example, if we use Accuracy from fl4health.metrics, which accumulates batches
+
+        .. code-block:: python
+
+            from fl4health.metrics import Accuracy
+
+            ema = EmaMetric(Accuracy(), 0.1)
+
+            preds_1 = torch.Tensor([1, 0, 1]), targets_1 = torch.Tensor([1, 1, 1])
+
+            ema.update(preds_1, targets_1)
+
+            ema.compute() -> 0.667
+
+            preds_2 = torch.Tensor([1, 0, 1]), targets_1 = torch.Tensor([0, 0, 1])
+
+            # If no clear before update (new accuracy is computed using both pred_1 and pred_2)
+
+            ema.update(preds_2, targets_2) = 0.9(0.667) + 0.1 (0.5)
+
+            # If no clear before update (new accuracy is computed using pred_2)
+
+            ema.clear()
+
+            ema.update(preds_2, targets_2 = 0.9(0.667) + 0.1(0.333)
 
         Args:
-            metric (T): A FL4Health compatible metric
+            metric (T): An FL4Health compatible metric
             smoothing_factor (float, optional): Smoothing factor in range [0, 1] for the EMA. Smaller values increase
                 smoothing by weighting previous scores more heavily. Defaults to 0.1.
             name (str | None, optional): Name of the EMAMetric. If left as None will default to 'EMA_{metric.name}'.
 
         """
-        self.metric = metric
+        # Create a copy of the metrics object so that we do not inadvertently change the provided object elsewhere
+        self.metric = copy.deepcopy(metric)
         assert 0.0 <= smoothing_factor <= 1.0, f"smoothing_factor should be in [0, 1] but was {smoothing_factor}"
         self.smoothing_factor = smoothing_factor
         self.previous_score: Metrics | None = None
@@ -81,10 +106,10 @@ class EmaMetric(Metric, Generic[T]):
     def _drop_str_or_bytes_scores_and_store(self, metrics_dict: Metrics) -> None:
         self.previous_score = {}
         for key, score in metrics_dict.items():
-            if isinstance(score, (str, bytes)):
+            if not isinstance(score, (int, float)):
                 log(
                     WARNING,
-                    "EMAMetric is not compatible with str or bytes metrics, but metrics contains a value with "
+                    "EMAMetric is only compatible with float or int metrics, but metrics contains a value with "
                     f"type: {type(score)} at key: {key}. These values will be ignored in subsequent computations.",
                 )
             else:
@@ -115,7 +140,8 @@ class TransformsMetric(Metric, Generic[T]):
                 apply to the targets before computing the metrics. Each callable must accept and return a
                 ``torch.Tensor``. Use partial to set other arguments.
         """
-        self.metric = metric
+        # Create a copy of the metrics object so that we do not inadvertently change the provided object elsewhere
+        self.metric = copy.deepcopy(metric)
         self.pred_transforms = [] if pred_transforms is None else pred_transforms
         self.target_transforms = [] if target_transforms is None else target_transforms
         super().__init__(name=self.metric.name)

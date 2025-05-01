@@ -11,8 +11,8 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
 from fl4health.clients.evaluate_client import EvaluateClient
-from fl4health.metrics.metrics import Accuracy
-from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics import Accuracy
+from fl4health.metrics.base_metrics import Metric
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_cifar10_test_data

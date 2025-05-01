@@ -10,7 +10,7 @@ from flwr.common.typing import Config
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.fenda_client import FendaClient
 from fl4health.losses.fenda_loss_config import ConstrainedFendaLossContainer
-from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics.base_metrics import Metric
 from fl4health.model_bases.fenda_base import FendaModelWithFeatureState
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter

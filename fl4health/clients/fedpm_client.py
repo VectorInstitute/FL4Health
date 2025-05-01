@@ -6,7 +6,7 @@ from flwr.common.typing import Config
 
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
-from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics.base_metrics import Metric
 from fl4health.model_bases.masked_layers.masked_layers_utils import convert_to_masked_model
 from fl4health.parameter_exchange.fedpm_exchanger import FedPmExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
