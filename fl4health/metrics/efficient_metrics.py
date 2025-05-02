@@ -98,9 +98,29 @@ class MultiClassDice(MultiClassificationMetric):
         self,
         true_positives: torch.Tensor,
         false_positives: torch.Tensor,
-        false_negatives: torch.Tensor,
         true_negatives: torch.Tensor,
+        false_negatives: torch.Tensor,
     ) -> Metrics:
+        """
+        Computes a multi-class Dice score, defined to be the mean Dice score across all labels in the multi-class
+        problem. This score is computed relative the outcome counts provided in the form of true positives (TP),
+        false positives (FP), and false negatives (FN). Because Dice scores don't factor in true negatives, this
+        argument is unused. For a set of counts, the Dice score for a particular label is 2*TP/(2*TP + FP + FN). For
+        this class, counts are assumed to have shape (num_labels,) or (num_samples, num_labels). In the former, a
+        single Dice score is computed relative to the counts for each label and then AVERAGED. In the latter, an
+        AVERAGE dice score over both the samples AND labels computed. The second setting is useful, for example, if
+        you are computing the Dice score per image and then averaging. The first setting is useful, for example, if
+        you want to treat all examples as a SINGLE image.
+
+        Args:
+            true_positives (torch.Tensor): Counts associated with positive predictions and positive labels
+            false_positives (torch.Tensor): Counts associated with positive predictions and negative labels
+            true_negatives (torch.Tensor): Counts associated with negative predictions and negative labels
+            false_negatives (torch.Tensor): Counts associated with negative predictions and positive labels
+
+        Returns:
+            Metrics: A mean dice score associated with the counts
+        """
         # compute dice coefficients and return mean
         dice = compute_dice_on_count_tensors(true_positives, false_positives, false_negatives, self.zero_division)
         if dice.numel() == 0:
@@ -108,6 +128,16 @@ class MultiClassDice(MultiClassificationMetric):
         return {self.name: torch.mean(dice).item()}
 
     def __call__(self, input: torch.Tensor, target: torch.Tensor) -> Scalar:
+        """
+        Computes the Dice score relative to the single input and target tensors provided
+
+        Args:
+            input (torch.Tensor): predictions tensor
+            target (torch.Tensor): target tensor
+
+        Returns:
+            Scalar: Mean dice score for the provided tensors
+        """
         true_positives, false_positives, false_negatives, _ = self.count_tp_fp_fn_tn(input, target)
         dice = compute_dice_on_count_tensors(true_positives, false_positives, false_negatives, self.zero_division)
         if dice.numel() == 0:
@@ -202,9 +232,28 @@ class BinaryDice(BinaryClassificationMetric):
         self,
         true_positives: torch.Tensor,
         false_positives: torch.Tensor,
-        false_negatives: torch.Tensor,
         true_negatives: torch.Tensor,
+        false_negatives: torch.Tensor,
     ) -> Metrics:
+        """
+        Computes a binary Dice score associated with the outcome counts provided in the form of true positives (TP),
+        false positives (FP), and false negatives (FN). Because Dice scores don't factor in true negatives, this
+        argument is unused. For a set of counts, the binary Dice score is 2*TP/(2*TP + FP + FN). For this class
+        it is assumed that all counts are presented relative to the class indicated by the `pos_label` index.
+        Moreover, they are assumed to either have a single entry or have shape (num_samples, 1). In the former, a
+        single Dice score is computed relative to the counts. In the latter, a MEAN dice score over the samples is
+        computed. The second setting is useful, for example, if you are computing the Dice score per image and then
+        averaging. The first setting is useful, for example, if you want to treat all examples as a SINGLE image.
+
+        Args:
+            true_positives (torch.Tensor): Counts associated with positive predictions and positive labels
+            false_positives (torch.Tensor): Counts associated with positive predictions and negative labels
+            true_negatives (torch.Tensor): Counts associated with negative predictions and negative labels
+            false_negatives (torch.Tensor): Counts associated with negative predictions and positive labels
+
+        Returns:
+            Metrics: A mean dice score associated with the counts
+        """
         # compute dice coefficients and return mean
         dice = compute_dice_on_count_tensors(true_positives, false_positives, false_negatives, self.zero_division)
         if dice.numel() == 0:
@@ -212,6 +261,16 @@ class BinaryDice(BinaryClassificationMetric):
         return {self.name: torch.mean(dice).item()}
 
     def __call__(self, input: torch.Tensor, target: torch.Tensor) -> Scalar:
+        """
+        Computes the Dice score relative to the single input and target tensors provided
+
+        Args:
+            input (torch.Tensor): predictions tensor
+            target (torch.Tensor): target tensor
+
+        Returns:
+            Scalar: Mean dice score for the provided tensors
+        """
         true_positives, false_positives, false_negatives, _ = self.count_tp_fp_fn_tn(input, target)
         dice = compute_dice_on_count_tensors(true_positives, false_positives, false_negatives, self.zero_division)
         if dice.numel() == 0:

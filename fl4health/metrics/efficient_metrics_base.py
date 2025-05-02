@@ -254,8 +254,8 @@ class ClassificationMetric(Metric, ABC):
         metrics = self.compute_from_counts(
             true_positives=self.true_positives,
             false_positives=self.false_positives,
-            false_negatives=self.false_negatives,
             true_negatives=self.true_negatives,
+            false_negatives=self.false_negatives,
         )
         if name is not None:
             metrics = {f"{name} - {k}": v for k, v in metrics.items()}
@@ -265,17 +265,40 @@ class ClassificationMetric(Metric, ABC):
     def count_tp_fp_fn_tn(
         self, preds: torch.Tensor, targets: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def compute_from_counts(
         self,
         true_positives: torch.Tensor,
         false_positives: torch.Tensor,
-        false_negatives: torch.Tensor,
         true_negatives: torch.Tensor,
+        false_negatives: torch.Tensor,
     ) -> Metrics:
-        pass
+        """
+        Provided tensors associated with the various outcomes from predictions compared to targets in the form of
+        true positives, false positives, true negatives, and false negatives, returns a dictionary of Scalar metrics.
+        For example, one might compute recall as true_positives/(true_positives + false_negatives). The shape of these
+        tensors is likely specific to the kind of classification being done (multi-class vs. binary) and the way
+        predictions and targets have been provided etc.
+
+        Args:
+            true_positives (torch.Tensor): Counts associated with positive predictions of a class and true positives
+                for that class
+            false_positives (torch.Tensor): Counts associated with positive predictions of a class and true negatives
+                for that class
+            true_negatives (torch.Tensor): Counts associated with negative predictions of a class and true negatives
+                for that class
+            false_negatives (torch.Tensor): Counts associated with negative predictions of a class and true positives
+                for that class
+
+        Raises:
+            NotImplementedError: Must be implemented by the inheriting class
+
+        Returns:
+            Metrics: Metrics computed from the provided outcome counts
+        """
+        raise NotImplementedError
 
 
 class BinaryClassificationMetric(ClassificationMetric):
@@ -526,9 +549,34 @@ class BinaryClassificationMetric(ClassificationMetric):
         self,
         true_positives: torch.Tensor,
         false_positives: torch.Tensor,
-        false_negatives: torch.Tensor,
         true_negatives: torch.Tensor,
+        false_negatives: torch.Tensor,
     ) -> Metrics:
+        """
+        Provided tensors associated with the various outcomes from predictions compared to targets in the form of
+        true positives, false positives, true negatives, and false negatives, returns a dictionary of Scalar metrics.
+        For example, one might compute recall as true_positives/(true_positives + false_negatives). The shape of these
+        tensors are specific to how this object is configured, see class documentation above.
+
+        For this class it is assumed that all counts are presented relative to the class indicated by the `pos_label`
+        index. Moreover, they are assumed to either have a single entry or have shape (num_samples, 1). In the former,
+        a single count is presented ACROSS all samples relative to the `pos_label` specified. In the latter, counts
+        are computed WITHIN each sample, but held separate across samples. A concrete setting where this makes sense
+        is binary image segmentation. You can have such counts summed for all pixels within an image, but separate
+        per image. A metric could then be computed for each image and then averaged.
+
+        Args:
+            true_positives (torch.Tensor): Counts associated with positive predictions and positive labels
+            false_positives (torch.Tensor): Counts associated with positive predictions and negative labels
+            true_negatives (torch.Tensor): Counts associated with negative predictions and negative labels
+            false_negatives (torch.Tensor): Counts associated with negative predictions and positive labels
+
+        Raises:
+            NotImplementedError: Must be implemented by the inheriting class
+
+        Returns:
+            Metrics: Metrics computed from the provided outcome counts
+        """
         raise NotImplementedError
 
     def __call__(self, input: torch.Tensor, target: torch.Tensor) -> Scalar:
@@ -662,7 +710,7 @@ class MultiClassificationMetric(ClassificationMetric):
         return preds, targets
 
     @classmethod
-    def _transpose_matrix_unless_empty(cls, matrix: torch.Tensor) -> torch.Tensor:
+    def _transpose_2d_matrix_unless_empty(cls, matrix: torch.Tensor) -> torch.Tensor:
         """
         Helper function to transpose the provided matrix if it is 2D. This is mainly used to put the batch dimension
         before the label dimension if required. The tensor might be empty if it corresponds to a discarded outcome
@@ -771,10 +819,10 @@ class MultiClassificationMetric(ClassificationMetric):
         # If batch dim is larger than label_dim, then we re-order them so that batch_dim comes first after summation
         if self.batch_dim is not None and self.batch_dim > self.label_dim:
             return (
-                self._transpose_matrix_unless_empty(true_positives),
-                self._transpose_matrix_unless_empty(false_positives),
-                self._transpose_matrix_unless_empty(false_negatives),
-                self._transpose_matrix_unless_empty(true_negatives),
+                self._transpose_2d_matrix_unless_empty(true_positives),
+                self._transpose_2d_matrix_unless_empty(false_positives),
+                self._transpose_2d_matrix_unless_empty(false_negatives),
+                self._transpose_2d_matrix_unless_empty(true_negatives),
             )
 
         return true_positives, false_positives, false_negatives, true_negatives
@@ -783,9 +831,38 @@ class MultiClassificationMetric(ClassificationMetric):
         self,
         true_positives: torch.Tensor,
         false_positives: torch.Tensor,
-        false_negatives: torch.Tensor,
         true_negatives: torch.Tensor,
+        false_negatives: torch.Tensor,
     ) -> Metrics:
+        """
+        Provided tensors associated with the various outcomes from predictions compared to targets in the form of
+        true positives, false positives, true negatives, and false negatives, returns a dictionary of Scalar metrics.
+        For example, one might compute recall as true_positives/(true_positives + false_negatives). The shape of these
+        tensors is The shape of these tensors are specific to how this object is configured, see class documentation
+        above.
+
+        For this class, counts are assumed to have shape (num_labels,) or (num_samples, num_labels). In the former,
+        counts have been aggregated ACROSS samples into single count values for each possible label. In the later,
+        counts have been aggregated WITHIN each sample and remain separate across examples. A concrete setting where
+        this makes sense is image segmentation. You can have such counts summed for all pixels within an image, but
+        separate per image. A metric could then be computed for each image and then averaged.
+
+        Args:
+            true_positives (torch.Tensor): Counts associated with positive predictions of a class and true positives
+                for that class
+            false_positives (torch.Tensor): Counts associated with positive predictions of a class and true negatives
+                for that class
+            true_negatives (torch.Tensor): Counts associated with negative predictions of a class and true negatives
+                for that class
+            false_negatives (torch.Tensor): Counts associated with negative predictions of a class and true positives
+                for that class
+
+        Raises:
+            NotImplementedError: Must be implemented by the inheriting class
+
+        Returns:
+            Metrics: Metrics computed from the provided outcome counts
+        """
         raise NotImplementedError
 
     def __call__(self, input: torch.Tensor, target: torch.Tensor) -> Scalar:

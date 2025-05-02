@@ -5,6 +5,7 @@ import torch
 
 from fl4health.metrics.efficient_metrics_base import MetricOutcome, MultiClassificationMetric
 from fl4health.metrics.metrics_utils import threshold_tensor
+from fl4health.utils.random import set_all_random_seeds
 
 
 def test_tensor_thresholding() -> None:
@@ -36,7 +37,7 @@ def test_remove_background() -> None:
 
 
 def test_classification_metric_counts() -> None:
-    torch.manual_seed(42)
+    set_all_random_seeds(42)
 
     logits = torch.Tensor(
         [

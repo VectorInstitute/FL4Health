@@ -4,10 +4,11 @@ import torch
 from pytest import approx
 
 from fl4health.metrics.efficient_metrics import MultiClassDice
+from fl4health.utils.random import set_all_random_seeds
 
 
 def test_multi_dice_metric_with_threshold() -> None:
-    torch.manual_seed(42)
+    set_all_random_seeds(42)
 
     dice = MultiClassDice(name="DICE", label_dim=2, batch_dim=0, threshold=2, zero_division=None)
 
@@ -65,7 +66,7 @@ def test_multi_dice_metric_with_threshold() -> None:
 
 
 def test_multi_dice_metric_ignore_background() -> None:
-    torch.manual_seed(42)
+    set_all_random_seeds(42)
 
     dice = MultiClassDice(name="DICE", label_dim=2, batch_dim=0, threshold=2, ignore_background=2, zero_division=None)
 
@@ -98,7 +99,7 @@ def test_multi_dice_metric_ignore_background() -> None:
 
 
 def test_continuous_multi_dice_metric() -> None:
-    torch.manual_seed(42)
+    set_all_random_seeds(42)
 
     logits = torch.rand((2, 3, 3))
     targets = torch.rand((2, 3, 3))
@@ -112,17 +113,12 @@ def test_continuous_multi_dice_metric() -> None:
     tp1 = [[0, 0.9150, 0.6009], [0.8694 + 0.4294, 0.9346, 0.7411 + 0.5739]]
     fp1 = [[0.8823 + 0.9593 + 0.2566, 0.3904 + 0.7936, 0.3829 + 0.9408], [0.1332, 0.5677 + 0.8854, 0.5936]]
     fn1 = [[0, (1 - 0.9150), (1 - 0.6009)], [(1 - 0.8694) + (1 - 0.4294), (1 - 0.9346), (1 - 0.7411) + (1 - 0.5739)]]
-    dice_target_11 = (2 * tp1[0][0]) / (2 * tp1[0][0] + fp1[0][0] + fn1[0][0])
-    dice_target_12 = (2 * tp1[0][1]) / (2 * tp1[0][1] + fp1[0][1] + fn1[0][1])
-    dice_target_13 = (2 * tp1[0][2]) / (2 * tp1[0][2] + fp1[0][2] + fn1[0][2])
-    dice_target_21 = (2 * tp1[1][0]) / (2 * tp1[1][0] + fp1[1][0] + fn1[1][0])
-    dice_target_22 = (2 * tp1[1][1]) / (2 * tp1[1][1] + fp1[1][1] + fn1[1][1])
-    dice_target_23 = (2 * tp1[1][2]) / (2 * tp1[1][2] + fp1[1][2] + fn1[1][2])
-    assert result["DICE"] == approx(
-        (1.0 / 6.0)
-        * (dice_target_11 + dice_target_12 + dice_target_13 + dice_target_21 + dice_target_22 + dice_target_23),
-        abs=1e-4,
-    )
+
+    dice_target_1 = [
+        [(2 * tp1[i][j]) / (2 * tp1[i][j] + fp1[i][j] + fn1[i][j]) for j in range(len(tp1[i]))]
+        for i in range(len(tp1))
+    ]
+    assert result["DICE"] == approx((1.0 / 6.0) * sum(sum(d) for d in dice_target_1), abs=1e-4)
 
     # Test that accumulation works still
     logits = torch.rand((2, 3, 3))
@@ -139,30 +135,12 @@ def test_continuous_multi_dice_metric() -> None:
         [(1 - 0.5779) + (1 - 0.7104), (1 - 0.9040) + (1 - 0.6343), (1 - 0.5547) + (1 - 0.7890)],
         [(1 - 0.9103), (1 - 0.7886) + (1 - 0.1165), (1 - 0.7539)],
     ]
-    next_dice_target_11 = (2 * tp2[0][0]) / (2 * tp2[0][0] + fp2[0][0] + fn2[0][0])
-    next_dice_target_12 = (2 * tp2[0][1]) / (2 * tp2[0][1] + fp2[0][1] + fn2[0][1])
-    next_dice_target_13 = (2 * tp2[0][2]) / (2 * tp2[0][2] + fp2[0][2] + fn2[0][2])
-    next_dice_target_21 = (2 * tp2[1][0]) / (2 * tp2[1][0] + fp2[1][0] + fn2[1][0])
-    next_dice_target_22 = (2 * tp2[1][1]) / (2 * tp2[1][1] + fp2[1][1] + fn2[1][1])
-    next_dice_target_23 = (2 * tp2[1][2]) / (2 * tp2[1][2] + fp2[1][2] + fn2[1][2])
-    assert result["DICE"] == approx(
-        (1.0 / 12.0)
-        * (
-            dice_target_11
-            + dice_target_12
-            + dice_target_13
-            + dice_target_21
-            + dice_target_22
-            + dice_target_23
-            + next_dice_target_11
-            + next_dice_target_12
-            + next_dice_target_13
-            + next_dice_target_21
-            + next_dice_target_22
-            + next_dice_target_23
-        ),
-        abs=1e-4,
-    )
+
+    dice_target_2 = [
+        [(2 * tp2[i][j]) / (2 * tp2[i][j] + fp2[i][j] + fn2[i][j]) for j in range(len(tp2[i]))]
+        for i in range(len(tp2))
+    ]
+    assert result["DICE"] == approx((1.0 / 12.0) * sum(sum(d) for d in (dice_target_1 + dice_target_2)), abs=1e-4)
 
 
 def test_more_spatial_dimensions() -> None:

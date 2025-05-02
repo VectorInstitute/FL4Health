@@ -4,10 +4,11 @@ import torch
 from pytest import approx
 
 from fl4health.metrics.efficient_metrics import MultiClassDice
+from fl4health.utils.random import set_all_random_seeds
 
 
 def test_multi_dice_metric_with_threshold() -> None:
-    torch.manual_seed(42)
+    set_all_random_seeds(42)
 
     dice = MultiClassDice(name="DICE", label_dim=2, batch_dim=None, threshold=2, zero_division=None)
 
@@ -67,7 +68,7 @@ def test_multi_dice_metric_with_threshold() -> None:
 
 
 def test_multi_dice_metric_ignore_background() -> None:
-    torch.manual_seed(42)
+    set_all_random_seeds(42)
 
     dice = MultiClassDice(
         name="DICE", label_dim=2, batch_dim=None, threshold=2, ignore_background=2, zero_division=None
@@ -103,7 +104,7 @@ def test_multi_dice_metric_ignore_background() -> None:
 
 
 def test_continuous_multi_dice_metric() -> None:
-    torch.manual_seed(42)
+    set_all_random_seeds(42)
 
     # Test ignore background
     logits = torch.rand((2, 3, 3))

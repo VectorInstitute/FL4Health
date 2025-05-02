@@ -4,10 +4,11 @@ import pytest
 import torch
 
 from fl4health.metrics.efficient_metrics_base import MetricOutcome, MultiClassificationMetric
+from fl4health.utils.random import set_all_random_seeds
 
 
 def test_classification_metric_counts() -> None:
-    torch.manual_seed(42)
+    set_all_random_seeds(42)
 
     logits = torch.Tensor(
         [
@@ -180,7 +181,7 @@ def test_classification_metric_counts() -> None:
     assert torch.allclose(classification_metric.false_negatives, torch.Tensor([]))
 
     # Test when label dim is less than batch dim that everything still comes out properly
-    torch.manual_seed(42)
+    set_all_random_seeds(42)
     # Need to rearrange the tensors to maintain the meaning of labels and batch dim while having batch dim come after
     logits = torch.rand((2, 3, 2)).transpose(0, 1).transpose(1, 2)
     targets = torch.rand((2, 3, 2)).transpose(0, 1).transpose(1, 2)
