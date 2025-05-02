@@ -10,7 +10,7 @@ from flwr.common.typing import Config, NDArrays
 
 from fl4health.clients.basic_client import BasicClient
 from fl4health.losses.weight_drift_loss import WeightDriftLoss
-from fl4health.mixins.core import BasicClientProtocol
+from fl4health.mixins.core import BasicClientProtocol, BasicClientProtocolPreSetup
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -46,11 +46,14 @@ class AdaptiveDriftConstrainedMixin:
         self.drift_penalty_weight = None
 
         # Call parent's init
-        super().__init__(*args, **kwargs)
+        try:
+            super().__init__(*args, **kwargs)
+        except TypeError:
+            super().__init__()
 
         # set penalty_loss_function
-        if not hasattr(self, "device"):
-            raise ValueError("No `device` attribute detected.")
+        if not isinstance(self, BasicClientProtocolPreSetup):
+            raise RuntimeError("This object needs to satisfy `BasicClientProtocolPreSetup`.")
         self.penalty_loss_function = WeightDriftLoss(self.device)
 
     def __init_subclass__(cls, **kwargs: Any):

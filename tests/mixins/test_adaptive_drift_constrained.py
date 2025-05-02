@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pytest
 import torch
 import torch.nn as nn
 from flwr.common.typing import Config
@@ -35,6 +36,10 @@ class _TestAdaptedClient(AdaptiveDriftConstrainedMixin, _TestBasicClient):
     pass
 
 
+class _InvalidTestAdaptedClient(AdaptiveDriftConstrainedMixin):
+    pass
+
+
 def test_init() -> None:
     # setup client
     client = _TestAdaptedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
@@ -48,3 +53,9 @@ def test_init() -> None:
 
     assert isinstance(client, BasicClientProtocol)
     assert isinstance(client, AdaptiveDriftConstrainedProtocol)
+
+
+def test_init_raises_value_error_when_basic_client_protocol_not_satisfied() -> None:
+    with pytest.raises(RuntimeError, match="This object needs to satisfy `BasicClientProtocolPreSetup`."):
+
+        _InvalidTestAdaptedClient(data_path=Path(""), metrics=[Accuracy()])

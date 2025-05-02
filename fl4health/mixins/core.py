@@ -31,10 +31,10 @@ class NumPyClientMinimalProtocol(Protocol):
 
 
 @runtime_checkable
-class BasicClientProtocol(NumPyClientMinimalProtocol, Protocol):
+class BasicClientProtocolPreSetup(NumPyClientMinimalProtocol, Protocol):
     """A minimal protocol for BasicClient focused on methods."""
 
-    model: nn.Module
+    device: torch.device
     initialized: bool
 
     # Include only methods, not attributes that get initialized later
@@ -57,3 +57,10 @@ class BasicClientProtocol(NumPyClientMinimalProtocol, Protocol):
         self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor] | None]:
         pass
+
+
+@runtime_checkable
+class BasicClientProtocol(BasicClientProtocolPreSetup, Protocol):
+    """A minimal protocol for BasicClient focused on methods."""
+
+    model: nn.Module
