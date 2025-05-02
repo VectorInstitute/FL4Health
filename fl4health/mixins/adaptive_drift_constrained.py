@@ -82,8 +82,8 @@ class AdaptiveDriftConstrainedMixin:
 
     def ensure_protocol_compliance(self) -> None:
         """Call this after the object is fully initialized"""
-        if not isinstance(self, BasicClient):
-            raise TypeError("Protocol requirements not met.")
+        if not isinstance(self, BasicClientProtocol):
+            raise TypeError("BasicClientProtocol requirements not met.")
 
     def get_parameters(self: AdaptiveDriftConstrainedProtocol, config: Config) -> NDArrays:
         """

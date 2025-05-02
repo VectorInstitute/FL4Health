@@ -59,3 +59,10 @@ def test_init_raises_value_error_when_basic_client_protocol_not_satisfied() -> N
     with pytest.raises(RuntimeError, match="This object needs to satisfy `BasicClientProtocolPreSetup`."):
 
         _InvalidTestAdaptedClient(data_path=Path(""), metrics=[Accuracy()])
+
+
+def test_when_basic_client_protocol_check_fails_raises_type_error() -> None:
+    client = _TestAdaptedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+
+    with pytest.raises(TypeError, match="BasicClientProtocol requirements not met."):
+        client.ensure_protocol_compliance()
