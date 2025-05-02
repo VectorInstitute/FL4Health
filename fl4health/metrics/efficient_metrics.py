@@ -9,45 +9,7 @@ from fl4health.metrics.efficient_metrics_base import (
     MetricOutcome,
     MultiClassificationMetric,
 )
-
-
-def compute_dice_on_count_tensors(
-    true_positives: torch.Tensor,
-    false_positives: torch.Tensor,
-    false_negatives: torch.Tensor,
-    zero_division: float | None,
-) -> torch.Tensor:
-    """
-    Given a set of count tensors representing true positives (TP), false positives (FP), and false negatives (FN),
-    compute the  Dice score as 2*TP/(2*TP + FP + FN) ELEMENTWISE. The zero division argument determines how to deal
-    with examples with all true negatives, which implies that TP + FP + FN = 0 and an undefined value.
-
-    Args:
-        true_positives (torch.Tensor): count of true positives in each entry
-        false_positives (torch.Tensor): count of false positives in each entry
-        false_negatives (torch.Tensor): count of false negatives in each entry
-        zero_division (float | None): How to deal with zero division. If None, the values with zero division are
-            simply dropped. If a float is specified, this value is injected into each Dice score that would have
-            been undefined.
-
-    Returns:
-        torch.Tensor: Dice scores computed for each element in the TP, FP, FN tensors computed ELEMENTWISE with
-            replacement or dropping of undefined entries. The tensor returned is flattened to be 1D.
-    """
-    # Compute union and intersection
-    numerator = 2 * true_positives  # Equivalent to 2 times the intersection
-    denominator = 2 * true_positives + false_positives + false_negatives  # Equivalent to the union
-
-    # Remove or replace dice score that will be null due to zero division
-    if zero_division is None:
-        numerator = numerator[denominator != 0]
-        denominator = denominator[denominator != 0]
-    else:
-        numerator[denominator == 0] = zero_division
-        denominator[denominator == 0] = 1
-
-    # Return individual dice coefficients
-    return numerator / denominator
+from fl4health.metrics.metrics_utils import compute_dice_on_count_tensors
 
 
 class MultiClassDice(MultiClassificationMetric):
@@ -167,7 +129,12 @@ class BinaryDice(BinaryClassificationMetric):
         """
         Computes the Dice Coefficient between binary predictions and targets. These can be vector encoded or
         just single elements values with an implicit positive class. That is, predictions might be vectorized
-        where a single predictions is a 2D vector [0.2, 0.8] or a float 0.8 (with the complement implied)
+        where a single predictions is a 2D vector [0.2, 0.8] or a float 0.8 (with the complement implied).
+
+        Regardless of how the input is structured, the provided score will be provided with respect to the value of the
+        ``pos_label'' variable, which defaults to 1 (and can only have values {0, 1}). That is, the reported score
+        will correspond to the score from the perspective of the specified label. For additional documentation see
+        that of the parent class ``BinaryClassificationMetric`` and the function ``_post_process_count_tensor`` therein
 
         NOTE: For this class, the predictions and targets passed to the update function MUST have the same shape
 

@@ -3,13 +3,14 @@ import re
 import pytest
 import torch
 
-from fl4health.metrics.efficient_metrics_base import ClassificationMetric, MetricOutcome, MultiClassificationMetric
+from fl4health.metrics.efficient_metrics_base import MetricOutcome, MultiClassificationMetric
+from fl4health.metrics.metrics_utils import threshold_tensor
 
 
 def test_tensor_thresholding() -> None:
     tensor_to_threshold = torch.Tensor([[1, 2, 3, 4], [6, 7, 1, 2]])  # shape (2, 4)
-    float_thresholded = ClassificationMetric._threshold_tensor(tensor_to_threshold, 4.0)
-    int_thresholded = ClassificationMetric._threshold_tensor(tensor_to_threshold, 1)
+    float_thresholded = threshold_tensor(tensor_to_threshold, 4.0)
+    int_thresholded = threshold_tensor(tensor_to_threshold, 1)
 
     assert torch.allclose(float_thresholded, torch.Tensor([[0, 0, 0, 0], [1, 1, 0, 0]]))
     assert torch.allclose(int_thresholded, torch.Tensor([[0, 0, 0, 1], [0, 1, 0, 0]]))
