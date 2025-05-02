@@ -6,7 +6,8 @@ import torch
 from flwr.common.logger import log
 from flwr.common.typing import Metrics, Scalar
 
-from fl4health.metrics.metrics_base import Metric
+from fl4health.metrics.base_metrics import Metric
+from fl4health.metrics.metrics_utils import threshold_tensor
 
 
 class MetricOutcome(Enum):
@@ -28,17 +29,19 @@ class ClassificationMetric(Metric, ABC):
     ) -> None:
         """
         A Base class for classification metrics that can be computed using the true positives (tp),
-        false positive (fp), false negative (fn) and true negative (tn) counts. These counts are computed for
-        each class independently. How they are composed together for the metric is left to inheriting classes.
+        false positive (fp), false negative (fn) and true negative (tn) counts. How these values are counted is left
+        to the inheriting class along with how they are composed together for the final metric score. There are two
+        classes inheriting from this class to form the basis of efficient classification metrics:
+        BinaryClassificationMetric and MultiClassificationMetric. These handle implementation of the
+        ``count_tp_fp_fn_tn`` method.
 
         On each update, the true_positives, false_positives, false_negatives and true_negatives counts for the
         provided predictions and targets are accumulated into ``self.true_positives``, ``self.false_positives``,
-        ``self.false_negatives`` and ``self.true_negatives``, respectively, for each label type. This reduces the
-        memory footprint required to compute metrics across rounds. The user needs to define the
-        ``compute_from_counts`` method which returns a dictionary of Scalar metrics given the true_positives,
-        false_positives, false_negatives, and true_negatives counts. The accumulated counts are reset by the
-        ``clear`` method. If your subclass returns multiple metrics you may need to also override the
-        `__call__` method.
+        ``self.false_negatives`` and ``self.true_negatives``, respectively. This reduces the memory footprint
+        required to compute metrics across rounds. The user needs to define the ``compute_from_counts`` method which
+        returns a dictionary of Scalar metrics given the ``true_positives``, ``false_positives``, ``false_negatives``,
+        and  ``true_negatives`` counts. The accumulated counts are reset by the ``clear`` method. If your subclass
+        returns multiple metrics you may need to also override the ``__call__`` method.
 
         If the predictions provided are continuous in value, then the associated counts will also be continuous
         ("soft"). For example, with a target of 1, a prediction of 0.8 contributes 0.8 to the true_positives count and
@@ -53,21 +56,7 @@ class ClassificationMetric(Metric, ABC):
                 label dimension.
             batch_dim (int | None, optional): If None, then counts are aggregated across the batch dimension. If
                 specified, counts will be computed along the dimension specified. That is, counts are maintained for
-                each training sample INDIVIDUALLY. For example, if batch_dim = 1 and label_dim = 0, then
-
-                .. code-block:: python
-
-                    predictions = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]]) # shape (1, 2, 4)
-
-                    targets = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]]) # shape (1, 2, 4)
-
-                    self.true_positives = torch.Tensor([[0], [4]])
-
-                    self.true_negatives = torch.Tensor([[2], [0]])
-
-                    self.false_positives = torch.Tensor([[1], [0]])
-
-                    self.false_negatives = torch.Tensor([[1], [0]])
+                each training sample INDIVIDUALLY.
 
                 NOTE: The resulting counts will always be presented batch dimension first, then label dimension,
                 regardless of input shape.
@@ -116,40 +105,6 @@ class ClassificationMetric(Metric, ABC):
             torch.tensor([]),
         )
 
-    @classmethod
-    def _threshold_tensor(cls, input: torch.Tensor, threshold: float | int) -> torch.Tensor:
-        """
-        Converts continuous 'soft' tensors into categorical 'hard' ones.
-
-        Args:
-            input (torch.Tensor): The tensor to threshold.
-            threshold (float | int): A float for thresholding values or an integer specifying the index of the
-                label dimension. If a float is given, elements below the threshold are mapped to 0 and above are
-                mapped to 1. If an integer is given, elements are thresholded based on the class with the highest
-                prediction.
-
-        Returns:
-            torch.Tensor: Thresholded tensor
-        """
-        if isinstance(threshold, float):
-            thresholded_tensor = torch.zeros_like(input)
-            mask_1 = input > threshold
-            thresholded_tensor[mask_1] = 1
-            return thresholded_tensor
-        elif isinstance(threshold, int):
-            # Use argmax to get predicted class labels (hard_preds) and the one-hot-encode them.
-            if threshold >= input.ndim:
-                raise ValueError(
-                    f"Cannot apply argmax to Tensor of shape {input.shape}. "
-                    f"Label dimension of {threshold} is out of range of tensor with {input.ndim} dimensions."
-                )
-            hard_input = input.argmax(threshold, keepdim=True)
-            input = torch.zeros_like(input)
-            input.scatter_(threshold, hard_input, 1)
-            return input
-        else:
-            raise ValueError(f"Was expecting threshold argument to be either a float or an int. Got {type(threshold)}")
-
     def _transform_tensors(self, preds: torch.Tensor, targets: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Given the predictions and targets this function performs two possible transformations. The first is to map
@@ -169,7 +124,7 @@ class ClassificationMetric(Metric, ABC):
         targets = targets.to(torch.uint8) if targets.dtype == torch.bool else targets
 
         # Maybe threshold predictions into 'hard' predictions.
-        preds = preds if self.threshold is None else self._threshold_tensor(preds, self.threshold)
+        preds = preds if self.threshold is None else threshold_tensor(preds, self.threshold)
         return preds, targets
 
     def _assert_correct_ranges(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
@@ -237,6 +192,10 @@ class ClassificationMetric(Metric, ABC):
         """
         Updates the existing self.true_positive, self.false_positive, self.false_negative and self.true_negative
         counts with new counts computed from preds and targets.
+
+        NOTE: In the implementation, this function implicitly assumes that the child classes inheriting from this
+        class have implemented `count_tp_fp_fn_tn` such that, if `self.batch_dim` is not None, the counts are returned
+        with shapes such that the batch dimension comes FIRST for the counts.
 
         Args:
             preds (torch.Tensor): Predictions tensor
@@ -477,11 +436,15 @@ class BinaryClassificationMetric(ClassificationMetric):
             ), f"Batch dim has been specified but not label dim, tensor should be 1D but got {count_ndims}D"
             return count_tensor.unsqueeze(1)
         else:
-            # Tensor should be 1D equivalent to size of labels or a single element if label dims has not be specified
+            # Tensor should be 1D equivalent to size of labels dimension if it has been specified or a single element
+            # if label dims has not be specified. The label dimension is of size at most 2, but can be of size 1 if
+            # there is a dimension for an "implied" label (i.e. 0.8 representing vector predictions [0.2, 0.8]). If
+            # there is no label dimension specified, there should only be a single element as well.
             assert (
                 count_ndims <= 1
-            ), f"Label dim has been specified but not batch dim, tensor should be 0 or 1D but got {count_ndims}"
+            ), f"Batch dim has not been specified, tensor should be 0 or 1D but got {count_ndims}"
             if count_tensor.numel() == 2:
+                assert self.label_dim is not None, "self.label_dim is None but got two elements in the count_tensor"
                 # Always return the class with label 1
                 return count_tensor[1].unsqueeze(0)
             elif count_tensor.numel() == 1:
