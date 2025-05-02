@@ -1,6 +1,10 @@
 from pathlib import Path
 
 import torch
+import torch.nn as nn
+from flwr.common.typing import Config
+from torch.nn.modules.loss import _Loss
+from torch.optim import Optimizer
 from torch.utils.data import DataLoader, TensorDataset
 
 from fl4health.clients.basic_client import BasicClient
@@ -14,16 +18,16 @@ from fl4health.parameter_exchange.parameter_packer import (
 
 
 class _TestBasicClient(BasicClient):
-    def get_model(self, config):
+    def get_model(self, config: Config) -> nn.Module:
         return self.model
 
-    def get_data_loaders(self, config):
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, ...]:
         return self.train_loader, self.val_loader
 
-    def get_optimizer(self, config):
+    def get_optimizer(self, config: Config) -> Optimizer | dict[str, Optimizer]:
         return self.optimizers["global"]
 
-    def get_criterion(self, config):
+    def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
 
 
@@ -39,8 +43,8 @@ def test_init() -> None:
     client.train_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))  # type: ignore
     client.val_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))  # type: ignore
     client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
-
     client.initialized = True
+    client.setup_client({})
 
     assert isinstance(client, BasicClientProtocol)
     assert isinstance(client, AdaptiveDriftConstrainedProtocol)
