@@ -127,6 +127,10 @@ def align_pred_and_target_shapes(
 
     If one is vector encoded but not the other, then both are returned as vector encoded tensors.
 
+    NOTE: This function ASSUMES label-index encoding if the shapes are misaligned. This assumption doesn't necessarily
+    hold in binary classification settings where continuous values might be used to indicate the positive label by
+    default. As such, this function should not be used for those types of tensors.
+
     For example, consider a problem with 3 label classes with the preds vector encoded and the targets label encoded
 
     .. code-block:: python
@@ -141,10 +145,6 @@ def align_pred_and_target_shapes(
     .. code-block:: python
 
         targets = torch.Tensor([0, 0, 1], [0, 1, 0])
-
-    NOTE: This function ASSUMES label-index encoding if the shapes are misaligned. This assumption doesn't necessarily
-    hold in binary classification settings where continuous values might be used to indicate the positive label by
-    default. As such, this function should not be used for those types of tensors.
 
     Args:
         preds (torch.Tensor): The tensor with model predictions.

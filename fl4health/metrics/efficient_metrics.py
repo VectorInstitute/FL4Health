@@ -138,7 +138,7 @@ class MultiClassDice(MultiClassificationMetric):
         Returns:
             Scalar: Mean dice score for the provided tensors
         """
-        true_positives, false_positives, false_negatives, _ = self.count_tp_fp_fn_tn(input, target)
+        true_positives, false_positives, _, false_negatives = self.count_tp_fp_tn_fn(input, target)
         dice = compute_dice_on_count_tensors(true_positives, false_positives, false_negatives, self.zero_division)
         if dice.numel() == 0:
             log(WARNING, "Currently, Dice score is undefined due to only true negatives present")
@@ -271,7 +271,7 @@ class BinaryDice(BinaryClassificationMetric):
         Returns:
             Scalar: Mean dice score for the provided tensors
         """
-        true_positives, false_positives, false_negatives, _ = self.count_tp_fp_fn_tn(input, target)
+        true_positives, false_positives, _, false_negatives = self.count_tp_fp_tn_fn(input, target)
         dice = compute_dice_on_count_tensors(true_positives, false_positives, false_negatives, self.zero_division)
         if dice.numel() == 0:
             log(WARNING, "Currently, Dice score is undefined due to only true negatives present")

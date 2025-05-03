@@ -158,15 +158,15 @@ class ClassificationMetric(Metric, ABC):
         false_positives = (preds * (1 - targets)) if not self.discard_fp else torch.tensor([])
         false_negatives = ((1 - preds) * targets) if not self.discard_fn else torch.tensor([])
         true_negatives = ((1 - preds) * (1 - targets)) if not self.discard_tn else torch.tensor([])
-        return true_positives, false_positives, false_negatives, true_negatives
+        return true_positives, false_positives, true_negatives, false_negatives
 
     def _sum_along_axes_or_discard(
         self,
         sum_axes: tuple[int, ...],
         true_positives: torch.Tensor,
         false_positives: torch.Tensor,
-        false_negatives: torch.Tensor,
         true_negatives: torch.Tensor,
+        false_negatives: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Provided a set of axes over which to reduce by summation. These sums are applied to each of the
@@ -176,18 +176,18 @@ class ClassificationMetric(Metric, ABC):
             sum_axes (tuple[int, ...]): The dimension or dimensions to reduce. If empty, all dimensions are reduced.
             true_positives (torch.Tensor): Tensor with entry of 1 indicating a true positive for a pred/target pair
             false_positives (torch.Tensor): Tensor with entry of 1 indicating a false positive for a pred/target pair
-            false_negatives (torch.Tensor): Tensor with entry of 1 indicating a false negative for a pred/target pair
             true_negatives (torch.Tensor): Tensor with entry of 1 indicating a true negative for a pred/target pair
+            false_negatives (torch.Tensor): Tensor with entry of 1 indicating a false negative for a pred/target pair
 
         Returns:
             tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors reduced over the specified axes
-                in the order ``true_positives``, ``false_positives``, ``false_negatives``, ``true_negatives``
+                in the order ``true_positives``, ``false_positives``, ``true_negatives``, ``false_negatives``
         """
         true_positives = true_positives.sum(sum_axes, dtype=self.dtype) if not self.discard_tp else true_positives
         false_positives = false_positives.sum(sum_axes, dtype=self.dtype) if not self.discard_fp else false_positives
         false_negatives = false_negatives.sum(sum_axes, dtype=self.dtype) if not self.discard_fn else false_negatives
         true_negatives = true_negatives.sum(sum_axes, dtype=self.dtype) if not self.discard_tn else true_negatives
-        return true_positives, false_positives, false_negatives, true_negatives
+        return true_positives, false_positives, true_negatives, false_negatives
 
     def update(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
         """
@@ -202,12 +202,12 @@ class ClassificationMetric(Metric, ABC):
             preds (torch.Tensor): Predictions tensor
             targets (torch.Tensor): Targets tensor
         """
-        # Get tp, fp, fn and tn counts for current update. If a count is discarded, then an empty tensor is returned.
-        tp, fp, fn, tn = self.count_tp_fp_fn_tn(preds, targets)
+        # Get tp, fp, tn and fn counts for current update. If a count is discarded, then an empty tensor is returned.
+        tp, fp, tn, fn = self.count_tp_fp_tn_fn(preds, targets)
 
         # If this is first update since init or clear, initialize counts attributes and exit function
         if not self.counts_initialized:
-            self.true_positives, self.false_positives, self.false_negatives, self.true_negatives = tp, fp, fn, tn
+            self.true_positives, self.false_positives, self.true_negatives, self.false_negatives = tp, fp, tn, fn
             self.counts_initialized = True
             return
 
@@ -222,11 +222,11 @@ class ClassificationMetric(Metric, ABC):
         self.false_positives = (
             torch.cat([self.false_positives, fp], dim=0) if self.batch_dim is not None else self.false_positives + fp
         )
-        self.false_negatives = (
-            torch.cat([self.false_negatives, fn], dim=0) if self.batch_dim is not None else self.false_negatives + fn
-        )
         self.true_negatives = (
             torch.cat([self.true_negatives, tn], dim=0) if self.batch_dim is not None else self.true_negatives + tn
+        )
+        self.false_negatives = (
+            torch.cat([self.false_negatives, fn], dim=0) if self.batch_dim is not None else self.false_negatives + fn
         )
 
     def clear(self) -> None:
@@ -262,10 +262,49 @@ class ClassificationMetric(Metric, ABC):
         return metrics
 
     @abstractmethod
-    def count_tp_fp_fn_tn(
+    def count_tp_fp_tn_fn(
         self, preds: torch.Tensor, targets: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        raise NotImplementedError
+        """
+        Given two tensors containing model predictions and targets, returns the number of true positives (tp), false
+        positives (fp), true negatives (tn), and false negatives (fn), respecting ``self.batch_dim`` and
+        ``self.label_dim``
+
+        NOTE: Inheriting classes must implement additional functionality on top of this class. For example, any
+        preprocessing that needs to be done to preds and targets should be done in the inheriting function. Any post
+        processing should also be done there. See implementations in the `BinaryClassificationMetric` or
+        `MultiClassificationMetric` class for examples.
+
+        If any of the true positives, false positives, true negative, or false negative counts were specified to be
+        discarded during initialization of the class, then that count will not be computed and an empty tensor will be
+        returned in its place.
+
+        Args:
+            preds (torch.Tensor): Tensor containing model predictions. Must be the same shape as targets
+            targets (torch.Tensor): Tensor containing prediction targets. Must be same shape as preds.
+
+        Returns:
+            tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
+                specified dimensions for each of true positives, false positives, false negative, and true negative
+                respectively.
+        """
+        # Compute counts. If we're ignoring a count, set it as an empty tensor to avoid downstream errors.
+        true_positives, false_positives, true_negatives, false_negatives = self._prepare_counts_from_preds_and_targets(
+            preds, targets
+        )
+
+        axes_to_ignore: set[int] = {self.label_dim} if self.label_dim is not None else set()
+        if self.batch_dim is not None:
+            axes_to_ignore.add(self.batch_dim)
+        sum_axes = tuple([i for i in range(preds.ndim) if i not in axes_to_ignore])
+
+        # If sum_axes is empty, then we have nothing to do.
+        if len(sum_axes) != 0:
+            true_positives, false_positives, true_negatives, false_negatives = self._sum_along_axes_or_discard(
+                sum_axes, true_positives, false_positives, true_negatives, false_negatives
+            )
+
+        return true_positives, false_positives, true_negatives, false_negatives
 
     @abstractmethod
     def compute_from_counts(
@@ -386,24 +425,6 @@ class BinaryClassificationMetric(ClassificationMetric):
         assert pos_label == 0 or pos_label == 1, "pos_label must be either 0 or 1"
         self.pos_label = pos_label
 
-    def _transform_tensors(self, preds: torch.Tensor, targets: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        """
-        Given the predictions and targets this function performs two possible transformations. The first is to map
-        boolean tensors to integers for computation. The second is to potentially threshold the predictions if
-        self.threshold is not None. Finally, we assert that the preds and targets are in [0, 1] after transformation
-
-        Args:
-            preds (torch.Tensor): Predictions tensor
-            targets (torch.Tensor): Targets tensor
-
-        Returns:
-            tuple[torch.Tensor, torch.Tensor]: Potentially transformed predictions and targets tensors, in that order
-        """
-        preds, targets = super()._transform_tensors(preds, targets)
-        super()._assert_correct_ranges(preds, targets)
-
-        return preds, targets
-
     def _post_process_count_tensor(self, count_tensor: torch.Tensor) -> torch.Tensor:
         """
         Given a count tensor, in the various forms that it might appear, we need to post process these so that they
@@ -478,14 +499,35 @@ class BinaryClassificationMetric(ClassificationMetric):
                     f"Too many elements in the count tensor, expected 2 or less and got {count_tensor.numel()}"
                 )
 
-    def count_tp_fp_fn_tn(
+    def _transform_tensors(self, preds: torch.Tensor, targets: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Given the predictions and targets this function performs two possible transformations. The first is to map
+        boolean tensors to integers for computation. The second is to potentially threshold the predictions if
+        self.threshold is not None. Finally, we assert that the preds and targets are in [0, 1] after transformation
+
+        Args:
+            preds (torch.Tensor): Predictions tensor
+            targets (torch.Tensor): Targets tensor
+
+        Returns:
+            tuple[torch.Tensor, torch.Tensor]: Potentially transformed predictions and targets tensors, in that order
+        """
+        # Transform preds and targets as necessary/specified before computing counts
+        preds, targets = super()._transform_tensors(preds, targets)
+        # Make sure the tensors have the correct value ranges for sensible computation of the counts
+        super()._assert_correct_ranges(preds, targets)
+
+        return preds, targets
+
+    def count_tp_fp_tn_fn(
         self, preds: torch.Tensor, targets: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Given two tensors containing model predictions and targets, returns the number of true positives (tp), false
-        positives (fp), false negatives (fn) and true negatives (tn), respecting self.batch_dim and self.label_dim
+        positives (fp), true negatives (tn), and false negatives (fn), respecting ``self.batch_dim`` and
+        ``self.label_dim``
 
-        If any of the true positives, false positives, false negative or true negative counts were specified to be
+        If any of the true positives, false positives, true negative, or false negative counts were specified to be
         discarded during initialization of the class, then that count will not be computed and an empty tensor will be
         returned in its place.
 
@@ -495,10 +537,9 @@ class BinaryClassificationMetric(ClassificationMetric):
 
         Returns:
             tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
-                specified dimensions for each of true positives, false positives, false negative, and true negative
+                specified dimensions for each of true positives, false positives, true negative, and false negative,
                 respectively.
         """
-
         # Transform preds and targets as necessary/specified before computing counts
         preds, targets = self._transform_tensors(preds, targets)
 
@@ -518,32 +559,18 @@ class BinaryClassificationMetric(ClassificationMetric):
                 "meant for binary metric computation only"
             )
 
-        # Compute counts. If we're ignoring a count, set it as an empty tensor to avoid downstream errors.
-        true_positives, false_positives, false_negatives, true_negatives = self._prepare_counts_from_preds_and_targets(
-            preds, targets
-        )
-
-        axes_to_ignore: set[int] = {self.label_dim} if self.label_dim is not None else set()
-        if self.batch_dim is not None:
-            axes_to_ignore.add(self.batch_dim)
-        sum_axes = tuple([i for i in range(preds.ndim) if i not in axes_to_ignore])
-
-        # If sum_axes is empty, then we have nothing to do.
-        if len(sum_axes) != 0:
-            true_positives, false_positives, false_negatives, true_negatives = self._sum_along_axes_or_discard(
-                sum_axes, true_positives, false_positives, false_negatives, true_negatives
-            )
+        true_positives, false_positives, true_negatives, false_negatives = super().count_tp_fp_tn_fn(preds, targets)
 
         true_positives = self._post_process_count_tensor(true_positives)
         false_positives = self._post_process_count_tensor(false_positives)
-        false_negatives = self._post_process_count_tensor(false_negatives)
         true_negatives = self._post_process_count_tensor(true_negatives)
+        false_negatives = self._post_process_count_tensor(false_negatives)
 
         if self.pos_label == 0:
             # Need to flip the label interpretations
-            return true_negatives, false_negatives, false_positives, true_positives
+            return true_negatives, false_negatives, true_positives, false_positives
 
-        return true_positives, false_positives, false_negatives, true_negatives
+        return true_positives, false_positives, true_negatives, false_negatives
 
     def compute_from_counts(
         self,
@@ -742,8 +769,6 @@ class MultiClassificationMetric(ClassificationMetric):
 
         As a last possible transformation, the background is removed if self.ignore_background is defined.
 
-        Finally, we assert that the preds and targets are in [0, 1] after transformation
-
         Args:
             preds (torch.Tensor): Predictions tensor
             targets (torch.Tensor): Targets tensor
@@ -762,20 +787,25 @@ class MultiClassificationMetric(ClassificationMetric):
         if self.ignore_background is not None:
             preds, targets = self._remove_background(self.ignore_background, preds, targets)
 
+        # Make sure the tensors have the correct value ranges for sensible computation of the counts
         super()._assert_correct_ranges(preds, targets)
 
         return preds, targets
 
-    def count_tp_fp_fn_tn(
+    def count_tp_fp_tn_fn(
         self, preds: torch.Tensor, targets: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Given two tensors containing model predictions and targets, returns the number of true positives (tp), false
-        positives (fp), false negatives (fn) and true negatives (tn).
+        positives (fp), true negatives (tn), and false negatives (fn), respecting ``self.batch_dim`` and
+        ``self.label_dim``
 
-        If any of the true positives, false positives, false negative or true negative counts were specified to be
+        If any of the true positives, false positives, true negative, or false negative counts were specified to be
         discarded during initialization of the class, then that count will not be computed and an empty tensor will be
         returned in its place.
+
+        For this class, counts will either have shape (num_labels,) or (num_samples, num_labels), depending on if the
+        `batch_dim` (former case) is specified or not (latter case).
 
         Args:
             preds (torch.Tensor): Tensor containing model predictions.
@@ -783,9 +813,10 @@ class MultiClassificationMetric(ClassificationMetric):
 
         Returns:
             tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
-                specified dimensions for each of true positives, false positives, false negative, and true negative
+                specified dimensions for each of true positives, false positives, true negative, and false negative
                 respectively.
         """
+
         # Transform preds and targets as necessary/specified before computing counts
         preds, targets = self._transform_tensors(preds, targets)
 
@@ -802,30 +833,18 @@ class MultiClassificationMetric(ClassificationMetric):
             "corresponding to a binary prediction or it is a class label that needs to be vector encoded."
         )
 
-        # Compute counts. If were ignoring a count, set it as an empty tensor to avoid downstream errors.
-        true_positives, false_positives, false_negatives, true_negatives = self._prepare_counts_from_preds_and_targets(
-            preds, targets
-        )
-
-        axes_to_ignore = {self.label_dim, self.batch_dim} if self.batch_dim is not None else {self.label_dim}
-        sum_axes = tuple([i for i in range(preds.ndim) if i not in axes_to_ignore])
-
-        # If sum_axes is empty, then we have nothing to do.
-        if len(sum_axes) != 0:
-            true_positives, false_positives, false_negatives, true_negatives = self._sum_along_axes_or_discard(
-                sum_axes, true_positives, false_positives, false_negatives, true_negatives
-            )
+        true_positives, false_positives, true_negatives, false_negatives = super().count_tp_fp_tn_fn(preds, targets)
 
         # If batch dim is larger than label_dim, then we re-order them so that batch_dim comes first after summation
         if self.batch_dim is not None and self.batch_dim > self.label_dim:
             return (
                 self._transpose_2d_matrix_unless_empty(true_positives),
                 self._transpose_2d_matrix_unless_empty(false_positives),
-                self._transpose_2d_matrix_unless_empty(false_negatives),
                 self._transpose_2d_matrix_unless_empty(true_negatives),
+                self._transpose_2d_matrix_unless_empty(false_negatives),
             )
 
-        return true_positives, false_positives, false_negatives, true_negatives
+        return true_positives, false_positives, true_negatives, false_negatives
 
     def compute_from_counts(
         self,
@@ -846,6 +865,9 @@ class MultiClassificationMetric(ClassificationMetric):
         counts have been aggregated WITHIN each sample and remain separate across examples. A concrete setting where
         this makes sense is image segmentation. You can have such counts summed for all pixels within an image, but
         separate per image. A metric could then be computed for each image and then averaged.
+
+        NOTE: A user can implement further reduction along the label dimension (summing TPs across labels for example),
+        if desired. It just needs to be handled in the implementation of this function
 
         Args:
             true_positives (torch.Tensor): Counts associated with positive predictions of a class and true positives
