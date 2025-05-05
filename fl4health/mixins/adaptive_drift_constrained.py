@@ -70,7 +70,7 @@ class AdaptiveDriftConstrainedMixin:
 
         # Check at class definition time if the parent class satisfies BasicClientProtocol
         for base in cls.__bases__:
-            if base is not AdaptiveDriftConstrainedMixin and isinstance(base, BasicClient):
+            if base is not AdaptiveDriftConstrainedMixin and issubclass(base, BasicClient):
                 return
 
         # If we get here, no compatible base was found

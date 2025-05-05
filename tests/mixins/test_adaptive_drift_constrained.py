@@ -1,3 +1,4 @@
+import warnings
 from pathlib import Path
 
 import pytest
@@ -36,8 +37,11 @@ class _TestAdaptedClient(AdaptiveDriftConstrainedMixin, _TestBasicClient):
     pass
 
 
-class _InvalidTestAdaptedClient(AdaptiveDriftConstrainedMixin):
-    pass
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=RuntimeWarning)
+
+    class _InvalidTestAdaptedClient(AdaptiveDriftConstrainedMixin):
+        pass
 
 
 def test_init() -> None:
@@ -66,3 +70,34 @@ def test_when_basic_client_protocol_check_fails_raises_type_error() -> None:
 
     with pytest.raises(TypeError, match="BasicClientProtocol requirements not met."):
         client.ensure_protocol_compliance()
+
+
+def test_subclass_checks_raise_no_warning() -> None:
+
+    with warnings.catch_warnings(record=True) as recorded_warnings:
+
+        class _TestComposedMixin(AdaptiveDriftConstrainedMixin, _TestBasicClient):
+            """subclass should init with skip validation if composed"""
+
+            pass
+
+        class _TestSubclass2(AdaptiveDriftConstrainedMixin, _TestBasicClient):
+            """subclass used for dynamic creation of clients with mixins."""
+
+            _dynamically_created = True
+
+    assert len(recorded_warnings) == 0
+
+
+def test_subclass_checks_raise_warnining() -> None:
+
+    msg = (
+        "Class _InvalidSubclass inherits from AdaptiveMixin but none of its other "
+        "base classes is a BasicClient. This may cause runtime errors."
+    )
+    with pytest.warns(RuntimeWarning, match=msg):
+
+        class _InvalidSubclass(AdaptiveDriftConstrainedMixin):
+            """subclass should init with skip validation if composed"""
+
+            pass
