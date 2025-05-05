@@ -51,7 +51,7 @@ def test_init() -> None:
     # setup client
     client = _TestAdaptedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
     client.model = torch.nn.Linear(5, 5)
-    client.optimizers = {"global": torch.optim.SGD(client.model.parameters(), lr=0.0001)}  # type: ignore
+    client.optimizers = {"global": torch.optim.SGD(client.model.parameters(), lr=0.0001)}
     client.train_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))  # type: ignore
     client.val_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))  # type: ignore
     client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
@@ -110,7 +110,7 @@ def test_get_parameters() -> None:
     # setup client
     client = _TestAdaptedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
     client.model = torch.nn.Linear(5, 5)
-    client.optimizers = {"global": torch.optim.SGD(client.model.parameters(), lr=0.0001)}  # type: ignore
+    client.optimizers = {"global": torch.optim.SGD(client.model.parameters(), lr=0.0001)}
 
     # setup mocks
     mock_param_exchanger = MagicMock()
