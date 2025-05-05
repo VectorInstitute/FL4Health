@@ -499,26 +499,6 @@ class BinaryClassificationMetric(ClassificationMetric):
                     f"Too many elements in the count tensor, expected 2 or less and got {count_tensor.numel()}"
                 )
 
-    def _transform_tensors(self, preds: torch.Tensor, targets: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        """
-        Given the predictions and targets this function performs two possible transformations. The first is to map
-        boolean tensors to integers for computation. The second is to potentially threshold the predictions if
-        self.threshold is not None. Finally, we assert that the preds and targets are in [0, 1] after transformation
-
-        Args:
-            preds (torch.Tensor): Predictions tensor
-            targets (torch.Tensor): Targets tensor
-
-        Returns:
-            tuple[torch.Tensor, torch.Tensor]: Potentially transformed predictions and targets tensors, in that order
-        """
-        # Transform preds and targets as necessary/specified before computing counts
-        preds, targets = super()._transform_tensors(preds, targets)
-        # Make sure the tensors have the correct value ranges for sensible computation of the counts
-        super()._assert_correct_ranges(preds, targets)
-
-        return preds, targets
-
     def count_tp_fp_tn_fn(
         self, preds: torch.Tensor, targets: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -542,6 +522,8 @@ class BinaryClassificationMetric(ClassificationMetric):
         """
         # Transform preds and targets as necessary/specified before computing counts
         preds, targets = self._transform_tensors(preds, targets)
+        # Make sure the tensors have the correct value ranges for sensible computation of the counts
+        super()._assert_correct_ranges(preds, targets)
 
         # Make sure after transformation the preds and targets have the right shape
         assert (
@@ -787,9 +769,6 @@ class MultiClassificationMetric(ClassificationMetric):
         if self.ignore_background is not None:
             preds, targets = self._remove_background(self.ignore_background, preds, targets)
 
-        # Make sure the tensors have the correct value ranges for sensible computation of the counts
-        super()._assert_correct_ranges(preds, targets)
-
         return preds, targets
 
     def count_tp_fp_tn_fn(
@@ -819,6 +798,8 @@ class MultiClassificationMetric(ClassificationMetric):
 
         # Transform preds and targets as necessary/specified before computing counts
         preds, targets = self._transform_tensors(preds, targets)
+        # Make sure the tensors have the correct value ranges for sensible computation of the counts
+        super()._assert_correct_ranges(preds, targets)
 
         # Assert that the label dimension for these tensors is not of size 1. This occurs either when considering
         # binary predictions or when both the preds and targets are label index encoded, which is not admissible for
