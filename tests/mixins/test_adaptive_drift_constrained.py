@@ -40,13 +40,6 @@ class _TestAdaptedClient(AdaptiveDriftConstrainedMixin, _TestBasicClient):
     pass
 
 
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", category=RuntimeWarning)
-
-    class _InvalidTestAdaptedClient(AdaptiveDriftConstrainedMixin):
-        pass
-
-
 def test_init() -> None:
     # setup client
     client = _TestAdaptedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
@@ -63,6 +56,15 @@ def test_init() -> None:
 
 
 def test_init_raises_value_error_when_basic_client_protocol_not_satisfied() -> None:
+
+    # Create an invalid adapted client such as inheriting the Mixin but nothing else.
+    # Since invalid it will raise a warning—see test_subclass_checks_raise_warning
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+
+        class _InvalidTestAdaptedClient(AdaptiveDriftConstrainedMixin):
+            pass
+
     with pytest.raises(RuntimeError, match="This object needs to satisfy `BasicClientProtocolPreSetup`."):
 
         _InvalidTestAdaptedClient(data_path=Path(""), metrics=[Accuracy()])
@@ -79,12 +81,12 @@ def test_subclass_checks_raise_no_warning() -> None:
 
     with warnings.catch_warnings(record=True) as recorded_warnings:
 
-        class _TestComposedMixin(AdaptiveDriftConstrainedMixin, _TestBasicClient):
-            """subclass should init with skip validation if composed"""
+        class _TestInheritanceMixin(AdaptiveDriftConstrainedMixin, _TestBasicClient):
+            """subclass should skip validation if is itself a Mixin that inherits AdaptiveDriftConstrainedMixin"""
 
             pass
 
-        class _TestSubclass2(AdaptiveDriftConstrainedMixin, _TestBasicClient):
+        class _DynamicallyCreatedClass(AdaptiveDriftConstrainedMixin, _TestBasicClient):
             """subclass used for dynamic creation of clients with mixins."""
 
             _dynamically_created = True
@@ -92,7 +94,7 @@ def test_subclass_checks_raise_no_warning() -> None:
     assert len(recorded_warnings) == 0
 
 
-def test_subclass_checks_raise_warnining() -> None:
+def test_subclass_checks_raise_warning() -> None:
 
     msg = (
         "Class _InvalidSubclass inherits from AdaptiveMixin but none of its other "
@@ -101,7 +103,7 @@ def test_subclass_checks_raise_warnining() -> None:
     with pytest.warns(RuntimeWarning, match=msg):
 
         class _InvalidSubclass(AdaptiveDriftConstrainedMixin):
-            """subclass should init with skip validation if composed"""
+            """Invalid subclass that warns the user that it expects this class to be mixed with a BasicClient."""
 
             pass
 

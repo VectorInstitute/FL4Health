@@ -33,13 +33,15 @@ class AdaptiveDriftConstrainedProtocol(BasicClientProtocol, Protocol):
 
 
 class AdaptiveDriftConstrainedMixin:
-    """Adaptive Drift Constrained Mixin
-
-    To be used with `~fl4health.BaseClient` in order to add the ability to compute
-    losses via a constrained adaptive drift.
-    """
-
     def __init__(self, *args: Any, **kwargs: Any):
+        """Adaptive Drift Constrained Mixin
+
+        To be used with `~fl4health.BaseClient` in order to add the ability to compute
+        losses via a constrained adaptive drift.
+
+        Raises:
+            RuntimeError: when the inheriting class does not satisfy `BasicClientProtocolPreSetup`.
+        """
         # Initialize mixin-specific attributes with default values
         self.loss_for_adaptation = 0.1
         self.drift_penalty_tensors = None
@@ -49,6 +51,7 @@ class AdaptiveDriftConstrainedMixin:
         try:
             super().__init__(*args, **kwargs)
         except TypeError:
+            # if a parent class doesn't take args/kwargs
             super().__init__()
 
         # set penalty_loss_function
