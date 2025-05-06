@@ -10,7 +10,7 @@ from flwr.common.typing import Config, NDArrays
 
 from fl4health.clients.basic_client import BasicClient
 from fl4health.losses.weight_drift_loss import WeightDriftLoss
-from fl4health.mixins.core import BasicClientProtocol, BasicClientProtocolPreSetup
+from fl4health.mixins.core_protocols import BasicClientProtocol, BasicClientProtocolPreSetup
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -60,7 +60,7 @@ class AdaptiveDriftConstrainedMixin:
         self.penalty_loss_function = WeightDriftLoss(self.device)
 
     def __init_subclass__(cls, **kwargs: Any):
-        """This method is called when a class inherits from AdaptiveMixin"""
+        """This method is called when a class inherits from AdaptiveDriftConstrainedMixin."""
         super().__init_subclass__(**kwargs)
 
         # Skip check for other mixins
@@ -78,7 +78,7 @@ class AdaptiveDriftConstrainedMixin:
 
         # If we get here, no compatible base was found
         warnings.warn(
-            f"Class {cls.__name__} inherits from AdaptiveMixin but none of its other "
+            f"Class {cls.__name__} inherits from AdaptiveDriftConstrainedMixin but none of its other "
             f"base classes is a BasicClient. This may cause runtime errors.",
             RuntimeWarning,
         )

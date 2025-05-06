@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from fl4health.clients.basic_client import BasicClient
 from fl4health.metrics import Accuracy
 from fl4health.mixins.adaptive_drift_constrained import AdaptiveDriftConstrainedMixin, AdaptiveDriftConstrainedProtocol
-from fl4health.mixins.core import BasicClientProtocol
+from fl4health.mixins.core_protocols import BasicClientProtocol
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import (
     ParameterPackerAdaptiveConstraint,
