@@ -1,4 +1,5 @@
 import warnings
+from logging import INFO
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -163,6 +164,38 @@ def test_get_parameters_uninitialized(mock_param_exchanger: MagicMock, mock_setu
     mock_setup_client.assert_called_once_with(test_config)
     mock_param_exchanger_instance.push_parameters.assert_called_once_with(client.model, config=test_config)
     assert_array_equal(packed_params, push_params_return_model_weights)
+
+
+@patch("fl4health.mixins.adaptive_drift_constrained.log")
+@patch.object(_TestBasicClient, "set_parameters")
+def test_set_parameters(mock_super_set_parameters: MagicMock, mock_logger: MagicMock) -> None:
+    # setup client
+    client = _TestAdaptedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    client.model = torch.nn.Linear(5, 5)
+    client.optimizers = {"global": torch.optim.SGD(client.model.parameters(), lr=0.0001)}
+    client.train_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
+    client.val_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
+    client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
+    client.initialized = True
+    client.setup_client({})
+
+    # setup mocks
+    mock_param_exchanger = MagicMock()
+    unpack_params_model_state: NDArray = np.ndarray(shape=(2, 2), dtype=float)
+    mock_param_exchanger.unpack_parameters.return_value = (unpack_params_model_state, 0.1)
+    client.parameter_exchanger = mock_param_exchanger
+
+    # act
+    assert isinstance(client, AdaptiveDriftConstrainedProtocol)
+    new_params: NDArray = np.ndarray(shape=(2, 2), dtype=float)
+    config: dict[str, Scalar] = {}
+    fitting_round = True
+    client.set_parameters(new_params, config, fitting_round)
+
+    # assert
+    mock_super_set_parameters.assert_called_once_with(unpack_params_model_state, config, fitting_round)
+    mock_param_exchanger.unpack_parameters.assert_called_once_with(new_params)
+    mock_logger.assert_called_once_with(INFO, "Penalty weight received from the server: 0.1")
 
 
 def test_dynamically_created_class() -> None:
