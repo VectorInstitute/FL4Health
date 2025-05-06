@@ -14,7 +14,11 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from fl4health.clients.basic_client import BasicClient
 from fl4health.metrics import Accuracy
-from fl4health.mixins.adaptive_drift_constrained import AdaptiveDriftConstrainedMixin, AdaptiveDriftConstrainedProtocol
+from fl4health.mixins.adaptive_drift_constrained import (
+    AdaptiveDriftConstrainedMixin,
+    AdaptiveDriftConstrainedProtocol,
+    apply_adaptive_drift_to_client,
+)
 from fl4health.mixins.core_protocols import BasicClientProtocol
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import (
@@ -134,3 +138,19 @@ def test_get_parameters() -> None:
         push_params_return_model_weights, client.loss_for_adaptation
     )
     assert_array_equal(packed_params, pack_params_return_val)
+
+
+def test_dynamically_created_class() -> None:
+    adapted_class = apply_adaptive_drift_to_client(_TestBasicClient)
+
+    client = adapted_class(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    client.model = torch.nn.Linear(5, 5)
+    client.optimizers = {"global": torch.optim.SGD(client.model.parameters(), lr=0.0001)}
+    client.train_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))  # type: ignore
+    client.val_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))  # type: ignore
+    client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
+    client.initialized = True
+    client.setup_client({})
+
+    assert isinstance(client, BasicClientProtocol)
+    assert isinstance(client, AdaptiveDriftConstrainedProtocol)
