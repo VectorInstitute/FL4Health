@@ -230,7 +230,7 @@ class AdaptiveDriftConstrainedMixin:
         return self.penalty_loss_function(self.model, self.drift_penalty_tensors, self.drift_penalty_weight)
 
 
-def apply_adaptive_drive_to_client(client_base_type: type[BasicClient]) -> type[BasicClient]:
+def apply_adaptive_drift_to_client(client_base_type: type[BasicClient]) -> type[BasicClient]:
     """Dynamically create an adapted client class.
 
     Args:
