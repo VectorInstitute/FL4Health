@@ -1,7 +1,7 @@
 """AdaptiveDriftConstrainedMixin"""
 
 import warnings
-from logging import INFO
+from logging import INFO, WARN
 from typing import Any, Protocol, runtime_checkable
 
 import torch
@@ -75,9 +75,13 @@ class AdaptiveDriftConstrainedMixin:
                 return
 
         # If we get here, no compatible base was found
-        warnings.warn(
+        msg = (
             f"Class {cls.__name__} inherits from AdaptiveDriftConstrainedMixin but none of its other "
-            f"base classes is a BasicClient. This may cause runtime errors.",
+            f"base classes is a BasicClient. This may cause runtime errors."
+        )
+        log(WARN, msg)
+        warnings.warn(
+            msg,
             RuntimeWarning,
         )
 
