@@ -125,6 +125,7 @@ def test_get_parameters() -> None:
 
     # act
     test_config: dict[str, Scalar] = {}
+    # TODO: fix the mixin/protocol typing that leads to mypy complaint
     packed_params = client.get_parameters(config=test_config)  # type: ignore
 
     # assert
