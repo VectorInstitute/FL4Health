@@ -97,7 +97,7 @@ def test_subclass_checks_raise_no_warning() -> None:
 def test_subclass_checks_raise_warning() -> None:
 
     msg = (
-        "Class _InvalidSubclass inherits from AdaptiveMixin but none of its other "
+        "Class _InvalidSubclass inherits from AdaptiveDriftConstrainedMixin but none of its other "
         "base classes is a BasicClient. This may cause runtime errors."
     )
     with pytest.warns(RuntimeWarning, match=msg):
