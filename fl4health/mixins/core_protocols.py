@@ -64,3 +64,7 @@ class BasicClientProtocol(BasicClientProtocolPreSetup, Protocol):
     """A minimal protocol for BasicClient focused on methods."""
 
     model: nn.Module
+    optimizers: dict[str, torch.optim.Optimizer]
+    train_loader: DataLoader
+    val_loader: DataLoader
+    test_loader: DataLoader | None

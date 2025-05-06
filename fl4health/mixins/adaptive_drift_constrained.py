@@ -29,8 +29,6 @@ class AdaptiveDriftConstrainedProtocol(BasicClientProtocol, Protocol):
 
     def compute_penalty_loss(self) -> torch.Tensor: ...  # noqa: E704
 
-    def ensure_protocol_compliance(self) -> None: ...  # noqa: E704
-
 
 class AdaptiveDriftConstrainedMixin:
     def __init__(self, *args: Any, **kwargs: Any):
@@ -82,11 +80,6 @@ class AdaptiveDriftConstrainedMixin:
             f"base classes is a BasicClient. This may cause runtime errors.",
             RuntimeWarning,
         )
-
-    def ensure_protocol_compliance(self) -> None:
-        """Call this after the object is fully initialized"""
-        if not isinstance(self, BasicClientProtocol):
-            raise TypeError("BasicClientProtocol requirements not met.")
 
     def get_parameters(self: AdaptiveDriftConstrainedProtocol, config: Config) -> NDArrays:
         """
