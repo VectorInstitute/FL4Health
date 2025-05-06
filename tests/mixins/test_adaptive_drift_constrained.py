@@ -1,6 +1,6 @@
 import warnings
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
@@ -138,6 +138,31 @@ def test_get_parameters() -> None:
         push_params_return_model_weights, client.loss_for_adaptation
     )
     assert_array_equal(packed_params, pack_params_return_val)
+
+
+@patch.object(_TestAdaptedClient, "setup_client")
+@patch("fl4health.mixins.adaptive_drift_constrained.FullParameterExchanger")
+def test_get_parameters_uninitialized(mock_param_exchanger: MagicMock, mock_setup_client: MagicMock) -> None:
+    # setup client
+    client = _TestAdaptedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    client.model = torch.nn.Linear(5, 5)
+    client.optimizers = {"global": torch.optim.SGD(client.model.parameters(), lr=0.0001)}
+    client.initialized = False
+
+    # setup mocks
+    mock_param_exchanger_instance = mock_param_exchanger.return_value
+    push_params_return_model_weights: NDArray = np.ndarray(shape=(2, 2), dtype=float)
+    mock_param_exchanger_instance.push_parameters.return_value = push_params_return_model_weights
+
+    # act
+    test_config: dict[str, Scalar] = {}
+    # TODO: fix the mixin/protocol typing that leads to mypy complaint
+    packed_params = client.get_parameters(config=test_config)  # type: ignore
+
+    # assert
+    mock_setup_client.assert_called_once_with(test_config)
+    mock_param_exchanger_instance.push_parameters.assert_called_once_with(client.model, config=test_config)
+    assert_array_equal(packed_params, push_params_return_model_weights)
 
 
 def test_dynamically_created_class() -> None:
