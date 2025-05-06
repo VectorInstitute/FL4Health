@@ -228,3 +228,26 @@ class AdaptiveDriftConstrainedMixin:
         assert self.drift_penalty_tensors is not None
 
         return self.penalty_loss_function(self.model, self.drift_penalty_tensors, self.drift_penalty_weight)
+
+
+def apply_adaptive_drive_to_client(client_base_type: type[BasicClient]) -> type[BasicClient]:
+    """Dynamically create an adapted client class.
+
+    Args:
+        client_base_type (type[BasicClient]): The class to be mixed.
+
+    Returns:
+        type[BasicClient]: A basic client that has been mixed with `AdaptiveDriftConstrainedMixin`.
+    """
+
+    return type(
+        f"AdaptiveDrift{client_base_type.__name__}",
+        (
+            AdaptiveDriftConstrainedMixin,
+            client_base_type,
+        ),
+        {
+            # Special flag to bypass validation
+            "_dynamically_created": True
+        },
+    )
