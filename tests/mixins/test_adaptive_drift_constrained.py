@@ -186,10 +186,10 @@ def test_set_parameters(mock_super_set_parameters: MagicMock, mock_logger: Magic
     client.parameter_exchanger = mock_param_exchanger
 
     # act
-    assert isinstance(client, AdaptiveDriftConstrainedProtocol)
     new_params: NDArray = np.ndarray(shape=(2, 2), dtype=float)
     config: dict[str, Scalar] = {}
     fitting_round = True
+    assert isinstance(client, AdaptiveDriftConstrainedProtocol)
     client.set_parameters(new_params, config, fitting_round)
 
     # assert
