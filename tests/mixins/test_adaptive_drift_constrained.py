@@ -31,7 +31,7 @@ class _TestBasicClient(BasicClient):
     def get_model(self, config: Config) -> nn.Module:
         return self.model
 
-    def get_data_loaders(self, config: Config) -> tuple[DataLoader, ...]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         return self.train_loader, self.val_loader
 
     def get_optimizer(self, config: Config) -> Optimizer | dict[str, Optimizer]:
