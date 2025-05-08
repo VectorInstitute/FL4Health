@@ -7,7 +7,8 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.utils.typing import TorchFeatureType, TorchPredType, TorchTargetType
+from fl4health.utils.losses import EvaluationLosses, TrainingLosses
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
 @runtime_checkable
@@ -68,3 +69,35 @@ class BasicClientProtocol(BasicClientProtocolPreSetup, Protocol):
     train_loader: DataLoader
     val_loader: DataLoader
     test_loader: DataLoader | None
+    criterion: _Loss
+
+    def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
+        pass
+
+    def update_before_train(self, current_server_round: int) -> None:
+        pass
+
+    def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
+        pass
+
+    def transform_target(self, target: TorchTargetType) -> TorchTargetType:
+        pass
+
+    def compute_training_loss(
+        self,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
+    ) -> TrainingLosses:
+        pass
+
+    def validate(self, include_losses_in_metrics: bool = False) -> tuple[float, dict[str, Scalar]]:
+        pass
+
+    def compute_evaluation_loss(
+        self,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
+    ) -> EvaluationLosses:
+        pass
