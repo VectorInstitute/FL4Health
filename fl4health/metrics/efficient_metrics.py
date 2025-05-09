@@ -138,11 +138,10 @@ class MultiClassDice(MultiClassificationMetric):
         Returns:
             Scalar: Mean dice score for the provided tensors
         """
-        true_positives, false_positives, _, false_negatives = self.count_tp_fp_tn_fn(input, target)
-        dice = compute_dice_on_count_tensors(true_positives, false_positives, false_negatives, self.zero_division)
-        if dice.numel() == 0:
-            log(WARNING, "Currently, Dice score is undefined due to only true negatives present")
-        return torch.mean(dice).item()
+        true_positives, false_positives, true_negatives, false_negatives = self.count_tp_fp_tn_fn(input, target)
+        dice_metric = self.compute_from_counts(true_positives, false_positives, true_negatives, false_negatives)
+        # Extract the scalar from the dictionary.
+        return dice_metric[self.name]
 
 
 class BinaryDice(BinaryClassificationMetric):
@@ -271,8 +270,7 @@ class BinaryDice(BinaryClassificationMetric):
         Returns:
             Scalar: Mean dice score for the provided tensors
         """
-        true_positives, false_positives, _, false_negatives = self.count_tp_fp_tn_fn(input, target)
-        dice = compute_dice_on_count_tensors(true_positives, false_positives, false_negatives, self.zero_division)
-        if dice.numel() == 0:
-            log(WARNING, "Currently, Dice score is undefined due to only true negatives present")
-        return torch.mean(dice).item()
+        true_positives, false_positives, true_negatives, false_negatives = self.count_tp_fp_tn_fn(input, target)
+        dice_metric = self.compute_from_counts(true_positives, false_positives, true_negatives, false_negatives)
+        # Extract the scalar from the dictionary.
+        return dice_metric[self.name]

@@ -29,12 +29,13 @@ class ClassificationMetric(Metric, ABC):
         discard: set[MetricOutcome] | None,
     ) -> None:
         """
-        A Base class for classification metrics that can be computed using the true positives (tp),
-        false positive (fp), false negative (fn) and true negative (tn) counts. How these values are counted is left
-        to the inheriting class along with how they are composed together for the final metric score. There are two
-        classes inheriting from this class to form the basis of efficient classification metrics:
-        BinaryClassificationMetric and MultiClassificationMetric. These handle implementation of the
-        ``count_tp_fp_fn_tn`` method.
+        A Base class for efficiently computing classification metrics that can be calculated using the true positives
+        (tp), false positive (fp), false negative (fn) and true negative (tn) counts.
+
+        How these values are counted is left to the inheriting class along with how they are composed together for the
+        final metric score. There are two classes inheriting from this class to form the basis of efficient
+        classification metrics: BinaryClassificationMetric and MultiClassificationMetric. These handle implementation
+        of the ``count_tp_fp_fn_tn`` method.
 
         On each update, the true_positives, false_positives, false_negatives and true_negatives counts for the
         provided predictions and targets are accumulated into ``self.true_positives``, ``self.false_positives``,
@@ -144,6 +145,9 @@ class ClassificationMetric(Metric, ABC):
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Compute counts. If were ignoring a count, set it as an empty tensor to avoid downstream errors.
+
+        NOTE: preds and targets are assumed to be in range [0, 1]. Otherwise the computations below may produce
+        unexpected results.
 
         Args:
             preds (torch.Tensor): Predictions tensor
@@ -267,8 +271,10 @@ class ClassificationMetric(Metric, ABC):
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Given two tensors containing model predictions and targets, returns the number of true positives (tp), false
-        positives (fp), true negatives (tn), and false negatives (fn), respecting ``self.batch_dim`` and
-        ``self.label_dim``
+        positives (fp), true negatives (tn), and false negatives (fn).
+
+        The shape of these counts depends on the values of ``self.batch_dim`` and ``self.label_dim`` are specified
+        and the implementation of the inheriting class.
 
         NOTE: Inheriting classes must implement additional functionality on top of this class. For example, any
         preprocessing that needs to be done to preds and targets should be done in the inheriting function. Any post
@@ -425,7 +431,7 @@ class BinaryClassificationMetric(ClassificationMetric):
         assert pos_label == 0 or pos_label == 1, "pos_label must be either 0 or 1"
         self.pos_label = pos_label
 
-    def _post_process_count_tensor(self, count_tensor: torch.Tensor) -> torch.Tensor:
+    def _postprocess_count_tensor(self, count_tensor: torch.Tensor) -> torch.Tensor:
         """
         Given a count tensor, in the various forms that it might appear, we need to post process these so that they
         can be returned to the user in the appropriate format. The structure of the counts tensors after processing
@@ -503,22 +509,25 @@ class BinaryClassificationMetric(ClassificationMetric):
         self, preds: torch.Tensor, targets: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
-        Given two tensors containing model predictions and targets, returns the number of true positives (tp), false
-        positives (fp), true negatives (tn), and false negatives (fn), respecting ``self.batch_dim`` and
-        ``self.label_dim``
+         Given two tensors containing model predictions and targets, returns the number of true positives (tp), false
+         positives (fp), true negatives (tn), and false negatives (fn).
 
-        If any of the true positives, false positives, true negative, or false negative counts were specified to be
-        discarded during initialization of the class, then that count will not be computed and an empty tensor will be
-        returned in its place.
+        The shape of these counts depends on the values of ``self.batch_dim`` and ``self.label_dim`` are specified.
+        They also depend on the shape of the input and target for this class. As binary predictions may be explicit
+        (vector encoded) or implicit (single value implying values for the negative and positive classes).
 
-        Args:
-            preds (torch.Tensor): Tensor containing model predictions. Must be the same shape as targets
-            targets (torch.Tensor): Tensor containing prediction targets. Must be same shape as preds.
+         If any of the true positives, false positives, true negative, or false negative counts were specified to be
+         discarded during initialization of the class, then that count will not be computed and an empty tensor will be
+         returned in its place.
 
-        Returns:
-            tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
-                specified dimensions for each of true positives, false positives, true negative, and false negative,
-                respectively.
+         Args:
+             preds (torch.Tensor): Tensor containing model predictions. Must be the same shape as targets
+             targets (torch.Tensor): Tensor containing prediction targets. Must be same shape as preds.
+
+         Returns:
+             tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
+                 specified dimensions for each of true positives, false positives, true negative, and false negative,
+                 respectively.
         """
         # Transform preds and targets as necessary/specified before computing counts
         preds, targets = self._transform_tensors(preds, targets)
@@ -543,10 +552,10 @@ class BinaryClassificationMetric(ClassificationMetric):
 
         true_positives, false_positives, true_negatives, false_negatives = super().count_tp_fp_tn_fn(preds, targets)
 
-        true_positives = self._post_process_count_tensor(true_positives)
-        false_positives = self._post_process_count_tensor(false_positives)
-        true_negatives = self._post_process_count_tensor(true_negatives)
-        false_negatives = self._post_process_count_tensor(false_negatives)
+        true_positives = self._postprocess_count_tensor(true_positives)
+        false_positives = self._postprocess_count_tensor(false_positives)
+        true_negatives = self._postprocess_count_tensor(true_negatives)
+        false_negatives = self._postprocess_count_tensor(false_negatives)
 
         if self.pos_label == 0:
             # Need to flip the label interpretations
@@ -776,8 +785,7 @@ class MultiClassificationMetric(ClassificationMetric):
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Given two tensors containing model predictions and targets, returns the number of true positives (tp), false
-        positives (fp), true negatives (tn), and false negatives (fn), respecting ``self.batch_dim`` and
-        ``self.label_dim``
+        positives (fp), true negatives (tn), and false negatives (fn).
 
         If any of the true positives, false positives, true negative, or false negative counts were specified to be
         discarded during initialization of the class, then that count will not be computed and an empty tensor will be
