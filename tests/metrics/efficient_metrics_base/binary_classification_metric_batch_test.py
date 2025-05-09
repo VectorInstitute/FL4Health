@@ -4,10 +4,11 @@ import pytest
 import torch
 
 from fl4health.metrics.efficient_metrics_base import BinaryClassificationMetric, MetricOutcome
+from fl4health.utils.random import set_all_random_seeds
 
 
 def test_binary_classification_metric_counts() -> None:
-    torch.manual_seed(42)
+    set_all_random_seeds(42)
 
     logits = torch.Tensor([[3.0, 1.0], [0.88, 0.06], [0.1, 0.3], [0.9, 0.3], [0.5, 3.0]])
     targets = torch.Tensor([[1, 0], [1, 0], [0, 1], [1, 0], [0, 1]])
@@ -143,7 +144,7 @@ def test_binary_classification_metric_counts() -> None:
     assert torch.allclose(classification_metric.false_negatives, torch.Tensor([[0], [0], [0], [0], [0]]))
 
     # Test when label dim is less than batch dim that everything still comes out properly
-    torch.manual_seed(42)
+    set_all_random_seeds(42)
     # Need to rearrange the tensors to maintain the meaning of labels and batch dim while having batch dim come after
     logits = torch.rand((2, 3, 2)).transpose(0, 1).transpose(1, 2)
     targets = torch.rand((2, 3, 2)).transpose(0, 1).transpose(1, 2)
