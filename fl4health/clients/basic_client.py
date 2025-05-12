@@ -1094,7 +1094,7 @@ class BasicClient(NumPyClient):
         assert not isinstance(optimizer, dict)
         self.optimizers = {"global": optimizer}
 
-    def get_data_loaders(self, config: Config) -> tuple[DataLoader, ...]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         """
         User defined method that returns a PyTorch Train DataLoader
         and a PyTorch Validation DataLoader
