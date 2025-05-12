@@ -438,19 +438,25 @@ class BinaryClassificationMetric(ClassificationMetric):
     def _postprocess_count_tensor(self, count_tensor: torch.Tensor) -> torch.Tensor:
         """
         Given a count tensor, in the various forms that it might appear, we need to post process these so that they
-        can be returned to the user in the appropriate format. The structure of the counts tensors after processing
-        a batch of data will differ depending on whether the label_dim and batch_dim have been specified.
+        can be returned to the user in the appropriate format. The structure of `count_tensor` after processing
+        a batch of data will differ depending on whether the ``label_dim`` and ``batch_dim`` have been specified.
+
+        That is, the shape of `count_tensor` will be:
+
+        - If both ``label_dim`` and ``batch_dim`` have been provided, the count tensor will be 2D with the batch
+          dimension first, followed by the label dimension.
+        - If ``batch_dim`` has been provided, but not ``label_dim``, the count tensor will be 1D with a single count
+          associated with each sample in the batch.
+        - If ``label_dim`` has been provided, but not ``batch_dim``, the count tensor will have 1 or 2 elements,
+          because it's a binary problem.
+        - If neither has been provided then the tensor will have 1 element corresponding to the count over all
+          tensor elements.
 
         NOTE: If the count has been specified as discarded, it will always simply be an empty tensor
 
-        - If both label_dim and batch_dim have been provided, the count tensor will be 2D with the batch dimension
-          first, followed by the label dimension.
-        - If batch_dim has been provided, but not label_dim, the count tensor will be 1D with a single count
-          associated with each sample in the batch.
-        - If label_dim has been provided, but not batch_dim, the count tensor will have 1 or 2 elements, because it's
-          a binary problem.
-        - If neither has been provided then the tensor will have 1 element corresponding to the count over all
-          tensor elements.
+        After postprocessing, the count tensor will always be RELATIVE to the class associated with the class at index
+        1 or the implicit class associated with targets 1.0 (when preds/targets are not vector encoded). Returning
+        values relative to the opposite class is handled elsewhere.
 
         Args:
             count_tensor (torch.Tensor): Count tensor with the correct shape and meaning.
@@ -459,7 +465,9 @@ class BinaryClassificationMetric(ClassificationMetric):
             ValueError: Raises errors if the tensor does not have the right shape for the expected setting
 
         Returns:
-            torch.Tensor: Count tensor of the appropriate shape and structure.
+            torch.Tensor: Count tensor of the appropriate shape and structure. If `self.batch_dim` is not None
+                then the postprocessed `count_tensor` will have shape (batch size, 1), Otherwise, it will have shape
+                (1,). In both settings, the count is relative to the label at index 1 (implied or explicit).
         """
         # If tensor is empty, we do nothing
         if count_tensor.numel() == 0:
@@ -531,7 +539,8 @@ class BinaryClassificationMetric(ClassificationMetric):
          Returns:
              tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
                  specified dimensions for each of true positives, false positives, true negative, and false negative,
-                 respectively.
+                 respectively. If `self.batch_dim` is not None then these tensors will have shape (batch size, 1),
+                 Otherwise, it will have shape (1,). The counts will be relative to the index of ``self.pos_label``
         """
         # Transform preds and targets as necessary/specified before computing counts
         preds, targets = self._transform_tensors(preds, targets)
@@ -561,8 +570,8 @@ class BinaryClassificationMetric(ClassificationMetric):
         true_negatives = self._postprocess_count_tensor(true_negatives)
         false_negatives = self._postprocess_count_tensor(false_negatives)
 
+        # Need to flip the label interpretations
         if self.pos_label == 0:
-            # Need to flip the label interpretations
             return true_negatives, false_negatives, true_positives, false_positives
 
         return true_positives, false_positives, true_negatives, false_negatives
