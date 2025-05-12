@@ -216,6 +216,11 @@ class BinaryDice(BinaryClassificationMetric):
                 a zero division (only true negatives present). If None, these examples will be dropped. If all
                 components are only TNs, then NaN will be returned.
         """
+        # The right set of counts that can be ignored for Dice computation depends on which label relative to which
+        # we're reporting the score. If reporting relative to the positive label, then we need not track
+        # True Negatives, as they don't factor into the standard Dice score. On the other hand, if reporting relative
+        # to the negative class, we need not keep True Positives around, for the same reason.
+        discard = {MetricOutcome.TRUE_NEGATIVE} if pos_label == 1 else {MetricOutcome.TRUE_POSITIVE}
         super().__init__(
             name=name,
             batch_dim=batch_dim,
@@ -223,7 +228,7 @@ class BinaryDice(BinaryClassificationMetric):
             dtype=dtype,
             threshold=threshold,
             pos_label=pos_label,
-            discard=None,
+            discard=discard,
         )
         self.zero_division = zero_division
 

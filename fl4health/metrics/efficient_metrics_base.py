@@ -113,6 +113,8 @@ class ClassificationMetric(Metric, ABC):
         boolean tensors to integers for computation. The second is to potentially threshold the predictions if
         self.threshold is not None
 
+        NOTE: This is a common implementation meant to be called (or overridden) by inheriting classes.
+
         Args:
             preds (torch.Tensor): Predictions tensor
             targets (torch.Tensor): Targets tensor
@@ -132,6 +134,8 @@ class ClassificationMetric(Metric, ABC):
     def _assert_correct_ranges(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
         """
         Ensures that the prediction and target tensors are within the expected ranges for computation.
+
+        NOTE: This is a common implementation meant to be called (or overridden) by inheriting classes.
 
         Args:
             preds (torch.Tensor): Predictions tensor
