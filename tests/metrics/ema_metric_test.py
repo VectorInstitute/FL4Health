@@ -2,6 +2,7 @@ import torch
 from flwr.common.typing import Metrics
 from pytest import LogCaptureFixture, approx
 
+from fl4health.metrics import Accuracy
 from fl4health.metrics.base_metrics import Metric
 from fl4health.metrics.compound_metrics import EmaMetric
 from tests.metrics.metric_utility import AccuracyForTest
@@ -52,6 +53,40 @@ def test_ema_metric_computation() -> None:
 
     metrics_2 = ema_accuracy_metric.compute()
     assert metrics_2["ema_acc"] == approx(0.8 * (6.0 / 14.0) + 0.2 * (1.0 / 4.0), abs=1e-6)
+
+
+def test_ema_with_no_clear() -> None:
+
+    ema = EmaMetric(Accuracy(), 0.1)
+
+    preds_1 = torch.Tensor([1, 0, 1])
+    targets_1 = torch.Tensor([1, 1, 1])
+
+    preds_2 = torch.Tensor([0, 0, 1])
+    targets_2 = torch.Tensor([1, 1, 1])
+
+    ema.update(preds_1, targets_1)
+    metrics = ema.compute()
+    assert metrics["EMA_accuracy"] == 2.0 / 3.0
+
+    # If no clear before update (new accuracy is computed using both pred_1 and pred_2)
+    ema.update(preds_2, targets_2)
+    metrics = ema.compute()
+    assert metrics["EMA_accuracy"] == 0.9 * (2.0 / 3.0) + 0.1 * (1.0 / 2.0)
+
+    # Reset the previous score for testing
+    ema.previous_score = None
+    # Clear the underlying metric accumulation
+    ema.clear()
+
+    ema.update(preds_1, targets_1)
+    ema.compute()
+
+    # Clear the underlying metric accumulation before ema update
+    ema.clear()
+    ema.update(preds_2, targets_2)
+    metrics = ema.compute()
+    assert metrics["EMA_accuracy"] == 0.9 * (2.0 / 3.0) + 0.1 * (1.0 / 3.0)
 
 
 def test_ema_warning_on_bad_type(caplog: LogCaptureFixture) -> None:
