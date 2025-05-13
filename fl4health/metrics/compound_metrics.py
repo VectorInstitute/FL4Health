@@ -20,7 +20,8 @@ class EmaMetric(Metric, Generic[T]):
 
         NOTE: If the underlying metric accumulates batches during update, then updating this metric without clearing
         in between will result in previously seen inputs and targets being a part of subsequent computations. For
-        example, if we use Accuracy from fl4health.metrics, which accumulates batches
+        example, if we use Accuracy from fl4health.metrics, which accumulates batches, we get the following behavior
+        in the code block below.
 
         .. code-block:: python
 
@@ -34,13 +35,13 @@ class EmaMetric(Metric, Generic[T]):
 
             ema.compute() -> 0.667
 
-            preds_2 = torch.Tensor([1, 0, 1]), targets_1 = torch.Tensor([0, 0, 1])
+            preds_2 = torch.Tensor([0, 0, 1]), targets_2 = torch.Tensor([1, 1, 1])
 
             # If no clear before update (new accuracy is computed using both pred_1 and pred_2)
 
             ema.update(preds_2, targets_2) = 0.9(0.667) + 0.1 (0.5)
 
-            # If no clear before update (new accuracy is computed using pred_2)
+            # If there were a clear before update (new accuracy is computed using pred_2)
 
             ema.clear()
 
