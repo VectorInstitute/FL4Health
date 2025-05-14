@@ -7,14 +7,14 @@
 
     
       <meta name="description" content="aieng-template Python API documentation">
-    <link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="fl4health.reporting.json_reporter module" href="fl4health.reporting.json_reporter.html" /><link rel="prev" title="fl4health.reporting package" href="fl4health.reporting.html" />
+    <link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="fl4health.mixins package" href="fl4health.mixins.html" /><link rel="prev" title="fl4health.metrics.metrics_utils module" href="fl4health.metrics.metrics_utils.html" />
 
     <meta name="generator" content="sphinx-8.1.3, furo 2024.08.06"/>
 
     
     <meta name="msvalidate.01" content="8D2A5032F006424CAF54C0DDCD16F666" />
       
-        <title>fl4health.reporting.base_reporter module - FL4Health</title>
+        <title>fl4health.metrics.utils module - FL4Health</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
@@ -319,7 +319,7 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.losses.weight_drift_loss.html">fl4health.losses.weight_drift_loss module</a></li>
 </ul>
 </li>
-<li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.metrics.html">fl4health.metrics package</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of fl4health.metrics package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 current has-children"><a class="reference internal" href="fl4health.metrics.html">fl4health.metrics package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of fl4health.metrics package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.base_metrics.html">fl4health.metrics.base_metrics module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.compound_metrics.html">fl4health.metrics.compound_metrics module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.efficient_metrics.html">fl4health.metrics.efficient_metrics module</a></li>
@@ -328,7 +328,7 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metric_managers.html">fl4health.metrics.metric_managers module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics.html">fl4health.metrics.metrics module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics_utils.html">fl4health.metrics.metrics_utils module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.utils.html">fl4health.metrics.utils module</a></li>
+<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">fl4health.metrics.utils module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.mixins.html">fl4health.mixins package</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" role="switch" type="checkbox"/><label for="toctree-checkbox-16"><div class="visually-hidden">Toggle navigation of fl4health.mixins package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -386,8 +386,8 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.privacy.moments_accountant.html">fl4health.privacy.moments_accountant module</a></li>
 </ul>
 </li>
-<li class="toctree-l3 current has-children"><a class="reference internal" href="fl4health.reporting.html">fl4health.reporting package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" role="switch" type="checkbox"/><label for="toctree-checkbox-23"><div class="visually-hidden">Toggle navigation of fl4health.reporting package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
-<li class="toctree-l4 current current-page"><a class="current reference internal" href="#">fl4health.reporting.base_reporter module</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.reporting.html">fl4health.reporting package</a><input class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" role="switch" type="checkbox"/><label for="toctree-checkbox-23"><div class="visually-hidden">Toggle navigation of fl4health.reporting package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.reporting.base_reporter.html">fl4health.reporting.base_reporter module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.reporting.json_reporter.html">fl4health.reporting.json_reporter module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.reporting.reports_manager.html">fl4health.reporting.reports_manager module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.reporting.wandb_reporter.html">fl4health.reporting.wandb_reporter module</a></li>
@@ -492,69 +492,102 @@
           </label>
         </div>
         <article role="main">
-          <section id="module-fl4health.reporting.base_reporter">
-<span id="fl4health-reporting-base-reporter-module"></span><h1>fl4health.reporting.base_reporter module<a class="headerlink" href="#module-fl4health.reporting.base_reporter" title="Link to this heading">¶</a></h1>
-<p>Base Class for Reporters.</p>
-<p>Super simple for now but keeping it in a separate file in case we add more base methods.</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="fl4health.reporting.base_reporter.BaseReporter">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BaseReporter</span></span><a class="reference internal" href="../../_modules/fl4health/reporting/base_reporter.html#BaseReporter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.reporting.base_reporter.BaseReporter" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.reporting.base_reporter.BaseReporter.initialize">
-<span class="sig-name descname"><span class="pre">initialize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/reporting/base_reporter.html#BaseReporter.initialize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.reporting.base_reporter.BaseReporter.initialize" title="Link to this definition">¶</a></dt>
-<dd><p>Method for initializing reporters with client/server information</p>
-<p>This method is called once by the client or server during initialization.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>kwargs</strong> (<em>Any</em>) – arbitrary keyword arguments containing information from the client or server that might be
-useful for initializing the reporter. This information should be treated as optional and this method
-should work even if no keyword arguments are passed.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
-</dd>
-</dl>
-</dd></dl>
+          <section id="module-fl4health.metrics.utils">
+<span id="fl4health-metrics-utils-module"></span><h1>fl4health.metrics.utils module<a class="headerlink" href="#module-fl4health.metrics.utils" title="Link to this heading">¶</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="fl4health.metrics.utils.align_pred_and_target_shapes">
+<span class="sig-name descname"><span class="pre">align_pred_and_target_shapes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/utils.html#align_pred_and_target_shapes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.utils.align_pred_and_target_shapes" title="Link to this definition">¶</a></dt>
+<dd><p>If necessary, attempts to correct shape mismatches between the given tensors by inferring which one
+to one-hot-encode. Note that if both preds and targets have the same shape then nothing needs to be modified. If
+there is a mismatch, it is assumed that the labels in one of the predictions or the targets are vector encoded
+in some way (either one-hot or soft) while the other is label index encoded.</p>
+<p>If one is vector encoded but not the other, then both are returned as vector encoded tensors.</p>
+<p>NOTE: This function ASSUMES label-index encoding if the shapes are misaligned. This assumption doesn’t necessarily
+hold in binary classification settings where continuous values might be used to indicate the positive label by
+default. As such, this function should not be used for those types of tensors.</p>
+<p>For example, consider a problem with 3 label classes with the preds vector encoded and the targets label encoded</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">preds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]])</span>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.reporting.base_reporter.BaseReporter.report">
-<span class="sig-name descname"><span class="pre">report</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/reporting/base_reporter.html#BaseReporter.report"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.reporting.base_reporter.BaseReporter.report" title="Link to this definition">¶</a></dt>
-<dd><p>A method called by clients or servers to send data to the reporter.</p>
-<p>The report method is called by the client/server at frequent intervals (ie step, epoch, round) and sometimes
-outside of a FL round (for high level summary data). It is up to the reporter to determine when and what to
-report.</p>
+<span class="n">targets</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([[</span><span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+</pre></div>
+</div>
+<p>preds has shape (2, 3) and targets has shape (2, 1). This function will convert targets to a one-hot-encode tensor
+with contents</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">targets</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a>) – The data to maybe report from the server or client.</p></li>
-<li><p><strong>round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The current FL round. If None, this indicates that the method was called
-outside of a round (e.g. for summary information). Defaults to None.</p></li>
-<li><p><strong>epoch</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The current epoch (In total across all rounds). If None then this method was
-not called at or within the scope of an epoch. Should always be None if training by steps. Defaults to
-None.</p></li>
-<li><p><strong>step</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The current step (In total across all rounds and epochs). If None then this
-method was called outside the scope of a training or evaluation step (e.g. at the end of an epoch or
-round) Defaults to None.</p></li>
+<li><p><strong>preds</strong> (<em>torch.Tensor</em>) – The tensor with model predictions.</p></li>
+<li><p><strong>targets</strong> (<em>torch.Tensor</em>) – The tensor with model targets.</p></li>
+<li><p><strong>label_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em>) – Index of the label dimension. If left as None then this method attempts to infer
+the label dimension if it is needed.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The pred and target tensors respectively now ensured to have the same shape.</p>
 </dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.reporting.base_reporter.BaseReporter.shutdown">
-<span class="sig-name descname"><span class="pre">shutdown</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/reporting/base_reporter.html#BaseReporter.shutdown"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.reporting.base_reporter.BaseReporter.shutdown" title="Link to this definition">¶</a></dt>
-<dd><p>Called by the client/server on shutdown.</p>
-<dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[torch.Tensor, torch.Tensor]</p>
 </dd>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="fl4health.metrics.utils.infer_label_dim">
+<span class="sig-name descname"><span class="pre">infer_label_dim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensor2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/utils.html#infer_label_dim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.utils.infer_label_dim" title="Link to this definition">¶</a></dt>
+<dd><p>Infers the label dimension given two related tensors of different shapes.</p>
+<p>Generally useful for inferring the label dimension when one tensor is vector-encoded and the other is not. The
+label dimension is inferred by looking for dimensions that either are not the same size, or are not present in
+tensor 2.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tensor1</strong> (<em>torch.Tensor</em>) – The reference tensor. Must have the same number of dimensions as tensor 2, or have
+exactly 1 more dimension (the label dim).</p></li>
+<li><p><strong>tensor2</strong> (<em>torch.Tensor</em>) – The non-reference tensor.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#AssertionError" title="(in Python v3.10)"><strong>AssertionError</strong></a> – If the the label dimension cannot be inferred without ambiguity. For example if a dimension
+next to the label dimension has the same size.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Index of the dimension along tensor 1 that corresponds to the label dimension.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)">int</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fl4health.metrics.utils.map_label_index_tensor_to_one_hot">
+<span class="sig-name descname"><span class="pre">map_label_index_tensor_to_one_hot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label_index_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_dim</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/utils.html#map_label_index_tensor_to_one_hot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.utils.map_label_index_tensor_to_one_hot" title="Link to this definition">¶</a></dt>
+<dd><p>Maps the provided <code class="docutils literal notranslate"><span class="pre">label_index_tensor</span></code>, which has label indices at the provided <code class="docutils literal notranslate"><span class="pre">label_dim</span></code>. In the tensor,
+this dimension should be “empty”, i.e. have size 1. This function uses the shape provided by <code class="docutils literal notranslate"><span class="pre">target_shape</span></code> to
+expand the label indices into one-hot encoded vectors in that dimension according the the size of the target
+dimension at <code class="docutils literal notranslate"><span class="pre">label_dim</span></code> in <code class="docutils literal notranslate"><span class="pre">target_shape</span></code>. For example, if label_index_tensor has shape (64, 10, 10, 1),
+label_dim = 3, and target_shape = (64, 10, 10, 4), then the new shape should be (64, 10, 10, 4) with [i, j, k, :]
+being a one-hot vector of length 4.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>label_index_tensor</strong> (<em>torch.Tensor</em>) – Tensor to have label_dim dimension one-hot encoded accounting to
+target_shape and the indices of label_index_tensor in the label_dim</p></li>
+<li><p><strong>target_shape</strong> (<em>torch.Size</em>) – Shape we want to transform label_index_tensor to. Mainly used to establish the
+length of the one-hot encodings</p></li>
+<li><p><strong>label_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Dimension to one-hot encode.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tensor with one-hot encoded label_dim.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -564,23 +597,23 @@ round) Defaults to None.</p></li>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="fl4health.reporting.json_reporter.html">
+          <a class="next-page" href="fl4health.mixins.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">fl4health.reporting.json_reporter module</div>
+                <div class="title">fl4health.mixins package</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="fl4health.reporting.html">
+          <a class="prev-page" href="fl4health.metrics.metrics_utils.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">fl4health.reporting package</div>
+                <div class="title">fl4health.metrics.metrics_utils module</div>
                 
               </div>
             </a>
@@ -631,13 +664,10 @@ round) Defaults to None.</p></li>
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">fl4health.reporting.base_reporter module</a><ul>
-<li><a class="reference internal" href="#fl4health.reporting.base_reporter.BaseReporter"><code class="docutils literal notranslate"><span class="pre">BaseReporter</span></code></a><ul>
-<li><a class="reference internal" href="#fl4health.reporting.base_reporter.BaseReporter.initialize"><code class="docutils literal notranslate"><span class="pre">BaseReporter.initialize()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.reporting.base_reporter.BaseReporter.report"><code class="docutils literal notranslate"><span class="pre">BaseReporter.report()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.reporting.base_reporter.BaseReporter.shutdown"><code class="docutils literal notranslate"><span class="pre">BaseReporter.shutdown()</span></code></a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#">fl4health.metrics.utils module</a><ul>
+<li><a class="reference internal" href="#fl4health.metrics.utils.align_pred_and_target_shapes"><code class="docutils literal notranslate"><span class="pre">align_pred_and_target_shapes()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.metrics.utils.infer_label_dim"><code class="docutils literal notranslate"><span class="pre">infer_label_dim()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.metrics.utils.map_label_index_tensor_to_one_hot"><code class="docutils literal notranslate"><span class="pre">map_label_index_tensor_to_one_hot()</span></code></a></li>
 </ul>
 </li>
 </ul>

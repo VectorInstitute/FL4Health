@@ -20,3 +20,4 @@ Submodules
    fl4health.metrics.metric_managers
    fl4health.metrics.metrics
    fl4health.metrics.metrics_utils
+   fl4health.metrics.utils

@@ -328,6 +328,7 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metric_managers.html">fl4health.metrics.metric_managers module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics.html">fl4health.metrics.metrics module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics_utils.html">fl4health.metrics.metrics_utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.utils.html">fl4health.metrics.utils module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.mixins.html">fl4health.mixins package</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" role="switch" type="checkbox"/><label for="toctree-checkbox-16"><div class="visually-hidden">Toggle navigation of fl4health.mixins package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -564,41 +565,69 @@ computation. Defaults to None.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric.compute_from_counts">
-<span class="sig-name descname"><span class="pre">compute_from_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">true_positives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_positives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_negatives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_negatives</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics_base.html#BinaryClassificationMetric.compute_from_counts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric.compute_from_counts" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#bytes" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]</span></p>
+<span class="sig-name descname"><span class="pre">compute_from_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">true_positives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_positives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_negatives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_negatives</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics_base.html#BinaryClassificationMetric.compute_from_counts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric.compute_from_counts" title="Link to this definition">¶</a></dt>
+<dd><p>Provided tensors associated with the various outcomes from predictions compared to targets in the form of
+true positives, false positives, true negatives, and false negatives, returns a dictionary of Scalar metrics.
+For example, one might compute recall as true_positives/(true_positives + false_negatives). The shape of these
+tensors are specific to how this object is configured, see class documentation above.</p>
+<p>For this class it is assumed that all counts are presented relative to the class indicated by the <cite>pos_label</cite>
+index. Moreover, they are assumed to either have a single entry or have shape (num_samples, 1). In the former,
+a single count is presented ACROSS all samples relative to the <cite>pos_label</cite> specified. In the latter, counts
+are computed WITHIN each sample, but held separate across samples. A concrete setting where this makes sense
+is binary image segmentation. You can have such counts summed for all pixels within an image, but separate
+per image. A metric could then be computed for each image and then averaged.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>true_positives</strong> (<em>torch.Tensor</em>) – Counts associated with positive predictions and positive labels</p></li>
+<li><p><strong>false_positives</strong> (<em>torch.Tensor</em>) – Counts associated with positive predictions and negative labels</p></li>
+<li><p><strong>true_negatives</strong> (<em>torch.Tensor</em>) – Counts associated with negative predictions and negative labels</p></li>
+<li><p><strong>false_negatives</strong> (<em>torch.Tensor</em>) – Counts associated with negative predictions and positive labels</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#NotImplementedError" title="(in Python v3.10)"><strong>NotImplementedError</strong></a> – Must be implemented by the inheriting class</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Metrics computed from the provided outcome counts</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Metrics</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric.count_tp_fp_fn_tn">
-<span class="sig-name descname"><span class="pre">count_tp_fp_fn_tn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics_base.html#BinaryClassificationMetric.count_tp_fp_fn_tn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric.count_tp_fp_fn_tn" title="Link to this definition">¶</a></dt>
-<dd><p>Given two tensors containing model predictions and targets, returns the number of true positives (tp), false
-positives (fp), false negatives (fn) and true negatives (tn), respecting self.batch_dim and self.label_dim</p>
-<p>If any of the true positives, false positives, false negative or true negative counts were specified to be
-discarded during initialization of the class, then that count will not be computed and an empty tensor will be
-returned in its place.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>preds</strong> (<em>torch.Tensor</em>) – Tensor containing model predictions. Must be the same shape as targets</p></li>
-<li><p><strong>targets</strong> (<em>torch.Tensor</em>) – Tensor containing prediction targets. Must be same shape as preds.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><dl class="simple">
-<dt>Tensors containing the counts along the</dt><dd><p>specified dimensions for each of true positives, false positives, false negative, and true negative
-respectively.</p>
-</dd>
-</dl>
+<dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric.count_tp_fp_tn_fn">
+<span class="sig-name descname"><span class="pre">count_tp_fp_tn_fn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics_base.html#BinaryClassificationMetric.count_tp_fp_tn_fn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric.count_tp_fp_tn_fn" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</span></p>
+<p>Given two tensors containing model predictions and targets, returns the number of true positives (tp), false
+positives (fp), true negatives (tn), and false negatives (fn).</p>
 </p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]</p>
+</dl>
+<p>The shape of these counts depends on the values of <code class="docutils literal notranslate"><span class="pre">self.batch_dim</span></code> and <code class="docutils literal notranslate"><span class="pre">self.label_dim</span></code> are specified.
+They also depend on the shape of the input and target for this class. As binary predictions may be explicit
+(vector encoded) or implicit (single value implying values for the negative and positive classes).</p>
+<blockquote>
+<div><p>If any of the true positives, false positives, true negative, or false negative counts were specified to be
+discarded during initialization of the class, then that count will not be computed and an empty tensor will be
+returned in its place.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>preds (torch.Tensor): Tensor containing model predictions. Must be the same shape as targets
+targets (torch.Tensor): Tensor containing prediction targets. Must be same shape as preds.</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the</dt><dd><p>specified dimensions for each of true positives, false positives, true negatives, and false negatives,
+respectively. If <cite>self.batch_dim</cite> is not None then these tensors will have shape (batch size, 1),
+Otherwise, it will have shape (1,). The counts will be relative to the index of <code class="docutils literal notranslate"><span class="pre">self.pos_label</span></code></p>
 </dd>
 </dl>
+</dd>
+</dl>
+</div></blockquote>
 </dd></dl>
 
 </dd></dl>
@@ -610,12 +639,12 @@ respectively.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics_base.ClassificationMetric.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discard</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics_base.html#ClassificationMetric.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics_base.ClassificationMetric.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>A Base class for classification metrics that can be computed using the true positives (tp),
-false positive (fp), false negative (fn) and true negative (tn) counts. How these values are counted is left
-to the inheriting class along with how they are composed together for the final metric score. There are two
-classes inheriting from this class to form the basis of efficient classification metrics:
-BinaryClassificationMetric and MultiClassificationMetric. These handle implementation of the
-<code class="docutils literal notranslate"><span class="pre">count_tp_fp_fn_tn</span></code> method.</p>
+<dd><p>A Base class for efficiently computing classification metrics that can be calculated using the true positives
+(tp), false positive (fp), false negative (fn) and true negative (tn) counts.</p>
+<p>How these values are counted is left to the inheriting class along with how they are composed together for the
+final metric score. There are two classes inheriting from this class to form the basis of efficient
+classification metrics: BinaryClassificationMetric and MultiClassificationMetric. These handle implementation
+of the <code class="docutils literal notranslate"><span class="pre">count_tp_fp_tn_fn</span></code> method.</p>
 <p>On each update, the true_positives, false_positives, false_negatives and true_negatives counts for the
 provided predictions and targets are accumulated into <code class="docutils literal notranslate"><span class="pre">self.true_positives</span></code>, <code class="docutils literal notranslate"><span class="pre">self.false_positives</span></code>,
 <code class="docutils literal notranslate"><span class="pre">self.false_negatives</span></code> and <code class="docutils literal notranslate"><span class="pre">self.true_negatives</span></code>, respectively. This reduces the memory footprint
@@ -688,20 +717,68 @@ dictionary.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics_base.ClassificationMetric.compute_from_counts">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compute_from_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">true_positives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_positives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_negatives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_negatives</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics_base.html#ClassificationMetric.compute_from_counts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics_base.ClassificationMetric.compute_from_counts" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#bytes" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]</span></p>
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compute_from_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">true_positives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_positives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_negatives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_negatives</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics_base.html#ClassificationMetric.compute_from_counts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics_base.ClassificationMetric.compute_from_counts" title="Link to this definition">¶</a></dt>
+<dd><p>Provided tensors associated with the various outcomes from predictions compared to targets in the form of
+true positives, false positives, true negatives, and false negatives, returns a dictionary of Scalar metrics.
+For example, one might compute recall as true_positives/(true_positives + false_negatives). The shape of these
+tensors is likely specific to the kind of classification being done (multi-class vs. binary) and the way
+predictions and targets have been provided etc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>true_positives</strong> (<em>torch.Tensor</em>) – Counts associated with positive predictions of a class and true positives
+for that class</p></li>
+<li><p><strong>false_positives</strong> (<em>torch.Tensor</em>) – Counts associated with positive predictions of a class and true negatives
+for that class</p></li>
+<li><p><strong>true_negatives</strong> (<em>torch.Tensor</em>) – Counts associated with negative predictions of a class and true negatives
+for that class</p></li>
+<li><p><strong>false_negatives</strong> (<em>torch.Tensor</em>) – Counts associated with negative predictions of a class and true positives
+for that class</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#NotImplementedError" title="(in Python v3.10)"><strong>NotImplementedError</strong></a> – Must be implemented by the inheriting class</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Metrics computed from the provided outcome counts</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Metrics</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics_base.ClassificationMetric.count_tp_fp_fn_tn">
-<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">count_tp_fp_fn_tn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics_base.html#ClassificationMetric.count_tp_fp_fn_tn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics_base.ClassificationMetric.count_tp_fp_fn_tn" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics_base.ClassificationMetric.count_tp_fp_tn_fn">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">count_tp_fp_tn_fn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics_base.html#ClassificationMetric.count_tp_fp_tn_fn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics_base.ClassificationMetric.count_tp_fp_tn_fn" title="Link to this definition">¶</a></dt>
+<dd><p>Given two tensors containing model predictions and targets, returns the number of true positives (tp), false
+positives (fp), true negatives (tn), and false negatives (fn).</p>
+<p>The shape of these counts depends on the values of <code class="docutils literal notranslate"><span class="pre">self.batch_dim</span></code> and <code class="docutils literal notranslate"><span class="pre">self.label_dim</span></code> are specified
+and the implementation of the inheriting class.</p>
+<p>NOTE: Inheriting classes must implement additional functionality on top of this class. For example, any
+preprocessing that needs to be done to preds and targets should be done in the inheriting function. Any post
+processing should also be done there. See implementations in the <cite>BinaryClassificationMetric</cite> or
+<cite>MultiClassificationMetric</cite> class for examples.</p>
+<p>If any of the true positives, false positives, true negative, or false negative counts were specified to be
+discarded during initialization of the class, then that count will not be computed and an empty tensor will be
+returned in its place.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>preds</strong> (<em>torch.Tensor</em>) – Tensor containing model predictions. Must be the same shape as targets</p></li>
+<li><p><strong>targets</strong> (<em>torch.Tensor</em>) – Tensor containing prediction targets. Must be same shape as preds.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Tensors containing the counts along the</dt><dd><p>specified dimensions for each of true positives, false positives, true negatives, and false negatives
+respectively.</p>
+</dd>
+</dl>
+</p>
+</dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</span></p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -712,7 +789,7 @@ dictionary.</p>
 <dd><p>Updates the existing self.true_positive, self.false_positive, self.false_negative and self.true_negative
 counts with new counts computed from preds and targets.</p>
 <p>NOTE: In the implementation, this function implicitly assumes that the child classes inheriting from this
-class have implemented <cite>count_tp_fp_fn_tn</cite> such that, if <cite>self.batch_dim</cite> is not None, the counts are returned
+class have implemented <cite>count_tp_fp_tn_fn</cite> such that, if <cite>self.batch_dim</cite> is not None, the counts are returned
 with shapes such that the batch dimension comes FIRST for the counts.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -753,6 +830,150 @@ with shapes such that the batch dimension comes FIRST for the counts.</p>
 <dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics_base.MetricOutcome.TRUE_POSITIVE">
 <span class="sig-name descname"><span class="pre">TRUE_POSITIVE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'true_positive'</span></em><a class="headerlink" href="#fl4health.metrics.efficient_metrics_base.MetricOutcome.TRUE_POSITIVE" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics_base.MultiClassificationMetric">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultiClassificationMetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.float32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_background</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discard</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics_base.html#MultiClassificationMetric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics_base.MultiClassificationMetric" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.ClassificationMetric" title="fl4health.metrics.efficient_metrics_base.ClassificationMetric"><code class="xref py py-class docutils literal notranslate"><span class="pre">ClassificationMetric</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics_base.MultiClassificationMetric.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.float32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_background</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">discard</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics_base.html#MultiClassificationMetric.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics_base.MultiClassificationMetric.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>A Base class for multi-class, multi-label classification metrics that can be computed using the true
+positives (tp), false positive (fp), false negative (fn) and true negative (tn) counts. These counts are
+computed for each class independently. How they are composed together for the metric is left to inheriting
+classes.</p>
+<p>On each update, the true_positives, false_positives, false_negatives and true_negatives counts for the
+provided predictions and targets are accumulated into <code class="docutils literal notranslate"><span class="pre">self.true_positives</span></code>, <code class="docutils literal notranslate"><span class="pre">self.false_positives</span></code>,
+<code class="docutils literal notranslate"><span class="pre">self.false_negatives</span></code> and <code class="docutils literal notranslate"><span class="pre">self.true_negatives</span></code>, respectively, for each label type. This reduces the
+memory footprint required to compute metrics across rounds. The user needs to define the
+<code class="docutils literal notranslate"><span class="pre">compute_from_counts</span></code> method which returns a dictionary of Scalar metrics given the true_positives,
+false_positives, false_negatives, and true_negatives counts. The accumulated counts are reset by the
+<code class="docutils literal notranslate"><span class="pre">clear</span></code> method. If your subclass returns multiple metrics you may need to also override the <cite>__call__</cite>
+method.</p>
+<p>If the predictions provided are continuous in value, then the associated counts will also be continuous
+(“soft”). For example, with a target of 1, a prediction of 0.8 contributes 0.8 to the true_positives count and
+0.2 to the false_negatives.</p>
+<p>NOTE: Preds and targets are expected to have elements in the interval [0, 1] or to be thresholded, using
+that argument to be as such.</p>
+<p>NOTE: If preds and targets passed to update method have different shapes, or end up with different shapes
+after thresholding, this class will attempt to align the shapes by one-hot-encoding one of the tensors in the
+label dimension, if possible.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – The name of the metric.</p></li>
+<li><p><strong>label_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Specifies which dimension in the provided tensors corresponds to the label
+dimension. During metric computation, this dimension must have size of AT LEAST 2.</p></li>
+<li><p><strong>batch_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – <p>If None, then counts are aggregated across the batch dimension. If
+specified, counts will be computed along the dimension specified. That is, counts are maintained for
+each training sample INDIVIDUALLY. For example, if batch_dim = 1 and label_dim = 0, then</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">]],</span> <span class="p">[[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]]])</span>
+
+<span class="n">t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">]],</span> <span class="p">[[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]]])</span>
+
+<span class="bp">self</span><span class="o">.</span><span class="n">tp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">]])</span>
+
+<span class="bp">self</span><span class="o">.</span><span class="n">tn</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+
+<span class="bp">self</span><span class="o">.</span><span class="n">fp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+
+<span class="bp">self</span><span class="o">.</span><span class="n">fn</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+</pre></div>
+</div>
+<p>NOTE: The resulting counts will always be presented batch dimension first, then label dimension,
+regardless of input shape. Defaults to None</p>
+</p></li>
+<li><p><strong>dtype</strong> (<em>torch.dtype</em>) – The dtype to store the counts as. If preds or targets can be continuous, specify a
+float type. Otherwise specify an integer type to prevent overflow. Defaults to torch.float32</p></li>
+<li><p><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A float for thresholding values or an integer specifying the
+index of the label dimension. If a float is given, predictions below the threshold are mapped
+to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
+with the highest prediction where the specified axis is assumed to contain a prediction for each class
+(where its index along that dimension is the class label). Value of None leaves preds unchanged.
+Defaults to None.</p></li>
+<li><p><strong>ignore_background</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em>) – If specified, the FIRST channel of the specified axis is removed prior to
+computing the counts. Useful for removing background classes. Defaults to None.</p></li>
+<li><p><strong>discard</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#set" title="(in Python v3.10)"><em>set</em></a><em>[</em><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.MetricOutcome" title="fl4health.metrics.efficient_metrics_base.MetricOutcome"><em>MetricOutcome</em></a><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – One or several of MetricOutcome values. Specified outcome
+counts will not be accumulated. Their associated attribute will remain as an empty pytorch tensor.
+Useful for reducing the memory footprint of metrics that do not use all of the counts in their
+computation.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics_base.MultiClassificationMetric.compute_from_counts">
+<span class="sig-name descname"><span class="pre">compute_from_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">true_positives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_positives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_negatives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_negatives</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics_base.html#MultiClassificationMetric.compute_from_counts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics_base.MultiClassificationMetric.compute_from_counts" title="Link to this definition">¶</a></dt>
+<dd><p>Provided tensors associated with the various outcomes from predictions compared to targets in the form of
+true positives, false positives, true negatives, and false negatives, returns a dictionary of Scalar metrics.
+For example, one might compute recall as true_positives/(true_positives + false_negatives). The shape of these
+tensors is The shape of these tensors are specific to how this object is configured, see class documentation
+above.</p>
+<p>For this class, counts are assumed to have shape (num_labels,) or (num_samples, num_labels). In the former,
+counts have been aggregated ACROSS samples into single count values for each possible label. In the later,
+counts have been aggregated WITHIN each sample and remain separate across examples. A concrete setting where
+this makes sense is image segmentation. You can have such counts summed for all pixels within an image, but
+separate per image. A metric could then be computed for each image and then averaged.</p>
+<p>NOTE: A user can implement further reduction along the label dimension (summing TPs across labels for example),
+if desired. It just needs to be handled in the implementation of this function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>true_positives</strong> (<em>torch.Tensor</em>) – Counts associated with positive predictions of a class and true positives
+for that class</p></li>
+<li><p><strong>false_positives</strong> (<em>torch.Tensor</em>) – Counts associated with positive predictions of a class and true negatives
+for that class</p></li>
+<li><p><strong>true_negatives</strong> (<em>torch.Tensor</em>) – Counts associated with negative predictions of a class and true negatives
+for that class</p></li>
+<li><p><strong>false_negatives</strong> (<em>torch.Tensor</em>) – Counts associated with negative predictions of a class and true positives
+for that class</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#NotImplementedError" title="(in Python v3.10)"><strong>NotImplementedError</strong></a> – Must be implemented by the inheriting class</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Metrics computed from the provided outcome counts</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Metrics</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics_base.MultiClassificationMetric.count_tp_fp_tn_fn">
+<span class="sig-name descname"><span class="pre">count_tp_fp_tn_fn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics_base.html#MultiClassificationMetric.count_tp_fp_tn_fn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics_base.MultiClassificationMetric.count_tp_fp_tn_fn" title="Link to this definition">¶</a></dt>
+<dd><p>Given two tensors containing model predictions and targets, returns the number of true positives (tp), false
+positives (fp), true negatives (tn), and false negatives (fn).</p>
+<p>If any of the true positives, false positives, true negative, or false negative counts were specified to be
+discarded during initialization of the class, then that count will not be computed and an empty tensor will be
+returned in its place.</p>
+<p>For this class, counts will either have shape (num_labels,) or (num_samples, num_labels), depending on if the
+<cite>batch_dim</cite> (former case) is specified or not (latter case).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>preds</strong> (<em>torch.Tensor</em>) – Tensor containing model predictions.</p></li>
+<li><p><strong>targets</strong> (<em>torch.Tensor</em>) – Tensor containing prediction targets.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Tensors containing the counts along the</dt><dd><p>specified dimensions for each of true positives, false positives, true negatives, and false negatives
+respectively.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]</p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
@@ -834,7 +1055,7 @@ with shapes such that the batch dimension comes FIRST for the counts.</p>
 <li><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric"><code class="docutils literal notranslate"><span class="pre">BinaryClassificationMetric</span></code></a><ul>
 <li><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric.__init__"><code class="docutils literal notranslate"><span class="pre">BinaryClassificationMetric.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric.compute_from_counts"><code class="docutils literal notranslate"><span class="pre">BinaryClassificationMetric.compute_from_counts()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric.count_tp_fp_fn_tn"><code class="docutils literal notranslate"><span class="pre">BinaryClassificationMetric.count_tp_fp_fn_tn()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric.count_tp_fp_tn_fn"><code class="docutils literal notranslate"><span class="pre">BinaryClassificationMetric.count_tp_fp_tn_fn()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.ClassificationMetric"><code class="docutils literal notranslate"><span class="pre">ClassificationMetric</span></code></a><ul>
@@ -842,7 +1063,7 @@ with shapes such that the batch dimension comes FIRST for the counts.</p>
 <li><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.ClassificationMetric.clear"><code class="docutils literal notranslate"><span class="pre">ClassificationMetric.clear()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.ClassificationMetric.compute"><code class="docutils literal notranslate"><span class="pre">ClassificationMetric.compute()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.ClassificationMetric.compute_from_counts"><code class="docutils literal notranslate"><span class="pre">ClassificationMetric.compute_from_counts()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.ClassificationMetric.count_tp_fp_fn_tn"><code class="docutils literal notranslate"><span class="pre">ClassificationMetric.count_tp_fp_fn_tn()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.ClassificationMetric.count_tp_fp_tn_fn"><code class="docutils literal notranslate"><span class="pre">ClassificationMetric.count_tp_fp_tn_fn()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.ClassificationMetric.update"><code class="docutils literal notranslate"><span class="pre">ClassificationMetric.update()</span></code></a></li>
 </ul>
 </li>
@@ -851,6 +1072,12 @@ with shapes such that the batch dimension comes FIRST for the counts.</p>
 <li><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.MetricOutcome.FALSE_POSITIVE"><code class="docutils literal notranslate"><span class="pre">MetricOutcome.FALSE_POSITIVE</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.MetricOutcome.TRUE_NEGATIVE"><code class="docutils literal notranslate"><span class="pre">MetricOutcome.TRUE_NEGATIVE</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.MetricOutcome.TRUE_POSITIVE"><code class="docutils literal notranslate"><span class="pre">MetricOutcome.TRUE_POSITIVE</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.MultiClassificationMetric"><code class="docutils literal notranslate"><span class="pre">MultiClassificationMetric</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.MultiClassificationMetric.__init__"><code class="docutils literal notranslate"><span class="pre">MultiClassificationMetric.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.MultiClassificationMetric.compute_from_counts"><code class="docutils literal notranslate"><span class="pre">MultiClassificationMetric.compute_from_counts()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.metrics.efficient_metrics_base.MultiClassificationMetric.count_tp_fp_tn_fn"><code class="docutils literal notranslate"><span class="pre">MultiClassificationMetric.count_tp_fp_tn_fn()</span></code></a></li>
 </ul>
 </li>
 </ul>

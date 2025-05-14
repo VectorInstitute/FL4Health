@@ -13,7 +13,7 @@
     
     <meta name="msvalidate.01" content="8D2A5032F006424CAF54C0DDCD16F666" />
       
-        <title>fl4health.parameter_exchange.full_exchanger - FL4Health</title>
+        <title>fl4health.metrics.utils - FL4Health</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=354aac6f" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
@@ -490,61 +490,208 @@
           </label>
         </div>
         <article role="main">
-          <h1>Source code for fl4health.parameter_exchange.full_exchanger</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrderedDict</span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span><span class="p">,</span> <span class="n">NDArrays</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.parameter_exchange.parameter_exchanger_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParameterExchanger</span>
+          <h1>Source code for fl4health.metrics.utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
 
-<div class="viewcode-block" id="FullParameterExchanger">
-<a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.full_exchanger.html#fl4health.parameter_exchange.full_exchanger.FullParameterExchanger">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">FullParameterExchanger</span><span class="p">(</span><span class="n">ParameterExchanger</span><span class="p">):</span>
-<div class="viewcode-block" id="FullParameterExchanger.push_parameters">
-<a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.full_exchanger.html#fl4health.parameter_exchange.full_exchanger.FullParameterExchanger.push_parameters">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">push_parameters</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">initial_model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArrays</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Sending all of parameters ordered by state_dict keys</span>
-<span class="sd">        **NOTE**: Order matters, because it is relied upon by ``pull_parameters`` below</span>
+<div class="viewcode-block" id="infer_label_dim">
+<a class="viewcode-back" href="../../../reference/api/fl4health.metrics.utils.html#fl4health.metrics.utils.infer_label_dim">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">infer_label_dim</span><span class="p">(</span><span class="n">tensor1</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">tensor2</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Infers the label dimension given two related tensors of different shapes.</span>
 
-<span class="sd">        Args:</span>
-<span class="sd">            model (nn.Module): Model containing the weights to be sent.</span>
-<span class="sd">            initial_model (nn.Module | None, optional): Not Used. Defaults to None.</span>
-<span class="sd">            config (Config | None, optional): Not Used. Defaults to None.</span>
+<span class="sd">    Generally useful for inferring the label dimension when one tensor is vector-encoded and the other is not. The</span>
+<span class="sd">    label dimension is inferred by looking for dimensions that either are not the same size, or are not present in</span>
+<span class="sd">    tensor 2.</span>
 
-<span class="sd">        Returns:</span>
-<span class="sd">            NDArrays: All parameters contained in the ``state_dict`` of the model parameter. The ``state_dict``</span>
-<span class="sd">            maintains a specific order.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Sending all of parameters ordered by state_dict keys</span>
-        <span class="c1"># NOTE: Order matters, because it is relied upon by pull_parameters below</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">val</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span></div>
+<span class="sd">    Args:</span>
+<span class="sd">        tensor1 (torch.Tensor): The reference tensor. Must have the same number of dimensions as tensor 2, or have</span>
+<span class="sd">            exactly 1 more dimension (the label dim).</span>
+<span class="sd">        tensor2 (torch.Tensor): The non-reference tensor.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        AssertionError: If the the label dimension cannot be inferred without ambiguity. For example if a dimension</span>
+<span class="sd">            next to the label dimension has the same size.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        int: Index of the dimension along tensor 1 that corresponds to the label dimension.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="p">(</span>
+        <span class="n">tensor1</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">tensor2</span><span class="o">.</span><span class="n">shape</span>
+    <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Could not infer the label dimension of tensors with the same shape: </span><span class="si">{</span><span class="n">tensor1</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="n">tensor1</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="n">tensor2</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Could not infer the label dimension of tensors with shapes: tensor1: </span><span class="si">{</span><span class="n">tensor1</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">), tensor 2: &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">tensor2</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">). Expected tensor1 to be larger than tensor2 by at most 1 dimension.&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Infer label dimension.</span>
+    <span class="n">idx2</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">candidate_label_dims</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># Iterate through dimensions of tensor1 and compare size to corresponding dimension of tensor2</span>
+    <span class="c1"># If tensor1 and tensor2 have the same number of dimensions, we are looking for axes in the same position with</span>
+    <span class="c1"># different sizes. If tensor1 has an extra dimension, then we are looking for an axes with likely unique size not</span>
+    <span class="c1"># present in tensor2</span>
+    <span class="k">for</span> <span class="n">idx1</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">tensor1</span><span class="o">.</span><span class="n">ndim</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">idx2</span> <span class="o">&gt;=</span> <span class="n">tensor2</span><span class="o">.</span><span class="n">ndim</span><span class="p">:</span>
+            <span class="c1"># If tensor1 has an extra dimension and all previous dimensions were the same shape, then the last</span>
+            <span class="c1"># dimension must be the additional dimension</span>
+            <span class="n">candidate_label_dims</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">tensor1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">idx1</span><span class="p">]</span> <span class="o">==</span> <span class="n">tensor2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">idx2</span><span class="p">]:</span>
+            <span class="c1"># If the dimensions have the size then they are likely not the label dimension</span>
+            <span class="n">idx2</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">candidate_label_dims</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">tensor1</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">tensor2</span><span class="o">.</span><span class="n">ndim</span><span class="p">:</span>
+                <span class="c1"># If tensor1 and tensor2 have the same number of dimensions, then we are looking for axes in the same</span>
+                <span class="c1"># position with different sizes. Hence we proceed to the next index of tensor 2. Otherwise, the</span>
+                <span class="c1"># non-matching dimension in tensor1 is an extra dimension, and so we want to act as if we skipped it</span>
+                <span class="c1"># and ensure the rest of the shape is the same.</span>
+                <span class="n">idx2</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidate_label_dims</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Could not infer the label dimension of tensors with shapes: (</span><span class="si">{</span><span class="n">tensor1</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">), (</span><span class="si">{</span><span class="n">tensor2</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">). &quot;</span>
+        <span class="s2">&quot;Found multiple axes that could be the label dimension.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">label_dim</span> <span class="o">=</span> <span class="n">candidate_label_dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># Cover edge case where dim adjacent to label dim has the same size. We will mistakenly resolve only a single</span>
+    <span class="c1"># candidate label dimension when technically it is ambiguous. An example is</span>
+    <span class="c1">#   tensor_1.shape = (5, 5, 3) and tensor_2.shape = (5, 3).</span>
+    <span class="c1"># The label dimension could be the first or the second.</span>
+    <span class="k">if</span> <span class="n">tensor1</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="n">tensor2</span><span class="o">.</span><span class="n">ndim</span> <span class="ow">and</span> <span class="n">label_dim</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">tensor1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">label_dim</span><span class="p">]</span> <span class="o">!=</span> <span class="n">tensor1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">label_dim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Could not infer the label dimension of tensors with shapes: (</span><span class="si">{</span><span class="n">tensor1</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">), (</span><span class="si">{</span><span class="n">tensor2</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">). &quot;</span>
+            <span class="s2">&quot;A dimension adjacent to the label dimension appears to have the same size.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># If tensors have same ndim but different shapes, then this only works if label dim was empty for one of them</span>
+    <span class="k">if</span> <span class="n">tensor1</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">tensor2</span><span class="o">.</span><span class="n">ndim</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="n">tensor1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">label_dim</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">tensor2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">label_dim</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Could not infer the label dimension of tensors with shapes: (</span><span class="si">{</span><span class="n">tensor1</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">), (</span><span class="si">{</span><span class="n">tensor2</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">). &quot;</span>
+            <span class="s2">&quot;The inferred candidate dimension has different sizes on each tensor, was expecting one to be empty.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">label_dim</span></div>
 
 
-<div class="viewcode-block" id="FullParameterExchanger.pull_parameters">
-<a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.full_exchanger.html#fl4health.parameter_exchange.full_exchanger.FullParameterExchanger.pull_parameters">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">pull_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="n">NDArrays</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Takes in a set of parameters in the form of ``NDArrays`` (list of numpy arrays) and injects them into the</span>
-<span class="sd">        provided model.</span>
 
-<span class="sd">        Assumes all model parameters are contained in parameters. The ``state_dict`` is reconstituted because</span>
-<span class="sd">        parameters is simply a list of arrays</span>
+<div class="viewcode-block" id="map_label_index_tensor_to_one_hot">
+<a class="viewcode-back" href="../../../reference/api/fl4health.metrics.utils.html#fl4health.metrics.utils.map_label_index_tensor_to_one_hot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">map_label_index_tensor_to_one_hot</span><span class="p">(</span>
+    <span class="n">label_index_tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">target_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span> <span class="n">label_dim</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Maps the provided ``label_index_tensor``, which has label indices at the provided ``label_dim``. In the tensor,</span>
+<span class="sd">    this dimension should be &quot;empty&quot;, i.e. have size 1. This function uses the shape provided by ``target_shape`` to</span>
+<span class="sd">    expand the label indices into one-hot encoded vectors in that dimension according the the size of the target</span>
+<span class="sd">    dimension at ``label_dim`` in ``target_shape``. For example, if label_index_tensor has shape (64, 10, 10, 1),</span>
+<span class="sd">    label_dim = 3, and target_shape = (64, 10, 10, 4), then the new shape should be (64, 10, 10, 4) with [i, j, k, :]</span>
+<span class="sd">    being a one-hot vector of length 4.</span>
 
-<span class="sd">        Args:</span>
-<span class="sd">            parameters (NDArrays): Parameter to inject into the provided model</span>
-<span class="sd">            model (nn.Module): Model to inject the parameters into</span>
-<span class="sd">            config (Config | None, optional): Not used.. Defaults to None.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">params_dict</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">parameters</span><span class="p">)</span>
-        <span class="n">state_dict</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">({</span><span class="n">k</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">params_dict</span><span class="p">})</span>
-        <span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">state_dict</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
-</div>
+<span class="sd">    Args:</span>
+<span class="sd">        label_index_tensor (torch.Tensor): Tensor to have label_dim dimension one-hot encoded accounting to</span>
+<span class="sd">            target_shape and the indices of label_index_tensor in the label_dim</span>
+<span class="sd">        target_shape (torch.Size): Shape we want to transform label_index_tensor to. Mainly used to establish the</span>
+<span class="sd">            length of the one-hot encodings</span>
+<span class="sd">        label_dim (int): Dimension to one-hot encode.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        torch.Tensor: Tensor with one-hot encoded label_dim.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">label_index_tensor_shape</span> <span class="o">=</span> <span class="n">label_index_tensor</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="k">assert</span> <span class="n">label_dim</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span>
+        <span class="n">label_index_tensor_shape</span>
+    <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Label dim: </span><span class="si">{</span><span class="n">label_dim</span><span class="si">}</span><span class="s2"> too large for target shape: </span><span class="si">{</span><span class="n">label_index_tensor_shape</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="n">label_dim_of_tensor</span> <span class="o">=</span> <span class="n">label_index_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">label_dim</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="p">(</span>
+        <span class="n">label_dim_of_tensor</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Expected label_dim </span><span class="si">{</span><span class="n">label_dim</span><span class="si">}</span><span class="s2"> of label_index_tensor to be of size 1, but got </span><span class="si">{</span><span class="n">label_dim_of_tensor</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="n">one_hot_encoded_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">target_shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">label_index_tensor</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">one_hot_encoded_tensor</span><span class="o">.</span><span class="n">scatter_</span><span class="p">(</span><span class="n">label_dim</span><span class="p">,</span> <span class="n">label_index_tensor</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">one_hot_encoded_tensor</span></div>
+
+
+
+<div class="viewcode-block" id="align_pred_and_target_shapes">
+<a class="viewcode-back" href="../../../reference/api/fl4health.metrics.utils.html#fl4health.metrics.utils.align_pred_and_target_shapes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">align_pred_and_target_shapes</span><span class="p">(</span>
+    <span class="n">preds</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">targets</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">label_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    If necessary, attempts to correct shape mismatches between the given tensors by inferring which one</span>
+<span class="sd">    to one-hot-encode. Note that if both preds and targets have the same shape then nothing needs to be modified. If</span>
+<span class="sd">    there is a mismatch, it is assumed that the labels in one of the predictions or the targets are vector encoded</span>
+<span class="sd">    in some way (either one-hot or soft) while the other is label index encoded.</span>
+
+<span class="sd">    If one is vector encoded but not the other, then both are returned as vector encoded tensors.</span>
+
+<span class="sd">    NOTE: This function ASSUMES label-index encoding if the shapes are misaligned. This assumption doesn&#39;t necessarily</span>
+<span class="sd">    hold in binary classification settings where continuous values might be used to indicate the positive label by</span>
+<span class="sd">    default. As such, this function should not be used for those types of tensors.</span>
+
+<span class="sd">    For example, consider a problem with 3 label classes with the preds vector encoded and the targets label encoded</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        preds = torch.Tensor([[0.1, 0.2, 0.7], [0.9, 0.1, 0.0]])</span>
+
+<span class="sd">        targets = torch.Tensor([[2], [1]])</span>
+
+<span class="sd">    preds has shape (2, 3) and targets has shape (2, 1). This function will convert targets to a one-hot-encode tensor</span>
+<span class="sd">    with contents</span>
+
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        targets = torch.Tensor([0, 0, 1], [0, 1, 0])</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        preds (torch.Tensor): The tensor with model predictions.</span>
+<span class="sd">        targets (torch.Tensor): The tensor with model targets.</span>
+<span class="sd">        label_dim (int | None): Index of the label dimension. If left as None then this method attempts to infer</span>
+<span class="sd">            the label dimension if it is needed.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple[torch.Tensor, torch.Tensor]: The pred and target tensors respectively now ensured to have the same shape.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Shapes are already aligned.</span>
+    <span class="k">if</span> <span class="n">preds</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">preds</span><span class="p">,</span> <span class="n">targets</span>
+
+    <span class="c1"># Run this assertion before in case label dim is defined.</span>
+    <span class="k">assert</span> <span class="p">(</span>
+        <span class="nb">abs</span><span class="p">(</span><span class="n">preds</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="n">targets</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span>
+    <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Can not align pred and target tensors with shapes </span><span class="si">{</span><span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="c1"># If shapes are different then we assume one tensor has vector encoded labels and the other is label index encoded</span>
+    <span class="c1"># and will be mapped to one-hot-encoded format.</span>
+    <span class="k">if</span> <span class="n">preds</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="n">targets</span><span class="o">.</span><span class="n">ndim</span><span class="p">:</span>
+        <span class="c1"># Preds must be vector encoded and targets are not</span>
+        <span class="c1"># Determine label dimension. Preds is the first/reference tensor because its shape is larger, if not provided</span>
+        <span class="n">label_dim</span> <span class="o">=</span> <span class="n">infer_label_dim</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span> <span class="k">if</span> <span class="n">label_dim</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">label_dim</span>
+        <span class="n">targets</span> <span class="o">=</span> <span class="n">targets</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">label_dim</span><span class="p">)</span>
+        <span class="n">one_hot_targets</span> <span class="o">=</span> <span class="n">map_label_index_tensor_to_one_hot</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">label_dim</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">preds</span><span class="p">,</span> <span class="n">one_hot_targets</span>
+
+    <span class="k">if</span> <span class="n">preds</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="n">targets</span><span class="o">.</span><span class="n">ndim</span><span class="p">:</span>
+        <span class="c1"># Targets must be vector encoded and preds are not</span>
+        <span class="c1"># Determine label dimension. Targets is the first/reference tensor because its shape is larger, if not provided</span>
+        <span class="n">label_dim</span> <span class="o">=</span> <span class="n">infer_label_dim</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">preds</span><span class="p">)</span> <span class="k">if</span> <span class="n">label_dim</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">label_dim</span>
+        <span class="n">preds</span> <span class="o">=</span> <span class="n">preds</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="n">label_dim</span><span class="p">)</span>
+        <span class="n">one_hot_preds</span> <span class="o">=</span> <span class="n">map_label_index_tensor_to_one_hot</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">label_dim</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">one_hot_preds</span><span class="p">,</span> <span class="n">targets</span>
+
+    <span class="c1"># If we&#39;re here, the shapes are the same size, but differ in at least one dimension</span>
+    <span class="c1"># Determine label dimension, if not provided. Because their shapes are the same length, order doesn&#39;t matter</span>
+    <span class="n">label_dim</span> <span class="o">=</span> <span class="n">infer_label_dim</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span> <span class="k">if</span> <span class="n">label_dim</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">label_dim</span>
+    <span class="k">if</span> <span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">label_dim</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">label_dim</span><span class="p">]:</span>
+        <span class="c1"># We need to one-hot the preds tensor</span>
+        <span class="k">return</span> <span class="n">map_label_index_tensor_to_one_hot</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">label_dim</span><span class="p">),</span> <span class="n">targets</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">preds</span><span class="p">,</span> <span class="n">map_label_index_tensor_to_one_hot</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">label_dim</span><span class="p">)</span></div>
 
 </pre></div>
         </article>

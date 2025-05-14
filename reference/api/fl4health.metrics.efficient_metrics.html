@@ -328,6 +328,7 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metric_managers.html">fl4health.metrics.metric_managers module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics.html">fl4health.metrics.metrics module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics_utils.html">fl4health.metrics.metrics_utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.utils.html">fl4health.metrics.utils module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.mixins.html">fl4health.mixins package</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" role="switch" type="checkbox"/><label for="toctree-checkbox-16"><div class="visually-hidden">Toggle navigation of fl4health.mixins package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -562,10 +563,129 @@ components are only TNs, then NaN will be returned.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics.BinaryDice.compute_from_counts">
-<span class="sig-name descname"><span class="pre">compute_from_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">true_positives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_positives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_negatives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_negatives</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics.html#BinaryDice.compute_from_counts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics.BinaryDice.compute_from_counts" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<span class="sig-name descname"><span class="pre">compute_from_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">true_positives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_positives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_negatives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_negatives</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics.html#BinaryDice.compute_from_counts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics.BinaryDice.compute_from_counts" title="Link to this definition">¶</a></dt>
+<dd><p>Computes a binary Dice score associated with the outcome counts provided in the form of true positives (TP),
+false positives (FP), and false negatives (FN). Because Dice scores don’t factor in true negatives, this
+argument is unused. For a set of counts, the binary Dice score is 2*TP/(2*TP + FP + FN). For this class
+it is assumed that all counts are presented relative to the class indicated by the <cite>pos_label</cite> index.
+Moreover, they are assumed to either have a single entry or have shape (num_samples, 1). In the former, a
+single Dice score is computed relative to the counts. In the latter, a MEAN dice score over the samples is
+computed. The second setting is useful, for example, if you are computing the Dice score per image and then
+averaging. The first setting is useful, for example, if you want to treat all examples as a SINGLE image.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>true_positives</strong> (<em>torch.Tensor</em>) – Counts associated with positive predictions and positive labels</p></li>
+<li><p><strong>false_positives</strong> (<em>torch.Tensor</em>) – Counts associated with positive predictions and negative labels</p></li>
+<li><p><strong>true_negatives</strong> (<em>torch.Tensor</em>) – Counts associated with negative predictions and negative labels</p></li>
+<li><p><strong>false_negatives</strong> (<em>torch.Tensor</em>) – Counts associated with negative predictions and positive labels</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A mean dice score associated with the counts</p>
+</dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#bytes" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]</span></p>
+<dd class="field-odd"><p>Metrics</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics.MultiClassDice">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultiClassDice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'MultiClassDice'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.float32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_background</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zero_division</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics.html#MultiClassDice"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics.MultiClassDice" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.MultiClassificationMetric" title="fl4health.metrics.efficient_metrics_base.MultiClassificationMetric"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiClassificationMetric</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics.MultiClassDice.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'MultiClassDice'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.float32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_background</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zero_division</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics.html#MultiClassDice.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics.MultiClassDice.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Computes the Mean Dice Coefficient between class predictions and targets with multiple classes.</p>
+<p>NOTE: The default behavior for Dice Scores is to compute the mean over each SAMPLE of the dataset being
+measured. In the image domain, for example, this means that the Dice score is computed for each image
+separately and then averaged across images (then classes) to produce a single score. This is accomplished
+by specifying the batch_dim here. If, however, you would like to compute the Dice score over ALL TP, FP, FNs
+across all samples (then classes) as a single count, batch_dim = None is appropriate.</p>
+<p>NOTE: Preds and targets are expected to have elements in the interval [0, 1] or to be thresholded, using
+that argument to be as such.</p>
+<p>NOTE: If preds and targets passed to the update method have different shapes, this class will attempt to align
+the shapes by one-hot-encoding one (but not both) of the tensors if possible.</p>
+<p>NOTE: In the case of BINARY predictions/targets with 2 labels, the result will be the AVERAGE of the Dice
+score for the two labels. If you want a single score associated with one of the binary labels, use
+BinaryDice.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>batch_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – <p>If None, then counts are aggregated across the batch dimension. If
+specified, counts will be computed along the dimension specified. That is, counts are maintained for
+each training sample INDIVIDUALLY. For example, if batch_dim = 1 and label_dim = 0, then</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">]],</span> <span class="p">[[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]]])</span>
+
+<span class="n">t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">]],</span> <span class="p">[[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]]])</span>
+
+<span class="bp">self</span><span class="o">.</span><span class="n">tp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">]])</span>
+
+<span class="bp">self</span><span class="o">.</span><span class="n">tn</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+
+<span class="bp">self</span><span class="o">.</span><span class="n">fp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+
+<span class="bp">self</span><span class="o">.</span><span class="n">fn</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt>In computing the Dice score, we get scores for each sample, label pair as</dt><dd><p>[[2*2/(2*2+1+0), 2*1/(2*1+0+1)], [0*2/(0*2+0+0), 2*4/(2*4+0+0)]].</p>
+</dd>
+</dl>
+<p>Assuming zero_division = None, the undefined calculation at (1, 0) is dropped and the remainder of the
+individual scores are averaged to be (1/3)*(4/5 + 2/3 + 8/8) = 0.8222</p>
+</p></li>
+<li><p><strong>label_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Specifies which dimension in the provided tensors corresponds to the label
+dimension. During metric computation, this dimension must have size of AT LEAST 2 and is required for
+this class.</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Name of the metric. Defaults to ‘MultiClassDice’</p></li>
+<li><p><strong>dtype</strong> (<em>torch.dtype</em>) – The dtype to store the counts as. If preds or targets can be continuous, specify a
+float type. Otherwise specify an integer type to prevent overflow. Defaults to torch.float32</p></li>
+<li><p><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A float for thresholding values or an integer specifying the
+index of the label dimension. If a float is given, predictions below the threshold are mapped
+to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
+with the highest prediction where the specified axis is assumed to contain a prediction for each class
+(where its index along that dimension is the class label). Default of None leaves preds unchanged.</p></li>
+<li><p><strong>ignore_background</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em>) – If specified, the FIRST channel of the specified axis is removed prior to
+computing the counts. Useful for removing background classes. Defaults to None.</p></li>
+<li><p><strong>zero_division</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Set what the individual Dice coefficients should be when there is
+a zero division (only true negatives present). How this argument affects the final Dice score will vary
+depending on the Dice scores for other labels. If left as None, the resultant Dice coefficients will
+be excluded from the average/final Dice score.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics.MultiClassDice.compute_from_counts">
+<span class="sig-name descname"><span class="pre">compute_from_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">true_positives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_positives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_negatives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_negatives</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics.html#MultiClassDice.compute_from_counts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics.MultiClassDice.compute_from_counts" title="Link to this definition">¶</a></dt>
+<dd><p>Computes a multi-class Dice score, defined to be the mean Dice score across all labels in the multi-class
+problem. This score is computed relative the outcome counts provided in the form of true positives (TP),
+false positives (FP), and false negatives (FN). Because Dice scores don’t factor in true negatives, this
+argument is unused. For a set of counts, the Dice score for a particular label is 2*TP/(2*TP + FP + FN). For
+this class, counts are assumed to have shape (num_labels,) or (num_samples, num_labels). In the former, a
+single Dice score is computed relative to the counts for each label and then AVERAGED. In the latter, an
+AVERAGE dice score over both the samples AND labels computed. The second setting is useful, for example, if
+you are computing the Dice score per image and then averaging. The first setting is useful, for example, if
+you want to treat all examples as a SINGLE image.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>true_positives</strong> (<em>torch.Tensor</em>) – Counts associated with positive predictions and positive labels</p></li>
+<li><p><strong>false_positives</strong> (<em>torch.Tensor</em>) – Counts associated with positive predictions and negative labels</p></li>
+<li><p><strong>true_negatives</strong> (<em>torch.Tensor</em>) – Counts associated with negative predictions and negative labels</p></li>
+<li><p><strong>false_negatives</strong> (<em>torch.Tensor</em>) – Counts associated with negative predictions and positive labels</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A mean dice score associated with the counts</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Metrics</p>
 </dd>
 </dl>
 </dd></dl>
@@ -650,6 +770,11 @@ components are only TNs, then NaN will be returned.</p></li>
 <li><a class="reference internal" href="#fl4health.metrics.efficient_metrics.BinaryDice"><code class="docutils literal notranslate"><span class="pre">BinaryDice</span></code></a><ul>
 <li><a class="reference internal" href="#fl4health.metrics.efficient_metrics.BinaryDice.__init__"><code class="docutils literal notranslate"><span class="pre">BinaryDice.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.metrics.efficient_metrics.BinaryDice.compute_from_counts"><code class="docutils literal notranslate"><span class="pre">BinaryDice.compute_from_counts()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#fl4health.metrics.efficient_metrics.MultiClassDice"><code class="docutils literal notranslate"><span class="pre">MultiClassDice</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.metrics.efficient_metrics.MultiClassDice.__init__"><code class="docutils literal notranslate"><span class="pre">MultiClassDice.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.metrics.efficient_metrics.MultiClassDice.compute_from_counts"><code class="docutils literal notranslate"><span class="pre">MultiClassDice.compute_from_counts()</span></code></a></li>
 </ul>
 </li>
 </ul>

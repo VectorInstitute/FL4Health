@@ -325,6 +325,7 @@
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.metrics.metric_managers.html">fl4health.metrics.metric_managers module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.metrics.metrics.html">fl4health.metrics.metrics module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.metrics.metrics_utils.html">fl4health.metrics.metrics_utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.metrics.utils.html">fl4health.metrics.utils module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="reference/api/fl4health.mixins.html">fl4health.mixins package</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" role="switch" type="checkbox"/><label for="toctree-checkbox-16"><div class="visually-hidden">Toggle navigation of fl4health.mixins package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -729,6 +730,10 @@
 </li>
           <li><a href="reference/api/fl4health.servers.adaptive_constraint_servers.mrmtl_server.html#fl4health.servers.adaptive_constraint_servers.mrmtl_server.MrMtlServer.__init__">(MrMtlServer method)</a>
 </li>
+          <li><a href="reference/api/fl4health.metrics.efficient_metrics.html#fl4health.metrics.efficient_metrics.MultiClassDice.__init__">(MultiClassDice method)</a>
+</li>
+          <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.MultiClassificationMetric.__init__">(MultiClassificationMetric method)</a>
+</li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.__init__">(NnunetClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper.__init__">(nnUNetDataLoaderWrapper method)</a>
@@ -929,6 +934,8 @@
         <li><a href="reference/api/fl4health.utils.losses.html#fl4health.utils.losses.LossMeter.aggregate_losses_dict">aggregate_losses_dict() (LossMeter static method)</a>
 </li>
         <li><a href="reference/api/fl4health.strategies.aggregate_utils.html#fl4health.strategies.aggregate_utils.aggregate_results">aggregate_results() (in module fl4health.strategies.aggregate_utils)</a>
+</li>
+        <li><a href="reference/api/fl4health.metrics.utils.html#fl4health.metrics.utils.align_pred_and_target_shapes">align_pred_and_target_shapes() (in module fl4health.metrics.utils)</a>
 </li>
         <li><a href="reference/api/fl4health.clients.apfl_client.html#fl4health.clients.apfl_client.ApflClient">ApflClient (class in fl4health.clients.apfl_client)</a>
 </li>
@@ -1145,6 +1152,10 @@
 </li>
           <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.ClassificationMetric.compute_from_counts">(ClassificationMetric method)</a>
 </li>
+          <li><a href="reference/api/fl4health.metrics.efficient_metrics.html#fl4health.metrics.efficient_metrics.MultiClassDice.compute_from_counts">(MultiClassDice method)</a>
+</li>
+          <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.MultiClassificationMetric.compute_from_counts">(MultiClassificationMetric method)</a>
+</li>
         </ul></li>
         <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_h_u_from_inner_products">compute_h_u_from_inner_products() (MkMmdLoss method)</a>
 </li>
@@ -1308,10 +1319,12 @@
 </li>
         <li><a href="reference/api/fl4health.losses.fenda_loss_config.html#fl4health.losses.fenda_loss_config.CosineSimilarityLossContainer">CosineSimilarityLossContainer (class in fl4health.losses.fenda_loss_config)</a>
 </li>
-        <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric.count_tp_fp_fn_tn">count_tp_fp_fn_tn() (BinaryClassificationMetric method)</a>
+        <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric.count_tp_fp_tn_fn">count_tp_fp_tn_fn() (BinaryClassificationMetric method)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.ClassificationMetric.count_tp_fp_fn_tn">(ClassificationMetric method)</a>
+          <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.ClassificationMetric.count_tp_fp_tn_fn">(ClassificationMetric method)</a>
+</li>
+          <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.MultiClassificationMetric.count_tp_fp_tn_fn">(MultiClassificationMetric method)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.create_plans">create_plans() (NnunetClient method)</a>
@@ -2083,6 +2096,13 @@
 </li>
         </ul></li>
         <li>
+    fl4health.metrics.utils
+
+        <ul>
+          <li><a href="reference/api/fl4health.metrics.utils.html#module-fl4health.metrics.utils">module</a>
+</li>
+        </ul></li>
+        <li>
     fl4health.mixins
 
         <ul>
@@ -2180,6 +2200,8 @@
           <li><a href="reference/api/fl4health.model_bases.masked_layers.masked_layers_utils.html#module-fl4health.model_bases.masked_layers.masked_layers_utils">module</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     fl4health.model_bases.masked_layers.masked_linear
 
@@ -2187,8 +2209,6 @@
           <li><a href="reference/api/fl4health.model_bases.masked_layers.masked_linear.html#module-fl4health.model_bases.masked_layers.masked_linear">module</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     fl4health.model_bases.masked_layers.masked_normalization_layers
 
@@ -3196,6 +3216,8 @@
   <h2>I</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/fl4health.metrics.utils.html#fl4health.metrics.utils.infer_label_dim">infer_label_dim() (in module fl4health.metrics.utils)</a>
+</li>
         <li><a href="reference/api/fl4health.utils.typing.html#fl4health.utils.typing.LogLevel.INFO">INFO (LogLevel attribute)</a>
 </li>
         <li><a href="reference/api/fl4health.reporting.base_reporter.html#fl4health.reporting.base_reporter.BaseReporter.initialize">initialize() (BaseReporter method)</a>
@@ -3383,6 +3405,8 @@
         <li><a href="reference/api/fl4health.datasets.rxrx1.preprocess.html#fl4health.datasets.rxrx1.preprocess.main">main() (in module fl4health.datasets.rxrx1.preprocess)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.config.html#fl4health.utils.config.make_dict_with_epochs_or_steps">make_dict_with_epochs_or_steps() (in module fl4health.utils.config)</a>
+</li>
+        <li><a href="reference/api/fl4health.metrics.utils.html#fl4health.metrics.utils.map_label_index_tensor_to_one_hot">map_label_index_tensor_to_one_hot() (in module fl4health.metrics.utils)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.privacy_utilities.html#fl4health.utils.privacy_utilities.map_model_to_opacus_model">map_model_to_opacus_model() (in module fl4health.utils.privacy_utilities)</a>
 </li>
@@ -3626,6 +3650,8 @@
 </li>
           <li><a href="reference/api/fl4health.metrics.metrics_utils.html#module-fl4health.metrics.metrics_utils">fl4health.metrics.metrics_utils</a>
 </li>
+          <li><a href="reference/api/fl4health.metrics.utils.html#module-fl4health.metrics.utils">fl4health.metrics.utils</a>
+</li>
           <li><a href="reference/api/fl4health.mixins.html#module-fl4health.mixins">fl4health.mixins</a>
 </li>
           <li><a href="reference/api/fl4health.mixins.adaptive_drift_constrained.html#module-fl4health.mixins.adaptive_drift_constrained">fl4health.mixins.adaptive_drift_constrained</a>
@@ -3846,6 +3872,10 @@
         <li><a href="reference/api/fl4health.servers.adaptive_constraint_servers.mrmtl_server.html#fl4health.servers.adaptive_constraint_servers.mrmtl_server.MrMtlServer">MrMtlServer (class in fl4health.servers.adaptive_constraint_servers.mrmtl_server)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.msd_dataset_sources.html#fl4health.utils.msd_dataset_sources.MsdDataset">MsdDataset (class in fl4health.utils.msd_dataset_sources)</a>
+</li>
+        <li><a href="reference/api/fl4health.metrics.efficient_metrics.html#fl4health.metrics.efficient_metrics.MultiClassDice">MultiClassDice (class in fl4health.metrics.efficient_metrics)</a>
+</li>
+        <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.MultiClassificationMetric">MultiClassificationMetric (class in fl4health.metrics.efficient_metrics_base)</a>
 </li>
     </ul></td>
   </tr></table>
