@@ -35,7 +35,7 @@ class ClassificationMetric(Metric, ABC):
         How these values are counted is left to the inheriting class along with how they are composed together for the
         final metric score. There are two classes inheriting from this class to form the basis of efficient
         classification metrics: BinaryClassificationMetric and MultiClassificationMetric. These handle implementation
-        of the ``count_tp_fp_fn_tn`` method.
+        of the ``count_tp_fp_tn_fn`` method.
 
         On each update, the true_positives, false_positives, false_negatives and true_negatives counts for the
         provided predictions and targets are accumulated into ``self.true_positives``, ``self.false_positives``,
@@ -159,7 +159,7 @@ class ClassificationMetric(Metric, ABC):
 
         Returns:
             tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: True positive, false positive,
-                false negative, and true negative indications for each of the predictions in the provided tensors.
+                true negative, and false negative indications for each of the predictions in the provided tensors.
         """
 
         true_positives = (preds * targets) if not self.discard_tp else torch.tensor([])
@@ -203,7 +203,7 @@ class ClassificationMetric(Metric, ABC):
         counts with new counts computed from preds and targets.
 
         NOTE: In the implementation, this function implicitly assumes that the child classes inheriting from this
-        class have implemented `count_tp_fp_fn_tn` such that, if `self.batch_dim` is not None, the counts are returned
+        class have implemented `count_tp_fp_tn_fn` such that, if `self.batch_dim` is not None, the counts are returned
         with shapes such that the batch dimension comes FIRST for the counts.
 
         Args:
@@ -295,7 +295,7 @@ class ClassificationMetric(Metric, ABC):
 
         Returns:
             tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
-                specified dimensions for each of true positives, false positives, false negative, and true negative
+                specified dimensions for each of true positives, false positives, true negatives, and false negatives
                 respectively.
         """
         # Compute counts. If we're ignoring a count, set it as an empty tensor to avoid downstream errors.
@@ -538,7 +538,7 @@ class BinaryClassificationMetric(ClassificationMetric):
 
          Returns:
              tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
-                 specified dimensions for each of true positives, false positives, true negative, and false negative,
+                 specified dimensions for each of true positives, false positives, true negatives, and false negatives,
                  respectively. If `self.batch_dim` is not None then these tensors will have shape (batch size, 1),
                  Otherwise, it will have shape (1,). The counts will be relative to the index of ``self.pos_label``
         """
@@ -813,7 +813,7 @@ class MultiClassificationMetric(ClassificationMetric):
 
         Returns:
             tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
-                specified dimensions for each of true positives, false positives, true negative, and false negative
+                specified dimensions for each of true positives, false positives, true negatives, and false negatives
                 respectively.
         """
 
