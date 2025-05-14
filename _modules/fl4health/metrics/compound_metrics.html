@@ -487,16 +487,142 @@
         </div>
         <article role="main">
           <h1>Source code for fl4health.metrics.compound_metrics</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">WARNING</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Metrics</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.metrics.base_metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Metric</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TorchTransformFunction</span>
 
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Metric</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="EmaMetric">
+<a class="viewcode-back" href="../../../reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.EmaMetric">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EmaMetric</span><span class="p">(</span><span class="n">Metric</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+<div class="viewcode-block" id="EmaMetric.__init__">
+<a class="viewcode-back" href="../../../reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.EmaMetric.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metric</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">smoothing_factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Exponential Moving Average (EMA) metric wrapper to apply EMA to the underlying metric.</span>
+
+<span class="sd">        NOTE: If the underlying metric accumulates batches during update, then updating this metric without clearing</span>
+<span class="sd">        in between will result in previously seen inputs and targets being a part of subsequent computations. For</span>
+<span class="sd">        example, if we use Accuracy from fl4health.metrics, which accumulates batches, we get the following behavior</span>
+<span class="sd">        in the code block below.</span>
+
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            from fl4health.metrics import Accuracy</span>
+
+<span class="sd">            ema = EmaMetric(Accuracy(), 0.1)</span>
+
+<span class="sd">            preds_1 = torch.Tensor([1, 0, 1]), targets_1 = torch.Tensor([1, 1, 1])</span>
+
+<span class="sd">            ema.update(preds_1, targets_1)</span>
+
+<span class="sd">            ema.compute() -&gt; 0.667</span>
+
+<span class="sd">            preds_2 = torch.Tensor([0, 0, 1]), targets_2 = torch.Tensor([1, 1, 1])</span>
+
+<span class="sd">            # If no clear before update (new accuracy is computed using both pred_1 and pred_2)</span>
+
+<span class="sd">            ema.update(preds_2, targets_2) = 0.9(0.667) + 0.1 (0.5)</span>
+
+<span class="sd">            # If there were a clear before update (new accuracy is computed using pred_2)</span>
+
+<span class="sd">            ema.clear()</span>
+
+<span class="sd">            ema.update(preds_2, targets_2 = 0.9(0.667) + 0.1(0.333)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            metric (T): An FL4Health compatible metric</span>
+<span class="sd">            smoothing_factor (float, optional): Smoothing factor in range [0, 1] for the EMA. Smaller values increase</span>
+<span class="sd">                smoothing by weighting previous scores more heavily. Defaults to 0.1.</span>
+<span class="sd">            name (str | None, optional): Name of the EMAMetric. If left as None will default to &#39;EMA_{metric.name}&#39;.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Create a copy of the metrics object so that we do not inadvertently change the provided object elsewhere</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">metric</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">smoothing_factor</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;smoothing_factor should be in [0, 1] but was </span><span class="si">{</span><span class="n">smoothing_factor</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smoothing_factor</span> <span class="o">=</span> <span class="n">smoothing_factor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">previous_score</span><span class="p">:</span> <span class="n">Metrics</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;EMA_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">name</span></div>
+
+
+<div class="viewcode-block" id="EmaMetric.update">
+<a class="viewcode-back" href="../../../reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.EmaMetric.update">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EmaMetric.compute">
+<a class="viewcode-back" href="../../../reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.EmaMetric.compute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Metrics</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute metric on state accumulated over updates. This computation considers the exponential moving average</span>
+<span class="sd">        with respect to previous scores. For time step :math:`t`, and metric score :math:`m_t`, the EMA score is</span>
+<span class="sd">        computed</span>
+
+<span class="sd">        .. math ::</span>
+<span class="sd">            \\text{smoothing_factor} \\cdot m_t + (1-\\text{smoothing_factor}) \\cdot (m_{t-1}).</span>
+
+<span class="sd">        The very first score is stored as is.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name (str | None, optional): Optional name used in conjunction with class attribute name to define key in</span>
+<span class="sd">                metrics dictionary. Defaults to None.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Metrics: A dictionary of string and ``Scalar`` representing the computed metric and its associated key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Temporarily change name of the underlying metric so that we get the EMAMetric name in keys of metrics_dict</span>
+        <span class="n">metric_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="o">.</span><span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">metrics_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">metric_name</span>
+
+        <span class="c1"># Check if this is the first score</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">previous_score</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_drop_str_or_bytes_scores_and_store</span><span class="p">(</span><span class="n">metrics_dict</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">previous_score</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">previous_score</span><span class="p">)</span>
+
+        <span class="c1"># Otherwise compute EMA score for each &#39;metric&#39; in Metrics dict</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">previous_score</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">previous_score</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">current_score</span> <span class="o">=</span> <span class="n">metrics_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">current_score</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">))</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">previous_score</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">previous_score</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">smoothing_factor</span> <span class="o">*</span> <span class="n">current_score</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">smoothing_factor</span><span class="p">)</span> <span class="o">*</span> <span class="n">previous_score</span>
+                <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">previous_score</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_drop_str_or_bytes_scores_and_store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metrics_dict</span><span class="p">:</span> <span class="n">Metrics</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">previous_score</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">score</span> <span class="ow">in</span> <span class="n">metrics_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">score</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+                <span class="n">log</span><span class="p">(</span>
+                    <span class="n">WARNING</span><span class="p">,</span>
+                    <span class="s2">&quot;EMAMetric is only compatible with float or int metrics, but metrics contains a value with &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">score</span><span class="p">)</span><span class="si">}</span><span class="s2"> at key: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">. These values will be ignored in subsequent computations.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">previous_score</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">score</span>
+
+<div class="viewcode-block" id="EmaMetric.clear">
+<a class="viewcode-back" href="../../../reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.EmaMetric.clear">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Clear accumulated inputs and targets but not the previous score</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+</div>
+
 
 
 <div class="viewcode-block" id="TransformsMetric">
@@ -523,7 +649,8 @@
 <span class="sd">                apply to the targets before computing the metrics. Each callable must accept and return a</span>
 <span class="sd">                ``torch.Tensor``. Use partial to set other arguments.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">metric</span>
+        <span class="c1"># Create a copy of the metrics object so that we do not inadvertently change the provided object elsewhere</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">metric</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pred_transforms</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">pred_transforms</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">pred_transforms</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">target_transforms</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">target_transforms</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">target_transforms</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">metric</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div>
