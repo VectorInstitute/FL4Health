@@ -319,9 +319,12 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="reference/api/fl4health.metrics.html">fl4health.metrics package</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of fl4health.metrics package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.metrics.base_metrics.html">fl4health.metrics.base_metrics module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.metrics.compound_metrics.html">fl4health.metrics.compound_metrics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.metrics.efficient_metrics.html">fl4health.metrics.efficient_metrics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.metrics.efficient_metrics_base.html">fl4health.metrics.efficient_metrics_base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.metrics.metric_aggregation.html">fl4health.metrics.metric_aggregation module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.metrics.metric_managers.html">fl4health.metrics.metric_managers module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.metrics.metrics.html">fl4health.metrics.metrics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.metrics.metrics_utils.html">fl4health.metrics.metrics_utils module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="reference/api/fl4health.mixins.html">fl4health.mixins package</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" role="switch" type="checkbox"/><label for="toctree-checkbox-16"><div class="visually-hidden">Toggle navigation of fl4health.mixins package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -530,7 +533,13 @@
 </li>
           <li><a href="reference/api/fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.BestMetricTorchModuleCheckpointer.__init__">(BestMetricTorchModuleCheckpointer method)</a>
 </li>
+          <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric.__init__">(BinaryClassificationMetric method)</a>
+</li>
+          <li><a href="reference/api/fl4health.metrics.efficient_metrics.html#fl4health.metrics.efficient_metrics.BinaryDice.__init__">(BinaryDice method)</a>
+</li>
           <li><a href="reference/api/fl4health.metrics.html#fl4health.metrics.BinarySoftDiceCoefficient.__init__">(BinarySoftDiceCoefficient method)</a>, <a href="reference/api/fl4health.metrics.metrics.html#fl4health.metrics.metrics.BinarySoftDiceCoefficient.__init__">[1]</a>
+</li>
+          <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.ClassificationMetric.__init__">(ClassificationMetric method)</a>
 </li>
           <li><a href="reference/api/fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.ClientCheckpointAndStateModule.__init__">(ClientCheckpointAndStateModule method)</a>
 </li>
@@ -981,10 +990,10 @@
 </li>
         <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol">BasicClientProtocol (class in fl4health.mixins.core_protocols)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup">BasicClientProtocolPreSetup (class in fl4health.mixins.core_protocols)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.strategies.basic_fedavg.html#fl4health.strategies.basic_fedavg.BasicFedAvg">BasicFedAvg (class in fl4health.strategies.basic_fedavg)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.functions.html#fl4health.utils.functions.BernoulliSample">BernoulliSample (class in fl4health.utils.functions)</a>
@@ -998,6 +1007,10 @@
         <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss.beta_with_extreme_kernel_base_values">beta_with_extreme_kernel_base_values() (MkMmdLoss method)</a>
 </li>
         <li><a href="reference/api/fl4health.feature_alignment.tabular_type.html#fl4health.feature_alignment.tabular_type.TabularType.BINARY">BINARY (TabularType attribute)</a>
+</li>
+        <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric">BinaryClassificationMetric (class in fl4health.metrics.efficient_metrics_base)</a>
+</li>
+        <li><a href="reference/api/fl4health.metrics.efficient_metrics.html#fl4health.metrics.efficient_metrics.BinaryDice">BinaryDice (class in fl4health.metrics.efficient_metrics)</a>
 </li>
         <li><a href="reference/api/fl4health.metrics.html#fl4health.metrics.BinarySoftDiceCoefficient">BinarySoftDiceCoefficient (class in fl4health.metrics)</a>
 
@@ -1031,9 +1044,13 @@
 </li>
         <li><a href="reference/api/fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.CheckpointMode">CheckpointMode (class in fl4health.checkpointing.client_module)</a>
 </li>
-        <li><a href="reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.EmaMetric.clear">clear() (EmaMetric method)</a>
+        <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.ClassificationMetric">ClassificationMetric (class in fl4health.metrics.efficient_metrics_base)</a>
+</li>
+        <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.ClassificationMetric.clear">clear() (ClassificationMetric method)</a>
 
         <ul>
+          <li><a href="reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.EmaMetric.clear">(EmaMetric method)</a>
+</li>
           <li><a href="reference/api/fl4health.utils.losses.html#fl4health.utils.losses.LossMeter.clear">(LossMeter method)</a>
 </li>
           <li><a href="reference/api/fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric.clear">(Metric method)</a>
@@ -1065,9 +1082,11 @@
 </li>
         <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.collapse_one_hot_tensor">collapse_one_hot_tensor() (in module fl4health.utils.nnunet_utils)</a>
 </li>
-        <li><a href="reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.EmaMetric.compute">compute() (EmaMetric method)</a>
+        <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.ClassificationMetric.compute">compute() (ClassificationMetric method)</a>
 
         <ul>
+          <li><a href="reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.EmaMetric.compute">(EmaMetric method)</a>
+</li>
           <li><a href="reference/api/fl4health.utils.losses.html#fl4health.utils.losses.LossMeter.compute">(LossMeter method)</a>
 </li>
           <li><a href="reference/api/fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric.compute">(Metric method)</a>
@@ -1095,6 +1114,8 @@
 </li>
         <li><a href="reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.compute_cumulative_explained_variance">compute_cumulative_explained_variance() (PcaModule method)</a>
 </li>
+        <li><a href="reference/api/fl4health.metrics.metrics_utils.html#fl4health.metrics.metrics_utils.compute_dice_on_count_tensors">compute_dice_on_count_tensors() (in module fl4health.metrics.metrics_utils)</a>
+</li>
         <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_euclidean_inner_products">compute_euclidean_inner_products() (MkMmdLoss method)</a>
 </li>
         <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_euclidean_inner_products_linear">compute_euclidean_inner_products_linear() (MkMmdLoss method)</a>
@@ -1117,6 +1138,14 @@
         </ul></li>
         <li><a href="reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.compute_explained_variance_ratios">compute_explained_variance_ratios() (PcaModule method)</a>
 </li>
+        <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric.compute_from_counts">compute_from_counts() (BinaryClassificationMetric method)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.metrics.efficient_metrics.html#fl4health.metrics.efficient_metrics.BinaryDice.compute_from_counts">(BinaryDice method)</a>
+</li>
+          <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.ClassificationMetric.compute_from_counts">(ClassificationMetric method)</a>
+</li>
+        </ul></li>
         <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_h_u_from_inner_products">compute_h_u_from_inner_products() (MkMmdLoss method)</a>
 </li>
         <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_h_u_from_inner_products_linear">compute_h_u_from_inner_products_linear() (MkMmdLoss method)</a>
@@ -1279,6 +1308,12 @@
 </li>
         <li><a href="reference/api/fl4health.losses.fenda_loss_config.html#fl4health.losses.fenda_loss_config.CosineSimilarityLossContainer">CosineSimilarityLossContainer (class in fl4health.losses.fenda_loss_config)</a>
 </li>
+        <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric.count_tp_fp_fn_tn">count_tp_fp_fn_tn() (BinaryClassificationMetric method)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.ClassificationMetric.count_tp_fp_fn_tn">(ClassificationMetric method)</a>
+</li>
+        </ul></li>
         <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.create_plans">create_plans() (NnunetClient method)</a>
 </li>
         <li><a href="reference/api/fl4health.datasets.rxrx1.load_data.html#fl4health.datasets.rxrx1.load_data.create_splits">create_splits() (in module fl4health.datasets.rxrx1.load_data)</a>
@@ -1448,6 +1483,10 @@
         <li><a href="reference/api/fl4health.strategies.feddg_ga.html#fl4health.strategies.feddg_ga.FairnessMetric">FairnessMetric (class in fl4health.strategies.feddg_ga)</a>
 </li>
         <li><a href="reference/api/fl4health.strategies.feddg_ga.html#fl4health.strategies.feddg_ga.FairnessMetricType">FairnessMetricType (class in fl4health.strategies.feddg_ga)</a>
+</li>
+        <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.MetricOutcome.FALSE_NEGATIVE">FALSE_NEGATIVE (MetricOutcome attribute)</a>
+</li>
+        <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.MetricOutcome.FALSE_POSITIVE">FALSE_POSITIVE (MetricOutcome attribute)</a>
 </li>
         <li><a href="reference/api/fl4health.model_bases.feature_extractor_buffer.html#fl4health.model_bases.feature_extractor_buffer.FeatureExtractorBuffer">FeatureExtractorBuffer (class in fl4health.model_bases.feature_extractor_buffer)</a>
 </li>
@@ -2002,6 +2041,20 @@
 </li>
         </ul></li>
         <li>
+    fl4health.metrics.efficient_metrics
+
+        <ul>
+          <li><a href="reference/api/fl4health.metrics.efficient_metrics.html#module-fl4health.metrics.efficient_metrics">module</a>
+</li>
+        </ul></li>
+        <li>
+    fl4health.metrics.efficient_metrics_base
+
+        <ul>
+          <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#module-fl4health.metrics.efficient_metrics_base">module</a>
+</li>
+        </ul></li>
+        <li>
     fl4health.metrics.metric_aggregation
 
         <ul>
@@ -2020,6 +2073,13 @@
 
         <ul>
           <li><a href="reference/api/fl4health.metrics.metrics.html#module-fl4health.metrics.metrics">module</a>
+</li>
+        </ul></li>
+        <li>
+    fl4health.metrics.metrics_utils
+
+        <ul>
+          <li><a href="reference/api/fl4health.metrics.metrics_utils.html#module-fl4health.metrics.metrics_utils">module</a>
 </li>
         </ul></li>
         <li>
@@ -2127,6 +2187,8 @@
           <li><a href="reference/api/fl4health.model_bases.masked_layers.masked_linear.html#module-fl4health.model_bases.masked_layers.masked_linear">module</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     fl4health.model_bases.masked_layers.masked_normalization_layers
 
@@ -2141,8 +2203,6 @@
           <li><a href="reference/api/fl4health.model_bases.moon_base.html#module-fl4health.model_bases.moon_base">module</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     fl4health.model_bases.parallel_split_models
 
@@ -3398,6 +3458,8 @@
 </li>
         <li><a href="reference/api/fl4health.metrics.metric_managers.html#fl4health.metrics.metric_managers.MetricManager">MetricManager (class in fl4health.metrics.metric_managers)</a>
 </li>
+        <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.MetricOutcome">MetricOutcome (class in fl4health.metrics.efficient_metrics_base)</a>
+</li>
         <li><a href="reference/api/fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.MetricPrefix">MetricPrefix (class in fl4health.metrics.base_metrics)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.sampler.html#fl4health.utils.sampler.MinorityLabelBasedSampler">MinorityLabelBasedSampler (class in fl4health.utils.sampler)</a>
@@ -3552,11 +3614,17 @@
 </li>
           <li><a href="reference/api/fl4health.metrics.compound_metrics.html#module-fl4health.metrics.compound_metrics">fl4health.metrics.compound_metrics</a>
 </li>
+          <li><a href="reference/api/fl4health.metrics.efficient_metrics.html#module-fl4health.metrics.efficient_metrics">fl4health.metrics.efficient_metrics</a>
+</li>
+          <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#module-fl4health.metrics.efficient_metrics_base">fl4health.metrics.efficient_metrics_base</a>
+</li>
           <li><a href="reference/api/fl4health.metrics.metric_aggregation.html#module-fl4health.metrics.metric_aggregation">fl4health.metrics.metric_aggregation</a>
 </li>
           <li><a href="reference/api/fl4health.metrics.metric_managers.html#module-fl4health.metrics.metric_managers">fl4health.metrics.metric_managers</a>
 </li>
           <li><a href="reference/api/fl4health.metrics.metrics.html#module-fl4health.metrics.metrics">fl4health.metrics.metrics</a>
+</li>
+          <li><a href="reference/api/fl4health.metrics.metrics_utils.html#module-fl4health.metrics.metrics_utils">fl4health.metrics.metrics_utils</a>
 </li>
           <li><a href="reference/api/fl4health.mixins.html#module-fl4health.mixins">fl4health.mixins</a>
 </li>
@@ -4431,6 +4499,8 @@
 </li>
         <li><a href="reference/api/fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextMulticolumnTransformer">TextMulticolumnTransformer (class in fl4health.feature_alignment.string_columns_transformer)</a>
 </li>
+        <li><a href="reference/api/fl4health.metrics.metrics_utils.html#fl4health.metrics.metrics_utils.threshold_tensor">threshold_tensor() (in module fl4health.metrics.metrics_utils)</a>
+</li>
         <li><a href="reference/api/fl4health.feature_alignment.tabular_feature.html#fl4health.feature_alignment.tabular_feature.TabularFeature.to_json">to_json() (TabularFeature method)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.load_data.html#fl4health.utils.load_data.ToNumpy">ToNumpy (class in fl4health.utils.load_data)</a>
@@ -4443,10 +4513,10 @@
         </ul></li>
         <li><a href="reference/api/fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.TorchModuleCheckpointer">TorchModuleCheckpointer (class in fl4health.checkpointing.checkpointer)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.TorchModuleSnapshotter">TorchModuleSnapshotter (class in fl4health.utils.snapshotter)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.utils.logging.html#fl4health.utils.logging.LoggingMode.TRAIN">TRAIN (LoggingMode attribute)</a>
 </li>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.train_by_epochs">train_by_epochs() (BasicClient method)</a>
@@ -4499,6 +4569,10 @@
 </li>
         <li><a href="reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.TransformsMetric">TransformsMetric (class in fl4health.metrics.compound_metrics)</a>
 </li>
+        <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.MetricOutcome.TRUE_NEGATIVE">TRUE_NEGATIVE (MetricOutcome attribute)</a>
+</li>
+        <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.MetricOutcome.TRUE_POSITIVE">TRUE_POSITIVE (MetricOutcome attribute)</a>
+</li>
         <li><a href="reference/api/fl4health.utils.data_generation.html#fl4health.utils.data_generation.SyntheticFedProxDataset.two_layer_map_inputs_to_outputs">two_layer_map_inputs_to_outputs() (SyntheticFedProxDataset method)</a>
 </li>
     </ul></td>
@@ -4549,9 +4623,11 @@
           <li><a href="reference/api/fl4health.strategies.fedavg_sparse_coo_tensor.html#fl4health.strategies.fedavg_sparse_coo_tensor.FedAvgSparseCooTensor.unweighted_aggregate">(FedAvgSparseCooTensor method)</a>
 </li>
         </ul></li>
-        <li><a href="reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.EmaMetric.update">update() (EmaMetric method)</a>
+        <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.ClassificationMetric.update">update() (ClassificationMetric method)</a>
 
         <ul>
+          <li><a href="reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.EmaMetric.update">(EmaMetric method)</a>
+</li>
           <li><a href="reference/api/fl4health.utils.losses.html#fl4health.utils.losses.LossMeter.update">(LossMeter method)</a>
 </li>
           <li><a href="reference/api/fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric.update">(Metric method)</a>
