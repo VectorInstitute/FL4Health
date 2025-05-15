@@ -11,7 +11,8 @@ class PersonalizedModes(str, Enum):
 PersonalizedMixinRegistry = {"ditto": DittoPersonalizedMixin}
 
 
-def make_it_personal(client_base_type: type[BasicClient], mode: PersonalizedModes) -> type[BasicClient]:
+def make_it_personal(client_base_type: type[BasicClient], mode: PersonalizedModes | str) -> type[BasicClient]:
+    """A mixed class factory for converting basic clients to personalized versions."""
     if mode == "ditto":
 
         return type(
