@@ -1,7 +1,7 @@
 from enum import Enum
 
 from fl4health.clients.basic_client import BasicClient
-from fl4health.mixins.personalized.ditto import DittoPersonalizedMixin
+from fl4health.mixins.personalized.ditto import DittoPersonalizedMixin, DittoPersonalizedProtocol
 
 
 class PersonalizedModes(str, Enum):
@@ -30,4 +30,10 @@ def make_it_personal(client_base_type: type[BasicClient], mode: PersonalizedMode
         raise ValueError("Unrecognized personalized mode.")
 
 
-__all__ = ["DittoPersonalizedMixin", "PersonalizedModes", "PersonalizedMixinRegistry", "make_it_personal"]
+__all__ = [
+    "DittoPersonalizedMixin",
+    "DittoPersonalizedProtocol",
+    "PersonalizedModes",
+    "PersonalizedMixinRegistry",
+    "make_it_personal",
+]
