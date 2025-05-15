@@ -138,6 +138,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         config["for_global"] = True
         return self.get_model(config).to(self.device)
 
+    @ensure_protocol_compliance
     def get_optimizer(self: DittoPersonalizedProtocol, config: Config) -> dict[str, Optimizer]:
         if self.global_model is None:
             # try set it here

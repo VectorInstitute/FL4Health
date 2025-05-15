@@ -31,7 +31,7 @@ class _TestBasicClient(BasicClient):
         return self.train_loader, self.val_loader
 
     def get_optimizer(self, config: Config) -> Optimizer | dict[str, Optimizer]:
-        return self.optimizers["global"]
+        return self.optimizers["local"]
 
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
@@ -45,7 +45,7 @@ def test_init() -> None:
     # setup client
     client = _TestDittoedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
     client.model = torch.nn.Linear(5, 5)
-    client.optimizers = {"global": torch.optim.SGD(client.model.parameters(), lr=0.0001)}
+    client.optimizers = {"local": torch.optim.SGD(client.model.parameters(), lr=0.0001)}
     client.train_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
     client.val_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
     client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
@@ -100,7 +100,7 @@ def test_get_parameters() -> None:
     client = _TestDittoedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
     client.model = torch.nn.Linear(5, 5)
     client.global_model = torch.nn.Linear(5, 5)
-    client.optimizers = {"global": torch.optim.SGD(client.model.parameters(), lr=0.0001)}
+    client.optimizers = {"local": torch.optim.SGD(client.model.parameters(), lr=0.0001)}
 
     # setup mocks
     mock_param_exchanger = MagicMock()
@@ -130,7 +130,7 @@ def test_get_parameters_uninitialized(mock_param_exchanger: MagicMock, mock_setu
     # setup client
     client = _TestDittoedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
     client.model = torch.nn.Linear(5, 5)
-    client.optimizers = {"global": torch.optim.SGD(client.model.parameters(), lr=0.0001)}
+    client.optimizers = {"local": torch.optim.SGD(client.model.parameters(), lr=0.0001)}
     client.initialized = False
 
     # setup mocks
@@ -186,3 +186,25 @@ def test_set_parameters(mock_logger: MagicMock) -> None:
             _Call(((INFO, "Initializing the global and local models weights for the first time"), {})),
         ]
     )
+
+
+@patch.object(_TestDittoedClient, "_copy_optimizer_with_new_params")
+def test_get_optimizer(mock_copy_optimizer: MagicMock) -> None:
+    # setup client
+    client = _TestDittoedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    client.model = torch.nn.Linear(5, 5)
+    client.optimizers = {"local": torch.optim.SGD(client.model.parameters(), lr=0.0001)}
+    client.train_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
+    client.val_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
+    client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
+
+    copied_optimizer = torch.optim.SGD(client.model.parameters(), lr=0.0001)
+    mock_copy_optimizer.return_value = copied_optimizer
+
+    # act
+    optimizers = client.get_optimizer({})
+
+    # assert
+    assert client.optimizers["local"] == optimizers["local"]
+    assert optimizers["global"] == copied_optimizer
+    mock_copy_optimizer.assert_called_once_with(client.optimizers["local"])
