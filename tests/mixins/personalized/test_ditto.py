@@ -22,6 +22,7 @@ from fl4health.parameter_exchange.packing_exchanger import FullParameterExchange
 from fl4health.parameter_exchange.parameter_packer import (
     ParameterPackerAdaptiveConstraint,
 )
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType
 
 
 class _TestBasicClient(BasicClient):
@@ -38,7 +39,28 @@ class _TestBasicClient(BasicClient):
         return torch.nn.CrossEntropyLoss()
 
 
+class _TestBasicClientV2(BasicClient):
+    def get_model(self, config: Config) -> nn.Module:
+        return self.model
+
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
+        return self.train_loader, self.val_loader
+
+    def get_optimizer(self, config: Config) -> Optimizer | dict[str, Optimizer]:
+        return self.optimizers["local"]
+
+    def get_criterion(self, config: Config) -> _Loss:
+        return torch.nn.CrossEntropyLoss()
+
+    def _predict(self, model: torch.nn.Module, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
+        return {}, {}
+
+
 class _TestDittoedClient(DittoPersonalizedMixin, _TestBasicClient):
+    pass
+
+
+class _TestDittoedClientV2(DittoPersonalizedMixin, _TestBasicClientV2):
     pass
 
 
@@ -223,6 +245,36 @@ def test_predict() -> None:
 
     client.model = mock_model
     client.global_model = mock_global_model
+
+    client.optimizers = {
+        "global": MagicMock(),
+        "local": MagicMock(),
+    }
+
+    client.train_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
+    client.val_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
+    client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
+    client.initialized = True
+
+    # act
+    # TODO: fix the mixin/protocol typing that leads to mypy complaint
+    res, _ = client.predict(input=torch.zeros(5))  # type: ignore
+    print(f"res: {res}")
+    print(torch.zeros(5))
+
+    # assert
+    assert_close(res["global"], torch.zeros(5))
+    assert_close(res["local"], torch.ones(5))
+
+
+@patch.object(_TestDittoedClientV2, "_predict")
+def test_predict_delagation(private_predict: MagicMock) -> None:
+    # setup client
+    client = _TestDittoedClientV2(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    client.model = torch.nn.Linear(5, 5)
+    client.global_model = torch.nn.Linear(5, 5)
+
+    private_predict.side_effect = [(torch.zeros(5), {}), (torch.ones(5), {})]
 
     client.optimizers = {
         "global": MagicMock(),
