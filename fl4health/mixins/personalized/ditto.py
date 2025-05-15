@@ -26,19 +26,19 @@ class DittoPersonalizedProtocol(AdaptiveDriftConstrainedProtocol, Protocol):
     optimizer_keys: list[str]
 
     def get_global_model(self, config: Config) -> nn.Module:
-        pass
+        pass  # pragma: no cover
 
     def _copy_optimizer_with_new_params(self, original_optimizer: Optimizer) -> Optimizer:
-        pass
+        pass  # pragma: no cover
 
     def set_initial_global_tensors(self) -> None:
-        pass
+        pass  # pragma: no cover
 
     def _extract_pred(self, kind: str, preds: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
-        pass
+        pass  # pragma: no cover
 
     def safe_global_model(self) -> nn.Module:
-        pass
+        pass  # pragma: no cover
 
 
 class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
