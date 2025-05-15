@@ -11,6 +11,7 @@ from flwr.common.typing import Config, NDArray, Scalar
 from numpy.testing import assert_array_equal
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
+from torch.testing import assert_close
 from torch.utils.data import DataLoader, TensorDataset
 
 from fl4health.clients.basic_client import BasicClient
@@ -208,3 +209,37 @@ def test_get_optimizer(mock_copy_optimizer: MagicMock) -> None:
     assert client.optimizers["local"] == optimizers["local"]
     assert optimizers["global"] == copied_optimizer
     mock_copy_optimizer.assert_called_once_with(client.optimizers["local"])
+
+
+def test_predict() -> None:
+    # setup client
+    client = _TestDittoedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+
+    mock_model = MagicMock()
+    mock_global_model = MagicMock()
+
+    mock_model.return_value = torch.ones(5)
+    mock_global_model.return_value = torch.zeros(5)
+
+    client.model = mock_model
+    client.global_model = mock_global_model
+
+    client.optimizers = {
+        "global": MagicMock(),
+        "local": MagicMock(),
+    }
+
+    client.train_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
+    client.val_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
+    client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
+    client.initialized = True
+
+    # act
+    # TODO: fix the mixin/protocol typing that leads to mypy complaint
+    res, _ = client.predict(input=torch.zeros(5))  # type: ignore
+    print(f"res: {res}")
+    print(torch.zeros(5))
+
+    # assert
+    assert_close(res["global"], torch.zeros(5))
+    assert_close(res["local"], torch.ones(5))
