@@ -243,3 +243,25 @@ def test_predict() -> None:
     # assert
     assert_close(res["global"], torch.zeros(5))
     assert_close(res["local"], torch.ones(5))
+
+
+def test_extract_pred() -> None:
+    # setup client
+    client = _TestDittoedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+
+    res = client._extract_pred(
+        kind="global", preds={"global-xyz": torch.ones(5), "global-abc": torch.zeros(5), "local": torch.zeros(5)}
+    )
+
+    assert_close(res["xyz"], torch.ones(5))
+    assert_close(res["abc"], torch.zeros(5))
+
+
+def test_extract_pred_raises_error() -> None:
+    # setup client
+    client = _TestDittoedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+
+    with pytest.raises(ValueError):
+        client._extract_pred(
+            kind="oops", preds={"global-xyz": torch.ones(5), "global-abc": torch.zeros(5), "local": torch.zeros(5)}
+        )
