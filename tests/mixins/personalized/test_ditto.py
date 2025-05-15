@@ -265,3 +265,20 @@ def test_extract_pred_raises_error() -> None:
         client._extract_pred(
             kind="oops", preds={"global-xyz": torch.ones(5), "global-abc": torch.zeros(5), "local": torch.zeros(5)}
         )
+
+
+@patch.object(_TestDittoedClient, "set_initial_global_tensors")
+@patch.object(_TestBasicClient, "update_before_train")
+def test_update_before_train(
+    mock_super_update_before_train: MagicMock, mock_set_initial_global_tensors: MagicMock
+) -> None:
+    client = _TestDittoedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    mock_global_model = MagicMock()
+    client.global_model = mock_global_model
+
+    # act
+    client.update_before_train(1)
+
+    mock_global_model.train.assert_called_once()
+    mock_super_update_before_train.assert_called_once_with(1)
+    mock_set_initial_global_tensors.assert_called_once()
