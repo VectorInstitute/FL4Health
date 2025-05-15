@@ -72,16 +72,16 @@ class BasicClientProtocol(BasicClientProtocolPreSetup, Protocol):
     criterion: _Loss
 
     def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
-        pass
+        pass  # pragma: no cover
 
     def update_before_train(self, current_server_round: int) -> None:
-        pass
+        pass  # pragma: no cover
 
     def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
-        pass
+        pass  # pragma: no cover
 
     def transform_target(self, target: TorchTargetType) -> TorchTargetType:
-        pass
+        pass  # pragma: no cover
 
     def compute_training_loss(
         self,
@@ -89,10 +89,10 @@ class BasicClientProtocol(BasicClientProtocolPreSetup, Protocol):
         features: TorchFeatureType,
         target: TorchTargetType,
     ) -> TrainingLosses:
-        pass
+        pass  # pragma: no cover
 
     def validate(self, include_losses_in_metrics: bool = False) -> tuple[float, dict[str, Scalar]]:
-        pass
+        pass  # pragma: no cover
 
     def compute_evaluation_loss(
         self,
@@ -100,4 +100,4 @@ class BasicClientProtocol(BasicClientProtocolPreSetup, Protocol):
         features: TorchFeatureType,
         target: TorchTargetType,
     ) -> EvaluationLosses:
-        pass
+        pass  # pragma: no cover
