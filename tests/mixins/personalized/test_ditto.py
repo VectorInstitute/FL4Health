@@ -1,6 +1,7 @@
 import warnings
+from logging import INFO
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, _Call, patch
 
 import numpy as np
 import pytest
@@ -146,3 +147,42 @@ def test_get_parameters_uninitialized(mock_param_exchanger: MagicMock, mock_setu
     mock_setup_client.assert_called_once_with(test_config)
     mock_param_exchanger_instance.push_parameters.assert_called_once_with(client.model, config=test_config)
     assert_array_equal(packed_params, push_params_return_model_weights)
+
+
+@patch("fl4health.mixins.personalized.ditto.log")
+def test_set_parameters(mock_logger: MagicMock) -> None:
+    # setup client
+    client = _TestDittoedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    client.model = torch.nn.Linear(5, 5)
+    client.optimizers = {
+        "global": torch.optim.SGD(client.model.parameters(), lr=0.0001),
+        "local": torch.optim.SGD(client.model.parameters(), lr=0.0001),
+    }
+    client.train_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
+    client.val_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
+    client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
+    client.initialized = True
+    client.setup_client({})
+
+    # setup mocks
+    mock_param_exchanger = MagicMock()
+    unpack_params_model_state: NDArray = np.ndarray(shape=(2, 2), dtype=float)
+    mock_param_exchanger.unpack_parameters.return_value = (unpack_params_model_state, 0.1)
+    client.parameter_exchanger = mock_param_exchanger
+
+    # act
+    new_params: NDArray = np.ndarray(shape=(2, 2), dtype=float)
+    config: dict[str, Scalar] = {"current_server_round": 1}
+    fitting_round = True
+    assert isinstance(client, DittoPersonalizedProtocol)
+    client.set_parameters(new_params, config, fitting_round)
+
+    # assert
+    mock_param_exchanger.unpack_parameters.assert_called_once_with(new_params)
+    mock_logger.assert_has_calls(
+        [
+            _Call(((INFO, "global model set: Linear"), {})),
+            _Call(((INFO, "Lambda weight received from the server: 0.1"), {})),
+            _Call(((INFO, "Initializing the global and local models weights for the first time"), {})),
+        ]
+    )
