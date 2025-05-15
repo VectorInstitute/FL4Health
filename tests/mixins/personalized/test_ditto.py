@@ -1,10 +1,13 @@
 import warnings
 from pathlib import Path
+from unittest.mock import MagicMock
 
+import numpy as np
 import pytest
 import torch
 import torch.nn as nn
-from flwr.common.typing import Config
+from flwr.common.typing import Config, NDArray, Scalar
+from numpy.testing import assert_array_equal
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, TensorDataset
@@ -70,10 +73,51 @@ def test_subclass_checks_raise_no_warning() -> None:
     with warnings.catch_warnings(record=True) as recorded_warnings:
 
         class _TestInheritanceMixin(DittoPersonalizedMixin, _TestBasicClient):
-            """subclass should skip validation if is itself a Mixin that inherits AdaptiveDriftConstrainedMixin"""
+            """subclass should skip validation if is itself a Mixin that inherits DittoPersonalizedMixin"""
 
             pass
 
+        # attaches _dynamically_created attr
         _ = make_it_personal(_TestBasicClient, "ditto")
 
     assert len(recorded_warnings) == 0
+
+
+def test_subclass_checks_raise_warning() -> None:
+
+    # will raise two warnings, one for DittoPersonalizedMixin and another for its super AdaptiveDriftConstrainedMixin
+    with pytest.warns((RuntimeWarning, RuntimeWarning)):
+
+        class _InvalidSubclass(DittoPersonalizedMixin):
+            """Invalid subclass that warns the user that it expects this class to be mixed with a BasicClient."""
+
+            pass
+
+
+def test_get_parameters() -> None:
+    # setup client
+    client = _TestDittoedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    client.model = torch.nn.Linear(5, 5)
+    client.global_model = torch.nn.Linear(5, 5)
+    client.optimizers = {"global": torch.optim.SGD(client.model.parameters(), lr=0.0001)}
+
+    # setup mocks
+    mock_param_exchanger = MagicMock()
+    push_params_return_model_weights: NDArray = np.ndarray(shape=(2, 2), dtype=float)
+    pack_params_return_val: NDArray = np.ndarray(shape=(2, 2), dtype=float)
+    mock_param_exchanger.push_parameters.return_value = push_params_return_model_weights
+    mock_param_exchanger.pack_parameters.return_value = pack_params_return_val
+    client.parameter_exchanger = mock_param_exchanger
+    client.initialized = True
+
+    # act
+    test_config: dict[str, Scalar] = {}
+    # TODO: fix the mixin/protocol typing that leads to mypy complaint
+    packed_params = client.get_parameters(config=test_config)  # type: ignore
+
+    # assert
+    mock_param_exchanger.push_parameters.assert_called_once_with(client.model, config=test_config)
+    mock_param_exchanger.pack_parameters.assert_called_once_with(
+        push_params_return_model_weights, client.loss_for_adaptation
+    )
+    assert_array_equal(packed_params, pack_params_return_val)

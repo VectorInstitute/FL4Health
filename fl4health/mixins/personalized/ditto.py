@@ -45,7 +45,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
 
     def __init__(self, *args: Any, **kwargs: Any):
         # Initialize mixin-specific attributes
-        self.global_model = None
+        self.global_model: torch.nn.Module | None = None
 
         # Call parent's init
         try:
