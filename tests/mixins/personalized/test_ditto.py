@@ -334,3 +334,11 @@ def test_update_before_train(
     mock_global_model.train.assert_called_once()
     mock_super_update_before_train.assert_called_once_with(1)
     mock_set_initial_global_tensors.assert_called_once()
+
+
+def test_safe_model_raises_error() -> None:
+    client = _TestDittoedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+
+    with pytest.raises(ValueError):
+        # TODO: fix the mixin/protocol typing that leads to mypy complaint
+        client.safe_global_model()  # type: ignore
