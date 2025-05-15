@@ -1,3 +1,4 @@
+import warnings
 from pathlib import Path
 
 import pytest
@@ -11,7 +12,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from fl4health.clients.basic_client import BasicClient
 from fl4health.metrics import Accuracy
 from fl4health.mixins.core_protocols import BasicClientProtocol
-from fl4health.mixins.personalized import DittoPersonalizedMixin, DittoPersonalizedProtocol
+from fl4health.mixins.personalized import DittoPersonalizedMixin, DittoPersonalizedProtocol, make_it_personal
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import (
     ParameterPackerAdaptiveConstraint,
@@ -62,3 +63,17 @@ def test_init_raises_value_error_when_basic_client_protocol_not_satisfied() -> N
     with pytest.raises(RuntimeError, match="This object needs to satisfy `BasicClientProtocolPreSetup`."):
 
         _InvalidTestDittoClient(data_path=Path(""), metrics=[Accuracy()])
+
+
+def test_subclass_checks_raise_no_warning() -> None:
+
+    with warnings.catch_warnings(record=True) as recorded_warnings:
+
+        class _TestInheritanceMixin(DittoPersonalizedMixin, _TestBasicClient):
+            """subclass should skip validation if is itself a Mixin that inherits AdaptiveDriftConstrainedMixin"""
+
+            pass
+
+        _ = make_it_personal(_TestBasicClient, "ditto")
+
+    assert len(recorded_warnings) == 0
