@@ -118,10 +118,22 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
 
     @property
     def optimizer_keys(self: DittoPersonalizedProtocol) -> list[str]:
-        """Returns the optimizer keys."""
+        """Property for optimizer keys.
+
+        Returns:
+            list[str]: list of keys for the optimizers dictionary.
+        """
         return ["local", "global"]
 
     def _copy_optimizer_with_new_params(self: DittoPersonalizedProtocol, original_optimizer: Optimizer) -> Optimizer:
+        """Helper method to make a copy of the original optimizer for the global model.
+
+        Args:
+            original_optimizer (Optimizer): original optimizer of the underyling `BasicClient`.
+
+        Returns:
+            Optimizer: a copy of the original optimizer to be used by the global model.
+        """
         OptimClass = original_optimizer.__class__
         state_dict = original_optimizer.state_dict()
 
@@ -159,6 +171,12 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
 
     @ensure_protocol_compliance
     def get_optimizer(self: DittoPersonalizedProtocol, config: Config) -> dict[str, Optimizer]:
+        """
+        Returns a dictionary with global and local optimizers with string keys "global" and "local" respectively.
+
+        Args:
+            config (Config): The config from the server.
+        """
         if self.global_model is None:
             # try set it here
             self.global_model = self.get_global_model(config)  # is this the same config?
