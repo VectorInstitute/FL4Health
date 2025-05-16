@@ -409,7 +409,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             retval.update(**{f"local-{k}": v for k, v in local_preds.items()})
             return retval, {}
         else:
-            raise ValueError(f"Unsupported pred type: {type(global_preds)}.")
+            raise ValueError(f"Unsupported pred types. Global: {type(global_preds)}, local: {type(local_preds)}")
 
     def _extract_pred(self, kind: str, preds: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         if kind not in ["global", "local"]:
