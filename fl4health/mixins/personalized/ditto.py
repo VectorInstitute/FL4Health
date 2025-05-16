@@ -132,13 +132,11 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         # store initial_lr to be used with schedulers
         initial_lr = param_group.pop("initial_lr", param_group["lr"])
 
-        optimizer_kwargs = {k: v for k, v in param_group.items() if k not in ("params", "lr")}
+        optimizer_kwargs = {k: v for k, v in param_group.items() if k not in ("params")}
         assert self.global_model is not None
-        global_optimizer = OptimClass(
-            self.global_model.parameters(), lr=param_group["lr"], **optimizer_kwargs
-        )  # type:ignore [call-arg]
+        global_optimizer = OptimClass(self.global_model.parameters(), **optimizer_kwargs)
 
-        # If you need to maintain the initial_lr for schedulers:
+        # maintain initial_lr for schedulers
         for param_group in global_optimizer.param_groups:
             param_group["initial_lr"] = initial_lr
 
@@ -157,7 +155,6 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         Returns:
             nn.Module: The PyTorch model serving as the global model for Ditto
         """
-        config["for_global"] = True
         return self.get_model(config).to(self.device)
 
     @ensure_protocol_compliance
