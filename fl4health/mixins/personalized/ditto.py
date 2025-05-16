@@ -43,7 +43,7 @@ class DittoPersonalizedProtocol(AdaptiveDriftConstrainedProtocol, Protocol):
 
 class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
 
-    def __init__(self, *args: Any, **kwargs: Any):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         # Initialize mixin-specific attributes
         self.global_model: torch.nn.Module | None = None
 
@@ -57,7 +57,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         if not isinstance(self, BasicClientProtocolPreSetup):
             raise RuntimeError("This object needs to satisfy `BasicClientProtocolPreSetup`.")
 
-    def __init_subclass__(cls, **kwargs: Any):
+    def __init_subclass__(cls, **kwargs: Any) -> None:
         """This method is called when a class inherits from AdaptiveMixin"""
         super().__init_subclass__(**kwargs)
 
