@@ -130,9 +130,9 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         param_group = state_dict["param_groups"][0]
 
         # store initial_lr to be used with schedulers
-        initial_lr = param_group.pop("initial_lr", param_group["lr"])
+        initial_lr = param_group.get("initial_lr", param_group["lr"])
 
-        optimizer_kwargs = {k: v for k, v in param_group.items() if k not in ("params")}
+        optimizer_kwargs = {k: v for k, v in param_group.items() if k not in ("params", "initial_lr")}
         assert self.global_model is not None
         global_optimizer = OptimClass(self.global_model.parameters(), **optimizer_kwargs)
 
