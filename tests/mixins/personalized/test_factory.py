@@ -32,5 +32,6 @@ def test_make_it_personal_factory_method() -> None:
 
 
 def test_make_it_personal_raises_value_error() -> None:
+    """Ignore mypy error since a user of the library may not be using static checks in their application."""
     with pytest.raises(ValueError, match="Unrecognized personalized mode."):
         _ = make_it_personal(MyClient, mode="invalid-mode")  # type: ignore [arg-type]
