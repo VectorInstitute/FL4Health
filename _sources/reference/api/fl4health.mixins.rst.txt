@@ -6,6 +6,14 @@ fl4health.mixins package
    :undoc-members:
    :show-inheritance:
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   fl4health.mixins.personalized
+
 Submodules
 ----------
 
