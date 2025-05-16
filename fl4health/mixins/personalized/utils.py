@@ -10,6 +10,8 @@ from fl4health.clients.basic_client import BasicClient
 def ensure_protocol_compliance(func: Callable, instance: Any | None, args: Any, kwargs: Any) -> Any:
     """Wrapper to ensure that a the instance is of `BasicClient` type.
 
+    NOTE: this should only be used within a `BasicClient`.
+
     Args:
         # are params specified and supplied by the `wrapt` decorator
         func (Callable): the function to be wrapped
