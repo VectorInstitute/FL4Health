@@ -22,6 +22,7 @@ from fl4health.parameter_exchange.packing_exchanger import FullParameterExchange
 from fl4health.parameter_exchange.parameter_packer import (
     ParameterPackerAdaptiveConstraint,
 )
+from fl4health.utils.losses import TrainingLosses
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType
 
 
@@ -342,3 +343,45 @@ def test_safe_model_raises_error() -> None:
     with pytest.raises(ValueError):
         # TODO: fix the mixin/protocol typing that leads to mypy complaint
         client.safe_global_model()  # type: ignore
+
+
+@patch("torch.optim.Optimizer")
+@patch.object(_TestDittoedClient, "predict")
+@patch.object(_TestDittoedClient, "compute_training_loss")
+def test_train_step(
+    mock_compute_training_loss: MagicMock, mock_predict: MagicMock, mock_optimizer_class: MagicMock
+) -> None:
+    # setup client
+    client = _TestDittoedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    client.optimizers = {
+        "global": MagicMock(),
+        "local": MagicMock(),
+    }
+    client.train_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
+    client.val_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
+    client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
+    client.initialized = True
+
+    # arrange mocks
+    pred_return: tuple[TorchPredType, TorchFeatureType] = {"local": torch.ones(5)}, {}
+    preds, features = pred_return
+    mock_predict.return_value = preds, features
+    mock_backward_loss = MagicMock()
+    mock_additional_global_loss = MagicMock()
+    losses = TrainingLosses(
+        backward={"backward": mock_backward_loss}, additional_losses={"global_loss": mock_additional_global_loss}
+    )
+    mock_compute_training_loss.return_value = losses
+
+    # act
+    input, target = torch.tensor([1, 1, 1, 1, 1]), torch.zeros(3)
+    # TODO: fix the mixin/protocol typing that leads to mypy complaint
+    retval = client.train_step(input, target)  # type: ignore
+
+    mock_predict.assert_called_once()
+    client.optimizers["global"].zero_grad.assert_called_once()
+    client.optimizers["local"].zero_grad.assert_called_once()
+    mock_compute_training_loss.assert_called_once_with(preds, features, target)
+    mock_backward_loss.backward.assert_called_once()
+    mock_additional_global_loss.backward.assert_called_once()
+    assert retval == (losses, preds)
