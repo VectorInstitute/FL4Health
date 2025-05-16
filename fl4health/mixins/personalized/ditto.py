@@ -412,6 +412,18 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             raise ValueError(f"Unsupported pred types. Global: {type(global_preds)}, local: {type(local_preds)}")
 
     def _extract_pred(self, kind: str, preds: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+        """Helper method to extract predictions from global and local models.
+
+        Args:
+            kind (str): the kind of predictions to be extracted i.e., for 'local' or for 'global'
+            preds (dict[str, torch.Tensor]): the full preds result from `self.predict()`
+
+        Raises:
+            ValueError: If supplied `kind` is not of 'global' or 'local'
+
+        Returns:
+            dict[str, torch.Tensor]: the predictions associated with the specified kind
+        """
         if kind not in ["global", "local"]:
             raise ValueError("Unsupported kind of prediction. Must be 'global' or 'local'.")
 
