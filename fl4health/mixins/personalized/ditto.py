@@ -209,7 +209,6 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             pass
         # The rest of the setup is the same
         super().setup_client(config)  # type:ignore [safe-super]
-        # Need to setup the global model here as well. It should be the same architecture as the local model.
 
     def get_parameters(self: DittoPersonalizedProtocol, config: Config) -> NDArrays:
         """
@@ -403,10 +402,6 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
                 global_preds = self.safe_global_model()(**input)
                 local_preds = self.model(**input)
 
-        # Here we assume that global and local preds are simply tensors
-        # TODO: Perhaps loosen this at a later date.
-        # assert isinstance(global_preds, torch.Tensor)
-        # assert isinstance(local_preds, torch.Tensor)
         if isinstance(global_preds, torch.Tensor) and isinstance(local_preds, torch.Tensor):
             return {"global": global_preds, "local": local_preds}, {}
         elif isinstance(global_preds, dict) and isinstance(local_preds, dict):
