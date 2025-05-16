@@ -37,7 +37,7 @@ peft = "^0.14.0"
 # Problematic grpcio versions cause issues, should be fixed in next flwr update
 # See https://github.com/adap/flower/pull/3853
 # https://github.com/grpc/grpc/issues/37162
-tornado = ">=6.4.2"
+tornado = "^6.5"
 pympler = "^1.1"
 flwr-datasets = "^0.5.0"
 
