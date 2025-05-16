@@ -20,7 +20,7 @@ from fl4health.mixins.core_protocols import BasicClientProtocol
 from fl4health.mixins.personalized import (
     DittoPersonalizedMixin,
     DittoPersonalizedProtocol,
-    PersonalizedModes,
+    PersonalizedMode,
     make_it_personal,
 )
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
@@ -108,7 +108,7 @@ def test_subclass_checks_raise_no_warning() -> None:
             pass
 
         # attaches _dynamically_created attr
-        _ = make_it_personal(_TestBasicClient, PersonalizedModes.DITTO)
+        _ = make_it_personal(_TestBasicClient, PersonalizedMode.DITTO)
 
     assert len(recorded_warnings) == 0
 
