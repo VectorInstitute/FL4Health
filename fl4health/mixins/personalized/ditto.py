@@ -103,9 +103,14 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         )
 
     def safe_global_model(self: DittoPersonalizedProtocol) -> nn.Module:
-        """Convenience method for accessing optional `global_model`.
+        """Convenient accessor for the global model.
 
-        Raises: ValueError if global model has not yet been set.
+        Raises:
+            ValueError: If the `global_model` attribute has not yet been set, we
+            will raise an error.
+
+        Returns:
+            nn.Module: the global model if it has been set.
         """
         if self.global_model:
             return self.global_model
