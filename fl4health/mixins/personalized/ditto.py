@@ -142,7 +142,15 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         param_group = state_dict["param_groups"][0]
 
         # store initial_lr to be used with schedulers
-        initial_lr = param_group.get("initial_lr", param_group["lr"])
+        try:
+
+            initial_lr = param_group["initial_lr"]
+        except KeyError:
+            if "lr" in original_optimizer.defaults:
+                initial_lr = original_optimizer.defaults["lr"]
+            else:
+                initial_lr = 1e-3
+                log(WARN, "Unable to get the original `lr` for the global optimizer, falling back to `1e-3`.")
 
         optimizer_kwargs = {k: v for k, v in param_group.items() if k not in ("params", "initial_lr")}
         assert self.global_model is not None
