@@ -4,16 +4,16 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.mixins.personalized.ditto import DittoPersonalizedMixin, DittoPersonalizedProtocol
 
 
-class PersonalizedModes(str, Enum):
+class PersonalizedModes(Enum):
     DITTO = "ditto"
 
 
-PersonalizedMixinRegistry = {"ditto": DittoPersonalizedMixin}
+PersonalizedMixinRegistry = {PersonalizedModes.DITTO: DittoPersonalizedMixin}
 
 
-def make_it_personal(client_base_type: type[BasicClient], mode: PersonalizedModes | str) -> type[BasicClient]:
+def make_it_personal(client_base_type: type[BasicClient], mode: PersonalizedModes) -> type[BasicClient]:
     """A mixed class factory for converting basic clients to personalized versions."""
-    if mode == "ditto":
+    if mode == PersonalizedModes.DITTO:
 
         return type(
             f"Ditto{client_base_type.__name__}",

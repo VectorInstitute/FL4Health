@@ -7,7 +7,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from fl4health.clients.basic_client import BasicClient
-from fl4health.mixins.personalized import DittoPersonalizedMixin, make_it_personal
+from fl4health.mixins.personalized import DittoPersonalizedMixin, PersonalizedModes, make_it_personal
 
 
 class MyClient(BasicClient):
@@ -26,11 +26,11 @@ class MyClient(BasicClient):
 
 def test_make_it_personal_factory_method() -> None:
 
-    ditto_my_client_cls = make_it_personal(MyClient, mode="ditto")
+    ditto_my_client_cls = make_it_personal(MyClient, mode=PersonalizedModes.DITTO)
 
     assert issubclass(ditto_my_client_cls, (BasicClient, DittoPersonalizedMixin))
 
 
 def test_make_it_personal_raises_value_error() -> None:
     with pytest.raises(ValueError, match="Unrecognized personalized mode."):
-        _ = make_it_personal(MyClient, mode="invalid-mode")
+        _ = make_it_personal(MyClient, mode="invalid-mode")  # type: ignore [arg-type]
