@@ -481,13 +481,13 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             log(INFO, "Using '_special_compute_loss_and_additional_losses' to compute loss")
             global_loss, _ = self._special_compute_loss_and_additional_losses(global_preds, features, target)
 
-            # Compute local model loss + ditto constraint term
+            # Compute local model loss
             local_loss, _ = self._special_compute_loss_and_additional_losses(local_preds, features, target)
 
         else:
             global_loss = self.criterion(global_preds, target)
 
-            # Compute local model loss + ditto constraint term
+            # Compute local model loss
             local_loss = self.criterion(local_preds, target)
 
         additional_losses = {"local_loss": local_loss.clone(), "global_loss": global_loss}
