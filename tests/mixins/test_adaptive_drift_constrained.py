@@ -60,15 +60,13 @@ def test_init() -> None:
     assert isinstance(client, AdaptiveDriftConstrainedProtocol)
 
 
+# Create an invalid adapted client such as inheriting the Mixin but nothing else.
+# Since invalid it will raise a warning—see test_subclass_checks_raise_warning
+@pytest.mark.filterwarnings("ignore::RuntimeWarning")
 def test_init_raises_value_error_when_basic_client_protocol_not_satisfied() -> None:
 
-    # Create an invalid adapted client such as inheriting the Mixin but nothing else.
-    # Since invalid it will raise a warning—see test_subclass_checks_raise_warning
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-
-        class _InvalidTestAdaptedClient(AdaptiveDriftConstrainedMixin):
-            pass
+    class _InvalidTestAdaptedClient(AdaptiveDriftConstrainedMixin):
+        pass
 
     with pytest.raises(RuntimeError, match="This object needs to satisfy `BasicClientProtocolPreSetup`."):
 
