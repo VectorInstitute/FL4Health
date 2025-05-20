@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fl4health"
-version = "0.3.1"
+version = "2"
 description = "Federated Learning for Health"
 authors = ["Vector AI Engineering <fl4health@vectorinstitute.ai>"]
 license = "Apache-2.0"
