@@ -12,6 +12,7 @@ from fl4health.servers.adaptive_constraint_servers.ditto_server import DittoServ
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config, make_dict_with_epochs_or_steps
 from fl4health.utils.parameter_extraction import get_all_model_parameters
+from fl4health.utils.random import set_all_random_seeds
 
 
 def fit_config(
@@ -79,8 +80,18 @@ if __name__ == "__main__":
         help="Path to configuration file.",
         default="examples/ditto_example/config.yaml",
     )
+    parser.add_argument(
+        "--seed",
+        action="store",
+        type=int,
+        help="Seed for the random number generators across python, torch, and numpy",
+        required=False,
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
+
+    # Set the random seed for reproducibility
+    set_all_random_seeds(args.seed)
 
     main(config)
