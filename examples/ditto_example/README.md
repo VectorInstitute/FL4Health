@@ -32,7 +32,10 @@ from the FL4Health directory. The following arguments must be present in the spe
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the three
 clients. This is done by simply running (remembering to activate your environment)
 ```bash
+# run a ditto client that's built with `DittoClient`
 python -m examples.ditto_example.client --dataset_path /path/to/data
+
+# Or, run a ditto client that's built via an application of `make_it_personal` on a `BasicClient`.
 ```
 **NOTE**: The argument `dataset_path` has two functions, depending on whether the dataset exists locally or not. If
 the dataset already exists at the path specified, it will be loaded from there. Otherwise, the dataset will be
