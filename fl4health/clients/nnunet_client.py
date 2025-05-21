@@ -1,3 +1,4 @@
+import copy
 import gc
 import logging
 import os
@@ -27,7 +28,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.metrics.base_metrics import Metric
 from fl4health.metrics.metric_managers import MetricManager
 from fl4health.reporting.base_reporter import BaseReporter
-from fl4health.utils.config import narrow_dict_type
+from fl4health.utils.config import FOR_GLOBAL_MODEL_KEY, narrow_dict_type
 from fl4health.utils.logging import LoggingMode
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.nnunet_utils import (
@@ -315,6 +316,13 @@ class NnunetClient(BasicClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
+
+        for_global = config.get(FOR_GLOBAL_MODEL_KEY, False)
+        if for_global:
+            return copy.deepcopy(self.nnunet_trainer.network)
+        else:
+            return self.nnunet_trainer.network
+
         return self.nnunet_trainer.network
 
     def get_criterion(self, config: Config) -> _Loss:
