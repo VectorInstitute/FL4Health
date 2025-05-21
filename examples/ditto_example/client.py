@@ -63,14 +63,14 @@ if __name__ == "__main__":
         "--debug",
         help="[OPTIONAL] Include flag to print DEBUG logs",
         action="store_const",
-        dest="logLevel",
+        dest="log_level",
         const=DEBUG,
         default=INFO,
     )
     args = parser.parse_args()
 
     # Set the log level
-    update_console_handler(level=args.logLevel)
+    update_console_handler(level=args.log_level)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
