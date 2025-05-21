@@ -228,7 +228,7 @@ class NnunetClient(BasicClient):
 
         # As in the nnUNetTrainer, we implement mixed precision using torch.autocast and torch.GradScaler
         # Clear gradients from optimizer if they exist
-        self.optimizers["global"].zero_grad()
+        self.optimizers["local"].zero_grad()
 
         # Call user defined methods to get predictions and compute loss
         preds, features = self.predict(input)
@@ -240,11 +240,11 @@ class NnunetClient(BasicClient):
         scaled_backward_loss.backward()
 
         # Rescale gradients then clip based on specified norm
-        self.grad_scaler.unscale_(self.optimizers["global"])
+        self.grad_scaler.unscale_(self.optimizers["local"])
         self.transform_gradients(losses)
 
         # Update parameters and scaler
-        self.grad_scaler.step(self.optimizers["global"])
+        self.grad_scaler.step(self.optimizers["local"])
         self.grad_scaler.update()
 
         return losses, preds
@@ -800,7 +800,7 @@ class NnunetClient(BasicClient):
         logging_mode: LoggingMode,
     ) -> tuple[str, list[tuple[LogLevel, str]]]:
         if logging_mode == LoggingMode.TRAIN:
-            lr = float(self.optimizers["global"].param_groups[0]["lr"])
+            lr = float(self.optimizers["local"].param_groups[0]["lr"])
             if current_epoch is None:
                 # Assume training by steps
                 return f"Initial LR {lr}", []
@@ -810,7 +810,7 @@ class NnunetClient(BasicClient):
             return "", []
 
     def get_client_specific_reports(self) -> dict[str, Any]:
-        return {"learning_rate": float(self.optimizers["global"].param_groups[0]["lr"])}
+        return {"learning_rate": float(self.optimizers["local"].param_groups[0]["lr"])}
 
     @use_default_signal_handlers  # Experiment planner spawns a process I think
     def get_properties(self, config: Config) -> dict[str, Scalar]:
