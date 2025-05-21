@@ -1,7 +1,7 @@
 """Ditto Personalized Mixin"""
 
 import warnings
-from logging import INFO, WARN
+from logging import DEBUG, INFO, WARN
 from typing import Any, Protocol, cast, runtime_checkable
 
 import torch
@@ -483,6 +483,9 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         global_preds = self._extract_pred(kind="global", preds=preds)
         local_preds = self._extract_pred(kind="local", preds=preds)
 
+        log(DEBUG, f"global_preds has keys {global_preds.keys()}")
+        log(DEBUG, f"local_preds has keys {local_preds.keys()}")
+
         # Compute global model vanilla loss
 
         if hasattr(self, "_special_compute_loss_and_additional_losses"):
@@ -493,10 +496,10 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             local_loss, _ = self._special_compute_loss_and_additional_losses(local_preds, features, target)
 
         else:
-            global_loss = self.criterion(global_preds, target)
+            global_loss = self.criterion(global_preds["global"], target)
 
             # Compute local model loss
-            local_loss = self.criterion(local_preds, target)
+            local_loss = self.criterion(local_preds["local"], target)
 
         additional_losses = {"local_loss": local_loss.clone(), "global_loss": global_loss}
 
