@@ -323,8 +323,6 @@ class NnunetClient(BasicClient):
         else:
             return self.nnunet_trainer.network
 
-        return self.nnunet_trainer.network
-
     def get_criterion(self, config: Config) -> _Loss:
         if isinstance(self.nnunet_trainer.loss, DeepSupervisionWrapper):
             self.reports_manager.report({"Criterion": self.nnunet_trainer.loss.loss.__class__.__name__})
