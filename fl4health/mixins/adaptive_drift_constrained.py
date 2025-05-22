@@ -1,7 +1,7 @@
 """AdaptiveDriftConstrainedMixin"""
 
 import warnings
-from logging import INFO, WARN, DEBUG
+from logging import DEBUG, INFO, WARN
 from typing import Any, Protocol, runtime_checkable
 
 import torch
