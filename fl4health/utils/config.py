@@ -8,6 +8,8 @@ REQUIRED_CONFIG = {
     "batch_size": int,
 }
 
+FOR_GLOBAL_MODEL_KEY = "__for_global_model"
+
 T = TypeVar("T")
 
 
