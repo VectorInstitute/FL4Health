@@ -82,10 +82,16 @@ class BasicClientProtocol(BasicClientProtocolPreSetup, Protocol):
     ) -> tuple[TrainingLosses, TorchPredType]:
         pass  # pragma: no cover
 
+    def _predict(self, model: nn.Module, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
+        pass  # pragma: no cover
+
     def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
         pass  # pragma: no cover
 
     def transform_target(self, target: TorchTargetType) -> TorchTargetType:
+        pass  # pragma: no cover
+
+    def transform_gradients(self, losses: TrainingLosses) -> None:
         pass  # pragma: no cover
 
     def compute_training_loss(

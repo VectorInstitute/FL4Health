@@ -211,7 +211,7 @@ class NnunetClient(BasicClient):
     ) -> tuple[TrainingLosses, TorchPredType]:
         # If the device type is not cuda, we don't use mixed precision training and therefore can use parent method.
         if self.device.type != "cuda":
-            return super().train_step(input, target)
+            return super()._train_step(model, optimizer, input, target)
 
         # As in the nnUNetTrainer, we implement mixed precision using torch.autocast and torch.GradScaler
         # Clear gradients from optimizer if they exist

@@ -579,7 +579,7 @@ class BasicClient(NumPyClient):
         # Compute backward pass and update parameters with optimizer
         losses.backward["backward"].backward()
         self.transform_gradients(losses)
-        self.optimizers["global"].step()
+        optimizer.step()
 
         return losses, preds
 
