@@ -559,6 +559,30 @@ class BasicClient(NumPyClient):
         """
         metric_manager.update(preds, target)
 
+    def _train_step(
+        self, model: torch.nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[TrainingLosses, TorchPredType]:
+        """Helper train step.
+
+        This interface allows for injection of model and optimizer params, which
+        are useful for personalized FL methods.
+        """
+
+        # Clear gradients from optimizer if they exist
+        optimizer.zero_grad()
+
+        # Call user defined methods to get predictions and compute loss
+        preds, features = self._predict(model, input)
+        target = self.transform_target(target)
+        losses = self.compute_training_loss(preds, features, target)
+
+        # Compute backward pass and update parameters with optimizer
+        losses.backward["backward"].backward()
+        self.transform_gradients(losses)
+        self.optimizers["global"].step()
+
+        return losses, preds
+
     def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
         """
         Given a single batch of input and target data, generate predictions, compute loss, update parameters and
@@ -573,20 +597,7 @@ class BasicClient(NumPyClient):
             tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
             a dictionary of any predictions produced by the model.
         """
-        # Clear gradients from optimizer if they exist
-        self.optimizers["global"].zero_grad()
-
-        # Call user defined methods to get predictions and compute loss
-        preds, features = self.predict(input)
-        target = self.transform_target(target)
-        losses = self.compute_training_loss(preds, features, target)
-
-        # Compute backward pass and update parameters with optimizer
-        losses.backward["backward"].backward()
-        self.transform_gradients(losses)
-        self.optimizers["global"].step()
-
-        return losses, preds
+        return self._train_step(self.model, self.optimizers["global"], input, target)
 
     def val_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[EvaluationLosses, TorchPredType]:
         """
@@ -975,6 +986,34 @@ class BasicClient(NumPyClient):
         """
         return FullParameterExchanger()
 
+    def _predict(self, model: torch.nn.Module, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
+        """Helper predict method.
+
+        Unlike, predict(), this interface allows for injecting the model param.
+        """
+
+        if isinstance(input, torch.Tensor):
+            output = model(input)
+        elif isinstance(input, dict):
+            # If input is a dictionary, then we unpack it before computing the forward pass.
+            # Note that this assumes the keys of the input match (exactly) the keyword args
+            # of self.model.forward().
+            output = model(**input)
+        else:
+            raise TypeError("'input' must be of type torch.Tensor or dict[str, torch.Tensor].")
+
+        if isinstance(output, dict):
+            return output, {}
+        elif isinstance(output, torch.Tensor):
+            return {"prediction": output}, {}
+        elif isinstance(output, tuple):
+            if len(output) != 2:
+                raise ValueError(f"Output tuple should have length 2 but has length {len(output)}")
+            preds, features = output
+            return preds, features
+        else:
+            raise ValueError("Model forward did not return a tensor, dictionary of tensors, or tuple of tensors")
+
     def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the prediction(s), and potentially features, of the model(s) given the input.
@@ -996,27 +1035,7 @@ class BasicClient(NumPyClient):
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
                 forward.
         """
-        if isinstance(input, torch.Tensor):
-            output = self.model(input)
-        elif isinstance(input, dict):
-            # If input is a dictionary, then we unpack it before computing the forward pass.
-            # Note that this assumes the keys of the input match (exactly) the keyword args
-            # of self.model.forward().
-            output = self.model(**input)
-        else:
-            raise TypeError("'input' must be of type torch.Tensor or dict[str, torch.Tensor].")
-
-        if isinstance(output, dict):
-            return output, {}
-        elif isinstance(output, torch.Tensor):
-            return {"prediction": output}, {}
-        elif isinstance(output, tuple):
-            if len(output) != 2:
-                raise ValueError(f"Output tuple should have length 2 but has length {len(output)}")
-            preds, features = output
-            return preds, features
-        else:
-            raise ValueError("Model forward did not return a tensor, dictionary of tensors, or tuple of tensors")
+        return self._predict(self.model, input)
 
     def compute_loss_and_additional_losses(
         self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
@@ -1280,6 +1299,15 @@ class BasicClient(NumPyClient):
         """
         pass
 
+    def _transform_gradients(self, model: torch.nn.Module, losses: TrainingLosses) -> None:
+        """
+        Helper transform gradients method.
+
+        Unlike transform_gradients(), this helper's interface allows for injecting
+        model as a param.
+        """
+        pass
+
     def transform_gradients(self, losses: TrainingLosses) -> None:
         """
         Hook function for model training only called after backwards pass but before optimizer step. Useful for
@@ -1288,7 +1316,7 @@ class BasicClient(NumPyClient):
         Args:
             losses (TrainingLosses): The losses object from the train step
         """
-        pass
+        return self._transform_gradients(self.model, losses)
 
     def _save_client_state(self) -> None:
         """

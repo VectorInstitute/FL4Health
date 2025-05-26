@@ -373,7 +373,9 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         """
 
         # global
-        global_losses, global_preds = self._train_step(self.global_model, self.optimizers["global"], input, target)
+        global_losses, global_preds = self._train_step(
+            self.safe_global_model(), self.optimizers["global"], input, target
+        )
         # local
         local_losses, local_preds = self._train_step(self.model, self.optimizers["local"], input, target)
 

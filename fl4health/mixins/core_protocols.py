@@ -77,6 +77,11 @@ class BasicClientProtocol(BasicClientProtocolPreSetup, Protocol):
     def update_before_train(self, current_server_round: int) -> None:
         pass  # pragma: no cover
 
+    def _train_step(
+        self, model: nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[TrainingLosses, TorchPredType]:
+        pass  # pragma: no cover
+
     def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
         pass  # pragma: no cover
 

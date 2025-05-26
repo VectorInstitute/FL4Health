@@ -207,7 +207,7 @@ class NnunetClient(BasicClient):
                 log(INFO, "Disabling model optimizations and JIT compilation. This may impact runtime performance.")
 
     def _train_step(
-        self, model: nn.Module, optimizer: ..., input: TorchInputType, target: TorchTargetType
+        self, model: nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
     ) -> tuple[TrainingLosses, TorchPredType]:
         # If the device type is not cuda, we don't use mixed precision training and therefore can use parent method.
         if self.device.type != "cuda":
@@ -956,4 +956,4 @@ class NnunetClient(BasicClient):
         Args:
             losses (TrainingLosses): Not used for this transformation.
         """
-        self._transform_gradients(self.model, self.max_grad_norm)
+        self._transform_gradients(self.model, losses)
