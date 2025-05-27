@@ -559,6 +559,29 @@ class BasicClient(NumPyClient):
         """
         metric_manager.update(preds, target)
 
+    def _train_step_compute_preds_and_losses(
+        self, model: nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[TrainingLosses, TorchPredType]:
+        # Clear gradients from optimizer if they exist
+        optimizer.zero_grad()
+
+        # Call user defined methods to get predictions and compute loss
+        preds, features = self._predict(model, input)
+        target = self.transform_target(target)
+        losses = self.compute_training_loss(preds, features, target)
+
+        return losses, preds
+
+    def _train_step_apply_backwards_and_step(
+        self, model: nn.Module, optimizer: Optimizer, losses: TrainingLosses
+    ) -> tuple[TrainingLosses, TorchPredType]:
+        # Compute backward pass and update parameters with optimizer
+        losses.backward["backward"].backward()
+        self.transform_gradients(losses)
+        optimizer.step()
+
+        return losses
+
     def _train_step(
         self, model: torch.nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
     ) -> tuple[TrainingLosses, TorchPredType]:
@@ -568,18 +591,8 @@ class BasicClient(NumPyClient):
         are useful for personalized FL methods.
         """
 
-        # Clear gradients from optimizer if they exist
-        optimizer.zero_grad()
-
-        # Call user defined methods to get predictions and compute loss
-        preds, features = self._predict(model, input)
-        target = self.transform_target(target)
-        losses = self.compute_training_loss(preds, features, target)
-
-        # Compute backward pass and update parameters with optimizer
-        losses.backward["backward"].backward()
-        self.transform_gradients(losses)
-        optimizer.step()
+        losses, preds = self._train_step_compute_preds_and_losses(model, optimizer, input, target)
+        losses = self._train_step_apply_backwards_and_step(model, optimizer, losses)
 
         return losses, preds
 

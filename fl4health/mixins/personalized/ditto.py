@@ -373,49 +373,48 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         """
 
         # global
-        global_losses, global_preds = self._train_step(
+        global_losses, global_preds = self._train_step_compute_preds_and_losses(
             self.safe_global_model(), self.optimizers["global"], input, target
         )
         # local
-        local_losses, local_preds = self._train_step(self.model, self.optimizers["local"], input, target)
+        local_losses, local_preds = self._train_step_compute_preds_and_losses(
+            self.model, self.optimizers["local"], input, target
+        )
 
         log(DEBUG, f"global_losses: {type(global_losses)}")
         log(DEBUG, f"local_losses: {type(local_losses)}")
 
-        local_losses = cast(TrainingLosses, local_losses)
         global_losses = cast(TrainingLosses, global_losses)
+        local_losses = cast(TrainingLosses, local_losses)
+        local_loss_clone = local_losses.backward["backward"].clone()
 
-        # aggregate global and local losses
-
-        local_loss = local_losses.backward["backward"]
-        global_loss = global_losses.backward["backward"]
-
-        # from compute_loss_and_additional_losses
-        additional_losses = {
-            "local_loss": local_loss.clone(),
-            "global_loss": global_loss,
-        }
-
-        # from compute_loss
-        # Setting the adaptation loss to that of the local model, as its performance should dictate whether more or
-        # less weight is used to constrain it to the global model (as in FedProx)
-        additional_losses["loss_for_adaptation"] = additional_losses["local_loss"].clone()
-
-        # This is the Ditto penalty loss of the local model compared with the original Global model weights, scaled
-        # by drift_penalty_weight (or lambda in the original paper)
+        # take step
+        # global
+        global_losses = self._train_step_apply_backwards_and_step(
+            self.safe_global_model(), self.optimizers["global"], global_losses
+        )
+        # local
         penalty_loss = self.compute_penalty_loss()
-        additional_losses["penalty_loss"] = penalty_loss.clone()
+        local_losses.backward["backward"] = local_losses.backward["backward"] + penalty_loss
+        local_losses = self._train_step_apply_backwards_and_step(self.model, self.optimizers["local"], local_losses)
 
-        training_losses = TrainingLosses(backward=local_loss + penalty_loss, additional_losses=additional_losses)
+        # prepare return values
+        additional_losses = {
+            "penalty_loss": penalty_loss.clone(),
+            "local_loss": local_loss_clone,
+            "global_loss": global_losses.backward["backward"],
+            "loss_for_adaptation": local_loss_clone.clone(),
+        }
+        local_losses.additional_losses = additional_losses
 
-        # aggregate preds
+        # combined preds
         if isinstance(global_preds, torch.Tensor) and isinstance(local_preds, torch.Tensor):
-            agg_preds = {"global": global_preds, "local": local_preds}
+            combined_preds = {"global": global_preds, "local": local_preds}
         elif isinstance(global_preds, dict) and isinstance(local_preds, dict):
-            agg_preds = {f"global-{k}": v for k, v in global_preds.items()}
-            agg_preds.update(**{f"local-{k}": v for k, v in local_preds.items()})
+            combined_preds = {f"global-{k}": v for k, v in global_preds.items()}
+            combined_preds.update(**{f"local-{k}": v for k, v in local_preds.items()})
 
-        return training_losses, agg_preds
+        return local_losses, combined_preds
 
     def _extract_pred(self, kind: str, preds: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         """Helper method to extract predictions from global and local models.

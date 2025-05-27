@@ -206,7 +206,7 @@ class NnunetClient(BasicClient):
             if self.verbose:
                 log(INFO, "Disabling model optimizations and JIT compilation. This may impact runtime performance.")
 
-    def _train_step(
+    def _train_step_compute_preds_and_losses(
         self, model: nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
     ) -> tuple[TrainingLosses, TorchPredType]:
         # If the device type is not cuda, we don't use mixed precision training and therefore can use parent method.
@@ -222,6 +222,11 @@ class NnunetClient(BasicClient):
         target = self.transform_target(target)
         losses = self.compute_training_loss(preds, features, target)
 
+        return losses, preds
+
+    def _train_step_apply_backwards_and_step(
+        self, model: nn.Module, optimizer: Optimizer, losses: TrainingLosses
+    ) -> tuple[TrainingLosses, TorchPredType]:
         # Compute scaled loss and perform backward pass
         scaled_backward_loss = self.grad_scaler.scale(losses.backward["backward"])
         scaled_backward_loss.backward()
@@ -233,6 +238,19 @@ class NnunetClient(BasicClient):
         # Update parameters and scaler
         self.grad_scaler.step(optimizer)
         self.grad_scaler.update()
+
+        return losses
+
+    def _train_step(
+        self, model: nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[TrainingLosses, TorchPredType]:
+        """Helper train step.
+
+        This interface allows for injection of model and optimizer params, which
+        are useful for personalized FL methods.
+        """
+        losses, preds = self._train_step_compute_preds_and_losses(model, optimizer, input, target)
+        losses = self._train_step_apply_backwards_and_step(model, optimizer, losses)
 
         return losses, preds
 
