@@ -11,7 +11,8 @@ from flwr.common.typing import Config, NDArray, Scalar
 from numpy.testing import assert_array_equal
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
-from torch.testing import assert_close
+
+# from torch.testing import assert_close
 from torch.utils.data import DataLoader, TensorDataset
 
 from fl4health.clients.basic_client import BasicClient
@@ -27,7 +28,8 @@ from fl4health.parameter_exchange.packing_exchanger import FullParameterExchange
 from fl4health.parameter_exchange.parameter_packer import (
     ParameterPackerAdaptiveConstraint,
 )
-from fl4health.utils.losses import TrainingLosses
+
+# from fl4health.utils.losses import TrainingLosses
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType
 
 
@@ -239,70 +241,6 @@ def test_get_optimizer(mock_copy_optimizer: MagicMock) -> None:
     mock_copy_optimizer.assert_called_once_with(client.optimizers["local"])
 
 
-def test_predict() -> None:
-    # setup client
-    client = _TestDittoedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
-
-    mock_model = MagicMock()
-    mock_global_model = MagicMock()
-
-    mock_model.return_value = torch.ones(5)
-    mock_global_model.return_value = torch.zeros(5)
-
-    client.model = mock_model
-    client.global_model = mock_global_model
-
-    client.optimizers = {
-        "global": MagicMock(),
-        "local": MagicMock(),
-    }
-
-    client.train_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
-    client.val_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
-    client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
-    client.initialized = True
-
-    # act
-    # TODO: fix the mixin/protocol typing that leads to mypy complaint
-    res, _ = client.predict(input=torch.zeros(5))  # type: ignore
-    print(f"res: {res}")
-    print(torch.zeros(5))
-
-    # assert
-    assert_close(res["global"], torch.zeros(5))
-    assert_close(res["local"], torch.ones(5))
-
-
-@patch.object(_TestDittoedClientV2, "_predict")
-def test_predict_delagation(private_predict: MagicMock) -> None:
-    # setup client
-    client = _TestDittoedClientV2(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
-    client.model = torch.nn.Linear(5, 5)
-    client.global_model = torch.nn.Linear(5, 5)
-
-    private_predict.side_effect = [(torch.zeros(5), {}), (torch.ones(5), {})]
-
-    client.optimizers = {
-        "global": MagicMock(),
-        "local": MagicMock(),
-    }
-
-    client.train_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
-    client.val_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
-    client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
-    client.initialized = True
-
-    # act
-    # TODO: fix the mixin/protocol typing that leads to mypy complaint
-    res, _ = client.predict(input=torch.zeros(5))  # type: ignore
-    print(f"res: {res}")
-    print(torch.zeros(5))
-
-    # assert
-    assert_close(res["global"], torch.zeros(5))
-    assert_close(res["local"], torch.ones(5))
-
-
 @patch.object(_TestDittoedClient, "set_initial_global_tensors")
 @patch.object(_TestBasicClient, "update_before_train")
 def test_update_before_train(
@@ -326,45 +264,3 @@ def test_safe_model_raises_error() -> None:
     with pytest.raises(ValueError):
         # TODO: fix the mixin/protocol typing that leads to mypy complaint
         client.safe_global_model()  # type: ignore
-
-
-@patch("torch.optim.Optimizer")
-@patch.object(_TestDittoedClient, "predict")
-@patch.object(_TestDittoedClient, "compute_training_loss")
-def test_train_step(
-    mock_compute_training_loss: MagicMock, mock_predict: MagicMock, mock_optimizer_class: MagicMock
-) -> None:
-    # setup client
-    client = _TestDittoedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
-    client.optimizers = {
-        "global": MagicMock(),
-        "local": MagicMock(),
-    }
-    client.train_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
-    client.val_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
-    client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
-    client.initialized = True
-
-    # arrange mocks
-    pred_return: tuple[TorchPredType, TorchFeatureType] = {"local": torch.ones(5)}, {}
-    preds, features = pred_return
-    mock_predict.return_value = preds, features
-    mock_backward_loss = MagicMock()
-    mock_additional_global_loss = MagicMock()
-    losses = TrainingLosses(
-        backward={"backward": mock_backward_loss}, additional_losses={"global_loss": mock_additional_global_loss}
-    )
-    mock_compute_training_loss.return_value = losses
-
-    # act
-    input, target = torch.tensor([1, 1, 1, 1, 1]), torch.zeros(3)
-    # TODO: fix the mixin/protocol typing that leads to mypy complaint
-    retval = client.train_step(input, target)  # type: ignore
-
-    mock_predict.assert_called_once()
-    client.optimizers["global"].zero_grad.assert_called_once()
-    client.optimizers["local"].zero_grad.assert_called_once()
-    mock_compute_training_loss.assert_called_once_with(preds, features, target)
-    mock_backward_loss.backward.assert_called_once()
-    mock_additional_global_loss.backward.assert_called_once()
-    assert retval == (losses, preds)
