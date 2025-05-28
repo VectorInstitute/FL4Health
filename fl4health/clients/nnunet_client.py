@@ -780,10 +780,11 @@ class NnunetClient(BasicClient):
 
         log(DEBUG, f"preds: {preds.keys()}")
 
-        # If personalized, the
+        # If personalized preds will have keys prefixed with "global-" and "local-",
+        # but we only want to keep the local ones here. NOTE: this will still work
+        # even in the non-personalized case as those preds don't get prefixed with "global-"
         preds = {k: v for k, v in preds.items() if not k.startswith("global")}
-        # remove prefix
-        preds = {k.replace("local-", ""): v for k, v in preds.items()}
+        preds = {k.replace("local-", ""): v for k, v in preds.items()}  # no-op in non-personalized case
 
         if len(preds) > 1:
             # for nnunet the first pred in the output list is the main one
