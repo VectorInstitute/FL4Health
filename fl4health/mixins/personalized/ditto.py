@@ -416,6 +416,21 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
 
         return local_losses, combined_preds
 
+    def val_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[EvaluationLosses, TorchPredType]:
+
+        # global
+        global_losses, global_preds = self._val_step(self.safe_global_model(), input, target)
+        # local
+        local_losses, local_preds = self._val_step(self.model, input, target)
+
+        # combine
+        losses = EvaluationLosses(
+            local_losses.checkpoint,
+            additional_losses={"global_loss": global_losses.checkpoint, "local_loss": local_losses.checkpoint},
+        )
+        preds = {"global": global_preds["prediction"], "local": local_preds["prediction"]}
+        return losses, preds
+
     def _extract_pred(self, kind: str, preds: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         """Helper method to extract predictions from global and local models.
 

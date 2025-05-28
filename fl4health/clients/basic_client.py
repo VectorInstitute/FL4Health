@@ -612,7 +612,9 @@ class BasicClient(NumPyClient):
         """
         return self._train_step(self.model, self.optimizers["global"], input, target)
 
-    def val_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[EvaluationLosses, TorchPredType]:
+    def _val_step(
+        self, model: nn.Module, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[EvaluationLosses, TorchPredType]:
         """
         Given input and target, compute loss, update loss and metrics. Assumes ``self.model`` is in eval mode already.
 
@@ -627,11 +629,26 @@ class BasicClient(NumPyClient):
 
         # Get preds and compute loss
         with torch.no_grad():
-            preds, features = self.predict(input)
+            preds, features = self._predict(model, input)
             target = self.transform_target(target)
             losses = self.compute_evaluation_loss(preds, features, target)
 
         return losses, preds
+
+    def val_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[EvaluationLosses, TorchPredType]:
+        """
+        Given input and target, compute loss, update loss and metrics. Assumes ``self.model`` is in eval mode already.
+
+        Args:
+            input (TorchInputType): The input to be fed into the model.
+            target (TorchTargetType): The target corresponding to the input.
+
+        Returns:
+            tuple[EvaluationLosses, TorchPredType]: The losses object from the val step along with a dictionary of the
+            predictions produced by the model.
+        """
+
+        return self._val_step(self.model, input)
 
     def train_by_epochs(
         self,
