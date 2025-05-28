@@ -1,5 +1,6 @@
 """Ditto Personalized Mixin"""
 
+import copy
 import warnings
 from logging import INFO, WARN
 from typing import Any, Protocol, cast, runtime_checkable
@@ -15,7 +16,7 @@ from fl4health.mixins.adaptive_drift_constrained import AdaptiveDriftConstrained
 from fl4health.mixins.core_protocols import BasicClientProtocolPreSetup
 from fl4health.mixins.personalized.utils import ensure_protocol_compliance
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.utils.config import FOR_GLOBAL_MODEL_KEY, narrow_dict_type
+from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import EvaluationLosses, TrainingLosses
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
@@ -172,8 +173,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         Returns:
             nn.Module: The PyTorch model serving as the global model for Ditto
         """
-        config[FOR_GLOBAL_MODEL_KEY] = True
-        return self.get_model(config).to(self.device)
+        return copy.deepcopy(self.get_model(config).to(self.device))
 
     @ensure_protocol_compliance
     def get_optimizer(self: DittoPersonalizedProtocol, config: Config) -> dict[str, Optimizer]:
