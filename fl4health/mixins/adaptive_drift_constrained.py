@@ -1,7 +1,7 @@
 """AdaptiveDriftConstrainedMixin"""
 
 import warnings
-from logging import DEBUG, INFO, WARN
+from logging import INFO, WARN
 from typing import Any, Protocol, runtime_checkable
 
 import torch
@@ -16,7 +16,7 @@ from fl4health.parameter_exchange.packing_exchanger import FullParameterExchange
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 from fl4health.utils.losses import TrainingLosses
-from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
+from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
 
 
 @runtime_checkable
@@ -28,13 +28,6 @@ class AdaptiveDriftConstrainedProtocol(BasicClientProtocol, Protocol):
     parameter_exchanger: FullParameterExchangerWithPacking[float]
 
     def compute_penalty_loss(self) -> torch.Tensor: ...  # noqa: E704
-
-    def __compute_training_loss(  # noqa: E704
-        self,
-        preds: TorchPredType,
-        features: TorchFeatureType,
-        target: TorchTargetType,
-    ) -> TrainingLosses: ...
 
 
 class AdaptiveDriftConstrainedMixin:
@@ -159,55 +152,23 @@ class AdaptiveDriftConstrainedMixin:
         self: AdaptiveDriftConstrainedProtocol, input: TorchInputType, target: TorchTargetType
     ) -> tuple[TrainingLosses, TorchPredType]:
 
-        # Clear gradients from optimizer if they exist
-        self.optimizers["global"].zero_grad()
+        losses, preds = self._train_step_compute_preds_and_losses(self.model, self.optimizers["global"], input, target)
+        loss_clone = losses.backward["backward"].clone()
 
-        # Call user defined methods to get predictions and compute loss
-        preds, features = self.predict(input)
-        target = self.transform_target(target)
-        losses = self.__compute_training_loss(preds, features, target)
+        # apply penalty
+        penalty_loss = self.compute_penalty_loss()
+        losses.backward["backward"] = losses.backward["backward"] + penalty_loss
+        losses = self._train_step_apply_backwards_and_step(self.model, self.optimizers["global"], losses)
 
-        # Compute backward pass and update parameters with optimizer
-        losses.backward["backward"].backward()
-        self.transform_gradients(losses)
-        self.optimizers["global"].step()
+        # prepare return values
+        additional_losses = {
+            "penalty_loss": penalty_loss.clone(),
+            "local_loss": loss_clone,
+            "loss_for_adaptation": loss_clone.clone(),
+        }
+        losses.additional_losses = additional_losses
 
         return losses, preds
-
-    def __compute_training_loss(
-        self: AdaptiveDriftConstrainedProtocol,
-        preds: TorchPredType,
-        features: TorchFeatureType,
-        target: TorchTargetType,
-    ) -> TrainingLosses:
-        """
-        Computes training loss given predictions of the model and ground truth data. Adds to objective by including
-        penalty loss.
-
-        Args:
-            preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in
-                dictionary will be used to compute metrics.
-            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
-            target: (TorchTargetType): Ground truth data to evaluate predictions against.
-
-        Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed
-            by name. Additional losses includes penalty loss.
-        """
-        log(DEBUG, "COMPUTE TRAINING LOSS CALL FROM ADAPTIVE MIXIN")
-        loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
-        if additional_losses is None:
-            additional_losses = {}
-
-        additional_losses["loss"] = loss.clone()
-        # adding the vanilla loss to the additional losses to be used by update_after_train for potential adaptation
-        additional_losses["loss_for_adaptation"] = loss.clone()
-
-        # Compute the drift penalty loss and store it in the additional losses dictionary.
-        penalty_loss = self.compute_penalty_loss()
-        additional_losses["penalty_loss"] = penalty_loss.clone()
-
-        return TrainingLosses(backward=loss + penalty_loss, additional_losses=additional_losses)
 
     def get_parameter_exchanger(self: AdaptiveDriftConstrainedProtocol, config: Config) -> ParameterExchanger:
         """
