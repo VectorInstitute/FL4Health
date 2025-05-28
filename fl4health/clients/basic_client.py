@@ -574,7 +574,7 @@ class BasicClient(NumPyClient):
 
     def _train_step_apply_backwards_and_step(
         self, model: nn.Module, optimizer: Optimizer, losses: TrainingLosses
-    ) -> tuple[TrainingLosses, TorchPredType]:
+    ) -> TrainingLosses:
         # Compute backward pass and update parameters with optimizer
         losses.backward["backward"].backward()
         self.transform_gradients(losses)
@@ -648,7 +648,7 @@ class BasicClient(NumPyClient):
             predictions produced by the model.
         """
 
-        return self._val_step(self.model, input)
+        return self._val_step(self.model, input, target)
 
     def train_by_epochs(
         self,

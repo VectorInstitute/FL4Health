@@ -1,7 +1,7 @@
 """Ditto Personalized Mixin"""
 
 import warnings
-from logging import DEBUG, INFO, WARN
+from logging import INFO, WARN
 from typing import Any, Protocol, cast, runtime_checkable
 
 import torch
@@ -32,9 +32,6 @@ class DittoPersonalizedProtocol(AdaptiveDriftConstrainedProtocol, Protocol):
         pass  # pragma: no cover
 
     def set_initial_global_tensors(self) -> None:
-        pass  # pragma: no cover
-
-    def _extract_pred(self, kind: str, preds: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         pass  # pragma: no cover
 
     def safe_global_model(self) -> nn.Module:
@@ -73,8 +70,6 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
 
         if not isinstance(self, BasicClientProtocolPreSetup):
             raise RuntimeError("This object needs to satisfy `BasicClientProtocolPreSetup`.")
-
-        #
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """This method is called when a class inherits from AdaptiveMixin"""
@@ -380,13 +375,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         local_losses, local_preds = self._train_step_compute_preds_and_losses(
             self.model, self.optimizers["local"], input, target
         )
-
-        log(DEBUG, f"global_losses: {type(global_losses)}")
-        log(DEBUG, f"local_losses: {type(local_losses)}")
-
-        global_losses = cast(TrainingLosses, global_losses)
-        local_losses = cast(TrainingLosses, local_losses)
-        local_loss_clone = local_losses.backward["backward"].clone()
+        local_loss_clone = local_losses.backward["backward"].clone()  # need a clone for later
 
         # take step
         # global
@@ -416,7 +405,9 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
 
         return local_losses, combined_preds
 
-    def val_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[EvaluationLosses, TorchPredType]:
+    def val_step(
+        self: DittoPersonalizedProtocol, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[EvaluationLosses, TorchPredType]:
 
         # global
         global_losses, global_preds = self._val_step(self.safe_global_model(), input, target)
@@ -428,30 +419,10 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             local_losses.checkpoint,
             additional_losses={"global_loss": global_losses.checkpoint, "local_loss": local_losses.checkpoint},
         )
-        preds = {"global": global_preds["prediction"], "local": local_preds["prediction"]}
+        preds: TorchPredType = {}
+        preds.update(**{f"global-{k}": v for k, v in global_preds.items()})
+        preds.update(**{f"local-{k}": v for k, v in local_preds.items()})
         return losses, preds
-
-    def _extract_pred(self, kind: str, preds: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
-        """Helper method to extract predictions from global and local models.
-
-        Args:
-            kind (str): the kind of predictions to be extracted i.e., for 'local' or for 'global'
-            preds (dict[str, torch.Tensor]): the full preds result from `self.predict()`
-
-        Raises:
-            ValueError: If supplied `kind` is not of 'global' or 'local'
-
-        Returns:
-            dict[str, torch.Tensor]: the predictions associated with the specified kind
-        """
-        if kind not in ["global", "local"]:
-            raise ValueError("Unsupported kind of prediction. Must be 'global' or 'local'.")
-
-        # filter
-        retval = {k: v for k, v in preds.items() if kind in k}
-        # remove prefix
-        retval = {k.replace(f"{kind}-", ""): v for k, v in retval.items()}
-        return retval
 
     @ensure_protocol_compliance
     def validate(
