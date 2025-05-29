@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import torch
+import torch.nn as nn
 from flwr.common.typing import Config
 
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
@@ -136,7 +137,7 @@ class PerFclClient(BasicClient):
             and self.initial_global_module is not None
         )
 
-    def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
+    def _predict(self, model: nn.Module, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the prediction(s) and features of the model(s) given the input.
 
@@ -166,6 +167,22 @@ class PerFclClient(BasicClient):
             features["initial_global_features"] = self._flatten(self.initial_global_module.forward(input))
 
         return preds, features
+
+    def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
+        """
+        Computes the prediction(s) and features of the model(s) given the input.
+
+        Args:
+            input (TorchInputType): Inputs to be fed into the model. ``TorchInputType`` is simply an alias
+                for the union of ``torch.Tensor`` and ``dict[str, torch.Tensor]``.
+
+        Returns:
+            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple in which the first element
+            contains predictions indexed by name and the second element contains intermediate activations
+            index by name. Specifically the features of the model, features of the global model and features of
+            the old model are returned. All predictions included in dictionary will be used to compute metrics.
+        """
+        return self._predict(self.model, input)
 
     def val_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[EvaluationLosses, TorchPredType]:
         # Get preds and compute loss
