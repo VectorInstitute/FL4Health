@@ -167,6 +167,15 @@ class PerFclClient(BasicClient):
 
         return preds, features
 
+    def val_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[EvaluationLosses, TorchPredType]:
+        # Get preds and compute loss
+        with torch.no_grad():
+            preds, features = self.predict(input)
+            target = self.transform_target(target)
+            losses = self.compute_evaluation_loss(preds, features, target)
+
+        return losses, preds
+
     def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
         """
         This function is called after client-side training concludes. In this case, it is used to save the local
