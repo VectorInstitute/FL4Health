@@ -208,6 +208,19 @@ class NnunetClient(BasicClient):
     def _compute_preds_and_losses(
         self, model: nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
     ) -> tuple[TrainingLosses, TorchPredType]:
+        """
+        Overrides parent to include mixed precision training (autocasting and corresponding gradient scaling) as per
+        the original ``nnUNetTrainer``.
+
+        Args:
+            input (TorchInputType): The input to be fed into the model.
+            target (TorchTargetType): The target corresponding to the input.
+
+        Returns:
+            Tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with a dictionary of any
+            predictions produced by the model.
+        """
+
         # If the device type is not cuda, we don't use mixed precision training and therefore can use parent method.
         if self.device.type != "cuda":
             return super()._compute_preds_and_losses(model, optimizer, input, target)
@@ -226,6 +239,18 @@ class NnunetClient(BasicClient):
     def _apply_backwards_on_losses_and_take_step(
         self, model: nn.Module, optimizer: Optimizer, losses: TrainingLosses
     ) -> TrainingLosses:
+        """
+        Overrides parent to make use grad scaler with ``nnUNetTrainer``.
+
+        Args:
+            model (nn.Module): the model used for making predictions. Passed here in case subclasses need it.
+            optimizer (Optimizer): the optimizer with which we take the step
+            losses (TrainingLosses): the losses to apply backwards on
+
+        Returns:
+            TrainingLosses: The losses object after backwards application
+        """
+
         # Compute scaled loss and perform backward pass
         scaled_backward_loss = self.grad_scaler.scale(losses.backward["backward"])
         scaled_backward_loss.backward()
@@ -239,26 +264,6 @@ class NnunetClient(BasicClient):
         self.grad_scaler.update()
 
         return losses
-
-    def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
-        """
-        Given a single batch of input and target data, generate predictions, compute loss, update parameters and
-        optionally update metrics if they exist. (i.e. backprop on a single batch of data). Assumes ``self.model`` is
-        in train mode already.
-
-        Overrides parent to include mixed precision training (autocasting and corresponding gradient scaling) as per
-        the original ``nnUNetTrainer``.
-
-        Args:
-            input (TorchInputType): The input to be fed into the model.
-            target (TorchTargetType): The target corresponding to the input.
-
-        Returns:
-            Tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with a dictionary of any
-            predictions produced by the model.
-        """
-        # If the device type is not cuda, we don't use mixed precision training and therefore can use parent method.
-        return self._train_step_with_model_and_optimizer(self.model, self.optimizers["global"], input, target)
 
     @use_default_signal_handlers  # Dataloaders use multiprocessing
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
@@ -620,6 +625,20 @@ class NnunetClient(BasicClient):
     def _predict_with_model(
         self, model: torch.nn.Module, input: TorchInputType
     ) -> tuple[TorchPredType, dict[str, torch.Tensor]]:
+        """
+        Generate model outputs. Overridden because nnunets outputs lists when deep supervision is on so we have to
+        reformat the output into dicts.
+
+        Additionally if device type is cuda, loss computed in mixed precision.
+
+        Args:
+            model (nn.Module): The model used to make predictions
+            input (TorchInputType): The model inputs
+
+        Returns:
+            tuple[TorchPredType, dict[str, torch.Tensor]]: A tuple in which the first element model outputs indexed by
+            name. The second element is unused by this subclass and therefore is always an empty dict
+        """
         if isinstance(input, torch.Tensor):
             # If device type is cuda, nnUNet defaults to mixed precision forward pass
             if self.device.type == "cuda":
@@ -641,22 +660,6 @@ class NnunetClient(BasicClient):
             raise TypeError(
                 "Was expecting nnunet model output to be either a torch.Tensor or a list/tuple of torch.Tensors"
             )
-
-    def predict(self, input: TorchInputType) -> tuple[TorchPredType, dict[str, torch.Tensor]]:
-        """
-        Generate model outputs. Overridden because nnunets outputs lists when deep supervision is on so we have to
-        reformat the output into dicts.
-
-        Additionally if device type is cuda, loss computed in mixed precision.
-
-        Args:
-            input (TorchInputType): The model inputs
-
-        Returns:
-            tuple[TorchPredType, dict[str, torch.Tensor]]: A tuple in which the first element model outputs indexed by
-            name. The second element is unused by this subclass and therefore is always an empty dict
-        """
-        return self._predict_with_model(self.model, input)
 
     def compute_loss_and_additional_losses(
         self,
