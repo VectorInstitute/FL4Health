@@ -582,13 +582,21 @@ class BasicClient(NumPyClient):
 
         return losses
 
-    def _train_step(
+    def _train_step_with_model_and_optimizer(
         self, model: torch.nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
     ) -> tuple[TrainingLosses, TorchPredType]:
-        """Helper train step.
+        """Helper train step method that allows for injection of model and optimizer.
 
-        This interface allows for injection of model and optimizer params, which
-        are useful for personalized FL methods.
+        Subclasses should implement this method if there is a need to specialize
+        the train_step logic.
+
+        Args:
+            input (TorchInputType): The input to be fed into the model.
+            target (TorchTargetType): The target corresponding to the input.
+
+        Returns:
+            tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
+            a dictionary of any predictions produced by the model.
         """
 
         losses, preds = self._train_step_compute_preds_and_losses(model, optimizer, input, target)
@@ -610,7 +618,7 @@ class BasicClient(NumPyClient):
             tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
             a dictionary of any predictions produced by the model.
         """
-        return self._train_step(self.model, self.optimizers["global"], input, target)
+        return self._train_step_with_model_and_optimizer(self.model, self.optimizers["global"], input, target)
 
     def _val_step(
         self, model: nn.Module, input: TorchInputType, target: TorchTargetType

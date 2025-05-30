@@ -258,7 +258,7 @@ class NnunetClient(BasicClient):
             predictions produced by the model.
         """
         # If the device type is not cuda, we don't use mixed precision training and therefore can use parent method.
-        return self._train_step(self.model, self.optimizers["global"], input, target)
+        return self._train_step_with_model_and_optimizer(self.model, self.optimizers["global"], input, target)
 
     @use_default_signal_handlers  # Dataloaders use multiprocessing
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:

@@ -87,7 +87,7 @@ class BasicClientProtocol(BasicClientProtocolPreSetup, Protocol):
     ) -> TrainingLosses:
         pass  # pragma: no cover
 
-    def _train_step(
+    def _train_step_with_model_and_optimizer(
         self, model: nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
     ) -> tuple[TrainingLosses, TorchPredType]:
         pass  # pragma: no cover
