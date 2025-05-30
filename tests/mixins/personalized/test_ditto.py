@@ -28,8 +28,7 @@ from fl4health.parameter_exchange.packing_exchanger import FullParameterExchange
 from fl4health.parameter_exchange.parameter_packer import (
     ParameterPackerAdaptiveConstraint,
 )
-
-# from fl4health.utils.losses import TrainingLosses
+from fl4health.utils.losses import TrainingLosses
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType
 
 
@@ -155,6 +154,74 @@ def test_get_parameters() -> None:
         push_params_return_model_weights, client.loss_for_adaptation
     )
     assert_array_equal(packed_params, pack_params_return_val)
+
+
+@patch.object(_TestDittoedClient, "compute_penalty_loss")
+@patch.object(_TestDittoedClient, "_apply_backwards_on_losses_and_take_step")
+@patch.object(_TestDittoedClient, "_compute_preds_and_losses")
+def test_predict(
+    mock_private_compute_preds_and_losses: MagicMock,
+    mock_private_apply_backwards_on_losses_and_take_step: MagicMock,
+    mock_compute_penalty_loss: MagicMock,
+) -> None:
+    # setup client
+    client = _TestDittoedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    client.model = torch.nn.Linear(5, 5)
+    client.global_model = torch.nn.Linear(5, 5)
+    client.optimizers = {
+        "global": torch.optim.SGD(client.model.parameters(), lr=0.0001),
+        "local": torch.optim.SGD(client.model.parameters(), lr=0.0001),
+    }
+    # setup mocks
+    mock_param_exchanger = MagicMock()
+    push_params_return_model_weights: NDArray = np.ndarray(shape=(2, 2), dtype=float)
+    pack_params_return_val: NDArray = np.ndarray(shape=(2, 2), dtype=float)
+    mock_param_exchanger.push_parameters.return_value = push_params_return_model_weights
+    mock_param_exchanger.pack_parameters.return_value = pack_params_return_val
+    client.parameter_exchanger = mock_param_exchanger
+    client.initialized = True
+
+    mock_backward_loss = MagicMock()
+    mock_additional_global_loss = MagicMock()
+    dummy_training_losses = TrainingLosses(
+        backward={"backward": mock_backward_loss}, additional_losses={"global_loss": mock_additional_global_loss}
+    )
+    dummy_training_losses_for_local = TrainingLosses(
+        backward={"backward": mock_backward_loss}, additional_losses={"global_loss": mock_additional_global_loss}
+    )
+    mock_private_compute_preds_and_losses.side_effect = [
+        (
+            dummy_training_losses,
+            {"prediction": torch.Tensor([1, 2, 3, 4, 5])},
+        ),
+        (
+            dummy_training_losses_for_local,
+            {"prediction": torch.Tensor([1, 2, 3, 4, 5])},
+        ),
+    ]
+    mock_private_apply_backwards_on_losses_and_take_step.side_effect = [
+        dummy_training_losses,
+        dummy_training_losses_for_local,
+    ]
+
+    # act
+    input, target = torch.tensor([1, 1, 1, 1, 1]), torch.zeros(3)
+    # TODO: fix the mixin/protocol typing that leads to mypy complaint
+    _ = client.train_step(input, target)  # type: ignore
+
+    mock_private_compute_preds_and_losses.assert_has_calls(
+        [
+            _Call(((client.global_model, client.optimizers["global"], input, target), {})),
+            _Call(((client.model, client.optimizers["local"], input, target), {})),
+        ]
+    )
+    mock_private_apply_backwards_on_losses_and_take_step.assert_has_calls(
+        [
+            _Call(((client.global_model, client.optimizers["global"], dummy_training_losses), {})),
+            _Call(((client.model, client.optimizers["local"], dummy_training_losses_for_local), {})),
+        ]
+    )
+    mock_compute_penalty_loss.assert_called_once()
 
 
 @patch.object(_TestDittoedClient, "setup_client")
