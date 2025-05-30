@@ -77,12 +77,12 @@ class BasicClientProtocol(BasicClientProtocolPreSetup, Protocol):
     def update_before_train(self, current_server_round: int) -> None:
         pass  # pragma: no cover
 
-    def _train_step_compute_preds_and_losses(
+    def _compute_preds_and_losses(
         self, model: nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
     ) -> tuple[TrainingLosses, TorchPredType]:
         pass  # pragma: no cover
 
-    def _train_step_apply_backwards_and_step(
+    def _apply_backwards_on_losses_and_take_step(
         self, model: nn.Module, optimizer: Optimizer, losses: TrainingLosses
     ) -> TrainingLosses:
         pass  # pragma: no cover
@@ -92,7 +92,7 @@ class BasicClientProtocol(BasicClientProtocolPreSetup, Protocol):
     ) -> tuple[TrainingLosses, TorchPredType]:
         pass  # pragma: no cover
 
-    def _val_step(
+    def _val_step_with_model(
         self, model: nn.Module, input: TorchInputType, target: TorchTargetType
     ) -> tuple[EvaluationLosses, TorchPredType]:
         pass  # pragma: no cover

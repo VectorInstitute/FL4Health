@@ -559,9 +559,25 @@ class BasicClient(NumPyClient):
         """
         metric_manager.update(preds, target)
 
-    def _train_step_compute_preds_and_losses(
+    def _compute_preds_and_losses(
         self, model: nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
     ) -> tuple[TrainingLosses, TorchPredType]:
+        """Helper method within the train step for computing preds and losses.
+
+        NOTE: Subclasses should implement this helper method if there is a need
+        to specialize this part of the overall train step.
+
+        Args:
+            model (nn.Module): the model used to make predictions
+            optimizer (Optimizer): the associated optimizer
+            input (TorchInputType): The input to be fed into the model.
+            target (TorchTargetType): The target corresponding to the input.
+
+        Returns:
+            tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
+            a dictionary of any predictions produced by the model prior to the
+            application of the backwards phase
+        """
         # Clear gradients from optimizer if they exist
         optimizer.zero_grad()
 
@@ -572,9 +588,22 @@ class BasicClient(NumPyClient):
 
         return losses, preds
 
-    def _train_step_apply_backwards_and_step(
+    def _apply_backwards_on_losses_and_take_step(
         self, model: nn.Module, optimizer: Optimizer, losses: TrainingLosses
     ) -> TrainingLosses:
+        """Helper method within the train step for applying backwards on losses and taking step with optimizer.
+
+        NOTE: Subclasses should implement this helper method if there is a need
+        to specialize this part of the overall train step.
+
+        Args:
+            model (nn.Module): the model used for making predictions. Passed here in case subclasses need it.
+            optimizer (Optimizer): the optimizer with which we take the step
+            losses (TrainingLosses): the losses to apply backwards on
+
+        Returns:
+            TrainingLosses: The losses object post backwards application
+        """
         # Compute backward pass and update parameters with optimizer
         losses.backward["backward"].backward()
         self.transform_gradients(losses)
@@ -587,7 +616,7 @@ class BasicClient(NumPyClient):
     ) -> tuple[TrainingLosses, TorchPredType]:
         """Helper train step method that allows for injection of model and optimizer.
 
-        Subclasses should implement this method if there is a need to specialize
+        NOTE: Subclasses should implement this method if there is a need to specialize
         the train_step logic.
 
         Args:
@@ -599,8 +628,8 @@ class BasicClient(NumPyClient):
             a dictionary of any predictions produced by the model.
         """
 
-        losses, preds = self._train_step_compute_preds_and_losses(model, optimizer, input, target)
-        losses = self._train_step_apply_backwards_and_step(model, optimizer, losses)
+        losses, preds = self._compute_preds_and_losses(model, optimizer, input, target)
+        losses = self._apply_backwards_on_losses_and_take_step(model, optimizer, losses)
 
         return losses, preds
 
@@ -620,11 +649,13 @@ class BasicClient(NumPyClient):
         """
         return self._train_step_with_model_and_optimizer(self.model, self.optimizers["global"], input, target)
 
-    def _val_step(
+    def _val_step_with_model(
         self, model: nn.Module, input: TorchInputType, target: TorchTargetType
     ) -> tuple[EvaluationLosses, TorchPredType]:
-        """
-        Given input and target, compute loss, update loss and metrics. Assumes ``self.model`` is in eval mode already.
+        """Helper method for val_step that allows for injection of model.
+
+        NOTE: Subclasses should implement this method if there is a need to
+        specialize the val_step logic.
 
         Args:
             input (TorchInputType): The input to be fed into the model.
@@ -656,7 +687,7 @@ class BasicClient(NumPyClient):
             predictions produced by the model.
         """
 
-        return self._val_step(self.model, input, target)
+        return self._val_step_with_model(self.model, input, target)
 
     def train_by_epochs(
         self,

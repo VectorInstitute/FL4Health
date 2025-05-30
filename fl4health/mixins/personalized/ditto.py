@@ -368,24 +368,24 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         """
 
         # global
-        global_losses, global_preds = self._train_step_compute_preds_and_losses(
+        global_losses, global_preds = self._compute_preds_and_losses(
             self.safe_global_model(), self.optimizers["global"], input, target
         )
         # local
-        local_losses, local_preds = self._train_step_compute_preds_and_losses(
-            self.model, self.optimizers["local"], input, target
-        )
+        local_losses, local_preds = self._compute_preds_and_losses(self.model, self.optimizers["local"], input, target)
         local_loss_clone = local_losses.backward["backward"].clone()  # need a clone for later
 
         # take step
         # global
-        global_losses = self._train_step_apply_backwards_and_step(
+        global_losses = self._apply_backwards_on_losses_and_take_step(
             self.safe_global_model(), self.optimizers["global"], global_losses
         )
         # local
         penalty_loss = self.compute_penalty_loss()
         local_losses.backward["backward"] = local_losses.backward["backward"] + penalty_loss
-        local_losses = self._train_step_apply_backwards_and_step(self.model, self.optimizers["local"], local_losses)
+        local_losses = self._apply_backwards_on_losses_and_take_step(
+            self.model, self.optimizers["local"], local_losses
+        )
 
         # prepare return values
         additional_losses = {
@@ -410,9 +410,9 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
     ) -> tuple[EvaluationLosses, TorchPredType]:
 
         # global
-        global_losses, global_preds = self._val_step(self.safe_global_model(), input, target)
+        global_losses, global_preds = self._val_step_with_model(self.safe_global_model(), input, target)
         # local
-        local_losses, local_preds = self._val_step(self.model, input, target)
+        local_losses, local_preds = self._val_step_with_model(self.model, input, target)
 
         # combine
         losses = EvaluationLosses(

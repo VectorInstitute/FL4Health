@@ -152,13 +152,13 @@ class AdaptiveDriftConstrainedMixin:
         self: AdaptiveDriftConstrainedProtocol, input: TorchInputType, target: TorchTargetType
     ) -> tuple[TrainingLosses, TorchPredType]:
 
-        losses, preds = self._train_step_compute_preds_and_losses(self.model, self.optimizers["global"], input, target)
+        losses, preds = self._compute_preds_and_losses(self.model, self.optimizers["global"], input, target)
         loss_clone = losses.backward["backward"].clone()
 
         # apply penalty
         penalty_loss = self.compute_penalty_loss()
         losses.backward["backward"] = losses.backward["backward"] + penalty_loss
-        losses = self._train_step_apply_backwards_and_step(self.model, self.optimizers["global"], losses)
+        losses = self._apply_backwards_on_losses_and_take_step(self.model, self.optimizers["global"], losses)
 
         # prepare return values
         additional_losses = {
