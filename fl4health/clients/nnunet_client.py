@@ -940,9 +940,6 @@ class NnunetClient(BasicClient):
             gc.freeze()
 
     def _transform_gradients(self, model: torch.nn.Module, losses: TrainingLosses) -> None:
-        nn.utils.clip_grad_norm_(model.parameters(), self.max_grad_norm)
-
-    def transform_gradients(self, losses: TrainingLosses) -> None:
         """
         Apply the gradient clipping performed by the default nnunet trainer. This is the default behavior for
         nnunet 2.5.1
@@ -950,4 +947,4 @@ class NnunetClient(BasicClient):
         Args:
             losses (TrainingLosses): Not used for this transformation.
         """
-        self._transform_gradients(self.model, losses)
+        nn.utils.clip_grad_norm_(model.parameters(), self.max_grad_norm)
