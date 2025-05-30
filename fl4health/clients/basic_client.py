@@ -1389,7 +1389,7 @@ class BasicClient(NumPyClient):
         """
         pass
 
-    def _transform_gradients(self, model: torch.nn.Module, losses: TrainingLosses) -> None:
+    def _transform_gradients_with_model(self, model: torch.nn.Module, losses: TrainingLosses) -> None:
         """Helper transform gradients method that allows for injection of model.
 
         NOTE: Subclasses should implement this helper should there be a need to specialize the logic
@@ -1410,7 +1410,7 @@ class BasicClient(NumPyClient):
         Args:
             losses (TrainingLosses): The losses object from the train step
         """
-        return self._transform_gradients(self.model, losses)
+        return self._transform_gradients_with_model(self.model, losses)
 
     def _save_client_state(self) -> None:
         """

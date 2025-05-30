@@ -106,7 +106,7 @@ class BasicClientProtocol(BasicClientProtocolPreSetup, Protocol):
     def transform_target(self, target: TorchTargetType) -> TorchTargetType:
         pass  # pragma: no cover
 
-    def _transform_gradients(self, model: torch.nn.Module, losses: TrainingLosses) -> None:
+    def _transform_gradients_with_model(self, model: torch.nn.Module, losses: TrainingLosses) -> None:
         pass  # pragma: no cover
 
     def transform_gradients(self, losses: TrainingLosses) -> None:

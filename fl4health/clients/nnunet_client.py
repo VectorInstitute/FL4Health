@@ -232,7 +232,7 @@ class NnunetClient(BasicClient):
 
         # Rescale gradients then clip based on specified norm
         self.grad_scaler.unscale_(optimizer)
-        self._transform_gradients(model, losses)
+        self._transform_gradients_with_model(model, losses)
 
         # Update parameters and scaler
         self.grad_scaler.step(optimizer)
@@ -939,7 +939,7 @@ class NnunetClient(BasicClient):
             # freeze before the first pass, gc.collect has to check all those variables
             gc.freeze()
 
-    def _transform_gradients(self, model: torch.nn.Module, losses: TrainingLosses) -> None:
+    def _transform_gradients_with_model(self, model: torch.nn.Module, losses: TrainingLosses) -> None:
         """
         Apply the gradient clipping performed by the default nnunet trainer. This is the default behavior for
         nnunet 2.5.1
