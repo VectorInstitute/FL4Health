@@ -97,7 +97,7 @@ class BasicClientProtocol(BasicClientProtocolPreSetup, Protocol):
     ) -> tuple[EvaluationLosses, TorchPredType]:
         pass  # pragma: no cover
 
-    def _predict(self, model: nn.Module, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
+    def _predict_with_model(self, model: nn.Module, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
         pass  # pragma: no cover
 
     def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:

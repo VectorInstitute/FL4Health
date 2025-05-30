@@ -137,7 +137,7 @@ class PerFclClient(BasicClient):
             and self.initial_global_module is not None
         )
 
-    def _predict(self, model: nn.Module, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
+    def _predict_with_model(self, model: nn.Module, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the prediction(s) and features of the model(s) given the input.
 
@@ -182,7 +182,7 @@ class PerFclClient(BasicClient):
             index by name. Specifically the features of the model, features of the global model and features of
             the old model are returned. All predictions included in dictionary will be used to compute metrics.
         """
-        return self._predict(self.model, input)
+        return self._predict_with_model(self.model, input)
 
     def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
         """

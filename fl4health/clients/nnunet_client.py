@@ -217,7 +217,7 @@ class NnunetClient(BasicClient):
         optimizer.zero_grad()
 
         # Call user defined methods to get predictions and compute loss
-        preds, features = self._predict(model, input)
+        preds, features = self._predict_with_model(model, input)
         target = self.transform_target(target)
         losses = self.compute_training_loss(preds, features, target)
 
@@ -617,7 +617,9 @@ class NnunetClient(BasicClient):
         # We have to call parent method after setting up nnunet trainer
         super().setup_client(config)
 
-    def _predict(self, model: torch.nn.Module, input: TorchInputType) -> tuple[TorchPredType, dict[str, torch.Tensor]]:
+    def _predict_with_model(
+        self, model: torch.nn.Module, input: TorchInputType
+    ) -> tuple[TorchPredType, dict[str, torch.Tensor]]:
         if isinstance(input, torch.Tensor):
             # If device type is cuda, nnUNet defaults to mixed precision forward pass
             if self.device.type == "cuda":
@@ -654,14 +656,28 @@ class NnunetClient(BasicClient):
             tuple[TorchPredType, dict[str, torch.Tensor]]: A tuple in which the first element model outputs indexed by
             name. The second element is unused by this subclass and therefore is always an empty dict
         """
-        return self._predict(self.model, input)
+        return self._predict_with_model(self.model, input)
 
-    def _special_compute_loss_and_additional_losses(
+    def compute_loss_and_additional_losses(
         self,
         preds: TorchPredType,
         features: dict[str, torch.Tensor],
         target: TorchTargetType,
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor] | None]:
+        """
+        Checks the pred and target types and computes the loss. If device type is cuda, loss computed in mixed
+        precision.
+
+        Args:
+            preds (TorchPredType): Dictionary of model output tensors indexed by name
+            features (dict[str, torch.Tensor]): Not used by this subclass
+            target (TorchTargetType): The targets to evaluate the predictions with. If multiple prediction tensors
+                are given, target must be a dictionary with the same number of tensors
+
+        Returns:
+            tuple[torch.Tensor, dict[str, torch.Tensor] | None]: A tuple where the first element is the loss and the
+            second element is an optional additional loss
+        """
         # If deep supervision is turned on we must convert loss and target dicts into lists
         loss_preds = prepare_loss_arg(preds)
         loss_targets = prepare_loss_arg(target)
@@ -685,28 +701,6 @@ class NnunetClient(BasicClient):
             loss = self.criterion(loss_preds, loss_targets), None
 
         return loss
-
-    def compute_loss_and_additional_losses(
-        self,
-        preds: TorchPredType,
-        features: dict[str, torch.Tensor],
-        target: TorchTargetType,
-    ) -> tuple[torch.Tensor, dict[str, torch.Tensor] | None]:
-        """
-        Checks the pred and target types and computes the loss. If device type is cuda, loss computed in mixed
-        precision.
-
-        Args:
-            preds (TorchPredType): Dictionary of model output tensors indexed by name
-            features (dict[str, torch.Tensor]): Not used by this subclass
-            target (TorchTargetType): The targets to evaluate the predictions with. If multiple prediction tensors
-                are given, target must be a dictionary with the same number of tensors
-
-        Returns:
-            tuple[torch.Tensor, dict[str, torch.Tensor] | None]: A tuple where the first element is the loss and the
-            second element is an optional additional loss
-        """
-        return self._special_compute_loss_and_additional_losses(preds, features, target)
 
     def mask_data(self, pred: torch.Tensor, target: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """

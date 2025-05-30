@@ -566,7 +566,7 @@ class BasicClient(NumPyClient):
         optimizer.zero_grad()
 
         # Call user defined methods to get predictions and compute loss
-        preds, features = self._predict(model, input)
+        preds, features = self._predict_with_model(model, input)
         target = self.transform_target(target)
         losses = self.compute_training_loss(preds, features, target)
 
@@ -629,7 +629,7 @@ class BasicClient(NumPyClient):
 
         # Get preds and compute loss
         with torch.no_grad():
-            preds, features = self._predict(model, input)
+            preds, features = self._predict_with_model(model, input)
             target = self.transform_target(target)
             losses = self.compute_evaluation_loss(preds, features, target)
 
@@ -1016,10 +1016,28 @@ class BasicClient(NumPyClient):
         """
         return FullParameterExchanger()
 
-    def _predict(self, model: torch.nn.Module, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
-        """Helper predict method.
+    def _predict_with_model(
+        self, model: torch.nn.Module, input: TorchInputType
+    ) -> tuple[TorchPredType, TorchFeatureType]:
+        """Helper predict interface allowing for injection of model.
 
-        Unlike, predict(), this interface allows for injecting the model param.
+        Unlike, predict(), this interface allows for a model to be supplied.
+        Subclasses should implement this method if there is need to specialize
+        the predict method of the client.
+
+        Args:
+            model (torch.nn.Module): the model with which to make predictions
+            input (TorchInputType): Inputs to be fed into the model. If input is of type ``dict[str, torch.Tensor]``,
+                it is assumed that the keys of input match the names of the keyword arguments of
+                ``self.model.forward().`
+
+        Res:
+            TypeError: _description_
+            ValueError: _description_
+            ValueError: _description_
+
+        Returns:
+            tuple[TorchPredType, TorchFeatureType]: _description_
         """
 
         if isinstance(input, torch.Tensor):
@@ -1065,7 +1083,7 @@ class BasicClient(NumPyClient):
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
                 forward.
         """
-        return self._predict(self.model, input)
+        return self._predict_with_model(self.model, input)
 
     def compute_loss_and_additional_losses(
         self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
