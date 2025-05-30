@@ -28,7 +28,7 @@ from fl4health.parameter_exchange.packing_exchanger import FullParameterExchange
 from fl4health.parameter_exchange.parameter_packer import (
     ParameterPackerAdaptiveConstraint,
 )
-from fl4health.utils.losses import TrainingLosses
+from fl4health.utils.losses import EvaluationLosses, TrainingLosses
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType
 
 
@@ -333,3 +333,54 @@ def test_safe_model_raises_error() -> None:
     with pytest.raises(ValueError):
         # TODO: fix the mixin/protocol typing that leads to mypy complaint
         client.safe_global_model()  # type: ignore
+
+
+@patch.object(_TestDittoedClient, "_val_step_with_model")
+def test_val_step(
+    mock_private_val_step_with_model: MagicMock,
+) -> None:
+    # setup client
+    client = _TestDittoedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    client.model = torch.nn.Linear(5, 5)
+    client.global_model = torch.nn.Linear(5, 5)
+    client.optimizers = {
+        "global": torch.optim.SGD(client.model.parameters(), lr=0.0001),
+        "local": torch.optim.SGD(client.model.parameters(), lr=0.0001),
+    }
+    # setup mocks
+    mock_param_exchanger = MagicMock()
+    push_params_return_model_weights: NDArray = np.ndarray(shape=(2, 2), dtype=float)
+    pack_params_return_val: NDArray = np.ndarray(shape=(2, 2), dtype=float)
+    mock_param_exchanger.push_parameters.return_value = push_params_return_model_weights
+    mock_param_exchanger.pack_parameters.return_value = pack_params_return_val
+    client.parameter_exchanger = mock_param_exchanger
+    client.initialized = True
+
+    dummy_training_losses = EvaluationLosses(
+        checkpoint=torch.ones(5),
+    )
+    dummy_training_losses_for_local = EvaluationLosses(
+        checkpoint=torch.ones(5),
+    )
+    mock_private_val_step_with_model.side_effect = [
+        (
+            dummy_training_losses,
+            {"prediction": torch.Tensor([1, 2, 3, 4, 5])},
+        ),
+        (
+            dummy_training_losses_for_local,
+            {"prediction": torch.Tensor([1, 2, 3, 4, 5])},
+        ),
+    ]
+
+    # act
+    input, target = torch.tensor([1, 1, 1, 1, 1]), torch.zeros(3)
+    # TODO: fix the mixin/protocol typing that leads to mypy complaint
+    _ = client.val_step(input, target)  # type: ignore
+
+    mock_private_val_step_with_model.assert_has_calls(
+        [
+            _Call(((client.global_model, input, target), {})),
+            _Call(((client.model, input, target), {})),
+        ]
+    )
