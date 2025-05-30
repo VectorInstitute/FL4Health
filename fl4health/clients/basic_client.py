@@ -1058,11 +1058,10 @@ class BasicClient(NumPyClient):
     def _predict_with_model(
         self, model: torch.nn.Module, input: TorchInputType
     ) -> tuple[TorchPredType, TorchFeatureType]:
-        """Helper predict interface allowing for injection of model.
+        """Helper predict method that allows for injection of model.
 
-        Unlike, predict(), this interface allows for a model to be supplied.
-        Subclasses should implement this method if there is need to specialize
-        the predict method of the client.
+        NOTE: Subclasses should implement this method if there is need to specialize
+        the predict logic of the client.
 
         Args:
             model (torch.nn.Module): the model with which to make predictions
@@ -1070,13 +1069,17 @@ class BasicClient(NumPyClient):
                 it is assumed that the keys of input match the names of the keyword arguments of
                 ``self.model.forward().`
 
-        Res:
-            TypeError: _description_
-            ValueError: _description_
-            ValueError: _description_
-
         Returns:
-            tuple[TorchPredType, TorchFeatureType]: _description_
+            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains a dictionary of
+            predictions indexed by name and the second element contains intermediate activations indexed by name. By
+            passing features, we can compute losses such as the contrastive loss in MOON. All predictions included in
+            dictionary will by default be used to compute metrics separately.
+
+        Raises:
+            TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model's
+                forward method.
+            ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
+                forward.
         """
 
         if isinstance(input, torch.Tensor):
