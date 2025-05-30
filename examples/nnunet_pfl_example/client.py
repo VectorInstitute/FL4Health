@@ -209,7 +209,7 @@ if __name__ == "__main__":
         type=str,
         required=False,
         default=None,
-        help="[OPTIONAL] Personalized strategy to use. Can be 'ditto' or 'mr-mtl' \
+        help="[OPTIONAL] Personalized strategy to use. For now, can only be 'ditto'. \
         Defaults to None, in which no personalized strategy is applied.",
     )
 
