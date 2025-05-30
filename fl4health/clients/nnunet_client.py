@@ -240,19 +240,6 @@ class NnunetClient(BasicClient):
 
         return losses
 
-    def _train_step(
-        self, model: nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
-    ) -> tuple[TrainingLosses, TorchPredType]:
-        """Helper train step.
-
-        This interface allows for injection of model and optimizer params, which
-        are useful for personalized FL methods.
-        """
-        losses, preds = self._train_step_compute_preds_and_losses(model, optimizer, input, target)
-        losses = self._train_step_apply_backwards_and_step(model, optimizer, losses)
-
-        return losses, preds
-
     def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
         """
         Given a single batch of input and target data, generate predictions, compute loss, update parameters and

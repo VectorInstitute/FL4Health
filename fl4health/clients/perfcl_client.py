@@ -153,7 +153,7 @@ class PerFclClient(BasicClient):
         """
         # For PerFCL models, we required the input to simply be a torch.Tensor
         assert isinstance(input, torch.Tensor)
-        preds, features = self.model(input)
+        preds, features = model(input)
         # In the first server round, these module will not have been set.
         if (
             self.old_local_module is not None
@@ -183,15 +183,6 @@ class PerFclClient(BasicClient):
             the old model are returned. All predictions included in dictionary will be used to compute metrics.
         """
         return self._predict(self.model, input)
-
-    def val_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[EvaluationLosses, TorchPredType]:
-        # Get preds and compute loss
-        with torch.no_grad():
-            preds, features = self.predict(input)
-            target = self.transform_target(target)
-            losses = self.compute_evaluation_loss(preds, features, target)
-
-        return losses, preds
 
     def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
         """
