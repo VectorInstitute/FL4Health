@@ -1,15 +1,19 @@
 from collections.abc import Sequence
 from logging import INFO
-from typing import Any
 
 import torch.nn as nn
 from flwr.common import Parameters
 from flwr.common.logger import log
-from flwr.common.parameter import parameters_to_ndarrays
+from flwr.common.parameter import ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.typing import Scalar
 
-from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer, TorchModuleCheckpointer
+from fl4health.checkpointing.checkpointer import TorchModuleCheckpointer
 from fl4health.checkpointing.opacus_checkpointer import OpacusCheckpointer
+from fl4health.checkpointing.state_checkpointer import (
+    NnUnetServerPerRoundStateCheckpointer,
+    ServerPerRoundStateCheckpointer,
+    ServerStateCheckpointer,
+)
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ExchangerType
 from fl4health.parameter_exchange.parameter_packer import (
@@ -24,12 +28,13 @@ ModelCheckpointers = TorchModuleCheckpointer | Sequence[TorchModuleCheckpointer]
 
 
 class BaseServerCheckpointAndStateModule:
+
     def __init__(
         self,
         model: nn.Module | None = None,
         parameter_exchanger: ExchangerType | None = None,
         model_checkpointers: ModelCheckpointers = None,
-        state_checkpointer: PerRoundStateCheckpointer | None = None,
+        state_checkpointer: ServerStateCheckpointer | None = None,
     ) -> None:
         """
         This module is meant to handle basic model and state checkpointing on the server-side of an FL process. Unlike
@@ -51,7 +56,7 @@ class BaseServerCheckpointAndStateModule:
                 parameters go to the right places. Defaults to None.
             model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of
                 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.
-            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be
+            state_checkpointer (ServerStateCheckpointer | None, optional): If defined, this checkpointer will be
                 used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
                 checkpointer will save much more than just the model being trained. Defaults to None.
         """
@@ -142,17 +147,12 @@ class BaseServerCheckpointAndStateModule:
         model_ndarrays = parameters_to_ndarrays(server_parameters)
         self.parameter_exchanger.pull_parameters(model_ndarrays, self.model)
 
-    def save_state(
-        self, state_checkpoint_name: str, server_parameters: Parameters, other_state: dict[str, Any]
-    ) -> None:
+    def save_state(self, server_parameters: Parameters) -> None:
         """
-        This function is meant to facilitate saving state required to restart on FL process on the server side. By
-        default, this function will always at least preserve the model being trained. However, it may be desirable to
-        save additional information, like the current server round etc. So the ``other_state`` dictionary may be
-        provided to preserve this additional state.
-
-        **NOTE:** This function will throw an error if you attempt to save the model under the 'model' key in
-        ``other_state``
+        Facilitates saving state required to restart on FL process on the server side. By default, this function
+        will preserve the state of the server as defined in the ``ServerPerRoundStateCheckpointer`` snapshot_attrs.
+        Note that ``server_parameters`` will by hydrated and assigned to server.model to assist saving the
+        state of the server's parameters.
 
         Args:
             state_checkpoint_name (str): Name of the state checkpoint file. The checkpointer itself will have a
@@ -160,43 +160,36 @@ class BaseServerCheckpointAndStateModule:
             server_parameters (Parameters): Like model checkpointers, these are the aggregated Parameters stored by
                 the server representing model state. They are mapped to a torch model architecture via the
                 ``_hydrate_model_for_checkpointing`` function.
-            other_state (dict[str, Any]): Any additional state (such as current server round) to be checkpointed in
-                order to allow FL to restart from where it left off.
 
         Raises:
-            ValueError: Throws an error if ``other_state`` already has a key called "model"
             ValueError: Throws an error if this function is called, but no state checkpointer has been provided
         """
         if self.state_checkpointer is not None:
             self._hydrate_model_for_checkpointing(server_parameters)
-            if "model" in other_state:
-                raise ValueError("Key 'model' already exists in the other_state dictionary.")
-
-            checkpoint_dict = other_state | {"model": self.model}
-            self.state_checkpointer.save_checkpoint(state_checkpoint_name, checkpoint_dict=checkpoint_dict)
+            assert self.model is not None
+            self.state_checkpointer.save_server_state(self.model)
         else:
             raise ValueError("Attempting to save state but no state checkpointer is specified")
 
-    def maybe_load_state(self, state_checkpoint_name: str) -> dict[str, Any] | None:
+    def maybe_load_state(self) -> Parameters | None:
         """
-        This function facilitates loading of any pre-existing state (with the name ``state_checkpoint_name``) in the
-        directory of the state_checkpointer. If the state already exists at the proper path, the state is loaded
-        and returned. If it doesn't exist, we return None.
-
-        Args:
-            state_checkpoint_name (str): Name of the state checkpoint file. The checkpointer itself will have a
-                directory from which state will be loaded (if it exists).
+        Facilitates loading of any pre-existing state (with the name ``state_checkpoint_name``) in the
+        directory of the state_checkpointer. If the ``state_checkpointer`` exists, the state is loaded
+        from the ``checkpoint_dir``as defined in the state_checkpointer. If no state checkpoint exists, we return None.
 
         Raises:
             ValueError: Throws an error if this function is called, but no state checkpointer has been provided
 
         Returns:
-            dict[str, Any] | None: If the state checkpoint properly exists and is loaded correctly, this dictionary
-            carries that state. Otherwise, we return a None (or throw an exception).
+            Parameters | None: If the state checkpoint properly exists and is loaded correctly, server_parameters
+            is returned. Otherwise, we return a None (or throw an exception).
         """
         if self.state_checkpointer is not None:
-            if self.state_checkpointer.checkpoint_exists(state_checkpoint_name):
-                return self.state_checkpointer.load_checkpoint(state_checkpoint_name)
+            if self.state_checkpointer.checkpoint_exists():
+                assert self.model is not None, "Attempting to load state but self.model is None"
+                server_model = self.state_checkpointer.load_server_state(self.model)
+                assert self.parameter_exchanger is not None
+                return ndarrays_to_parameters(self.parameter_exchanger.push_parameters(server_model))
             else:
                 log(INFO, "State checkpointer is defined but no state checkpoint exists.")
                 return None
@@ -205,12 +198,13 @@ class BaseServerCheckpointAndStateModule:
 
 
 class PackingServerCheckpointAndAndStateModule(BaseServerCheckpointAndStateModule):
+
     def __init__(
         self,
         model: nn.Module | None = None,
         parameter_exchanger: FullParameterExchangerWithPacking | None = None,
         model_checkpointers: ModelCheckpointers = None,
-        state_checkpointer: PerRoundStateCheckpointer | None = None,
+        state_checkpointer: ServerPerRoundStateCheckpointer | None = None,
     ) -> None:
         """
 
@@ -232,9 +226,9 @@ class PackingServerCheckpointAndAndStateModule(BaseServerCheckpointAndStateModul
                 places. Defaults to None.
             model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of
                 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.
-            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be
-                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-                checkpointer will save much more than just the model being trained. Defaults to None.
+            state_checkpointer (ServerPerRoundStateCheckpointer | None, optional): If defined, this checkpointer
+                will be used to preserve FL training state to facilitate restarting training if interrupted.
+                Generally, this checkpointer will save much more than just the model being trained. Defaults to None.
         """
         if parameter_exchanger is not None:
             assert isinstance(
@@ -275,7 +269,7 @@ class ScaffoldServerCheckpointAndStateModule(PackingServerCheckpointAndAndStateM
         self,
         model: nn.Module | None = None,
         model_checkpointers: ModelCheckpointers = None,
-        state_checkpointer: PerRoundStateCheckpointer | None = None,
+        state_checkpointer: ServerPerRoundStateCheckpointer | None = None,
     ) -> None:
         """
         This module is meant to handle SCAFFOLD model and state checkpointing on the server-side of an FL process.
@@ -293,9 +287,9 @@ class ScaffoldServerCheckpointAndStateModule(PackingServerCheckpointAndAndStateM
                 these parameters to allow for real models to be saved. Defaults to None.
             model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of
                 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.
-            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be
-                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-                checkpointer will save much more than just the model being trained. Defaults to None.
+            state_checkpointer (ServerPerRoundStateCheckpointer | None, optional): If defined, this checkpointer
+                will be used to preserve FL training state to facilitate restarting training if interrupted.
+                Generally, this  checkpointer will save much more than just the model being trained. Defaults to None.
         """
         if model is not None:
             model_size = len(model.state_dict())
@@ -310,7 +304,7 @@ class AdaptiveConstraintServerCheckpointAndStateModule(PackingServerCheckpointAn
         self,
         model: nn.Module | None = None,
         model_checkpointers: ModelCheckpointers = None,
-        state_checkpointer: PerRoundStateCheckpointer | None = None,
+        state_checkpointer: ServerPerRoundStateCheckpointer | None = None,
     ) -> None:
         """
         This module is meant to handle FL flows with adaptive constraints, where the server and client communicate
@@ -328,9 +322,9 @@ class AdaptiveConstraintServerCheckpointAndStateModule(PackingServerCheckpointAn
                 these parameters to allow for real models to be saved. Defaults to None.
             model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of
                 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.
-            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be
-                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-                checkpointer will save much more than just the model being trained. Defaults to None.
+            state_checkpointer (ServerPerRoundStateCheckpointer | None, optional): If defined, this checkpointer
+                will be used to preserve FL training state to facilitate restarting training if interrupted.
+                Generally, this checkpointer will save much more than just the model being trained. Defaults to None.
         """
         if model is not None:
             parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
@@ -344,7 +338,7 @@ class ClippingBitServerCheckpointAndStateModule(PackingServerCheckpointAndAndSta
         self,
         model: nn.Module | None = None,
         model_checkpointers: ModelCheckpointers = None,
-        state_checkpointer: PerRoundStateCheckpointer | None = None,
+        state_checkpointer: ServerPerRoundStateCheckpointer | None = None,
     ) -> None:
         """
         This module is meant to handle FL flows with clipping bits being passed to the server along with the model
@@ -362,9 +356,9 @@ class ClippingBitServerCheckpointAndStateModule(PackingServerCheckpointAndAndSta
                 these parameters to allow for real models to be saved. Defaults to None.
             model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of
                 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.
-            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be
-                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-                checkpointer will save much more than just the model being trained. Defaults to None.
+            state_checkpointer (ServerPerRoundStateCheckpointer | None, optional): If defined, this checkpointer
+                will be used to preserve FL training state to facilitate restarting training if interrupted.
+                Generally, this checkpointer will save much more than just the model being trained. Defaults to None.
         """
         if model is not None:
             parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerWithClippingBit())
@@ -378,7 +372,7 @@ class LayerNamesServerCheckpointAndStateModule(PackingServerCheckpointAndAndStat
         self,
         model: nn.Module | None = None,
         model_checkpointers: ModelCheckpointers = None,
-        state_checkpointer: PerRoundStateCheckpointer | None = None,
+        state_checkpointer: ServerPerRoundStateCheckpointer | None = None,
     ) -> None:
         """
         This module is meant to handle FL flows with layer names being passed to the server along with the model
@@ -396,9 +390,9 @@ class LayerNamesServerCheckpointAndStateModule(PackingServerCheckpointAndAndStat
                 these parameters to allow for real models to be saved. Defaults to None.
             model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of
                 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.
-            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be
-                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-                checkpointer will save much more than just the model being trained. Defaults to None.
+            state_checkpointer (ServerPerRoundStateCheckpointer | None, optional): If defined, this checkpointer
+                will be used to preserve FL training state to facilitate restarting training if interrupted.
+                Generally, this checkpointer will save much more than just the model being trained. Defaults to None.
         """
         if model is not None:
             parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerWithLayerNames())
@@ -412,7 +406,7 @@ class SparseCooServerCheckpointAndStateModule(PackingServerCheckpointAndAndState
         self,
         model: nn.Module | None = None,
         model_checkpointers: ModelCheckpointers = None,
-        state_checkpointer: PerRoundStateCheckpointer | None = None,
+        state_checkpointer: ServerPerRoundStateCheckpointer | None = None,
     ) -> None:
         """
         This module is meant to handle FL flows with parameters encoded in a sparse COO format being passed to the
@@ -431,9 +425,10 @@ class SparseCooServerCheckpointAndStateModule(PackingServerCheckpointAndAndState
                 these parameters to allow for real models to be saved. Defaults to None.
             model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of
                 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.
-            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be
-                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-                checkpointer will save much more than just the model being trained. Defaults to None.
+            state_checkpointer (ServerPerRoundStateCheckpointer | None, optional): If defined, this checkpointer
+                will be used to preserve FL training state to facilitate restarting training if interrupted.
+                Generally, this checkpointer will save much more than just the model being trained.
+                Defaults to None.
         """
         if model is not None:
             parameter_exchanger = FullParameterExchangerWithPacking(SparseCooParameterPacker())
@@ -448,7 +443,7 @@ class OpacusServerCheckpointAndStateModule(BaseServerCheckpointAndStateModule):
         model: nn.Module | None = None,
         parameter_exchanger: ExchangerType | None = None,
         model_checkpointers: ModelCheckpointers = None,
-        state_checkpointer: PerRoundStateCheckpointer | None = None,
+        state_checkpointer: ServerPerRoundStateCheckpointer | None = None,
     ) -> None:
         """
         This module is meant to handle FL flows with Opacus models where special treatment by the checkpointers is
@@ -471,9 +466,9 @@ class OpacusServerCheckpointAndStateModule(BaseServerCheckpointAndStateModule):
                 parameters go to the right places. Defaults to None.
             model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of
                 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.
-            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be
-                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-                checkpointer will save much more than just the model being trained. Defaults to None.
+            state_checkpointer (ServerPerRoundStateCheckpointer | None, optional): If defined, this checkpointer
+                will be used to preserve FL training state to facilitate restarting training if interrupted.
+                Generally, this checkpointer will save much more than just the model being trained. Defaults to None.
         """
 
         super().__init__(model, parameter_exchanger, model_checkpointers, state_checkpointer)
@@ -491,12 +486,13 @@ class OpacusServerCheckpointAndStateModule(BaseServerCheckpointAndStateModule):
 
 
 class NnUnetServerCheckpointAndStateModule(BaseServerCheckpointAndStateModule):
+
     def __init__(
         self,
         model: nn.Module | None = None,
         parameter_exchanger: ExchangerType | None = None,
         model_checkpointers: ModelCheckpointers = None,
-        state_checkpointer: PerRoundStateCheckpointer | None = None,
+        state_checkpointer: NnUnetServerPerRoundStateCheckpointer | None = None,
     ) -> None:
         """
         This module is meant to be used with the ``NnUnetServer`` class to handle model and state checkpointing on the
@@ -528,9 +524,9 @@ class NnUnetServerCheckpointAndStateModule(BaseServerCheckpointAndStateModule):
                 parameters go to the right places. Defaults to None.
             model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of
                 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.
-            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be
-                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-                checkpointer will save much more than just the model being trained. Defaults to None.
+            state_checkpointer (ServerPerRoundStateCheckpointer | None, optional): If defined, this checkpointer
+                will be used to preserve FL training state to facilitate restarting training if interrupted.
+                Generally, this checkpointer will save much more than just the model being trained. Defaults to None.
         """
         super().__init__(model, parameter_exchanger, model_checkpointers, state_checkpointer)
 
@@ -548,7 +544,7 @@ class DpScaffoldServerCheckpointAndStateModule(ScaffoldServerCheckpointAndStateM
         self,
         model: nn.Module | None = None,
         model_checkpointers: ModelCheckpointers = None,
-        state_checkpointer: PerRoundStateCheckpointer | None = None,
+        state_checkpointer: ServerPerRoundStateCheckpointer | None = None,
     ) -> None:
         """
         This module is meant to handle DP SCAFFOLD model and state checkpointing on the server-side of an FL process.
@@ -566,9 +562,9 @@ class DpScaffoldServerCheckpointAndStateModule(ScaffoldServerCheckpointAndStateM
                 these parameters to allow for real models to be saved. Defaults to None.
             model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of
                 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.
-            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be
-                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-                checkpointer will save much more than just the model being trained. Defaults to None.
+            state_checkpointer (ServerPerRoundStateCheckpointer | None, optional): If defined, this checkpointer
+                will be used to preserve FL training state to facilitate restarting training if interrupted.
+                Generally, this checkpointer will save much more than just the model being trained. Defaults to None.
         """
         super().__init__(model, model_checkpointers, state_checkpointer)
         self._ensure_checkpointers_are_of_opacus_type()

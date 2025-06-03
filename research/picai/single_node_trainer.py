@@ -10,8 +10,9 @@ from monai.data.dataloader import DataLoader
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 
-from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, PerRoundStateCheckpointer
-from fl4health.metrics.metric_managers import MetricManager
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
+from fl4health.checkpointing.state_checkpointer import SimpleDictCheckpointer
+from fl4health.utils.metrics import MetricManager
 
 
 class SingleNodeTrainer:
@@ -33,7 +34,7 @@ class SingleNodeTrainer:
             os.mkdir(checkpoint_dir)
 
         self.state_checkpoint_name = "ckpt.pkl"
-        self.per_epoch_checkpointer = PerRoundStateCheckpointer(Path(checkpoint_dir))
+        self.per_epoch_checkpointer = SimpleDictCheckpointer(Path(checkpoint_dir), self.state_checkpoint_name)
         best_metric_checkpoint_name = "best_ckpt.pkl"
         self.checkpointer = BestLossTorchModuleCheckpointer(checkpoint_dir, best_metric_checkpoint_name)
 
@@ -45,12 +46,10 @@ class SingleNodeTrainer:
         self.device = device
         self.epoch: int
 
-        if not self.per_epoch_checkpointer.checkpoint_exists(self.state_checkpoint_name):
-            self.per_epoch_checkpointer.save_checkpoint(
-                self.state_checkpoint_name, {"model": self.model, "optimizer": self.optimizer, "epoch": 0}
-            )
+        if not self.per_epoch_checkpointer.checkpoint_exists():
+            self.per_epoch_checkpointer.save_checkpoint({"model": self.model, "optimizer": self.optimizer, "epoch": 0})
 
-        ckpt = self.per_epoch_checkpointer.load_checkpoint(self.state_checkpoint_name)
+        ckpt = self.per_epoch_checkpointer.load_checkpoint()
         self.model, self.optimizer, self.epoch = ckpt["model"], ckpt["optimizer"], ckpt["epoch"]
 
     def _maybe_checkpoint(self, loss: float, metrics: dict[str, Scalar]) -> None:
@@ -104,7 +103,7 @@ class SingleNodeTrainer:
 
             # Save checkpoint in case run gets pre-empted
             self.per_epoch_checkpointer.save_checkpoint(
-                self.state_checkpoint_name, {"model": self.model, "optimizer": self.optimizer, "epoch": epoch + 1}
+                {"model": self.model, "optimizer": self.optimizer, "epoch": epoch + 1}
             )
 
     def validate(self, val_metric_mngr: MetricManager) -> None:

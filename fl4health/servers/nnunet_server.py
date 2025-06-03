@@ -4,7 +4,6 @@ from collections.abc import Callable, Sequence
 from logging import INFO
 from typing import Any
 
-import torch.nn as nn
 from flwr.common import Parameters
 from flwr.common.logger import log
 from flwr.common.typing import Code, Config, EvaluateIns, FitIns, GetPropertiesIns, Scalar
@@ -15,11 +14,9 @@ from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.server_module import NnUnetServerCheckpointAndStateModule
 from fl4health.reporting.base_reporter import BaseReporter
-from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.servers.base_server import FlServer
-from fl4health.utils.config import narrow_dict_type, narrow_dict_type_and_set_attribute
+from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.nnunet_utils import NnunetConfig
-from fl4health.utils.parameter_extraction import get_all_model_parameters
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -154,7 +151,6 @@ class NnunetServer(FlServer):
             self.num_segmentation_heads,
             self.global_deep_supervision,
         )
-
         self.checkpoint_and_state_module.model = model
 
     def update_before_fit(self, num_rounds: int, timeout: float | None) -> None:
@@ -191,18 +187,8 @@ class NnunetServer(FlServer):
             or self.checkpoint_and_state_module.model_checkpointers is not None
         )
 
-        # If the state_checkpointer has been specified and a state checkpoint exists, we load state
-        # NOTE: Inherent assumption that if checkpoint exists for server that it also will exist for client.
-        if (
-            self.checkpoint_and_state_module.state_checkpointer is not None
-            and self.checkpoint_and_state_module.state_checkpointer.checkpoint_exists(
-                self.state_checkpoint_name
-            )  # self.state_checkpoint_name initialized in base FLServer Class
-        ):
-            self._load_server_state()
-
         # Otherwise, we're starting training from "scratch"
-        elif checkpointer_exists or plans_bytes is None:
+        if checkpointer_exists or plans_bytes is None:
             log(INFO, "")
             log(INFO, "[PRE-INIT]")
             log(INFO, "Requesting properties from one random client via get_properties")
@@ -245,16 +231,27 @@ class NnunetServer(FlServer):
             if checkpointer_exists:
                 self.initialize_server_model()
 
-            # Wrap config functions so that we are sure the nnunet_plans are included
-            new_fit_cfg_fn = add_items_to_config_fn(
-                self.strategy.configure_fit, {"nnunet_plans": self.nnunet_plans_bytes}
-            )
-            new_eval_cfg_fn = add_items_to_config_fn(
-                self.strategy.configure_evaluate, {"nnunet_plans": self.nnunet_plans_bytes}
-            )
-            setattr(self.strategy, "configure_fit", new_fit_cfg_fn)
-            setattr(self.strategy, "configure_evaluate", new_eval_cfg_fn)
+        # If the state_checkpointer has been specified and a state checkpoint exists, we load state
+        # NOTE: Inherent assumption that if checkpoint exists for server that it also will exist for client.
+        # Note that we load the state after all the server attributes are initialized. If loading is successful,
+        # the initialized attributes will be updated based on the loaded state.
+        if (
+            self.checkpoint_and_state_module.state_checkpointer is not None
+            and self.checkpoint_and_state_module.state_checkpointer.checkpoint_exists()
+        ):
+            self.history = History()
+            self.current_round = 1
+            # The initial values of history and current_round will be updated based on the loaded state.
+            state_load_success = self._load_server_state()
+            assert state_load_success is True
 
+        # Wrap config functions so that we are sure the nnunet_plans are included
+        new_fit_cfg_fn = add_items_to_config_fn(self.strategy.configure_fit, {"nnunet_plans": self.nnunet_plans_bytes})
+        new_eval_cfg_fn = add_items_to_config_fn(
+            self.strategy.configure_evaluate, {"nnunet_plans": self.nnunet_plans_bytes}
+        )
+        setattr(self.strategy, "configure_fit", new_fit_cfg_fn)
+        setattr(self.strategy, "configure_evaluate", new_eval_cfg_fn)
         # Finish
         log(INFO, "")
 
@@ -275,52 +272,4 @@ class NnunetServer(FlServer):
             and self.nnunet_config is not None
         )
 
-        other_state_to_save = {
-            "history": self.history,
-            "current_round": self.current_round,
-            "reports_manager": self.reports_manager,
-            "server_name": self.server_name,
-            "nnunet_plans_bytes": self.nnunet_plans_bytes,
-            "num_input_channels": self.num_input_channels,
-            "num_segmentation_heads": self.num_segmentation_heads,
-            "global_deep_supervision": self.global_deep_supervision,
-            "nnunet_config": self.nnunet_config,
-        }
-
-        self.checkpoint_and_state_module.save_state(
-            state_checkpoint_name=self.state_checkpoint_name,
-            server_parameters=self.parameters,
-            other_state=other_state_to_save,
-        )
-
-    def _load_server_state(self) -> bool:
-        """
-        Load server checkpoint consisting of model, history, server name, current round and metrics reporter.
-        The method overrides parent to add any necessary state when loading the checkpoint.
-        """
-        # Attempt to load the server state if it exists. This variable will be None if it does not.
-        server_state = self.checkpoint_and_state_module.maybe_load_state(self.state_checkpoint_name)
-
-        if server_state is None:
-            return False
-
-        # Standard attributes to load
-        narrow_dict_type_and_set_attribute(self, server_state, "current_round", "current_round", int)
-        narrow_dict_type_and_set_attribute(self, server_state, "server_name", "server_name", str)
-        narrow_dict_type_and_set_attribute(self, server_state, "reports_manager", "reports_manager", ReportsManager)
-        narrow_dict_type_and_set_attribute(self, server_state, "history", "history", History)
-        narrow_dict_type_and_set_attribute(
-            self, server_state, "model", "parameters", nn.Module, func=get_all_model_parameters
-        )
-        # Needed for when _hydrate_model_for_checkpointing is called
-        narrow_dict_type_and_set_attribute(self, server_state, "model", "server_model", nn.Module)
-
-        # NnunetServer specific attributes to load
-        narrow_dict_type_and_set_attribute(self, server_state, "nnunet_plans_bytes", "nnunet_plans_bytes", bytes)
-        narrow_dict_type_and_set_attribute(self, server_state, "num_segmentation_heads", "num_segmentation_heads", int)
-        narrow_dict_type_and_set_attribute(self, server_state, "num_input_channels", "num_input_channels", int)
-        narrow_dict_type_and_set_attribute(
-            self, server_state, "global_deep_supervision", "global_deep_supervision", bool
-        )
-        narrow_dict_type_and_set_attribute(self, server_state, "nnunet_config", "nnunet_config", NnunetConfig)
-        return True
+        super()._save_server_state()

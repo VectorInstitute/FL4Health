@@ -12,9 +12,8 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.checkpointing.server_module import NnUnetServerCheckpointAndStateModule
-from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.checkpointing.state_checkpointer import NnUnetServerPerRoundStateCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.nnunet_server import NnunetServer
 from fl4health.utils.config import make_dict_with_epochs_or_steps
@@ -85,7 +84,7 @@ def main(
     )
 
     state_checkpointer = (
-        PerRoundStateCheckpointer(Path(intermediate_server_state_dir))
+        NnUnetServerPerRoundStateCheckpointer(Path(intermediate_server_state_dir))
         if intermediate_server_state_dir is not None
         else None
     )
@@ -123,7 +122,7 @@ if __name__ == "__main__":
         help="Path to the configuration file. See examples/nnunet_example/README.md for more info",
     )
     parser.add_argument(
-        "--server-address",
+        "--server_address",
         type=str,
         required=False,
         default="0.0.0.0:8080",
@@ -132,14 +131,14 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--intermediate-server-state-dir",
+        "--intermediate_server_state_dir",
         type=str,
         required=False,
         default=None,
         help="[OPTIONAL] Directory to store server state. Defaults to None",
     )
     parser.add_argument(
-        "--server-name",
+        "--server_name",
         type=str,
         required=False,
         default=None,

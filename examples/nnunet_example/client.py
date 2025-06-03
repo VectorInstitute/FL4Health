@@ -5,8 +5,8 @@ from logging import DEBUG, INFO
 from os.path import exists, join
 from pathlib import Path
 
-from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
+from fl4health.checkpointing.state_checkpointer import ClientPerRoundStateCheckpointer
 
 with warnings.catch_warnings():
     # Silence deprecation warnings from sentry sdk due to flwr and wandb
@@ -73,7 +73,7 @@ def main(
 
     if intermediate_client_state_dir is not None:
         checkpoint_and_state_module = ClientCheckpointAndStateModule(
-            state_checkpointer=PerRoundStateCheckpointer(Path(intermediate_client_state_dir))
+            state_checkpointer=ClientPerRoundStateCheckpointer(Path(intermediate_client_state_dir))
         )
     else:
         checkpoint_and_state_module = None
@@ -140,7 +140,7 @@ if __name__ == "__main__":
             get_msd_dataset_enum function",
     )
     parser.add_argument(
-        "--always-preprocess",
+        "--always_preprocess",
         action="store_true",
         required=False,
         help="[OPTIONAL] Use this to force preprocessing the nnunet data \
@@ -169,21 +169,21 @@ if __name__ == "__main__":
         default=INFO,
     )
     parser.add_argument(
-        "--skip-compile",
+        "--skip_compile",
         action="store_true",
         required=False,
         help="[OPTIONAL] Include flag to train without jit compiling the pytorch model first",
     )
 
     parser.add_argument(
-        "--intermediate-client-state-dir",
+        "--intermediate_client_state_dir",
         type=str,
         required=False,
         default=None,
         help="[OPTIONAL] Directory to store client state during training. Defaults to None",
     )
     parser.add_argument(
-        "--client-name",
+        "--client_name",
         type=str,
         required=False,
         default=None,

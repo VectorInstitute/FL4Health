@@ -1,13 +1,13 @@
 from collections.abc import Sequence
 from enum import Enum
 from logging import INFO
-from typing import Any
 
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Scalar
 
-from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer, TorchModuleCheckpointer
+from fl4health.checkpointing.checkpointer import TorchModuleCheckpointer
+from fl4health.checkpointing.state_checkpointer import ClientPerRoundStateCheckpointer
 
 ModelCheckpointers = TorchModuleCheckpointer | Sequence[TorchModuleCheckpointer] | None
 
@@ -18,11 +18,12 @@ class CheckpointMode(Enum):
 
 
 class ClientCheckpointAndStateModule:
+
     def __init__(
         self,
         pre_aggregation: ModelCheckpointers = None,
         post_aggregation: ModelCheckpointers = None,
-        state_checkpointer: PerRoundStateCheckpointer | None = None,
+        state_checkpointer: ClientPerRoundStateCheckpointer | None = None,
     ) -> None:
         """
         This module is meant to hold up three to major components that determine how clients handle model and state
@@ -44,9 +45,9 @@ class ClientCheckpointAndStateModule:
             post_aggregation (ModelCheckpointers, optional): If defined, this checkpointer (or sequence
                 of checkpointers) is used to checkpoint models based on their validation metrics/losses **AFTER**
                 server-side aggregation. Defaults to None.
-            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer is used to
-                preserve client state (not just models), in the event one wants to restart federated training.
-                Defaults to None.
+            state_checkpointer (ClientPerRoundStateCheckpointer | None, optional): If defined, this checkpointer
+                is used to preserve client state (not just models), in the event one wants to restart
+                federated training. Defaults to None.
         """
         self.pre_aggregation = (
             [pre_aggregation] if isinstance(pre_aggregation, TorchModuleCheckpointer) else pre_aggregation
@@ -119,52 +120,41 @@ class ClientCheckpointAndStateModule:
         else:
             raise ValueError(f"Unrecognized mode for checkpointing: {str(mode)}")
 
-    def save_state(self, state_checkpoint_name: str, state: dict[str, Any]) -> None:
+    def save_state(self) -> None:
         """
         This function is meant to facilitate saving state required to restart an FL process on the client side. This
-        function will simply save whatever information is passed in the state variable using the file name in
-        ``state_checkpoint_name``. This function should only be called if a ``state_checkpointer`` exists in this
-        module
-
-        Args:
-            state_checkpoint_name (str): Name of the state checkpoint file. The checkpointer itself will have a
-                directory to which state will be saved.
-            state (dict[str, Any]): State to be saved so that training might be resumed on the client if federated
-                training is interrupted. For example, this might contain things like optimizer states, learning rate
-                scheduler states, etc.
+        function will simply save all the attributes stated in ``ClientPerRoundStateCheckpointer.snapshot_attrs``.
+        This function should only be called if a ``state_checkpointer`` exists in this module.
 
         Raises:
             ValueError: Throws an error if this function is called, but no state checkpointer has been provided
         """
 
         if self.state_checkpointer is not None:
-            self.state_checkpointer.save_checkpoint(state_checkpoint_name, state)
+            self.state_checkpointer.save_client_state()
         else:
             raise ValueError("Attempting to save state but no state checkpointer is specified")
 
-    def maybe_load_state(self, state_checkpoint_name: str) -> dict[str, Any] | None:
+    def maybe_load_state(self) -> bool:
         """
-        This function facilitates loading of any pre-existing state (with the name ``state_checkpoint_name``) in the
-        directory of the ``state_checkpointer``. If the state already exists at the proper path, the state is loaded
-        and returned. If it doesn't exist, we return None.
-
-        Args:
-            state_checkpoint_name (str): Name of the state checkpoint file. The checkpointer itself will have a
-                directory from which state will be loaded (if it exists).
+        This function facilitates loading of any pre-existing state (with the name ``checkpoint_name``) in the
+        directory of the ``checkpoint_dir``. If the state already exists at the proper path, the state is loaded
+        and will be automatically saved into client's attributes. If it doesn't exist, we return False.
 
         Raises:
             ValueError: Throws an error if this function is called, but no state checkpointer has been provided
 
         Returns:
-            dict[str, Any] | None: If the state checkpoint properly exists and is loaded correctly, this dictionary
-            carries that state. Otherwise, we return a None (or throw an exception).
+            bool : If the state checkpoint properly exists and is loaded correctly, client's attributes
+            are set to the loaded values, and True is returned. Otherwise, we return False (or throw an exception).
         """
 
         if self.state_checkpointer is not None:
-            if self.state_checkpointer.checkpoint_exists(state_checkpoint_name):
-                return self.state_checkpointer.load_checkpoint(state_checkpoint_name)
+            if self.state_checkpointer.checkpoint_exists():
+                self.state_checkpointer.load_client_state()
+                return True
             else:
                 log(INFO, "State checkpointer is defined but no state checkpoint exists.")
-                return None
+                return False
         else:
             raise ValueError("Attempting to load state, but no state checkpointer is specified")
