@@ -8,9 +8,9 @@ from flwr.common.typing import Config
 from flwr.server.strategy import FedAvg
 
 from examples.models.ensemble_cnn import ConfigurableMnistNet
+from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.model_bases.ensemble_base import EnsembleModel
 from fl4health.utils.config import load_config
-from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 
 

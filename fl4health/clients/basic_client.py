@@ -15,6 +15,8 @@ from torch.optim.lr_scheduler import LRScheduler
 from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointAndStateModule
+from fl4health.metrics.base_metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric
+from fl4health.metrics.metric_managers import MetricManager
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
@@ -31,7 +33,6 @@ from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.early_stopper import EarlyStopper
 from fl4health.utils.logging import LoggingMode
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
-from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric, MetricManager
 from fl4health.utils.random import generate_hash
 from fl4health.utils.typing import LogLevel, TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
@@ -1091,7 +1092,7 @@ class BasicClient(NumPyClient):
         assert not isinstance(optimizer, dict)
         self.optimizers = {"global": optimizer}
 
-    def get_data_loaders(self, config: Config) -> tuple[DataLoader, ...]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         """
         User defined method that returns a PyTorch Train DataLoader
         and a PyTorch Validation DataLoader

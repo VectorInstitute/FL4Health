@@ -11,12 +11,12 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
 from fl4health.clients.partial_weight_exchange_client import PartialWeightExchangeClient
+from fl4health.metrics import Accuracy
 from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_selection_criteria import LayerSelectionFunctionConstructor
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_cifar10_data
-from fl4health.utils.metrics import Accuracy
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 

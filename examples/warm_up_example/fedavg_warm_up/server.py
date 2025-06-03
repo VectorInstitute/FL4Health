@@ -9,10 +9,10 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import MnistNet
+from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.servers.base_server import FlServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config, make_dict_with_epochs_or_steps
-from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import set_all_random_seeds
 

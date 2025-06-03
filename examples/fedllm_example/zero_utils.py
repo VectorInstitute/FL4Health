@@ -108,6 +108,7 @@ def safe_save_model_for_zero3(model: torch.nn.Module, training_arguments: Traini
     if training_arguments.local_rank in [0, -1]:  # Ensures only rank 0 or single-GPU saves
         model.config.save_pretrained(training_arguments.output_dir)
         model.save_pretrained(training_arguments.output_dir, state_dict=state_dict)
+        assert training_arguments.output_dir is not None, "training_arguments.output_dir must not be None"
         torch.save(non_lora_state_dict, os.path.join(training_arguments.output_dir, "non_lora_trainables.bin"))
 
 
@@ -119,8 +120,8 @@ def safe_save_model_for_hf_trainer(trainer: Trainer) -> None:
     Args:
         trainer (transformers.Trainer): The trainer.
     """
-    trainer.accelerator.wait_for_everyone()
+    trainer.accelerator.wait_for_everyone()  # type:ignore
     torch.cuda.synchronize()
 
-    trainer.save_model()
+    trainer.save_model()  # type:ignore
     return

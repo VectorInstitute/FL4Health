@@ -18,13 +18,14 @@ from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import TorchInputType
 from fl4health.clients.partial_weight_exchange_client import PartialWeightExchangeClient
+from fl4health.metrics import Accuracy
+from fl4health.metrics.base_metrics import Metric
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_selection_criteria import largest_final_magnitude_scores
 from fl4health.parameter_exchange.sparse_coo_parameter_exchanger import SparseCooParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import Accuracy, Metric
 from research.ag_news.client_data import construct_dataloaders
 
 

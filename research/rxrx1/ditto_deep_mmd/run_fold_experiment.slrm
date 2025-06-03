@@ -63,7 +63,10 @@ if [[ "${SLURM_JOB_PARTITION}" == "t4v2" ]] || \
 fi
 
 
+# This environment variable must be set in order to force torch to use deterministic algorithms. See documentation
+# in fl4health/utils/random.py for more information
 export CUBLAS_WORKSPACE_CONFIG=:4096:8
+
 # Process Inputs
 
 SERVER_CONFIG_PATH=$1
@@ -100,7 +103,7 @@ do
     SEED="${SEEDS[i]}"
     # create the run directory
     RUN_DIR="${ARTIFACT_DIR}${RUN_NAME}/"
-    echo "Starting Run and logging artifcats at ${RUN_DIR}"
+    echo "Starting Run and logging artifacts at ${RUN_DIR}"
     if [ -d "${RUN_DIR}" ]
     then
         # Directory already exists, we check if the done.out file exists

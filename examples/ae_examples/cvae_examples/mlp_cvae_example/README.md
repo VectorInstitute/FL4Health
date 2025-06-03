@@ -8,7 +8,7 @@ In order to run the example, first ensure you have [installed the dependencies i
 ## Starting Server
 
 The next step is to start the server by running
-```
+```bash
 python -m examples.ae_examples.cvae_examples.mlp_cvae_example.server  --config_path /path/to/config.yaml
 ```
 from the FL4Health directory. The following arguments must be present in the specified config file:
@@ -23,7 +23,7 @@ from the FL4Health directory. The following arguments must be present in the spe
 
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the two
 clients. This is done by simply running (remembering to activate your environment)
-```
+```bash
 python -m examples.ae_examples.cvae_examples.mlp_cvae_example.client --dataset_path /path/to/data --condition "client's ID number" --num_conditions "total number of clients (client IDs)"
 ```
 **NOTE**: The argument `dataset_path` has two functions, depending on whether the dataset exists locally or not. If
@@ -34,14 +34,13 @@ After both clients have been started federated learning should commence.
 
 **NOTE**: In this example, the argument `condition ` is used to set a client-specific condition on the CVAE model. Here, client IDs are used as the condition on their data. The next argument `num_conditions` is used to create a one hot encoded condition vector for each client.
 
-
 ### In this example
 You can use the following commands to run the clients.
 Client 0:
-```
+```bash
 python -m examples.ae_examples.cvae_examples.mlp_cvae_example.client --dataset_path examples/datasets/MNIST --condition 0 --num_conditions 2
 ```
 Client 1:
-```
+```bash
 python -m examples.ae_examples.cvae_examples.mlp_cvae_example.client --dataset_path examples/datasets/MNIST --condition 1 --num_conditions 2
 ```

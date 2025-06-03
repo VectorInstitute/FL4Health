@@ -11,11 +11,11 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from fl4health.clients.apfl_client import ApflClient
+from fl4health.metrics import Accuracy
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.reporting import JsonReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_mnist_data
-from fl4health.utils.metrics import Accuracy
 from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 

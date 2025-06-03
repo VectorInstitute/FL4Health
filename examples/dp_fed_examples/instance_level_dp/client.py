@@ -15,9 +15,9 @@ from examples.models.cnn_model import Net
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.checkpointing.opacus_checkpointer import BestLossOpacusCheckpointer
 from fl4health.clients.instance_level_dp_client import InstanceLevelDpClient
+from fl4health.metrics import Accuracy
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_cifar10_data
-from fl4health.utils.metrics import Accuracy
 
 
 class CifarClient(InstanceLevelDpClient):
@@ -53,7 +53,11 @@ if __name__ == "__main__":
     data_path = Path(args.dataset_path)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     client = CifarClient(
-        data_path, [Accuracy("accuracy")], device, checkpoint_and_state_module=checkpoint_and_state_module
+        data_path,
+        [Accuracy("accuracy")],
+        device,
+        checkpoint_and_state_module=checkpoint_and_state_module,
+        client_name=client_name,
     )
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
 

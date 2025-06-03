@@ -15,7 +15,7 @@ repos:
       - id: check-yaml
 
   - repo: https://github.com/PyCQA/flake8
-    rev: 7.1.2
+    rev: 7.2.0
     hooks:
       - id: flake8
 
@@ -30,7 +30,7 @@ repos:
       - id: isort
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
+    rev: v1.16.0
     hooks:
       - id: mypy
         name: mypy

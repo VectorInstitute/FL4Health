@@ -11,7 +11,7 @@ In order to run the example, first ensure you have [installed the dependencies i
 ## Starting Server
 
 The next step is to start the server by running
-```
+```bash
 python -m examples.fedpca_examples.perform_pca.server  --config_path /path/to/config.yaml
 ```
 from the FL4Health directory. The following arguments must be present in the specified config file:
@@ -27,8 +27,8 @@ from the FL4Health directory. The following arguments must be present in the spe
 
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the four
 clients. This is done by simply running (remembering to activate your environment)
-```
-python -m examples.fedpca_examples.perform_pca.client --dataset_path /path/to/data --components_save_path /path/to/save/components
+```bash
+python -m examples.fedpca_examples.perform_pca.client --dataset_path /path/to/data --components_save_dir /dir/to/save/components
 ```
 **NOTE**:
 
@@ -36,6 +36,6 @@ python -m examples.fedpca_examples.perform_pca.client --dataset_path /path/to/da
 the dataset already exists at the path specified, it will be loaded from there. Otherwise, the dataset will be
 automatically downloaded to the path specified and used in the run.
 
-* The argument `components_save_path` specifies the directory in which the merged principal components will be saved, so they can be leveraged for other downstream tasks. An example of dimensionality reduction can be found at `examples/fedpca_examples/dim_reduction`.
+* The argument `components_save_dir` specifies the directory in which the merged principal components will be saved, so they can be leveraged for other downstream tasks. An example of dimensionality reduction can be found at `examples/fedpca_examples/dim_reduction`.
 
 After the clients have been started federated pca should commence.

@@ -17,11 +17,12 @@ from torch.utils.data import DataLoader
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client import DittoDeepMmdClient
+from fl4health.metrics import Accuracy
+from fl4health.metrics.base_metrics import Metric
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_cifar10_data, load_cifar10_test_data
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 from research.cifar10.model import ConvNet
@@ -68,6 +69,8 @@ class CifarDittoClient(DittoDeepMmdClient):
         self.client_number = client_number
         self.heterogeneity_level = heterogeneity_level
         self.learning_rate: float = learning_rate
+        # Number of batches to accumulate before updating the global model
+        self.num_accumulating_batches = 50
 
     def setup_client(self, config: Config) -> None:
         # Check if the client number is within the range of the total number of clients
@@ -231,16 +234,10 @@ if __name__ == "__main__":
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     pre_aggregation_best_checkpoint_name = f"pre_aggregation_client_{args.client_number}_best_model.pkl"
     pre_aggregation_last_checkpoint_name = f"pre_aggregation_client_{args.client_number}_last_model.pkl"
-    post_aggregation_best_checkpoint_name = f"post_aggregation_client_{args.client_number}_best_model.pkl"
-    post_aggregation_last_checkpoint_name = f"post_aggregation_client_{args.client_number}_last_model.pkl"
     checkpoint_and_state_module = ClientCheckpointAndStateModule(
         pre_aggregation=[
             BestLossTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_best_checkpoint_name),
             LatestTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_last_checkpoint_name),
-        ],
-        post_aggregation=[
-            BestLossTorchModuleCheckpointer(checkpoint_dir, post_aggregation_best_checkpoint_name),
-            LatestTorchModuleCheckpointer(checkpoint_dir, post_aggregation_last_checkpoint_name),
         ],
     )
 

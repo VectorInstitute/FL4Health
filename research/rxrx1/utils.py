@@ -5,8 +5,10 @@ import numpy as np
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
+from torchvision import models
 
-from fl4health.utils.metrics import Metric, MetricManager
+from fl4health.metrics.base_metrics import Metric
+from fl4health.metrics.metric_managers import MetricManager
 
 
 def get_all_run_folders(artifact_dir: str) -> list[str]:
@@ -89,3 +91,10 @@ def evaluate_model_on_dataset(
             preds = preds if isinstance(preds, dict) else {"prediction": preds}
             meter.update(preds, target)
     return meter
+
+
+def get_model(num_classes: int = 50) -> nn.Module:
+    model = models.resnet18(pretrained=True)
+    in_features = model.fc.in_features
+    model.fc = nn.Linear(in_features, num_classes)
+    return model

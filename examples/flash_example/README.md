@@ -9,7 +9,7 @@ Ensure you have [installed the dependencies in your virtual environment accordin
 ## Starting Server
 
 Start the server by running:
-```
+```bash
 python -m examples.flash_example.server --config_path /path/to/config.yaml
 ```
 from the FL4Health directory. The config file should contain:
@@ -22,7 +22,7 @@ from the FL4Health directory. The config file should contain:
 ## Starting Clients
 
 After the server starts and logs "FL starting," start the clients in separate terminals:
-```
+```bash
 python -m examples.flash_example.client --dataset_path /path/to/data
 ```
 **NOTE**: The `dataset_path` argument either loads the dataset if it exists locally or downloads it to the specified path.

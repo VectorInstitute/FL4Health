@@ -14,7 +14,7 @@ In order to run the example, first ensure you have [installed the dependencies i
 ## Starting Server
 
 The next step is to start the server by running:
-```
+```bash
 python -m examples.model_merge_example.server --config_path /path/to/config
 ```
 Optionally, you can provide a path to an evaluation dataset (`--data_path`) to evaluate the merged models on the
@@ -26,7 +26,7 @@ For a full list of arguments and their definitions: `python -m examples.model_me
 
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the two
 clients. This is done by simply running (remembering to activate your environment)
-```
-python -m examples.basic_example.client --model_path /path/to/checkpoint.pt
+```bash
+python -m examples.basic_example.client --dataset_path "examples/datasets/mnist_data/" --model_path "/path/to/checkpoint.pt"
 ```
 For a full list of arguments and their definitions: `python -m examples.model_merge_example.client --help`

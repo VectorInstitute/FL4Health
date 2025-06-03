@@ -3,7 +3,7 @@ import torch
 from flwr.common.typing import Scalar
 from sklearn import metrics
 
-from fl4health.utils.metrics import Metric
+from fl4health.metrics.base_metrics import Metric
 
 
 class Binary_ROC_AUC(Metric):

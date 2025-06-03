@@ -21,7 +21,7 @@ def collate_fn_with_padding(
     for input_dict, target in batch:
         input_list.append(input_dict)
         target_list.append(target)
-    return tokenizer.pad(input_list).data, torch.stack(target_list)
+    return tokenizer.pad(input_list).data, torch.stack(target_list)  # type: ignore
 
 
 def create_text_classification_dataset(

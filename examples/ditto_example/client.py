@@ -1,11 +1,11 @@
 import argparse
-from logging import INFO
+from logging import DEBUG, INFO
 from pathlib import Path
 
 import flwr as fl
 import torch
 import torch.nn as nn
-from flwr.common.logger import log
+from flwr.common.logger import log, update_console_handler
 from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
@@ -13,10 +13,10 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
 from fl4health.clients.ditto_client import DittoClient
+from fl4health.metrics import Accuracy
 from fl4health.reporting import JsonReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_mnist_data
-from fl4health.utils.metrics import Accuracy
 from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
@@ -59,7 +59,18 @@ if __name__ == "__main__":
         help="Seed for the random number generators across python, torch, and numpy",
         required=False,
     )
+    parser.add_argument(
+        "--debug",
+        help="[OPTIONAL] Include flag to print DEBUG logs",
+        action="store_const",
+        dest="log_level",
+        const=DEBUG,
+        default=INFO,
+    )
     args = parser.parse_args()
+
+    # Set the log level
+    update_console_handler(level=args.log_level)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)

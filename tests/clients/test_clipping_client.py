@@ -6,7 +6,7 @@ import torch
 from flwr.common import Config
 
 from fl4health.clients.clipping_client import NumpyClippingClient
-from fl4health.utils.metrics import Accuracy
+from fl4health.metrics import Accuracy
 
 
 class DummyClippingClient(NumpyClippingClient):

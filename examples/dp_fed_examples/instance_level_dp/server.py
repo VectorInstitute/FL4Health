@@ -11,11 +11,11 @@ from examples.models.cnn_model import Net
 from fl4health.checkpointing.opacus_checkpointer import BestLossOpacusCheckpointer
 from fl4health.checkpointing.server_module import OpacusServerCheckpointAndStateModule
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
+from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.instance_level_dp_server import InstanceLevelDpServer
 from fl4health.strategies.basic_fedavg import OpacusBasicFedAvg
 from fl4health.utils.config import load_config, make_dict_with_epochs_or_steps
-from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.privacy_utilities import map_model_to_opacus_model
 
 
@@ -69,9 +69,9 @@ def main(config: dict[str, Any]) -> None:
 
     model = map_model_to_opacus_model(Net())
 
-    client_name = "".join(choices(string.ascii_uppercase, k=5))
+    server_name = "".join(choices(string.ascii_uppercase, k=5))
     checkpoint_dir = "examples/dp_fed_examples/instance_level_dp/"
-    checkpoint_name = f"server_{client_name}_best_model.pkl"
+    checkpoint_name = f"server_{server_name}_best_model.pkl"
     checkpointer = BestLossOpacusCheckpointer(checkpoint_dir=checkpoint_dir, checkpoint_name=checkpoint_name)
 
     checkpoint_and_state_module = OpacusServerCheckpointAndStateModule(
@@ -106,6 +106,7 @@ def main(config: dict[str, Any]) -> None:
         num_server_rounds=config["n_server_rounds"],
         checkpoint_and_state_module=checkpoint_and_state_module,
         accept_failures=False,
+        server_name=server_name,
     )
 
     fl.server.start_server(

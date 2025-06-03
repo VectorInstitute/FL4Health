@@ -32,7 +32,7 @@ from torch.utils.data import DataLoader
 from examples.models.cnn_model import Net
 from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.load_data import load_cifar10_data
-from fl4health.utils.metrics import Accuracy
+from fl4health.metrics import Accuracy
 
 
 class CifarClient(BasicClient):
@@ -68,7 +68,7 @@ from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import Net
 from fl4health.servers.base_server import FlServer
-from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 
 

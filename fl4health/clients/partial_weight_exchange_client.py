@@ -10,12 +10,12 @@ from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
+from fl4health.metrics.base_metrics import Metric
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.partial_parameter_exchanger import PartialParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import Metric
 
 
 class PartialWeightExchangeClient(BasicClient):

@@ -288,7 +288,23 @@ If you are interested in contributing to the library, please see [CONTRIBUTION.M
 
 ## Citation
 
-We hope that the library will be useful to both FL practitioners and researchers working on cutting edge FL applications, with a specific interest in FL for healthcare. If you use FL4Health in a project or in your research, the citation below should be used.
+We hope that the library will be useful to both FL practitioners and researchers working on cutting edge FL applications, with a specific interest in FL for healthcare. If you use FL4Health in a project or in your research, the citation provided by the "Cite this Repository" widget should be used.
+
+As examples (the version may be out of date)
+
 ```
-D. B. Emerson, J. Jewell, S. Ayromlou, S. Carere, F. Tavakoli, Y. Zhang, M. Lotif, V. A. Fajardo, and A. Krishnan (2025). FL4Health. https://github.com/vectorInstitute/FL4Health/. Computer Software, Vector Institute for Artificial Intelligence.
+# APA Sytle
+Emerson, D.B., Jewell, J., Ayromlou, S., Carere, S., Tavakoli, F., Zhang, Y., Lotif, M., Fajardo, V. A., & Krishnan, A. FL4Health (Version 0.3.0) [Computer software]. https://doi.org/10.5281/zenodo.1234
+```
+
+```bibtex
+# Bibtex Entry
+@software{Emerson_FL4Health,
+author = {Emerson, David B. and Jewell, John and Ayromlou, Sana and Carere, Shawn and Tavakoli, Fatemeh and Zhang, Y. and Lotif, Marcello and Fajardo, Val Andrei and Krishnan, A.},
+doi = {10.5281/zenodo.1234},
+license = {Apache-2.0},
+title = {{FL4Health}},
+url = {https://github.com/vectorInstitute/FL4Health/},
+version = {0.3.0}
+}
 ```
