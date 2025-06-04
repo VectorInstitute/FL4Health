@@ -52,14 +52,31 @@ class SimpleDictCheckpointer:
     ) -> None:
         self.checkpoint_dir = checkpoint_dir
         self.checkpoint_name = checkpoint_name
-        assert self.checkpoint_dir is not None, "Checkpoint directory should be set to facilitate saving in disk."
-        assert self.checkpoint_name is not None, "Checkpoint name should be provided."
-        self.checkpoint_path = os.path.join(self.checkpoint_dir, self.checkpoint_name)
+        assert self.checkpoint_dir is not None, "Checkpoint directory should be set to facilitate saving on disk."
         self.in_memory = False
+        self.checkpoint_path: str | None = None
+        if self.checkpoint_name is not None:
+            self.set_checkpoint_path(self.checkpoint_name, self.checkpoint_dir)
+
+    def set_checkpoint_path(self, checkpoint_name: str, checkpoint_dir: Path | None = None) -> None:
+        """
+        Set or update the checkpoint path based on the provided checkpoint name and directory.
+
+        Args:
+            checkpoint_name (str): The name of the checkpoint file.
+            checkpoint_dir (Path | None): The directory where the checkpoint will be saved.
+        """
+        self.checkpoint_name = checkpoint_name
+        if checkpoint_dir is not None:
+            # Also update the checkpoint dir.
+            self.checkpoint_dir = checkpoint_dir
+        assert self.checkpoint_dir is not None, "Checkpoint directory should be set to facilitate saving on disk."
+        assert self.checkpoint_name is not None, "Checkpoint name should be set to facilitate saving on disk."
+        self.checkpoint_path = os.path.join(self.checkpoint_dir, self.checkpoint_name)
 
     def save_checkpoint(self, checkpoint_dict: dict[str, Any]) -> None:
         """
-        Saves ``checkpoint_dict`` to checkpoint path defined based on checkpointer dir and checkpoint name.
+        Save ``checkpoint_dict`` to checkpoint path defined based on checkpointer dir and checkpoint name.
 
         Args:
             checkpoint_dict (dict[str, Any]): A dictionary with string keys and values of type Any representing the
@@ -69,7 +86,7 @@ class SimpleDictCheckpointer:
             e: Will throw an error if there is an issue saving the model. ``Torch.save`` seems to swallow errors in
                 this context, so we explicitly surface the error with a try/except.
         """
-
+        assert self.checkpoint_path is not None, "Checkpoint path is not set. Call set_checkpoint_path first."
         try:
             log(INFO, f"Saving the state as {self.checkpoint_path}")
             torch.save(checkpoint_dict, self.checkpoint_path)
@@ -79,13 +96,13 @@ class SimpleDictCheckpointer:
 
     def load_checkpoint(self) -> dict[str, Any]:
         """
-        Loads and returns the checkpoint stored in ``checkpoint_dir`` under
+        Load and return the checkpoint stored in ``checkpoint_dir`` under
         the  ``checkpoint_name`` if it exists. If it does not exist, an assertion error will be thrown.
 
         Returns:
             dict[str, Any]: A dictionary representing the checkpointed state, as loaded by ``torch.load``.
         """
-
+        assert self.checkpoint_path is not None, "Checkpoint path is not set. Call set_checkpoint_path first."
         assert self.checkpoint_exists()
         log(INFO, f"Loading state from checkpoint at {self.checkpoint_path}")
 
@@ -93,7 +110,7 @@ class SimpleDictCheckpointer:
 
     def checkpoint_exists(self) -> bool:
         """
-        Checks if a checkpoint exists at the checkpoint_path constructed as
+        Check if a checkpoint exists at the checkpoint_path constructed as
         ``checkpoint_dir`` + ``checkpoint_name`` during initialization.
 
         Returns:
@@ -103,8 +120,7 @@ class SimpleDictCheckpointer:
             # Check point is saved in memory.
             return False
         else:
-            assert self.checkpoint_dir is not None, "Checkpoint directory is not set."
-            assert self.checkpoint_name is not None, "Checkpoint name is not set."
+            assert self.checkpoint_path is not None, "Checkpoint path is not set. Call set_checkpoint_path first."
             return os.path.exists(self.checkpoint_path)
 
 
@@ -131,11 +147,6 @@ class StateCheckpointer(SimpleDictCheckpointer, ABC):
         if checkpoint_dir is not None:
             # If checkpoint_dir is provided, state will be saved to the disk.
             self.checkpoint_dir = checkpoint_dir
-            if checkpoint_name is not None:
-                self.checkpoint_name = checkpoint_name
-            else:
-                self.checkpoint_name = "state_checkpoint.pt"
-            assert checkpoint_dir is not None and checkpoint_name is not None
             # Casting to respect the parent class's constructor
             super().__init__(self.checkpoint_dir, self.checkpoint_name)
             self.in_memory = False
@@ -326,8 +337,9 @@ class ClientStateCheckpointer(StateCheckpointer):
         self.client = client
         self.client_name = client.client_name
         # Set the checkpoint name based on client's name if not already provided.
-        if self.checkpoint_name is None:
+        if self.checkpoint_name or self.checkpoint_path is None:
             self.checkpoint_name = f"client_{self.client_name}_state.pt"
+            self.set_checkpoint_path(self.checkpoint_name)
 
     def save_client_state(self) -> None:
         """
@@ -392,8 +404,6 @@ class ClientPerRoundStateCheckpointer(ClientStateCheckpointer):
             checkpoint_dir is not None
         ), "Checkpoint directory should be set for\
             per round checkpointing to facilitate restarting federated training if interrupted."
-        if checkpoint_name is None:
-            checkpoint_name = "client_state_checkpoint.pt"
         # We don't need to save the client model here since parameters are loaded from the server at the start
         # of the round.
         self.snapshot_attrs: dict = {
@@ -409,6 +419,8 @@ class ClientPerRoundStateCheckpointer(ClientStateCheckpointer):
                 ReportsManager,
             ),
         }
+        # No default checkpoint_name is provided.
+        # It should be user-defined and specific for each clients, or it will be set when client is set.
         super().__init__(
             checkpoint_dir,
             checkpoint_name,
@@ -454,6 +466,8 @@ class ClientTrainLoopCheckpointer(ClientStateCheckpointer):
                 MetricManager,
             ),
         }
+        # No default checkpoint_name is provided.
+        # It should be user-defined and specific for each clients, or it will be set when client is set.
         super().__init__(
             checkpoint_dir,
             checkpoint_name,
@@ -595,7 +609,7 @@ class ServerPerRoundStateCheckpointer(ServerStateCheckpointer):
         )
 
 
-class NnUnetServerPerRoundStateCheckpointer(ServerStateCheckpointer):
+class NnUnetServerPerRoundStateCheckpointer(ServerPerRoundStateCheckpointer):
 
     def __init__(
         self,
@@ -614,6 +628,11 @@ class NnUnetServerPerRoundStateCheckpointer(ServerStateCheckpointer):
         if checkpoint_name is None:
             checkpoint_name = "nnunet_server_state_checkpoint.pt"
 
+        super().__init__(
+            checkpoint_dir,
+            checkpoint_name,
+        )
+        # Override's parent class's snapshot_attrs with nnUNet-specific attributes.
         self.snapshot_attrs: dict = {
             "model": (TorchModuleSnapshotter(), nn.Module),
             "current_round": (NumberSnapshotter(), int),
@@ -629,8 +648,3 @@ class NnUnetServerPerRoundStateCheckpointer(ServerStateCheckpointer):
             "global_deep_supervision": (EnumSnapshotter(), bool),
             "nnunet_config": (EnumSnapshotter(), Enum),
         }
-        super().__init__(
-            checkpoint_dir,
-            checkpoint_name,
-            self.snapshot_attrs,
-        )
