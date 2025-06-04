@@ -1290,8 +1290,10 @@ class BasicClient(NumPyClient):
 
     def _save_client_state(self) -> None:
         """
-        Saves checkpoint dict consisting of client name, total steps, lr schedulers, metrics reporter and
-        optimizers state. Method can be overridden to augment saved checkpointed state.
+        Save a checkpoint of the client's state as defined by the state_checkpointer's snapshot_attrs.
+        By default, snapshot_attrs includes attributes such as client name, total steps, lr schedulers,
+        metrics reporter, and optimizer states. You can override snapshot_attrs in the state_checkpointer to
+        customize which attributes are saved in the checkpoint.
         """
         assert self.checkpoint_and_state_module.state_checkpointer is not None
         self.checkpoint_and_state_module.state_checkpointer.set_client(self)
