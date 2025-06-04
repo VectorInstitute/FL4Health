@@ -12,7 +12,6 @@ from fl4health.checkpointing.opacus_checkpointer import OpacusCheckpointer
 from fl4health.checkpointing.state_checkpointer import (
     NnUnetServerPerRoundStateCheckpointer,
     ServerPerRoundStateCheckpointer,
-    ServerStateCheckpointer,
 )
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ExchangerType
@@ -34,7 +33,7 @@ class BaseServerCheckpointAndStateModule:
         model: nn.Module | None = None,
         parameter_exchanger: ExchangerType | None = None,
         model_checkpointers: ModelCheckpointers = None,
-        state_checkpointer: ServerStateCheckpointer | None = None,
+        state_checkpointer: ServerPerRoundStateCheckpointer | None = None,
     ) -> None:
         """
         This module is meant to handle basic model and state checkpointing on the server-side of an FL process. Unlike
@@ -56,9 +55,9 @@ class BaseServerCheckpointAndStateModule:
                 parameters go to the right places. Defaults to None.
             model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of
                 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.
-            state_checkpointer (ServerStateCheckpointer | None, optional): If defined, this checkpointer will be
-                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-                checkpointer will save much more than just the model being trained. Defaults to None.
+            state_checkpointer (ServerPerRoundStateCheckpointer | None, optional): If defined, this checkpointer
+                 will be used to preserve FL training state to facilitate restarting training if interrupted.
+                Generally, this checkpointer will save much more than just the model being trained. Defaults to None.
         """
         self.model = model
         self.parameter_exchanger = parameter_exchanger
