@@ -339,7 +339,7 @@ def test_server_per_round_state_checkpointer(tmp_path: Path) -> None:
     )
 
 
-def test_nnunet_Server_per_round_state_checkpointer(tmp_path: Path) -> None:
+def test_nnunet_server_per_round_state_checkpointer(tmp_path: Path) -> None:
     """
     Test the nnunet server per round state checkpointer.
     """
