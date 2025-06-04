@@ -33,7 +33,7 @@ class BernoulliSample(torch.autograd.Function):
     # This method determines the "gradient" of the BernoulliSample function.
     # grad_output is supposed to be the gradient w.r.t. the output of the forward method.
     @staticmethod
-    def backward(ctx: torch.Any, grad_output: torch.Tensor) -> torch.Tensor:  # type: ignore
+    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:  # type: ignore
         # ctx.saved_tensors is a tuple (of length 1 in this case). Hence the indexing here.
         bernoulli_probs = ctx.saved_tensors[0]
         return bernoulli_probs * grad_output
