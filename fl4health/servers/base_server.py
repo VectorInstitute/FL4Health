@@ -153,7 +153,6 @@ class FlServer(Server):
             log(INFO, "Server state checkpoint successfully loaded.")
         else:
             log(INFO, "No server state checkpoint found. Starting from scratch.")
-
         if self.current_round == 1:
             log(INFO, "Evaluating initial parameters")
             res = self.strategy.evaluate(0, parameters=self.parameters)

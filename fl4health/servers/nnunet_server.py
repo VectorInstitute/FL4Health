@@ -9,7 +9,6 @@ from flwr.common.logger import log
 from flwr.common.typing import Code, Config, EvaluateIns, FitIns, GetPropertiesIns, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
-from flwr.server.history import History
 from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.server_module import NnUnetServerCheckpointAndStateModule
@@ -187,7 +186,6 @@ class NnunetServer(FlServer):
             or self.checkpoint_and_state_module.model_checkpointers is not None
         )
 
-        # Otherwise, we're starting training from "scratch"
         if checkpointer_exists or plans_bytes is None:
             log(INFO, "")
             log(INFO, "[PRE-INIT]")
@@ -231,32 +229,22 @@ class NnunetServer(FlServer):
             if checkpointer_exists:
                 self.initialize_server_model()
 
-        # If the state_checkpointer has been specified and a state checkpoint exists, we load state
-        # NOTE: Inherent assumption that if checkpoint exists for server that it also will exist for client.
-        # Note that we load the state after all the server attributes are initialized. If loading is successful,
-        # the initialized attributes will be updated based on the loaded state.
-        if (
-            self.checkpoint_and_state_module.state_checkpointer is not None
-            and self.checkpoint_and_state_module.state_checkpointer.checkpoint_exists()
-        ):
-            self.history = History()
-            self.current_round = 1
-            # The initial values of history and current_round will be updated based on the loaded state.
-            state_load_success = self._load_server_state()
-            assert state_load_success is True
+            # If the state_checkpointer has been specified and a state checkpoint exists, we load
+            # the state in the ``fit_with_per_round_checkpointing`` of the base_server.
+            # NOTE: Inherent assumption that if checkpoint exists for server that it also will exist for client.
 
-        # Wrap config functions so that we are sure the nnunet_plans are included
-        new_fit_cfg_fn = add_items_to_config_fn(self.strategy.configure_fit, {"nnunet_plans": self.nnunet_plans_bytes})
-        new_eval_cfg_fn = add_items_to_config_fn(
-            self.strategy.configure_evaluate, {"nnunet_plans": self.nnunet_plans_bytes}
-        )
-        setattr(self.strategy, "configure_fit", new_fit_cfg_fn)
-        setattr(self.strategy, "configure_evaluate", new_eval_cfg_fn)
+            # Wrap config functions so that we are sure the nnunet_plans are included
+            new_fit_cfg_fn = add_items_to_config_fn(
+                self.strategy.configure_fit, {"nnunet_plans": self.nnunet_plans_bytes}
+            )
+            new_eval_cfg_fn = add_items_to_config_fn(
+                self.strategy.configure_evaluate, {"nnunet_plans": self.nnunet_plans_bytes}
+            )
+            setattr(self.strategy, "configure_fit", new_fit_cfg_fn)
+            setattr(self.strategy, "configure_evaluate", new_eval_cfg_fn)
         # Finish
         log(INFO, "")
 
-    # TODO: We should have a get server state method
-    # subclass could call parent method and not have to copy entire state.
     def _save_server_state(self) -> None:
         """
         Save server checkpoint consisting of model, history, server round, metrics reporter and server name. This
