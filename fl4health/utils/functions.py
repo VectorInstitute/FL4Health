@@ -19,7 +19,7 @@ class BernoulliSample(torch.autograd.Function):
     """
 
     @staticmethod
-    def forward(bernoulli_probs: torch.Tensor) -> torch.Tensor:  # type: ignore
+    def forward(bernoulli_probs: torch.Tensor) -> torch.Tensor:
         return torch.bernoulli(input=bernoulli_probs)
 
     @staticmethod
