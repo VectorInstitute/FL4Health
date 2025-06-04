@@ -53,7 +53,7 @@ class SimpleDictCheckpointer:
         self.checkpoint_dir = checkpoint_dir
         self.checkpoint_name = checkpoint_name
         assert self.checkpoint_dir is not None, "Checkpoint directory should be set to facilitate saving on disk."
-        self.in_memory = False
+        self.save_on_disk = True
         self.checkpoint_path: str | None = None
         if self.checkpoint_name is not None:
             self.set_checkpoint_path(self.checkpoint_name, self.checkpoint_dir)
@@ -116,12 +116,12 @@ class SimpleDictCheckpointer:
         Returns:
             bool: True if checkpoint exists, otherwise false.
         """
-        if self.in_memory:
-            # Check point is saved in memory.
-            return False
-        else:
+        if self.save_on_disk:
             assert self.checkpoint_path is not None, "Checkpoint path is not set. Call set_checkpoint_path first."
             return os.path.exists(self.checkpoint_path)
+        else:
+            # Checkpoint is only saved in memory.
+            return False
 
 
 class StateCheckpointer(SimpleDictCheckpointer, ABC):
@@ -147,9 +147,8 @@ class StateCheckpointer(SimpleDictCheckpointer, ABC):
         if checkpoint_dir is not None:
             # If checkpoint_dir is provided, state will be saved to the disk.
             self.checkpoint_dir = checkpoint_dir
-            # Casting to respect the parent class's constructor
             super().__init__(self.checkpoint_dir, self.checkpoint_name)
-            self.in_memory = False
+            self.save_on_disk = True
         else:
             # Otherwise, checkpoint_dir is None and the state will be saved in memory.
             log(
@@ -157,7 +156,7 @@ class StateCheckpointer(SimpleDictCheckpointer, ABC):
                 "State is being persisted in memory.\\"
                 " You should provide a checkpoint_dir to facilitate restarting training if interrupted.",
             )
-            self.in_memory = True
+            self.save_on_disk = False
 
         self.snapshot_attrs = snapshot_attrs
         self.snapshot_ckpt: dict[str, Any] = {}
@@ -337,7 +336,8 @@ class ClientStateCheckpointer(StateCheckpointer):
         self.client = client
         self.client_name = client.client_name
         # Set the checkpoint name based on client's name if not already provided.
-        if self.checkpoint_name or self.checkpoint_path is None:
+        if self.checkpoint_name is None and self.checkpoint_dir is not None:
+            # If checkpoint_name is not provided, we set it based on the client name.
             self.checkpoint_name = f"client_{self.client_name}_state.pt"
             self.set_checkpoint_path(self.checkpoint_name)
 
