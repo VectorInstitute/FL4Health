@@ -127,7 +127,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         """Helper method to make a copy of the original optimizer for the global model.
 
         Args:
-            original_optimizer (Optimizer): original optimizer of the underyling `BasicClient`.
+            original_optimizer (Optimizer): original optimizer of the underlying `BasicClient`.
 
         Returns:
             Optimizer: a copy of the original optimizer to be used by the global model.
