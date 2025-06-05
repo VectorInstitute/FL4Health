@@ -95,10 +95,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             f"base classes implement BasicClient. This may cause runtime errors."
         )
         log(WARN, msg)
-        warnings.warn(
-            msg,
-            RuntimeWarning,
-        )
+        warnings.warn(msg, RuntimeWarning)
 
     def safe_global_model(self: DittoPersonalizedProtocol) -> nn.Module:
         """Convenient accessor for the global model.
