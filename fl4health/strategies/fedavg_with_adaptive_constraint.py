@@ -28,7 +28,7 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
         on_fit_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         on_evaluate_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
-        initial_parameters: Parameters,
+        initial_parameters: Parameters | None,
         fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         evaluate_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         initial_loss_weight: float = 1.0,
@@ -102,8 +102,9 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
 
         self.previous_loss = float("inf")
 
-        self.server_model_weights = parameters_to_ndarrays(initial_parameters)
-        initial_parameters.tensors.extend(ndarrays_to_parameters([np.array(initial_loss_weight)]).tensors)
+        if initial_parameters:
+            self.server_model_weights = parameters_to_ndarrays(initial_parameters)
+            initial_parameters.tensors.extend(ndarrays_to_parameters([np.array(initial_loss_weight)]).tensors)
 
         super().__init__(
             fraction_fit=fraction_fit,
