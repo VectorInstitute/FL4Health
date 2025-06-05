@@ -24,9 +24,7 @@ from fl4health.mixins.personalized import (
     make_it_personal,
 )
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
-from fl4health.parameter_exchange.parameter_packer import (
-    ParameterPackerAdaptiveConstraint,
-)
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 from fl4health.utils.losses import TrainingLosses
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType
 

@@ -13,7 +13,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen, SkinCancerNet
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.fedbn_client import FedBnClient
 from fl4health.datasets.skin_cancer.load_data import load_skin_cancer_data
 from fl4health.metrics import Accuracy
 from fl4health.metrics.base_metrics import Metric
@@ -24,7 +24,7 @@ from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
-class MnistFedBNClient(BasicClient):
+class MnistFedBnClient(FedBnClient):
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
@@ -45,7 +45,7 @@ class MnistFedBNClient(BasicClient):
         return LayerExchangerWithExclusions(self.model, {nn.BatchNorm2d})
 
 
-class SkinCancerFedBNClient(BasicClient):
+class SkinCancerFedBNClient(FedBnClient):
     def __init__(self, data_path: Path, metrics: Sequence[Metric], device: torch.device, dataset_name: str):
         super().__init__(data_path, metrics, device)
         self.dataset_name = dataset_name
@@ -95,9 +95,9 @@ if __name__ == "__main__":
     log(INFO, f"Server Address: {args.server_address}")
 
     if args.dataset_name in ["Barcelona", "Rosendahl", "Vienna", "UFES", "Canada"]:
-        client: BasicClient = SkinCancerFedBNClient(data_path, [Accuracy()], device, args.dataset_name)
+        client: FedBnClient = SkinCancerFedBNClient(data_path, [Accuracy()], device, args.dataset_name)
     elif args.dataset_name == "mnist":
-        client = MnistFedBNClient(data_path, [Accuracy()], device)
+        client = MnistFedBnClient(data_path, [Accuracy()], device)
     else:
         raise ValueError(
             "Unsupported dataset name. Please choose from 'Barcelona', 'Rosendahl', \
