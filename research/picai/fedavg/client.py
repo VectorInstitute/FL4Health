@@ -13,8 +13,8 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torchmetrics.classification import MultilabelAveragePrecision
 
-from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
+from fl4health.checkpointing.state_checkpointer import ClientPerRoundStateCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.metrics import TorchMetric
 from fl4health.metrics.base_metrics import Metric
@@ -166,7 +166,7 @@ if __name__ == "__main__":
     checkpoint_and_state_module: ClientCheckpointAndStateModule | None
     if args.artifact_dir is not None:
         checkpoint_and_state_module = ClientCheckpointAndStateModule(
-            state_checkpointer=PerRoundStateCheckpointer(Path(args.artifact_dir))
+            state_checkpointer=ClientPerRoundStateCheckpointer(Path(args.artifact_dir))
         )
     else:
         checkpoint_and_state_module = None
