@@ -1,4 +1,3 @@
-# Mock BasicClient and override _fully_validate_or_test method for testing
 from pathlib import Path
 from unittest.mock import MagicMock
 
