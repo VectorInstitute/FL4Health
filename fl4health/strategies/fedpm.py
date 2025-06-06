@@ -110,7 +110,7 @@ class FedPm(FedAvgDynamicLayer):
 
         In this case, the updates performed are:
 
-        .. code:: python
+        .. code-block:: python
 
             alpha_new = alpha + M
 

@@ -13,9 +13,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.metrics import Accuracy
 from fl4health.mixins.personalized.utils import ensure_protocol_compliance
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
-from fl4health.parameter_exchange.parameter_packer import (
-    ParameterPackerAdaptiveConstraint,
-)
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 
 
 def test_ensure_protocol_compliance_does_not_raise() -> None:

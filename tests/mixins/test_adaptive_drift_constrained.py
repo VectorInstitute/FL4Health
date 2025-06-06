@@ -22,9 +22,7 @@ from fl4health.mixins.adaptive_drift_constrained import (
 )
 from fl4health.mixins.core_protocols import BasicClientProtocol
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
-from fl4health.parameter_exchange.parameter_packer import (
-    ParameterPackerAdaptiveConstraint,
-)
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 
 
 class _TestBasicClient(BasicClient):
