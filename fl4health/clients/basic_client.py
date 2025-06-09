@@ -1,6 +1,7 @@
 import datetime
+import warnings
 from collections.abc import Iterator, Sequence
-from logging import INFO
+from logging import INFO, WARN
 from pathlib import Path
 from typing import Any
 
@@ -134,6 +135,41 @@ class BasicClient(NumPyClient):
         # Iterator
         self.train_iterator: Iterator | None = None
         self.val_iterator: Iterator | None = None
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """Perform some validations on subclasses of BasicClient"""
+        super().__init_subclass__(**kwargs)
+
+        # check that specific methods are not overridden, otherwise throw warning
+        methods_should_not_be_overridden = [
+            (
+                "predict",
+                (
+                    f"`{cls.__name__}` overrides `predict()`, but this method should no longer be overridden. "
+                    "Please use `_predict_with_model()` instead."
+                ),
+            ),
+            (
+                "val_step",
+                (
+                    f"`{cls.__name__}` overrides `val_step()`, but this method should no longer be overridden. "
+                    "Please use `_val_step_with_model()` instead."
+                ),
+            ),
+            (
+                "train_step",
+                (
+                    f"`{cls.__name__}` overrides `train_step()`, but this method should no longer be overridden. "
+                    "Please use `_train_step_with_model_and_optimizer()` and its helper methods instead "
+                    "for proper customization."
+                ),
+            ),
+        ]
+
+        for method_name, msg in methods_should_not_be_overridden:
+            if method_name in cls.__dict__:  # method was overridden by subclass
+                log(WARN, msg)
+                warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
     def _maybe_checkpoint(self, loss: float, metrics: dict[str, Scalar], checkpoint_mode: CheckpointMode) -> None:
         """

@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from logging import INFO
+from logging import DEBUG, INFO
 from pathlib import Path
 
 import torch
@@ -251,6 +251,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
 
         # Forward pass on both the global and local models
         preds, features = self.predict(input)
+        log(DEBUG, f"PRED KEYS from train_step: {preds.keys()}")
         target = self.transform_target(target)  # Apply transformation (Defaults to identity)
 
         # Compute all relevant losses
@@ -265,6 +266,15 @@ class DittoClient(AdaptiveDriftConstraintClient):
         self.optimizers["local"].step()
 
         # Return dictionary of predictions where key is used to name respective MetricMeters
+        return losses, preds
+
+    def val_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[EvaluationLosses, TorchPredType]:
+        # Get preds and compute loss
+        with torch.no_grad():
+            preds, features = self.predict(input)
+            target = self.transform_target(target)
+            losses = self.compute_evaluation_loss(preds, features, target)
+
         return losses, preds
 
     def predict(
@@ -325,6 +335,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
             - A dictionary with ``local_loss``, ``global_loss`` as additionally reported loss values.
         """
         # Compute global model vanilla loss
+        log(DEBUG, f"PRED KEYS from compute_loss_and_additional_losses: {preds.keys()}")
         assert "global" in preds
         global_loss = self.criterion(preds["global"], target)
 
@@ -363,6 +374,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
         assert self.global_model.training and self.model.training
 
         # local loss is stored in loss, global model loss is stored in additional losses.
+        log(DEBUG, f"PRED KEYS: {preds.keys()}")
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
 
         # Setting the adaptation loss to that of the local model, as its performance should dictate whether more or
