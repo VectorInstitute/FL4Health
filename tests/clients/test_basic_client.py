@@ -1,9 +1,11 @@
 import datetime
+import re
 from collections.abc import Sequence
 from pathlib import Path
 from unittest.mock import MagicMock
 
 import freezegun
+import pytest
 import torch
 from flwr.common import Scalar
 from flwr.common.typing import Config
@@ -16,9 +18,9 @@ from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.client import fold_loss_dict_into_metrics
 from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.logging import LoggingMode
-from fl4health.utils.losses import EvaluationLosses
+from fl4health.utils.losses import EvaluationLosses, TrainingLosses
 from fl4health.utils.random import set_all_random_seeds, unset_all_random_seeds
-from fl4health.utils.typing import TorchInputType, TorchTargetType
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 from tests.test_utils.models_for_test import LinearModel
 
