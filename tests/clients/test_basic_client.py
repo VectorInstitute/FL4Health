@@ -1,9 +1,11 @@
 import datetime
+import re
 from collections.abc import Sequence
 from pathlib import Path
 from unittest.mock import MagicMock
 
 import freezegun
+import pytest
 import torch
 from flwr.common import Scalar
 from flwr.common.typing import Config
@@ -16,9 +18,9 @@ from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.client import fold_loss_dict_into_metrics
 from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.logging import LoggingMode
-from fl4health.utils.losses import EvaluationLosses
+from fl4health.utils.losses import EvaluationLosses, TrainingLosses
 from fl4health.utils.random import set_all_random_seeds, unset_all_random_seeds
-from fl4health.utils.typing import TorchInputType, TorchTargetType
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 from tests.test_utils.models_for_test import LinearModel
 
@@ -249,3 +251,50 @@ class MockBasicClient(BasicClient):
             return self.mock_loss, self.mock_metrics
         else:
             return self.mock_loss, self.mock_metrics_test
+
+
+def test_subclass_raises_warning_if_override_predict() -> None:
+    msg = (
+        "`_TestSubclass` overrides `predict()`, but this method should no longer be overridden. "
+        "Please use `_predict_with_model()` instead."
+    )
+    with pytest.warns(RuntimeWarning, match=re.escape(msg)):
+
+        class _TestSubclass(BasicClient):
+            """A subclass that overrides predict"""
+
+            def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
+                return super().predict(input)
+
+
+def test_subclass_raises_warning_if_override_val_step() -> None:
+    msg = (
+        "`_TestSubclass` overrides `val_step()`, but this method should no longer be overridden. "
+        "Please use `_val_step_with_model()` instead."
+    )
+    with pytest.warns(RuntimeWarning, match=re.escape(msg)):
+
+        class _TestSubclass(BasicClient):
+            """A subclass that overrides val_step"""
+
+            def val_step(
+                self, input: TorchInputType, target: TorchTargetType
+            ) -> tuple[EvaluationLosses, TorchPredType]:
+                return super().val_step(input, target)
+
+
+def test_subclass_raises_warning_if_override_train_step() -> None:
+    msg = (
+        "`_TestSubclass` overrides `train_step()`, but this method should no longer be overridden. "
+        "Please use `_train_step_with_model_and_optimizer()` and its helper methods instead "
+        "for proper customization."
+    )
+    with pytest.warns(RuntimeWarning, match=re.escape(msg)):
+
+        class _TestSubclass(BasicClient):
+            """A subclass that overrides train_step"""
+
+            def train_step(
+                self, input: TorchInputType, target: TorchTargetType
+            ) -> tuple[TrainingLosses, TorchPredType]:
+                return super().train_step(input, target)
