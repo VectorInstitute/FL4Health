@@ -552,6 +552,80 @@ class BasicClient(NumPyClient):
         """
         metric_manager.update(preds, target)
 
+    def _compute_preds_and_losses(
+        self, model: nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[TrainingLosses, TorchPredType]:
+        """Helper method within the train step for computing preds and losses.
+
+        NOTE: Subclasses should implement this helper method if there is a need
+        to specialize this part of the overall train step.
+
+        Args:
+            model (nn.Module): the model used to make predictions
+            optimizer (Optimizer): the associated optimizer
+            input (TorchInputType): The input to be fed into the model.
+            target (TorchTargetType): The target corresponding to the input.
+
+        Returns:
+            tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
+            a dictionary of any predictions produced by the model prior to the
+            application of the backwards phase
+        """
+        # Clear gradients from optimizer if they exist
+        optimizer.zero_grad()
+
+        # Call user defined methods to get predictions and compute loss
+        preds, features = self._predict_with_model(model, input)
+        target = self.transform_target(target)
+        losses = self.compute_training_loss(preds, features, target)
+
+        return losses, preds
+
+    def _apply_backwards_on_losses_and_take_step(
+        self, model: nn.Module, optimizer: Optimizer, losses: TrainingLosses
+    ) -> TrainingLosses:
+        """Helper method within the train step for applying backwards on losses and taking step with optimizer.
+
+        NOTE: Subclasses should implement this helper method if there is a need
+        to specialize this part of the overall train step.
+
+        Args:
+            model (nn.Module): the model used for making predictions. Passed here in case subclasses need it.
+            optimizer (Optimizer): the optimizer with which we take the step
+            losses (TrainingLosses): the losses to apply backwards on
+
+        Returns:
+            TrainingLosses: The losses object post backwards application
+        """
+        # Compute backward pass and update parameters with optimizer
+        losses.backward["backward"].backward()
+        self.transform_gradients(losses)
+        optimizer.step()
+
+        return losses
+
+    def _train_step_with_model_and_optimizer(
+        self, model: torch.nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[TrainingLosses, TorchPredType]:
+        """Helper train step method that allows for injection of model and optimizer.
+
+        NOTE: Subclasses should implement this method if there is a need to specialize
+        the train_step logic.
+
+        Args:
+            input (TorchInputType): The input to be fed into the model.
+            target (TorchTargetType): The target corresponding to the input.
+
+        Returns:
+            tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
+            a dictionary of any predictions produced by the model.
+        """
+
+        losses, preds = self._compute_preds_and_losses(model, optimizer, input, target)
+        losses = self._apply_backwards_on_losses_and_take_step(model, optimizer, losses)
+
+        return losses, preds
+
     def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
         """
         Given a single batch of input and target data, generate predictions, compute loss, update parameters and
@@ -566,18 +640,29 @@ class BasicClient(NumPyClient):
             tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
             a dictionary of any predictions produced by the model.
         """
-        # Clear gradients from optimizer if they exist
-        self.optimizers["global"].zero_grad()
+        return self._train_step_with_model_and_optimizer(self.model, self.optimizers["global"], input, target)
 
-        # Call user defined methods to get predictions and compute loss
-        preds, features = self.predict(input)
-        target = self.transform_target(target)
-        losses = self.compute_training_loss(preds, features, target)
+    def _val_step_with_model(
+        self, model: nn.Module, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[EvaluationLosses, TorchPredType]:
+        """Helper method for val_step that allows for injection of model.
 
-        # Compute backward pass and update parameters with optimizer
-        losses.backward["backward"].backward()
-        self.transform_gradients(losses)
-        self.optimizers["global"].step()
+        NOTE: Subclasses should implement this method if there is a need to
+        specialize the val_step logic.
+
+        Args:
+            input (TorchInputType): The input to be fed into the model.
+            target (TorchTargetType): The target corresponding to the input.
+
+        Returns:
+            tuple[EvaluationLosses, TorchPredType]: The losses object from the val step along with a dictionary of the
+            predictions produced by the model.
+        """
+        # Get preds and compute loss
+        with torch.no_grad():
+            preds, features = self._predict_with_model(model, input)
+            target = self.transform_target(target)
+            losses = self.compute_evaluation_loss(preds, features, target)
 
         return losses, preds
 
@@ -593,13 +678,8 @@ class BasicClient(NumPyClient):
             tuple[EvaluationLosses, TorchPredType]: The losses object from the val step along with a dictionary of the
             predictions produced by the model.
         """
-        # Get preds and compute loss
-        with torch.no_grad():
-            preds, features = self.predict(input)
-            target = self.transform_target(target)
-            losses = self.compute_evaluation_loss(preds, features, target)
 
-        return losses, preds
+        return self._val_step_with_model(self.model, input, target)
 
     def train_by_epochs(
         self,
@@ -929,9 +1009,9 @@ class BasicClient(NumPyClient):
         # batch_size * num_validation_steps
         self.num_val_samples = len(self.val_loader.dataset)  # type: ignore
         if self.num_validation_steps is not None:
-            assert self.val_loader.batch_size is not None, (
-                "Validation batch size must be defined if we want to limit the number of validation steps"
-            )
+            assert (
+                self.val_loader.batch_size is not None
+            ), "Validation batch size must be defined if we want to limit the number of validation steps"
             self.num_val_samples = self.num_validation_steps * self.val_loader.batch_size
 
         if self.test_loader:
@@ -966,6 +1046,54 @@ class BasicClient(NumPyClient):
         """
         return FullParameterExchanger()
 
+    def _predict_with_model(
+        self, model: torch.nn.Module, input: TorchInputType
+    ) -> tuple[TorchPredType, TorchFeatureType]:
+        """Helper predict method that allows for injection of model.
+
+        NOTE: Subclasses should implement this method if there is need to specialize
+        the predict logic of the client.
+
+        Args:
+            model (torch.nn.Module): the model with which to make predictions
+            input (TorchInputType): Inputs to be fed into the model. If input is of type ``dict[str, torch.Tensor]``,
+                it is assumed that the keys of input match the names of the keyword arguments of
+                ``self.model.forward().`
+
+        Returns:
+            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains a dictionary of
+            predictions indexed by name and the second element contains intermediate activations indexed by name. By
+            passing features, we can compute losses such as the contrastive loss in MOON. All predictions included in
+            dictionary will by default be used to compute metrics separately.
+
+        Raises:
+            TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model's
+                forward method.
+            ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
+                forward.
+        """
+
+        if isinstance(input, torch.Tensor):
+            output = model(input)
+        elif isinstance(input, dict):
+            # If input is a dictionary, then we unpack it before computing the forward pass.
+            # Note that this assumes the keys of the input match (exactly) the keyword args
+            # of self.model.forward().
+            output = model(**input)
+        else:
+            raise TypeError("'input' must be of type torch.Tensor or dict[str, torch.Tensor].")
+
+        if isinstance(output, dict):
+            return output, {}
+        if isinstance(output, torch.Tensor):
+            return {"prediction": output}, {}
+        if isinstance(output, tuple):
+            if len(output) != 2:
+                raise ValueError(f"Output tuple should have length 2 but has length {len(output)}")
+            preds, features = output
+            return preds, features
+        raise ValueError("Model forward did not return a tensor, dictionary of tensors, or tuple of tensors")
+
     def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the prediction(s), and potentially features, of the model(s) given the input.
@@ -987,26 +1115,7 @@ class BasicClient(NumPyClient):
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
                 forward.
         """
-        if isinstance(input, torch.Tensor):
-            output = self.model(input)
-        elif isinstance(input, dict):
-            # If input is a dictionary, then we unpack it before computing the forward pass.
-            # Note that this assumes the keys of the input match (exactly) the keyword args
-            # of self.model.forward().
-            output = self.model(**input)
-        else:
-            raise TypeError("'input' must be of type torch.Tensor or dict[str, torch.Tensor].")
-
-        if isinstance(output, dict):
-            return output, {}
-        if isinstance(output, torch.Tensor):
-            return {"prediction": output}, {}
-        if isinstance(output, tuple):
-            if len(output) != 2:
-                raise ValueError(f"Output tuple should have length 2 but has length {len(output)}")
-            preds, features = output
-            return preds, features
-        raise ValueError("Model forward did not return a tensor, dictionary of tensors, or tuple of tensors")
+        return self._predict_with_model(self.model, input)
 
     def compute_loss_and_additional_losses(
         self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
@@ -1268,6 +1377,19 @@ class BasicClient(NumPyClient):
         """
         pass
 
+    def _transform_gradients_with_model(self, model: torch.nn.Module, losses: TrainingLosses) -> None:
+        """Helper transform gradients method that allows for injection of model.
+
+        NOTE: Subclasses should implement this helper should there be a need to specialize the logic
+        for transforming gradients.
+
+        Args:
+            model (torch.nn.Module): the model used to generate predictions to compute losses
+            losses (TrainingLosses): The losses object from the train step
+        """
+
+        pass
+
     def transform_gradients(self, losses: TrainingLosses) -> None:
         """
         Hook function for model training only called after backwards pass but before optimizer step. Useful for
@@ -1276,7 +1398,7 @@ class BasicClient(NumPyClient):
         Args:
             losses (TrainingLosses): The losses object from the train step
         """
-        pass
+        return self._transform_gradients_with_model(self.model, losses)
 
     def _save_client_state(self) -> None:
         """
