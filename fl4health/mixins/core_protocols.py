@@ -80,6 +80,34 @@ class BasicClientProtocol(BasicClientProtocolPreSetup, Protocol):
     def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
         pass  # pragma: no cover
 
+    def _predict_with_model(
+        self, model: torch.nn.Module, input: TorchInputType
+    ) -> tuple[TorchPredType, TorchFeatureType]:
+        pass  # pragma: no cover
+
+    def _train_step_with_model_and_optimizer(
+        self, model: torch.nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[TrainingLosses, TorchPredType]:
+        pass  # pragma: no cover
+
+    def _apply_backwards_on_losses_and_take_step(
+        self, model: nn.Module, optimizer: Optimizer, losses: TrainingLosses
+    ) -> TrainingLosses:
+        pass  # pragma: no cover
+
+    def _compute_preds_and_losses(
+        self, model: nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[TrainingLosses, TorchPredType]:
+        pass  # pragma: no cover
+
+    def _val_step_with_model(
+        self, model: nn.Module, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[EvaluationLosses, TorchPredType]:
+        pass  # pragma: no cover
+
+    def _transform_gradients_with_model(self, model: torch.nn.Module, losses: TrainingLosses) -> None:
+        pass  # pragma: no cover
+
     def transform_target(self, target: TorchTargetType) -> TorchTargetType:
         pass  # pragma: no cover
 
