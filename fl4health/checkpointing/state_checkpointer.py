@@ -397,8 +397,7 @@ class ClientPerRoundStateCheckpointer(ClientStateCheckpointer):
         checkpoint_name: str | None = None,
     ) -> None:
         """
-        Abstract class for saving and loading the state of the client's attributes
-        after each FL round.
+        Class for saving and loading the state of the client's attributes after each FL round.
         """
         assert (
             checkpoint_dir is not None
@@ -419,8 +418,8 @@ class ClientPerRoundStateCheckpointer(ClientStateCheckpointer):
                 ReportsManager,
             ),
         }
-        # No default checkpoint_name is provided.
-        # It should be user-defined and specific for each clients, or it will be set when client is set.
+        # checkpoint_name should be user-defined and specific for each clients,
+        # or it will be set based on client's name.
         super().__init__(
             checkpoint_dir,
             checkpoint_name,
@@ -466,8 +465,8 @@ class ClientTrainLoopCheckpointer(ClientStateCheckpointer):
                 MetricManager,
             ),
         }
-        # No default checkpoint_name is provided.
-        # It should be user-defined and specific for each clients, or it will be set when client is set.
+        # checkpoint_name should be user-defined and specific for each clients,
+        # or it will be set based on client's name.
         super().__init__(
             checkpoint_dir,
             checkpoint_name,
@@ -632,7 +631,7 @@ class NnUnetServerPerRoundStateCheckpointer(ServerPerRoundStateCheckpointer):
             checkpoint_dir,
             checkpoint_name,
         )
-        # Override's parent class's snapshot_attrs with nnUNet-specific attributes.
+        # Override snapshot_attrs with nnUNet-specific attributes.
         self.snapshot_attrs: dict = {
             "model": (TorchModuleSnapshotter(), nn.Module),
             "current_round": (NumberSnapshotter(), int),
