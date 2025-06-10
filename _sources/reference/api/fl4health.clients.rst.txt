@@ -31,6 +31,7 @@ Submodules
    fl4health.clients.evaluate_client
    fl4health.clients.fed_pca_client
    fl4health.clients.fed_prox_client
+   fl4health.clients.fedbn_client
    fl4health.clients.fedper_client
    fl4health.clients.fedpm_client
    fl4health.clients.fedrep_client
