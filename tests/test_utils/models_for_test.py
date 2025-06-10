@@ -33,10 +33,10 @@ class LinearModel(nn.Module):
 
 
 class SingleLayerWithSeed(nn.Module):
-    def __init__(self, seed: int = 42) -> None:
+    def __init__(self, seed: int = 42, output_size: int = 2) -> None:
         super().__init__()
         torch.manual_seed(seed)
-        self.linear = nn.Linear(100, 2, bias=False)
+        self.linear = nn.Linear(100, output_size, bias=False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.linear(x)
