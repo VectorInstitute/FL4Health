@@ -42,6 +42,7 @@ fastapi = "^0.115.12"
 tornado = "^6.5"
 pympler = "^1.1"
 flwr-datasets = "^0.5.0"
+jupyter-core = "5.8.1"
 
 [tool.poetry.group.dev.dependencies]
 # locked the 2.15 version because of restrictions with tensorflow-io
