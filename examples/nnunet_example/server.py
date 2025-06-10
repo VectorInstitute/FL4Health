@@ -14,6 +14,7 @@ from flwr.server.strategy import FedAvg
 
 from fl4health.checkpointing.server_module import NnUnetServerCheckpointAndStateModule
 from fl4health.checkpointing.state_checkpointer import NnUnetServerPerRoundStateCheckpointer
+from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.nnunet_server import NnunetServer
 from fl4health.utils.config import make_dict_with_epochs_or_steps

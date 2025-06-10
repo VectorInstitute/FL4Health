@@ -15,6 +15,7 @@ from fl4health.checkpointing.checkpointer import (
 )
 from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.checkpointing.state_checkpointer import ServerPerRoundStateCheckpointer
+from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.reporting import JsonReporter
 from fl4health.servers.base_server import FlServer

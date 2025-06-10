@@ -8,17 +8,6 @@ from flwr.common.logger import log
 
 from fl4health.checkpointing.state_checkpointer import ClientTrainLoopCheckpointer
 from fl4health.utils.logging import LoggingMode
-from fl4health.utils.losses import TrainingLosses
-from fl4health.utils.metrics import MetricManager
-from fl4health.utils.snapshotter import (
-    AbstractSnapshotter,
-    LRSchedulerSnapshotter,
-    NumberSnapshotter,
-    OptimizerSnapshotter,
-    SerializableObjectSnapshotter,
-    T,
-    TorchModuleSnapshotter,
-)
 
 if TYPE_CHECKING:
     from fl4health.clients.basic_client import BasicClient

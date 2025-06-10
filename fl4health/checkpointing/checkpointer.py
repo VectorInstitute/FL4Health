@@ -1,7 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from logging import ERROR, INFO
+from logging import ERROR, INFO, WARNING
 
 import torch
 import torch.nn as nn
@@ -262,3 +262,48 @@ class BestLossTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
                 f"Not checkpointing the model: Current Loss ({comparison_score}) is not "
                 f"{self.comparison_str} Best Loss ({self.best_score})",
             )
+
+
+class BestMetricTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
+    def __init__(
+        self,
+        checkpoint_dir: str,
+        checkpoint_name: str,
+        metric: str,
+        prefix: str = "val - prediction - ",
+        maximize: bool = False,
+    ) -> None:
+        """Checkpointer that checkpoints based on the value of a user defined metric.
+        Args:
+            checkpoint_dir (str): Directory to which the model is saved. This directory should already exist. The
+                checkpointer will not create it if it does not.
+            checkpoint_name (str): Name of the checkpoint to be saved.
+            metric (str): The name of the metric to base checkpointing on. After prepending the prefix, should be a
+                key in the metrics dictionary passed in ``self.maybe_checkpoint``. In BasicClient this is the 'name'
+                attribute of the corresponding ``fl4health.utils.metrics.Metric`` that was provided to the clients.
+            prefix (str, optional): A prefix to add to the metric name to create the key used to find the metric.
+                Usually a prefix is added by the client's metric manager. Defaults to 'val - prediction - '.
+            maximize (bool, optional): If True maximizes the metric instead of minimizing it. Defaults to False.
+        """
+        self.metric_key = f"{prefix}{metric}"
+
+        def metric_score_function(_: float, metrics: dict[str, Scalar]) -> float:
+            try:
+                val = metrics[self.metric_key]
+            except KeyError as e:
+                log(ERROR, f"Could not find '{self.metric_key}' in metrics dict. Available keys are: {metrics.keys()}")
+                raise e
+            try:
+                val_float = float(val)
+            except ValueError as e:
+                log(ERROR, f"Could not convert {self.metric_key} into a float score for best metric checkpointing.")
+                raise e
+            return val_float
+
+        super().__init__(
+            checkpoint_dir=checkpoint_dir,
+            checkpoint_name=checkpoint_name,
+            checkpoint_score_function=metric_score_function,
+            checkpoint_score_name=metric,
+            maximize=maximize,
+        )

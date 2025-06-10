@@ -20,9 +20,9 @@ if TYPE_CHECKING:
 
 from flwr.server.history import History
 
+from fl4health.metrics.metric_managers import MetricManager
 from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.utils.losses import LossMeter
-from fl4health.utils.metrics import MetricManager
 from fl4health.utils.snapshotter import (
     AbstractSnapshotter,
     BytesSnapshotter,
