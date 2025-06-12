@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 import os
 from abc import ABC, abstractmethod
 from enum import Enum
@@ -38,40 +37,50 @@ from fl4health.utils.snapshotter import (
 )
 
 
-class SimpleDictCheckpointer:
-    """
-    Simple state checkpointer for saving and loading the state of an object's attributes saved in a dictionary.
-    This class is used to save and load the state of an object to a file. It is not meant to be used for
-    saving in memory.
-    """
+class StateCheckpointer(ABC):
 
     def __init__(
         self,
-        checkpoint_dir: Path | None,
+        checkpoint_dir: Path,
         checkpoint_name: str | None,
+        snapshot_attrs: dict[str, tuple[AbstractSnapshotter, Any]],
     ) -> None:
+        """
+        Class for saving and loading the state of the client or server attributes. Attributes are stored in a
+        dictionary to assist saving and are loaded in a dictionary. Checkpointing can be done after client or
+        server round to facilitate restarting federated training if interrupted, or during the client's training
+        loop to facilitate early stopping.
+
+        Server and client state checkpointers will save to disk in the provided directory. A default name for the
+        state checkpoint will be derived if checkpoint name remains none at the time of saving.
+
+        Args:
+            checkpoint_dir (Path): Directory to which checkpoints are saved. This can be modified later with
+                `set_checkpoint_path`
+            checkpoint_name (str): Name of the checkpoint to be saved. If None at time of state saving, a default name
+                will be given to the checkpoint. This can be set later with `set_checkpoint_path`
+            snapshot_attrs (dict[str, tuple[AbstractSnapshotter, Any]]): Attributes that we need to save in order
+                to allow for restarting of training.
+        """
         self.checkpoint_dir = checkpoint_dir
         self.checkpoint_name = checkpoint_name
-        assert self.checkpoint_dir is not None, "Checkpoint directory should be set to facilitate saving on disk."
-        self.save_on_disk = True
         self.checkpoint_path: str | None = None
         if self.checkpoint_name is not None:
-            self.set_checkpoint_path(self.checkpoint_name, self.checkpoint_dir)
+            self.checkpoint_path = os.path.join(self.checkpoint_dir, self.checkpoint_name)
 
-    def set_checkpoint_path(self, checkpoint_name: str, checkpoint_dir: Path | None = None) -> None:
+        self.snapshot_attrs = snapshot_attrs
+        self.snapshot_ckpt: dict[str, Any] = {}
+
+    def set_checkpoint_path(self, checkpoint_dir: Path, checkpoint_name: str) -> None:
         """
         Set or update the checkpoint path based on the provided checkpoint name and directory.
 
         Args:
+            checkpoint_dir (Path): The directory where the checkpoint will be saved.
             checkpoint_name (str): The name of the checkpoint file.
-            checkpoint_dir (Path | None): The directory where the checkpoint will be saved.
         """
+        self.checkpoint_dir = checkpoint_dir
         self.checkpoint_name = checkpoint_name
-        if checkpoint_dir is not None:
-            # Also update the checkpoint dir.
-            self.checkpoint_dir = checkpoint_dir
-        assert self.checkpoint_dir is not None, "Checkpoint directory should be set to facilitate saving on disk."
-        assert self.checkpoint_name is not None, "Checkpoint name should be set to facilitate saving on disk."
         self.checkpoint_path = os.path.join(self.checkpoint_dir, self.checkpoint_name)
 
     def save_checkpoint(self, checkpoint_dict: dict[str, Any]) -> None:
@@ -86,7 +95,7 @@ class SimpleDictCheckpointer:
             e: Will throw an error if there is an issue saving the model. ``Torch.save`` seems to swallow errors in
                 this context, so we explicitly surface the error with a try/except.
         """
-        assert self.checkpoint_path is not None, "Checkpoint path is not set. Call set_checkpoint_path first."
+        assert self.checkpoint_path is not None, "Checkpoint path is not set but save_checkpoint has been called."
         try:
             log(INFO, f"Saving the state as {self.checkpoint_path}")
             torch.save(checkpoint_dict, self.checkpoint_path)
@@ -102,64 +111,88 @@ class SimpleDictCheckpointer:
         Returns:
             dict[str, Any]: A dictionary representing the checkpointed state, as loaded by ``torch.load``.
         """
-        assert self.checkpoint_path is not None, "Checkpoint path is not set. Call set_checkpoint_path first."
-        assert self.checkpoint_exists()
+        assert self.checkpoint_path is not None, "Checkpoint path is not set but load_checkpoint has been called."
+        assert self.checkpoint_exists(), f"Could not verify existence of checkpoint file at {self.checkpoint_path}"
         log(INFO, f"Loading state from checkpoint at {self.checkpoint_path}")
 
         return torch.load(self.checkpoint_path)
 
     def checkpoint_exists(self) -> bool:
         """
-        Check if a checkpoint exists at the checkpoint_path constructed as
-        ``checkpoint_dir`` + ``checkpoint_name`` during initialization.
+        Check if a checkpoint exists at the checkpoint_path constructed as ``checkpoint_dir`` + ``checkpoint_name``
+        during initialization.
 
         Returns:
             bool: True if checkpoint exists, otherwise false.
         """
-        if self.save_on_disk:
-            assert self.checkpoint_path is not None, "Checkpoint path is not set. Call set_checkpoint_path first."
+        if self.checkpoint_path is not None:
             return os.path.exists(self.checkpoint_path)
-        else:
-            # Checkpoint is only saved in memory.
-            return False
+        # Checkpoint is only saved in memory.
+        return False
 
-
-class StateCheckpointer(SimpleDictCheckpointer, ABC):
-
-    def __init__(
-        self,
-        checkpoint_dir: Path | None,
-        checkpoint_name: str | None,
-        snapshot_attrs: dict[str, tuple[AbstractSnapshotter, Any]],
-    ) -> None:
+    def add_to_snapshot_attr(self, name: str, snapshotter: AbstractSnapshotter, input_type: type[T]) -> None:
         """
-        Class for saving and loading the state of the client or server attributes. Attributes are stored
-        in a dictionary to assist saving and are loaded in a dictionary. Checkpointing can be done
-        after client or server round to facilitate restarting federated training if interrupted,
-        or during the client's training loop to facilitate early stopping.
-        Server and client state checkpointers should be saved to the disk and not in memory to
-        be recovered if training is interrupted. Client training loop state can optionally be saved in memory
-        if no checkpointing_dir is provided (to facilitate early stopping).
+        Add new attribute to the default ``snapshot_attrs`` dictionary. For this, we need a snapshotter that
+        provides functionality for loading and saving the state of the attribute based on the type of the attribute.
 
+        Args:
+            name (str): Name of the attribute to be added.
+            snapshotter (AbstractSnapshotter): Snapshotter object to be used for saving and loading the attribute.
+            input_type (type[T]): Expected type of the attribute.
         """
-        self.checkpoint_dir: Path | None = checkpoint_dir
-        self.checkpoint_name: str | None = checkpoint_name
-        if checkpoint_dir is not None:
-            # If checkpoint_dir is provided, state will be saved to the disk.
-            self.checkpoint_dir = checkpoint_dir
-            super().__init__(self.checkpoint_dir, self.checkpoint_name)
-            self.save_on_disk = True
-        else:
-            # Otherwise, checkpoint_dir is None and the state will be saved in memory.
-            log(
-                WARNING,
-                "State is being persisted in memory.\\"
-                " You should provide a checkpoint_dir to facilitate restarting training if interrupted.",
-            )
-            self.save_on_disk = False
+        self.snapshot_attrs.update({name: (snapshotter, input_type)})
 
-        self.snapshot_attrs = snapshot_attrs
-        self.snapshot_ckpt: dict[str, Any] = {}
+    def delete_from_snapshot_attr(self, name: str) -> None:
+        """
+        Delete the attribute from the default ``snapshot_attrs`` dictionary. This is useful for removing attributes
+        that are no longer needed or to avoid saving/loading them.
+
+        Args:
+            name (str): Name of the attribute to be removed from the ``snapshot_attrs`` dictionary.
+        """
+        del self.snapshot_attrs[name]
+
+    def save_state(self) -> None:
+        """
+        Create a snapshot of the state as defined in ``self.snapshot_attrs``. It is saved in the
+        ``self.checkpoint_dir`` under ``self.checkpoint_name``
+        """
+        for attr_name, (snapshotter, expected_type) in self.snapshot_attrs.items():
+            self.snapshot_ckpt.update(self._save_snapshot(snapshotter, attr_name, expected_type))
+
+        assert self.checkpoint_path is not None, "Attempting to save state but checkpoint_path is None"
+        log(INFO, f"Saving the state to checkpoint at {self.checkpoint_path}")
+        self.save_checkpoint(self.snapshot_ckpt)
+        # Release snapshot memory after disk persistence
+        self.snapshot_ckpt.clear()
+
+    def load_state(self, attributes: list[str] | None = None) -> None:
+        """
+        Load checkpointed state dictionary either from the checkpoint or from the memory (``self.snapshot_attrs``).
+
+        Args:
+            attributes (list[str] | None): List of attributes to load from the checkpoint. If None, all attributes
+                specified in ``snapshot_attrs`` are loaded. Defaults to None.
+        """
+        assert (
+            self.checkpoint_exists()
+        ), f"No state checkpoint to load. Checkpoint at {self.checkpoint_path} does not exist"
+
+        if attributes is None:
+            attributes = list(self.snapshot_attrs.keys())
+            if not attributes:
+                log(WARNING, "self.snapshot_attrs is empty, which may be undesired behavior.")
+
+        # If the checkpoint exists, load it into snapshot_ckpt
+        self.snapshot_ckpt = self.load_checkpoint()
+
+        # Load components into target object
+        for attr in attributes:
+            snapshotter, expected_type = self.snapshot_attrs[attr]
+            self._load_snapshot(snapshotter, attr, expected_type)
+
+        # Release snapshot memory after loading
+        self.snapshot_ckpt.clear()
 
     @abstractmethod
     def get_attribute(self, name: str) -> Any:
@@ -224,7 +257,10 @@ class StateCheckpointer(SimpleDictCheckpointer, ABC):
 
     def _load_snapshot(self, snapshotter: AbstractSnapshotter, name: str, expected_type: type[T]) -> None:
         """
-        Load the state of the attribute to the client using the snapshotter's load_attribute functionality.
+        Load the state of the attribute using the snapshotter's ``load_attribute`` functionality.
+
+        NOTE: This function assumes that ``snapshot_ckpt`` has been populated with the right data, either held in
+        memory or loaded from disk.
 
         Args:
             snapshotter (dict[str, Any]): Snapshotter object to return the state of the attribute.
@@ -238,128 +274,104 @@ class StateCheckpointer(SimpleDictCheckpointer, ABC):
         else:
             self.set_attribute(name, attribute)
 
-    def add_default_snapshot_attr(self, name: str, snapshotter: AbstractSnapshotter, input_type: type[T]) -> None:
-        """
-        Add new attribute to the default snapshot_attrs dictionary. For this, we need a snapshotter that
-        provides functionality for loading and saving the state of the attribute based on the type of the attribute.
-
-        Args:
-            name (str): Name of the attribute to be added.
-            snapshotter (AbstractSnapshotter): Snapshotter object to be used for saving and loading the attribute.
-            input_type (type[T]): Expected type of the attribute.
-        """
-        self.snapshot_attrs.update({name: (snapshotter, input_type)})
-
-    def delete_default_snapshot_attr(self, name: str) -> None:
-        """
-        Delete the attribute from the default snapshot_attrs dictionary.
-        This is useful for removing attributes that are no longer needed or to avoid saving/loading them.
-
-        Args:
-            name (str): Name of the attribute to be removed from the ``snapshot_attrs`` dictionary.
-        """
-        del self.snapshot_attrs[name]
-
-    def save_state(self) -> None:
-        """
-        Create a snapshot of the state as defined in self.snapshot_attrs.
-        It is either saved in the ``checkpoint_dir`` (if provided) under ``checkpoint_name``,
-        or remains in memory (self.snapshot_ckpt).
-        """
-        for attr_name, (snapshotter, expected_type) in self.snapshot_attrs.items():
-            self.snapshot_ckpt.update(self._save_snapshot(snapshotter, attr_name, expected_type))
-
-        if self.checkpoint_dir is not None:
-            log(
-                INFO,
-                f"Saving the state to checkpoint at {self.checkpoint_dir} " f"with name {self.checkpoint_name}.",
-            )
-            self.save_checkpoint(self.snapshot_ckpt)
-            self.snapshot_ckpt.clear()
-
-        else:
-            log(
-                WARNING,
-                "Checkpointing directory is not provided. State will be kept in the memory.",
-            )
-            self.snapshot_ckpt = copy.deepcopy(self.snapshot_ckpt)
-
-    def load_state(self, attributes: list[str] | None = None) -> None:
-        """
-        Load checkpointed state dictionary either from the checkpoint or from the memory (self.snapshot_attrs).
-
-        Args:
-            attributes (list[str] | None): List of attributes to load from the checkpoint. If None, all attributes
-                specified in ``snapshot_attrs`` are loaded. Defaults to None.
-        """
-        assert self.checkpoint_exists() or self.snapshot_ckpt != {}, "No state checkpoint to load."
-
-        if attributes is None:
-            attributes = list(self.snapshot_attrs.keys())
-
-        # If the checkpoint exists, load it, otherwise load from self.snapshot_ckpt (in memory).
-        if self.checkpoint_dir is not None and self.checkpoint_exists():
-            self.snapshot_ckpt = self.load_checkpoint()
-
-        for attr in attributes:
-            snapshotter, expected_type = self.snapshot_attrs[attr]
-            self._load_snapshot(snapshotter, attr, expected_type)
-
 
 class ClientStateCheckpointer(StateCheckpointer):
 
     def __init__(
         self,
-        checkpoint_dir: Path | None,
-        checkpoint_name: str | None,
-        snapshot_attrs: dict[str, tuple[AbstractSnapshotter, Any]],
+        checkpoint_dir: Path,
+        checkpoint_name: str | None = None,
+        snapshot_attrs: dict[str, tuple[AbstractSnapshotter, Any]] | None = None,
     ) -> None:
         """
-        Class for saving and loading the state of the client's attributes as specified in ``snapshot_attrs``.
+        Class for saving and loading the state of a client's attributes as specified in ``snapshot_attrs``.
+
+        Args:
+            checkpoint_dir (Path): Directory to which checkpoints are saved. This can be modified later with
+                `set_checkpoint_path`
+            checkpoint_name (str | None, optional): Name of the checkpoint to be saved. If None, but ``checkpoint_dir``
+                is set then a default ``checkpoint_name`` based on the underlying name of the client to be
+                checkpointed will be set of the form ``f"client_{client.client_name}_state.pt"``. This can be set later
+                with `set_checkpoint_path`. Defaults to None.
+            snapshot_attrs (dict[str, tuple[AbstractSnapshotter, Any]] | None, optional): Attributes that we need to
+                save in order to allow for restarting of training. If None, a sensible default set of attributes and
+                their associated snapshotters for an FL client are set. Defaults to None.
         """
-        self.snapshot_attrs = snapshot_attrs
-        super().__init__(
-            checkpoint_dir,
-            checkpoint_name,
-            self.snapshot_attrs,
-        )
+        # If snapshot_attrs is None, we set a sensible default set of attributes to be saved. These are a minimal
+        # set of attributes that can be used for per round checkpointing or early stopping.
+        # NOTE: These default attributes are useful for state checkpointing a BasicClient. More sophisticated  clients
+        # may require more attributes to fully support training restarts and early stopping. For a server example, see
+        # NnUnetServerStateCheckpointer.
+        if snapshot_attrs is None:
+            snapshot_attrs = {
+                "model": (TorchModuleSnapshotter(), nn.Module),
+                "optimizers": (OptimizerSnapshotter(), Optimizer),
+                "lr_schedulers": (
+                    LRSchedulerSnapshotter(),
+                    LRScheduler,
+                ),
+                "total_steps": (NumberSnapshotter(), int),
+                "total_epochs": (NumberSnapshotter(), int),
+                "reports_manager": (
+                    SerializableObjectSnapshotter(),
+                    ReportsManager,
+                ),
+                "train_loss_meter": (
+                    SerializableObjectSnapshotter(),
+                    LossMeter,
+                ),
+                "train_metric_manager": (
+                    SerializableObjectSnapshotter(),
+                    MetricManager,
+                ),
+            }
+
+        super().__init__(checkpoint_dir, checkpoint_name, snapshot_attrs)
         self.client: BasicClient | None = None
 
-    def set_client(self, client: BasicClient) -> None:
+    def maybe_set_default_checkpoint_name(self) -> None:
         """
-        Set the client to be monitored.
+        Potentially sets a default name for the checkpoint to be saved. If ``checkpoint_dir`` is set but
+        ``checkpoint_name`` is None then a default ``checkpoint_name`` based on the underlying name of the client to
+        be checkpointed will be set of the form ``f"client_{self.client.client_name}_state.pt"``.
 
         Args:
             client (BasicClient): The client to be monitored.
         """
-        # First hold the client in memory for checkpointing and loading.
-        self.client = client
-        self.client_name = client.client_name
+        assert self.client is not None, "Attempting to save client state but client is None"
         # Set the checkpoint name based on client's name if not already provided.
-        if self.checkpoint_name is None and self.checkpoint_dir is not None:
+        if self.checkpoint_name is None:
             # If checkpoint_name is not provided, we set it based on the client name.
-            self.checkpoint_name = f"client_{self.client_name}_state.pt"
-            self.set_checkpoint_path(self.checkpoint_name)
+            self.checkpoint_name = f"client_{self.client.client_name}_state.pt"
+            self.set_checkpoint_path(self.checkpoint_dir, self.checkpoint_name)
 
-    def save_client_state(self) -> None:
+    def save_client_state(self, client: BasicClient) -> None:
         """
-        Save the state of the client that is being monitored. Client is set in ``set_client``.
+        Save the state of the client that is provided
+
+        Args:
+            client (BasicClient): Client object with state to be saved.
         """
-        assert self.client is not None, "Client is not set. First call set_client."
+        # Store client for access in functions
+        self.client = client
+        # Potentially set a default checkpoint name
+        self.maybe_set_default_checkpoint_name()
         # Saves everything in self.snapshot_attrs
         self.save_state()
         # Clear the client after being checkpointed.
         self.client = None
 
-    def load_client_state(self, attributes: list[str] | None = None) -> None:
+    def load_client_state(self, client: BasicClient, attributes: list[str] | None = None) -> None:
         """
-        Load the state of the client that is being monitored. Client is set in ``set_client``.
+        Load the state into the client that is being provided.
 
         Args:
-            attributes (list[str] | None): List of attributes to load from the checkpoint. If None, all attributes
-                specified in ``snapshot_attrs`` are loaded. Defaults to None.
+            client (BasicClient): Target client object into which state will be loaded
+            attributes (list[str] | None, optional): List of attributes to load from the checkpoint. If None, all
+                attributes specified in ``snapshot_attrs`` are loaded. Defaults to None.
         """
-        assert self.client is not None, "Client is not set. First call set_client."
+        # Store client for access in functions
+        self.client = client
         self.load_state(attributes)
         # Clear the client after we are done updating its attributes.
         self.client = None
@@ -390,140 +402,86 @@ class ClientStateCheckpointer(StateCheckpointer):
         setattr(self.client, name, value)
 
 
-class ClientPerRoundStateCheckpointer(ClientStateCheckpointer):
-    def __init__(
-        self,
-        checkpoint_dir: Path,
-        checkpoint_name: str | None = None,
-    ) -> None:
-        """
-        Class for saving and loading the state of the client's attributes after each FL round.
-        """
-        assert (
-            checkpoint_dir is not None
-        ), "Checkpoint directory should be set for\
-            per round checkpointing to facilitate restarting federated training if interrupted."
-        # We don't need to save the client model here since parameters are loaded from the server at the start
-        # of the round.
-        self.snapshot_attrs: dict = {
-            "optimizers": (OptimizerSnapshotter(), Optimizer),
-            "lr_schedulers": (
-                LRSchedulerSnapshotter(),
-                LRScheduler,
-            ),
-            "total_steps": (NumberSnapshotter(), int),
-            "total_epochs": (NumberSnapshotter(), int),
-            "reports_manager": (
-                SerializableObjectSnapshotter(),
-                ReportsManager,
-            ),
-        }
-        # checkpoint_name should be user-defined and specific for each clients,
-        # or it will be set based on client's name.
-        super().__init__(
-            checkpoint_dir,
-            checkpoint_name,
-            self.snapshot_attrs,
-        )
-
-
-class ClientTrainLoopCheckpointer(ClientStateCheckpointer):
-
-    def __init__(
-        self,
-        checkpoint_dir: Path | None = None,
-        checkpoint_name: str | None = None,
-    ) -> None:
-        """
-        Class for saving and loading the state of the client's attributes
-        in the training loop. It is possible to save the state in memory
-        if no checkpoint_dir is provided, or to save it to the disk if
-        checkpoint_dir is provided.
-
-        """
-        # snapshot_attrs specifies the attributes that will be saved and loaded
-        # to facilitate checkpointing inside the training loop (used for early stopping).
-        self.snapshot_attrs: dict = {
-            "model": (TorchModuleSnapshotter(), nn.Module),
-            "optimizers": (OptimizerSnapshotter(), Optimizer),
-            "lr_schedulers": (
-                LRSchedulerSnapshotter(),
-                LRScheduler,
-            ),
-            "total_steps": (NumberSnapshotter(), int),
-            "total_epochs": (NumberSnapshotter(), int),
-            "reports_manager": (
-                SerializableObjectSnapshotter(),
-                ReportsManager,
-            ),
-            "train_loss_meter": (
-                SerializableObjectSnapshotter(),
-                LossMeter,
-            ),
-            "train_metric_manager": (
-                SerializableObjectSnapshotter(),
-                MetricManager,
-            ),
-        }
-        # checkpoint_name should be user-defined and specific for each clients,
-        # or it will be set based on client's name.
-        super().__init__(
-            checkpoint_dir,
-            checkpoint_name,
-            self.snapshot_attrs,
-        )
-
-
 class ServerStateCheckpointer(StateCheckpointer):
 
     def __init__(
         self,
-        checkpoint_dir: Path | None,
-        checkpoint_name: str | None,
-        snapshot_attrs: dict[str, tuple[AbstractSnapshotter, Any]],
+        checkpoint_dir: Path,
+        checkpoint_name: str | None = None,
+        snapshot_attrs: dict[str, tuple[AbstractSnapshotter, Any]] | None = None,
     ) -> None:
         """
-        Class for saving and loading the state of the server's attributes as specified in ``snapshot_attrs``.
+        Class for saving and loading the state of a server's attributes as specified in ``snapshot_attrs``.
+
+        Args:
+            checkpoint_dir (Path): Directory to which checkpoints are saved. This can be modified later with
+                `set_checkpoint_path`
+            checkpoint_name (str | None, optional): Name of the checkpoint to be saved. If None, but ``checkpoint_dir``
+                is set then a default ``checkpoint_name`` based on the underlying name of the client to be
+                checkpointed will be set of the form ``f"f"server_{self.server.server_name}_state.pt""``. This can be
+                set later  with `set_checkpoint_path`. Defaults to None.
+            snapshot_attrs (dict[str, tuple[AbstractSnapshotter, Any]] | None, optional): Attributes that we need to
+                save in order to allow for restarting of training. If None, a sensible default set of attributes and
+                their associated snapshotters for an FL client are set. Defaults to None.
         """
-        self.snapshot_attrs = snapshot_attrs
-        super().__init__(
-            checkpoint_dir,
-            checkpoint_name,
-            self.snapshot_attrs,
-        )
+        # If snapshot_attrs is None, we set a sensible default set of attributes to be saved. These are a minimal
+        # set of attributes that can be used for per round checkpointing or early stopping.
+        # NOTE: These default attributes are useful for state checkpointing a FlServer. More sophisticated  servers
+        # may require more attributes to fully support training restarts and early stopping. For an example, see
+        # NnUnetServerStateCheckpointer.
+        if snapshot_attrs is None:
+            snapshot_attrs = {
+                "model": (TorchModuleSnapshotter(), nn.Module),
+                "current_round": (NumberSnapshotter(), int),
+                "reports_manager": (
+                    SerializableObjectSnapshotter(),
+                    ReportsManager,
+                ),
+                "server_name": (StringSnapshotter(), str),
+                "history": (HistorySnapshotter(), History),
+            }
+        super().__init__(checkpoint_dir, checkpoint_name, snapshot_attrs)
         self.server: FlServer | None = None
         self.server_model: nn.Module | None = None
 
-    def set_server(self, server: FlServer) -> None:
+    def maybe_set_default_checkpoint_name(self) -> None:
         """
-        Set the server to be monitored.
+        Potentially sets a default name for the checkpoint to be saved. If ``checkpoint_dir`` is set but
+        ``checkpoint_name`` is None then a default ``checkpoint_name`` based on the underlying name of the server to
+        be checkpointed will be set of the form ``f"server_{self.server.server_name}_state.pt"``.
 
         Args:
-            server (FlServer): The server to be monitored.
+            client (BasicClient): The client to be monitored.
         """
-        # First hold the server in memory for checkpointing and loading.
-        self.server = server
-        self.server_name = server.server_name
-        # Set the checkpoint name based on server's name if not already provided.
+        assert self.server is not None, "Attempting to save client state but client is None"
+        # Set the checkpoint name based on client's name if not already provided.
         if self.checkpoint_name is None:
-            self.state_checkpoint_name = f"server_{self.server_name}_state.pt"
+            # If checkpoint_name is not provided, we set it based on the client name.
+            self.checkpoint_name = f"server_{self.server.server_name}_state.pt"
+            self.set_checkpoint_path(self.checkpoint_dir, self.checkpoint_name)
 
-    def save_server_state(self, model: nn.Module) -> None:
+    def save_server_state(self, server: FlServer, model: nn.Module) -> None:
         """
-        Save the state of the server.
+        Save the state of the server, including a torch model, which is not a required component of the server class
 
         Args:
+            server (FlServer): Server with state to be saved
             model (nn.Module): The model to be saved as part of the server state.
         """
-        assert self.server is not None, "Server is not set. First call set_server."
+        # Store server and model for access in functions
+        self.server = server
         # Server object does not have a model attribute, so we handle it separately.
-        assert model is not None, "Model should be provided to save the server state."
         self.server_model = model
+        self.server_model = model
+        # Potentially set a default checkpoint name
+        self.maybe_set_default_checkpoint_name()
+        # Saves everything in self.snapshot_attrs
         self.save_state()
-        # Clear the server object after checkpointing.
+        # Clear the server objects after checkpointing.
         self.server = None
+        self.server_model = None
 
-    def load_server_state(self, model: nn.Module, attributes: list[str] | None = None) -> nn.Module:
+    def load_server_state(self, server: FlServer, model: nn.Module, attributes: list[str] | None = None) -> nn.Module:
         """
         Load the state of the server from checkpoint.
 
@@ -532,14 +490,14 @@ class ServerStateCheckpointer(StateCheckpointer):
             attributes (list[str] | None): List of attributes to load from the checkpoint. If None, all attributes
                 specified in ``snapshot_attrs`` are loaded. Defaults to None.
         """
-        assert self.server is not None, "Server is not set. First call set_server."
+        # Store server for access in functions
+        self.server = server
+        # Server object does not have a model attribute, so we handle it separately.
         self.server_model = model
         self.load_state(attributes)
-        # Server object does not have a model attribute, so we handle it separately.
-        # Server model is saved and returned separately for parameter extraction.
         # Clear the server after we are done updating its attributes.
         self.server = None
-        # Return the server model.
+        # Server model is saved and returned separately for parameter extraction.
         return self.server_model
 
     def get_attribute(self, name: str) -> Any:
@@ -572,7 +530,7 @@ class ServerStateCheckpointer(StateCheckpointer):
             setattr(self.server, name, value)
 
 
-class ServerPerRoundStateCheckpointer(ServerStateCheckpointer):
+class NnUnetServerStateCheckpointer(ServerStateCheckpointer):
 
     def __init__(
         self,
@@ -580,59 +538,20 @@ class ServerPerRoundStateCheckpointer(ServerStateCheckpointer):
         checkpoint_name: str | None = None,
     ) -> None:
         """
-        Class for saving and loading the state of the server's attributes after each FL round.
-        This class is used to save and load the state of the server to the disk to facilitate
-        restarting federated training if interrupted.
+        Class for saving and loading the state of the server's attributes based on the ``snapshot_attrs`` defined
+        specifically for the nnUNet server.
+
+        Args:
+            checkpoint_dir (Path): Directory to which checkpoints are saved. This can be modified later with
+                `set_checkpoint_path`
+            checkpoint_name (str | None, optional): Name of the checkpoint to be saved. If None, but ``checkpoint_dir``
+                is set then a default ``checkpoint_name`` based on the underlying name of the client to be
+                checkpointed will be set of the form ``f"f"server_{self.server.server_name}_state.pt""``. This can be
+                set later  with `set_checkpoint_path`. Defaults to None.
         """
-        assert (
-            checkpoint_dir is not None
-        ), "Checkpoint directory should be set for\
-            per round checkpointing to facilitate restarting federated training if interrupted."
-        if checkpoint_name is None:
-            checkpoint_name = "server_state_checkpoint.pt"
 
-        self.snapshot_attrs: dict = {
-            "model": (TorchModuleSnapshotter(), nn.Module),
-            "current_round": (NumberSnapshotter(), int),
-            "reports_manager": (
-                SerializableObjectSnapshotter(),
-                ReportsManager,
-            ),
-            "server_name": (StringSnapshotter(), str),
-            "history": (HistorySnapshotter(), History),
-        }
-        super().__init__(
-            checkpoint_dir,
-            checkpoint_name,
-            self.snapshot_attrs,
-        )
-
-
-class NnUnetServerPerRoundStateCheckpointer(ServerPerRoundStateCheckpointer):
-
-    def __init__(
-        self,
-        checkpoint_dir: Path,
-        checkpoint_name: str | None = None,
-    ) -> None:
-        """
-        Class for saving and loading the state of the server's attributes based on
-        the ``snapshot_attrs`` defined specifically for the nnUNet server.
-
-        """
-        assert (
-            checkpoint_dir is not None
-        ), "Checkpoint directory should be set for\
-            per round checkpointing to facilitate restarting federated training if interrupted."
-        if checkpoint_name is None:
-            checkpoint_name = "nnunet_server_state_checkpoint.pt"
-
-        super().__init__(
-            checkpoint_dir,
-            checkpoint_name,
-        )
-        # Override snapshot_attrs with nnUNet-specific attributes.
-        self.snapshot_attrs: dict = {
+        # Go beyond default snapshot_attrs with nnUNet-specific attributes.
+        nnunet_snapshot_attrs: dict[str, tuple[AbstractSnapshotter, Any]] = {
             "model": (TorchModuleSnapshotter(), nn.Module),
             "current_round": (NumberSnapshotter(), int),
             "reports_manager": (
@@ -647,3 +566,5 @@ class NnUnetServerPerRoundStateCheckpointer(ServerPerRoundStateCheckpointer):
             "global_deep_supervision": (EnumSnapshotter(), bool),
             "nnunet_config": (EnumSnapshotter(), Enum),
         }
+
+        super().__init__(checkpoint_dir, checkpoint_name, snapshot_attrs=nnunet_snapshot_attrs)

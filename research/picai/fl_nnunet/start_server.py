@@ -6,7 +6,7 @@ from functools import partial
 from pathlib import Path
 
 from fl4health.checkpointing.server_module import NnUnetServerCheckpointAndStateModule
-from fl4health.checkpointing.state_checkpointer import NnUnetServerPerRoundStateCheckpointer
+from fl4health.checkpointing.state_checkpointer import NnUnetServerStateCheckpointer
 
 with warnings.catch_warnings():
     # Silence deprecation warnings from sentry sdk due to flwr and wandb
@@ -101,7 +101,7 @@ def main(
         checkpoint_and_state_model = NnUnetServerCheckpointAndStateModule(
             model=None,
             parameter_exchanger=FullParameterExchanger(),
-            state_checkpointer=NnUnetServerPerRoundStateCheckpointer(Path(intermediate_server_state_dir)),
+            state_checkpointer=NnUnetServerStateCheckpointer(Path(intermediate_server_state_dir)),
         )
 
     server = NnunetServer(

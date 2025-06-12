@@ -35,9 +35,9 @@ def test_early_stopper_patience_3(tmp_path: Path) -> None:
     mock_client = MockBasicClient()
     early_stopper = EarlyStopper(
         client=mock_client,
+        train_loop_checkpoint_dir=tmp_path,
         patience=3,
         interval_steps=1,
-        train_loop_checkpoint_dir=tmp_path,
     )
     # Override the snapshot_attrs of early stopper's state_checkpointer for test simplicity.
     early_stopper.state_checkpointer.snapshot_attrs = {
@@ -63,9 +63,9 @@ def test_early_stopper_patience_4(tmp_path: Path) -> None:
     mock_client = MockBasicClient()
     early_stopper = EarlyStopper(
         client=mock_client,
+        train_loop_checkpoint_dir=tmp_path,
         patience=4,
         interval_steps=1,
-        train_loop_checkpoint_dir=tmp_path,
     )
     # Override the snapshot_attrs of early stopper's state_checkpointer for test simplicity.
     early_stopper.state_checkpointer.snapshot_attrs = {

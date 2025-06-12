@@ -1,13 +1,17 @@
 from collections.abc import Sequence
 from enum import Enum
 from logging import INFO
+from typing import TYPE_CHECKING
 
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Scalar
 
+if TYPE_CHECKING:
+    from fl4health.clients.basic_client import BasicClient
+
 from fl4health.checkpointing.checkpointer import TorchModuleCheckpointer
-from fl4health.checkpointing.state_checkpointer import ClientPerRoundStateCheckpointer
+from fl4health.checkpointing.state_checkpointer import ClientStateCheckpointer
 
 ModelCheckpointers = TorchModuleCheckpointer | Sequence[TorchModuleCheckpointer] | None
 
@@ -23,7 +27,7 @@ class ClientCheckpointAndStateModule:
         self,
         pre_aggregation: ModelCheckpointers = None,
         post_aggregation: ModelCheckpointers = None,
-        state_checkpointer: ClientPerRoundStateCheckpointer | None = None,
+        state_checkpointer: ClientStateCheckpointer | None = None,
     ) -> None:
         """
         This module is meant to hold up three to major components that determine how clients handle model and state
@@ -45,7 +49,7 @@ class ClientCheckpointAndStateModule:
             post_aggregation (ModelCheckpointers, optional): If defined, this checkpointer (or sequence
                 of checkpointers) is used to checkpoint models based on their validation metrics/losses **AFTER**
                 server-side aggregation. Defaults to None.
-            state_checkpointer (ClientPerRoundStateCheckpointer | None, optional): If defined, this checkpointer
+            state_checkpointer (ClientStateCheckpointer | None, optional): If defined, this checkpointer
                 is used to preserve client state (not just models), in the event one wants to restart
                 federated training. Defaults to None.
         """
@@ -120,10 +124,10 @@ class ClientCheckpointAndStateModule:
         else:
             raise ValueError(f"Unrecognized mode for checkpointing: {str(mode)}")
 
-    def save_state(self) -> None:
+    def save_state(self, client: BasicClient) -> None:
         """
         This function is meant to facilitate saving state required to restart an FL process on the client side. This
-        function will simply save all the attributes stated in ``ClientPerRoundStateCheckpointer.snapshot_attrs``.
+        function will simply save all the attributes stated in ``ClientStateCheckpointer.snapshot_attrs``.
         This function should only be called if a ``state_checkpointer`` exists in this module.
 
         Raises:
@@ -131,11 +135,11 @@ class ClientCheckpointAndStateModule:
         """
 
         if self.state_checkpointer is not None:
-            self.state_checkpointer.save_client_state()
+            self.state_checkpointer.save_client_state(client)
         else:
             raise ValueError("Attempting to save state but no state checkpointer is specified")
 
-    def maybe_load_state(self) -> bool:
+    def maybe_load_state(self, client: BasicClient) -> bool:
         """
         This function facilitates loading of any pre-existing state (with the name ``checkpoint_name``) in the
         directory of the ``checkpoint_dir``. If the state already exists at the proper path, the state is loaded
@@ -151,7 +155,7 @@ class ClientCheckpointAndStateModule:
 
         if self.state_checkpointer is not None:
             if self.state_checkpointer.checkpoint_exists():
-                self.state_checkpointer.load_client_state()
+                self.state_checkpointer.load_client_state(client)
                 return True
             else:
                 log(INFO, "State checkpointer is defined but no state checkpoint exists.")

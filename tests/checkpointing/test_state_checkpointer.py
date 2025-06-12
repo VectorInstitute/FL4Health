@@ -9,23 +9,16 @@ from flwr.server.history import History
 from torch.optim import Optimizer
 
 from fl4health.checkpointing.state_checkpointer import (
-    ClientPerRoundStateCheckpointer,
     ClientStateCheckpointer,
-    ClientTrainLoopCheckpointer,
-    NnUnetServerPerRoundStateCheckpointer,
-    ServerPerRoundStateCheckpointer,
+    NnUnetServerStateCheckpointer,
+    ServerStateCheckpointer,
 )
 from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting import JsonReporter
 from fl4health.servers.base_server import FlServer
 from fl4health.servers.nnunet_server import NnunetServer
 from fl4health.utils.metrics import Accuracy
-from fl4health.utils.snapshotter import (
-    AbstractSnapshotter,
-    NumberSnapshotter,
-    OptimizerSnapshotter,
-    StringSnapshotter,
-)
+from fl4health.utils.snapshotter import AbstractSnapshotter, NumberSnapshotter, OptimizerSnapshotter, StringSnapshotter
 from tests.test_utils.models_for_test import SingleLayerWithSeed
 
 
@@ -48,16 +41,14 @@ def create_fl_client() -> BasicClient:
     return fl_client
 
 
-def test_client_per_round_checkpointer(tmp_path: Path) -> None:
+def test_client_state_works_for_per_round_checkpointing(tmp_path: Path) -> None:
     fl_client = create_fl_client()
     # Temporary path to save the state to, will be cleaned up at the end of the test.
     checkpoint_dir = tmp_path.joinpath("client_state")
     checkpoint_dir.mkdir()
     # checkpoint_dir is required for ClientStateCheckpointer to assist saving the state to the disk.
     # This is useful for resuming training after an interruption.
-    checkpointer = ClientPerRoundStateCheckpointer(
-        checkpoint_dir=Path(checkpoint_dir), checkpoint_name="client_state.pt"
-    )
+    checkpointer = ClientStateCheckpointer(checkpoint_dir=Path(checkpoint_dir), checkpoint_name="client_state.pt")
     copy_client = copy.deepcopy(fl_client)
 
     assert not checkpointer.checkpoint_exists()
@@ -72,14 +63,11 @@ def test_client_per_round_checkpointer(tmp_path: Path) -> None:
     fl_client.total_steps += 1
 
     # Save the state of the trained client
-    checkpointer.set_client(fl_client)
-    checkpointer.save_client_state()
+    checkpointer.save_client_state(fl_client)
 
     # Reset the checkpointer object
-    # This is similar to the situation where we have to program after an interruption.
-    checkpointer = ClientPerRoundStateCheckpointer(
-        checkpoint_dir=Path(checkpoint_dir), checkpoint_name="client_state.pt"
-    )
+    # This is similar to the situation where we have to restart FL after an interruption.
+    checkpointer = ClientStateCheckpointer(checkpoint_dir=Path(checkpoint_dir), checkpoint_name="client_state.pt")
 
     # Checkpoint should now exist
     assert checkpointer.checkpoint_exists()
@@ -100,8 +88,7 @@ def test_client_per_round_checkpointer(tmp_path: Path) -> None:
     assert copy_client.lr_schedulers["global"].state_dict() != fl_client.lr_schedulers["global"].state_dict()
 
     # Loads fl_client checkpoint (trained client) into the copy client
-    checkpointer.set_client(copy_client)
-    checkpointer.load_state()
+    checkpointer.load_client_state(copy_client)
 
     # Check that state is loaded correctly.
     # Check the state of the loaded optimizer.
@@ -117,10 +104,10 @@ def test_client_per_round_checkpointer(tmp_path: Path) -> None:
     assert copy_client.total_steps == 1
 
 
-def test_client_training_loop_checkpointer(tmp_path: Path) -> None:
+def test_client_state_works_for_training_loop_checkpointing(tmp_path: Path) -> None:
     """
-    Train loop checkpointer saves the state of the client in the training loop.
-    This is mainly used for early stopping.
+    Train loop checkpointing requires more information than per round as it needs to be able to restart a training
+    process where it left off. This is important for early stopping.
     """
     fl_client = create_fl_client()
     # Create a copy of the client for later.
@@ -128,9 +115,7 @@ def test_client_training_loop_checkpointer(tmp_path: Path) -> None:
     # Temporary path to save the state to, will be cleaned up at the end of the test.
     checkpoint_dir = tmp_path.joinpath("client_state")
     checkpoint_dir.mkdir()
-    # Saving the state in memory as well as to the disk.
-    # checkpoint_dir is optional for this checkpointer. If not provided, the state is saved in memory.
-    checkpointer = ClientTrainLoopCheckpointer(checkpoint_dir=Path(checkpoint_dir), checkpoint_name="client_state.pt")
+    checkpointer = ClientStateCheckpointer(checkpoint_dir=Path(checkpoint_dir), checkpoint_name="client_state.pt")
 
     # Simulate updates inside the training loop (one step).
     input_data = torch.randn(32, 100)
@@ -146,8 +131,7 @@ def test_client_training_loop_checkpointer(tmp_path: Path) -> None:
     fl_client.total_steps += 1
 
     # Save the state of the client.
-    checkpointer.set_client(fl_client)
-    checkpointer.save_client_state()
+    checkpointer.save_client_state(fl_client)
 
     assert checkpointer.checkpoint_exists()
     snapshot_ckpt = checkpointer.load_checkpoint()
@@ -162,8 +146,7 @@ def test_client_training_loop_checkpointer(tmp_path: Path) -> None:
     assert "train_metric_manager" in snapshot_ckpt
 
     # Use the copy_client to load the state.
-    checkpointer.set_client(copy_client)
-    checkpointer.load_client_state()
+    checkpointer.load_client_state(copy_client)
 
     # Check that the state is loaded correctly.
     # Check the state of the loaded optimizer.
@@ -194,11 +177,14 @@ def test_client_training_loop_checkpointer(tmp_path: Path) -> None:
     assert copy_client.reports_manager.reporters[0].metrics == fl_client.reports_manager.reporters[0].metrics
 
 
-def test_client_in_memory_checkpoint_specific_attrs() -> None:
+def test_client_state_checkpointing_with_custom_attrs(tmp_path: Path) -> None:
     """
-    Test that the client can save and load its state in memory.
-    This is useful for early stopping. The state is defined by a set of attributes.
+    Test that the client can save and load its state based a custom set of attributes rather than the
+    default.
     """
+    checkpoint_dir = tmp_path.joinpath("client_state")
+    checkpoint_dir.mkdir()
+
     fl_client = create_fl_client()
     # Create a copy of the client for later.
     copy_client = copy.deepcopy(fl_client)
@@ -209,7 +195,7 @@ def test_client_in_memory_checkpoint_specific_attrs() -> None:
         "client_name": (StringSnapshotter(), str),
     }
 
-    checkpointer = ClientStateCheckpointer(None, None, snapshot_attrs)  # ignore: typing
+    checkpointer = ClientStateCheckpointer(checkpoint_dir, None, snapshot_attrs)  # ignore: typing
 
     # Perform one training step.
     input_data = torch.randn(32, 100)
@@ -219,15 +205,12 @@ def test_client_in_memory_checkpoint_specific_attrs() -> None:
     # Change the name of the client for testing purposes.
     fl_client.client_name = "updated_client"
 
-    # Save the state of the client in memory.
-    checkpointer.set_client(fl_client)
-    checkpointer.save_client_state()
+    checkpointer.save_client_state(fl_client)
 
     assert not checkpointer.checkpoint_exists()
 
     # Use the copy_client to load the state.
-    checkpointer.set_client(copy_client)
-    checkpointer.load_client_state()
+    checkpointer.load_client_state(copy_client)
 
     assert "reports_manager" not in checkpointer.snapshot_ckpt
 
@@ -246,7 +229,7 @@ def test_client_in_memory_checkpoint_specific_attrs() -> None:
     assert copy_client.client_name == "updated_client"
 
 
-def test_server_per_round_state_checkpointer(tmp_path: Path) -> None:
+def test_server_state_checkpointer(tmp_path: Path) -> None:
     """
     Test the server per round state checkpointer.
     """
@@ -275,17 +258,13 @@ def test_server_per_round_state_checkpointer(tmp_path: Path) -> None:
     checkpoint_dir.mkdir()
 
     # Create a checkpointer for the server.
-    checkpointer = ServerPerRoundStateCheckpointer(
-        checkpoint_dir=Path(checkpoint_dir), checkpoint_name="server_state.pt"
-    )
+    checkpointer = ServerStateCheckpointer(checkpoint_dir=Path(checkpoint_dir), checkpoint_name="server_state.pt")
 
     # Check that the checkpoint does not exist initially.
     assert not checkpointer.checkpoint_exists()
 
-    # Save the state
-    checkpointer.set_server(fl_server)
     # Save the state with the model.
-    checkpointer.save_server_state(model=fl_server_model)
+    checkpointer.save_server_state(server=fl_server, model=fl_server_model)
 
     # Check that the checkpoint now exists.
     assert checkpointer.checkpoint_exists()
@@ -312,11 +291,8 @@ def test_server_per_round_state_checkpointer(tmp_path: Path) -> None:
     # We don't need to create a new checkpointer here,
     # but we create one to simulate the situation where the program is
     # restarted due to an interruption.
-    new_checkpointer = ServerPerRoundStateCheckpointer(
-        checkpoint_dir=Path(checkpoint_dir), checkpoint_name="server_state.pt"
-    )
-    new_checkpointer.set_server(new_server)
-    new_checkpointer.load_server_state(model=new_server_model)
+    new_checkpointer = ServerStateCheckpointer(checkpoint_dir=Path(checkpoint_dir), checkpoint_name="server_state.pt")
+    new_checkpointer.load_server_state(server=new_server, model=new_server_model)
 
     # Check that the state is loaded correctly.
     assert all(
@@ -339,7 +315,7 @@ def test_server_per_round_state_checkpointer(tmp_path: Path) -> None:
     )
 
 
-def test_nnunet_server_per_round_state_checkpointer(tmp_path: Path) -> None:
+def test_nnunet_server_state_checkpointer(tmp_path: Path) -> None:
     """
     Test the nnunet server per round state checkpointer.
     """
@@ -368,18 +344,16 @@ def test_nnunet_server_per_round_state_checkpointer(tmp_path: Path) -> None:
     checkpoint_dir.mkdir()
 
     # Create a checkpointer for the server.
-    checkpointer = NnUnetServerPerRoundStateCheckpointer(
+    checkpointer = NnUnetServerStateCheckpointer(
         checkpoint_dir=Path(checkpoint_dir), checkpoint_name="server_state.pt"
     )
 
     # Check that the checkpoint does not exist initially.
     assert not checkpointer.checkpoint_exists()
 
-    # Save the state
-    checkpointer.set_server(nnunet_server)
     # Save the state with the model.
     # In real usage, we should use parameter_exchanger to hydrate the model for checkpointing first.
-    checkpointer.save_server_state(model=nnunet_server_model)
+    checkpointer.save_server_state(server=nnunet_server, model=nnunet_server_model)
 
     # Check that the checkpoint now exists.
     assert checkpointer.checkpoint_exists()
@@ -417,12 +391,11 @@ def test_nnunet_server_per_round_state_checkpointer(tmp_path: Path) -> None:
     # We don't need to create a new checkpointer here,
     # but we create one to simulate the situation where the program is
     # restarted due to an interruption. Note that checkpoint name and path should point to the saved checkpoint.
-    new_checkpointer = NnUnetServerPerRoundStateCheckpointer(
+    new_checkpointer = NnUnetServerStateCheckpointer(
         checkpoint_dir=Path(checkpoint_dir), checkpoint_name="server_state.pt"
     )
 
-    new_checkpointer.set_server(new_server)
-    new_checkpointer.load_server_state(new_server_model)
+    new_checkpointer.load_server_state(server=new_server, model=new_server_model)
 
     # Check that the state is loaded correctly.
     assert all(
