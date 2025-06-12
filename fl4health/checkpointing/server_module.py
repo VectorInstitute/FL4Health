@@ -157,8 +157,7 @@ class BaseServerCheckpointAndStateModule:
         saving the state of the server's parameters.
 
         Args:
-            state_checkpoint_name (str): Name of the state checkpoint file. The checkpointer itself will have a
-                directory to which state will be saved.
+            server (FlServer): Server object from which state will be extracted and saved.
             server_parameters (Parameters): Like model checkpointers, these are the aggregated Parameters stored by
                 the server representing model state. They are mapped to a torch model architecture via the
                 ``_hydrate_model_for_checkpointing`` function.
@@ -179,6 +178,9 @@ class BaseServerCheckpointAndStateModule:
         If a state_checkpointer is defined and a checkpoint exists at its checkpoint_path, this method hydrates
         the model with the saved state and returns the corresponding server Parameters. If no checkpoint exists,
         it logs this information and returns None.
+
+        Args:
+            server (FlServer): server into which checkpointed state will be loaded if a checkpoint exists
 
         Raises:
             ValueError: Throws an error if this function is called, but no state checkpointer has been provided

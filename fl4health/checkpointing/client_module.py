@@ -132,6 +132,9 @@ class ClientCheckpointAndStateModule:
         function will simply save all the attributes stated in ``ClientStateCheckpointer.snapshot_attrs``.
         This function should only be called if a ``state_checkpointer`` exists in this module.
 
+        Args:
+            client (BasicClient): The client object from which state will be saved.
+
         Raises:
             ValueError: Throws an error if this function is called, but no state checkpointer has been provided
         """
@@ -146,6 +149,9 @@ class ClientCheckpointAndStateModule:
         This function facilitates loading of any pre-existing state (with the name ``checkpoint_name``) in the
         directory of the ``checkpoint_dir``. If the state already exists at the proper path, the state is loaded
         and will be automatically saved into client's attributes. If it doesn't exist, we return False.
+
+        Args:
+            client (BasicClient): client object into which state will be loaded if a checkpoint exists
 
         Raises:
             ValueError: Throws an error if this function is called, but no state checkpointer has been provided

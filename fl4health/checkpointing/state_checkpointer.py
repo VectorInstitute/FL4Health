@@ -105,8 +105,8 @@ class StateCheckpointer(ABC):
 
     def load_checkpoint(self) -> dict[str, Any]:
         """
-        Load and return the checkpoint stored in ``checkpoint_dir`` under
-        the  ``checkpoint_name`` if it exists. If it does not exist, an assertion error will be thrown.
+        Load and return the checkpoint stored in ``checkpoint_dir`` under the  ``checkpoint_name`` if it exists. If
+        it does not exist, an assertion error will be thrown.
 
         Returns:
             dict[str, Any]: A dictionary representing the checkpointed state, as loaded by ``torch.load``.
@@ -154,8 +154,8 @@ class StateCheckpointer(ABC):
 
     def save_state(self) -> None:
         """
-        Create a snapshot of the state as defined in ``self.snapshot_attrs``. It is saved in the
-        ``self.checkpoint_dir`` under ``self.checkpoint_name``
+        Create a snapshot of the state as defined in ``self.snapshot_attrs``. It is saved in ``self.checkpoint_dir``
+        under ``self.checkpoint_name``
         """
         for attr_name, (snapshotter, expected_type) in self.snapshot_attrs.items():
             self.snapshot_ckpt.update(self._save_snapshot(snapshotter, attr_name, expected_type))
@@ -334,9 +334,6 @@ class ClientStateCheckpointer(StateCheckpointer):
         Potentially sets a default name for the checkpoint to be saved. If ``checkpoint_dir`` is set but
         ``checkpoint_name`` is None then a default ``checkpoint_name`` based on the underlying name of the client to
         be checkpointed will be set of the form ``f"client_{self.client.client_name}_state.pt"``.
-
-        Args:
-            client (BasicClient): The client to be monitored.
         """
         assert self.client is not None, "Attempting to save client state but client is None"
         # Set the checkpoint name based on client's name if not already provided.
@@ -449,9 +446,6 @@ class ServerStateCheckpointer(StateCheckpointer):
         Potentially sets a default name for the checkpoint to be saved. If ``checkpoint_dir`` is set but
         ``checkpoint_name`` is None then a default ``checkpoint_name`` based on the underlying name of the server to
         be checkpointed will be set of the form ``f"server_{self.server.server_name}_state.pt"``.
-
-        Args:
-            client (BasicClient): The client to be monitored.
         """
         assert self.server is not None, "Attempting to save client state but client is None"
         # Set the checkpoint name based on client's name if not already provided.
