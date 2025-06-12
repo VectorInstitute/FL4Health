@@ -206,8 +206,7 @@ def test_client_state_checkpointing_with_custom_attrs(tmp_path: Path) -> None:
     fl_client.client_name = "updated_client"
 
     checkpointer.save_client_state(fl_client)
-
-    assert not checkpointer.checkpoint_exists()
+    assert checkpointer.checkpoint_exists()
 
     # Use the copy_client to load the state.
     checkpointer.load_client_state(copy_client)
