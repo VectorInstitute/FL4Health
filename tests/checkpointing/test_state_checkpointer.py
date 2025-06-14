@@ -230,7 +230,7 @@ def test_client_state_checkpointing_with_custom_attrs(tmp_path: Path) -> None:
 
 def test_server_state_checkpointer(tmp_path: Path) -> None:
     """
-    Test the server per round state checkpointer.
+    Test the server state checkpointer.
     """
     fl_server = FlServer(
         client_manager=SimpleClientManager(),

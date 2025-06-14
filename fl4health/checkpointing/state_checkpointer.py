@@ -58,7 +58,7 @@ class StateCheckpointer(ABC):
             checkpoint_dir (Path): Directory to which checkpoints are saved. This can be modified later with
                 `set_checkpoint_path`
             checkpoint_name (str): Name of the checkpoint to be saved. If None at time of state saving, a default name
-                will be given to the checkpoint. This can be set later with `set_checkpoint_path`
+                will be given to the checkpoint. This can be changed later with `set_checkpoint_path`
             snapshot_attrs (dict[str, tuple[AbstractSnapshotter, Any]]): Attributes that we need to save in order
                 to allow for restarting of training.
         """
@@ -120,14 +120,12 @@ class StateCheckpointer(ABC):
     def checkpoint_exists(self) -> bool:
         """
         Check if a checkpoint exists at the checkpoint_path constructed as ``checkpoint_dir`` + ``checkpoint_name``
-        during initialization.
 
         Returns:
             bool: True if checkpoint exists, otherwise false.
         """
         if self.checkpoint_path is not None:
             return os.path.exists(self.checkpoint_path)
-        # Checkpoint is only saved in memory.
         return False
 
     def add_to_snapshot_attr(self, name: str, snapshotter: AbstractSnapshotter, input_type: type[T]) -> None:
@@ -154,8 +152,7 @@ class StateCheckpointer(ABC):
 
     def save_state(self) -> None:
         """
-        Create a snapshot of the state as defined in ``self.snapshot_attrs``. It is saved in ``self.checkpoint_dir``
-        under ``self.checkpoint_name``
+        Create a snapshot of the state as defined in ``self.snapshot_attrs``. It is saved at ``self.checkpoint_path``
         """
         for attr_name, (snapshotter, expected_type) in self.snapshot_attrs.items():
             self.snapshot_ckpt.update(self._save_snapshot(snapshotter, attr_name, expected_type))
@@ -168,7 +165,7 @@ class StateCheckpointer(ABC):
 
     def load_state(self, attributes: list[str] | None = None) -> None:
         """
-        Load checkpointed state dictionary either from the checkpoint or from the memory (``self.snapshot_attrs``).
+        Load checkpointed state dictionary from the checkpoint, potentially restricting the attributes to load.
 
         Args:
             attributes (list[str] | None): List of attributes to load from the checkpoint. If None, all attributes
@@ -259,8 +256,7 @@ class StateCheckpointer(ABC):
         """
         Load the state of the attribute using the snapshotter's ``load_attribute`` functionality.
 
-        NOTE: This function assumes that ``snapshot_ckpt`` has been populated with the right data, either held in
-        memory or loaded from disk.
+        NOTE: This function assumes that ``snapshot_ckpt`` has been populated with the right data loaded from disk.
 
         Args:
             snapshotter (dict[str, Any]): Snapshotter object to return the state of the attribute.
@@ -291,15 +287,15 @@ class ClientStateCheckpointer(StateCheckpointer):
                 `set_checkpoint_path`
             checkpoint_name (str | None, optional): Name of the checkpoint to be saved. If None, but ``checkpoint_dir``
                 is set then a default ``checkpoint_name`` based on the underlying name of the client to be
-                checkpointed will be set of the form ``f"client_{client.client_name}_state.pt"``. This can be set later
-                with `set_checkpoint_path`. Defaults to None.
+                checkpointed will be set of the form ``f"client_{client.client_name}_state.pt"``. This can be changed
+                later with `set_checkpoint_path`. Defaults to None.
             snapshot_attrs (dict[str, tuple[AbstractSnapshotter, Any]] | None, optional): Attributes that we need to
                 save in order to allow for restarting of training. If None, a sensible default set of attributes and
                 their associated snapshotters for an FL client are set. Defaults to None.
         """
         # If snapshot_attrs is None, we set a sensible default set of attributes to be saved. These are a minimal
         # set of attributes that can be used for per round checkpointing or early stopping.
-        # NOTE: These default attributes are useful for state checkpointing a BasicClient. More sophisticated  clients
+        # NOTE: These default attributes are useful for state checkpointing a BasicClient. More sophisticated clients
         # may require more attributes to fully support training restarts and early stopping. For a server example, see
         # NnUnetServerStateCheckpointer.
         if snapshot_attrs is None:
@@ -344,7 +340,7 @@ class ClientStateCheckpointer(StateCheckpointer):
 
     def save_client_state(self, client: BasicClient) -> None:
         """
-        Save the state of the client that is provided
+        Save the state of the client that is provided.
 
         Args:
             client (BasicClient): Client object with state to be saved.
@@ -416,14 +412,14 @@ class ServerStateCheckpointer(StateCheckpointer):
             checkpoint_name (str | None, optional): Name of the checkpoint to be saved. If None, but ``checkpoint_dir``
                 is set then a default ``checkpoint_name`` based on the underlying name of the client to be
                 checkpointed will be set of the form ``f"f"server_{self.server.server_name}_state.pt""``. This can be
-                set later  with `set_checkpoint_path`. Defaults to None.
+                updated later  with `set_checkpoint_path`. Defaults to None.
             snapshot_attrs (dict[str, tuple[AbstractSnapshotter, Any]] | None, optional): Attributes that we need to
                 save in order to allow for restarting of training. If None, a sensible default set of attributes and
                 their associated snapshotters for an FL client are set. Defaults to None.
         """
         # If snapshot_attrs is None, we set a sensible default set of attributes to be saved. These are a minimal
         # set of attributes that can be used for per round checkpointing or early stopping.
-        # NOTE: These default attributes are useful for state checkpointing a FlServer. More sophisticated  servers
+        # NOTE: These default attributes are useful for state checkpointing a FlServer. More sophisticated servers
         # may require more attributes to fully support training restarts and early stopping. For an example, see
         # NnUnetServerStateCheckpointer.
         if snapshot_attrs is None:
@@ -447,10 +443,10 @@ class ServerStateCheckpointer(StateCheckpointer):
         ``checkpoint_name`` is None then a default ``checkpoint_name`` based on the underlying name of the server to
         be checkpointed will be set of the form ``f"server_{self.server.server_name}_state.pt"``.
         """
-        assert self.server is not None, "Attempting to save client state but client is None"
-        # Set the checkpoint name based on client's name if not already provided.
+        assert self.server is not None, "Attempting to save server state but server is None"
+        # Set the checkpoint name based on server's name if not already provided.
         if self.checkpoint_name is None:
-            # If checkpoint_name is not provided, we set it based on the client name.
+            # If checkpoint_name is not provided, we set it based on the server's name.
             self.checkpoint_name = f"server_{self.server.server_name}_state.pt"
             self.set_checkpoint_path(self.checkpoint_dir, self.checkpoint_name)
 
@@ -465,7 +461,6 @@ class ServerStateCheckpointer(StateCheckpointer):
         # Store server and model for access in functions
         self.server = server
         # Server object does not have a model attribute, so we handle it separately.
-        self.server_model = model
         self.server_model = model
         # Potentially set a default checkpoint name
         self.maybe_set_default_checkpoint_name()
@@ -541,7 +536,7 @@ class NnUnetServerStateCheckpointer(ServerStateCheckpointer):
             checkpoint_name (str | None, optional): Name of the checkpoint to be saved. If None, but ``checkpoint_dir``
                 is set then a default ``checkpoint_name`` based on the underlying name of the client to be
                 checkpointed will be set of the form ``f"f"server_{self.server.server_name}_state.pt""``. This can be
-                set later  with `set_checkpoint_path`. Defaults to None.
+                updated later  with `set_checkpoint_path`. Defaults to None.
         """
 
         # Go beyond default snapshot_attrs with nnUNet-specific attributes.

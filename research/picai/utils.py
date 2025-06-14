@@ -8,16 +8,15 @@ import torch
 from flwr.common.logger import log
 
 
-class SimpleDictionartCheckpointer:
+class SimpleDictionaryCheckpointer:
     def __init__(
         self,
         checkpoint_dir: Path,
         checkpoint_name: str,
     ) -> None:
         """
-        Simple state checkpointer for saving and loading the state of an object's attributes saved in a dictionary.
-        This class is used to save and load the state of an object to a file. It is not meant to be used for
-        saving in memory.
+        A simple state checkpointer that saves and loads an object's attribute state (stored in a dictionary) to and
+        from a file.
 
         Args:
             checkpoint_dir (Path): Directory to which checkpoints are saved
