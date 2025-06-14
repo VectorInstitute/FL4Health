@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
-from fl4health.checkpointing.state_checkpointer import ClientPerRoundStateCheckpointer
+from fl4health.checkpointing.state_checkpointer import ClientStateCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.metrics import Accuracy
 from fl4health.metrics.base_metrics import Metric
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     checkpoint_and_state_module: ClientCheckpointAndStateModule | None
     if args.intermediate_client_state_dir is not None:
         checkpoint_and_state_module = ClientCheckpointAndStateModule(
-            state_checkpointer=ClientPerRoundStateCheckpointer(Path(args.intermediate_client_state_dir))
+            state_checkpointer=ClientStateCheckpointer(Path(args.intermediate_client_state_dir))
         )
     else:
         checkpoint_and_state_module = None

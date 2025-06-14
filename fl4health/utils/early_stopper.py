@@ -1,25 +1,22 @@
 from __future__ import annotations
 
-from logging import INFO
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from flwr.common.logger import log
-
-from fl4health.checkpointing.state_checkpointer import ClientTrainLoopCheckpointer
-from fl4health.utils.logging import LoggingMode
-
 if TYPE_CHECKING:
     from fl4health.clients.basic_client import BasicClient
+
+from fl4health.checkpointing.state_checkpointer import ClientStateCheckpointer
+from fl4health.utils.logging import LoggingMode
 
 
 class EarlyStopper:
     def __init__(
         self,
         client: BasicClient,
+        train_loop_checkpoint_dir: Path,
         patience: int | None = 1,
         interval_steps: int = 5,
-        train_loop_checkpoint_dir: Path | None = None,
     ) -> None:
         """
         Early stopping class is a plugin for the client that allows to stop local training based on the validation
@@ -29,14 +26,12 @@ class EarlyStopper:
 
         Args:
             client (BasicClient): The client to be monitored.
+            train_loop_checkpoint_dir (Path): Directory to checkpoint the "best" state seen so far.
             patience (int, optional): Number of validation cycles to wait before stopping the training. If it is equal
                 to None client never stops, but still loads the best state before sending the model to the server.
                 Defaults to 1.
             interval_steps (int): Specifies the frequency, in terms of training intervals, at which the early
                 stopping mechanism should evaluate the validation loss. Defaults to 5.
-            train_loop_checkpoint_dir (Path | None, optional): Rather than keeping the best state in the memory,
-            we can checkpoint it in the given directory. If the directory is not provided, the best state is kept
-                in the memory. Defaults to None.
         """
 
         self.client = client
@@ -45,13 +40,10 @@ class EarlyStopper:
         self.count_down = patience
         self.interval_steps = interval_steps
 
-        if train_loop_checkpoint_dir is None:
-            log(INFO, "Early stopper's checkpointed state is being persisted in memory")
-            checkpoint_name = None
-        else:
-            checkpoint_name = f"temp_{self.client.client_name}.pt"
+        # Early stopper uses a default name for the state
+        checkpoint_name = f"temp_{self.client.client_name}.pt"
 
-        self.state_checkpointer = ClientTrainLoopCheckpointer(
+        self.state_checkpointer = ClientStateCheckpointer(
             checkpoint_dir=train_loop_checkpoint_dir, checkpoint_name=checkpoint_name
         )
 
@@ -66,8 +58,7 @@ class EarlyStopper:
                 If None, all attributes as defined in ``state_checkpointer`` are loaded. Defaults to None.
         """
         # Load the best snapshot, and update self.client with the values
-        self.state_checkpointer.set_client(self.client)
-        self.state_checkpointer.load_client_state(attributes)
+        self.state_checkpointer.load_client_state(self.client, attributes)
 
     def should_stop(self, steps: int) -> bool:
         """
@@ -96,8 +87,7 @@ class EarlyStopper:
         if self.best_score is None or val_loss < self.best_score:
             self.best_score = val_loss
             self.count_down = self.patience
-            self.state_checkpointer.set_client(self.client)
-            self.state_checkpointer.save_client_state()
+            self.state_checkpointer.save_client_state(self.client)
             return False
 
         if self.count_down is not None:
