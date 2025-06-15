@@ -4,12 +4,11 @@ from flwr.server.criterion import Criterion
 
 
 class FixedSamplingClientManager(SimpleClientManager):
-    """Keeps sampling fixed until it's reset"""
-
     def __init__(self) -> None:
         """
         Client manager that samples the same set of clients each time until it receives a signal to resample the
-        clients to be selected. This class, for example, helps facilitate the requirements associated with FedDG-GA
+        clients to be selected. This class, for example, helps facilitate the requirements associated with FedDG-GA.
+        Keeps sampling fixed until it's reset.
         """
         super().__init__()
         self.current_sample: list[ClientProxy] | None = None

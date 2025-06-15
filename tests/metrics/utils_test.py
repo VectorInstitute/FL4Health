@@ -5,6 +5,7 @@ import torch
 
 from fl4health.metrics.utils import align_pred_and_target_shapes, infer_label_dim, map_label_index_tensor_to_one_hot
 
+
 MULTIPLE_AXES_PATTERN = re.compile("Found multiple axes that could be the label dimension", flags=re.IGNORECASE)
 SAME_DIM_DIFFERENT_SIZE_PATTERN = re.compile(
     "The inferred candidate dimension has different sizes on each tensor, was expecting one to be empty.",
@@ -85,10 +86,9 @@ def test_infer_label_dim_failures() -> None:
 def get_dummy_classification_tensors(
     full_tensor_shape: tuple[int, ...], label_dim: int
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """
-    Returns 3 versions of the same dummy tensor to use for metric tests. The shape provided in the arguments specifies
-    the shape of tensors with vector encoded targets. The function will create "soft" encodings (i.e not one-hot),
-    "hard" encodings (i.e. one-hot), and label index encodings.
+    """Returns 3 versions of the same dummy tensor to use for metric tests. The shape provided in the arguments
+    specifies the shape of tensors with vector encoded targets. The function will create "soft" encodings
+    (i.e not one-hot), "hard" encodings (i.e. one-hot), and label index encodings.
 
     Args:
         full_tensor_shape (tuple[int, ...]): Size of the desired tensor, assuming label dimension is vector encoded
@@ -208,7 +208,6 @@ def test_multiclass_align() -> None:
 
 
 def test_align_exceptions() -> None:
-
     # Label dim can not be resolved if shapes differ in more than 1 dimension
     one_hot_tensor_preds, soft_vector_encoded_preds, _ = get_dummy_classification_tensors((2, 3, 5, 9, 3), 1)
     one_hot_tensor_targets, _, label_index_encoded_targets = get_dummy_classification_tensors((2, 3, 5, 9, 6), 1)

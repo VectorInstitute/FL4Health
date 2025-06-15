@@ -33,13 +33,13 @@ def prepare_annotations(human_annotations_dir: str, ai_annotations_dir: str, ann
 def main() -> None:
     parser = argparse.ArgumentParser()
     human_annotations_dir_default = (
-        "/ssd003/projects/aieng/public/PICAI/input/picai_labels/" "csPCa_lesion_delineations/human_expert/resampled"
+        "/ssd003/projects/aieng/public/PICAI/input/picai_labels/csPCa_lesion_delineations/human_expert/resampled"
     )
     ai_annotations_dir_default = (
-        "/ssd003/projects/aieng/public/PICAI/input/picai_labels/" "csPCa_lesion_delineations/AI/Bosma22a"
+        "/ssd003/projects/aieng/public/PICAI/input/picai_labels/csPCa_lesion_delineations/AI/Bosma22a"
     )
     annotations_write_dir_default = (
-        "/ssd003/projects/aieng/public/PICAI/input/picai_labels" "/csPCa_lesion_delineations/all_annotations_resampled"
+        "/ssd003/projects/aieng/public/PICAI/input/picai_labels/csPCa_lesion_delineations/all_annotations_resampled"
     )
     parser.add_argument("--human_annotations_dir", default=human_annotations_dir_default, type=str)
     parser.add_argument(

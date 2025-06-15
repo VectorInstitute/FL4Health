@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 from fl4health.model_bases.fenda_base import FendaHeadModule, FendaJoinMode, FendaModel
 
@@ -18,12 +18,11 @@ class PerFclClassifier(FendaHeadModule):
 
     def head_forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.dropout(x)
-        x = self.fc6(x)
-        return x
+        return self.fc6(x)
 
 
 class LocalLogistic(nn.Module):
-    """Local FENDA module"""
+    """Local FENDA module."""
 
     def __init__(self, input_dim: int) -> None:
         super().__init__()
@@ -42,13 +41,11 @@ class LocalLogistic(nn.Module):
         x = self.dropout(x)
         x = self.activation(self.fc3(x))
         x = self.dropout(x)
-        x = self.activation(self.fc4(x))
-
-        return x
+        return self.activation(self.fc4(x))
 
 
 class GlobalLogistic(nn.Module):
-    """Global FENDA module"""
+    """Global FENDA module."""
 
     def __init__(self, input_dim: int) -> None:
         super().__init__()
@@ -67,9 +64,7 @@ class GlobalLogistic(nn.Module):
         x = self.dropout(x)
         x = self.activation(self.fc3(x))
         x = self.dropout(x)
-        x = self.activation(self.fc4(x))
-
-        return x
+        return self.activation(self.fc4(x))
 
 
 class DeliriumPerFclModel(FendaModel):

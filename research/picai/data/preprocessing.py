@@ -134,9 +134,7 @@ class PicaiCase(Case):
         super().__init__(scan_paths, annotations_path, settings)
 
     def read(self) -> None:
-        """
-        Reads in scans and annotation into the corresponding scans and annotation attribute.
-        """
+        """Reads in scans and annotation into the corresponding scans and annotation attribute."""
         assert len(self.scan_paths) != 0
         self.scans = [sitk.ReadImage(path) for path in self.scan_paths]
         self.annotation = sitk.ReadImage(self.annotations_path)
@@ -175,10 +173,8 @@ class PicaiCase(Case):
         return preprocessed_scan_paths, preprocessed_annotation_path
 
 
-class PreprocessingException(Exception):
-    """
-    Custom exception to be thrown during a failed attempt at processing a Case.
-    """
+class PreprocessingError(Exception):
+    """Custom exception to be thrown during a failed attempt at processing a Case."""
 
     pass
 
@@ -359,7 +355,7 @@ def apply_transform(case: Case, transforms: Sequence[PreprocessingTransform]) ->
         return processed_case.write()
     except Exception as e:
         error_path_string = ", ".join([str(path) for path in case.scan_paths] + [str(case.annotations_path)])
-        raise PreprocessingException(f"Error preprocessing case with following paths: {error_path_string}") from e
+        raise PreprocessingError(f"Error preprocessing case with following paths: {error_path_string}") from e
 
 
 def preprocess(

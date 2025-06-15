@@ -1,9 +1,8 @@
 from logging import INFO, WARNING
 
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
-from torch import Tensor
+from torch import Tensor, nn
 from torch.nn.parameter import Parameter
 
 
@@ -13,7 +12,6 @@ class PcaModule(nn.Module):
         PyTorch module for performing Principal Component Analysis.
 
         Notes:
-
         - If ``low_rank`` is set to True, then a value :math:`q` for ``rank_estimation`` is required (either specified
           by the user or via its default value). If :math:`q` is too far away from the actual rank :math:`k` of the
           data matrix, then the resulting rank-q svd approximation is not guaranteed to be a good approximation of the
@@ -88,8 +86,8 @@ class PcaModule(nn.Module):
                 log(INFO, "Performing full SVD on data matrix.")
             else:
                 log(INFO, "Performing reduced SVD on data matrix.")
-            _, singular_values, Vh = torch.linalg.svd(X_prime, full_matrices=self.full_svd)
-            principal_components = Vh.T
+            _, singular_values, vh = torch.linalg.svd(X_prime, full_matrices=self.full_svd)
+            principal_components = vh.T
         return principal_components, singular_values
 
     def maybe_reshape(self, X: Tensor) -> Tensor:
@@ -105,9 +103,8 @@ class PcaModule(nn.Module):
         """
         if len(X.size()) == 2:
             return torch.squeeze(X.float())
-        else:
-            dim0 = X.size(0)
-            return torch.squeeze(X.view(dim0, -1).float())
+        dim0 = X.size(0)
+        return torch.squeeze(X.view(dim0, -1).float())
 
     def set_data_mean(self, X: Tensor) -> None:
         """
@@ -140,12 +137,11 @@ class PcaModule(nn.Module):
         if center_data:
             self.set_data_mean(X)
             return self.center_data(X)
-        else:
-            # Check if the mean of X is already (nearly) zero.
-            # Throw an exception if it is not.
-            data_mean = torch.mean(X, dim=0)
-            assert torch.allclose(torch.zeros(data_mean.size()), data_mean, atol=1e-6)
-            return X
+        # Check if the mean of X is already (nearly) zero.
+        # Throw an exception if it is not.
+        data_mean = torch.mean(X, dim=0)
+        assert torch.allclose(torch.zeros(data_mean.size()), data_mean, atol=1e-6)
+        return X
 
     def project_lower_dim(self, X: Tensor, k: int | None = None, center_data: bool = False) -> Tensor:
         """
@@ -170,8 +166,7 @@ class PcaModule(nn.Module):
             X_prime = self.center_data(X)
         if k:
             return torch.matmul(X_prime, self.principal_components[:, :k])
-        else:
-            return torch.matmul(X_prime, self.principal_components)
+        return torch.matmul(X_prime, self.principal_components)
 
     def project_back(self, X_lower_dim: Tensor, add_mean: bool = False) -> Tensor:
         """
@@ -192,10 +187,9 @@ class PcaModule(nn.Module):
         if add_mean:
             assert self.data_mean is not None
             return torch.matmul(X_lower_dim_prime, self.principal_components[:, :k].T) + self.data_mean
-        else:
-            return torch.matmul(X_lower_dim_prime, self.principal_components[:, :k].T)
+        return torch.matmul(X_lower_dim_prime, self.principal_components[:, :k].T)
 
-    def compute_reconstruction_error(self, X: Tensor, k: int | None, center_data: bool = False) -> float:
+    def compute_reconstruction_error(self, x: Tensor, k: int | None, center_data: bool = False) -> float:
         """
         Compute the reconstruction error of X under PCA reconstruction.
 
@@ -215,10 +209,10 @@ class PcaModule(nn.Module):
         Returns:
             float: reconstruction loss as defined above.
         """
-        N = X.size(0)
-        X_lower_dim = self.project_lower_dim(X, k, center_data=center_data)
-        reconstruction = self.project_back(X_lower_dim, add_mean=center_data)
-        return (torch.linalg.norm(reconstruction - X) ** 2).item() / N
+        n = x.size(0)
+        x_lower_dim = self.project_lower_dim(x, k, center_data=center_data)
+        reconstruction = self.project_back(x_lower_dim, add_mean=center_data)
+        return (torch.linalg.norm(reconstruction - x) ** 2).item() / n
 
     def compute_projection_variance(self, X: Tensor, k: int | None, center_data: bool = False) -> float:
         """

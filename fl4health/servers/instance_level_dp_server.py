@@ -102,7 +102,7 @@ class InstanceLevelDpServer(FlServer):
         self.local_epochs = local_epochs
 
         # Whether or not we have to convert local_steps to local_epochs
-        self.convert_steps_to_epochs = True if self.local_epochs is None else False
+        self.convert_steps_to_epochs = self.local_epochs is None
         self.noise_multiplier = noise_multiplier
         self.batch_size = batch_size
         self.num_server_rounds = num_server_rounds
@@ -122,7 +122,6 @@ class InstanceLevelDpServer(FlServer):
             training results, including things like aggregated loss and metrics. Tuple also includes elapsed time in
             seconds for round.
         """
-
         assert isinstance(self.strategy, StrategyWithPolling)
         sample_counts = self.poll_clients_for_sample_counts(timeout)
         self.setup_privacy_accountant(sample_counts)

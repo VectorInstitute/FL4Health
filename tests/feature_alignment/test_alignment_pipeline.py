@@ -8,7 +8,7 @@ from fl4health.feature_alignment.tabular_type import TabularType
 
 @pytest.fixture
 def create_df1() -> pd.DataFrame:
-    df = pd.DataFrame(
+    return pd.DataFrame(
         {
             "ID": [1, 2, 3, 4],
             "Name": [
@@ -22,12 +22,11 @@ def create_df1() -> pd.DataFrame:
             "Wealth": [10.5, 20.4, 30.2, 300],
         }
     )
-    return df
 
 
 @pytest.fixture
 def create_df2() -> pd.DataFrame:
-    df = pd.DataFrame(
+    return pd.DataFrame(
         {
             "ID": [1, 2, 3, 4],
             "Name": [
@@ -43,12 +42,11 @@ def create_df2() -> pd.DataFrame:
             "Wealth": [10.5, 20.4, 30.2, 300],
         }
     )
-    return df
 
 
 @pytest.fixture
 def create_df3() -> pd.DataFrame:
-    df = pd.DataFrame(
+    return pd.DataFrame(
         {
             "ID": [1, 2, 3, 4],
             "Name": [
@@ -64,7 +62,6 @@ def create_df3() -> pd.DataFrame:
             "Wealth": [10.5, 20.4, 30.2, 300],
         }
     )
-    return df
 
 
 def test_encoding(create_df1: pd.DataFrame) -> None:

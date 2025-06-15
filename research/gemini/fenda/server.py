@@ -4,13 +4,13 @@ from logging import INFO
 from typing import Any
 
 import flwr as fl
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters, Scalar
 from flwr.server.client_manager import ClientManager, SimpleClientManager
 from flwr.server.server import EvaluateResultsAndFailures
 from flwr.server.strategy import FedAvg, Strategy
+from torch import nn
 
 from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
@@ -18,7 +18,7 @@ from fl4health.servers.server import FlServer
 from fl4health.utils.config import load_config
 
 # delirium model
-from research.gemini.delirium_models.fenda_mlp import FendaClassifier_d, GlobalMLP_d, LocalMLP_d
+from research.gemini.delirium_models.fenda_mlp import FendaClassifierD, GlobalMlpD, LocalMlpD
 
 # mortality model
 from research.gemini.mortality_models.fenda_mlp import FendaClassifier, GlobalMLP, LocalMLP
@@ -119,7 +119,7 @@ def main(config: dict[str, Any], server_address: str) -> None:
 
     client_manager = SimpleClientManager()
     if int(config["n_clients"]) == 6:
-        client_model = FendaModel(LocalMLP_d(), GlobalMLP_d(), FendaClassifier_d(FendaJoinMode.CONCATENATE, size=256))
+        client_model = FendaModel(LocalMlpD(), GlobalMlpD(), FendaClassifierD(FendaJoinMode.CONCATENATE, size=256))
     else:
         client_model = FendaModel(LocalMLP(), GlobalMLP(), FendaClassifier(FendaJoinMode.CONCATENATE))
 

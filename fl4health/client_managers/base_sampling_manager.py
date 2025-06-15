@@ -4,7 +4,7 @@ from flwr.server.criterion import Criterion
 
 
 class BaseFractionSamplingManager(SimpleClientManager):
-    """Overrides the Simple Client Manager to Provide Fixed Sampling without replacement for Clients"""
+    """Overrides the Simple Client Manager to Provide Fixed Sampling without replacement for Clients."""
 
     def sample(
         self, num_clients: int, min_num_clients: int | None = None, criterion: Criterion | None = None
@@ -48,7 +48,7 @@ class BaseFractionSamplingManager(SimpleClientManager):
 
     def sample_all(self, min_num_clients: int | None = None, criterion: Criterion | None = None) -> list[ClientProxy]:
         """
-        Samples **ALL** available clients
+        Samples **ALL** available clients.
 
         Args:
             min_num_clients (int | None, optional): minimum number of clients to wait to become available before

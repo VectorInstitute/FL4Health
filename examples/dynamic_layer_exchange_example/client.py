@@ -3,8 +3,8 @@ from pathlib import Path
 
 import flwr as fl
 import torch
-import torch.nn as nn
 from flwr.common.typing import Config
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -56,9 +56,7 @@ class CifarDynamicLayerClient(PartialWeightExchangeClient):
             else layer_selection_function_constructor.select_by_threshold()
         )
 
-        parameter_exchanger = DynamicLayerExchanger(layer_selection_function=layer_selection_function)
-
-        return parameter_exchanger
+        return DynamicLayerExchanger(layer_selection_function=layer_selection_function)
 
 
 if __name__ == "__main__":

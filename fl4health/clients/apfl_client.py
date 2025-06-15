@@ -28,7 +28,7 @@ class ApflClient(BasicClient):
         client_name: str | None = None,
     ) -> None:
         """
-        Client specifically implementing the APFL Algorithm: https://arxiv.org/abs/2003.13461
+        Client specifically implementing the APFL Algorithm: https://arxiv.org/abs/2003.13461.
 
         Twin models are trained. One of them is globally shared by all clients and aggregated on the server.
         The other is strictly trained locally by each client. Predictions are made by a convex combination of the
@@ -138,7 +138,6 @@ class ApflClient(BasicClient):
             - The tensor for the personal loss
             - A dictionary of with "global_loss" and "local_loss" keys and their calculated values
         """
-
         assert isinstance(preds, dict)
         personal_loss = self.criterion(preds["personal"], target)
         global_loss = self.criterion(preds["global"], target)
@@ -149,11 +148,9 @@ class ApflClient(BasicClient):
 
     def set_optimizer(self, config: Config) -> None:
         optimizers = self.get_optimizer(config)
-        assert isinstance(optimizers, dict) and set(("global", "local")) == set(optimizers.keys())
+        assert isinstance(optimizers, dict) and {"global", "local"} == set(optimizers.keys())
         self.optimizers = optimizers
 
     def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
-        """
-        Returns a dictionary with global and local optimizers with string keys "global" and "local" respectively.
-        """
+        """Returns a dictionary with global and local optimizers with string keys "global" and "local" respectively."""
         raise NotImplementedError

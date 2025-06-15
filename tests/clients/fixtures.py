@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 
 from fl4health.clients.apfl_client import ApflClient

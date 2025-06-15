@@ -21,9 +21,9 @@ def infer_label_dim(tensor1: torch.Tensor, tensor2: torch.Tensor) -> int:
     Returns:
         int: Index of the dimension along tensor 1 that corresponds to the label dimension.
     """
-    assert (
-        tensor1.shape != tensor2.shape
-    ), f"Could not infer the label dimension of tensors with the same shape: {tensor1.shape}"
+    assert tensor1.shape != tensor2.shape, (
+        f"Could not infer the label dimension of tensors with the same shape: {tensor1.shape}"
+    )
 
     assert 0 <= (tensor1.ndim - tensor2.ndim) <= 1, (
         f"Could not infer the label dimension of tensors with shapes: tensor1: {tensor1.shape}), tensor 2: "
@@ -102,14 +102,14 @@ def map_label_index_tensor_to_one_hot(
     """
     label_index_tensor_shape = label_index_tensor.shape
 
-    assert label_dim < len(
-        label_index_tensor_shape
-    ), f"Label dim: {label_dim} too large for target shape: {label_index_tensor_shape}"
+    assert label_dim < len(label_index_tensor_shape), (
+        f"Label dim: {label_dim} too large for target shape: {label_index_tensor_shape}"
+    )
 
     label_dim_of_tensor = label_index_tensor.shape[label_dim]
-    assert (
-        label_dim_of_tensor == 1
-    ), f"Expected label_dim {label_dim} of label_index_tensor to be of size 1, but got {label_dim_of_tensor}"
+    assert label_dim_of_tensor == 1, (
+        f"Expected label_dim {label_dim} of label_index_tensor to be of size 1, but got {label_dim_of_tensor}"
+    )
 
     one_hot_encoded_tensor = torch.zeros(target_shape, device=label_index_tensor.device)
     one_hot_encoded_tensor.scatter_(label_dim, label_index_tensor.to(torch.int64), 1)
@@ -155,15 +155,14 @@ def align_pred_and_target_shapes(
     Returns:
         tuple[torch.Tensor, torch.Tensor]: The pred and target tensors respectively now ensured to have the same shape.
     """
-
     # Shapes are already aligned.
     if preds.shape == targets.shape:
         return preds, targets
 
     # Run this assertion before in case label dim is defined.
-    assert (
-        abs(preds.ndim - targets.ndim) <= 1
-    ), f"Can not align pred and target tensors with shapes {preds.shape}, {targets.shape}"
+    assert abs(preds.ndim - targets.ndim) <= 1, (
+        f"Can not align pred and target tensors with shapes {preds.shape}, {targets.shape}"
+    )
 
     # If shapes are different then we assume one tensor has vector encoded labels and the other is label index encoded
     # and will be mapped to one-hot-encoded format.
@@ -189,5 +188,4 @@ def align_pred_and_target_shapes(
     if preds.shape[label_dim] < targets.shape[label_dim]:
         # We need to one-hot the preds tensor
         return map_label_index_tensor_to_one_hot(preds, targets.shape, label_dim), targets
-    else:
-        return preds, map_label_index_tensor_to_one_hot(targets, preds.shape, label_dim)
+    return preds, map_label_index_tensor_to_one_hot(targets, preds.shape, label_dim)

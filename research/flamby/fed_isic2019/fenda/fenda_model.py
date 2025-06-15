@@ -1,8 +1,8 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from efficientnet_pytorch import EfficientNet
 from efficientnet_pytorch.utils import url_map
+from torch import nn
 from torch.utils import model_zoo
 
 from fl4health.model_bases.fenda_base import FendaModel
@@ -39,8 +39,7 @@ class FendaClassifier(ParallelSplitHeadModule):
     def head_forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         x = self.dropout(input_tensor)
         x = F.relu(self.fc1(x))
-        x = self.fc2(x)
-        return x
+        return self.fc2(x)
 
 
 class LocalEfficientNet(nn.Module):
@@ -78,8 +77,7 @@ class LocalEfficientNet(nn.Module):
             self.base_model._modules["_blocks"][block_index].requires_grad_(False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.base_model(x)
-        return x
+        return self.base_model(x)
 
 
 class GlobalEfficientNet(nn.Module):
@@ -117,8 +115,7 @@ class GlobalEfficientNet(nn.Module):
             self.base_model._modules["_blocks"][block_index].requires_grad_(False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.base_model(x)
-        return x
+        return self.base_model(x)
 
 
 class FedIsic2019FendaModel(FendaModel):

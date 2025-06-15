@@ -69,8 +69,8 @@ class FedPmClient(BasicClient):
 
     def setup_client(self, config: Config) -> None:
         """
-        Performs the same setup as BasicClient, but adds on the possibility of converting an ordinary model to a
-        masked model compatible with FedPM
+        Performs the same setup as ``BasicClient``, but adds on the possibility of converting an ordinary model to a
+        masked model compatible with ``FedPM``.
 
         Args:
             config (Config): Configuration specifying all of the required parameters for training.
@@ -84,7 +84,7 @@ class FedPmClient(BasicClient):
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         """
-        Forces the client to use the ``FedPmExchanger``
+        Forces the client to use the ``FedPmExchanger``.
 
         Args:
             config (Config): Configuration specifying all of the required parameters for training.

@@ -1,13 +1,13 @@
-"""Ditto Personalized Mixin"""
+"""Ditto Personalized Mixin."""
 
 import warnings
-from logging import DEBUG, INFO, WARN
+from logging import DEBUG, ERROR, INFO, WARN
 from typing import Any, Protocol, cast, runtime_checkable
 
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
+from torch import nn
 from torch.optim import Optimizer
 
 from fl4health.clients.basic_client import BasicClient
@@ -42,7 +42,6 @@ class DittoPersonalizedProtocol(AdaptiveDriftConstrainedProtocol, Protocol):
 
 
 class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
-
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         This mixin implements the Ditto algorithm from Ditto: Fair and Robust Federated Learning Through
@@ -75,7 +74,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             raise RuntimeError("This object needs to satisfy `BasicClientProtocolPreSetup`.")
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
-        """This method is called when a class inherits from AdaptiveMixin"""
+        """This method is called when a class inherits from AdaptiveMixin."""
         super().__init_subclass__(**kwargs)
 
         # Skip check for other mixins
@@ -97,13 +96,11 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             f"base classes implement BasicClient. This may cause runtime errors."
         )
         log(WARN, msg)
-        warnings.warn(
-            msg,
-            RuntimeWarning,
-        )
+        warnings.warn(msg, RuntimeWarning, stacklevel=1)
 
     def safe_global_model(self: DittoPersonalizedProtocol) -> nn.Module:
-        """Convenient accessor for the global model.
+        """
+        Convenient accessor for the global model.
 
         Raises:
             ValueError: If the `global_model` attribute has not yet been set, we
@@ -118,7 +115,8 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
 
     @property
     def optimizer_keys(self: DittoPersonalizedProtocol) -> list[str]:
-        """Property for optimizer keys.
+        """
+        Property for optimizer keys.
 
         Returns:
             list[str]: list of keys for the optimizers dictionary.
@@ -126,15 +124,16 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         return ["local", "global"]
 
     def _copy_optimizer_with_new_params(self: DittoPersonalizedProtocol, original_optimizer: Optimizer) -> Optimizer:
-        """Helper method to make a copy of the original optimizer for the global model.
+        """
+        Helper method to make a copy of the original optimizer for the global model.
 
         Args:
-            original_optimizer (Optimizer): original optimizer of the underyling `BasicClient`.
+            original_optimizer (Optimizer): original optimizer of the underlying `BasicClient`.
 
         Returns:
             Optimizer: a copy of the original optimizer to be used by the global model.
         """
-        OptimClass = original_optimizer.__class__
+        optim_class = original_optimizer.__class__
         state_dict = original_optimizer.state_dict()
 
         # Extract hyperparameters from param_groups
@@ -143,7 +142,6 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
 
         # store initial_lr to be used with schedulers
         try:
-
             initial_lr = param_group["initial_lr"]
         except KeyError:
             if "lr" in original_optimizer.defaults:
@@ -154,7 +152,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
 
         optimizer_kwargs = {k: v for k, v in param_group.items() if k not in ("params", "initial_lr")}
         assert self.global_model is not None
-        global_optimizer = OptimClass(self.global_model.parameters(), **optimizer_kwargs)
+        global_optimizer = optim_class(self.global_model.parameters(), **optimizer_kwargs)
 
         # maintain initial_lr for schedulers
         for param_group in global_optimizer.param_groups:
@@ -195,8 +193,9 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         if isinstance(optimizer, dict):
             try:
                 original_optimizer = next(el for el in optimizer.values() if isinstance(el, Optimizer))
-            except StopIteration:
-                raise ValueError("Unable to find an ~torch.optim.Optimizer object.")
+            except StopIteration as e:
+                log(ERROR, "Unable to find an ~torch.optim.Optimizer object.")
+                raise e
         elif isinstance(optimizer, Optimizer):
             original_optimizer = optimizer
         else:
@@ -262,18 +261,17 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             # architecture, it doesn't matter which we choose as an initializer. The global and local models are set
             # to the same weights in initialize_all_model_weights
             return FullParameterExchanger().push_parameters(self.model, config=config)
-        else:
-            # NOTE: the global model weights are sent to the server here.
-            if self.global_model is None:
-                raise ValueError("Unable to get parameters with unset global model.")
-            global_model_weights = self.parameter_exchanger.push_parameters(self.global_model, config=config)
+        # NOTE: the global model weights are sent to the server here.
+        if self.global_model is None:
+            raise ValueError("Unable to get parameters with unset global model.")
+        global_model_weights = self.parameter_exchanger.push_parameters(self.global_model, config=config)
 
-            # Weights and training loss sent to server for aggregation
-            # Training loss sent because server will decide to increase or decrease the penalty weight, if adaptivity
-            # is turned on
-            packed_params = self.parameter_exchanger.pack_parameters(global_model_weights, self.loss_for_adaptation)
-            log(INFO, "Successfully packed parameters of global model")
-            return packed_params
+        # Weights and training loss sent to server for aggregation
+        # Training loss sent because server will decide to increase or decrease the penalty weight, if adaptivity
+        # is turned on
+        packed_params = self.parameter_exchanger.pack_parameters(global_model_weights, self.loss_for_adaptation)
+        log(INFO, "Successfully packed parameters of global model")
+        return packed_params
 
     @ensure_protocol_compliance
     def set_parameters(
@@ -352,7 +350,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         self: DittoPersonalizedProtocol, input: TorchInputType, target: TorchTargetType
     ) -> tuple[TrainingLosses, TorchPredType]:
         """
-        Mechanics of training loop follow from original Ditto implementation: https://github.com/litian96/ditto
+        Mechanics of training loop follow from original Ditto implementation: https://github.com/litian96/ditto.
 
         As in the implementation there, steps of the global and local models are done in tandem and for the same
         number of steps.
@@ -368,7 +366,6 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             model optimization steps. The prediction dictionary contains predictions indexed a "global" and "local"
             corresponding to predictions from the global and local Ditto models for metric evaluations.
         """
-
         # Clear gradients from optimizers if they exist
         self.optimizers["global"].zero_grad()
         self.optimizers["local"].zero_grad()
@@ -397,7 +394,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
     ) -> tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the predictions for both the **GLOBAL** and **LOCAL** models and pack them into the prediction
-        dictionary
+        dictionary.
 
         Args:
             input (TorchInputType): Inputs to be fed into both models.
@@ -411,34 +408,32 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
                 forward.
         """
-
         if hasattr(self, "_predict"):
             log(INFO, "Using '_predict' to make predictions")
             global_preds, _ = self._predict(self.safe_global_model(), input)
             local_preds, _ = self._predict(self.model, input)
             log(INFO, "Successfully predicted for global and local models")
-        else:
-            if isinstance(input, torch.Tensor):
-                global_preds = self.safe_global_model()(input)
-                local_preds = self.model(input)
-            elif isinstance(input, dict):
-                # If input is a dictionary, then we unpack it before computing the forward pass.
-                # Note that this assumes the keys of the input match (exactly) the keyword args
-                # of the forward method.
-                global_preds = self.safe_global_model()(**input)
-                local_preds = self.model(**input)
+        elif isinstance(input, torch.Tensor):
+            global_preds = self.safe_global_model()(input)
+            local_preds = self.model(input)
+        elif isinstance(input, dict):
+            # If input is a dictionary, then we unpack it before computing the forward pass.
+            # Note that this assumes the keys of the input match (exactly) the keyword args
+            # of the forward method.
+            global_preds = self.safe_global_model()(**input)
+            local_preds = self.model(**input)
 
         if isinstance(global_preds, torch.Tensor) and isinstance(local_preds, torch.Tensor):
             return {"global": global_preds, "local": local_preds}, {}
-        elif isinstance(global_preds, dict) and isinstance(local_preds, dict):
+        if isinstance(global_preds, dict) and isinstance(local_preds, dict):
             retval = {f"global-{k}": v for k, v in global_preds.items()}
             retval.update(**{f"local-{k}": v for k, v in local_preds.items()})
             return retval, {}
-        else:
-            raise ValueError(f"Unsupported pred types. Global: {type(global_preds)}, local: {type(local_preds)}")
+        raise ValueError(f"Unsupported pred types. Global: {type(global_preds)}, local: {type(local_preds)}")
 
     def _extract_pred(self, kind: str, preds: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
-        """Helper method to extract predictions from global and local models.
+        """
+        Helper method to extract predictions from global and local models.
 
         Args:
             kind (str): the kind of predictions to be extracted i.e., for 'local' or for 'global'
@@ -456,8 +451,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         # filter
         retval = {k: v for k, v in preds.items() if kind in k}
         # remove prefix
-        retval = {k.replace(f"{kind}-", ""): v for k, v in retval.items()}
-        return retval
+        return {k.replace(f"{kind}-", ""): v for k, v in retval.items()}
 
     def compute_loss_and_additional_losses(
         self: DittoPersonalizedProtocol,
@@ -467,19 +461,19 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Computes the local model loss and the global Ditto model loss (stored in additional losses) for reporting and
-        training of the global model
+        training of the global model.
 
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name.
             features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
             target (TorchTargetType): Ground truth data to evaluate predictions against.
+
         Returns:
             tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
 
             - The tensor for the model loss
             - A dictionary with ``local_loss``, ``global_loss`` as additionally reported loss values.
         """
-
         global_preds = self._extract_pred(kind="global", preds=preds)
         local_preds = self._extract_pred(kind="local", preds=preds)
 
@@ -515,7 +509,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         Computes training losses given predictions of the global and local models and ground truth data.
         For the local model we add to the vanilla loss function by including Ditto penalty loss which is the l2 inner
         product between the initial global model weights and weights of the local model. This is stored in backward
-        The loss to optimize the global model is stored in the additional losses dictionary under "global_loss"
+        The loss to optimize the global model is stored in the additional losses dictionary under "global_loss".
 
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in

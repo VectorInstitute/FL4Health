@@ -12,11 +12,11 @@ from typing import Any
 
 import flwr as fl
 import torch
-import torch.nn as nn
 from datasets import Dataset
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from peft import get_peft_model_state_dict, set_peft_model_state_dict
+from torch import nn
 from transformers import PreTrainedTokenizer
 from trl import SFTConfig, SFTTrainer
 
@@ -34,6 +34,7 @@ from fl4health.reporting import JsonReporter
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.random import set_all_random_seeds
 
+
 # Avoid warnings
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -41,7 +42,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 NUM_CLIENTS = 2
 
 
-class LLMClient(BasicClient):
+class LlmClient(BasicClient):
     def __init__(
         self,
         data_path: Path,
@@ -68,9 +69,8 @@ class LLMClient(BasicClient):
                 to None.
             deepspeed_config_dir (str | None, optional): The path to the deepspeed configuration file. Defaults to
                 None.
-            checkpioint_dir (str | None, optional): The directory to save the model checkpoints. Defaults to None.
+            checkpoint_dir (str | None, optional): The directory to save the model checkpoints. Defaults to None.
         """
-
         super().__init__(data_path, metrics, device, reporters=reporters, checkpoint_and_state_module=None)
         self.client_number = client_number
         self.deepspeed_config_dir = deepspeed_config_dir
@@ -96,7 +96,6 @@ class LLMClient(BasicClient):
                 current_server_round, evaluate_after_fit and pack_losses_with_val_metrics. Ensures only one of
                 local_epochs and local_steps is defined in the config and sets the one that is not to None.
         """
-
         local_epochs, local_steps, current_server_round, evaluate_after_fit, pack_losses_with_val_metrics = (
             super().process_config(config)
         )
@@ -148,7 +147,6 @@ class LLMClient(BasicClient):
 
     def get_parameters(self, config: Config) -> NDArrays:
         """Return the parameters of the current net."""
-
         # In deepspeed Stage 3, we need to get lora parameters differently as all the parameters are also partitioned.
         # We should make sure to gather all of these parameters for sending them to server.
         if not self.deepspeed_config_dir or (self.deepspeed_config_dir and "zero3" not in self.deepspeed_config_dir):
@@ -164,7 +162,6 @@ class LLMClient(BasicClient):
         Args:
             config (Config): The config from the server.
         """
-
         # Let's get the client partition
         assert isinstance(config["dataset"], str), "Config must contain values for dataset arguments."
         dataset_cfg = json.loads(config["dataset"])
@@ -185,7 +182,6 @@ class LLMClient(BasicClient):
         Args:
             config (Config): The config from the server.
         """
-
         assert isinstance(config["model"], str), "Config must contain values for model arguments."
         self.model_cfg = json.loads(config["model"])
         assert isinstance(self.model_cfg, dict), "Model configuration must be a dictionary"
@@ -207,7 +203,6 @@ class LLMClient(BasicClient):
         Args:
             config (Config): The config from the server.
         """
-
         self.model = self.get_model(config)
 
         self.set_train_dataset(config)
@@ -227,7 +222,6 @@ class LLMClient(BasicClient):
         Args:
             current_server_round (int): The number of current server round.
         """
-
         assert isinstance(self.train_cfg, dict), "train_cfg should be a dictionary"
         lrate_max = self.train_cfg.get("learning_rate_max")
         lrate_min = self.train_cfg.get("learning_rate_min")
@@ -240,9 +234,9 @@ class LLMClient(BasicClient):
             learning_rate_min=float(lrate_min),
         )
 
-        assert isinstance(
-            self.training_arguments, SFTConfig
-        ), "training_arguments should be a TrainingArguments object"
+        assert isinstance(self.training_arguments, SFTConfig), (
+            "training_arguments should be a TrainingArguments object"
+        )
 
         self.training_arguments.learning_rate = self.lr
         # Disable reporting to avoid cluttering the logs
@@ -275,7 +269,6 @@ class LLMClient(BasicClient):
             tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
                 Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
-
         # Do local training
         results = self.trainer.train()
         loss_dict = {"train_loss": results.training_loss}
@@ -295,7 +288,6 @@ class LLMClient(BasicClient):
             loss_dict (dict[str, float]): The loss dictionary from the local training.
             config (Config): The config from the server.
         """
-
         self.trainer.save_state()
         self.model.config.use_cache = True
 
@@ -378,7 +370,7 @@ if __name__ == "__main__":
     # Set the checkpoint directory
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
 
-    client = LLMClient(
+    client = LlmClient(
         data_path=Path(" "),
         metrics=[Accuracy()],
         device=device,

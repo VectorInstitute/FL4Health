@@ -3,6 +3,7 @@ import torch
 
 from fl4health.losses.deep_mmd_loss import DeepMmdLoss
 
+
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 X = torch.Tensor(
@@ -43,7 +44,7 @@ def test_forward() -> None:
     deep_mmd_loss_1.training = True
     train_outputs_1 = []
     val_outputs_1 = []
-    for i in range(5):
+    for _ in range(5):
         deep_mmd_loss_1.training = True
         output = deep_mmd_loss_1(X, Y)
         train_outputs_1.append(output)

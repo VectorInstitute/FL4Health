@@ -22,6 +22,7 @@ from research.rxrx1.utils import (
     write_measurement_results,
 )
 
+
 NUM_CLIENTS = 4
 BATCH_SIZE = 32
 
@@ -43,22 +44,22 @@ def main(
     test_results: dict[str, float] = {}
     metrics = [Accuracy("rxrx1_accuracy")]
 
-    all_pre_best_local_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
-    all_pre_last_local_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
-    all_post_best_local_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
-    all_post_last_local_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
+    all_pre_best_local_test_metrics = dict.fromkeys(all_run_folder_dir, 0.0)
+    all_pre_last_local_test_metrics = dict.fromkeys(all_run_folder_dir, 0.0)
+    all_post_best_local_test_metrics = dict.fromkeys(all_run_folder_dir, 0.0)
+    all_post_last_local_test_metrics = dict.fromkeys(all_run_folder_dir, 0.0)
 
-    all_best_server_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
-    all_last_server_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
+    all_best_server_test_metrics = dict.fromkeys(all_run_folder_dir, 0.0)
+    all_last_server_test_metrics = dict.fromkeys(all_run_folder_dir, 0.0)
 
     if eval_over_aggregated_test_data:
-        all_pre_best_local_agg_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
-        all_pre_last_local_agg_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
-        all_post_best_local_agg_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
-        all_post_last_local_agg_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
+        all_pre_best_local_agg_test_metrics = dict.fromkeys(all_run_folder_dir, 0.0)
+        all_pre_last_local_agg_test_metrics = dict.fromkeys(all_run_folder_dir, 0.0)
+        all_post_best_local_agg_test_metrics = dict.fromkeys(all_run_folder_dir, 0.0)
+        all_post_last_local_agg_test_metrics = dict.fromkeys(all_run_folder_dir, 0.0)
 
-        all_best_server_agg_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
-        all_last_server_agg_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
+        all_best_server_agg_test_metrics = dict.fromkeys(all_run_folder_dir, 0.0)
+        all_last_server_agg_test_metrics = dict.fromkeys(all_run_folder_dir, 0.0)
 
     if eval_over_aggregated_test_data:
         for client_number in range(NUM_CLIENTS):
@@ -114,7 +115,6 @@ def main(
                     local_run_metric * num_examples["eval_set"] / aggregated_num_examples
                 )
                 if eval_over_aggregated_test_data:
-
                     agg_local_run_metric = evaluate_rxrx1_model(local_model, aggregated_test_loader, metrics, device)
                     log(
                         INFO,
@@ -140,7 +140,6 @@ def main(
                 )
 
                 if eval_over_aggregated_test_data:
-
                     agg_local_run_metric = evaluate_rxrx1_model(local_model, aggregated_test_loader, metrics, device)
                     log(
                         INFO,
@@ -166,7 +165,6 @@ def main(
                 )
 
                 if eval_over_aggregated_test_data:
-
                     agg_local_run_metric = evaluate_rxrx1_model(local_model, aggregated_test_loader, metrics, device)
                     log(
                         INFO,
@@ -192,7 +190,6 @@ def main(
                 )
 
                 if eval_over_aggregated_test_data:
-
                     agg_local_run_metric = evaluate_rxrx1_model(local_model, aggregated_test_loader, metrics, device)
                     log(
                         INFO,
@@ -218,7 +215,6 @@ def main(
                 )
 
                 if eval_over_aggregated_test_data:
-
                     agg_server_run_metric = evaluate_rxrx1_model(server_model, aggregated_test_loader, metrics, device)
                     log(
                         INFO,
@@ -244,7 +240,6 @@ def main(
                 )
 
                 if eval_over_aggregated_test_data:
-
                     agg_server_run_metric = evaluate_rxrx1_model(server_model, aggregated_test_loader, metrics, device)
                     log(
                         INFO,

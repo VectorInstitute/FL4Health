@@ -4,14 +4,14 @@ from logging import INFO
 from pathlib import Path
 
 import torch
-import torch.nn as nn
 from data.data import load_train_delirium, load_train_mortality
 from flwr.common.logger import log
+from torch import nn
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.metrics import AccumulationMeter, Metric
 from research.gemini.delirium_models.NN import NN as delirium_model
-from research.gemini.metrics.metrics import Accuracy, Binary_F1, Binary_ROC_AUC
+from research.gemini.metrics.metrics import Accuracy, BinaryF1, BinaryRocAuc
 from research.gemini.mortality_models.NN import NN as mortality_model
 
 
@@ -26,7 +26,6 @@ def main(
     checkpoint_stub: str,
     run_name: str = "",
 ) -> None:
-
     # Load training and validation data from all the hospitals.
     if learning_task == "mortality":
         model: nn.Module = mortality_model(input_dim=35, output_dim=1).to(device)
@@ -126,7 +125,7 @@ if __name__ == "__main__":
 
     main(
         data_path,
-        [Binary_ROC_AUC(), Binary_F1(), Accuracy()],
+        [BinaryRocAuc(), BinaryF1(), Accuracy()],
         device,
         args.task,
         args.batch_size,

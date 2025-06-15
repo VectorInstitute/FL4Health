@@ -3,6 +3,7 @@ import torch
 from fl4health.model_bases.feature_extractor_buffer import FeatureExtractorBuffer
 from tests.test_utils.models_for_test import HierarchicalCnn
 
+
 MODEL = HierarchicalCnn()
 
 

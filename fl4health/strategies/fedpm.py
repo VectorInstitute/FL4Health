@@ -89,8 +89,7 @@ class FedPm(FedAvgDynamicLayer):
     def aggregate(self, results: list[tuple[NDArrays, int]]) -> dict[str, NDArray]:
         if not self.bayesian_aggregation:
             return super().aggregate(results)
-        else:
-            return self.aggregate_bayesian(results)
+        return self.aggregate_bayesian(results)
 
     def aggregate_bayesian(self, results: list[tuple[NDArrays, int]]) -> dict[str, NDArray]:
         """
@@ -148,7 +147,7 @@ class FedPm(FedAvgDynamicLayer):
 
         # posterior update of the beta parameters and using them
         # to compute the final result.
-        for parameter_name in self.beta_parameters.keys():
+        for parameter_name in self.beta_parameters:
             m_agg = reduce(np.add, names_to_layers[parameter_name])
             n_clients = total_num_clients[parameter_name]
             alpha, beta = self.beta_parameters[parameter_name]
@@ -160,9 +159,7 @@ class FedPm(FedAvgDynamicLayer):
         return aggregation_result
 
     def reset_beta_priors(self) -> None:
-        """
-        Reset the alpha and beta parameters for the Beta distribution to be arrays of all ones.
-        """
-        for parameter_name in self.beta_parameters.keys():
+        """Reset the alpha and beta parameters for the Beta distribution to be arrays of all ones."""
+        for parameter_name in self.beta_parameters:
             alpha, beta = self.beta_parameters[parameter_name]
             self.beta_parameters[parameter_name] = (np.ones_like(alpha), np.ones_like(beta))

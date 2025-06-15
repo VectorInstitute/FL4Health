@@ -23,7 +23,7 @@ def construct_rxrx1_tensor_dataset(
     transform: Callable | None = None,
 ) -> tuple[TensorDataset, dict[int, int]]:
     """
-    Construct a ``TensorDataset`` for rxrx1 data (https://www.rxrx.ai/rxrx1)
+    Construct a ``TensorDataset`` for rxrx1 data (https://www.rxrx.ai/rxrx1).
 
     Args:
         metadata (DataFrame): A ``DataFrame`` containing image metadata.
@@ -35,7 +35,6 @@ def construct_rxrx1_tensor_dataset(
     Returns:
         tuple[TensorDataset, dict[int, int]]: A ``TensorDataset`` containing the processed images and label map.
     """
-
     label_map = {label: idx for idx, label in enumerate(sorted(metadata["sirna_id"].unique()))}
     original_label_map = {new_label: original_label for original_label, new_label in label_map.items()}
     metadata = metadata[metadata["dataset"] == dataset_type]
@@ -43,7 +42,7 @@ def construct_rxrx1_tensor_dataset(
     data_list = []
     for index in range(len(targets_tensor)):
         with open(
-            os.path.join(data_path, f"clients/{dataset_type}_data_{client_num+1}/image_{index}.pkl"), "rb"
+            os.path.join(data_path, f"clients/{dataset_type}_data_{client_num + 1}/image_{index}.pkl"), "rb"
         ) as file:
             data_list.append(torch.Tensor(pickle.load(file)).unsqueeze(0))
     data_tensor = torch.cat(data_list)
@@ -95,7 +94,6 @@ def create_splits(
     Returns:
         tuple[list[int], list[int]]: Indices associated with the selected datapoints for the train and validation sets
     """
-
     # Group indices by label
     label_to_indices = defaultdict(list)
     assert isinstance(dataset.targets, torch.Tensor)
@@ -104,7 +102,7 @@ def create_splits(
 
     # Stratified splitting
     train_indices, val_indices = [], []
-    for label, indices in label_to_indices.items():
+    for _, indices in label_to_indices.items():
         if seed is not None:
             np_generator = np.random.default_rng(seed)
             np_generator.shuffle(indices)
@@ -143,9 +141,8 @@ def load_rxrx1_data(
         tuple[DataLoader, DataLoader, dict[str, int]]: Train and validation dataloaders and a dictionary holding the
         size of each dataset.
     """
-
     # Read the CSV file
-    data = pd.read_csv(f"{data_path}/clients/meta_data_{client_num+1}.csv")
+    data = pd.read_csv(f"{data_path}/clients/meta_data_{client_num + 1}.csv")
 
     dataset, _ = construct_rxrx1_tensor_dataset(data, data_path, client_num, "train")
 
@@ -174,7 +171,7 @@ def load_rxrx1_test_data(
     data_path: Path, client_num: int, batch_size: int, num_workers: int = 0
 ) -> tuple[DataLoader, dict[str, int]]:
     """
-    Create a dataloader for the reserved rxrx1 dataset
+    Create a dataloader for the reserved rxrx1 dataset.
 
     Args:
         data_path (Path): Path to the test data
@@ -185,9 +182,8 @@ def load_rxrx1_test_data(
     Returns:
         tuple[DataLoader, dict[str, int]]: Test dataloader, dictionary containing count of the data points in the set
     """
-
     # Read the CSV file
-    data = pd.read_csv(f"{data_path}/clients/meta_data_{client_num+1}.csv")
+    data = pd.read_csv(f"{data_path}/clients/meta_data_{client_num + 1}.csv")
 
     dataset, _ = construct_rxrx1_tensor_dataset(data, data_path, client_num, "test")
 

@@ -1,13 +1,13 @@
 import argparse
 import os
-from logging import INFO
+from logging import ERROR, INFO
 from pathlib import Path
 
 import numpy as np
 import torch
-import torchvision.transforms as transforms
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
+from torchvision import transforms
 
 from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.load_data import ToNumpy, get_cifar10_data_and_target_tensors, split_data_and_targets
@@ -28,8 +28,9 @@ def get_preprocessed_data(
     try:
         train_data = torch.from_numpy(np.load(f"{dataset_dir}/beta_{beta}/client_{client_num}_train_data.npy"))
         train_targets = torch.from_numpy(np.load(f"{dataset_dir}/beta_{beta}/client_{client_num}_train_targets.npy"))
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Client {client_num} does not have partitioned train data")
+    except FileNotFoundError as e:
+        log(ERROR, f"Client {client_num} does not have partitioned train data")
+        raise e
 
     training_set = TensorDataset(train_data, train_targets, transform=transform, target_transform=None)
 
@@ -40,8 +41,9 @@ def get_preprocessed_data(
         validation_targets = torch.from_numpy(
             np.load(f"{dataset_dir}/beta_{beta}/client_{client_num}_validation_targets.npy")
         )
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Client {client_num} does not have partitioned validation data")
+    except FileNotFoundError as e:
+        log(ERROR, f"Client {client_num} does not have partitioned validation data")
+        raise e
 
     validation_set = TensorDataset(validation_data, validation_targets, transform=transform, target_transform=None)
 
@@ -68,8 +70,9 @@ def get_test_preprocessed_data(
     try:
         data = torch.from_numpy(np.load(f"{dataset_dir}/beta_{beta}/client_{client_num}_test_data.npy"))
         targets = torch.from_numpy(np.load(f"{dataset_dir}/beta_{beta}/client_{client_num}_test_targets.npy"))
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Client {client_num} does not have partitioned test data")
+    except FileNotFoundError as e:
+        log(ERROR, f"Client {client_num} does not have partitioned test data")
+        raise e
 
     evaluation_set = TensorDataset(data, targets, transform=transform, target_transform=None)
 

@@ -169,7 +169,7 @@ def select_by_indices(dataset: D, selected_indices: torch.Tensor) -> D:
         # cast being used here until the mypy bug mentioned in https://github.com/python/mypy/issues/12800 and the
         # duplicate ticket https://github.com/python/mypy/issues/10817 are fixed
         return cast(D, modified_dataset)
-    elif isinstance(dataset, DictionaryDataset):
+    if isinstance(dataset, DictionaryDataset):
         new_targets = dataset.targets[selected_indices]
         new_data: dict[str, list[torch.Tensor]] = {}
         for key, val in dataset.data.items():
@@ -179,5 +179,4 @@ def select_by_indices(dataset: D, selected_indices: torch.Tensor) -> D:
         # cast being used here until the mypy bug mentioned in https://github.com/python/mypy/issues/12800 and the
         # duplicate ticket https://github.com/python/mypy/issues/10817 are fixed
         return cast(D, DictionaryDataset(new_data, new_targets))
-    else:
-        raise TypeError("Dataset type is not supported by this function.")
+    raise TypeError("Dataset type is not supported by this function.")

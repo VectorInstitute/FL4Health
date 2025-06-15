@@ -3,10 +3,11 @@ from collections.abc import Callable
 from enum import Enum
 
 import torch
-import torch.nn as nn
 from flwr.common import EvaluateRes, FitRes
 from flwr.common.typing import NDArrays
 from flwr.server.client_proxy import ClientProxy
+from torch import nn
+
 
 TorchInputType = torch.Tensor | dict[str, torch.Tensor]
 TorchTargetType = torch.Tensor | dict[str, torch.Tensor]

@@ -69,10 +69,7 @@ pytest-asyncio = "^0.25.2"
 py-cpuinfo = "^9.0.0"
 
 [tool.poetry.group.codestyle.dependencies]
-black = "^24.3.0"
-flake8 = "^5.0.4"
-pyproject-flake8 = "5.0.4"
-isort = "5.11.5"
+ruff = "^0.9.2"
 pre-commit = "^3.0.1"
 toml = "^0.10.2"
 types-requests = "^2.28.11.8"
@@ -132,14 +129,80 @@ matplotlib = "^3.10.1"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.black]
+[tool.ruff]
+include = ["*.py", "pyproject.toml"]
+exclude = ["mypy_disallow_legacy_types.py", "*.ipynb"]
 line-length = 119
 
-[tool.isort]
-line_length = 119
-profile = "black"
-skip_gitignore = true
-known_third_party = ["wandb"]
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = [
+    "A", # flake8-builtins
+    "B", # flake8-bugbear
+    "COM", # flake8-commas
+    "C4", # flake8-comprehensions
+    "RET", # flake8-return
+    "SIM", # flake8-simplify
+    "ICN", # flake8-import-conventions
+    "Q", # flake8-quotes
+    "RSE", # flake8-raise
+    "D", # pydocstyle
+    "E", # pycodestyle
+    "F", # pyflakes
+    "I", # isort
+    "W", # pycodestyle
+    "N", # pep8-naming
+    "ERA", # eradicate
+    "PL", # pylint
+    "D213", # Multiline Docstrings start on newline
+]
+fixable = ["A", "B", "COM", "C4", "RET", "SIM", "ICN", "Q", "RSE", "D", "E", "F", "I", "W", "N", "ERA", "PL", "D213"]
+ignore = [
+    "B905", # `zip()` without an explicit `strict=` parameter
+    "E501", # line too long
+    "D203", # 1 blank line required before class docstring
+    "D213", # Multi-line docstring summary should start at the second line
+    "D100", # Ignore module level docstrings requirement
+    "D104", # Ignore package level docstrings requirement
+    "D205", # 1 blank line required between summary line and description
+    "ERA001", # Found commented-out code (too many false positives with math comments)
+    "PLR2004", # Replace magic number with named constant
+    "PLR0913", # Too many arguments
+    "COM812", # Missing trailing comma
+    "A001", # Ignore variable `input` is shadowing a Python builtin
+    "A002", # Ignore variable `input` is shadowing a Python builtin in function
+    "PLR0915", # Too many statements (> 50)
+    "PLR0912", # Too many branches (>12)
+    "PLW2901", # `for` loop variable `target` overwritten by assignment target
+    "D212", # Multi-line docstring summary should start at the first line
+    "D301", # r-strings for docstrings with backslashes
+    "D101", # TEMPORARY IGNORE WILL FIX ONE BY ONE
+    "D102", # TEMPORARY IGNORE WILL FIX ONE BY ONE
+    "D103", # TEMPORARY IGNORE WILL FIX ONE BY ONE
+    "D107", # TEMPORARY IGNORE WILL FIX ONE BY ONE
+    "D417", # TEMPORARY IGNORE WILL FIX ONE BY ONE
+    "D105", # TEMPORARY IGNORE WILL FIX ONE BY ONE
+]
+
+# Ignore import violations in all `__init__.py` files.
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402", "F401", "F403", "F811"]
+
+[tool.ruff.lint.pep8-naming]
+ignore-names = ["X*", "setUp", "SimpleITK", "F", "NN"]
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 119
 
 [tool.pytest.ini_options]
 markers = [

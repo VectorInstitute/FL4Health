@@ -9,7 +9,7 @@ def formatting_prompts_func(input: dict[str, list[str]]) -> list[str]:
     """
     Format the prompt for the model with the instruction and response. Adapted from flower
     FlowerTune example:
-    https://github.com/adap/flower/blob/main/examples/flowertune-llm/flowertune_llm/dataset.py
+    https://github.com/adap/flower/blob/main/examples/flowertune-llm/flowertune_llm/dataset.py.
 
     Args:
         input (dict[str, list[str]]): A dictionary containing the instruction and response.
@@ -34,7 +34,7 @@ def get_alpaca_tokenizer_and_data_collator(
 ) -> tuple[PreTrainedTokenizer, DataCollatorForCompletionOnlyLM]:
     """
     Get tokenizer and data collator for the model. Adapted from flower FlowerTune example:
-    https://github.com/adap/flower/blob/main/examples/flowertune-llm/flowertune_llm/dataset.py
+    https://github.com/adap/flower/blob/main/examples/flowertune-llm/flowertune_llm/dataset.py.
 
     Args:
         model_name (str): Model name that is supported by the Hugging Face Transformers library.
@@ -57,7 +57,7 @@ def load_data(partition_id: int, num_partitions: int, dataset_name: str) -> Data
     Load partitioned data using Flower datasets. We utilize the IID partitioner to split the data and pass
     it into the FederatedDataset. This wrapper around Hugging Face Datasets simplifies data partitioning for
     federated learning. Adapted from flower FlowerTune example:
-    https://github.com/adap/flower/blob/main/examples/flowertune-llm/flowertune_llm/dataset.py
+    https://github.com/adap/flower/blob/main/examples/flowertune-llm/flowertune_llm/dataset.py.
 
     Args:
         partition_id (int): The partition id.
@@ -74,6 +74,4 @@ def load_data(partition_id: int, num_partitions: int, dataset_name: str) -> Data
         partitioners={"train": partitioner},
     )
     client_trainset = federated_dataset.load_partition(partition_id, "train")
-    client_trainset = client_trainset.rename_column("output", "response")
-
-    return client_trainset
+    return client_trainset.rename_column("output", "response")

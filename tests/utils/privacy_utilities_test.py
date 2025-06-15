@@ -1,11 +1,12 @@
 import pytest
 import torch
-import torch.nn as nn
 from opacus import GradSampleModule, PrivacyEngine
+from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 
 from fl4health.utils.privacy_utilities import map_model_to_opacus_model, privacy_validate_and_fix_modules
 from tests.test_utils.models_for_test import MnistNetWithBnAndFrozen
+
 
 model = MnistNetWithBnAndFrozen(True)
 

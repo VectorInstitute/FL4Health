@@ -1,6 +1,6 @@
 import argparse
 import os
-from logging import INFO
+from logging import ERROR, INFO
 from pathlib import Path
 
 import numpy as np
@@ -27,8 +27,9 @@ def get_preprocessed_data(
             ),
             dim=1,
         )
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Client {client_num} does not have partitioned train data")
+    except FileNotFoundError as e:
+        log(ERROR, f"Client {client_num} does not have partitioned train data")
+        raise e
 
     training_set = TensorDataset(train_data, train_targets, transform=None, target_transform=None)
 
@@ -42,8 +43,9 @@ def get_preprocessed_data(
             ),
             dim=1,
         )
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Client {client_num} does not have partitioned validation data")
+    except FileNotFoundError as e:
+        log(ERROR, f"Client {client_num} does not have partitioned validation data")
+        raise e
 
     validation_set = TensorDataset(validation_data, validation_targets, transform=None, target_transform=None)
 
@@ -68,8 +70,9 @@ def get_test_preprocessed_data(
             torch.from_numpy(np.load(f"{dataset_dir}/alpha_{alpha}_beta_{beta}/client_{client_num}_test_targets.npy")),
             dim=1,
         )
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Client {client_num} does not have partitioned test data")
+    except FileNotFoundError as e:
+        log(ERROR, f"Client {client_num} does not have partitioned test data)")
+        raise e
 
     evaluation_set = TensorDataset(data, targets, transform=None, target_transform=None)
 
@@ -84,7 +87,6 @@ def preprocess_data(
     beta: float,
     num_clients: int = 5,
 ) -> tuple[list[TensorDataset], list[TensorDataset], list[TensorDataset]]:
-
     # Get raw data
     synth_data_generator = SyntheticNonIidFedProxDataset(
         num_clients=num_clients,

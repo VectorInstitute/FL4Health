@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 
 class ParallelFeatureJoinMode(Enum):
@@ -14,7 +14,7 @@ class ParallelSplitHeadModule(nn.Module, ABC):
     def __init__(self, mode: ParallelFeatureJoinMode) -> None:
         """
         This is a head module to be used as part of ``ParallelSplitModel`` type models. This module is responsible for
-        merging inputs from two parallel feature extractors and acting on those inputs to produce a prediction
+        merging inputs from two parallel feature extractors and acting on those inputs to produce a prediction.
 
         Args:
             mode (ParallelFeatureJoinMode): This determines **HOW** the head module is meant to combine the features
@@ -28,7 +28,7 @@ class ParallelSplitHeadModule(nn.Module, ABC):
     def parallel_output_join(self, local_tensor: torch.Tensor, global_tensor: torch.Tensor) -> torch.Tensor:
         """
         Defines how the local and global feature tensors that are output by the preceding parallel feature extractors
-        are meant to be joined together when the ``self.mode`` is set to ``ParallelFeatureJoinMode.CONCATENATE``
+        are meant to be joined together when the ``self.mode`` is set to ``ParallelFeatureJoinMode.CONCATENATE``.
 
         Args:
             local_tensor (torch.Tensor): First tensor to be joined
@@ -107,7 +107,7 @@ class ParallelSplitModel(nn.Module):
         """
         Composite forward function. The input tensor is first passed through the two parallel feature extractors and
         then finally through the head model. The outputs and joining mechanism defined in the head model need to
-        be compatible with the head model input itself. This is left to the user to handle
+        be compatible with the head model input itself. This is left to the user to handle.
 
         Args:
             input (torch.Tensor): Input tensor to be passed through the set of forwards.

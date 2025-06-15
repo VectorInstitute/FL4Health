@@ -4,6 +4,7 @@ from torch.distributions import MultivariateNormal
 
 from fl4health.losses.mkmmd_loss import MkMmdLoss
 
+
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 X = torch.Tensor(
@@ -44,7 +45,7 @@ inner_products_linear = mkmmd_loss_linear.compute_euclidean_inner_products_linea
 all_h_us_linear = mkmmd_loss_linear.compute_all_h_u_from_inner_products_linear(inner_products_linear)
 hat_d_per_kernel_linear = mkmmd_loss_linear.compute_hat_d_per_kernel(all_h_us_linear)
 h_u_delta_w_i = mkmmd_loss_linear.form_h_u_delta_w_i(all_h_us_linear)
-Q_k_linear = mkmmd_loss_linear.compute_hat_Q_k_linear(all_h_us_linear)
+q_k_linear = mkmmd_loss_linear.compute_hat_q_k_linear(all_h_us_linear)
 
 mkmmd_loss = MkMmdLoss(DEVICE, gammas=torch.Tensor([2, 1, 1 / 2]))
 mkmmd_loss.betas = torch.Tensor([1.5, 2.0, -1.0]).reshape(-1, 1).to(DEVICE)
@@ -52,13 +53,13 @@ inner_products_all = mkmmd_loss.compute_euclidean_inner_products(X, Y)
 all_h_us_all = mkmmd_loss.compute_all_h_u_from_inner_products(inner_products_all)
 hat_d_per_kernel_all = mkmmd_loss.compute_hat_d_per_kernel(all_h_us_all)
 kernel_samples_minus_expectation = mkmmd_loss.form_kernel_samples_minus_expectation(all_h_us_all, hat_d_per_kernel_all)
-Q_k = mkmmd_loss.compute_hat_Q_k(all_h_us_all, hat_d_per_kernel_all)
+Q_k = mkmmd_loss.compute_hat_q_k(all_h_us_all, hat_d_per_kernel_all)
 
 
 def test_normalize_features() -> None:
-    normalized_X = mkmmd_loss.normalize(X)
-    assert normalized_X.shape == (11, 3)
-    norm_of_rows = torch.linalg.norm(normalized_X, dim=1)
+    normalized_x = mkmmd_loss.normalize(X)
+    assert normalized_x.shape == (11, 3)
+    norm_of_rows = torch.linalg.norm(normalized_x, dim=1)
     for index in range(11):
         assert pytest.approx(norm_of_rows[index].item(), abs=0.0001) == 1.0
 
@@ -107,36 +108,36 @@ def test_inner_product_calculations_all() -> None:
     inner_product_x3_x3 = 0.0
     inner_product_x1_x2 = (3.0 - 4.0) * (3.0 - 4.0) + (4.0 - 2.0) * (4.0 - 2.0) + (4.0 - 1.0) * (4.0 - 1.0)
     # Index into XX'
-    pytest.approx(inner_products_all[0, 3, 3].cpu(), abs=0.0001) == inner_product_x3_x3
-    pytest.approx(inner_products_all[0, 1, 2].cpu(), abs=0.0001) == inner_product_x1_x2
+    assert pytest.approx(inner_products_all[0, 3, 3].cpu(), abs=0.0001) == inner_product_x3_x3
+    assert pytest.approx(inner_products_all[0, 1, 2].cpu(), abs=0.0001) == inner_product_x1_x2
     # Should be symmetric
-    pytest.approx(inner_products_all[0, 2, 1].cpu(), abs=0.0001) == inner_product_x1_x2
+    assert pytest.approx(inner_products_all[0, 2, 1].cpu(), abs=0.0001) == inner_product_x1_x2
 
     inner_product_x1_y1 = (3.0 - 1.0) * (3.0 - 1.0) + (4.0 - 2.0) * (4.0 - 2.0) + (4.0 - 2.0) * (4.0 - 2.0)
     inner_product_x1_y3 = (3.0 - 1.0) * (3.0 - 1.0) + (4.0 - 4.0) * (4.0 - 4.0) + (4.0 - 2.0) * (4.0 - 2.0)
     # Index into XY'
-    pytest.approx(inner_products_all[2, 1, 1].cpu(), abs=0.0001) == inner_product_x1_y1
-    pytest.approx(inner_products_all[2, 1, 3].cpu(), abs=0.0001) == inner_product_x1_y3
+    assert pytest.approx(inner_products_all[2, 1, 1].cpu(), abs=0.0001) == inner_product_x1_y1
+    assert pytest.approx(inner_products_all[2, 1, 3].cpu(), abs=0.0001) == inner_product_x1_y3
     # Should be transpose in X'Y
-    pytest.approx(inner_products_all[3, 1, 1].cpu(), abs=0.0001) == inner_product_x1_y1
-    pytest.approx(inner_products_all[3, 3, 1].cpu(), abs=0.0001) == inner_product_x1_y3
+    assert pytest.approx(inner_products_all[3, 1, 1].cpu(), abs=0.0001) == inner_product_x1_y1
+    assert pytest.approx(inner_products_all[3, 3, 1].cpu(), abs=0.0001) == inner_product_x1_y3
 
     inner_product_y2_y2 = 0.0
     inner_product_y5_y8 = (4.0 - 3.0) * (4.0 - 3.0) + (1.0 - 2.0) * (1.0 - 2.0) + (2.0 - 1.0) * (2.0 - 1.0)
     # Index into YY'
-    pytest.approx(inner_products_all[1, 2, 2].cpu(), abs=0.0001) == inner_product_y2_y2
-    pytest.approx(inner_products_all[1, 5, 8].cpu(), abs=0.0001) == inner_product_y5_y8
+    assert pytest.approx(inner_products_all[1, 2, 2].cpu(), abs=0.0001) == inner_product_y2_y2
+    assert pytest.approx(inner_products_all[1, 5, 8].cpu(), abs=0.0001) == inner_product_y5_y8
     # Should be symmetric
-    pytest.approx(inner_products_all[1, 8, 5].cpu(), abs=0.0001) == inner_product_y5_y8
+    assert pytest.approx(inner_products_all[1, 8, 5].cpu(), abs=0.0001) == inner_product_y5_y8
 
     inner_product_y1_x1 = (1.0 - 3.0) * (1.0 - 3.0) + (2.0 - 4.0) * (2.0 - 4.0) + (2.0 - 4.0) * (2.0 - 4.0)
     inner_product_y3_x3 = (1.0 - 2.0) * (1.0 - 2.0) + (4.0 - 1.0) * (4.0 - 1.0) + (2.0 - 4.0) * (2.0 - 4.0)
     # Index into X'Y
-    pytest.approx(inner_products_all[3, 1, 1].cpu(), abs=0.0001) == inner_product_y1_x1
-    pytest.approx(inner_products_all[3, 3, 3].cpu(), abs=0.0001) == inner_product_y3_x3
+    assert pytest.approx(inner_products_all[3, 1, 1].cpu(), abs=0.0001) == inner_product_y1_x1
+    assert pytest.approx(inner_products_all[3, 3, 3].cpu(), abs=0.0001) == inner_product_y3_x3
     # Should be transpose in X'Y, but we're looking at the diagonal
-    pytest.approx(inner_products_all[2, 1, 1].cpu(), abs=0.0001) == inner_product_y1_x1
-    pytest.approx(inner_products_all[2, 3, 1].cpu(), abs=0.0001) == inner_product_y3_x3
+    assert pytest.approx(inner_products_all[2, 1, 1].cpu(), abs=0.0001) == inner_product_y1_x1
+    assert pytest.approx(inner_products_all[2, 3, 1].cpu(), abs=0.0001) == inner_product_y3_x3
 
 
 def test_compute_h_u_from_inner_products_linear() -> None:
@@ -272,7 +273,7 @@ def test_compute_all_h_u_from_inner_products() -> None:
 
 def test_compute_hat_d_per_kernel_linear() -> None:
     # shape should be num_kernels x 1
-    hat_d_per_kernel_linear.shape == (3, 1)
+    assert hat_d_per_kernel_linear.shape == (3, 1)
     assert (
         pytest.approx(hat_d_per_kernel_linear[0, 0].item(), abs=0.00001)
         == ((1 / 5) * torch.sum(all_h_us_linear[0, :])).item()
@@ -299,7 +300,7 @@ def test_compute_mkmmd_linear() -> None:
 
 def test_compute_hat_d_per_kernel() -> None:
     # shape should be num_kernels x 1
-    hat_d_per_kernel_all.shape == (3, 1)
+    assert hat_d_per_kernel_all.shape == (3, 1)
     assert (
         pytest.approx(hat_d_per_kernel_all[0, 0].item(), abs=0.00001)
         == ((1 / 121) * torch.sum(all_h_us_all[0, :, :])).item()
@@ -333,34 +334,34 @@ def test_create_h_u_delta_w_i() -> None:
     assert h_u_delta_w_i[2, 1] == all_h_us_linear[2, 2] - all_h_us_linear[2, 3]
 
 
-def test_compute_hat_Q_k_linear() -> None:
+def test_compute_hat_q_k_linear() -> None:
     # shape should be number of kernels x number of kernels
-    assert Q_k_linear.shape == (3, 3)
-    assert Q_k_linear[0, 0] == (0.5) * (
+    assert q_k_linear.shape == (3, 3)
+    assert q_k_linear[0, 0] == (0.5) * (
         h_u_delta_w_i[0, 0] * h_u_delta_w_i[0, 0] + h_u_delta_w_i[0, 1] * h_u_delta_w_i[0, 1]
     )
-    assert Q_k_linear[0, 1] == (0.5) * (
+    assert q_k_linear[0, 1] == (0.5) * (
         h_u_delta_w_i[0, 0] * h_u_delta_w_i[1, 0] + h_u_delta_w_i[0, 1] * h_u_delta_w_i[1, 1]
     )
-    assert Q_k_linear[1, 0] == (0.5) * (
+    assert q_k_linear[1, 0] == (0.5) * (
         h_u_delta_w_i[0, 0] * h_u_delta_w_i[1, 0] + h_u_delta_w_i[0, 1] * h_u_delta_w_i[1, 1]
     )
-    assert Q_k_linear[0, 2] == (0.5) * (
+    assert q_k_linear[0, 2] == (0.5) * (
         h_u_delta_w_i[0, 0] * h_u_delta_w_i[2, 0] + h_u_delta_w_i[0, 1] * h_u_delta_w_i[2, 1]
     )
-    assert Q_k_linear[2, 0] == (0.5) * (
+    assert q_k_linear[2, 0] == (0.5) * (
         h_u_delta_w_i[0, 0] * h_u_delta_w_i[2, 0] + h_u_delta_w_i[0, 1] * h_u_delta_w_i[2, 1]
     )
-    assert Q_k_linear[1, 1] == (0.5) * (
+    assert q_k_linear[1, 1] == (0.5) * (
         h_u_delta_w_i[1, 0] * h_u_delta_w_i[1, 0] + h_u_delta_w_i[1, 1] * h_u_delta_w_i[1, 1]
     )
-    assert Q_k_linear[1, 2] == (0.5) * (
+    assert q_k_linear[1, 2] == (0.5) * (
         h_u_delta_w_i[1, 0] * h_u_delta_w_i[2, 0] + h_u_delta_w_i[1, 1] * h_u_delta_w_i[2, 1]
     )
-    assert Q_k_linear[2, 1] == (0.5) * (
+    assert q_k_linear[2, 1] == (0.5) * (
         h_u_delta_w_i[1, 0] * h_u_delta_w_i[2, 0] + h_u_delta_w_i[1, 1] * h_u_delta_w_i[2, 1]
     )
-    assert Q_k_linear[2, 2] == (0.5) * (
+    assert q_k_linear[2, 2] == (0.5) * (
         h_u_delta_w_i[2, 0] * h_u_delta_w_i[2, 0] + h_u_delta_w_i[2, 1] * h_u_delta_w_i[2, 1]
     )
 
@@ -414,23 +415,23 @@ def unrolled_summation(kernel_1_index: int, kernel_2_index: int) -> torch.Tensor
     return sum
 
 
-def test_compute_Q_k() -> None:
+def test_compute_q_k() -> None:
     assert Q_k.shape == (3, 3)
 
-    Q_k_0_0 = (1 / (121 - 1)) * unrolled_summation(0, 0)
-    Q_k_1_0 = (1 / (121 - 1)) * unrolled_summation(1, 0)
-    Q_k_0_1 = (1 / (121 - 1)) * unrolled_summation(0, 1)
-    Q_k_1_2 = (1 / (121 - 1)) * unrolled_summation(1, 2)
-    Q_k_2_1 = (1 / (121 - 1)) * unrolled_summation(2, 1)
+    q_k_0_0 = (1 / (121 - 1)) * unrolled_summation(0, 0)
+    q_k_1_0 = (1 / (121 - 1)) * unrolled_summation(1, 0)
+    q_k_0_1 = (1 / (121 - 1)) * unrolled_summation(0, 1)
+    q_k_1_2 = (1 / (121 - 1)) * unrolled_summation(1, 2)
+    q_k_2_1 = (1 / (121 - 1)) * unrolled_summation(2, 1)
     # Should be symmetric
-    pytest.approx(Q_k_1_0.cpu(), abs=0.00001) == Q_k_0_1.cpu()
-    pytest.approx(Q_k_1_2.cpu(), abs=0.00001) == Q_k_2_1.cpu()
+    assert pytest.approx(q_k_1_0.cpu(), abs=0.00001) == q_k_0_1.cpu()
+    assert pytest.approx(q_k_1_2.cpu(), abs=0.00001) == q_k_2_1.cpu()
 
-    pytest.approx(Q_k[0, 0].cpu(), abs=0.00001) == Q_k_0_0.cpu()
-    pytest.approx(Q_k[1, 0].cpu(), abs=0.00001) == Q_k_1_0.cpu()
-    pytest.approx(Q_k[0, 1].cpu(), abs=0.00001) == Q_k_0_1.cpu()
-    pytest.approx(Q_k[1, 2].cpu(), abs=0.00001) == Q_k_1_2.cpu()
-    pytest.approx(Q_k[2, 1].cpu(), abs=0.00001) == Q_k_2_1.cpu()
+    assert pytest.approx(Q_k[0, 0].cpu(), abs=0.00001) == q_k_0_0.cpu()
+    assert pytest.approx(Q_k[1, 0].cpu(), abs=0.00001) == q_k_1_0.cpu()
+    assert pytest.approx(Q_k[0, 1].cpu(), abs=0.00001) == q_k_0_1.cpu()
+    assert pytest.approx(Q_k[1, 2].cpu(), abs=0.00001) == q_k_1_2.cpu()
+    assert pytest.approx(Q_k[2, 1].cpu(), abs=0.00001) == q_k_2_1.cpu()
 
 
 def test_beta_with_largest_hat_d() -> None:
@@ -461,7 +462,7 @@ def test_beta_with_largest_hat_d() -> None:
     assert torch.all(one_hot_beta_min.eq(beta_target_min))
 
 
-def test_optimize_betas_for_X_Y() -> None:
+def test_optimize_betas_for_x_y() -> None:
     # The simple test cases above result in a set of hat_ds that are all negative for the linear estimate. In this
     # case, we perform the selection of a single kernel as recommended in Gretton
     degenerate_betas = mkmmd_loss_linear.optimize_betas(X, Y, lambda_m=0.0001)
@@ -486,8 +487,8 @@ def test_gamma_defaults() -> None:
 
 def test_get_best_vertex_for_objective_function() -> None:
     lambda_m = 0.0001
-    regularized_Q_k = 2 * Q_k_linear + lambda_m * torch.eye(3).to(DEVICE)
-    best_vertex = mkmmd_loss_linear.get_best_vertex_for_objective_function(hat_d_per_kernel_linear, regularized_Q_k)
+    regularized_q_k = 2 * q_k_linear + lambda_m * torch.eye(3).to(DEVICE)
+    best_vertex = mkmmd_loss_linear.get_best_vertex_for_objective_function(hat_d_per_kernel_linear, regularized_q_k)
     assert best_vertex.shape == (3, 1)
 
     assert pytest.approx(best_vertex[0, 0].item(), abs=0.0001) == -4.1689
@@ -503,7 +504,7 @@ def test_optimizer_betas_in_non_degenerate_case_linear() -> None:
 
     # First sample is from a zero mean gaussian with unit covariance (dimension 5)
     p = MultivariateNormal(torch.zeros(5), torch.eye(5))
-    X_local = p.sample(
+    x_local = p.sample(
         torch.Size(
             [
                 100,
@@ -515,7 +516,7 @@ def test_optimizer_betas_in_non_degenerate_case_linear() -> None:
     # and the second has mean 1.0 in the second coordinate
     q_1 = MultivariateNormal(torch.tensor([1.0, 0, 0, 0, 0]), torch.eye(5))
     q_2 = MultivariateNormal(torch.tensor([0, 1.0, 0, 0, 0]), torch.eye(5))
-    Y_local = (
+    y_local = (
         q_1.sample(
             torch.Size(
                 [
@@ -531,25 +532,25 @@ def test_optimizer_betas_in_non_degenerate_case_linear() -> None:
             )
         )
     ) / 2.0
-    X_local = X_local.to(DEVICE)
-    Y_local = Y_local.to(DEVICE)
-    all_h_u_per_vi_local = default_mkmmd.compute_all_h_u_linear(X_local, Y_local)
+    x_local = x_local.to(DEVICE)
+    y_local = y_local.to(DEVICE)
+    all_h_u_per_vi_local = default_mkmmd.compute_all_h_u_linear(x_local, y_local)
     hat_d_per_kernel_local = default_mkmmd.compute_hat_d_per_kernel(all_h_u_per_vi_local)
-    mkmmd_before_opt = default_mkmmd(X_local, Y_local)
+    mkmmd_before_opt = default_mkmmd(x_local, y_local)
     target_mkmmd = torch.mm(default_mkmmd.betas.t(), hat_d_per_kernel_local)[0][0]
     assert pytest.approx(mkmmd_before_opt.item(), abs=0.000001) == target_mkmmd.cpu()
 
-    hat_Q_k = default_mkmmd.compute_hat_Q_k_linear(all_h_u_per_vi_local)
-    regularized_hat_Q_k = 2 * hat_Q_k + lambda_m * torch.eye(19).to(DEVICE)
-    raw_betas = default_mkmmd.form_and_solve_qp(hat_d_per_kernel_local, regularized_hat_Q_k)
+    hat_q_k = default_mkmmd.compute_hat_q_k_linear(all_h_u_per_vi_local)
+    regularized_hat_q_k = 2 * hat_q_k + lambda_m * torch.eye(19).to(DEVICE)
+    raw_betas = default_mkmmd.form_and_solve_qp(hat_d_per_kernel_local, regularized_hat_q_k)
     raw_betas = torch.clamp(raw_betas, min=0)
     assert pytest.approx(torch.mm(raw_betas.t(), hat_d_per_kernel_local).cpu(), abs=0.0001) == 1.0000
 
-    betas_local = default_mkmmd.optimize_betas(X_local, Y_local, lambda_m)
+    betas_local = default_mkmmd.optimize_betas(x_local, y_local, lambda_m)
     assert torch.all(betas_local.eq((1 / torch.sum(raw_betas)) * raw_betas))
 
     default_mkmmd = MkMmdLoss(DEVICE, minimize_type_two_error=False, perform_linear_approximation=True)
-    betas_local = default_mkmmd.optimize_betas(X_local, Y_local, lambda_m)
+    betas_local = default_mkmmd.optimize_betas(x_local, y_local, lambda_m)
     one_hot_betas = torch.zeros_like(betas_local)
 
     one_hot_betas[0, 0] = 1
@@ -563,7 +564,7 @@ def test_optimizer_betas_in_non_degenerate_case() -> None:
 
     # First sample is from a zero mean gaussian with unit covariance (dimension 5)
     p = MultivariateNormal(torch.zeros(5), torch.eye(5))
-    X_local = p.sample(
+    x_local = p.sample(
         torch.Size(
             [
                 100,
@@ -575,7 +576,7 @@ def test_optimizer_betas_in_non_degenerate_case() -> None:
     # and the second has mean 1.0 in the second coordinate
     q_1 = MultivariateNormal(torch.tensor([1.0, 0, 0, 0, 0]), torch.eye(5))
     q_2 = MultivariateNormal(torch.tensor([0, 1.0, 0, 0, 0]), torch.eye(5))
-    Y_local = (
+    y_local = (
         q_1.sample(
             torch.Size(
                 [
@@ -591,30 +592,30 @@ def test_optimizer_betas_in_non_degenerate_case() -> None:
             )
         )
     ) / 2.0
-    X_local = X_local.to(DEVICE)
-    Y_local = Y_local.to(DEVICE)
+    x_local = x_local.to(DEVICE)
+    y_local = y_local.to(DEVICE)
 
-    all_h_u_per_sample = default_mkmmd.compute_all_h_u_all_samples(X_local, Y_local)
+    all_h_u_per_sample = default_mkmmd.compute_all_h_u_all_samples(x_local, y_local)
     hat_d_per_kernel_local = default_mkmmd.compute_hat_d_per_kernel(all_h_u_per_sample)
-    mkmmd_before_opt = default_mkmmd(X_local, Y_local)
+    mkmmd_before_opt = default_mkmmd(x_local, y_local)
     target_mkmmd = torch.mm(default_mkmmd.betas.t(), hat_d_per_kernel_local)[0][0]
     assert pytest.approx(mkmmd_before_opt.item(), abs=0.000001) == target_mkmmd.cpu()
 
-    hat_Q_k = default_mkmmd.compute_hat_Q_k(all_h_u_per_sample, hat_d_per_kernel_local)
-    regularized_hat_Q_k = 2 * hat_Q_k + lambda_m * torch.eye(19).to(DEVICE)
-    raw_betas = default_mkmmd.form_and_solve_qp(hat_d_per_kernel_local, regularized_hat_Q_k)
+    hat_q_k = default_mkmmd.compute_hat_q_k(all_h_u_per_sample, hat_d_per_kernel_local)
+    regularized_hat_q_k = 2 * hat_q_k + lambda_m * torch.eye(19).to(DEVICE)
+    raw_betas = default_mkmmd.form_and_solve_qp(hat_d_per_kernel_local, regularized_hat_q_k)
     raw_betas = torch.clamp(raw_betas, min=0)
     assert pytest.approx(torch.mm(raw_betas.t(), hat_d_per_kernel_local).cpu(), abs=0.0001) == 1.0000
 
-    betas_local = default_mkmmd.optimize_betas(X_local, Y_local, lambda_m)
+    betas_local = default_mkmmd.optimize_betas(x_local, y_local, lambda_m)
     assert torch.all(betas_local.eq((1 / torch.sum(raw_betas)) * raw_betas))
 
     default_mkmmd.betas = betas_local
-    mkmmd_after_opt = default_mkmmd(X_local, Y_local)
+    mkmmd_after_opt = default_mkmmd(x_local, y_local)
     assert mkmmd_after_opt.item() > mkmmd_before_opt.item()
 
     default_mkmmd = MkMmdLoss(DEVICE, minimize_type_two_error=False)
-    betas_local = default_mkmmd.optimize_betas(X_local, Y_local, lambda_m)
+    betas_local = default_mkmmd.optimize_betas(x_local, y_local, lambda_m)
     one_hot_betas = torch.zeros_like(betas_local)
 
     one_hot_betas[1, 0] = 1

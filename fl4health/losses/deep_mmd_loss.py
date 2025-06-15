@@ -33,8 +33,7 @@ class ModelLatentF(torch.nn.Module):
         Returns:
             torch.Tensor: The output tensor of the deep network.
         """
-        feature_latent_map = self.latent(input)
-        return feature_latent_map
+        return self.latent(input)
 
 
 class DeepMmdLoss(torch.nn.Module):
@@ -71,7 +70,6 @@ class DeepMmdLoss(torch.nn.Module):
             optimization_steps (int, optional): The number of optimization steps to train the Deep Kernel in each
                 forward pass. Defaults to 5.
         """
-
         super().__init__()
         self.device = device
         self.lr = lr
@@ -101,7 +99,7 @@ class DeepMmdLoss(torch.nn.Module):
         # Set the model to training mode if required to train the Deep Kernel
         self.training = False
 
-    def pairwise_distance_squared(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
+    def pairwise_distance_squared(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         """
         Compute the paired distance between x and y.
 
@@ -112,9 +110,9 @@ class DeepMmdLoss(torch.nn.Module):
         Returns:
             torch.Tensor: The paired distance between X and Y.
         """
-        x_norm = (X**2).sum(1).view(-1, 1)
-        y_norm = (Y**2).sum(1).view(1, -1)
-        paired_distance = x_norm + y_norm - 2.0 * torch.mm(X, torch.transpose(Y, 0, 1))
+        x_norm = (x**2).sum(1).view(-1, 1)
+        y_norm = (y**2).sum(1).view(1, -1)
+        paired_distance = x_norm + y_norm - 2.0 * torch.mm(x, torch.transpose(y, 0, 1))
         paired_distance[paired_distance < 0] = 0
         return paired_distance
 
@@ -163,7 +161,7 @@ class DeepMmdLoss(torch.nn.Module):
         variance_estimate = v1 - v2 + (10 ** (-8))
         return mmd2, variance_estimate
 
-    def MMDu(
+    def mmdu(
         self,
         features: torch.Tensor,
         len_s: int,
@@ -222,7 +220,7 @@ class DeepMmdLoss(torch.nn.Module):
         # k_w(x_i, y_j) for all i, j in the sample X and sample Y defined in Equation (1) of the paper
         return self.h1_mean_var_gram(kernel_x, kernel_y, kernel_xy, is_var_computed)
 
-    def train_kernel(self, X: torch.Tensor, Y: torch.Tensor) -> None:
+    def train_kernel(self, x: torch.Tensor, y: torch.Tensor) -> None:
         """
         Train the Deep MMD kernel.
 
@@ -230,7 +228,6 @@ class DeepMmdLoss(torch.nn.Module):
             X (torch.Tensor): The input tensor X.
             Y (torch.Tensor): The input tensor Y.
         """
-
         self.featurizer.train()
         self.sigma_q_opt.requires_grad = True
         self.sigma_phi_opt.requires_grad = True
@@ -238,10 +235,10 @@ class DeepMmdLoss(torch.nn.Module):
 
         # Shuffle the data to ensure they are not always presented in the same order for training
         # which might lead to overfitting
-        indices = torch.randperm(Y.size(0))
-        Y_shuffled = Y[indices]
+        indices = torch.randperm(y.size(0))
+        y_shuffled = y[indices]
 
-        features = torch.cat([X, Y_shuffled], 0)
+        features = torch.cat([x, y_shuffled], 0)
 
         # ------------------------------
         #  Train deep network for MMD-D
@@ -255,9 +252,9 @@ class DeepMmdLoss(torch.nn.Module):
         sigma_q = self.sigma_q_opt**2
         sigma_phi = self.sigma_phi_opt**2
         # Compute Deep MMD value and variance estimates
-        mmd_value_estimate, mmd_var_estimate = self.MMDu(
+        mmd_value_estimate, mmd_var_estimate = self.mmdu(
             features=model_output,
-            len_s=X.shape[0],
+            len_s=x.shape[0],
             features_org=features.view(features.shape[0], -1),
             sigma_q=sigma_q,
             sigma_phi=sigma_phi,
@@ -274,7 +271,7 @@ class DeepMmdLoss(torch.nn.Module):
         # Update weights using gradient descent
         self.optimizer_F.step()
 
-    def compute_kernel(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
+    def compute_kernel(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         """
         Compute the Deep MMD Loss.
 
@@ -285,13 +282,12 @@ class DeepMmdLoss(torch.nn.Module):
         Returns:
             torch.Tensor: The value of Deep MMD Loss.
         """
-
         self.featurizer.eval()
         self.sigma_q_opt.requires_grad = False
         self.sigma_phi_opt.requires_grad = False
         self.epsilon_opt.requires_grad = False
 
-        features = torch.cat([X, Y], 0)
+        features = torch.cat([x, y], 0)
 
         # Compute output of deep network
         model_output = self.featurizer(features)
@@ -300,9 +296,9 @@ class DeepMmdLoss(torch.nn.Module):
         sigma_q = self.sigma_q_opt**2
         sigma_phi = self.sigma_phi_opt**2
         # Compute Deep MMD value estimates
-        mmd_value_estimate, _ = self.MMDu(
+        mmd_value_estimate, _ = self.mmdu(
             features=model_output,
-            len_s=X.shape[0],
+            len_s=x.shape[0],
             features_org=features.view(features.shape[0], -1),
             sigma_q=sigma_q,
             sigma_phi=sigma_phi,
@@ -324,7 +320,6 @@ class DeepMmdLoss(torch.nn.Module):
         Returns:
             torch.Tensor: The value of Deep MMD Loss.
         """
-
         if self.training:
             for _ in range(self.optimization_steps):
                 self.train_kernel(Xs.clone().detach(), Xt.clone().detach())

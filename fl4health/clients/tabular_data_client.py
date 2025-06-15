@@ -164,16 +164,15 @@ class TabularDataClient(BasicClient):
             return {
                 FEATURE_INFO: self.tabular_features_info_encoder.to_json(),
             }
-        else:
-            return {
-                INPUT_DIMENSION: self.input_dimension,
-                OUTPUT_DIMENSION: self.output_dimension,
-            }
+        return {
+            INPUT_DIMENSION: self.input_dimension,
+            OUTPUT_DIMENSION: self.output_dimension,
+        }
 
     def preset_specific_pipeline(self, feature_name: str, pipeline: Pipeline) -> None:
         """
         The user may use this method to specify a specific pipeline to be applied to a particular feature. This
-        function stores the provided pipeline associated with the provided ``feature_name``
+        function stores the provided pipeline associated with the provided ``feature_name``.
 
         Args:
             feature_name (str): Name of the feature as a column in the dataframe
@@ -182,9 +181,7 @@ class TabularDataClient(BasicClient):
         self.feature_specific_pipelines[feature_name] = pipeline
 
     def set_feature_specific_pipelines(self) -> None:
-        """
-        Given the feature specific pipelines, at them to the tabular feature preprocessor.
-        """
+        """Given the feature specific pipelines, at them to the tabular feature preprocessor."""
         assert self.tabular_features_preprocessor is not None
         for feature_name, pipeline in self.feature_specific_pipelines.items():
             self.tabular_features_preprocessor.set_feature_pipeline(feature_name, pipeline)

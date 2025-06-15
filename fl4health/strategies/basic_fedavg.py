@@ -123,7 +123,6 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
             list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
             be sent to each client (packaged as ``FitIns``).
         """
-
         if isinstance(client_manager, BaseFractionSamplingManager):
             # Using one of the custom FractionSamplingManager classes, sampling fraction is based on fraction_fit
             config = {}
@@ -139,9 +138,8 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
 
             # Return client/config pairs
             return [(client, fit_ins) for client in clients]
-        else:
-            log(INFO, f"Using the standard Flower ClientManager: {type(client_manager)}")
-            return super().configure_fit(server_round, parameters, client_manager)
+        log(INFO, f"Using the standard Flower ClientManager: {type(client_manager)}")
+        return super().configure_fit(server_round, parameters, client_manager)
 
     def configure_evaluate(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
@@ -162,7 +160,6 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
             list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
             to be sent to each client (packaged as ``EvaluateIns``).
         """
-
         # Do not configure federated evaluation if fraction eval is 0.
         if self.fraction_evaluate == 0.0:
             return []
@@ -183,9 +180,8 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
 
             # Return client/config pairs
             return [(client, evaluate_ins) for client in clients]
-        else:
-            log(INFO, f"Using the standard Flower ClientManager: {type(client_manager)}")
-            return super().configure_evaluate(server_round, parameters, client_manager)
+        log(INFO, f"Using the standard Flower ClientManager: {type(client_manager)}")
+        return super().configure_evaluate(server_round, parameters, client_manager)
 
     def configure_poll(
         self, server_round: int, client_manager: ClientManager

@@ -76,7 +76,6 @@ class Flash(BasicFedAvg):
                 averages or a uniform average. Flash default is a uniform average of the losses by dividing
                 the total loss by the number of clients. Defaults to False.
         """
-
         super().__init__(
             fraction_fit=fraction_fit,
             fraction_evaluate=fraction_evaluate,
@@ -106,11 +105,10 @@ class Flash(BasicFedAvg):
 
     def __repr__(self) -> str:
         """Compute a string representation of the strategy."""
-        rep = f"Flash(accept_failures={self.accept_failures})"
-        return rep
+        return f"Flash(accept_failures={self.accept_failures})"
 
     def _update_parameters(self, delta_t: NDArrays) -> None:
-        """Update m_t, v_t, beta_3, and d_t per-element"""
+        """Update m_t, v_t, beta_3, and d_t per-element."""
         for i, (delta, m_prev, v_prev, d_prev) in enumerate(zip(delta_t, self.m_t, self.v_t, self.d_t)):
             delta_squared = np.square(delta)
             # Update m_t
@@ -134,7 +132,6 @@ class Flash(BasicFedAvg):
         failures: list[tuple[ClientProxy, FitRes] | BaseException],
     ) -> tuple[Parameters | None, dict[str, Scalar]]:
         """Aggregate fit results using the Flash method."""
-
         fedavg_parameters_aggregated, metrics_aggregated = super().aggregate_fit(
             server_round=server_round, results=results, failures=failures
         )

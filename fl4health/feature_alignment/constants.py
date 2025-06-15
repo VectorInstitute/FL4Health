@@ -1,5 +1,6 @@
 from sklearn.feature_extraction.text import CountVectorizer, HashingVectorizer, TfidfTransformer, TfidfVectorizer
 
+
 TextFeatureTransformer = CountVectorizer | TfidfTransformer | TfidfVectorizer | HashingVectorizer
 
 # constants used in config for communication between

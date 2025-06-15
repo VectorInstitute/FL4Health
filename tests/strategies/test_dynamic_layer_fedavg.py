@@ -3,6 +3,7 @@ from flwr.common import NDArrays, Parameters, ndarrays_to_parameters
 
 from fl4health.strategies.fedavg_dynamic_layer import FedAvgDynamicLayer
 
+
 client0_res = [np.ones((3, 3)), np.ones((4, 4))] + [np.array(["layer1", "layer2"])]
 client1_res = [np.full((4, 4), 2)] + [np.array(["layer2"])]
 client2_res = [np.full((3, 3), 3), np.full((5, 5), 3)] + [np.array(["layer1", "layer3"])]
@@ -36,5 +37,5 @@ def test_aggregate() -> None:
     }
 
     assert expected_result.keys() == aggregate_result.keys()
-    for key in expected_result.keys():
-        assert (expected_result[key] == aggregate_result[key]).all()
+    for key, val in expected_result.items():
+        assert (val == aggregate_result[key]).all()

@@ -1,6 +1,6 @@
-import torch.nn as nn
 from flwr.server.client_manager import ClientManager
 from flwr.server.strategy import Strategy
+from torch import nn
 
 from fl4health.checkpointing.checkpointer import TorchModuleCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger

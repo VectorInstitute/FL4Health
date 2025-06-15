@@ -8,6 +8,7 @@ from pathlib import Path
 from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 
+
 with warnings.catch_warnings():
     # Silence deprecation warnings from sentry sdk due to flwr and wandb
     # https://github.com/adap/flower/issues/4086
@@ -37,7 +38,6 @@ def main(
     intermediate_client_state_dir: str | None = None,
     client_name: str | None = None,
 ) -> None:
-
     # Log device and server address
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log(INFO, f"Using device: {device}")

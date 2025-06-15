@@ -1,7 +1,7 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from flamby.datasets.fed_ixi.model import ConvolutionalBlock
+from torch import nn
 
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode, ParallelSplitHeadModule
@@ -50,8 +50,7 @@ class FendaClassifier(ParallelSplitHeadModule):
     def head_forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         x = self.monte_carlo_layer(input_tensor) if self.monte_carlo_layer is not None else input_tensor
         x = self.classifier(x)
-        x = F.softmax(x, dim=self.CHANNELS_DIMENSION)
-        return x
+        return F.softmax(x, dim=self.CHANNELS_DIMENSION)
 
 
 class LocalUNetFeatureExtractor(nn.Module):
@@ -67,8 +66,7 @@ class LocalUNetFeatureExtractor(nn.Module):
             shutoff_batch_norm_tracking(self.base_model)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.base_model(x)
-        return x
+        return self.base_model(x)
 
 
 class GlobalUNetFeatureExtractor(nn.Module):
@@ -85,8 +83,7 @@ class GlobalUNetFeatureExtractor(nn.Module):
             shutoff_batch_norm_tracking(self.base_model)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.base_model(x)
-        return x
+        return self.base_model(x)
 
 
 class FedIxiFendaModel(FendaModel):

@@ -2,11 +2,11 @@ from collections.abc import Sequence
 from logging import INFO
 from typing import Any
 
-import torch.nn as nn
 from flwr.common import Parameters
 from flwr.common.logger import log
 from flwr.common.parameter import parameters_to_ndarrays
 from flwr.common.typing import Scalar
+from torch import nn
 
 from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer, TorchModuleCheckpointer
 from fl4health.checkpointing.opacus_checkpointer import OpacusCheckpointer
@@ -19,6 +19,7 @@ from fl4health.parameter_exchange.parameter_packer import (
     ParameterPackerWithLayerNames,
     SparseCooParameterPacker,
 )
+
 
 ModelCheckpointers = TorchModuleCheckpointer | Sequence[TorchModuleCheckpointer] | None
 
@@ -83,7 +84,6 @@ class BaseServerCheckpointAndStateModule:
         This function is meant to throw an exception if there is an overlap in the paths to which model checkpointers
         will save model checkpoints to avoid accidental overwriting.
         """
-
         checkpointer_paths = (
             [checkpointer.checkpoint_path for checkpointer in self.model_checkpointers]
             if self.model_checkpointers
@@ -136,9 +136,9 @@ class BaseServerCheckpointAndStateModule:
             checkpointed.
         """
         assert self.model is not None, "Hydrate model for checkpoint called but self.model is None"
-        assert (
-            self.parameter_exchanger is not None
-        ), "Hydrate model for checkpoint called but self.parameter_exchanger is None"
+        assert self.parameter_exchanger is not None, (
+            "Hydrate model for checkpoint called but self.parameter_exchanger is None"
+        )
         model_ndarrays = parameters_to_ndarrays(server_parameters)
         self.parameter_exchanger.pull_parameters(model_ndarrays, self.model)
 
@@ -197,11 +197,9 @@ class BaseServerCheckpointAndStateModule:
         if self.state_checkpointer is not None:
             if self.state_checkpointer.checkpoint_exists(state_checkpoint_name):
                 return self.state_checkpointer.load_checkpoint(state_checkpoint_name)
-            else:
-                log(INFO, "State checkpointer is defined but no state checkpoint exists.")
-                return None
-        else:
-            raise ValueError("Attempting to load state, but no state checkpointer is specified")
+            log(INFO, "State checkpointer is defined but no state checkpoint exists.")
+            return None
+        raise ValueError("Attempting to load state, but no state checkpointer is specified")
 
 
 class PackingServerCheckpointAndAndStateModule(BaseServerCheckpointAndStateModule):
@@ -213,7 +211,6 @@ class PackingServerCheckpointAndAndStateModule(BaseServerCheckpointAndStateModul
         state_checkpointer: PerRoundStateCheckpointer | None = None,
     ) -> None:
         """
-
         This module is meant to be a base class for any server-side checkpointing module that relies on unpacking
         of parameters to hydrate models for checkpointing. The specifics of the unpacking will be handled by the
         child classes of the packer within the parameter exchange.
@@ -237,9 +234,9 @@ class PackingServerCheckpointAndAndStateModule(BaseServerCheckpointAndStateModul
                 checkpointer will save much more than just the model being trained. Defaults to None.
         """
         if parameter_exchanger is not None:
-            assert isinstance(
-                parameter_exchanger, FullParameterExchangerWithPacking
-            ), "Parameter exchanger must be of based type FullParameterExchangerWithPacking"
+            assert isinstance(parameter_exchanger, FullParameterExchangerWithPacking), (
+                "Parameter exchanger must be of based type FullParameterExchangerWithPacking"
+            )
         super().__init__(model, parameter_exchanger, model_checkpointers, state_checkpointer)
 
     def _hydrate_model_for_checkpointing(self, server_parameters: Parameters) -> None:
@@ -260,9 +257,9 @@ class PackingServerCheckpointAndAndStateModule(BaseServerCheckpointAndStateModul
             checkpointed.
         """
         assert self.model is not None, "Hydrate model for checkpoint called but self.model is None"
-        assert (
-            self.parameter_exchanger is not None
-        ), "Hydrate model for checkpoint called but self.parameter_exchanger is None"
+        assert self.parameter_exchanger is not None, (
+            "Hydrate model for checkpoint called but self.parameter_exchanger is None"
+        )
         packed_parameters = parameters_to_ndarrays(server_parameters)
         assert isinstance(self.parameter_exchanger, FullParameterExchangerWithPacking)
         # Use the unpacking function of the parameter exchange to handle extraction of model parameters
@@ -475,19 +472,16 @@ class OpacusServerCheckpointAndStateModule(BaseServerCheckpointAndStateModule):
                 used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
                 checkpointer will save much more than just the model being trained. Defaults to None.
         """
-
         super().__init__(model, parameter_exchanger, model_checkpointers, state_checkpointer)
         self._ensure_checkpointers_are_of_opacus_type()
 
     def _ensure_checkpointers_are_of_opacus_type(self) -> None:
-        """
-        Helper function to ensure that the provided checkpointers are explicitly compatible with Opacus
-        """
+        """Helper function to ensure that the provided checkpointers are explicitly compatible with Opacus."""
         if self.model_checkpointers is not None:
             for checkpointer in self.model_checkpointers:
-                assert isinstance(
-                    checkpointer, OpacusCheckpointer
-                ), "Provided checkpointers must have base class OpacusCheckpointer"
+                assert isinstance(checkpointer, OpacusCheckpointer), (
+                    "Provided checkpointers must have base class OpacusCheckpointer"
+                )
 
 
 class NnUnetServerCheckpointAndStateModule(BaseServerCheckpointAndStateModule):
@@ -574,11 +568,9 @@ class DpScaffoldServerCheckpointAndStateModule(ScaffoldServerCheckpointAndStateM
         self._ensure_checkpointers_are_of_opacus_type()
 
     def _ensure_checkpointers_are_of_opacus_type(self) -> None:
-        """
-        Helper function to ensure that the provided checkpointers are explicitly compatible with Opacus
-        """
+        """Helper function to ensure that the provided checkpointers are explicitly compatible with Opacus."""
         if self.model_checkpointers is not None:
             for checkpointer in self.model_checkpointers:
-                assert isinstance(
-                    checkpointer, OpacusCheckpointer
-                ), "Provided checkpointers must have base class OpacusCheckpointer"
+                assert isinstance(checkpointer, OpacusCheckpointer), (
+                    "Provided checkpointers must have base class OpacusCheckpointer"
+                )

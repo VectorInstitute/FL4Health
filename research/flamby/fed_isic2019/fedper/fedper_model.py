@@ -1,7 +1,7 @@
 import torch
-import torch.nn as nn
 from efficientnet_pytorch import EfficientNet
 from efficientnet_pytorch.utils import url_map
+from torch import nn
 from torch.utils import model_zoo
 
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
@@ -21,7 +21,7 @@ def from_pretrained(model_name: str, in_channels: int = 3, include_top: bool = F
 
 
 class HeadClassifier(nn.Module):
-    """FedPer head module"""
+    """FedPer head module."""
 
     def __init__(self, stack_output_dimension: int):
         super().__init__()
@@ -30,8 +30,7 @@ class HeadClassifier(nn.Module):
 
     def forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         x = self.dropout(input_tensor)
-        x = self.fc1(x)
-        return x
+        return x.flatten(start_dim=1)
 
 
 class BaseEfficientNet(nn.Module):
@@ -70,8 +69,7 @@ class BaseEfficientNet(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.base_model(x)
-        x = x.flatten(start_dim=1)
-        return x
+        return x.flatten(start_dim=1)
 
 
 class FedIsic2019FedPerModel(SequentiallySplitExchangeBaseModel):

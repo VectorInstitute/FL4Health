@@ -116,8 +116,8 @@ class FedPCA(BasicFedAvg):
 
         client_singular_values = []
         client_singular_vectors = []
-        for A in decoded_and_sorted_results:
-            singular_vectors, singular_values = A[0], A[1]
+        for a in decoded_and_sorted_results:
+            singular_vectors, singular_values = a[0], a[1]
             client_singular_vectors.append(singular_vectors)
             client_singular_values.append(singular_values)
 
@@ -165,7 +165,6 @@ class FedPCA(BasicFedAvg):
         where the new left singular vectors are returned as the merging result.
 
         Notes:
-
         1. If ``U_i @ S_i`` is of size ``d`` by ``N_i``, then ``B`` has size ``d`` by ``N``, where
            ``N = N_1 + N_2 + ... + N_n.``
         2. If
@@ -193,8 +192,8 @@ class FedPCA(BasicFedAvg):
         Returns:
             tuple[NDArray, NDArray]: merged PCs and corresponding singular values.
         """
-        X = [U @ np.diag(S) for U, S in zip(client_singular_vectors, client_singular_values)]
-        svd_input = np.concatenate(X, axis=1)
+        x = [u @ np.diag(s) for u, s in zip(client_singular_vectors, client_singular_values)]
+        svd_input = np.concatenate(x, axis=1)
         new_singular_vectors, new_singular_values, _ = np.linalg.svd(svd_input, full_matrices=True)
         return new_singular_vectors, new_singular_values
 
@@ -239,34 +238,33 @@ class FedPCA(BasicFedAvg):
         """
         assert len(client_singular_values) >= 2
         if len(client_singular_values) == 2:
-            U1, S1 = client_singular_vectors[0], np.diag(client_singular_values[0])
-            U2, S2 = client_singular_vectors[1], np.diag(client_singular_values[1])
-            return self.merge_two_subspaces_qr((U1, S1), (U2, S2))
-        else:
-            U, S = self.merge_subspaces_qr(client_singular_vectors[:-1], client_singular_values[:-1])
-            U_last, S_last = client_singular_vectors[-1], client_singular_values[-1]
-            return self.merge_two_subspaces_qr((U, np.diag(S)), (U_last, np.diag(S_last)))
+            u1, s1 = client_singular_vectors[0], np.diag(client_singular_values[0])
+            u2, s2 = client_singular_vectors[1], np.diag(client_singular_values[1])
+            return self.merge_two_subspaces_qr((u1, s1), (u2, s2))
+        u, s = self.merge_subspaces_qr(client_singular_vectors[:-1], client_singular_values[:-1])
+        u_last, s_last = client_singular_vectors[-1], client_singular_values[-1]
+        return self.merge_two_subspaces_qr((u, np.diag(s)), (u_last, np.diag(s_last)))
 
     def merge_two_subspaces_qr(
         self, subspace1: tuple[NDArray, NDArray], subspace2: tuple[NDArray, NDArray]
     ) -> tuple[NDArray, NDArray]:
-        U1, S1 = subspace1
-        U2, S2 = subspace2
+        u1, s1 = subspace1
+        u2, s2 = subspace2
 
-        Z = U1.T @ U2
-        Q, R = np.linalg.qr(U2 - U1 @ Z)
+        z = u1.T @ u2
+        q, r = np.linalg.qr(u2 - u1 @ z)
 
-        d2 = S1.shape[1]
-        d1 = R.shape[0]
+        d2 = s1.shape[1]
+        d1 = r.shape[0]
         zeros = np.zeros(shape=(d1, d2))
-        A = np.concatenate((S1, zeros), axis=0)
-        B = np.concatenate(((Z @ S2), (R @ S2)), axis=0)
-        svd_input = np.concatenate((A, B), axis=1)
+        a = np.concatenate((s1, zeros), axis=0)
+        b = np.concatenate(((z @ s2), (r @ s2)), axis=0)
+        svd_input = np.concatenate((a, b), axis=1)
 
-        U3, S_final, _ = np.linalg.svd(svd_input, full_matrices=False)
+        u3, s_final, _ = np.linalg.svd(svd_input, full_matrices=False)
 
-        U_final = (np.concatenate((U1, Q), axis=1)) @ U3
+        u_final = (np.concatenate((u1, q), axis=1)) @ u3
 
-        m, n = U1.shape[0], U1.shape[1] + U2.shape[1]
+        m, n = u1.shape[0], u1.shape[1] + u2.shape[1]
         rank = min(m, n)
-        return U_final[:, :rank], S_final[:rank]
+        return u_final[:, :rank], s_final[:rank]

@@ -23,7 +23,6 @@ DUMMY_DATASET = get_dummy_dataset()
 
 
 def test_process_and_check_validation_steps(caplog: pytest.LogCaptureFixture) -> None:
-
     dataloader = DataLoader(DUMMY_DATASET, batch_size=15, shuffle=False)
 
     # No entry in the config, stays None

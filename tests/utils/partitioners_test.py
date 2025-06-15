@@ -148,7 +148,7 @@ def test_dirichlet_allocation_partitioner_with_prior_distribution() -> None:
     )
 
     # Check that the partitioned distributions are the same
-    for key in partitioned_distribution_1.keys():
+    for key in partitioned_distribution_1:
         for partition in range(10):
             assert (
                 pytest.approx(partitioned_distribution_1[key][partition], abs=0.00001)

@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 from fl4health.losses.contrastive_loss import MoonContrastiveLoss
 
@@ -53,6 +53,7 @@ class PerFclLoss(nn.Module):
             initial_global_features (torch.Tensor): Features produced by the **INITIAL** global feature extractor of
                 the model at the start of client-side training. This feature extractor is the **AGGREGATED** weights
                 across clients. Shape (``batch_size``, ``n_features``)
+
         Returns:
             tuple[torch.Tensor, torch.Tensor]: Tuple containing the two components of the PerFCL loss function to
             be weighted and summed. The first tensor corresponds to the global feature loss, the second is

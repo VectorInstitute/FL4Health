@@ -6,7 +6,7 @@ from sklearn import metrics
 from fl4health.metrics.base_metrics import Metric
 
 
-class Binary_ROC_AUC(Metric):
+class BinaryRocAuc(Metric):
     def __init__(self, name: str = "binary_ROC_AUC"):
         super().__init__(name)
 
@@ -19,7 +19,7 @@ class Binary_ROC_AUC(Metric):
         return metrics.roc_auc_score(y_true, prob)
 
 
-class Binary_F1(Metric):
+class BinaryF1(Metric):
     def __init__(self, name: str = "binary_F1"):
         super().__init__(name)
 
@@ -32,7 +32,7 @@ class Binary_F1(Metric):
         return metrics.f1_score(y_true, preds, average="weighted")
 
 
-class Binary_F1_Macro(Metric):
+class BinaryF1Macro(Metric):
     def __init__(self, name: str = "binary_F1_macro"):
         super().__init__(name)
 
@@ -58,7 +58,7 @@ class Accuracy(Metric):
         return metrics.accuracy_score(y_true, preds)
 
 
-class Binary_Balanced_Accuracy(Metric):
+class BinaryBalancedAccuracy(Metric):
     def __init__(self, name: str = "balanced accuracy"):
         super().__init__(name)
 

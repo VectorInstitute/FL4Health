@@ -6,8 +6,8 @@ from logging import INFO, WARNING
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import torch.nn as nn
 from flwr.common.logger import log
+from torch import nn
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
 
@@ -25,6 +25,7 @@ from fl4health.utils.snapshotter import (
     T,
     TorchModuleSnapshotter,
 )
+
 
 if TYPE_CHECKING:
     from fl4health.clients.basic_client import BasicClient
@@ -54,7 +55,6 @@ class EarlyStopper:
             snapshot_dir (Path | None, optional): Rather than keeping best state in the memory we can checkpoint it to
                 the given directory. If it is not given, the best state is kept in the memory. Defaults to None.
         """
-
         self.client = client
 
         self.patience = patience
@@ -104,9 +104,7 @@ class EarlyStopper:
         del self.snapshot_attrs[name]
 
     def save_snapshot(self) -> None:
-        """
-        Creates a snapshot of the client state and if ``snapshot_ckpt`` is given, saves it to the checkpoint.
-        """
+        """Creates a snapshot of the client state and if ``snapshot_ckpt`` is given, saves it to the checkpoint."""
         for attr, (snapshotter_function, expected_type) in self.snapshot_attrs.items():
             self.snapshot_ckpt.update(snapshotter_function.save(attr, expected_type))
 
@@ -134,9 +132,9 @@ class EarlyStopper:
             attributes (list[str] | None): List of attributes to load from the checkpoint. If None, all attributes
                 are loaded. Defaults to None.
         """
-        assert (
-            self.checkpointer.checkpoint_exists(self.checkpoint_name) or self.snapshot_ckpt != {}
-        ), "No checkpoint to load"
+        assert self.checkpointer.checkpoint_exists(self.checkpoint_name) or self.snapshot_ckpt != {}, (
+            "No checkpoint to load"
+        )
 
         if attributes is None:
             attributes = list(self.snapshot_attrs.keys())

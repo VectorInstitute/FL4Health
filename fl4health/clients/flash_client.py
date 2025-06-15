@@ -69,7 +69,7 @@ class FlashClient(BasicClient):
     def process_config(self, config: Config) -> tuple[int | None, int | None, int, bool, bool]:
         """
         Performs the necessary processing of the config from the server. FLASH is not defined for step-wise training.
-        So this method straps on a check to ensure that we aren't trying to do step-wise training
+        So this method straps on a check to ensure that we aren't trying to do step-wise training.
 
         Args:
             config (Config): The config object from the server.
@@ -162,8 +162,8 @@ class FlashClient(BasicClient):
 
     def setup_client(self, config: Config) -> None:
         """
-        Follows the same flow as BasicClient for setting up the client. This function simply performs an additional
-        step to process whether the gamma parameter is in the configuration
+        Follows the same flow as ``BasicClient`` for setting up the client. This function simply performs an additional
+        step to process whether the gamma parameter is in the configuration.
 
         Args:
             config (Config): The config object from the server.

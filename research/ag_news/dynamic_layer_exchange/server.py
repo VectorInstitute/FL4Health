@@ -28,7 +28,7 @@ def construct_config(
     beta: float,
 ) -> Config:
     assert 0 < sample_percentage <= 1
-    assert 0 < beta
+    assert beta > 0
     return {
         "current_server_round": current_round,
         "local_steps": local_steps,

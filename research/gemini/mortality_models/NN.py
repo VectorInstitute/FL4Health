@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 
 class NN(torch.nn.Module):
@@ -17,6 +17,5 @@ class NN(torch.nn.Module):
         x = self.activation(self.fc2(x))
         x = self.activation(self.fc3(x))
         x = self.activation(self.fc4(x))
-        x = self.fc5(x)
 
-        return x
+        return self.fc5(x)

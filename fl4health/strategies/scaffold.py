@@ -3,7 +3,6 @@ from functools import reduce
 from logging import WARNING
 
 import numpy as np
-import torch.nn as nn
 from flwr.common import (
     FitIns,
     MetricsAggregationFn,
@@ -17,6 +16,7 @@ from flwr.common.typing import FitRes, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 from opacus import GradSampleModule
+from torch import nn
 
 from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
@@ -47,7 +47,7 @@ class Scaffold(BasicFedAvg):
         model: nn.Module | None = None,
     ) -> None:
         """
-        Scaffold Federated Learning strategy. Implementation based on https://arxiv.org/pdf/1910.06378.pdf
+        Scaffold Federated Learning strategy. Implementation based on https://arxiv.org/pdf/1910.06378.pdf.
 
         Args:
             initial_parameters (Parameters): Initial model parameters to which all client models are set.
@@ -78,7 +78,6 @@ class Scaffold(BasicFedAvg):
                 set the server control variates and the initial control variates on the client side to all zeros.
                 If ``initial_control_variates`` are provided, they take precedence. Defaults to None.
         """
-
         self.server_model_weights = parameters_to_ndarrays(initial_parameters)
         # Setup the initial control variates on the server-side and store them to be transmitted to the clients
         initial_control_variates = self.initialize_control_variates(initial_control_variates, model)
@@ -121,6 +120,7 @@ class Scaffold(BasicFedAvg):
         Returns:
             Parameters: This quantity represents the initial values for the control variates for the server and on the
             client-side.
+
         Raises:
             ValueError: This error will be raised if neither a model nor initial control variates are provided.
         """
@@ -128,19 +128,18 @@ class Scaffold(BasicFedAvg):
             # If we've been provided with a set of initial control variates, we use those values
             self.server_control_variates = parameters_to_ndarrays(initial_control_variates)
             return initial_control_variates
-        elif model is not None:
+        if model is not None:
             # If no initial values are provided but a model structure has been given, we initialize the control
             # variates to zeros as recommended in the SCAFFOLD paper.
             zero_control_variates = [np.zeros_like(val.data) for val in model.parameters() if val.requires_grad]
             self.server_control_variates = zero_control_variates
             return ndarrays_to_parameters(zero_control_variates)
-        else:
-            # Either a model structure or custom initial values for the control variates must be provided to run
-            # SCAFFOLD
-            raise ValueError(
-                "Both initial_control_variates and model are None. One must be defined in order to establish "
-                "initial values for the control variates."
-            )
+        # Either a model structure or custom initial values for the control variates must be provided to run
+        # SCAFFOLD
+        raise ValueError(
+            "Both initial_control_variates and model are None. One must be defined in order to establish "
+            "initial values for the control variates."
+        )
 
     def aggregate_fit(
         self,
@@ -222,7 +221,9 @@ class Scaffold(BasicFedAvg):
     ) -> NDArrays:
         """
         Computes updated_params by moving in the direction of parameter_updates with a step proportional the scaling
-        coefficient. Calculates
+        coefficient.
+
+        Calculates
 
         .. math::
             \\text{original_params} + \\text{scaling_coefficient} \\cdot \\text{parameter_updates}.
@@ -237,13 +238,10 @@ class Scaffold(BasicFedAvg):
             NDArrays: Updated numpy arrays according to
             :math:`\\text{original_params} + \\text{scaling_coefficient} \\cdot \\text{parameter_updates}`
         """
-
-        updated_parameters = [
+        return [
             original_param + scaling_coefficient * update
             for original_param, update in zip(original_params, parameter_updates)
         ]
-
-        return updated_parameters
 
     def aggregate(self, params: list[NDArrays]) -> NDArrays:
         """
@@ -286,7 +284,6 @@ class Scaffold(BasicFedAvg):
             list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
             be sent to each client (packaged as ``FitIns``).
         """
-
         # This strategy requires the client manager to be of type at least BaseFractionSamplingManager
         assert isinstance(client_manager, BaseFractionSamplingManager)
 
@@ -324,17 +321,13 @@ class Scaffold(BasicFedAvg):
         delta_weights = self.compute_parameter_delta(weights, self.server_model_weights)
 
         # x = x + lr * x_update
-        server_model_weights = self.compute_updated_parameters(
-            self.learning_rate, self.server_model_weights, delta_weights
-        )
-
-        return server_model_weights
+        return self.compute_updated_parameters(self.learning_rate, self.server_model_weights, delta_weights)
 
     def compute_updated_control_variates(self, control_variates_update: NDArrays) -> NDArrays:
         """
         Given the aggregated control variates from the clients, this updates the server control variates in line with
         the paper. If :math:`c` is the server control variates and ``c_update`` is the client control variates, then
-        this update takes the form:
+        this update takes the following form.
 
         .. math::
             c + \\frac{\\vert S \\vert}{N} \\cdot c_{\\text{update}},
@@ -350,11 +343,9 @@ class Scaffold(BasicFedAvg):
             NDArrays: Updated server control variates according to the formula.
         """
         # c = c + |S| / N * c_update
-        server_control_variates = self.compute_updated_parameters(
+        return self.compute_updated_parameters(
             self.fraction_fit, self.server_control_variates, control_variates_update
         )
-
-        return server_control_variates
 
 
 class OpacusScaffold(Scaffold):

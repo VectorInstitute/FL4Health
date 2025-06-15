@@ -4,13 +4,13 @@ from logging import INFO
 from typing import Any
 
 import flwr as fl
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Parameters
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 from servers.personal_server import PersonalServer
+from torch import nn
 from utils.random import set_all_random_seeds
 
 from fl4health.utils.config import load_config

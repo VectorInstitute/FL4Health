@@ -10,12 +10,12 @@ from flwr.common.logger import log
 
 from fl4health.utils.dataset import DictionaryDataset, TensorDataset, select_by_indices
 
+
 T = TypeVar("T")
 D = TypeVar("D", bound=TensorDataset | DictionaryDataset)
 
 
 class LabelBasedSampler(ABC):
-
     def __init__(self, unique_labels: list[Any]) -> None:
         """
         This is an abstract class to be extended to create dataset samplers based on the class of samples.
@@ -52,7 +52,7 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
 
     def subsample(self, dataset: D) -> D:
         """
-        Returns a new dataset where samples part of minority_labels are downsampled
+        Returns a new dataset where samples part of ``minority_labels`` are downsampled.
 
         Args:
             dataset (D): Dataset to be modified, through downsampling on specified labels.
@@ -79,7 +79,7 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
     def _get_random_subsample(self, tensor_to_subsample: torch.Tensor, subsample_size: int) -> torch.Tensor:
         """
         Given a tensor a new tensor is created by selecting a set of rows from the original tensor of size
-        ``subsample_size``
+        ``subsample_size``.
 
         Args:
             tensor_to_subsample (torch.Tensor): Tensor to be subsampled. Assumes that we're subsampling rows of the
@@ -105,7 +105,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
         beta: float = 100,
     ) -> None:
         """
-        class used to subsample a dataset so the classes of samples are distributed in a non-IID way. In particular,
+        Class used to subsample a dataset so the classes of samples are distributed in a non-IID way. In particular,
         the ``DirichletLabelBasedSampler`` uses a dirichlet distribution to determine the number of samples from each
         class. The sampler is constructed by passing a beta parameter that determines the level of heterogeneity and a
         ``sample_percentage`` that determines the relative size of the modified dataset. Subsampling a dataset is
@@ -146,7 +146,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
 
     def subsample(self, dataset: D) -> D:
         """
-        Returns a new dataset where samples are selected based on a dirichlet distribution over labels
+        Returns a new dataset where samples are selected based on a dirichlet distribution over labels.
 
         Args:
             dataset (D): Dataset to be modified, through downsampling on specified labels.

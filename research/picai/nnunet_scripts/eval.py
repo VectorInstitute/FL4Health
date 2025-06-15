@@ -15,6 +15,7 @@ import SimpleITK as sitk
 from flwr.common.logger import log
 from numpy.typing import NDArray
 
+
 with contextlib.redirect_stdout(open(os.devnull, "w")):
     from picai_eval.eval import evaluate_case
     from picai_eval.metrics import Metrics as PicaiEvalMetrics
@@ -27,31 +28,30 @@ warnings.simplefilter("ignore", category=FutureWarning)
 
 
 def read_image(path: Path | str, npz_key: str | None = None) -> NDArray:
-    """Taken from picai eval. Had to change one line so that they wouldn't
-    throw away additional channels. They were assuming binary segmentation.
-    Also made it work for any npz file
+    """
+    Taken from picai eval. Had to change one line so that they wouldn't throw away additional channels. They were
+    assuming binary segmentation. Also made it work for any npz file.
 
     Args:
         path (Path | str): Path to the image file
-        npz_key (str | None): If the file type is .npz, then a key must be
-            provided to access the numpy array from the NpzFile object
+        npz_key (str | None): If the file type is .npz, then a key must be provided to access the numpy array from the
+            NpzFile object
     """
     if isinstance(path, Path):
         path = path.as_posix()
 
     if ".npy" in path:
         return np.load(path)
-    elif ".nii" in path or ".mha" in path or "mhd" in path:
+    if ".nii" in path or ".mha" in path or "mhd" in path:
         return sitk.GetArrayFromImage(sitk.ReadImage(path))
-    elif ".npz" in path:
+    if ".npz" in path:
         # read the nnU-Net format
         data = np.load(path)
         assert npz_key is not None, "Path leads to a .npz file but a key was not provided"
         data = data[npz_key]
         assert isinstance(data, np.ndarray), f"Was expecting a numpy array and got {type(data)}"
         return data.astype("float32")
-    else:
-        raise ValueError(f"Unexpected file path. Supported file formats: .nii(.gz), .mha, .npy and .npz. Got: {path}.")
+    raise ValueError(f"Unexpected file path. Supported file formats: .nii(.gz), .mha, .npy and .npz. Got: {path}.")
 
 
 def scan_folder_for_cases(
@@ -253,15 +253,14 @@ def generate_detection_maps(
 
     if verbose:
         elapsed = time.time() - t_start
-        log(INFO, f"Extracted {len(case_ids)} detection maps in {elapsed:.2f}s (~{elapsed/len(case_ids):.3f}s/case)")
+        log(INFO, f"Extracted {len(case_ids)} detection maps in {elapsed:.2f}s (~{elapsed / len(case_ids):.3f}s/case)")
 
     return case_ids
 
 
 def one_hot_ndarray(input: NDArray, num_classes: int) -> NDArray:
     one_hot = (np.arange(num_classes) == input[..., None]).astype(int)
-    one_hot = np.moveaxis(one_hot, -1, 0)  # Moves num_classes dim to the front
-    return one_hot
+    return np.moveaxis(one_hot, -1, 0)  # Moves num_classes dim to the front
 
 
 def evaluate_case_multichannel(
@@ -280,10 +279,10 @@ def evaluate_case_multichannel(
         num_classes = detection_map.shape[0] + 1  # Add one for background class
         ground_truth = one_hot_ndarray(ground_truth, num_classes)[1:]
 
-    assert (
-        detection_map.shape[0] == ground_truth.shape[0]
-    ), f"Was expecting detection map and ground truth to be the same shape\
+    assert detection_map.shape[0] == ground_truth.shape[0], (
+        f"Was expecting detection map and ground truth to be the same shape\
          detection_map: {detection_map.shape} ground_truth: {ground_truth.shape}"
+    )
 
     num_lesion_classes = detection_map.shape[0]  # One less than num_classes since it does not include background
 
@@ -300,7 +299,7 @@ def evaluate_case_multichannel(
 
     # The return signature for evaluate_case is just wrong.
     # So we have to ignore a mypy error here
-    for lesions, conf, weight, id in results:  # type: ignore
+    for lesions, conf, _, id in results:  # type: ignore
         lesion_result.extend(lesions)
         case_conf = max(case_conf, conf)
         case_id = id
@@ -318,9 +317,8 @@ def get_picai_metrics(
     **kwargs: Any,
 ) -> PicaiEvalMetrics:
     """
-    Computes the picai evaluation metrics provided the predicted lesion
-    detection maps and the ground truth annotations. Extends picai_eval to
-    allow multiclass evaluation
+    Computes the picai evaluation metrics provided the predicted lesion detection maps and the ground truth
+    annotations. Extends picai_eval to allow multiclass evaluation.
 
     Args:
         detection_maps_folder (str | Path): Path to the folder
@@ -442,7 +440,7 @@ def main() -> None:
     t = time.time()
     case_ids = generate_detection_maps(args.probs_path, det_maps_path, extensions=[".npz"])
     elapsed = time.time() - t
-    log(INFO, f"Extracted {len(case_ids)} detection maps in {elapsed:.2f}s (~{elapsed/len(case_ids):.3f}s/case)")
+    log(INFO, f"Extracted {len(case_ids)} detection maps in {elapsed:.2f}s (~{elapsed / len(case_ids):.3f}s/case)")
 
     metrics = get_picai_metrics(det_maps_path, args.gt_path)
     metrics.save(join(args.output_path, "metrics.json"))

@@ -6,9 +6,10 @@ from pathlib import Path
 from typing import Any
 
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Scalar
+from torch import nn
+
 
 CheckpointScoreFunctionType = Callable[[float, dict[str, Scalar]], float]
 
@@ -113,7 +114,6 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
         Returns:
             bool: Whether or not to checkpoint the model based on the provided score
         """
-
         if self.best_score:
             if self.maximize:
                 return self.best_score <= comparison_score
@@ -181,7 +181,7 @@ class LatestTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
 
     def maybe_checkpoint(self, model: nn.Module, loss: float, _: dict[str, Scalar]) -> None:
         """
-        This function is essentially a pass through, as this class always checkpoints the provided model
+        This function is essentially a pass through, as this class always checkpoints the provided model.
 
         Args:
             model (nn.Module): Model to be checkpointed whenever this function is called
@@ -275,7 +275,8 @@ class BestMetricTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
         prefix: str = "val - prediction - ",
         maximize: bool = False,
     ) -> None:
-        """Checkpointer that checkpoints based on the value of a user defined metric.
+        """
+        Checkpointer that checkpoints based on the value of a user defined metric.
 
         Args:
             checkpoint_dir (str): Directory to which the model is saved. This directory should already exist. The
@@ -342,7 +343,6 @@ class PerRoundStateCheckpointer:
             e: Will throw an error if there is an issue saving the model. ``Torch.save`` seems to swallow errors in
                 this context, so we explicitly surface the error with a try/except.
         """
-
         checkpoint_path = os.path.join(self.checkpoint_dir, checkpoint_name)
         try:
             log(INFO, f"Saving state as {checkpoint_path}")
@@ -362,7 +362,6 @@ class PerRoundStateCheckpointer:
         Returns:
             dict[str, Any]: A dictionary representing the checkpointed state, as loaded by ``torch.load``.
         """
-
         assert self.checkpoint_exists(checkpoint_name)
         checkpoint_path = os.path.join(self.checkpoint_dir, checkpoint_name)
         log(INFO, f"Loading state from checkpoint at {checkpoint_path}")

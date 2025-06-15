@@ -1,7 +1,7 @@
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode, ParallelSplitHeadModule
@@ -18,8 +18,7 @@ class FendaTestClassifier(ParallelSplitHeadModule):
         return torch.concat([local_tensor, global_tensor], dim=1)
 
     def head_forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
-        x = self.fc1(input_tensor)
-        return x
+        return self.fc1(input_tensor)
 
 
 class LocalFendaTest(nn.Module):
@@ -32,8 +31,7 @@ class LocalFendaTest(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.pool(F.relu(self.conv1(x)))
         x = x.view(-1, 2 * 4 * 4)
-        x = F.relu(self.fc1(x))
-        return x
+        return F.relu(self.fc1(x))
 
 
 class GlobalFendaTest(nn.Module):
@@ -46,8 +44,7 @@ class GlobalFendaTest(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.pool(F.relu(self.conv1(x)))
         x = x.view(-1, 2 * 4 * 4)
-        x = F.relu(self.fc1(x))
-        return x
+        return F.relu(self.fc1(x))
 
 
 def test_fenda_join_and_layer_exchange() -> None:

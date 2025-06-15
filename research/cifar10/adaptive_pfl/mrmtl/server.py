@@ -34,9 +34,9 @@ class PersonalMrMtlServer(PersonalServer):
         fl_config: Config,
         strategy: Strategy | None = None,
     ) -> None:
-        assert isinstance(
-            strategy, FedAvgWithAdaptiveConstraint
-        ), "Strategy must be of base type FedAvgWithAdaptiveConstraint"
+        assert isinstance(strategy, FedAvgWithAdaptiveConstraint), (
+            "Strategy must be of base type FedAvgWithAdaptiveConstraint"
+        )
         # Personal approaches don't train a "server" model. Rather, each client trains a client specific model with
         # some globally shared weights. So we don't checkpoint a global model
         super().__init__(client_manager=client_manager, fl_config=fl_config, strategy=strategy)

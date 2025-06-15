@@ -8,7 +8,7 @@ from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.moon_base import MoonModel
 from fl4health.preprocessing.warmed_up_module import WarmedUpModule
-from tests.test_utils.models_for_test import FeatureCnn, FendaHeadCnn, HeadCnn, SmallCnn, ToyConvNet, ToyConvNet_2
+from tests.test_utils.models_for_test import FeatureCnn, FendaHeadCnn, HeadCnn, SmallCnn, ToyConvNet, ToyConvNet2
 
 
 def test_initializing_warm_up_module(tmp_path: Path) -> None:
@@ -46,7 +46,7 @@ def test_initializing_warm_up_module(tmp_path: Path) -> None:
 
     # Check if the weights mapping dict is loaded correctly
     assert warmup_module.weights_mapping_dict is not None
-    for key in warmup_module.weights_mapping_dict.keys():
+    for key in warmup_module.weights_mapping_dict:
         assert warmup_module.weights_mapping_dict[key] == saved_weights_mapping_dict[key]
 
 
@@ -81,7 +81,7 @@ def test_loading_different_models_without_mapping() -> None:
 
 
 def test_partial_loading_different_models_without_mapping() -> None:
-    pretrained_model = ToyConvNet_2()
+    pretrained_model = ToyConvNet2()
     model = ToyConvNet()
     old_model = copy.deepcopy(model)
     warmup_module = WarmedUpModule(pretrained_model=pretrained_model)
@@ -89,7 +89,7 @@ def test_partial_loading_different_models_without_mapping() -> None:
 
     # Check if the weights with same size are loaded from pretrained model and if the weights with different size
     # are same with previous model as loading should not have any effect
-    for key in model.state_dict().keys():
+    for key in model.state_dict():
         if key in ["conv1.weight", "conv1.bias"]:
             assert (model.state_dict()[key] == pretrained_model.state_dict()[key]).all()
         else:
@@ -106,7 +106,7 @@ def test_partial_loading_similar_models_with_mapping() -> None:
 
     # Check if only the weights in mapping are loaded from pretrained model and if the weights not in mapping
     # are same with previous model as loading should not have any effect
-    for key in model.state_dict().keys():
+    for key in model.state_dict():
         if key in ["conv1.weight", "conv1.bias", "conv2.weight", "conv2.bias"]:
             assert (model.state_dict()[key] == pretrained_model.state_dict()[key]).all()
         else:
@@ -126,7 +126,7 @@ def test_global_loading_fenda_model_with_mapping() -> None:
 
     # Check if only the weights in mapping are loaded from pretrained model and if the weights not in mapping
     # are same with previous model as loading should not have any effect
-    for key in model.state_dict().keys():
+    for key in model.state_dict():
         if key in [
             "second_feature_extractor.conv1.weight",
             "second_feature_extractor.conv1.bias",
@@ -155,7 +155,7 @@ def test_global_and_local_loading_fenda_model_with_mapping() -> None:
 
     # Check if only the weights in mapping are loaded from pretrained model and if the weights not in mapping
     # are same with previous model as loading should not have any effect
-    for key in model.state_dict().keys():
+    for key in model.state_dict():
         if key in ["model_head.fc1.weight", "model_head.fc1.bias"]:
             assert (model.state_dict()[key] == old_model.state_dict()[key]).all()
         else:
@@ -179,7 +179,7 @@ def test_loading_apfl_model_with_mapping() -> None:
     warmup_module.load_from_pretrained(model)
 
     # Check if only the weights in mapping are loaded from pretrained model
-    for key in model.state_dict().keys():
+    for key in model.state_dict():
         matching_key = warmup_module.get_matching_component(key)
         assert matching_key is not None
         assert (model.state_dict()[key] == pretrained_model.state_dict()[matching_key]).all()
@@ -197,7 +197,7 @@ def test_loading_moon_model_with_mapping() -> None:
     warmup_module.load_from_pretrained(model)
 
     # Check if only the weights in mapping are loaded from pretrained model
-    for key in model.state_dict().keys():
+    for key in model.state_dict():
         matching_key = warmup_module.get_matching_component(key)
         assert matching_key is not None
         assert (model.state_dict()[key] == pretrained_model.state_dict()[matching_key]).all()

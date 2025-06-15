@@ -8,6 +8,7 @@ from fl4health.preprocessing.autoencoders.dim_reduction import CvaeVariableCondi
 from fl4health.utils.dataset import BaseDataset
 from tests.test_utils.models_for_test import VariationalDecoder, VariationalEncoder
 
+
 PATH = Path("tests/utils/resources/autoencoder.pt")
 
 

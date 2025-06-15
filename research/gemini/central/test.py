@@ -4,12 +4,12 @@ from logging import INFO
 from pathlib import Path
 
 import torch
-import torch.nn as nn
 from data.data import load_test_delirium, load_test_mortality
 from evaluation.utils import evaluate_model, get_all_run_folders, get_metric_avg_std
 from flwr.common.logger import log
+from torch import nn
 
-from research.gemini.metrics.metrics import Accuracy, Binary_F1, Binary_ROC_AUC
+from research.gemini.metrics.metrics import Accuracy, BinaryF1, BinaryRocAuc
 
 
 def load_centralized_model(run_folder_dir: str) -> nn.Module:
@@ -33,8 +33,8 @@ def main(
     all_run_folder_dir = get_all_run_folders(artifact_dir)
 
     metrics = [
-        Binary_ROC_AUC("roc"),
-        Binary_F1("f1"),
+        BinaryRocAuc("roc"),
+        BinaryF1("f1"),
         Accuracy("accuracy"),
     ]
 
@@ -45,7 +45,7 @@ def main(
 
     for metric in metrics:
         test_results: dict[str, float] = {}
-        all_clients_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
+        all_clients_test_metrics = dict.fromkeys(all_run_folder_dir, 0.0)
         client_test_metrics = {client_id: [] for client_id in range(n_clients)}
 
         pooled_metric_values = []

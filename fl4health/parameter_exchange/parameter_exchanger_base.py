@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import TypeVar
 
-import torch.nn as nn
 from flwr.common.typing import Config, NDArrays
+from torch import nn
 
 
 class ParameterExchanger(ABC):

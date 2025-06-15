@@ -76,7 +76,6 @@ def construct_dataset_partitioner(
     data_loader_enum = DatasetPartitionerEnum(config["dataset_partitioner_type"])
     if data_loader_enum == DatasetPartitionerEnum.JSON_TO_PANDAS:
         return JsonToPandasDatasetPartitioner(dataset_path, partition_dir, config)
-    elif data_loader_enum == DatasetPartitionerEnum.CSV_TO_PANDAS:
+    if data_loader_enum == DatasetPartitionerEnum.CSV_TO_PANDAS:
         return CsvToPandasDatasetPartitioner(dataset_path, partition_dir)
-    else:
-        raise NotImplementedError("No valid partitioner implemented for the configuration")
+    raise NotImplementedError("No valid partitioner implemented for the configuration")

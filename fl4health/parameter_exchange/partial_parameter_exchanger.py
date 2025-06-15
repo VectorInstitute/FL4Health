@@ -1,11 +1,12 @@
 from abc import abstractmethod
 from typing import Generic, TypeVar
 
-import torch.nn as nn
 from flwr.common.typing import NDArrays
+from torch import nn
 
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPacker
+
 
 T = TypeVar("T")
 

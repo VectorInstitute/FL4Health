@@ -1,7 +1,7 @@
 import pytest
 import torch
-import torch.nn as nn
 from flwr.common.typing import Config
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -25,7 +25,6 @@ class MyClient(BasicClient):
 
 
 def test_make_it_personal_factory_method() -> None:
-
     ditto_my_client_cls = make_it_personal(MyClient, mode=PersonalizedMode.DITTO)
 
     assert issubclass(ditto_my_client_cls, (BasicClient, DittoPersonalizedMixin))

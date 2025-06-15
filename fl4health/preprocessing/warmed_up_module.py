@@ -8,7 +8,6 @@ from flwr.common.logger import log
 
 
 class WarmedUpModule:
-
     def __init__(
         self,
         pretrained_model: torch.nn.Module | None = None,
@@ -17,7 +16,6 @@ class WarmedUpModule:
     ) -> None:
         """
         This class is used to load a pretrained model into the target model.
-
 
         Initialize the ``WarmedUpModule`` with the pretrained model states and weights mapping dict.
 
@@ -31,18 +29,18 @@ class WarmedUpModule:
                 model to the target model.
         """
         if pretrained_model is not None and pretrained_model_path is not None:
-            AssertionError(
+            raise AssertionError(
                 "pretrained_model_path and pretrained_model is mutually exclusive. Please provide one of them."
             )
 
-        elif pretrained_model is not None:
+        if pretrained_model is not None:
             log(INFO, "Pretrained model is provided.")
             self.pretrained_model_state = pretrained_model.state_dict()
 
         elif pretrained_model_path is not None:
-            assert os.path.exists(
-                pretrained_model_path
-            ), f"Pretrained model path {pretrained_model_path} does not exist."
+            assert os.path.exists(pretrained_model_path), (
+                f"Pretrained model path {pretrained_model_path} does not exist."
+            )
             log(INFO, f"Loading pretrained model from {pretrained_model_path}")
             self.pretrained_model_state = torch.load(pretrained_model_path).state_dict()
 
@@ -73,17 +71,13 @@ class WarmedUpModule:
             str | None: If no weights mapping dict is provided, returns the key. Otherwise, if the key is in the
             weights mapping dict, returns the matching component of the key. Otherwise, returns None.
         """
-
         if self.weights_mapping_dict is None:
             return key
 
         components = key.split(".")
-
+        matching_component = ""
         for i, component in enumerate(components):
-            if i == 0:
-                matching_component = component
-            else:
-                matching_component = f"{matching_component}.{component}"
+            matching_component = component if i == 0 else f"{matching_component}.{component}"
             if matching_component in self.weights_mapping_dict:
                 return self.weights_mapping_dict[matching_component] + key[len(matching_component) :]
         return None
@@ -95,19 +89,18 @@ class WarmedUpModule:
         Args:
             model (torch.nn.Module): target model.
         """
-
         assert self.pretrained_model_state is not None
 
         target_model_state = model.state_dict()
 
         matching_state = {}
-        for key in target_model_state.keys():
+        for key in target_model_state:
             original_state = target_model_state[key]
 
             pretrained_key = self.get_matching_component(key)
             log(INFO, f"Matching: {key} -> {pretrained_key}")
             if pretrained_key is not None:
-                if pretrained_key in self.pretrained_model_state.keys():
+                if pretrained_key in self.pretrained_model_state:
                     pretrained_state = self.pretrained_model_state[pretrained_key]
                     if original_state.size() == pretrained_state.size():
                         matching_state[key] = pretrained_state

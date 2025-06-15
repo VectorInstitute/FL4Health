@@ -6,7 +6,6 @@ from pathlib import Path
 
 import flwr as fl
 import torch
-import torch.nn as nn
 
 # data and metrics
 from data.data import load_train_delirium, load_train_mortality
@@ -16,6 +15,7 @@ from flwr.common.typing import Config
 
 # Models
 from mortality_models.fedper_model import GeminiFedPerModel
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -27,7 +27,7 @@ from fl4health.metrics.base_metrics import Metric
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.losses import LossMeterType
-from research.gemini.metrics.metrics import Accuracy, Binary_F1, Binary_ROC_AUC
+from research.gemini.metrics.metrics import Accuracy, BinaryF1, BinaryRocAuc
 
 
 class GeminiFedPerClient(MoonClient):
@@ -160,7 +160,7 @@ if __name__ == "__main__":
 
     client = GeminiFedPerClient(
         data_path=data_path,
-        metrics=[Binary_ROC_AUC(), Binary_F1(), Accuracy()],
+        metrics=[BinaryRocAuc(), BinaryF1(), Accuracy()],
         device=device,
         hospital_id=args.hospital_id,
         learning_rate=args.learning_rate,

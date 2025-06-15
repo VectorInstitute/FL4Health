@@ -72,7 +72,7 @@ class NumpyClippingClient(BasicClient):
     def calculate_parameters_norm(self, parameters: NDArrays) -> float:
         """
         Given a set of parameters, compute the l2-norm of the parameters. This is a matrix norm: squared sum of all of
-        the weights
+        the weights.
 
         Args:
             parameters (NDArrays): Tensor to measure with the norm
@@ -86,7 +86,7 @@ class NumpyClippingClient(BasicClient):
 
     def clip_parameters(self, parameters: NDArrays) -> tuple[NDArrays, float]:
         """
-        Performs "flat clipping" on the parameters according to
+        Performs "flat clipping" on the parameters as follows.
 
         .. math::
             \\text{parameters} \\cdot \\min \\left(1, \\frac{C}{\\Vert \\text{parameters} \\Vert_2} \\right)
@@ -114,7 +114,7 @@ class NumpyClippingClient(BasicClient):
 
     def compute_weight_update_and_clip(self, parameters: NDArrays) -> tuple[NDArrays, float]:
         """
-        Compute the weight delta (i.e. new weights - old weights) and clip according to `self.clipping_bound`
+        Compute the weight delta (i.e. new weights - old weights) and clip according to `self.clipping_bound`.
 
         Args:
             parameters (NDArrays): Updated parameters to compute the delta from and clip thereafter
@@ -134,7 +134,7 @@ class NumpyClippingClient(BasicClient):
     def get_parameters(self, config: Config) -> NDArrays:
         """
         This function performs clipping through ``compute_weight_update_and_clip`` and stores the clipping bit
-        as the last entry in the NDArrays
+        as the last entry in the NDArrays.
         """
         if not self.initialized:
             log(INFO, "Setting up client and providing full model parameters to the server for initialization")
@@ -145,11 +145,10 @@ class NumpyClippingClient(BasicClient):
             self.setup_client(config)
             # Need all parameters even if normally exchanging partial
             return FullParameterExchanger().push_parameters(self.model, config=config)
-        else:
-            assert self.model is not None and self.parameter_exchanger is not None
-            model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
-            clipped_weight_update, clipping_bit = self.compute_weight_update_and_clip(model_weights)
-            return self.parameter_exchanger.pack_parameters(clipped_weight_update, clipping_bit)
+        assert self.model is not None and self.parameter_exchanger is not None
+        model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
+        clipped_weight_update, clipping_bit = self.compute_weight_update_and_clip(model_weights)
+        return self.parameter_exchanger.pack_parameters(clipped_weight_update, clipping_bit)
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
@@ -187,8 +186,7 @@ class NumpyClippingClient(BasicClient):
             self.parameter_exchanger.pull_parameters(server_model_parameters, self.model, config)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
-        parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerWithClippingBit())
-        return parameter_exchanger
+        return FullParameterExchangerWithPacking(ParameterPackerWithClippingBit())
 
     def setup_client(self, config: Config) -> None:
         self.adaptive_clipping = narrow_dict_type(config, "adaptive_clipping", bool)

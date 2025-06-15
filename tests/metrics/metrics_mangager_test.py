@@ -38,7 +38,6 @@ LOGITS, TARGETS = get_logits_and_targets()
 
 
 def test_metric_manager() -> None:
-
     metric_manager = MetricManager([F1(), Accuracy()], "test")
 
     for logits, target in zip(LOGITS, TARGETS):
@@ -51,7 +50,6 @@ def test_metric_manager() -> None:
 
 
 def test_metric_manager_clear() -> None:
-
     metric_manager = MetricManager([F1(), Accuracy()], "test")
 
     for logits, target in zip(LOGITS, TARGETS):

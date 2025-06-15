@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.nn import BatchNorm2d, Conv2d, Flatten, Linear, MaxPool2d, Module, ReLU
 
 from fl4health.model_bases.fenda_base import FendaModel
@@ -36,7 +36,6 @@ class ConvNet(Module):
         self.flatten = Flatten()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-
         x = self.bn1(self.conv1(x)) if self.use_bn else self.conv1(x)
         x = self.maxpool(self.relu(x))
         x = self.bn2(self.conv2(x)) if self.use_bn else self.conv2(x)
@@ -45,9 +44,7 @@ class ConvNet(Module):
         x = self.dropout_layer(x)
         x = self.relu(self.fc1(x))
         x = self.dropout_layer(x)
-        x = self.fc2(x)
-
-        return x
+        return self.fc2(x)
 
 
 class ConvNetFeatureExtractor(Module):
@@ -70,14 +67,11 @@ class ConvNetFeatureExtractor(Module):
         self.flatten = Flatten()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-
         x = self.bn1(self.conv1(x)) if self.use_bn else self.conv1(x)
         x = self.maxpool(self.relu(x))
         x = self.bn2(self.conv2(x)) if self.use_bn else self.conv2(x)
         x = self.maxpool(self.relu(x))
-        x = self.flatten(x)
-
-        return x
+        return self.flatten(x)
 
 
 class ConvNetClassifier(Module):
@@ -101,9 +95,7 @@ class ConvNetClassifier(Module):
         x = self.dropout_layer(x)
         x = self.relu(self.fc1(x))
         x = self.dropout_layer(x)
-        x = self.fc2(x)
-
-        return x
+        return self.fc2(x)
 
 
 class ConvNetFendaClassifier(ParallelSplitHeadModule):
@@ -134,8 +126,7 @@ class ConvNetFendaClassifier(ParallelSplitHeadModule):
         x = self.relu(self.fc1(x))
         x = self.dropout_layer(x)
         x = self.fc2(x)
-
-        return x
+        return self.fc2(x)
 
 
 class ConvNetFendaModel(FendaModel):

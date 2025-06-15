@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 
 class AbstractAe(nn.Module, ABC):
@@ -56,8 +56,7 @@ class BasicAe(AbstractAe):
         Returns:
             torch.Tensor: Encoding associated with the input tensor.
         """
-        latent_vector = self.encoder(input)
-        return latent_vector
+        return self.encoder(input)
 
     def decode(self, latent_vector: torch.Tensor) -> torch.Tensor:
         """
@@ -69,8 +68,7 @@ class BasicAe(AbstractAe):
         Returns:
             torch.Tensor: Decoded tensor.
         """
-        output = self.decoder(latent_vector)
-        return output
+        return self.decoder(latent_vector)
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         """
@@ -93,7 +91,8 @@ class VariationalAe(AbstractAe):
         encoder: nn.Module,
         decoder: nn.Module,
     ) -> None:
-        """Variational Auto-Encoder model base class.
+        """
+        Variational Auto-Encoder model base class.
 
         Args:
             encoder (nn.Module): Encoder module defined by the user.
@@ -134,13 +133,12 @@ class VariationalAe(AbstractAe):
         Returns:
             torch.Tensor: Decoding from the latent vector
         """
-        output = self.decoder(latent_vector)
-        return output
+        return self.decoder(latent_vector)
 
     def sampling(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
         """
         Sampling using the reparameterization trick to make the VAE differentiable. This sampling produces a vector
-        as if it were sampled from :math:`\\mathcal{N}\\left(\\mu, \\exp(0.5 \\cdot \\text{logvar}) I \\right)`
+        as if it were sampled from :math:`\\mathcal{N}\\left(\\mu, \\exp(0.5 \\cdot \\text{logvar}) I \\right)`.
 
         Args:
             mu (torch.Tensor): Mean of the normal distribution from which to sample.
@@ -172,14 +170,14 @@ class ConditionalVae(AbstractAe):
         decoder: nn.Module,
         unpack_input_condition: Callable[[torch.Tensor], tuple[torch.Tensor, torch.Tensor]] | None = None,
     ) -> None:
-        """Conditional Variational Auto-Encoder model.
+        """
+        Conditional Variational Auto-Encoder model.
 
         Args:
             encoder (nn.Module): The encoder used to map input to latent space.
             decoder (nn.Module): The decoder used to reconstruct the input using a vector in latent space.
             unpack_input_condition (Callable | None, optional): For unpacking the input and condition tensors.
         """
-
         super().__init__(encoder, decoder)
         self.unpack_input_condition = unpack_input_condition
 
@@ -196,7 +194,6 @@ class ConditionalVae(AbstractAe):
         Returns:
             tuple[torch.Tensor, torch.Tensor]: mu and logvar, similar to the variational auto-encoder.
         """
-
         mu, logvar = self.encoder(input, condition)
         return mu, logvar
 
@@ -220,14 +217,12 @@ class ConditionalVae(AbstractAe):
         Returns:
             torch.Tensor: Decoded tensor from the latent vector and (potentially) the conditioning vector.
         """
-
-        output = self.decoder(latent_vector, condition)
-        return output
+        return self.decoder(latent_vector, condition)
 
     def sampling(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
         """
         Sampling using the reparameterization trick to make the CVAE differentiable. This sampling produces a vector
-        as if it were sampled from :math:`\\mathcal{N}\\left(\\mu, \\exp(0.5 \\cdot \\text{logvar}) I \\right)`
+        as if it were sampled from :math:`\\mathcal{N}\\left(\\mu, \\exp(0.5 \\cdot \\text{logvar}) I \\right)`.
 
         Args:
             mu (torch.Tensor): Mean of the normal distribution from which to sample.

@@ -36,7 +36,7 @@ class BaseReporter:
 
     def initialize(self, **kwargs: Any) -> None:
         """
-        Method for initializing reporters with client/server information
+        Method for initializing reporters with client/server information.
 
         This method is called once by the client or server during initialization.
 

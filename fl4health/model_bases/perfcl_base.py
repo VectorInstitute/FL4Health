@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 from fl4health.model_bases.parallel_split_models import ParallelSplitHeadModule, ParallelSplitModel
 from fl4health.model_bases.partial_layer_exchange_model import PartialLayerExchangeModel
@@ -33,13 +33,11 @@ class PerFclModel(PartialLayerExchangeModel, ParallelSplitModel):
             list[str]: List of layers associated with the global model (``second_feature_extractor``) corresponding
             to keys in the state dictionary.
         """
-        return [
-            layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("second_feature_extractor.")
-        ]
+        return [layer_name for layer_name in self.state_dict() if layer_name.startswith("second_feature_extractor.")]
 
     def forward(self, input: torch.Tensor) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]:
         """
-        Mapping input through the PerFCL model local and global feature extractors and the classification head
+        Mapping input through the PerFCL model local and global feature extractors and the classification head.
 
         Args:
             input (torch.Tensor): input is expected to be of shape (``batch_size``, \\*)

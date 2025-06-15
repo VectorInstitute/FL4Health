@@ -8,6 +8,7 @@ from flwr.common.logger import log
 
 from fl4health.utils.dataset import DictionaryDataset, TensorDataset, select_by_indices
 
+
 T = TypeVar("T")
 D = TypeVar("D", bound=TensorDataset | DictionaryDataset)
 
@@ -42,8 +43,7 @@ class DirichletLabelBasedAllocation(Generic[T]):
         .. code-block:: python
 
             original_dataset = SyntheticDataset(
-                torch.rand((10000, 3, 3)),
-                torch.randint(low=0, high=10, size=(10000, 1))
+                torch.rand((10000, 3, 3)), torch.randint(low=0, high=10, size=(10000, 1))
             )
 
             heterogeneous_partitioner = DirichletLabelBasedAllocation(
@@ -72,9 +72,9 @@ class DirichletLabelBasedAllocation(Generic[T]):
               the partitioning of test data is similar to the partitioning of the training data. Defaults to None. It
               is mutually exclusive with the beta parameter and ``min_label_examples``.
         """
-        assert (beta is not None) ^ (
-            prior_distribution is not None
-        ), "Either beta or a prior distribution must be provided, but not both."
+        assert (beta is not None) ^ (prior_distribution is not None), (
+            "Either beta or a prior distribution must be provided, but not both."
+        )
         self.number_of_partitions = number_of_partitions
         self.unique_labels = unique_labels
         self.n_unique_labels = len(unique_labels)
@@ -82,9 +82,9 @@ class DirichletLabelBasedAllocation(Generic[T]):
         self.min_label_examples = min_label_examples if min_label_examples else 0
         self.prior_distribution = prior_distribution
         if self.prior_distribution is not None:
-            assert (
-                len(self.prior_distribution) == self.n_unique_labels
-            ), "The length of the prior must match the number of labels"
+            assert len(self.prior_distribution) == self.n_unique_labels, (
+                "The length of the prior must match the number of labels"
+            )
             if self.min_label_examples > 0:
                 log(
                     WARN,
@@ -116,9 +116,9 @@ class DirichletLabelBasedAllocation(Generic[T]):
         """
         if self.prior_distribution is not None:
             label_prior_distribution = self.prior_distribution[label]
-            assert (
-                len(label_prior_distribution) == self.number_of_partitions
-            ), f"The length of the prior distribution for label ({str(label)}) must match the number of partitions"
+            assert len(label_prior_distribution) == self.number_of_partitions, (
+                f"The length of the prior distribution for label ({str(label)}) must match the number of partitions"
+            )
             if sum(label_prior_distribution) != 1:
                 log(
                     WARN,
@@ -186,7 +186,6 @@ class DirichletLabelBasedAllocation(Generic[T]):
             ``self.number_of_partitions``. ``dict[T, np.ndarray]`` is the Dirichlet distribution used to partition the
             data points for each label.
         """
-
         targets = original_dataset.targets
         assert targets is not None, "A label-based partitioner requires targets but this dataset has no targets"
         partitioned_indices = [torch.Tensor([]).int() for _ in range(self.number_of_partitions)]

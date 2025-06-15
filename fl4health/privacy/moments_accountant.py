@@ -43,6 +43,7 @@ class FixedSamplingWithoutReplacement(SamplingStrategy):
 class MomentsAccountant:
     def __init__(self, moment_orders: list[float] | None = None) -> None:
         """
+
         Moment orders are equivalent to lambda from Deep Learning with Differential Privacy (Abadi et. al. 2016).
         They form the set of moments to estimate the infimum of Theorem 2 part 2. The default values were taken from
         the tensorflow federated DP tutorial notebook:

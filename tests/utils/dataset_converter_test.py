@@ -94,8 +94,8 @@ def test_pack_unpack() -> None:
     data_loader = DataLoader(converted_data, batch_size=batch_size)
     # A normal training loop
     unpacking_function = autoencoder_converter.get_unpacking_function()
-    for data_batch, target_batch in data_loader:
-        data_batch, condition_batch = unpacking_function(data_batch)
+    for all_data_batch, target_batch in data_loader:
+        data_batch, condition_batch = unpacking_function(all_data_batch)
         # Check the unpacked data shape is as expected.
         assert data_batch.shape == torch.Size(
             [batch_size, autoencoder_converter.data_shape[0], autoencoder_converter.data_shape[1]]

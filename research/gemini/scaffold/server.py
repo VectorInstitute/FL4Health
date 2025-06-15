@@ -6,13 +6,13 @@ from typing import Any
 
 import flwr as fl
 import numpy as np
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.typing import Config, Metrics, NDArrays, Parameters, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.server import EvaluateResultsAndFailures
 from flwr.server.strategy import Strategy
+from torch import nn
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingWithoutReplacementClientManager
@@ -89,8 +89,7 @@ def get_initial_model_parameters(client_model: nn.Module) -> Parameters:
     model_weights = [val.cpu().numpy() for _, val in client_model.state_dict().items()]
     # Initializing the control variates to zero, as suggested in scaffold paper
     control_variates = [np.zeros_like(weight) for weight in model_weights]
-    parameters = ndarrays_to_parameters(model_weights + control_variates)
-    return parameters
+    return ndarrays_to_parameters(model_weights + control_variates)
 
 
 def fit_config(

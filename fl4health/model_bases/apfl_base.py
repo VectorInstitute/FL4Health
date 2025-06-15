@@ -1,7 +1,7 @@
 import copy
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 from fl4health.model_bases.partial_layer_exchange_model import PartialLayerExchangeModel
 
@@ -37,7 +37,7 @@ class ApflModule(PartialLayerExchangeModel):
 
     def global_forward(self, input: torch.Tensor) -> torch.Tensor:
         """
-        Forward function that runs the input tensor through the **GLOBAL** model only
+        Forward function that runs the input tensor through the **GLOBAL** model only.
 
         Args:
             input (torch.Tensor): tensor to be run through the global model
@@ -49,7 +49,7 @@ class ApflModule(PartialLayerExchangeModel):
 
     def local_forward(self, input: torch.Tensor) -> torch.Tensor:
         """
-        Forward function that runs the input tensor through the **LOCAL** model only
+        Forward function that runs the input tensor through the **LOCAL** model only.
 
         Args:
             input (torch.Tensor): tensor to be run through the local model
@@ -62,7 +62,7 @@ class ApflModule(PartialLayerExchangeModel):
     def forward(self, input: torch.Tensor) -> dict[str, torch.Tensor]:
         """
         Forward function for the full APFL model. This includes mixing of the global and local model predictions using
-        :math:`\\alpha`. The predictions are combined as
+        :math:`\\alpha`. The predictions are combined as follows.
 
         .. math::
             \\alpha \\cdot \\text{local_logits} + (1.0 - \\alpha) \\cdot \\text{global_logits}
@@ -79,8 +79,7 @@ class ApflModule(PartialLayerExchangeModel):
         global_logits = self.global_forward(input)
         local_logits = self.local_forward(input)
         personal_logits = self.alpha * local_logits + (1.0 - self.alpha) * global_logits
-        preds = {"personal": personal_logits, "global": global_logits, "local": local_logits}
-        return preds
+        return {"personal": personal_logits, "global": global_logits, "local": local_logits}
 
     def update_alpha(self) -> None:
         """
@@ -127,7 +126,5 @@ class ApflModule(PartialLayerExchangeModel):
             list[str]: Names of layers associated with the global model. These correspond to the layer names in the
             state dictionary of this entire module.
         """
-        layers_to_exchange: list[str] = [
-            layer for layer in self.state_dict().keys() if layer.startswith("global_model.")
-        ]
+        layers_to_exchange: list[str] = [layer for layer in self.state_dict() if layer.startswith("global_model.")]
         return layers_to_exchange

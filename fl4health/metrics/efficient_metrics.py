@@ -49,9 +49,13 @@ class MultiClassDice(MultiClassificationMetric):
 
                 .. code-block:: python
 
-                    p = torch.tensor([[[1., 1., 1., 0.], [0., 0., 0., 0.]], [[0., 0., 0., 1.], [1., 1., 1., 1.]]])
+                    p = torch.tensor(
+                        [[[1.0, 1.0, 1.0, 0.0], [0.0, 0.0, 0.0, 0.0]], [[0.0, 0.0, 0.0, 1.0], [1.0, 1.0, 1.0, 1.0]]]
+                    )
 
-                    t = torch.tensor([[[1., 1., 0., 0.], [0., 0., 0., 0.]], [[0., 0., 1., 1.], [1., 1., 1., 1.]]])
+                    t = torch.tensor(
+                        [[[1.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]], [[0.0, 0.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0]]]
+                    )
 
                     self.tp = torch.Tensor([[2, 1], [0, 4]])
 
@@ -129,7 +133,7 @@ class MultiClassDice(MultiClassificationMetric):
 
     def __call__(self, input: torch.Tensor, target: torch.Tensor) -> Scalar:
         """
-        Computes the Dice score relative to the single input and target tensors provided
+        Computes the Dice score relative to the single input and target tensors provided.
 
         Args:
             input (torch.Tensor): predictions tensor
@@ -183,9 +187,9 @@ class BinaryDice(BinaryClassificationMetric):
 
                 .. code-block:: python
 
-                    predictions = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]]) # shape (1, 2, 4)
+                    predictions = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])  # shape (1, 2, 4)
 
-                    targets = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]]) # shape (1, 2, 4)
+                    targets = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]])  # shape (1, 2, 4)
 
                     self.true_positives = torch.Tensor([[0], [4]])
 
@@ -266,7 +270,7 @@ class BinaryDice(BinaryClassificationMetric):
 
     def __call__(self, input: torch.Tensor, target: torch.Tensor) -> Scalar:
         """
-        Computes the Dice score relative to the single input and target tensors provided
+        Computes the Dice score relative to the single input and target tensors provided.
 
         Args:
             input (torch.Tensor): predictions tensor

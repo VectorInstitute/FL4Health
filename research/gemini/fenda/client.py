@@ -18,8 +18,8 @@ from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 
 # delirium model
-from research.gemini.delirium_models.fenda_mlp import FendaClassifier_d, GlobalMLP_d, LocalMLP_d
-from research.gemini.metrics.metrics import Accuracy, Binary_F1, Binary_ROC_AUC
+from research.gemini.delirium_models.fenda_mlp import FendaClassifierD, GlobalMlpD, LocalMlpD
+from research.gemini.metrics.metrics import Accuracy, BinaryF1, BinaryRocAuc
 
 # mortality model
 from research.gemini.mortality_models.fenda_mlp import FendaClassifier, GlobalMLP, LocalMLP
@@ -65,7 +65,7 @@ class GeminiFendaClient(NumpyFlClient):
             )
         else:
             self.model = FendaModel(
-                LocalMLP_d(), GlobalMLP_d(), FendaClassifier_d(FendaJoinMode.CONCATENATE, size=256)
+                LocalMlpD(), GlobalMlpD(), FendaClassifierD(FendaJoinMode.CONCATENATE, size=256)
             ).to(self.device)
             self.train_loader, self.val_loader, self.num_examples = load_train_delirium(
                 self.data_path, batch_size, self.hospitals
@@ -135,9 +135,8 @@ class GeminiFendaClient(NumpyFlClient):
 
             log(INFO, f"Local Epoch: {local_epoch}")
 
-        metrics = meter.compute()
         # Return final training metrics
-        return metrics
+        return meter.compute()
 
     def validate(self, current_server_round: int, meter: Meter) -> tuple[float, dict[str, Scalar]]:
         self.model.eval()
@@ -205,7 +204,7 @@ if __name__ == "__main__":
 
     client = GeminiFendaClient(
         data_path,
-        [Binary_ROC_AUC(), Binary_F1(), Accuracy()],
+        [BinaryRocAuc(), BinaryF1(), Accuracy()],
         args.hospital_id,
         device,
         args.task,

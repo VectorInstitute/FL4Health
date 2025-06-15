@@ -1,7 +1,7 @@
 from enum import Enum
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 
 class EnsembleAggregationMode(Enum):
@@ -77,7 +77,7 @@ class EnsembleModel(nn.Module):
         # Each row of matrix represents the argmax of each model for a given sample
         argmax_per_model = torch.hstack([torch.argmax(preds, dim=1, keepdim=True) for preds in preds_list])
         # For each row (sample), compute the unique class predictions and their respective counts
-        index_count_list = map(lambda x: torch.unique(x, return_counts=True), argmax_per_model.unbind())
+        index_count_list = map(lambda x: torch.unique(x, return_counts=True), argmax_per_model.unbind())  # noqa: C417
         # For each element of list (class index, class count) pairing
         # extract index with the highest count and create tensor
         indices_with_highest_counts = torch.tensor([index[torch.argmax(count)] for index, count in index_count_list])
@@ -101,5 +101,4 @@ class EnsembleModel(nn.Module):
             torch.Tensor: The average prediction of the ensemble.
         """
         stacked_model_preds = torch.stack(preds_list)
-        avg_preds = torch.mean(stacked_model_preds, dim=0)
-        return avg_preds
+        return torch.mean(stacked_model_preds, dim=0)

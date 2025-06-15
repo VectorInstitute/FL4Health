@@ -29,8 +29,7 @@ class CustomClientProxy(ClientProxy):
         group_id: int | None,
     ) -> GetPropertiesRes:
         status: Status = Status(code=Code["OK"], message="Test")
-        res = GetPropertiesRes(status=status, properties=self.properties)
-        return res
+        return GetPropertiesRes(status=status, properties=self.properties)
 
     def get_parameters(
         self,

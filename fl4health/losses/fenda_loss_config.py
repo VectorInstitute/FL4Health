@@ -15,7 +15,7 @@ class PerFclLossContainer:
         local_feature_loss_temperature: float = 0.5,
     ) -> None:
         """
-        Container to hold the different pieces associated with PerFCL Loss
+        Container to hold the different pieces associated with PerFCL Loss.
 
         Args:
             device (torch.device): Device to which the loss will be sent and computed on.
@@ -47,7 +47,7 @@ class CosineSimilarityLossContainer:
 class MoonContrastiveLossContainer:
     def __init__(self, device: torch.device, contrastive_loss_weight: float, temperature: float = 0.5) -> None:
         """
-        _summary_
+        Container to hold the different pieces associated with Moon Contrastive loss function.
 
         Args:
             device (torch.device): Device to which the loss will be sent and computed on.
@@ -67,7 +67,7 @@ class ConstrainedFendaLossContainer:
         contrastive_loss_config: MoonContrastiveLossContainer | None,
     ) -> None:
         """
-        Container to gather all of the possible loss functions used in constrained FENDA model optimization
+        Container to gather all of the possible loss functions used in constrained FENDA model optimization.
 
         Args:
             perfcl_loss_config (PerFclLossContainer | None): PerFCL loss container. If none, the loss isn not used.
@@ -93,7 +93,7 @@ class ConstrainedFendaLossContainer:
         self, features: torch.Tensor, positive_pairs: torch.Tensor, negative_pairs: torch.Tensor
     ) -> torch.Tensor:
         """
-        Compute the contrastive loss, if it exists, using the configuration
+        Compute the contrastive loss, if it exists, using the configuration.
 
         Args:
             features (torch.Tensor): features from the model
@@ -113,7 +113,7 @@ class ConstrainedFendaLossContainer:
         self, first_features: torch.Tensor, second_features: torch.Tensor
     ) -> torch.Tensor:
         """
-        Compute the cosine loss, if it exists, using the configuration
+        Compute the cosine loss, if it exists, using the configuration.
 
         Args:
             first_features (torch.Tensor): first set of features in the cosine comparison
@@ -135,7 +135,7 @@ class ConstrainedFendaLossContainer:
         initial_global_features: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """
-        Compute the PerFCL loss, if it exists, using the configuration
+        Compute the PerFCL loss, if it exists, using the configuration.
 
         Args:
             local_features (torch.Tensor): See PerFCL loss documentation

@@ -35,8 +35,8 @@ def test_set_parameters_basic_client(get_basic_client: BasicClient) -> None:  # 
     # Model state should match the new model state and be different from the old model state,
     # including the linear layers
     client_model_state = [to_numpy_clone(state) for state in client.model.state_dict().values()]
-    assert all([np.allclose(a, b, atol=0.001) for a, b in zip(new_model_state, client_model_state)])
-    assert all([not np.allclose(a, b, atol=0.001) for a, b in zip(old_model_state, client_model_state)])
+    assert all(np.allclose(a, b, atol=0.001) for a, b in zip(new_model_state, client_model_state))
+    assert all(not np.allclose(a, b, atol=0.001) for a, b in zip(old_model_state, client_model_state))
 
     # Get the CNN parameters from the client, modify them by adding 1 to all weights, and place back in
     cnn_parameters_only = client.get_parameters({})
@@ -56,11 +56,11 @@ def test_set_parameters_basic_client(get_basic_client: BasicClient) -> None:  # 
         to_numpy_clone(client_state_dict["fc2.weight"]),
     ]
     # CNN state should have been reset to the old model, but the FC layers should still be those of the "new" model
-    assert all([np.allclose(a, b, atol=0.001) for a, b in zip(cnn_parameters_only, client_model_cnn_state)])
-    assert all([np.allclose(a, b, atol=0.001) for a, b in zip(new_model_fc_state, client_model_fc_state)])
+    assert all(np.allclose(a, b, atol=0.001) for a, b in zip(cnn_parameters_only, client_model_cnn_state))
+    assert all(np.allclose(a, b, atol=0.001) for a, b in zip(new_model_fc_state, client_model_fc_state))
     # Alternatively the CNN states should no longer be the "new" model weights and the old model fc states should not
     # match
-    assert all([not np.allclose(a, b, atol=0.001) for a, b in zip(new_model_cnn_state, client_model_cnn_state)])
+    assert all(not np.allclose(a, b, atol=0.001) for a, b in zip(new_model_cnn_state, client_model_cnn_state))
 
 
 @pytest.mark.parametrize("type,model", [(ApflClient, SingleLayerWithSeed())])
@@ -77,7 +77,7 @@ def test_set_parameters_apfl_client(get_apfl_client: ApflClient) -> None:  # noq
     client.set_parameters(model_state_to_insert, config, fitting_round=True)
     current_model_state = [to_numpy_clone(state) for state in client.model.state_dict().values()]
     # The whole model should be initialized with model_state_to_insert
-    assert all([np.allclose(a, b, atol=0.001) for a, b in zip(model_state_to_insert, current_model_state)])
+    assert all(np.allclose(a, b, atol=0.001) for a, b in zip(model_state_to_insert, current_model_state))
 
     # Only the global linear layer should be replaced
     # Get the CNN parameters from the client, modify them by adding 1 to all weights, and place back in
@@ -92,9 +92,9 @@ def test_set_parameters_apfl_client(get_apfl_client: ApflClient) -> None:  # noq
     client_model_local_state = to_numpy_clone(client_state_dict["local_model.linear.weight"])
     client_model_global_state = to_numpy_clone(client_state_dict["global_model.linear.weight"])
     # The local model should be unchanged
-    assert all([np.allclose(a, b, atol=0.001) for a, b in zip(client_model_local_state, model_to_insert_local_params)])
+    assert all(np.allclose(a, b, atol=0.001) for a, b in zip(client_model_local_state, model_to_insert_local_params))
     # The global model should be updated, note global_layer_only is a list (so extract the only entry for comparison)
-    assert all([np.allclose(a, b, atol=0.001) for a, b in zip(client_model_global_state, global_layer_only[0])])
+    assert all(np.allclose(a, b, atol=0.001) for a, b in zip(client_model_global_state, global_layer_only[0]))
     assert all(
-        [not np.allclose(a, b, atol=0.001) for a, b in zip(client_model_global_state, model_to_insert_global_params)]
+        not np.allclose(a, b, atol=0.001) for a, b in zip(client_model_global_state, model_to_insert_global_params)
     )

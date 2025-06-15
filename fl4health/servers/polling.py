@@ -3,6 +3,7 @@ import concurrent.futures
 from flwr.common.typing import Code, GetPropertiesIns, GetPropertiesRes
 from flwr.server.client_proxy import ClientProxy
 
+
 PollResultsAndFailures = tuple[
     list[tuple[ClientProxy, GetPropertiesRes]],
     list[tuple[ClientProxy, GetPropertiesRes] | BaseException],
@@ -24,7 +25,6 @@ def _handle_finished_future_after_poll(
         failures (list[tuple[ClientProxy, GetPropertiesRes] | BaseException]): The set of failing results that
             have accumulated for the polling.
     """
-
     # Check if there was an exception
     failure = future.exception()
     if failure is not None:
@@ -79,7 +79,6 @@ def poll_clients(
     Returns:
         PollResultsAndFailures: Object holding the results and failures associate with the concurrent polling.
     """
-
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         submitted_fs = {
             executor.submit(poll_client, client_proxy, property_ins)

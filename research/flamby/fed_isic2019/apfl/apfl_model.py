@@ -1,6 +1,6 @@
 import torch
-import torch.nn as nn
 from flamby.datasets.fed_isic2019 import Baseline
+from torch import nn
 
 from research.flamby.utils import shutoff_batch_norm_tracking
 
@@ -41,5 +41,4 @@ class ApflEfficientNet(nn.Module):
             self.base_model._modules["base_model"]._modules["_blocks"][block_index].requires_grad_(False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.base_model(x)
-        return x
+        return self.base_model(x)

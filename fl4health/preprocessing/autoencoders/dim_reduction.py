@@ -1,14 +1,16 @@
-from abc import ABC
 from pathlib import Path
 
 import torch
 
 
-class AutoEncoderProcessing(ABC):
+DEVICE: torch.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
+class AutoEncoderProcessing:
     def __init__(
         self,
         checkpointing_path: Path,
-        device: torch.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+        device: torch.device = DEVICE,
     ) -> None:
         """
         Abstract class for processors that work with a pre-trained and saved autoencoder model.
@@ -18,7 +20,6 @@ class AutoEncoderProcessing(ABC):
             device (torch.device, optional): Device indicator for where to send the model and data samples
                 for preprocessing.
         """
-
         self.checkpointing_path = checkpointing_path
         self.device = device
         self.load_autoencoder()
@@ -33,9 +34,7 @@ class AutoEncoderProcessing(ABC):
 
 
 class AeProcessor(AutoEncoderProcessing):
-    """
-    Transformer processor to encode the data using basic autoencoder.
-    """
+    """Transformer processor to encode the data using basic autoencoder."""
 
     def __call__(self, sample: torch.Tensor) -> torch.Tensor:
         # This transformer is called for the input samples after they are transferred into torch tensors.
@@ -47,7 +46,7 @@ class VaeProcessor(AutoEncoderProcessing):
     def __init__(
         self,
         checkpointing_path: Path,
-        device: torch.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+        device: torch.device = DEVICE,
         return_mu_only: bool = False,
     ) -> None:
         """
@@ -74,12 +73,11 @@ class VaeProcessor(AutoEncoderProcessing):
 
 
 class CvaeFixedConditionProcessor(AutoEncoderProcessing):
-
     def __init__(
         self,
         checkpointing_path: Path,
         condition: torch.Tensor,
-        device: torch.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+        device: torch.device = DEVICE,
         return_mu_only: bool = False,
     ) -> None:
         """
@@ -95,9 +93,9 @@ class CvaeFixedConditionProcessor(AutoEncoderProcessing):
         super().__init__(checkpointing_path, device)
         self.condition = condition
         self.return_mu_only = return_mu_only
-        assert (
-            self.condition.dim() == 1
-        ), f"Error: condition should be a 1D vector instead of a {self.condition.dim()}D tensor."
+        assert self.condition.dim() == 1, (
+            f"Error: condition should be a 1D vector instead of a {self.condition.dim()}D tensor."
+        )
 
     def __call__(self, sample: torch.Tensor) -> torch.Tensor:
         # Assuming batch is the first dimension
@@ -121,7 +119,7 @@ class CvaeVariableConditionProcessor(AutoEncoderProcessing):
     def __init__(
         self,
         checkpointing_path: Path,
-        device: torch.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+        device: torch.device = DEVICE,
         return_mu_only: bool = False,
     ) -> None:
         """
@@ -152,9 +150,9 @@ class CvaeVariableConditionProcessor(AutoEncoderProcessing):
         # This transformer is called for the input samples after they are transformed into torch tensors.
         # We assume condition and data are "batch first".
         if condition.size(0) > 1:  # If condition is a batch
-            assert condition.size(0) == sample.size(
-                0
-            ), f"Error: Condition shape: {condition.shape} does not match the data shape: {sample.shape}"
+            assert condition.size(0) == sample.size(0), (
+                f"Error: Condition shape: {condition.shape} does not match the data shape: {sample.shape}"
+            )
         mu, logvar = self.autoencoder.encode(sample.to(self.device), condition.to(self.device))
         if self.return_mu_only:
             return mu.clone().detach()

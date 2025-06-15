@@ -4,11 +4,12 @@ from collections.abc import Sequence
 
 import numpy as np
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.utils.data import DataLoader
 
 from fl4health.metrics.base_metrics import Metric
 from fl4health.metrics.metric_managers import MetricManager
+
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -65,5 +66,4 @@ def evaluate_model(
             meter.update(preds, target)
     computed_metric = meter.compute()
     print(computed_metric)
-    metric_results = computed_metric[f"test_meter - prediction - {metrics[0].name}"]
-    return metric_results
+    return computed_metric[f"test_meter - prediction - {metrics[0].name}"]

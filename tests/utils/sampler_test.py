@@ -25,7 +25,7 @@ def construct_synthetic_dataset() -> tuple[SyntheticDataset, SyntheticDataset]:
 
 
 def test_minority_sampler() -> None:
-    minority_numbers = set([1, 2, 3])
+    minority_numbers = {1, 2, 3}
     downsampling_ratio = 0.1
     sampler = MinorityLabelBasedSampler(
         unique_labels=list(range(10)), downsampling_ratio=downsampling_ratio, minority_labels=minority_numbers
@@ -106,7 +106,7 @@ def test_dirichlet_sampler_with_assigned_probability() -> None:
 
     # No heterogeneity
     relative_probabilities = [1] * 10
-    sampler.probabilities = np.array([i for i in relative_probabilities]) / sum([i for i in relative_probabilities])
+    sampler.probabilities = np.array(relative_probabilities) / sum(relative_probabilities)
 
     train_new_ds = sampler.subsample(train_ds)
     assert train_new_ds.targets is not None
@@ -119,8 +119,8 @@ def test_dirichlet_sampler_with_assigned_probability() -> None:
         assert pytest.approx(new_probabilities[i], abs=0.001) == sampler.probabilities[i]
 
     # Mild heterogeneity
-    relative_probabilities = [i for i in range(1, 11)]
-    sampler.probabilities = np.array([i for i in relative_probabilities]) / sum([i for i in relative_probabilities])
+    relative_probabilities = list(range(1, 11))
+    sampler.probabilities = np.array(relative_probabilities) / sum(relative_probabilities)
 
     train_new_ds = sampler.subsample(train_ds)
     assert train_new_ds.targets is not None
@@ -133,8 +133,8 @@ def test_dirichlet_sampler_with_assigned_probability() -> None:
         assert pytest.approx(new_probabilities[i], abs=0.001) == sampler.probabilities[i]
 
     # Extreme heterogeneity
-    relative_probabilities = [i for i in range(1, 101, 10)]
-    sampler.probabilities = np.array([i for i in relative_probabilities]) / sum([i for i in relative_probabilities])
+    relative_probabilities = list(range(1, 101, 10))
+    sampler.probabilities = np.array(relative_probabilities) / sum(relative_probabilities)
     train_new_ds = sampler.subsample(train_ds)
     assert train_new_ds.targets is not None
 

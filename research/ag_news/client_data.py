@@ -14,9 +14,7 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 def collate_fn_with_padding(
     tokenizer: PreTrainedTokenizer, batch: list[tuple[dict[str, list[torch.Tensor]], torch.Tensor]]
 ) -> tuple[dict[str, list[torch.Tensor]], torch.Tensor]:
-    """
-    Pad the sequences within a batch to the same length.
-    """
+    """Pad the sequences within a batch to the same length."""
     input_list, target_list = [], []
     for input_dict, target in batch:
         input_list.append(input_dict)

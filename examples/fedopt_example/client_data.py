@@ -11,6 +11,7 @@ from nltk.tokenize import word_tokenize
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 
+
 nltk.download("punkt_tab")
 
 
@@ -82,10 +83,10 @@ class Vocabulary:
             n_pads = seq_length - 2 - len(tokenized_text)
             encoded = [self.get_index_or_unk(w) for w in tokenized_text]
             return sos + encoded + eos + pad * n_pads
-        else:  # truncating if needed
-            encoded = [self.get_index_or_unk(w) for w in tokenized_text]
-            truncated = encoded[: seq_length - 2]
-            return sos + truncated + eos
+        # truncating if needed
+        encoded = [self.get_index_or_unk(w) for w in tokenized_text]
+        truncated = encoded[: seq_length - 2]
+        return sos + truncated + eos
 
     def get_index_or_unk(self, token: str) -> int:
         if token in self.word2index:

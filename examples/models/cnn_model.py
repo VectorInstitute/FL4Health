@@ -1,6 +1,6 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 
 class Net(nn.Module):
@@ -19,8 +19,7 @@ class Net(nn.Module):
         x = x.view(-1, 16 * 5 * 5)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+        return self.fc3(x)
 
 
 class MnistNet(nn.Module):
@@ -37,8 +36,7 @@ class MnistNet(nn.Module):
         x = self.pool(F.relu(self.conv2(x)))
         x = x.view(-1, 16 * 4 * 4)
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        return x
+        return F.relu(self.fc2(x))
 
 
 class MnistNetWithBnAndFrozen(nn.Module):
@@ -62,8 +60,7 @@ class MnistNetWithBnAndFrozen(nn.Module):
         x = self.bn(x)
         x = x.view(-1, 16 * 4 * 4)
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        return x
+        return F.relu(self.fc2(x))
 
 
 class SkinCancerNet(nn.Module):
@@ -85,5 +82,4 @@ class SkinCancerNet(nn.Module):
         x = self.bn(x)
         x = x.view(-1, 16 * 61 * 61)
         x = F.relu(self.fc1(x))
-        x = self.fc2(x)
-        return x
+        return self.fc2(x)

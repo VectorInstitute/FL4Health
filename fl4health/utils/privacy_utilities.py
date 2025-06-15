@@ -1,11 +1,11 @@
 from logging import INFO, WARNING
 from typing import Any
 
-import torch.nn as nn
 from flwr.common.logger import log
 from opacus import GradSampleModule
 from opacus.grad_sample.utils import wrap_model
 from opacus.validators import ModuleValidator
+from torch import nn
 
 
 def privacy_validate_and_fix_modules(model: nn.Module) -> tuple[nn.Module, bool]:
@@ -63,7 +63,7 @@ def convert_model_to_opacus_model(
     if isinstance(model, GradSampleModule):
         log(INFO, f"Provided model is already of type {type(model)}, skipping conversion to Opacus model type")
         return model
-    return wrap_model(model, grad_sample_mode=grad_sample_mode, *args, **kwargs)
+    return wrap_model(model, grad_sample_mode, *args, **kwargs)
 
 
 def map_model_to_opacus_model(

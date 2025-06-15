@@ -4,9 +4,9 @@ from logging import INFO, WARNING
 from pathlib import Path
 
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
@@ -85,9 +85,7 @@ class EvaluateClient(BasicClient):
         raise ValueError("Fit is not implemented for an Evaluation-Only Client")
 
     def setup_client(self, config: Config) -> None:
-        """
-        Set dataloaders, parameter exchangers and other attributes for the client
-        """
+        """Set dataloaders, parameter exchangers and other attributes for the client."""
         (data_loader,) = self.get_data_loader(config)
         self.data_loader = data_loader
         self.global_model = self.initialize_global_model(config)
@@ -253,26 +251,25 @@ class EvaluateClient(BasicClient):
         """
         Parameter exchange is assumed to always be full for evaluation only clients. If there are partial weights
         exchanged during training, we assume that the checkpoint has been saved locally. However, this functionality
-        may be overridden if a different exchanger is needed
+        may be overridden if a different exchanger is needed.
         """
         return FullParameterExchanger()
 
     def get_data_loader(self, config: Config) -> tuple[DataLoader]:
-        """
-        User defined method that returns a PyTorch DataLoader for validation
-        """
+        """User defined method that returns a PyTorch DataLoader for validation."""
         raise NotImplementedError
 
     def initialize_global_model(self, config: Config) -> nn.Module | None:
         """
         User defined method that to initializes a global model to potentially be hydrated by parameters sent by the
-        server, by default, no global model is assumed to exist unless specified by the user
+        server, by default, no global model is assumed to exist unless specified by the user.
         """
         return None
 
     def get_local_model(self, config: Config) -> nn.Module | None:
         """
-        Functionality for initializing a model from a local checkpoint. This can be overridden for custom behavior
+        Functionality for initializing a model from a local checkpoint. This can be overridden for custom
+        behavior.
         """
         # If a model checkpoint is provided, we load the checkpoint into the local model to be evaluated.
         if self.model_checkpoint_path:
@@ -281,5 +278,4 @@ class EvaluateClient(BasicClient):
                 f"Loading model checkpoint at: {str(self.model_checkpoint_path)}",
             )
             return torch.load(self.model_checkpoint_path)
-        else:
-            return None
+        return None

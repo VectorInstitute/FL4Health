@@ -3,9 +3,10 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
-import torch.nn as nn
+from torch import nn
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
+
 
 if TYPE_CHECKING:
     from fl4health.clients.basic_client import BasicClient
@@ -13,6 +14,7 @@ if TYPE_CHECKING:
 from fl4health.metrics.metric_managers import MetricManager
 from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.utils.losses import LossMeter
+
 
 T = TypeVar("T")
 
@@ -41,13 +43,12 @@ class AbstractSnapshotter(ABC, Generic[T]):
         attribute = getattr(self.client, name)
         if isinstance(attribute, expected_type):
             return {"None": attribute}
-        elif isinstance(attribute, dict):
+        if isinstance(attribute, dict):
             for key, value in attribute.items():
                 if not isinstance(value, expected_type):
                     raise ValueError(f"Incompatible type of attribute {type(attribute)} for key {key}")
             return attribute
-        else:
-            raise ValueError(f"Incompatible type of attribute {type(attribute)}")
+        raise ValueError(f"Incompatible type of attribute {type(attribute)}")
 
     def save(self, name: str, expected_type: type[T]) -> dict[str, Any]:
         """
@@ -105,7 +106,6 @@ class AbstractSnapshotter(ABC, Generic[T]):
 
 
 class OptimizerSnapshotter(AbstractSnapshotter[Optimizer]):
-
     def save_attribute(self, attribute: dict[str, Optimizer]) -> dict[str, Any]:
         """
         Save the state of the optimizers by saving "state" attribute of the optimizer.
@@ -123,7 +123,7 @@ class OptimizerSnapshotter(AbstractSnapshotter[Optimizer]):
 
     def load_attribute(self, attribute_snapshot: dict[str, Any], attribute: dict[str, Optimizer]) -> None:
         """
-        Load the state of the optimizers by loading "state" attribute of the optimizer
+        Load the state of the optimizers by loading "state" attribute of the optimizer.
 
         Args:
             attribute_snapshot (dict[str, Any]): The snapshot containing the state of the optimizers.
@@ -136,7 +136,6 @@ class OptimizerSnapshotter(AbstractSnapshotter[Optimizer]):
 
 
 class LRSchedulerSnapshotter(AbstractSnapshotter[LRScheduler]):
-
     def save_attribute(self, attribute: dict[str, LRScheduler]) -> dict[str, Any]:
         """
         Save the state of the learning rate schedulers.
@@ -165,7 +164,6 @@ class LRSchedulerSnapshotter(AbstractSnapshotter[LRScheduler]):
 
 
 class TorchModuleSnapshotter(AbstractSnapshotter[nn.Module]):
-
     def save_attribute(self, attribute: dict[str, nn.Module]) -> dict[str, Any]:
         """
         Save the state of the ``nn.Modules``.

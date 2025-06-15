@@ -225,7 +225,6 @@ class PerFclClient(BasicClient):
               ``local_feature_contrastive_loss`` representing the various and relevant pieces of the loss
               calculations
         """
-
         loss = self.criterion(preds["prediction"], target)
         # If any of these are None then we don't compute the PerFCL loss. This will happen on the first client-side
         # training run.

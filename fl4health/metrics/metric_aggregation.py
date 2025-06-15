@@ -86,7 +86,7 @@ def normalize_metrics(total_examples: int, aggregated_metrics: Metrics) -> Metri
     # Normalize all metric values by the total count of examples seen.
     normalized_metrics: Metrics = {}
     for metric_name, metric_value in aggregated_metrics.items():
-        if isinstance(metric_value, float) or isinstance(metric_value, int):
+        if isinstance(metric_value, (float, int)):
             normalized_metrics[metric_name] = metric_value / total_examples
     return normalized_metrics
 
@@ -107,7 +107,7 @@ def uniform_normalize_metrics(
     # Normalize all metric values by the total count of clients that contributed to the metric.
     normalized_metrics: Metrics = {}
     for metric_name, metric_value in aggregated_metrics.items():
-        if isinstance(metric_value, float) or isinstance(metric_value, int):
+        if isinstance(metric_value, (float, int)):
             normalized_metrics[metric_name] = metric_value / total_client_count_by_metric[metric_name]
     return normalized_metrics
 

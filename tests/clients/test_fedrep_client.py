@@ -166,7 +166,7 @@ def sanity_check_optimizer_safeties(get_client: FedRepClient) -> None:  # noqa
     with mock.patch.object(FedRepClient, "get_optimizer", new=get_optimizer_patch_1):
         fedrep_client = get_client
         fedrep_client.set_optimizer({})
-        len(fedrep_client.optimizers) == 2
+        assert len(fedrep_client.optimizers) == 2
 
     with mock.patch.object(FedRepClient, "get_optimizer", new=get_optimizer_patch_2):
         fedrep_client = get_client

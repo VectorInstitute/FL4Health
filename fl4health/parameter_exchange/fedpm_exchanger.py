@@ -1,6 +1,6 @@
 import torch
-import torch.nn as nn
 from flwr.common.typing import Config, NDArrays
+from torch import nn
 
 from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger
 from fl4health.parameter_exchange.parameter_selection_criteria import select_scores_and_sample_masks

@@ -67,7 +67,7 @@ def process_data(metadata: pd.DataFrame, input_dir: Path, output_dir: Path, clie
     """
     for i, row in metadata.iterrows():
         image_tensor = load_image(row.to_dict(), Path(input_dir))
-        save_to_pkl(image_tensor, os.path.join(output_dir, f"{type_data}_data_{client_num+1}", f"image_{i}.pkl"))
+        save_to_pkl(image_tensor, os.path.join(output_dir, f"{type_data}_data_{client_num + 1}", f"image_{i}.pkl"))
 
 
 def save_to_pkl(data: torch.Tensor, output_path: str) -> None:
@@ -95,7 +95,7 @@ def main(dataset_dir: Path) -> None:
 
     # Define cell types to distribute data based on them for each client
     cell_types = ["RPE", "HUVEC", "HEPG2", "U2OS"]
-    output_files = [os.path.join(output_dir, f"meta_data_{i+1}.csv") for i in range(len(cell_types))]
+    output_files = [os.path.join(output_dir, f"meta_data_{i + 1}.csv") for i in range(len(cell_types))]
 
     # Filter and save data for each client
     for cell_type, output_path in zip(cell_types, output_files):

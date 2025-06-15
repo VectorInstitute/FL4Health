@@ -2,9 +2,9 @@ import argparse
 from logging import INFO
 
 import torch
-import torch.nn as nn
 from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_EPOCHS_POOLED, Baseline, BaselineLoss
 from flwr.common.logger import log
+from torch import nn
 from torch.utils.data import DataLoader
 
 from fl4health.metrics import BalancedAccuracy

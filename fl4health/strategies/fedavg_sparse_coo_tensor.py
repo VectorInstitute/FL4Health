@@ -192,8 +192,7 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         """
         if self.weighted_aggregation:
             return self.weighted_aggregate(results)
-        else:
-            return self.unweighted_aggregate(results)
+        return self.unweighted_aggregate(results)
 
     def weighted_aggregate(self, results: list[tuple[NDArrays, int]]) -> dict[str, Tensor]:
         """
@@ -251,12 +250,10 @@ class FedAvgSparseCooTensor(BasicFedAvg):
                 names_to_dense_tensors[tensor_name].append(dense_tensor * num_examples)
                 total_num_examples[tensor_name] += num_examples
 
-        names_to_tensors_aggregated = {
+        return {
             name_key: (reduce(torch.add, names_to_dense_tensors[name_key]) / total_num_examples[name_key])
             for name_key in names_to_dense_tensors
         }
-
-        return names_to_tensors_aggregated
 
     def unweighted_aggregate(self, results: list[tuple[NDArrays, int]]) -> dict[str, Tensor]:
         """
@@ -313,9 +310,7 @@ class FedAvgSparseCooTensor(BasicFedAvg):
                 names_to_dense_tensors[tensor_name].append(dense_tensor)
                 total_num_clients[tensor_name] += 1
 
-        names_to_tensors_aggregated = {
+        return {
             name_key: (reduce(torch.add, names_to_dense_tensors[name_key]) / total_num_clients[name_key])
             for name_key in names_to_dense_tensors
         }
-
-        return names_to_tensors_aggregated

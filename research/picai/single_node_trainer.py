@@ -3,10 +3,10 @@ from logging import INFO
 from pathlib import Path
 
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Scalar
 from monai.data.dataloader import DataLoader
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 
@@ -67,7 +67,7 @@ class SingleNodeTrainer:
         metric_prefix = "Validation" if is_validation else "Training"
         log(
             INFO,
-            f"Centralized {metric_prefix} Loss: {loss} \n" f"Centralized {metric_prefix} Metrics: {metric_string}",
+            f"Centralized {metric_prefix} Loss: {loss} \nCentralized {metric_prefix} Metrics: {metric_string}",
         )
 
     def train_step(self, input: torch.Tensor, target: torch.Tensor) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:

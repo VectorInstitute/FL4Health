@@ -30,7 +30,7 @@ def fit_config(
     local_steps: int | None = None,
 ) -> Config:
     assert 0 < sample_percentage <= 1
-    assert 0 < beta
+    assert beta > 0
     return {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "batch_size": batch_size,

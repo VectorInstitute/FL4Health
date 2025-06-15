@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-from torch import Tensor
+from torch import Tensor, nn
 from torch.nn.modules.batchnorm import _BatchNorm
 from torch.nn.parameter import Parameter
 
 from fl4health.utils.functions import bernoulli_sample
+
 
 TorchShape = int | list[int] | torch.Size
 
@@ -79,7 +79,7 @@ class MaskedLayerNorm(nn.LayerNorm):
 
     def forward(self, input: Tensor) -> Tensor:
         """
-        Mapping function for the ``MaskedLayerNorm``
+        Mapping function for the ``MaskedLayerNorm``.
 
         Args:
             input (Tensor): Tensor to be mapped by the layer
@@ -89,18 +89,17 @@ class MaskedLayerNorm(nn.LayerNorm):
         """
         if not self.elementwise_affine:
             return F.layer_norm(input, self.normalized_shape, self.weight, self.bias, self.eps)
+        assert self.weight is not None
+        weight_prob_scores = torch.sigmoid(self.weight_scores)
+        weight_mask = bernoulli_sample(weight_prob_scores)
+        masked_weight = weight_mask * self.weight
+        if self.bias is not None:
+            bias_prob_scores = torch.sigmoid(self.bias_scores)
+            bias_mask = bernoulli_sample(bias_prob_scores)
+            masked_bias = bias_mask * self.bias
         else:
-            assert self.weight is not None
-            weight_prob_scores = torch.sigmoid(self.weight_scores)
-            weight_mask = bernoulli_sample(weight_prob_scores)
-            masked_weight = weight_mask * self.weight
-            if self.bias is not None:
-                bias_prob_scores = torch.sigmoid(self.bias_scores)
-                bias_mask = bernoulli_sample(bias_prob_scores)
-                masked_bias = bias_mask * self.bias
-            else:
-                masked_bias = None
-            return F.layer_norm(input, self.normalized_shape, masked_weight, masked_bias, self.eps)
+            masked_bias = None
+        return F.layer_norm(input, self.normalized_shape, masked_weight, masked_bias, self.eps)
 
     @classmethod
     def from_pretrained(cls, layer_norm_module: nn.LayerNorm) -> MaskedLayerNorm:
@@ -151,18 +150,18 @@ class _MaskedBatchNorm(_BatchNorm):
         dtype: torch.dtype | None = None,
     ) -> None:
         """
-            Base class for masked batch normalization modules of various dimensions. When affine is True,
-            ``_BatchNorm`` has a learnable weight and bias. For ``_MaskedBatchNorm``, the weight and bias do not
-            receive gradient in back propagation. Instead, two score tensors - one for the weight and another for the
-            bias - are maintained. In the forward pass, the score tensors are transformed by the Sigmoid function
-            into probability scores, which are then used to produce binary masks via Bernoulli sampling. Finally, the
-            binary masks are applied to the weight and the bias. During training, gradients with respect to the score
-            tensors are computed and used to update the score tensors.
+        Base class for masked batch normalization modules of various dimensions. When affine is True,
+        ``_BatchNorm`` has a learnable weight and bias. For ``_MaskedBatchNorm``, the weight and bias do not
+        receive gradient in back propagation. Instead, two score tensors - one for the weight and another for the
+        bias - are maintained. In the forward pass, the score tensors are transformed by the Sigmoid function
+        into probability scores, which are then used to produce binary masks via Bernoulli sampling. Finally, the
+        binary masks are applied to the weight and the bias. During training, gradients with respect to the score
+        tensors are computed and used to update the score tensors.
 
-            When affine is False, _BatchNorm does not have weight or bias. Under this condition, both score tensors
-            are None and ``_MaskedBatchNorm`` acts in the same way as ``_BatchNorm``.
+        When affine is False, _BatchNorm does not have weight or bias. Under this condition, both score tensors
+        are None and ``_MaskedBatchNorm`` acts in the same way as ``_BatchNorm``.
 
-            **NOTE:** The scores are not assumed to be bounded between 0 and 1.
+        **NOTE:** The scores are not assumed to be bounded between 0 and 1.
 
         Args:
             num_features: number of features or channels :math:`C` of the input
@@ -200,7 +199,7 @@ class _MaskedBatchNorm(_BatchNorm):
 
     def forward(self, input: Tensor) -> Tensor:
         """
-        Mapping function for the ``_MaskedBatchNorm`` module
+        Mapping function for the ``_MaskedBatchNorm`` module.
 
         Args:
             input (Tensor): Tensor to be mapped via the ``_MaskedBatchNorm``
@@ -209,26 +208,18 @@ class _MaskedBatchNorm(_BatchNorm):
             Tensor: Output tensor after mapping
         """
         self._check_input_dim(input)
+        exponential_average_factor = 0.0 if self.momentum is None else self.momentum
 
-        if self.momentum is None:
-            exponential_average_factor = 0.0
-        else:
-            exponential_average_factor = self.momentum
-
-        if self.training and self.track_running_stats:
-            if self.num_batches_tracked is not None:  # type: ignore[has-type]
-                self.num_batches_tracked.add_(1)  # type: ignore[has-type]
-                if self.momentum is None:  # use cumulative moving average
-                    exponential_average_factor = 1.0 / float(self.num_batches_tracked)
-                else:  # use exponential moving average
-                    exponential_average_factor = self.momentum
+        if self.training and self.track_running_stats and self.num_batches_tracked is not None:  # type: ignore[has-type]
+            self.num_batches_tracked.add_(1)  # type: ignore[has-type]
+            if self.momentum is None:  # use cumulative moving average
+                exponential_average_factor = 1.0 / float(self.num_batches_tracked)
+            else:  # use exponential moving average
+                exponential_average_factor = self.momentum
 
         # Decide whether the mini-batch stats should be used for normalization rather than the buffers.
         # Mini-batch stats are used in training mode, and in eval mode when buffers are None.
-        if self.training:
-            bn_training = True
-        else:
-            bn_training = (self.running_mean is None) and (self.running_var is None)
+        bn_training = True if self.training else self.running_mean is None and self.running_var is None
 
         # Buffers are only updated if they are to be tracked and we are in training mode. Thus they only need to be
         # passed when the update should occur (i.e. in training mode when they are tracked), or when buffer stats are
@@ -261,7 +252,7 @@ class _MaskedBatchNorm(_BatchNorm):
     @classmethod
     def from_pretrained(cls, batch_norm_module: _BatchNorm) -> _MaskedBatchNorm:
         """
-        Mapping a ``_BatchNorm`` module to a ``_MaskedBatchNorm`` by injecting masked layers
+        Mapping a ``_BatchNorm`` module to a ``_MaskedBatchNorm`` by injecting masked layers.
 
         Args:
             batch_norm_module (_BatchNorm): Module to be transformed to a masked module through layer insertion
@@ -302,7 +293,8 @@ class MaskedBatchNorm1d(_MaskedBatchNorm):
 
 class MaskedBatchNorm2d(_MaskedBatchNorm):
     """
-    Applies (masked) Batch Normalization over a 4D input (a mini-batch of 2D inputs with additional channel dimension).
+    Applies (masked) Batch Normalization over a 4D input (a mini-batch of 2D inputs with additional channel
+    dimension).
     """
 
     def _check_input_dim(self, input: Tensor) -> None:
@@ -312,7 +304,8 @@ class MaskedBatchNorm2d(_MaskedBatchNorm):
 
 class MaskedBatchNorm3d(_MaskedBatchNorm):
     """
-    Applies (masked) Batch Normalization over a 5D input (a mini-batch of 3D inputs with additional channel dimension).
+    Applies (masked) Batch Normalization over a 5D input (a mini-batch of 3D inputs with additional
+    channel dimension).
     """
 
     def _check_input_dim(self, input: Tensor) -> None:

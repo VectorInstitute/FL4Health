@@ -6,9 +6,9 @@ from pathlib import Path
 
 import flwr as fl
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -26,6 +26,7 @@ from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 from research.cifar10.model import ConvNet
 from research.cifar10.preprocess import get_preprocessed_data, get_test_preprocessed_data
+
 
 BASELINE_LAYERS = ["bn1", "bn2", "fc1"]
 

@@ -4,6 +4,7 @@ import torch
 from fl4health.losses.weight_drift_loss import WeightDriftLoss
 from tests.test_utils.models_for_test import SmallCnn
 
+
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 

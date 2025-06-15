@@ -3,6 +3,7 @@ import torch
 
 from fl4health.losses.perfcl_loss import PerFclLoss
 
+
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 

@@ -1,10 +1,10 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 from fl4health.model_bases.fenda_base import FendaGlobalModule, FendaHeadModule, FendaJoinMode, FendaLocalModule
 
 
-class FendaClassifier_d(FendaHeadModule):
+class FendaClassifierD(FendaHeadModule):
     def __init__(self, join_mode: FendaJoinMode, size: int = 136) -> None:
         super().__init__(join_mode)
         self.fc1 = nn.Linear(size, 1)
@@ -19,11 +19,10 @@ class FendaClassifier_d(FendaHeadModule):
 
     def head_forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         x = self.dropout(input_tensor)
-        x = self.fc1(x)
-        return x
+        return self.fc1(x)
 
 
-class LocalMLP_d(FendaLocalModule):
+class LocalMlpD(FendaLocalModule):
     def __init__(self) -> None:
         super().__init__()
         self.fc1 = nn.Linear(8093, 256 * 2)
@@ -34,11 +33,10 @@ class LocalMLP_d(FendaLocalModule):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.activation(self.fc1(x))
         x = self.dropout(x)
-        x = self.activation(self.fc2(x))
-        return x
+        return self.activation(self.fc2(x))
 
 
-class GlobalMLP_d(FendaGlobalModule):
+class GlobalMlpD(FendaGlobalModule):
     def __init__(self) -> None:
         super().__init__()
         self.fc1 = nn.Linear(8093, 256 * 2)
@@ -55,5 +53,4 @@ class GlobalMLP_d(FendaGlobalModule):
         x = self.dropout(x)
         x = self.activation(self.fc3(x))
         x = self.dropout(x)
-        x = self.activation(self.fc4(x))
-        return x
+        return self.activation(self.fc4(x))

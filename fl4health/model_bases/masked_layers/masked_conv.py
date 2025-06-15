@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-from torch import Tensor
+from torch import Tensor, nn
 from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
 from torch.nn.modules.utils import _pair, _single, _triple
 from torch.nn.parameter import Parameter
@@ -81,7 +80,7 @@ class MaskedConv1d(nn.Conv1d):
 
     def forward(self, input: Tensor) -> Tensor:
         """
-        Forward for the mask 1D Convolution
+        Forward for the mask 1D Convolution.
 
         Args:
             input (Tensor): input tensor for the layer
@@ -207,7 +206,7 @@ class MaskedConv2d(nn.Conv2d):
 
     def forward(self, input: Tensor) -> Tensor:
         """
-        Forward for the Masked 2D Convolution
+        Forward for the Masked 2D Convolution.
 
         Args:
             input (Tensor): input tensor for the layer
@@ -331,7 +330,7 @@ class MaskedConv3d(nn.Conv3d):
 
     def forward(self, input: Tensor) -> Tensor:
         """
-        Forward for the Masked 3D Convolution
+        Forward for the Masked 3D Convolution.
 
         Args:
             input (Tensor): input tensor for the layer
@@ -404,7 +403,7 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
     ) -> None:
         """
         Implementation of masked ``ConvTranspose1d`` layers. For more information on transposed convolution,
-        please see the PyTorch implementation of ``nn.Conv1d.``
+        please see the PyTorch implementation of ``nn.Conv1d``.
 
         (https://pytorch.org/docs/stable/_modules/torch/nn/modules/conv.html#ConvTranspose1d)
 
@@ -460,7 +459,7 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
 
     def forward(self, input: Tensor, output_size: list[int] | None = None) -> Tensor:
         """
-        Forward for the ``MaskedConvTranspose1D``
+        Forward for the ``MaskedConvTranspose1D``.
 
         Args:
             input (Tensor): input to be mapped with the module
@@ -620,7 +619,7 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
 
     def forward(self, input: Tensor, output_size: list[int] | None = None) -> Tensor:
         """
-        Maps input tensor through the ``MaskedConvTranspose2D`` module
+        Maps input tensor through the ``MaskedConvTranspose2D`` module.
 
         Args:
             input (Tensor): tensor to be mapped
@@ -777,7 +776,7 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
 
     def forward(self, input: Tensor, output_size: list[int] | None = None) -> Tensor:
         """
-        Maps the input tensor with ``MaskedConvTranspose3D``
+        Maps the input tensor with ``MaskedConvTranspose3D``.
 
         Args:
             input (Tensor): Tensor to be mapped

@@ -3,11 +3,12 @@ from enum import Enum
 from logging import INFO
 from typing import Any
 
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Scalar
+from torch import nn
 
 from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer, TorchModuleCheckpointer
+
 
 ModelCheckpointers = TorchModuleCheckpointer | Sequence[TorchModuleCheckpointer] | None
 
@@ -66,7 +67,6 @@ class ClientCheckpointAndStateModule:
         Raises:
             ValueError: If any of the pre- or post-aggregation model checkpointer paths are not unique.
         """
-
         pre_aggregation_paths = (
             [checkpointer.checkpoint_path for checkpointer in self.pre_aggregation] if self.pre_aggregation else []
         )
@@ -124,7 +124,7 @@ class ClientCheckpointAndStateModule:
         This function is meant to facilitate saving state required to restart an FL process on the client side. This
         function will simply save whatever information is passed in the state variable using the file name in
         ``state_checkpoint_name``. This function should only be called if a ``state_checkpointer`` exists in this
-        module
+        module.
 
         Args:
             state_checkpoint_name (str): Name of the state checkpoint file. The checkpointer itself will have a
@@ -136,7 +136,6 @@ class ClientCheckpointAndStateModule:
         Raises:
             ValueError: Throws an error if this function is called, but no state checkpointer has been provided
         """
-
         if self.state_checkpointer is not None:
             self.state_checkpointer.save_checkpoint(state_checkpoint_name, state)
         else:
@@ -159,12 +158,9 @@ class ClientCheckpointAndStateModule:
             dict[str, Any] | None: If the state checkpoint properly exists and is loaded correctly, this dictionary
             carries that state. Otherwise, we return a None (or throw an exception).
         """
-
         if self.state_checkpointer is not None:
             if self.state_checkpointer.checkpoint_exists(state_checkpoint_name):
                 return self.state_checkpointer.load_checkpoint(state_checkpoint_name)
-            else:
-                log(INFO, "State checkpointer is defined but no state checkpoint exists.")
-                return None
-        else:
-            raise ValueError("Attempting to load state, but no state checkpointer is specified")
+            log(INFO, "State checkpointer is defined but no state checkpoint exists.")
+            return None
+        raise ValueError("Attempting to load state, but no state checkpointer is specified")

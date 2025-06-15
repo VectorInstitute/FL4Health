@@ -80,7 +80,6 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
                 the generalization adjustment weight. It has to be ``0 < adjustment_weight_step_size < 1.``
                 Optional, default is 0.2.
         """
-
         self.loss_weight = initial_loss_weight
         self.adapt_loss_weight = adapt_loss_weight
 
@@ -173,7 +172,7 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
         This function takes results returned from a fit round from each of the participating clients and unpacks the
         information into the appropriate objects. The parameters contained in the FitRes object are unpacked to
         separate the model weights from the training losses. The model weights are reinserted into the parameters
-        of the FitRes objects and the losses (along with sample counts) are placed in a list and returned
+        of the FitRes objects and the losses (along with sample counts) are placed in a list and returned.
 
         **NOTE:** The results that are passed to this function are **MODIFIED IN-PLACE**.
 
@@ -209,7 +208,6 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
                 Constraint clients this should be the aggregated training loss seen by each client participating in
                 training.
         """
-
         if self.adapt_loss_weight:
             if loss <= self.previous_loss:
                 self.loss_weight_patience_counter += 1

@@ -10,7 +10,7 @@ import torch
 class Losses(ABC):
     def __init__(self, additional_losses: dict[str, torch.Tensor] | None = None) -> None:
         """
-        An abstract class to store the losses
+        An abstract class to store the losses.
 
         Args:
             additional_losses (dict[str, torch.Tensor] | None): Optional dictionary of additional losses.
@@ -36,7 +36,7 @@ class Losses(ABC):
     @abstractmethod
     def aggregate(loss_meter: LossMeter) -> Losses:
         """
-        Aggregates the losses in the given ``LossMeter`` into an instance of Losses
+        Aggregates the losses in the given ``LossMeter`` into an instance of Losses.
 
         Args:
             loss_meter (LossMeter): The loss meter object with the collected losses.
@@ -75,7 +75,7 @@ class EvaluationLosses(Losses):
     @staticmethod
     def aggregate(loss_meter: LossMeter[EvaluationLosses]) -> EvaluationLosses:
         """
-        Aggregates the losses in the given ``LossMeter`` into An instance of ``EvaluationLosses``
+        Aggregates the losses in the given ``LossMeter`` into An instance of ``EvaluationLosses``.
 
         Args:
             loss_meter (LossMeter[EvaluationLosses]): The loss meter object with the collected evaluation losses.
@@ -132,7 +132,7 @@ class TrainingLosses(Losses):
     @staticmethod
     def aggregate(loss_meter: LossMeter[TrainingLosses]) -> TrainingLosses:
         """
-        Aggregates the losses in the given ``LossMeter`` into An instance of ``TrainingLosses``
+        Aggregates the losses in the given ``LossMeter`` into An instance of ``TrainingLosses``.
 
         Args:
             loss_meter (LossMeter[TrainingLosses]): The loss meter object with the collected training losses.
@@ -190,9 +190,7 @@ class LossMeter(Generic[LossesType]):
         self.losses_list.append(losses)
 
     def clear(self) -> None:
-        """
-        Resets the meter by re-initializing ``losses_list`` to be empty
-        """
+        """Resets the meter by re-initializing ``losses_list`` to be empty."""
         self.losses_list = []
 
     def compute(self) -> LossesType:
@@ -211,7 +209,7 @@ class LossMeter(Generic[LossesType]):
         loss_meter_type: LossMeterType,
     ) -> dict[str, torch.Tensor]:
         """
-        Aggregates a list of losses dictionaries into a single dictionary according to the loss meter aggregation type
+        Aggregates a list of losses dictionaries into a single dictionary according to the loss meter aggregation type.
 
         Args:
             loss_list (list[dict[str, torch.Tensor]]): A list of loss dictionaries
@@ -224,7 +222,7 @@ class LossMeter(Generic[LossesType]):
         # We don't know the keys of the dict (backward or additional losses) beforehand. We don't obtain them
         # from the first entry because losses can have different keys. We get list of all the keys from
         # all the losses.
-        loss_keys = set(key for loss_dict_ in loss_list for key in loss_dict_.keys())
+        loss_keys = {key for loss_dict_ in loss_list for key in loss_dict_}
         loss_dict: dict[str, torch.Tensor] = {}
         for key in loss_keys:
             if loss_meter_type == LossMeterType.AVERAGE:

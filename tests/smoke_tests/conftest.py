@@ -6,5 +6,4 @@ import torch
 def tolerance() -> float:
     if torch.cuda.is_available():
         return 0.005
-    else:
-        return 0.0005
+    return 0.0005

@@ -47,7 +47,7 @@ class TabularFeaturesPreprocessor:
 
     def get_default_numeric_pipeline(self) -> Pipeline:
         """
-        Default numeric pipeline factory. Mean imputation and default min-max scaler
+        Default numeric pipeline factory. Mean imputation and default min-max scaler.
 
         Returns:
             Pipeline: Default numeric pipeline
@@ -56,7 +56,7 @@ class TabularFeaturesPreprocessor:
 
     def get_default_binary_pipeline(self) -> Pipeline:
         """
-        Default binary pipeline factor. Most frequent imputer and an ordinal encoder
+        Default binary pipeline factor. Most frequent imputer and an ordinal encoder.
 
         Returns:
             Pipeline: Default binary pipeline
@@ -65,7 +65,7 @@ class TabularFeaturesPreprocessor:
 
     def get_default_one_hot_pipeline(self, categories: MetaData) -> Pipeline:
         """
-        Default one hot encoding pipeline. Unknowns are ignored, categories are provided as an input
+        Default one hot encoding pipeline. Unknowns are ignored, categories are provided as an input.
 
         Args:
             categories (MetaData): Categories to be one hot encoded.
@@ -101,7 +101,7 @@ class TabularFeaturesPreprocessor:
     def get_default_string_pipeline(self, vocabulary: MetaData) -> Pipeline:
         """
         Default string/text encoding pipeline. The vocabulary is provided and this is used to instantiate a default
-        ``TfidfVectorizer``
+        ``TfidfVectorizer``.
 
         Args:
             vocabulary (MetaData): Vocabulary to serve as the ``TfidfVectorizer`` vocab.
@@ -142,7 +142,7 @@ class TabularFeaturesPreprocessor:
 
     def return_column_transformer(self, pipelines: dict[str, Pipeline]) -> ColumnTransformer:
         """
-        Given a set of pipelines create a set of column transformations based on those pipelines
+        Given a set of pipelines create a set of column transformations based on those pipelines.
 
         Args:
             pipelines (dict[str, Pipeline]): Dictionary of pipelines for columns with the keys of the dictionary
@@ -170,7 +170,6 @@ class TabularFeaturesPreprocessor:
             feature_name (str): target column name in the dataframe to apply the pipeline to
             pipeline (Pipeline): Pipeline to apply to the associated column.
         """
-
         if feature_name in self.features_to_pipelines:
             self.features_to_pipelines[feature_name] = pipeline
             self.data_column_transformer = self.return_column_transformer(self.features_to_pipelines)
@@ -182,7 +181,7 @@ class TabularFeaturesPreprocessor:
 
     def preprocess_features(self, df: pd.DataFrame) -> tuple[NDArray, NDArray]:
         """
-        Preprocess the provided dataframe with the specified pipelines
+        Preprocess the provided dataframe with the specified pipelines.
 
         Args:
             df (pd.DataFrame): Dataframe to be processed.

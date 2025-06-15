@@ -8,14 +8,14 @@ from research.picai.data.preprocessing import PicaiCase, PreprocessingSettings
 
 
 def test_read_and_write_picai_case(tmp_path: Path) -> None:
-    X, Y, Z = 8, 16, 32
+    x, y, z = 8, 16, 32
     os.mkdir(f"{tmp_path}/read")
     os.mkdir(f"{tmp_path}/write")
 
-    t2w = np.zeros((X, Y, Z), dtype=np.float32)
-    adc = np.ones((X, Y, Z), dtype=np.float32)
-    hbv = np.ones((X, Y, Z), dtype=np.float32) * 2.0
-    annotation = np.ones((X, Y, Z), dtype=np.float32) * 3.0
+    t2w = np.zeros((x, y, z), dtype=np.float32)
+    adc = np.ones((x, y, z), dtype=np.float32)
+    hbv = np.ones((x, y, z), dtype=np.float32) * 2.0
+    annotation = np.ones((x, y, z), dtype=np.float32) * 3.0
 
     t2w_sitk = sitk.GetImageFromArray(t2w)
     adc_sitk = sitk.GetImageFromArray(adc)

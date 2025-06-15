@@ -6,9 +6,9 @@ from pathlib import Path
 
 import flwr as fl
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -79,11 +79,10 @@ class BertSparseTensorExchangeClient(PartialWeightExchangeClient):
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         # A different score_gen_function may be passed in to allow for alternative
         # selection criterion.
-        parameter_exchanger = SparseCooParameterExchanger(
+        return SparseCooParameterExchanger(
             sparsity_level=self.sparsity_level,
             score_gen_function=largest_final_magnitude_scores,
         )
-        return parameter_exchanger
 
     def predict(self, input: TorchInputType) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]:
         outputs, features = super().predict(input)

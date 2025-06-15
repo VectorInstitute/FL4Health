@@ -16,6 +16,7 @@ import yaml
 from flwr.common.logger import log
 from numpy.typing import NDArray
 
+
 with warnings.catch_warnings():
     # We get a bunch of scipy deprecation warnings from these packages
     # Curiously this only happens if flwr is imported first
@@ -40,7 +41,7 @@ class MyNnUNetPredictor(nnUNetPredictor):
         Override of the predict from data iterator class so that we can have it return the model outputs along with
         their output filenames and data properties. The parent class method either saves the data and returns
         nothing, or does not save the data and only returns the model outputs. We are going to change as little as
-        possible. This function is based off of nnunetv2 version 2.4.2
+        possible. This function is based off of nnunetv2 version 2.4.2.
 
         Args:
             data_iterator (Generator): The data iterator
@@ -57,7 +58,7 @@ class MyNnUNetPredictor(nnUNetPredictor):
         with multiprocessing.get_context("spawn").Pool(num_processes) as pool:
             # Have to ignore errors when defining worker list because mypy
             # doesn't understand multiprocessing.get_context
-            worker_list = [i for i in pool._pool]  # type: ignore
+            worker_list = list(pool._pool)  # type: ignore
             model_outputs: Any = []
             ofiles = []
             properties_list = []
@@ -124,7 +125,7 @@ class MyNnUNetPredictor(nnUNetPredictor):
 def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, plans: dict) -> nnUNetPredictor:
     """
     Returns an initialized nnUNetPredictor for a set of nnunet models with the
-    same config and architecture
+    same config and architecture.
 
     Args:
         ckpt_list (list[str]): A list containing the paths to the checkpoint
@@ -147,7 +148,7 @@ def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, 
     # Helper function to make code cleaner
     def check_for_ckpt_info(model: dict) -> tuple[str, bool]:
         """
-        Checks model dict for trainer name and ``inference_allowed_mirroring_axes``
+        Checks model dict for trainer name and ``inference_allowed_mirroring_axes``.
 
         Returns:
             tuple[str | None, bool]: Tuple with elements trainer_name and ``inference_allowed_mirroring_axes``.
@@ -155,9 +156,9 @@ def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, 
         """
         trainer_name = "nnUNetTrainer"
         inference_allowed_mirror_axes = False
-        if "trainer_name" in model.keys():
+        if "trainer_name" in model:
             trainer_name = model["trainer_name"]
-        if "inference_allowed_mirroring_axes" in model.keys():
+        if "inference_allowed_mirroring_axes" in model:
             inference_allowed_mirror_axes = model["inference_allowed_mirroring_axes"]
 
         return trainer_name, inference_allowed_mirror_axes
@@ -267,9 +268,12 @@ def predict(
     """
     t_start = time.time()
     # Load config and nnunet required dicts
-    config = yaml.safe_load(open(config_path, "r"))
-    dataset_json = json.load(open(config["dataset_json"], "r"))
-    plans = json.load(open(config["plans"], "r"))
+    with open(config_path, "r") as f:
+        config = yaml.safe_load(f)
+    with open(config["dataset_json"], "r") as f:
+        dataset_json = json.load(f)
+    with open(config["plans"], "r") as f:
+        plans = json.load(f)
 
     # Convert input folder into a list of filenames so that we know which
     # output preds correspond to which input files
@@ -289,7 +293,7 @@ def predict(
     # Model inference
     model_count = 0
     config_probs_list = []
-    for i, key in enumerate(config.keys()):
+    for key in config:
         if key in ["2d", "3d_fullres", "3d_lowres", "3d_cascade_fullres"]:
             # Get predictor for config
             predictor = get_predictor(
@@ -315,7 +319,10 @@ def predict(
 
             secs = time.time() - t
             if verbose:
-                log(INFO, f"Inference complete: {secs:.1f}s total, {secs/(len(case_identifiers)*n_models):.1f}s/case")
+                log(
+                    INFO,
+                    f"Inference complete: {secs:.1f}s total, {secs / (len(case_identifiers) * n_models):.1f}s/case",
+                )
                 log(INFO, "")
 
             # Each element of config_probs_list will have
@@ -345,7 +352,7 @@ def predict(
     if verbose:
         log(
             INFO,
-            (f"Finished running inference with {model_count} models on " f"{shape[0]} samples."),
+            (f"Finished running inference with {model_count} models on {shape[0]} samples."),
         )
         log(INFO, f"\tNum Samples: {shape[0]}")
         log(INFO, f"\tNum Classes: {shape[1]}")
@@ -362,7 +369,7 @@ def predict(
             log(INFO, "")
             log(
                 INFO,
-                f"Saved predicted probability maps to disk: {secs:.1f}s total, {secs/len(case_identifiers):.1f}s/case",
+                f"Saved predicted probability maps to disk: {secs:.1f}s total, {secs / len(case_identifiers):.1f}s/case",
             )
 
     # Maybe save predicted annotations
@@ -381,7 +388,7 @@ def predict(
     if verbose:
         secs = time.time() - t_start
         log(INFO, "")
-        log(INFO, f"Total Time: {secs:.1f}s ({secs/len(case_identifiers):.1f}s/case)")
+        log(INFO, f"Total Time: {secs:.1f}s ({secs / len(case_identifiers):.1f}s/case)")
 
     # final probs shape: (num_samples, num_classes, spatial_dims...)
     # final annot shape: (num_samples, spatial_dims...)

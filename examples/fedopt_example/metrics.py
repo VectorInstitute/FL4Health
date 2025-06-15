@@ -112,9 +112,7 @@ class CompoundMetric(Metric):
         return {topic: Outcome(topic) for topic in classes}
 
     def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
-        """
-        Evaluate metrics and store results.
-        """
+        """Evaluate metrics and store results."""
         predictions = torch.argmax(input.detach().clone(), dim=1)
         confusion = confusion_matrix(target.detach().clone(), predictions, labels=range(self.n_classes))
         for i in range(self.n_classes):
@@ -146,8 +144,8 @@ class CompoundMetric(Metric):
             for metric_name, metric_value in summary_dict.items():
                 log_string = f"{log_string}\n{metric_name}:{str(metric_value)}"
 
-        log_string = f"{log_string}\ntotal_accuracy:{str(self.true_preds/self.total_preds)}"
-        log_string = f"{log_string}\naverage_f1:{str(sum_f1/self.n_classes)}"
+        log_string = f"{log_string}\ntotal_accuracy:{str(self.true_preds / self.total_preds)}"
+        log_string = f"{log_string}\naverage_f1:{str(sum_f1 / self.n_classes)}"
         log(INFO, log_string)
 
         return results

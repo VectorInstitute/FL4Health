@@ -1,6 +1,6 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode, ParallelSplitHeadModule
 from fl4health.model_bases.perfcl_base import PerFclModel
@@ -22,12 +22,11 @@ class PerFclClassifier(ParallelSplitHeadModule):
     def head_forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         x = self.dropout(input_tensor)
         x = self.fc1(x)
-        x = torch.sigmoid(x)
-        return x
+        return torch.sigmoid(x)
 
 
 class LocalLogistic(nn.Module):
-    """Global PerFCL module"""
+    """Global PerFCL module."""
 
     def __init__(self, input_dim: int = 13):
         super().__init__()
@@ -35,12 +34,11 @@ class LocalLogistic(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.linear(x)
-        x = F.relu(x)
-        return x
+        return F.relu(x)
 
 
 class GlobalLogistic(nn.Module):
-    """Global PerFCL module"""
+    """Global PerFCL module."""
 
     def __init__(self, input_dim: int = 13) -> None:
         super().__init__()
@@ -48,8 +46,7 @@ class GlobalLogistic(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.linear(x)
-        x = F.relu(x)
-        return x
+        return F.relu(x)
 
 
 class FedHeartDiseasePerFclModel(PerFclModel):

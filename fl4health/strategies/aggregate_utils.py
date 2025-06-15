@@ -23,14 +23,13 @@ def aggregate_results(results: list[tuple[NDArrays, int]], weighted: bool = True
     if weighted:
         # Uses the underlying flwr aggregation scheme
         return aggregate(results)
-    else:
-        # Number of client weights to average
-        num_clients = len(results)
-        # Create a list of weights, each multiplied by 1/num_clients
-        weighted_weights = [[layer * (1.0 / num_clients) for layer in weights] for weights, _ in results]
+    # Number of client weights to average
+    num_clients = len(results)
+    # Create a list of weights, each multiplied by 1/num_clients
+    weighted_weights = [[layer * (1.0 / num_clients) for layer in weights] for weights, _ in results]
 
-        # Compute unweighted average by summing up across clients for each layer.
-        return [reduce(np.add, layer_updates) for layer_updates in zip(*weighted_weights)]
+    # Compute unweighted average by summing up across clients for each layer.
+    return [reduce(np.add, layer_updates) for layer_updates in zip(*weighted_weights)]
 
 
 def aggregate_losses(results: list[tuple[int, float]], weighted: bool = True) -> float:
@@ -52,6 +51,5 @@ def aggregate_losses(results: list[tuple[int, float]], weighted: bool = True) ->
     if weighted:
         # uses flwr implementation of weighted loss averaging
         return weighted_loss_avg(results)
-    else:
-        # standard averaging
-        return sum([loss for _, loss in results]) / len(results)
+    # standard averaging
+    return sum([loss for _, loss in results]) / len(results)

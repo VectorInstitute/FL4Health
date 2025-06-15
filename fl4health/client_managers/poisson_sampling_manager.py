@@ -9,8 +9,10 @@ from fl4health.client_managers.base_sampling_manager import BaseFractionSampling
 
 
 class PoissonSamplingClientManager(BaseFractionSamplingManager):
-    """Overrides the Simple Client Manager to Provide Poisson Sampling for Clients rather than
-    fixed without replacement sampling"""
+    """
+    Overrides the Simple Client Manager to Provide Poisson Sampling for Clients rather than fixed without replacement
+    sampling.
+    """
 
     def _poisson_sample(self, sampling_probability: float, available_cids: list[str]) -> list[str]:
         poisson_trials = np.random.binomial(1, sampling_probability, len(available_cids))
@@ -35,7 +37,6 @@ class PoissonSamplingClientManager(BaseFractionSamplingManager):
         Returns:
             list[ClientProxy]: List of selected ClientProxy objects represented the clients selected by the process.
         """
-
         available_cids = self.wait_and_filter(min_num_clients, criterion)
         n_available_cids = len(available_cids)
         expected_clients_selected = sample_fraction * n_available_cids

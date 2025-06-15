@@ -13,10 +13,10 @@ from pathlib import Path
 from typing import Any
 
 import torch
-import torchvision.transforms as transforms
 from flwr.common.logger import log
 from PIL import Image
 from torch.utils.data import DataLoader
+from torchvision import transforms
 
 from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.dataset_converter import DatasetConverter
@@ -36,11 +36,8 @@ def load_image(item: dict[str, Any], transform: Callable | None) -> tuple[torch.
     """
     image_path = item["img_path"]
     image = Image.open(image_path).convert("RGB")
-    if transform:
-        image = transform(image)
-    else:
-        # Default transformation if none provided
-        image = transforms.ToTensor()(image)
+    image = transform(image) if transform else transforms.ToTensor()(image)
+
     assert isinstance(image, torch.Tensor), f"Image at {image_path} is not a Tensor"
     target = int(torch.tensor(item["extended_labels"]).argmax().item())
     return image, target

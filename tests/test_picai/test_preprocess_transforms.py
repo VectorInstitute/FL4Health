@@ -15,6 +15,7 @@ from research.picai.data.preprocessing import (
     ResampleToFirstScan,
 )
 
+
 mock_preprocessing_settings_partial = partial(
     PreprocessingSettings,
     scans_write_dir=Path(""),
@@ -56,8 +57,8 @@ def test_resample_to_first_scan() -> None:
     sizes = [item.GetSize() for item in new_case.scans + [new_case.annotation]]
     spacings = [item.GetSpacing() for item in new_case.scans + [new_case.annotation]]
 
-    assert all(map(lambda x: x == (20, 256, 256), sizes))
-    assert all(map(lambda x: x == (1.0, 1.0, 1.0), spacings))
+    assert all(x == (20, 256, 256) for x in sizes)
+    assert all(x == (1.0, 1.0, 1.0) for x in spacings)
 
 
 def test_resample_spacing() -> None:
@@ -70,7 +71,7 @@ def test_resample_spacing() -> None:
 
     spacings = [item.GetSpacing() for item in new_case.scans + [new_case.annotation]]
 
-    assert all(map(lambda x: x == (2.0, 2.0, 2.0), spacings))
+    assert all(x == (2.0, 2.0, 2.0) for x in spacings)
 
 
 def test_resample_crop_or_pad() -> None:
@@ -84,8 +85,8 @@ def test_resample_crop_or_pad() -> None:
     sizes = [item.GetSize() for item in new_case.scans + [new_case.annotation]]
     spacings = [item.GetSpacing() for item in new_case.scans + [new_case.annotation]]
 
-    assert all(map(lambda x: x == (20, 256, 256), sizes))
-    assert all(map(lambda x: x == (1.0, 1.0, 1.0), spacings))
+    assert all(x == (20, 256, 256) for x in sizes)
+    assert all(x == (1.0, 1.0, 1.0) for x in spacings)
 
 
 def test_align_origin_and_direction() -> None:
@@ -98,9 +99,11 @@ def test_align_origin_and_direction() -> None:
 
     origins = [item.GetOrigin() for item in new_case.scans + [new_case.annotation]]
     dimensions = [item.GetDimension() for item in new_case.scans + [new_case.annotation]]
+    origins_target = origins[0]
+    dimensions_target = dimensions[0]
 
-    assert all(map(lambda x: x == origins[0], origins))
-    assert all(map(lambda x: x == dimensions[0], dimensions))
+    assert all(x == origins_target for x in origins)
+    assert all(x == dimensions_target for x in dimensions)
 
 
 def test_binarize_annotation() -> None:

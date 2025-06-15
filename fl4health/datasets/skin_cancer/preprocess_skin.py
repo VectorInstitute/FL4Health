@@ -1,5 +1,4 @@
-"""
-The following code is adapted from the preprocess_skin.py script
+"""The following code is adapted from the preprocess_skin.py script
 from the medical_federated GitHub repository by Seongjun Yang et al.
 
 Paper: https://arxiv.org/abs/2207.03075
@@ -79,29 +78,29 @@ def preprocess_isic_2019(data_path: str, official_columns: list[str]) -> None:
         data_path (str): The base path to the dataset.
         official_columns (list[str]): The list of official columns for the dataset.
     """
-    Isic_2019_path = os.path.join(data_path, "ISIC_2019")
-    Isic_csv_path = os.path.join(Isic_2019_path, "ISIC_2019_Training_GroundTruth.csv")
-    Isic_df = pd.read_csv(Isic_csv_path)
+    isic_2019_path = os.path.join(data_path, "ISIC_2019")
+    isic_csv_path = os.path.join(isic_2019_path, "ISIC_2019_Training_GroundTruth.csv")
+    isic_df = pd.read_csv(isic_csv_path)
 
-    Isic_meta = pd.read_csv(os.path.join(Isic_2019_path, "ISIC_2019_Training_Metadata.csv"))
-    barcelona_list = [i for i in Isic_meta["lesion_id"].dropna() if "BCN" in i]
-    barcelona_core = Isic_meta[Isic_meta["lesion_id"].isin(barcelona_list)]
-    core_2019 = Isic_df[Isic_df["image"].isin(barcelona_core["image"])]
-    core_2019.to_csv(os.path.join(Isic_2019_path, "ISIC_2019_core.csv"), mode="w")
+    isic_meta = pd.read_csv(os.path.join(isic_2019_path, "ISIC_2019_Training_Metadata.csv"))
+    barcelona_list = [i for i in isic_meta["lesion_id"].dropna() if "BCN" in i]
+    barcelona_core = isic_meta[isic_meta["lesion_id"].isin(barcelona_list)]
+    core_2019 = isic_df[isic_df["image"].isin(barcelona_core["image"])]
+    core_2019.to_csv(os.path.join(isic_2019_path, "ISIC_2019_core.csv"), mode="w")
 
-    Isic_2019_data_path = os.path.join(data_path, "ISIC_2019", "ISIC_2019_Training_Input")
-    Barcelona_df = pd.read_csv(os.path.join(Isic_2019_path, "ISIC_2019_core.csv"))
-    Barcelona_new = Barcelona_df[["image"] + official_columns + ["UNK"]]
+    isic_2019_data_path = os.path.join(data_path, "ISIC_2019", "ISIC_2019_Training_Input")
+    barcelona_df = pd.read_csv(os.path.join(isic_2019_path, "ISIC_2019_core.csv"))
+    barcelona_new = barcelona_df[["image"] + official_columns + ["UNK"]]
     preprocessed_data: dict[str, Any] = {
         "columns": official_columns,
         "original_columns": official_columns,
         "data": [],
     }
 
-    for i in range(len(Barcelona_new)):
+    for i in range(len(barcelona_new)):
         # Extract the row values, leaving off the last element ("UNK" column)
-        temp = list(Barcelona_new.loc[i].values[:-1])
-        img_path = os.path.join(Isic_2019_data_path, temp[0] + ".jpg")
+        temp = list(barcelona_new.loc[i].values[:-1])
+        img_path = os.path.join(isic_2019_data_path, temp[0] + ".jpg")
         origin_labels = temp[1:]
         extended_labels = temp[1:]
         preprocessed_data["data"].append(
@@ -138,7 +137,7 @@ def ham_label_map_func(row: pd.Series) -> str:
     Returns:
         str: The mapped label.
     """
-    Ham_labelmap = {
+    ham_labelmap = {
         "akiec": "AK",
         "bcc": "BCC",
         "bkl": "BKL",
@@ -147,7 +146,7 @@ def ham_label_map_func(row: pd.Series) -> str:
         "nv": "NV",
         "vasc": "VASC",
     }
-    return Ham_labelmap[row["dx"]]
+    return ham_labelmap[row["dx"]]
 
 
 def preprocess_ham10000(data_path: str, official_columns: list[str]) -> None:
@@ -158,33 +157,33 @@ def preprocess_ham10000(data_path: str, official_columns: list[str]) -> None:
         data_path (str): The base path to the dataset.
         official_columns (list[str]): The list of official columns for the dataset.
     """
-    Ham_10000_path = os.path.join(data_path, "HAM10000")
-    Ham_csv_path = os.path.join(Ham_10000_path, "HAM10000_metadata")
-    HAM_df = pd.read_csv(Ham_csv_path)
+    ham_10000_path = os.path.join(data_path, "HAM10000")
+    ham_csv_path = os.path.join(ham_10000_path, "HAM10000_metadata")
+    ham_df = pd.read_csv(ham_csv_path)
 
-    Rosendahl_data = HAM_df[HAM_df["dataset"] == "rosendahl"]
-    Rosendahl_data.to_csv(os.path.join(Ham_10000_path, "HAM_rosendahl.csv"), mode="w")
-    Vienna_data = HAM_df[HAM_df["dataset"] != "rosendahl"]
-    Vienna_data.to_csv(os.path.join(Ham_10000_path, "HAM_vienna.csv"), mode="w")
+    rosendahl_data = ham_df[ham_df["dataset"] == "rosendahl"]
+    rosendahl_data.to_csv(os.path.join(ham_10000_path, "HAM_rosendahl.csv"), mode="w")
+    vienna_data = ham_df[ham_df["dataset"] != "rosendahl"]
+    vienna_data.to_csv(os.path.join(ham_10000_path, "HAM_vienna.csv"), mode="w")
 
-    Ham_columns = ["MEL", "NV", "BCC", "AK", "BKL", "DF", "VASC"]
+    ham_columns = ["MEL", "NV", "BCC", "AK", "BKL", "DF", "VASC"]
 
     process_client_data(
-        pd.read_csv(os.path.join(Ham_10000_path, "HAM_rosendahl.csv")),
+        pd.read_csv(os.path.join(ham_10000_path, "HAM_rosendahl.csv")),
         "HAM_rosendahl",
-        Ham_10000_path,
+        ham_10000_path,
         ham_image_path_func,
         ham_label_map_func,
-        Ham_columns,
+        ham_columns,
         official_columns,
     )
     process_client_data(
-        pd.read_csv(os.path.join(Ham_10000_path, "HAM_vienna.csv")),
+        pd.read_csv(os.path.join(ham_10000_path, "HAM_vienna.csv")),
         "HAM_vienna",
-        Ham_10000_path,
+        ham_10000_path,
         ham_image_path_func,
         ham_label_map_func,
-        Ham_columns,
+        ham_columns,
         official_columns,
     )
 
@@ -212,7 +211,7 @@ def pad_label_map_func(row: pd.Series) -> str:
     Returns:
         str: The mapped label.
     """
-    Pad_ufes_20_labelmap = {
+    pad_ufes_20_labelmap = {
         "ACK": "AK",
         "BCC": "BCC",
         "MEL": "MEL",
@@ -220,7 +219,7 @@ def pad_label_map_func(row: pd.Series) -> str:
         "SCC": "SCC",
         "SEK": "BKL",
     }
-    return Pad_ufes_20_labelmap[row["diagnostic"]]
+    return pad_ufes_20_labelmap[row["diagnostic"]]
 
 
 def preprocess_pad_ufes_20(data_path: str, official_columns: list[str]) -> None:
@@ -231,19 +230,19 @@ def preprocess_pad_ufes_20(data_path: str, official_columns: list[str]) -> None:
         data_path (str): The base path to the dataset.
         official_columns (list[str]): The list of official columns for the dataset.
     """
-    Pad_ufes_20_path = os.path.join(data_path, "PAD-UFES-20")
-    Pad_ufes_20_csv_path = os.path.join(Pad_ufes_20_path, "metadata.csv")
-    Pad_ufes_20_df = pd.read_csv(Pad_ufes_20_csv_path)
+    pad_ufes_20_path = os.path.join(data_path, "PAD-UFES-20")
+    pad_ufes_20_csv_path = os.path.join(pad_ufes_20_path, "metadata.csv")
+    pad_ufes_20_df = pd.read_csv(pad_ufes_20_csv_path)
 
-    Pad_columns = ["MEL", "NV", "BCC", "AK", "BKL", "SCC"]
+    pad_columns = ["MEL", "NV", "BCC", "AK", "BKL", "SCC"]
 
     process_client_data(
-        Pad_ufes_20_df,
+        pad_ufes_20_df,
         "PAD_UFES_20",
-        Pad_ufes_20_path,
+        pad_ufes_20_path,
         pad_image_path_func,
         pad_label_map_func,
-        Pad_columns,
+        pad_columns,
         official_columns,
     )
 
@@ -271,7 +270,7 @@ def derm7pt_label_map_func(row: pd.Series) -> str:
     Returns:
         str:  The mapped label.
     """
-    Derm7pt_labelmap = {
+    derm7pt_labelmap = {
         "basal cell carcinoma": "BCC",
         "blue nevus": "NV",
         "clark nevus": "NV",
@@ -293,7 +292,7 @@ def derm7pt_label_map_func(row: pd.Series) -> str:
         "seborrheic keratosis": "BKL",
         "vascular lesion": "VASC",  # MISC
     }
-    return Derm7pt_labelmap[row["diagnosis"]]
+    return derm7pt_labelmap[row["diagnosis"]]
 
 
 def preprocess_derm7pt(data_path: str, official_columns: list[str]) -> None:
@@ -304,18 +303,18 @@ def preprocess_derm7pt(data_path: str, official_columns: list[str]) -> None:
         data_path (str): The base path to the dataset.
         official_columns (list[str]): The list of official columns for the dataset.
     """
-    Derm7pt_path = os.path.join(data_path, "Derm7pt")
-    Derm7pt_df = pd.read_csv(os.path.join(Derm7pt_path, "meta", "meta_core.csv"))
+    derm7pt_path = os.path.join(data_path, "Derm7pt")
+    derm7pt_df = pd.read_csv(os.path.join(derm7pt_path, "meta", "meta_core.csv"))
 
-    Derm7pt_columns = ["MEL", "NV", "BCC", "BKL", "DF", "VASC"]
+    derm7pt_columns = ["MEL", "NV", "BCC", "BKL", "DF", "VASC"]
 
     process_client_data(
-        Derm7pt_df,
+        derm7pt_df,
         "Derm7pt",
-        Derm7pt_path,
+        derm7pt_path,
         derm7pt_image_path_func,
         derm7pt_label_map_func,
-        Derm7pt_columns,
+        derm7pt_columns,
         official_columns,
     )
 

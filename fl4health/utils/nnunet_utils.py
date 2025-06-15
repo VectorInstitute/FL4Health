@@ -20,6 +20,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.utils.typing import LogLevel
 
+
 with warnings.catch_warnings():
     # silences a bunch of deprecation warnings related to scipy.ndimage
     # Raised an issue with nnunet. https://github.com/MIC-DKFZ/nnUNet/issues/2370
@@ -31,8 +32,7 @@ with warnings.catch_warnings():
 
 
 class NnunetConfig(Enum):
-    """
-    The possible nnunet model configs as of nnunetv2 version 2.5.1.
+    """The possible nnunet model configs as of nnunetv2 version 2.5.1.
 
     See https://github.com/MIC-DKFZ/nnUNet/tree/v2.5.1
     """
@@ -61,7 +61,7 @@ NNUNET_N_SPATIAL_DIMS = {  # The number of spatial dims for each config
 def use_default_signal_handlers(fn: Callable) -> Callable:
     """
     This is a decorator that resets the ``SIGINT`` and ``SIGTERM`` signal handlers back to the python defaults for the
-    execution of the method
+    execution of the method.
 
     flwr 1.9.0 overrides the default signal handlers with handlers that raise an error on any interruption or
     termination. Since nnunet spawns child processes which inherit these handlers, when those subprocesses are
@@ -157,7 +157,7 @@ def convert_deep_supervision_list_to_dict(
 
 def convert_deep_supervision_dict_to_list(tensor_dict: dict[str, torch.Tensor]) -> list[torch.Tensor]:
     """
-    Converts a dictionary of tensors back into a list so that it can be used by nnunet deep supervision loss functions
+    Converts a dictionary of tensors back into a list so that it can be used by nnunet deep supervision loss functions.
 
     Args:
         tensor_dict (dict[str, torch.Tensor]): Dictionary containing ``torch.Tensors``. The key values must start
@@ -173,7 +173,7 @@ def convert_deep_supervision_dict_to_list(tensor_dict: dict[str, torch.Tensor]) 
 
 def get_segs_from_probs(preds: torch.Tensor, has_regions: bool = False, threshold: float = 0.5) -> torch.Tensor:
     """
-    Converts the nnunet model output probabilities to predicted segmentations
+    Converts the nnunet model output probabilities to predicted segmentations.
 
     Args:
         preds (torch.Tensor): The one hot encoded model output probabilities with shape (batch, classes,
@@ -194,16 +194,15 @@ def get_segs_from_probs(preds: torch.Tensor, has_regions: bool = False, threshol
         # classified as background are not part of another class
         mask = ~pred_segs[:, 0]
         return pred_segs * mask
-    else:
-        pred_segs = preds.argmax(1)[:, None]  # shape (batch, 1, additional_dims)
-        # one hot encode (OHE) predicted segmentations again
-        # WARNING: Note the '_' after scatter. scatter_ and scatter are both
-        # functions with different functionality. It is easy to introduce a bug
-        # here by using the wrong one
-        pred_segs_one_hot = torch.zeros(preds.shape, device=preds.device, dtype=torch.float32)
-        pred_segs_one_hot.scatter_(1, pred_segs, 1)  # ohe -> One Hot Encoded
-        # convert output preds to long since it is binary
-        return pred_segs_one_hot.long()
+    pred_segs = preds.argmax(1)[:, None]  # shape (batch, 1, additional_dims)
+    # one hot encode (OHE) predicted segmentations again
+    # WARNING: Note the '_' after scatter. scatter_ and scatter are both
+    # functions with different functionality. It is easy to introduce a bug
+    # here by using the wrong one
+    pred_segs_one_hot = torch.zeros(preds.shape, device=preds.device, dtype=torch.float32)
+    pred_segs_one_hot.scatter_(1, pred_segs, 1)  # ohe -> One Hot Encoded
+    # convert output preds to long since it is binary
+    return pred_segs_one_hot.long()
 
 
 def collapse_one_hot_tensor(input: torch.Tensor, dim: int = 0) -> torch.Tensor:
@@ -238,8 +237,7 @@ def get_dataset_n_voxels(source_plans: dict, n_cases: int) -> float:
 
     # Get total number of voxels in dataset
     image_shape = cfg["median_image_size_in_voxels"]
-    approx_n_voxels = float(np.prod(image_shape, dtype=np.float64) * n_cases)
-    return approx_n_voxels
+    return float(np.prod(image_shape, dtype=np.float64) * n_cases)
 
 
 def prepare_loss_arg(tensor: torch.Tensor | dict[str, torch.Tensor]) -> torch.Tensor | list[torch.Tensor]:
@@ -256,14 +254,15 @@ def prepare_loss_arg(tensor: torch.Tensor | dict[str, torch.Tensor]) -> torch.Te
     # TODO: IDK why we have to make assumptions when we could just have a boolean state
     if isinstance(tensor, torch.Tensor):
         return tensor  # If input is a tensor then no changes required
-    elif isinstance(tensor, dict):
+    if isinstance(tensor, dict):
         if len(tensor) > 1:  # Assume deep supervision is on and return a list
             return convert_deep_supervision_dict_to_list(tensor)
-        else:  # If dict has only one item, assume deep supervision is off
-            return list(tensor.values())[0]  # return the torch.Tensor
+        # If dict has only one item, assume deep supervision is off
+        return list(tensor.values())[0]  # return the torch.Tensor
+    raise ValueError(f"Unrecognized type for tensor: {type(tensor)}")
 
 
-class nnUNetDataLoaderWrapper(DataLoader):
+class NnUNetDataLoaderWrapper(DataLoader):
     def __init__(
         self,
         nnunet_augmenter: SingleThreadedAugmenter | NonDetMultiThreadedAugmenter | MultiThreadedAugmenter,
@@ -318,23 +317,19 @@ class nnUNetDataLoaderWrapper(DataLoader):
         if not self.infinite and self.current_step == self.__len__():
             self.reset()
             raise StopIteration  # Raise stop iteration after epoch has completed
-        else:
-            self.current_step += 1
-            batch = next(self.nnunet_augmenter)  # This returns a dictionary
-            # Note: When deep supervision is on, target is a list of ground truth
-            # segmentations at various spatial scales/resolutions
-            # nnUNet has a wrapper for loss functions to enable deep supervision
-            inputs: torch.Tensor = batch["data"]
-            targets: torch.Tensor | list[torch.Tensor] = batch["target"]
-            if isinstance(targets, list):
-                target_dict = convert_deep_supervision_list_to_dict(targets, self.num_spatial_dims)
-                return inputs, target_dict
-            elif isinstance(targets, torch.Tensor):
-                return inputs, targets
-            else:
-                raise TypeError(
-                    "Was expecting the target generated by the nnunet dataloader to be a list or a torch.Tensor"
-                )
+        self.current_step += 1
+        batch = next(self.nnunet_augmenter)  # This returns a dictionary
+        # Note: When deep supervision is on, target is a list of ground truth
+        # segmentations at various spatial scales/resolutions
+        # nnUNet has a wrapper for loss functions to enable deep supervision
+        inputs: torch.Tensor = batch["data"]
+        targets: torch.Tensor | list[torch.Tensor] = batch["target"]
+        if isinstance(targets, list):
+            target_dict = convert_deep_supervision_list_to_dict(targets, self.num_spatial_dims)
+            return inputs, target_dict
+        if isinstance(targets, torch.Tensor):
+            return inputs, targets
+        raise TypeError("Was expecting the target generated by the nnunet dataloader to be a list or a torch.Tensor")
 
     def __len__(self) -> int:
         """
@@ -372,9 +367,7 @@ class nnUNetDataLoaderWrapper(DataLoader):
         return self
 
     def shutdown(self) -> None:
-        """
-        The multithreaded augmenters used by nnunet need to be shutdown gracefully to avoid errors
-        """
+        """The multithreaded augmenters used by nnunet need to be shutdown gracefully to avoid errors."""
         if isinstance(self.nnunet_augmenter, (NonDetMultiThreadedAugmenter, MultiThreadedAugmenter)):
             self.nnunet_augmenter._finish()
         else:
@@ -382,7 +375,7 @@ class nnUNetDataLoaderWrapper(DataLoader):
 
 
 class Module2LossWrapper(_Loss):
-    """Converts a `` nn.Module`` subclass to a ``_Loss`` subclass"""
+    """Converts a `` nn.Module`` subclass to a ``_Loss`` subclass."""
 
     def __init__(self, loss: nn.Module, **kwargs: Any) -> None:
         super().__init__(**kwargs)
@@ -458,7 +451,6 @@ class PolyLRSchedulerWrapper(_LRScheduler):
         Returns:
             Sequence[float]: A uniform sequence of LR for each of the parameter groups in the optimizer.
         """
-
         if self._step_count - 1 == self.max_steps + 1:
             log(
                 WARN,
@@ -471,7 +463,7 @@ class PolyLRSchedulerWrapper(_LRScheduler):
 
         new_lr = self.initial_lr * (1 - curr_window / self.num_windows) ** self.exponent
 
-        if curr_step % self.steps_per_lr == 0 and curr_step != 0 and curr_step != self.max_steps:
+        if curr_step % self.steps_per_lr == 0 and curr_step not in {0, self.max_steps}:
             log(INFO, f"Decaying LR of optimizer to {new_lr} at step {curr_step}")
 
         return [new_lr] * len(self.optimizer.param_groups)

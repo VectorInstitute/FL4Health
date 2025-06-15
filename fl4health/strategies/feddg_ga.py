@@ -14,14 +14,14 @@ from fl4health.client_managers.fixed_sampling_client_manager import FixedSamplin
 from fl4health.utils.functions import decode_and_pseudo_sort_results
 
 
-class SignalForTypeException(Exception):
+class SignalForTypeError(Exception):
     """Thrown when there is an error in ``signal_for_type`` function."""
 
     pass
 
 
 class FairnessMetricType(Enum):
-    """Defines the basic types for fairness metrics, their default names and their default signals"""
+    """Defines the basic types for fairness metrics, their default names and their default signals."""
 
     ACCURACY = "val - prediction - accuracy"
     LOSS = "val - checkpoint"
@@ -50,7 +50,7 @@ class FairnessMetricType(Enum):
             return -1.0
         if fairness_metric_type == FairnessMetricType.LOSS:
             return 1.0
-        raise SignalForTypeException("This function should not be called with CUSTOM type.")
+        raise SignalForTypeError("This function should not be called with CUSTOM type.")
 
 
 class FairnessMetric:
@@ -142,7 +142,6 @@ class FedDgGa(FedAvg):
                 generalization adjustment weights. It has to be ``0 < adjustment_weight_step_size < 1``.
                 Defaults to 0.2.
         """
-
         super().__init__(
             fraction_fit=1.0,
             fraction_evaluate=1.0,
@@ -164,9 +163,9 @@ class FedDgGa(FedAvg):
             self.fairness_metric = fairness_metric
 
         self.adjustment_weight_step_size = adjustment_weight_step_size
-        assert (
-            0 < self.adjustment_weight_step_size < 1
-        ), f"adjustment_weight_step_size has to be between 0 and 1 ({self.adjustment_weight_step_size})"
+        assert 0 < self.adjustment_weight_step_size < 1, (
+            f"adjustment_weight_step_size has to be between 0 and 1 ({self.adjustment_weight_step_size})"
+        )
 
         log(INFO, f"FedDG-GA Strategy initialized with weight_step_size of {self.adjustment_weight_step_size}")
         log(INFO, f"FedDG-GA Strategy initialized with FairnessMetric {self.fairness_metric}")
@@ -197,9 +196,9 @@ class FedDgGa(FedAvg):
         Returns:
             (list[tuple[ClientProxy, FitIns]]): the input for the clients' fit function.
         """
-        assert isinstance(
-            client_manager, FixedSamplingClientManager
-        ), f"Client manager is not of type FixedSamplingClientManager: {type(client_manager)}"
+        assert isinstance(client_manager, FixedSamplingClientManager), (
+            f"Client manager is not of type FixedSamplingClientManager: {type(client_manager)}"
+        )
 
         client_manager.reset_sample()
 
@@ -223,18 +222,18 @@ class FedDgGa(FedAvg):
         if self.num_rounds is None:
             self.num_rounds = n_server_rounds
         else:
-            assert (
-                n_server_rounds == self.num_rounds
-            ), f"n_server_rounds has changed from the original value of {self.num_rounds} and is now {n_server_rounds}"
+            assert n_server_rounds == self.num_rounds, (
+                f"n_server_rounds has changed from the original value of {self.num_rounds} and is now {n_server_rounds}"
+            )
 
         return client_fit_ins
 
     def configure_evaluate(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
     ) -> list[tuple[ClientProxy, EvaluateIns]]:
-        assert isinstance(
-            client_manager, FixedSamplingClientManager
-        ), f"Client manager is not of type FixedSamplingClientManager: {type(client_manager)}"
+        assert isinstance(client_manager, FixedSamplingClientManager), (
+            f"Client manager is not of type FixedSamplingClientManager: {type(client_manager)}"
+        )
 
         client_evaluate_ins = super().configure_evaluate(server_round, parameters, client_manager)
 
@@ -308,7 +307,6 @@ class FedDgGa(FedAvg):
             (tuple[float | None, dict[str, Scalar]]): A tuple containing the aggregated evaluation loss and the
             aggregated evaluation metrics.
         """
-
         loss_aggregated, metrics_aggregated = super().aggregate_evaluate(server_round, results, failures)
 
         self.evaluation_metrics = {}
@@ -335,7 +333,6 @@ class FedDgGa(FedAvg):
         Returns:
             (NDArrays): the weighted and aggregated results.
         """
-
         if self.adjustment_weights:
             log(INFO, f"Current adjustment weights by Client ID (CID) are {self.adjustment_weights}")
         else:
@@ -387,9 +384,9 @@ class FedDgGa(FedAvg):
         generalization_gaps = []
         # calculating local vs global metric difference (generalization gaps)
         for cid in cids:
-            assert (
-                cid in self.train_metrics and cid in self.evaluation_metrics
-            ), f"{cid} not in {self.train_metrics.keys()} or {self.evaluation_metrics.keys()}"
+            assert cid in self.train_metrics and cid in self.evaluation_metrics, (
+                f"{cid} not in {self.train_metrics.keys()} or {self.evaluation_metrics.keys()}"
+            )
 
             assert self.fairness_metric.metric_name is not None
 

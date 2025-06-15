@@ -9,7 +9,7 @@ from fl4health.client_managers.base_sampling_manager import BaseFractionSampling
 
 
 class FixedSamplingByFractionClientManager(BaseFractionSamplingManager):
-    """Overrides the Simple Client Manager to provide Fixed Sampling without replacement for Clients by fraction"""
+    """Overrides the Simple Client Manager to provide Fixed Sampling without replacement for Clients by fraction."""
 
     def sample_fraction(
         self,
@@ -31,7 +31,6 @@ class FixedSamplingByFractionClientManager(BaseFractionSamplingManager):
         Returns:
             list[ClientProxy]: List of ClientProxy objects representing the selected clients.
         """
-
         available_cids = self.wait_and_filter(min_num_clients, criterion)
         n_available_cids = len(available_cids)
         num_to_sample = int(sample_fraction * n_available_cids)

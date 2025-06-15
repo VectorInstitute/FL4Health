@@ -66,7 +66,6 @@ class WandBReporter(BaseReporter):
             kwargs (Any): Keyword arguments to ``wandb.init`` excluding the ones explicitly described above.
                 Documentation here: https://docs.wandb.ai/ref/python/init/
         """
-
         # Create wandb metadata dir if necessary
         if kwargs.get("dir") is not None:
             Path(kwargs["dir"]).mkdir(exist_ok=True)

@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 from fl4health.model_bases.fedper_base import FedPerModel
 
@@ -17,8 +17,7 @@ class FedPerGlobalFeatureExtractor(nn.Module):
         x = self.activation(self.fc1(x))
         x = self.activation(self.fc2(x))
         x = self.activation(self.fc3(x))
-        x = self.activation(self.fc4(x))
-        return x
+        return self.activation(self.fc4(x))
 
 
 class FedPerLocalPredictionHead(nn.Module):
@@ -27,8 +26,7 @@ class FedPerLocalPredictionHead(nn.Module):
         self.fc5 = nn.Linear(64, output_dim)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.fc5(x)
-        return x
+        return self.fc5(x)
 
 
 class GeminiFedPerModel(FedPerModel):

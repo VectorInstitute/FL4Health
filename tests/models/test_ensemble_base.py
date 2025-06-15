@@ -1,6 +1,6 @@
 import mock
 import torch
-import torch.nn as nn
+from torch import nn
 
 from fl4health.model_bases.ensemble_base import EnsembleAggregationMode, EnsembleModel
 from tests.test_utils.models_for_test import SmallCnn

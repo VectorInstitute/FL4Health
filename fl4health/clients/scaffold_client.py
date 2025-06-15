@@ -19,6 +19,7 @@ from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithCon
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 
+
 ScaffoldTrainStepOutput = tuple[torch.Tensor, torch.Tensor]
 
 
@@ -80,7 +81,7 @@ class ScaffoldClient(BasicClient):
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
-        Packs the parameters and control variates into a single ``NDArrays`` to be sent to the server for aggregation
+        Packs the parameters and control variates into a single ``NDArrays`` to be sent to the server for aggregation.
 
         Args:
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
@@ -101,25 +102,22 @@ class ScaffoldClient(BasicClient):
 
             # Need all parameters even if normally exchanging partial
             return FullParameterExchanger().push_parameters(self.model, config=config)
-        else:
-            assert self.model is not None and self.parameter_exchanger is not None
+        assert self.model is not None and self.parameter_exchanger is not None
 
-            model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
+        model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
 
-            # Weights and control variates updates sent to server for aggregation
-            # Control variates updates sent because only client has access to previous client control variate
-            # Therefore it can only be computed locally
-            assert self.client_control_variates_updates is not None
-            packed_params = self.parameter_exchanger.pack_parameters(
-                model_weights, self.client_control_variates_updates
-            )
-            return packed_params
+        # Weights and control variates updates sent to server for aggregation
+        # Control variates updates sent because only client has access to previous client control variate
+        # Therefore it can only be computed locally
+        assert self.client_control_variates_updates is not None
+        return self.parameter_exchanger.pack_parameters(model_weights, self.client_control_variates_updates)
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
         Assumes that the parameters being passed contain model parameters concatenated with server control variates.
         They are unpacked for the clients to use in training. If it's the first time the model is being initialized,
-        we assume the full model is being initialized and use the ``FullParameterExchanger()`` to set all model weights
+        we assume the full model is being initialized and use the ``FullParameterExchanger()`` to set all model
+        weights.
 
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
@@ -151,7 +149,7 @@ class ScaffoldClient(BasicClient):
     def update_control_variates(self, local_steps: int) -> None:
         """
         Updates local control variates along with the corresponding updates according to the option 2 in Equation 4 in
-        https://arxiv.org/pdf/1910.06378.pdf
+        https://arxiv.org/pdf/1910.06378.pdf.
 
         To be called after weights of local model have been updated.
 
@@ -213,7 +211,7 @@ class ScaffoldClient(BasicClient):
     def compute_parameters_delta(self, params_1: NDArrays, params_2: NDArrays) -> NDArrays:
         """
         Computes element-wise difference of two lists of ``NDarray`` where elements in ``params_2`` are subtracted from
-        elements in ``params_1``
+        elements in ``params_1``.
 
         Each ``NDArray`` in the list of ``NDArrays`` are subtracted as
 
@@ -248,7 +246,9 @@ class ScaffoldClient(BasicClient):
         delta_control_variates: NDArrays,
     ) -> NDArrays:
         """
-        Computes the updated local control variates according to option 2 in Equation 4 of paper. The calculation is
+        Computes the updated local control variates according to option 2 in Equation 4 of paper.
+
+        The calculation is
 
         .. math::
             c_i^+ = c_i - c + \\frac{1}{(K \\cdot lr)} \\cdot (x - y_i)
@@ -265,22 +265,19 @@ class ScaffoldClient(BasicClient):
         Returns:
             NDArrays: Updated client control variates
         """
-
         # coef = 1 / (K * eta_l)
         scaling_coefficient = 1 / (local_steps * self.learning_rate)
 
         # c_i^plus = c_i - c + 1/(K*lr) * (x - y_i)
-        updated_client_control_variates = [
+        return [
             delta_control_variate + scaling_coefficient * delta_model_weight
             for delta_control_variate, delta_model_weight in zip(delta_control_variates, delta_model_weights)
         ]
-        return updated_client_control_variates
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         assert self.model is not None
         model_size = len(self.model.state_dict())
-        parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
-        return parameter_exchanger
+        return FullParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
 
     def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
         """
@@ -313,7 +310,7 @@ class ScaffoldClient(BasicClient):
 
 class DPScaffoldClient(ScaffoldClient, InstanceLevelDpClient):
     """
-    Federated Learning client for Instance Level Differentially Private Scaffold strategy
+    Federated Learning client for Instance Level Differentially Private Scaffold strategy.
 
     Implemented as specified in https://arxiv.org/abs/2111.09278
     """

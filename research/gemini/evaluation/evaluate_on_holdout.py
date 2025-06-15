@@ -14,7 +14,7 @@ from evaluation.utils import (
 )
 from flwr.common.logger import log
 
-from research.gemini.metrics.metrics import Accuracy, Binary_F1, Binary_ROC_AUC
+from research.gemini.metrics.metrics import Accuracy, BinaryF1, BinaryRocAuc
 
 
 def main(
@@ -31,8 +31,8 @@ def main(
     all_run_folder_dir = get_all_run_folders(artifact_dir)
 
     metrics = [
-        Binary_ROC_AUC("roc"),
-        Binary_F1("f1"),
+        BinaryRocAuc("roc"),
+        BinaryF1("f1"),
         Accuracy("accuracy"),
         # Binary_F1_Macro("macro_f1"),
         # Binary_Balanced_Accuracy("balanced_accuracy"),
@@ -41,8 +41,8 @@ def main(
 
     for metric in metrics:
         test_results: dict[str, float] = {}
-        all_local_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
-        all_server_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
+        all_local_test_metrics = dict.fromkeys(all_run_folder_dir, 0.0)
+        all_server_test_metrics = dict.fromkeys(all_run_folder_dir, 0.0)
 
         # First we test each client's best model on local test data and the best server model on that same data
         for client_number in range(n_clients):

@@ -3,12 +3,13 @@ import contextlib
 import os
 import warnings
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from os.path import join
 from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
+
 
 with contextlib.redirect_stdout(open(os.devnull, "w")):
     from picai_eval import evaluate, evaluate_folder
@@ -23,10 +24,10 @@ def load_images_from_folder(
     folder: str,
     case_identifiers: list[str],
     postfixes: list[str] | None = None,
-    extensions: list[str] = [".nii.gz", ".nii", ".mha", ".mhd", ".npz", ".npy"],
+    extensions: Sequence[str] = [".nii.gz", ".nii", ".mha", ".mhd", ".npz", ".npy"],
 ) -> NDArray:
     """
-    Loads images from a folder given a list of case identifiers
+    Loads images from a folder given a list of case identifiers.
 
     Args:
         folder (str): The folder containing the images
@@ -60,7 +61,7 @@ def load_images_from_folder(
 
 def get_detection_maps(probability_maps: NDArray) -> NDArray:
     """
-    Generates detection maps from probability maps by doing lesion extraction
+    Generates detection maps from probability maps by doing lesion extraction.
 
     Args:
         probability_maps (NDArray): A numpy array containing the predicted
@@ -88,12 +89,12 @@ def get_picai_metrics(
     detection_maps: NDArray,
     ground_truth_annotations: NDArray,
     case_identifiers: Iterable[str] | None = None,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> PicaiEvalMetrics:
     """
     Computes the picai evaluation metrics provided the predicted lesion
     detection maps and the ground truth annotations. Extends picai_eval to
-    allow multiclass evaluation
+    allow multiclass evaluation.
 
     Args:
         detection_maps (NDArray): The predicted lesion detection maps. Must
@@ -126,9 +127,9 @@ def get_picai_metrics(
     if detection_maps.shape[1] != ground_truth_annotations.shape[1]:
         # Assume background class has not been removed
         ground_truth_annotations = ground_truth_annotations[:, 1:]
-        assert (
-            detection_maps.shape == ground_truth_annotations.shape
-        ), "Got unexpected shapes for detection maps and ground truth annotations"
+        assert detection_maps.shape == ground_truth_annotations.shape, (
+            "Got unexpected shapes for detection maps and ground truth annotations"
+        )
 
     # Evaluation must be calculated separately for each class
     num_classes = detection_maps.shape[1]
@@ -139,7 +140,7 @@ def get_picai_metrics(
                 y_det=detection_maps[:, cls],
                 y_true=ground_truth_annotations[:, cls],
                 subject_list=case_identifiers,
-                **kwargs
+                **kwargs,
             )
         )
 

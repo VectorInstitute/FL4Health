@@ -5,7 +5,6 @@ from logging import INFO
 from typing import Any
 
 import flwr as fl
-import torch.nn as nn
 from delirium_models.moon_model import DeliriumMoonModel
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
@@ -16,6 +15,7 @@ from flwr.server.strategy import FedAvg
 # model
 from mortality_models.moon_model import MortalityMoonModel
 from servers.full_exchange_server import FullExchangeServer
+from torch import nn
 from utils.random import set_all_random_seeds
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, LatestTorchModuleCheckpointer

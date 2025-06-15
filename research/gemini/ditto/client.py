@@ -6,12 +6,12 @@ from pathlib import Path
 
 import flwr as fl
 import torch
-import torch.nn as nn
 
 # data and metrics
 from data.data import load_train_delirium, load_train_mortality
 from flwr.common.logger import log
 from flwr.common.typing import Config
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -24,7 +24,7 @@ from fl4health.utils.losses import LossMeterType
 
 # Models
 from research.gemini.delirium_models.NN import NN as delirium_model
-from research.gemini.metrics.metrics import Accuracy, Binary_F1, Binary_ROC_AUC
+from research.gemini.metrics.metrics import Accuracy, BinaryF1, BinaryRocAuc
 from research.gemini.mortality_models.NN import NN as mortality_model
 
 
@@ -163,7 +163,7 @@ if __name__ == "__main__":
 
     client = GeminiDittoClient(
         data_path=data_path,
-        metrics=[Binary_ROC_AUC(), Binary_F1(), Accuracy()],
+        metrics=[BinaryRocAuc(), BinaryF1(), Accuracy()],
         device=device,
         hospital_id=args.hospital_id,
         learning_rate=args.learning_rate,

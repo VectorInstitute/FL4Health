@@ -2,12 +2,13 @@ import pickle
 from logging import INFO, getLogger
 from typing import Any
 
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Scalar
 from opacus import GradSampleModule
+from torch import nn
 
 from fl4health.checkpointing.checkpointer import FunctionTorchModuleCheckpointer
+
 
 # It seems like the opacus package adds a handler to the root logger which causes double logs.
 # By clearing handlers on the root logger we prevent these double logs whilst also allowing the flwr logger to
@@ -33,9 +34,9 @@ class OpacusCheckpointer(FunctionTorchModuleCheckpointer):
             loss (float): Loss value associated with the model to be used in checkpointing decisions.
             metrics (dict[str, Scalar]): Metrics associated with the model to be used in checkpointing decisions.
         """
-        assert isinstance(
-            model, GradSampleModule
-        ), f"Model is of type: {type(model)}. This checkpointer need only be used to checkpoint Opacus modules"
+        assert isinstance(model, GradSampleModule), (
+            f"Model is of type: {type(model)}. This checkpointer need only be used to checkpoint Opacus modules"
+        )
         comparison_score = self.checkpoint_score_function(loss, metrics)
         if self._should_checkpoint(comparison_score):
             log(
@@ -65,7 +66,6 @@ class OpacusCheckpointer(FunctionTorchModuleCheckpointer):
             dict[str, Any]: A state dictionary with the ``_module``. removed from the key prefixes to facilitate
             loading the state dictionary into a non-Opacus model.
         """
-
         return {key.removeprefix("_module."): val for key, val in opacus_state_dict.items()}
 
     def _extract_and_save_state(self, model: nn.Module) -> None:
@@ -125,9 +125,9 @@ class LatestOpacusCheckpointer(OpacusCheckpointer):
         super().__init__(checkpoint_dir, checkpoint_name, latest_score_function, "Latest", False)
 
     def maybe_checkpoint(self, model: GradSampleModule, loss: float, _: dict[str, Scalar]) -> None:
-        assert isinstance(
-            model, GradSampleModule
-        ), f"Model is of type: {type(model)}. This checkpointer need only be used to checkpoint Opacus modules"
+        assert isinstance(model, GradSampleModule), (
+            f"Model is of type: {type(model)}. This checkpointer need only be used to checkpoint Opacus modules"
+        )
         # Always checkpoint the latest model
         log(INFO, "Saving latest checkpoint with LatestTorchCheckpointer")
         self._extract_and_save_state(model)
@@ -153,9 +153,9 @@ class BestLossOpacusCheckpointer(OpacusCheckpointer):
         super().__init__(checkpoint_dir, checkpoint_name, loss_score_function, "Loss", maximize=False)
 
     def maybe_checkpoint(self, model: GradSampleModule, loss: float, metrics: dict[str, Scalar]) -> None:
-        assert isinstance(
-            model, GradSampleModule
-        ), f"Model is of type: {type(model)}. This checkpointer need only be used to checkpoint Opacus modules"
+        assert isinstance(model, GradSampleModule), (
+            f"Model is of type: {type(model)}. This checkpointer need only be used to checkpoint Opacus modules"
+        )
         # First we use the provided scoring function to produce a score
         comparison_score = self.checkpoint_score_function(loss, metrics)
         if self._should_checkpoint(comparison_score):

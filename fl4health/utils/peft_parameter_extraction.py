@@ -1,7 +1,7 @@
-import torch.nn as nn
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Parameters
 from peft import get_peft_model_state_dict
+from torch import nn
 
 
 def get_all_peft_parameters_from_model(model: nn.Module) -> Parameters:

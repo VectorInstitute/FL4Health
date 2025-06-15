@@ -40,6 +40,7 @@ class PcaPreprocessor:
             new_dimension (int): New data dimension after dimensionality reduction. Equals the number of principal
                 components onto which projection is performed.
             dataset (BaseDataset): Dataset containing data whose dimension is to be reduced.
+
         Returns:
             BaseDataset: Dataset consisting of data with reduced dimension.
         """

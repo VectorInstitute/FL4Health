@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import json
 import logging
 import re
@@ -12,6 +13,7 @@ from pytest import approx
 from six.moves import urllib
 
 from fl4health.utils.load_data import load_cifar10_data, load_mnist_data
+
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
@@ -68,10 +70,8 @@ def postprocess_logs(logs: str) -> str:
 def graceful_shutdown(processes: list[asyncio.subprocess.Process]) -> None:
     """Graceful shutdown of subprocesses."""
     for p in processes:
-        try:
+        with contextlib.suppress(ProcessLookupError):
             p.terminate()
-        except ProcessLookupError:
-            pass
 
 
 async def start_server_process_and_wait_for_stabilization(server_process: asyncio.subprocess.Process) -> str:
@@ -321,8 +321,8 @@ async def run_smoke_test(
 
         # Client assertions
         client_errors = []
-        for i, full_client_output in enumerate(full_client_outputs):
-            full_client_output = postprocess_logs(full_client_output)
+        for i, raw_full_client_output in enumerate(full_client_outputs):
+            full_client_output = postprocess_logs(raw_full_client_output)
 
             if "error" in full_client_output.lower():
                 raise SmokeTestAssertError(f"[ASSERT ERROR] Error message found for client {i}.")
@@ -330,15 +330,16 @@ async def run_smoke_test(
             if "Disconnect and shut down" not in full_client_output:
                 raise SmokeTestAssertError(f"[ASSERT ERROR] Shutdown message not found for client {i}.")
 
-            if assert_evaluation_logs:
-                if "Client Evaluation Local Model Metrics" not in full_client_output:
-                    raise SmokeTestAssertError(
-                        f"[ASSERT ERROR] 'Client Evaluation Local Model Metrics' message not found for client {i}."
-                    )
+            if assert_evaluation_logs and "Client Evaluation Local Model Metrics" not in full_client_output:
+                raise SmokeTestAssertError(
+                    f"[ASSERT ERROR] 'Client Evaluation Local Model Metrics' message not found for client {i}."
+                )
 
-            elif not skip_assert_client_fl_rounds:
-                if f"Current FL Round: {config['n_server_rounds']}" not in full_client_output:
-                    raise SmokeTestAssertError(f"[ASSERT ERROR] Last FL round message not found for client {i}.")
+            if (
+                not skip_assert_client_fl_rounds
+                and f"Current FL Round: {config['n_server_rounds']}" not in full_client_output
+            ):
+                raise SmokeTestAssertError(f"[ASSERT ERROR] Last FL round message not found for client {i}.")
 
             client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics, tolerance))
 
@@ -529,7 +530,7 @@ async def run_fault_tolerance_smoke_test(
 
         # client assertions
         client_errors = []
-        for i in range(len(client_processes)):
+        for _ in range(len(client_processes)):
             client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics, tolerance))
 
         return server_errors, client_errors
@@ -582,9 +583,9 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
     process_name: str,
     timeout: int = 300,  # timeout for the whole process to complete
 ) -> str:
-
     async def get_output_from_stdout(stream_reader: asyncio.streams.StreamReader) -> tuple[str, int | None]:
-        """Reading from the stdout stream.
+        """
+        Reading from the stdout stream.
 
         **NOTE:** In the initial implementation, we were invoking asyncio.wait_for()
         with the coroutine stream_reader.readline() and with a timeout=timeout.
@@ -681,20 +682,23 @@ def _assert_metrics_dict(
 
         return None
 
-    for metric_key in metrics_to_assert:
+    for metric_key, metric_val in metrics_to_assert.items():
         if metric_key not in metrics_saved:
             errors.append(f"Metric '{metric_key}' not found in saved metrics.")
             continue
 
-        value_to_assert = metrics_to_assert[metric_key]
+        value_to_assert = metric_val
 
-        if isinstance(value_to_assert, dict):
-            if "target_value" not in value_to_assert and "custom_tolerance" not in value_to_assert:
-                # if it's a dictionary, call this function recursively
-                # except when the dictionary has "target_value" and "custom_tolerance", which should
-                # be treated as a regular dictionary
-                errors.extend(_assert_metrics_dict(value_to_assert, metrics_saved[metric_key], tolerance))
-                continue
+        if (
+            isinstance(value_to_assert, dict)
+            and "target_value" not in value_to_assert
+            and "custom_tolerance" not in value_to_assert
+        ):
+            # if it's a dictionary, call this function recursively
+            # except when the dictionary has "target_value" and "custom_tolerance", which should
+            # be treated as a regular dictionary
+            errors.extend(_assert_metrics_dict(value_to_assert, metrics_saved[metric_key], tolerance))
+            continue
 
         if isinstance(value_to_assert, list) and len(value_to_assert) > 0:
             # if it's a list, call an assertion for each element of the list

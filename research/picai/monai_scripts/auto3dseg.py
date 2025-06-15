@@ -1,4 +1,4 @@
-"""Uses Auto3dSeg from monai to train a segmentation model
+"""Uses Auto3dSeg from monai to train a segmentation model.
 
 -Assumes dataset is formatted following nnUNet structure for consistency
 """
@@ -15,7 +15,7 @@ from monai.apps.auto3dseg.auto_runner import AutoRunner
 
 def gen_dataset_list(data_dir: str, output_path: str | None = None, ext: str = ".nii.gz") -> str:
     """
-    Generates a MONAI dataset list for an nnUNet structured dataset
+    Generates a MONAI dataset list for an nnUNet structured dataset.
 
     **NOTE:** Rather than having a single image and label, this checks for multiple
         channels following the nnunet dataset formatting guidelines, and passes
@@ -29,13 +29,12 @@ def gen_dataset_list(data_dir: str, output_path: str | None = None, ext: str = "
     Returns:
         str: The path to where the datalist file was saved
     """
-
     train_dir = join(data_dir, "imagesTr")
     test_dir = join(data_dir, "testTr")
 
     # Get the list of unique channel identifiers
     dataset_json = load_json(join(data_dir, "dataset.json"))
-    channels = [int(dataset_json["labels"][ch]) for ch in dataset_json["labels"].keys()]
+    channels = [int(dataset_json["labels"][ch]) for ch in dataset_json["labels"]]
 
     # Initialize datalist
     # The values to the testing and training keys should be a list of dictionaries

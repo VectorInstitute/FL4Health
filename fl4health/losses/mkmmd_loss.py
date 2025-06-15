@@ -18,7 +18,7 @@ class MkMmdLoss(torch.nn.Module):
     ) -> None:
         """
         Compute the multi-kernel maximum mean discrepancy (MK-MMD) between the source and target domains. Also allows
-        for optimization of the coefficients, beta
+        for optimization of the coefficients, beta.
 
         Args:
             device (torch.device): Device onto which tensors should be moved
@@ -65,10 +65,10 @@ class MkMmdLoss(torch.nn.Module):
     def normalize(self, X: torch.Tensor) -> torch.Tensor:
         return torch.div(X, torch.linalg.norm(X, dim=1, keepdim=True))
 
-    def construct_quadruples(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
+    def construct_quadruples(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         """
         In this function, we assume that ``X``, ``Y``: ``n_samples``, ``n_features`` are the same size. We construct
-        the quadruples
+        the quadruples.
 
         .. math::
             v_i = [x_{2i-1}, x_{2i}, y_{2i-1}, y_{2i}]
@@ -84,39 +84,38 @@ class MkMmdLoss(torch.nn.Module):
         Returns:
             torch.Tensor: Quadruples of the form described above.
         """
-        n_samples, n_features = X.shape
+        n_samples, n_features = x.shape
         # truncate if not divisible by 2
         if n_samples % 2 == 1:
-            X = X[:-1, :]
-            Y = Y[:-1, :]
-        v_i = torch.cat((X.reshape(n_samples // 2, 2, n_features), Y.reshape(n_samples // 2, 2, n_features)), dim=1)
-        return v_i
+            x = x[:-1, :]
+            y = y[:-1, :]
+        return torch.cat((x.reshape(n_samples // 2, 2, n_features), y.reshape(n_samples // 2, 2, n_features)), dim=1)
 
-    def compute_euclidean_inner_products(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
+    def compute_euclidean_inner_products(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         # In this function, we assume that X, Y: n_samples, n_features
         # We want to compute estimates of the expectation for each RBF kernel WITHOUT using a linear approximation.
         # So we need to compute ||x - y||^2 for all pairs (x_j, x_k), (x_j, y_k), (x_k, y_j), and (y_j, y_k) for all
         # j, k in range(n_samples).
         # NOTE: ||x - y||^2 = <x - y, x - y> = <x, x> + <y, y> - 2<x, y>
         x_x_prime = (
-            torch.sum((X**2), dim=1).reshape(-1, 1)
-            + torch.sum((X**2), dim=1).reshape(1, -1)
-            - 2.0 * torch.mm(X, torch.transpose(X, 0, 1))
+            torch.sum((x**2), dim=1).reshape(-1, 1)
+            + torch.sum((x**2), dim=1).reshape(1, -1)
+            - 2.0 * torch.mm(x, torch.transpose(x, 0, 1))
         )
         y_y_prime = (
-            torch.sum((Y**2), dim=1).reshape(-1, 1)
-            + torch.sum((Y**2), dim=1).reshape(1, -1)
-            - 2.0 * torch.mm(Y, torch.transpose(Y, 0, 1))
+            torch.sum((y**2), dim=1).reshape(-1, 1)
+            + torch.sum((y**2), dim=1).reshape(1, -1)
+            - 2.0 * torch.mm(y, torch.transpose(y, 0, 1))
         )
         x_y_prime = (
-            torch.sum((X**2), dim=1).reshape(-1, 1)
-            + torch.sum((Y**2), dim=1).reshape(1, -1)
-            - 2.0 * torch.mm(X, torch.transpose(Y, 0, 1))
+            torch.sum((x**2), dim=1).reshape(-1, 1)
+            + torch.sum((y**2), dim=1).reshape(1, -1)
+            - 2.0 * torch.mm(x, torch.transpose(y, 0, 1))
         )
         x_prime_y = (
-            torch.sum((Y**2), dim=1).reshape(-1, 1)
-            + torch.sum((X**2), dim=1).reshape(1, -1)
-            - 2.0 * torch.mm(Y, torch.transpose(X, 0, 1))
+            torch.sum((y**2), dim=1).reshape(-1, 1)
+            + torch.sum((x**2), dim=1).reshape(1, -1)
+            - 2.0 * torch.mm(y, torch.transpose(x, 0, 1))
         )
 
         # Correct any values that ended up nearly but not identically zero (||x-y||^2 should be semi-definite)
@@ -197,23 +196,21 @@ class MkMmdLoss(torch.nn.Module):
         # quadruples for every kernel
         return torch.cat(k_list)
 
-    def compute_all_h_u_linear(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
+    def compute_all_h_u_linear(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         # In this function, we assume that X, Y: n_samples, n_features
         # v_i = [x_{2i-1}, x_{2i}, y_{2i-1}, y_{2i}]
-        v_is = self.construct_quadruples(X, Y)
+        v_is = self.construct_quadruples(x, y)
         # For the quadruples of the form (x,  x', y, y') we need distances for pairs (x, x'), (y, y'), (x, y'), (x, y')
         inner_product_quadruples = self.compute_euclidean_inner_products_linear(v_is)
         # all_h_u has shape number of kernels x number of quadruples
-        all_h_u = self.compute_all_h_u_from_inner_products_linear(inner_product_quadruples)
-        return all_h_u
+        return self.compute_all_h_u_from_inner_products_linear(inner_product_quadruples)
 
-    def compute_all_h_u_all_samples(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
+    def compute_all_h_u_all_samples(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         # In this function, we assume that X, Y: n_samples, n_features
         # We don't need to construct the quadruples here, we can just compute the inner products directly
-        inner_product = self.compute_euclidean_inner_products(X, Y)
+        inner_product = self.compute_euclidean_inner_products(x, y)
         # all_h_u has shape number of kernels x n_samples x n_samples
-        all_h_u = self.compute_all_h_u_from_inner_products(inner_product)
-        return all_h_u
+        return self.compute_all_h_u_from_inner_products(inner_product)
 
     def compute_hat_d_per_kernel(self, all_h_u_per_sample: torch.Tensor) -> torch.Tensor:
         # all_h_u_per_sample has two possible shapes.
@@ -225,19 +222,19 @@ class MkMmdLoss(torch.nn.Module):
         # Taking the mean across kernel entries, output shape is number of kernels x 1
         return torch.mean(all_h_u_per_sample, dim=dim_to_reduce).unsqueeze(1)
 
-    def compute_mkmmd(self, X: torch.Tensor, Y: torch.Tensor, beta: torch.Tensor) -> torch.Tensor:
+    def compute_mkmmd(self, x: torch.Tensor, y: torch.Tensor, beta: torch.Tensor) -> torch.Tensor:
         # Normalize the features if necessary to have unit length
         if self.normalize_features:
-            X = self.normalize(X)
-            Y = self.normalize(Y)
+            x = self.normalize(x)
+            y = self.normalize(y)
 
         # In this function, we assume that X, Y: n_samples, n_features are the same size and that beta is a tensor of
         # shape number of kernels x 1
         if self.perform_linear_approximation:
-            all_h_u_per_vi = self.compute_all_h_u_linear(X, Y)
+            all_h_u_per_vi = self.compute_all_h_u_linear(x, y)
             hat_d_per_kernel = self.compute_hat_d_per_kernel(all_h_u_per_vi)
         else:
-            all_h_u_per_sample = self.compute_all_h_u_all_samples(X, Y)
+            all_h_u_per_sample = self.compute_all_h_u_all_samples(x, y)
             hat_d_per_kernel = self.compute_hat_d_per_kernel(all_h_u_per_sample)
         # Take the dot product between the individual kernel hat_d values to scale by the basis coefficients
         return torch.mm(beta.t(), hat_d_per_kernel)[0][0]
@@ -252,22 +249,22 @@ class MkMmdLoss(torch.nn.Module):
         h_u_v_i_pairs = all_h_u_per_v_i.reshape(n_kernels, n_v_i_s // 2, 2)
         return h_u_v_i_pairs[:, :, 0] - h_u_v_i_pairs[:, :, 1]
 
-    def compute_hat_Q_k_linear(self, all_h_u_per_v_i: torch.Tensor) -> torch.Tensor:
+    def compute_hat_q_k_linear(self, all_h_u_per_v_i: torch.Tensor) -> torch.Tensor:
         # all_h_u_per_v_i has dimension number kernels x number of v_i quadruples
         h_u_delta_w_i = self.form_h_u_delta_w_i(all_h_u_per_v_i)
 
-        Q_k_matrix: torch.Tensor = torch.zeros((self.kernel_num, self.kernel_num)).to(self.device)
+        q_k_matrix: torch.Tensor = torch.zeros((self.kernel_num, self.kernel_num)).to(self.device)
         len_w_is = h_u_delta_w_i.shape[1]
         # For each basis function we're adding in the value of h_{j, \Delta}(w_i)*h_{k, \Delta}(w_i) from the
         # construction above to the proper entry in Q. Note that Q is symmetric. So we can construct the symmetric
         # entries at the same time.
         for j in range(self.kernel_num):
             for k in range(j + 1):
-                Q_k_matrix[j][k] += torch.sum(h_u_delta_w_i[j] * h_u_delta_w_i[k])
+                q_k_matrix[j][k] += torch.sum(h_u_delta_w_i[j] * h_u_delta_w_i[k])
                 if j != k:
-                    Q_k_matrix[k][j] += torch.sum(h_u_delta_w_i[j] * h_u_delta_w_i[k])
+                    q_k_matrix[k][j] += torch.sum(h_u_delta_w_i[j] * h_u_delta_w_i[k])
         # Q_k_matrix has shape number of kernels x number of kernels
-        return Q_k_matrix / len_w_is
+        return q_k_matrix / len_w_is
 
     def form_kernel_samples_minus_expectation(
         self, all_h_u_per_sample: torch.Tensor, hat_d_per_kernel: torch.Tensor
@@ -281,13 +278,13 @@ class MkMmdLoss(torch.nn.Module):
         repeated_hat_d_per_kernel = hat_d_per_kernel.unsqueeze(1).repeat(1, rows, columns)
         return all_h_u_per_sample - repeated_hat_d_per_kernel
 
-    def compute_hat_Q_k(self, all_h_u_per_sample: torch.Tensor, hat_d_per_kernel: torch.Tensor) -> torch.Tensor:
+    def compute_hat_q_k(self, all_h_u_per_sample: torch.Tensor, hat_d_per_kernel: torch.Tensor) -> torch.Tensor:
         # all_h_u_per_sample has dimension num kernels x n_samples x n_samples
         n_samples = all_h_u_per_sample.shape[1]
         kernel_samples_minus_kernel_expectation = self.form_kernel_samples_minus_expectation(
             all_h_u_per_sample, hat_d_per_kernel
         )
-        Q_k_matrix: torch.Tensor = torch.zeros((self.kernel_num, self.kernel_num)).to(self.device)
+        q_k_matrix: torch.Tensor = torch.zeros((self.kernel_num, self.kernel_num)).to(self.device)
         # For each basis function we need to compute the covariance between the kernels where
         # Cov(X, Y) = E[(X - E[X])(Y - E[Y])], and X and Y are random variables representing the kernel values over
         # distributions P, Q. For kernels h_{k_i} and h_{k_j} this can be estimated as
@@ -301,14 +298,14 @@ class MkMmdLoss(torch.nn.Module):
                 )
                 # Compute the expectation to get Cov(h_{k_i}, h_{k_j}).
                 # NOTE: the n^2-1 correction is because we're using expectation estimates
-                Q_k_matrix[i][j] = (1.0 / (n_samples**2 - 1.0)) * torch.sum(product_of_variances)
-        return Q_k_matrix
+                q_k_matrix[i][j] = (1.0 / (n_samples**2 - 1.0)) * torch.sum(product_of_variances)
+        return q_k_matrix
 
     def beta_with_extreme_kernel_base_values(
-        self, hat_d_per_kernel: torch.Tensor, hat_Q_k: torch.Tensor, minimize_type_two_error: bool = True
+        self, hat_d_per_kernel: torch.Tensor, hat_q_k: torch.Tensor, minimize_type_two_error: bool = True
     ) -> torch.Tensor:
         kernel_base_values = torch.tensor(
-            [hat_d_per_kernel[i] / hat_Q_k[i][i] for i in range(len(hat_d_per_kernel))]
+            [hat_d_per_kernel[i] / hat_q_k[i][i] for i in range(len(hat_d_per_kernel))]
         ).to(self.device)
         if minimize_type_two_error:
             log(
@@ -330,7 +327,7 @@ class MkMmdLoss(torch.nn.Module):
         return 1.0 / hat_d_per_kernel
 
     def get_best_vertex_for_objective_function(
-        self, hat_d_per_kernel: torch.Tensor, hat_Q_k: torch.Tensor
+        self, hat_d_per_kernel: torch.Tensor, hat_q_k: torch.Tensor
     ) -> torch.Tensor:
         # vertices_weights have shape num kernels x 1
         vertices_weights = self.compute_vertices(hat_d_per_kernel)
@@ -340,20 +337,20 @@ class MkMmdLoss(torch.nn.Module):
         for i in range(self.kernel_num):
             vertices = torch.zeros_like(hat_d_per_kernel).to(self.device)
             vertices[i, 0] = vertices_weights[i, 0]
-            objective_value = torch.mm(torch.mm(vertices.t(), hat_Q_k), vertices).item()
+            objective_value = torch.mm(torch.mm(vertices.t(), hat_q_k), vertices).item()
             if objective_value > maximum_value:
                 maximum_value = objective_value
                 best_index = i
         best_vertex[best_index, 0] = vertices_weights[best_index, 0]
         return best_vertex
 
-    def form_and_solve_qp(self, hat_d_per_kernel: torch.Tensor, regularized_Q_k: torch.Tensor) -> torch.Tensor:
+    def form_and_solve_qp(self, hat_d_per_kernel: torch.Tensor, regularized_q_k: torch.Tensor) -> torch.Tensor:
         # p = \vec{0} of shape (number of kernels, 1). It is only used for the QP setup
         p = torch.zeros(self.kernel_num).to(self.device)
 
         # We want each beta >= 0, the QP defines the constraint as G\beta <= h. So h is a vector of zeros (see below)
         # and we want each -1*beta <=0 to guarantee that beta>=0. So G is an identify matrix scaled by -1
-        G = -1 * torch.eye(self.kernel_num).to(self.device)
+        g = -1 * torch.eye(self.kernel_num).to(self.device)
 
         # This is the RHS of the inequality constraint on the beta coefficients. We want them to be >= 0
         h = torch.zeros(self.kernel_num).to(self.device)
@@ -383,32 +380,32 @@ class MkMmdLoss(torch.nn.Module):
 
         # QPFunction returns betas in the shape 1 x num_kernels to we take the transpose for consistency
         return QPFunction(verbose=False, solver=QPSolvers.CVXPY, check_Q_spd=False)(
-            regularized_Q_k, p, G, h, hat_d_per_kernel.t(), b
+            regularized_q_k, p, g, h, hat_d_per_kernel.t(), b
         ).t()
 
-    def optimize_betas(self, X: torch.Tensor, Y: torch.Tensor, lambda_m: float = 1e-5) -> torch.Tensor:
+    def optimize_betas(self, x: torch.Tensor, y: torch.Tensor, lambda_m: float = 1e-5) -> torch.Tensor:
         # In this function, we assume that X, Y: n_samples, n_features
 
         # Normalize the features if necessary to have unit length
         if self.normalize_features:
-            X = self.normalize(X)
-            Y = self.normalize(Y)
+            x = self.normalize(x)
+            y = self.normalize(y)
 
         if self.perform_linear_approximation:
-            all_h_u_per_v_i = self.compute_all_h_u_linear(X, Y)
+            all_h_u_per_v_i = self.compute_all_h_u_linear(x, y)
             # shape of hat_d_per_kernel is number of kernels x 1
             hat_d_per_kernel = self.compute_hat_d_per_kernel(all_h_u_per_v_i)
             # shape of hat_Q_k is number of kernels x number of kernels
-            hat_Q_k = self.compute_hat_Q_k_linear(all_h_u_per_v_i)
+            hat_q_k = self.compute_hat_q_k_linear(all_h_u_per_v_i)
         else:
-            all_h_u_per_sample = self.compute_all_h_u_all_samples(X, Y)
+            all_h_u_per_sample = self.compute_all_h_u_all_samples(x, y)
             # shape of hat_d_per_kernel is number of kernels x 1
             hat_d_per_kernel = self.compute_hat_d_per_kernel(all_h_u_per_sample)
             # shape of hat_Q_k is number of kernels x number of kernels
-            hat_Q_k = self.compute_hat_Q_k(all_h_u_per_sample, hat_d_per_kernel)
+            hat_q_k = self.compute_hat_q_k(all_h_u_per_sample, hat_d_per_kernel)
 
         # Eigen shift hat_Q_k and scale by 2 as the QP setup scales by 1/2
-        regularized_Q_k = 2 * hat_Q_k + lambda_m * torch.eye(self.kernel_num).to(self.device)
+        regularized_q_k = 2 * hat_q_k + lambda_m * torch.eye(self.kernel_num).to(self.device)
 
         # check to see that at least one of hat_d_per_kernel is positive. If none of them are positive, then select a
         # single kernel with largest hat_d, similar to the suggestion of Gretton et al. in "Optimal Kernel Choice for
@@ -416,12 +413,12 @@ class MkMmdLoss(torch.nn.Module):
         if not torch.any(hat_d_per_kernel > 0):
             log(INFO, f"None of the estimates for hat_d are positive: {hat_d_per_kernel.squeeze()}.")
             return self.beta_with_extreme_kernel_base_values(
-                hat_d_per_kernel, regularized_Q_k, minimize_type_two_error=True
+                hat_d_per_kernel, regularized_q_k, minimize_type_two_error=True
             )
 
         if self.minimize_type_two_error:
             try:
-                raw_betas = self.form_and_solve_qp(hat_d_per_kernel, regularized_Q_k).detach()
+                raw_betas = self.form_and_solve_qp(hat_d_per_kernel, regularized_q_k).detach()
             except Exception as e:
                 # If we can't solve the QP due to infeasibility, then we keep the previous betas
                 if self.layer_name is not None:
@@ -432,15 +429,15 @@ class MkMmdLoss(torch.nn.Module):
         else:
             # If we're trying to maximize the type II error, then we are trying to maximize a convex function over a
             # convex polygon of beta values. So the maximum is found at one of the vertices
-            raw_betas = self.get_best_vertex_for_objective_function(hat_d_per_kernel, regularized_Q_k)
+            raw_betas = self.get_best_vertex_for_objective_function(hat_d_per_kernel, regularized_q_k)
 
         # We want to ensure that the betas are non-negative
         raw_betas = torch.clamp(raw_betas, min=0)
-        optimized_betas = (1.0 / torch.sum(raw_betas)) * raw_betas
-        return optimized_betas
+        return (1.0 / torch.sum(raw_betas)) * raw_betas
 
     def forward(self, Xs: torch.Tensor, Xt: torch.Tensor) -> torch.Tensor:
-        """Compute the multi-kernel maximum mean discrepancy (MK-MMD) between the source and target domains.
+        """
+        Compute the multi-kernel maximum mean discrepancy (MK-MMD) between the source and target domains.
 
         Args:
             Xs (torch.Tensor): Source domain data, shape (n_samples, n_features)
@@ -449,5 +446,4 @@ class MkMmdLoss(torch.nn.Module):
         Returns:
             torch.Tensor: MK-MMD value
         """
-
         return self.compute_mkmmd(Xs, Xt, self.betas)

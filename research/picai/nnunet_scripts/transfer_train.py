@@ -1,4 +1,4 @@
-"Automates simple transfer learning for nnUNetv2"
+"""Automates simple transfer learning for nnUNetv2."""
 
 import argparse
 import os
@@ -16,7 +16,7 @@ from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_
 def setup_device(device: str) -> torch.device:
     """
     Checks the device being used, sets the number of threads and returns a
-    pytorch device
+    pytorch device.
 
 
     Args:
@@ -36,20 +36,18 @@ def setup_device(device: str) -> torch.device:
 
         torch.set_num_threads(multiprocessing.cpu_count())
         return torch.device("cpu")
-    elif device == "cuda":
+    if device == "cuda":
         # multithreading in torch doesn't help nnU-Net if run on GPU
         torch.set_num_threads(1)
         torch.set_num_interop_threads(1)
         return torch.device("cuda")
-    else:
-        return torch.device("mps")
+    return torch.device("mps")
 
 
 def move_plans_between_datasets(finetune_id: int, pretrain_plans: str, finetune_plans_identifier: str) -> None:
     """
-    Transfers the necessary files needed from pretraining to the relevant
-    finetuning directories. Makes changes to the plans file to ensure
-    finetuning runs without issue
+    Transfers the necessary files needed from pretraining to the relevant finetuning directories. Makes changes to
+    the plans file to ensure finetuning runs without issue.
 
     Args:
         finetune_id (int): The nnunet dataset id for the finetuning dataset
@@ -72,9 +70,9 @@ def move_plans_between_datasets(finetune_id: int, pretrain_plans: str, finetune_
     bs_5percent = round(num_tr * 0.05)
 
     # Edit parameters for each configuration
-    for c in plans["configurations"].keys():
+    for c in plans["configurations"]:
         # Change the data identifier
-        if "data_identifier" in plans["configurations"][c].keys():
+        if "data_identifier" in plans["configurations"][c]:
             old_data_identifier = plans["configurations"][c]["data_identifier"]
             if old_data_identifier.startswith(pt_plans_identifier):
                 # The data identifier is typically a combination of the plans identifier and the config
@@ -84,7 +82,7 @@ def move_plans_between_datasets(finetune_id: int, pretrain_plans: str, finetune_
             plans["configurations"][c]["data_identifier"] = new_data_identifier
 
         # Ensure the batch size is within nnUNet limits
-        if "batch_size" in plans["configurations"][c].keys():
+        if "batch_size" in plans["configurations"][c]:
             old_bs = plans["configurations"][c]["batch_size"]
             new_bs = max(min(old_bs, bs_5percent), 2)
             plans["configurations"][c]["batch_size"] = new_bs
@@ -95,7 +93,7 @@ def move_plans_between_datasets(finetune_id: int, pretrain_plans: str, finetune_
 
 def transfer_metadata(finetune_id: int, pretrain_id: int, pretrain_plans: str) -> str:
     """
-    Transfers and or modifies metadata necessary for transfer learning
+    Transfers and or modifies metadata necessary for transfer learning.
 
     Ensures the dataset json, dataset fingerprint and nnunet plans are all
     ready for transfer learning. Some necessary changes are made to the
@@ -147,7 +145,7 @@ def transfer_metadata(finetune_id: int, pretrain_id: int, pretrain_plans: str) -
 
 def check_configs(plans_path: str, configs: list) -> None:
     """
-    Raises an error if configs are not found in plans json
+    Raises an error if configs are not found in plans json.
 
     Args:
         plans (str): Path to the plans file to check
@@ -155,17 +153,15 @@ def check_configs(plans_path: str, configs: list) -> None:
     """
     plans = load_json(plans_path)
     for c in configs:
-        assert (
-            c in plans["configurations"]
-        ), f"Did not find {c} config in {plans_path}. Note that \
+        assert c in plans["configurations"], (
+            f"Did not find {c} config in {plans_path}. Note that \
             3d_lowres and 3d_cascade_fullres are not created for datasets with \
             small image sizes"
+        )
 
 
 def main() -> None:
-    """
-    Parses arguments and opens subprocesses to train specified models
-    """
+    """Parses arguments and opens subprocesses to train specified models."""
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -270,11 +266,11 @@ def main() -> None:
     check_configs(plans_path=args.pretrain_plans, configs=args.configs)
 
     # Ensure a checkpoint was provided for each config
-    assert len(args.configs) == len(
-        args.pretrain_checkpoints
-    ), f"The number of \
+    assert len(args.configs) == len(args.pretrain_checkpoints), (
+        f"The number of \
         configs ({len(args.configs)}) and number of pretrained checkpoints \
         ({len(args.pretrain_checkpoints)}) do not match"
+    )
 
     # Transfer Metadata needed for processing the finetuning set
     ft_plans_identifier = transfer_metadata(
@@ -284,7 +280,7 @@ def main() -> None:
     # Set default number of processes for preprocessing
     if args.num_processes is None:
         default_num_processes = {"2d": 8, "3d_fullres": 4, "3d_lowres": 8}
-        num_processes = [default_num_processes[c] if c in default_num_processes.keys() else 4 for c in args.configs]
+        num_processes = [default_num_processes.get(c, 4) for c in args.configs]
     else:
         num_processes = args.num_processes
 
