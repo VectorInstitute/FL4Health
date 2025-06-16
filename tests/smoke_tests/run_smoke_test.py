@@ -330,12 +330,12 @@ async def run_smoke_test(
             if "Disconnect and shut down" not in full_client_output:
                 raise SmokeTestAssertError(f"[ASSERT ERROR] Shutdown message not found for client {i}.")
 
-            if assert_evaluation_logs and "Client Evaluation Local Model Metrics" not in full_client_output:
-                raise SmokeTestAssertError(
-                    f"[ASSERT ERROR] 'Client Evaluation Local Model Metrics' message not found for client {i}."
-                )
-
-            if (
+            if assert_evaluation_logs:
+                if "Client Evaluation Local Model Metrics" not in full_client_output:
+                    raise SmokeTestAssertError(
+                        f"[ASSERT ERROR] 'Client Evaluation Local Model Metrics' message not found for client {i}."
+                    )
+            elif (
                 not skip_assert_client_fl_rounds
                 and f"Current FL Round: {config['n_server_rounds']}" not in full_client_output
             ):
