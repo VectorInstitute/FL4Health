@@ -14,9 +14,9 @@ from torch.optim import Optimizer
 from torch.testing import assert_close
 from torch.utils.data import DataLoader, TensorDataset
 
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.flexible_client import FlexibleClient
 from fl4health.metrics import Accuracy
-from fl4health.mixins.core_protocols import BasicClientProtocol
+from fl4health.mixins.core_protocols import FlexibleClientProtocol
 from fl4health.mixins.personalized import (
     DittoPersonalizedMixin,
     DittoPersonalizedProtocol,
@@ -29,7 +29,7 @@ from fl4health.utils.losses import TrainingLosses
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType
 
 
-class _TestBasicClient(BasicClient):
+class _TestFlexibleClient(FlexibleClient):
     def get_model(self, config: Config) -> nn.Module:
         return self.model
 
@@ -43,7 +43,7 @@ class _TestBasicClient(BasicClient):
         return torch.nn.CrossEntropyLoss()
 
 
-class _TestBasicClientV2(BasicClient):
+class _TestFlexibleClientV2(FlexibleClient):
     def get_model(self, config: Config) -> nn.Module:
         return self.model
 
@@ -60,11 +60,11 @@ class _TestBasicClientV2(BasicClient):
         return {}, {}
 
 
-class _TestDittoedClient(DittoPersonalizedMixin, _TestBasicClient):
+class _TestDittoedClient(DittoPersonalizedMixin, _TestFlexibleClient):
     pass
 
 
-class _TestDittoedClientV2(DittoPersonalizedMixin, _TestBasicClientV2):
+class _TestDittoedClientV2(DittoPersonalizedMixin, _TestFlexibleClientV2):
     pass
 
 
@@ -79,7 +79,7 @@ def test_init() -> None:
     client.initialized = True
     client.setup_client({})
 
-    assert isinstance(client, BasicClientProtocol)
+    assert isinstance(client, FlexibleClientProtocol)
     assert isinstance(client, DittoPersonalizedProtocol)
 
 
@@ -90,20 +90,21 @@ def test_init_raises_value_error_when_basic_client_protocol_not_satisfied() -> N
     class _InvalidTestDittoClient(DittoPersonalizedMixin):
         pass
 
-    with pytest.raises(RuntimeError, match="This object needs to satisfy `BasicClientProtocolPreSetup`."):
+    with pytest.raises(RuntimeError, match="This object needs to satisfy `FlexibleClientProtocolPreSetup`."):
+
         _InvalidTestDittoClient(data_path=Path(""), metrics=[Accuracy()])
 
 
 def test_subclass_checks_raise_no_warning() -> None:
     with warnings.catch_warnings(record=True) as recorded_warnings:
 
-        class _TestInheritanceMixin(DittoPersonalizedMixin, _TestBasicClient):
-            """subclass should skip validation if is itself a Mixin that inherits DittoPersonalizedMixin."""
+        class _TestInheritanceMixin(DittoPersonalizedMixin, _TestFlexibleClient):
+            """subclass should skip validation if is itself a Mixin that inherits DittoPersonalizedMixin"""
 
             pass
 
         # attaches _dynamically_created attr
-        _ = make_it_personal(_TestBasicClient, PersonalizedMode.DITTO)
+        _ = make_it_personal(_TestFlexibleClient, PersonalizedMode.DITTO)
 
     assert len(recorded_warnings) == 0
 
@@ -113,7 +114,7 @@ def test_subclass_checks_raise_warning() -> None:
     with pytest.warns((RuntimeWarning, RuntimeWarning)):
 
         class _InvalidSubclass(DittoPersonalizedMixin):
-            """Invalid subclass that warns the user that it expects this class to be mixed with a BasicClient."""
+            """Invalid subclass that warns the user that it expects this class to be mixed with a FlexibleClient."""
 
             pass
 
@@ -320,7 +321,7 @@ def test_extract_pred_raises_error() -> None:
 
 
 @patch.object(_TestDittoedClient, "set_initial_global_tensors")
-@patch.object(_TestBasicClient, "update_before_train")
+@patch.object(_TestFlexibleClient, "update_before_train")
 def test_update_before_train(
     mock_super_update_before_train: MagicMock, mock_set_initial_global_tensors: MagicMock
 ) -> None:

@@ -12,7 +12,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.flexible_client import FlexibleClient
 from fl4health.mixins.personalized import PersonalizedMode, make_it_personal
 from fl4health.reporting import JsonReporter
 from fl4health.utils.config import narrow_dict_type
@@ -22,8 +22,8 @@ from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
-class MnistClient(BasicClient):
-    """A simple `BasicClient` type that we dynamically personalize via Ditto."""
+class MnistClient(FlexibleClient):
+    """A simple `FlexibleClient` type that we dynamically personalize via Ditto."""
 
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         sample_percentage = narrow_dict_type(config, "downsampling_ratio", float)

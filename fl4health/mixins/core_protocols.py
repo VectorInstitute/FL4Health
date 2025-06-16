@@ -32,7 +32,7 @@ class NumPyClientMinimalProtocol(Protocol):
 
 
 @runtime_checkable
-class BasicClientProtocolPreSetup(NumPyClientMinimalProtocol, Protocol):
+class FlexibleClientProtocolPreSetup(NumPyClientMinimalProtocol, Protocol):
     """A minimal protocol for BasicClient focused on methods."""
 
     device: torch.device
@@ -61,7 +61,7 @@ class BasicClientProtocolPreSetup(NumPyClientMinimalProtocol, Protocol):
 
 
 @runtime_checkable
-class BasicClientProtocol(BasicClientProtocolPreSetup, Protocol):
+class FlexibleClientProtocol(FlexibleClientProtocolPreSetup, Protocol):
     """A minimal protocol for BasicClient focused on methods."""
 
     model: nn.Module

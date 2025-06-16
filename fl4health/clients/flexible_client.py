@@ -1,14 +1,15 @@
 import datetime
+import warnings
 from collections.abc import Iterator, Sequence
-from logging import INFO
+from logging import INFO, WARN
 from pathlib import Path
 from typing import Any
 
 import torch
+import torch.nn as nn
 from flwr.client import NumPyClient
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
-from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
@@ -29,7 +30,7 @@ from fl4health.utils.client import (
     process_and_check_validation_steps,
     set_pack_losses_with_val_metrics,
 )
-from fl4health.utils.config import narrow_dict_type
+from fl4health.utils.config import narrow_dict_type, narrow_dict_type_and_set_attribute
 from fl4health.utils.early_stopper import EarlyStopper
 from fl4health.utils.logging import LoggingMode
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
@@ -37,7 +38,7 @@ from fl4health.utils.random import generate_hash
 from fl4health.utils.typing import LogLevel, TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
-class BasicClient(NumPyClient):
+class FlexibleClient(NumPyClient):
     def __init__(
         self,
         data_path: Path,
@@ -73,6 +74,7 @@ class BasicClient(NumPyClient):
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
         """
+
         self.data_path = data_path
         self.device = device
         self.metrics = metrics
@@ -80,6 +82,8 @@ class BasicClient(NumPyClient):
 
         self.client_name = client_name if client_name is not None else generate_hash()
         log(INFO, f"Client Name: {self.client_name}")
+
+        self.state_checkpoint_name = f"client_{self.client_name}_state.pt"
 
         if checkpoint_and_state_module is not None:
             self.checkpoint_and_state_module = checkpoint_and_state_module
@@ -135,6 +139,41 @@ class BasicClient(NumPyClient):
         self.train_iterator: Iterator | None = None
         self.val_iterator: Iterator | None = None
 
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """Perform some validations on subclasses of BasicClient"""
+        super().__init_subclass__(**kwargs)
+
+        # check that specific methods are not overridden, otherwise throw warning
+        methods_should_not_be_overridden = [
+            (
+                "predict",
+                (
+                    f"`{cls.__name__}` overrides `predict()`, but this method should no longer be overridden. "
+                    "Please use `_predict_with_model()` instead."
+                ),
+            ),
+            (
+                "val_step",
+                (
+                    f"`{cls.__name__}` overrides `val_step()`, but this method should no longer be overridden. "
+                    "Please use `_val_step_with_model()` instead."
+                ),
+            ),
+            (
+                "train_step",
+                (
+                    f"`{cls.__name__}` overrides `train_step()`, but this method should no longer be overridden. "
+                    "Please use `_train_step_with_model_and_optimizer()` and its helper methods instead "
+                    "for proper customization."
+                ),
+            ),
+        ]
+
+        for method_name, msg in methods_should_not_be_overridden:
+            if method_name in cls.__dict__:  # method was overridden by subclass
+                log(WARN, msg)
+                warnings.warn(msg, RuntimeWarning, stacklevel=2)
+
     def _maybe_checkpoint(self, loss: float, metrics: dict[str, Scalar], checkpoint_mode: CheckpointMode) -> None:
         """
         If checkpointer exists, maybe checkpoint model based on the provided metric values.
@@ -170,11 +209,12 @@ class BasicClient(NumPyClient):
 
             # Need all parameters even if normally exchanging partial
             return FullParameterExchanger().push_parameters(self.model, config=config)
-        assert self.model is not None and self.parameter_exchanger is not None
-        # If the client has early stopping module and the patience is None, we load the best saved state
-        # to send the best checkpointed local model's parameters to the server
-        self._maybe_load_saved_best_local_model_state()
-        return self.parameter_exchanger.push_parameters(self.model, config=config)
+        else:
+            assert self.model is not None and self.parameter_exchanger is not None
+            # If the client has early stopping module and the patience is None, we load the best saved state
+            # to send the best checkpointed local model's parameters to the server
+            self._maybe_load_saved_best_local_model_state()
+            return self.parameter_exchanger.push_parameters(self.model, config=config)
 
     def _maybe_load_saved_best_local_model_state(self) -> None:
         if self.early_stopper is not None and self.early_stopper.patience is None:
@@ -219,7 +259,9 @@ class BasicClient(NumPyClient):
         FullParameterExchanger().pull_parameters(parameters, self.model, config)
 
     def shutdown(self) -> None:
-        """Shuts down the client. Involves shutting down W&B reporter if one exists."""
+        """
+        Shuts down the client. Involves shutting down W&B reporter if one exists.
+        """
         # Shutdown reporters
         self.reports_manager.report({"shutdown": str(datetime.datetime.now())})
         self.reports_manager.shutdown()
@@ -245,7 +287,7 @@ class BasicClient(NumPyClient):
         # Parse config to determine train by steps or train by epochs
         if ("local_epochs" in config) and ("local_steps" in config):
             raise ValueError("Config cannot contain both local_epochs and local_steps. Please specify only one.")
-        if "local_epochs" in config:
+        elif "local_epochs" in config:
             local_epochs = narrow_dict_type(config, "local_epochs", int)
             local_steps = None
         elif "local_steps" in config:
@@ -435,8 +477,8 @@ class BasicClient(NumPyClient):
         logging_mode: LoggingMode = LoggingMode.TRAIN,
     ) -> None:
         """
-        Logs a header string. By default this is logged at the beginning of each local epoch or at the beginning of
-        the round if training by steps.
+        Logs a header string. By default this is logged at the beginning of each local
+        epoch or at the beginning of the round if training by steps
 
         Args:
             current_round (int | None, optional): The current FL round. (Ie current
@@ -444,6 +486,7 @@ class BasicClient(NumPyClient):
             current_epoch (int | None, optional): The current epoch of local
                 training. Defaults to None.
         """
+
         log_str = f"Current FL Round: {int(current_round)} " if current_round is not None else ""
         log_str += f"Current Epoch: {int(current_epoch)} " if current_epoch is not None else ""
 
@@ -464,8 +507,8 @@ class BasicClient(NumPyClient):
         logging_mode: LoggingMode = LoggingMode.TRAIN,
     ) -> None:
         """
-        Handles the logging of losses, metrics, and other information to the output file. Called only at the end of
-        an epoch or server round.
+        Handles the logging of losses, metrics, and other information to the
+        output file. Called only at the end of an epoch or server round
 
         Args:
             loss_dict (dict[str, float]): A dictionary of losses to log.
@@ -523,7 +566,7 @@ class BasicClient(NumPyClient):
     def get_client_specific_reports(self) -> dict[str, Any]:
         """
         This function can be overridden by an inheriting client to report additional client specific information to
-        the ``wandb_reporter``.
+        the ``wandb_reporter``
 
         Returns:
             dict[str, Any]: A dictionary of things to report
@@ -552,6 +595,80 @@ class BasicClient(NumPyClient):
         """
         metric_manager.update(preds, target)
 
+    def _compute_preds_and_losses(
+        self, model: nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[TrainingLosses, TorchPredType]:
+        """Helper method within the train step for computing preds and losses.
+
+        NOTE: Subclasses should implement this helper method if there is a need
+        to specialize this part of the overall train step.
+
+        Args:
+            model (nn.Module): the model used to make predictions
+            optimizer (Optimizer): the associated optimizer
+            input (TorchInputType): The input to be fed into the model.
+            target (TorchTargetType): The target corresponding to the input.
+
+        Returns:
+            tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
+            a dictionary of any predictions produced by the model prior to the
+            application of the backwards phase
+        """
+        # Clear gradients from optimizer if they exist
+        optimizer.zero_grad()
+
+        # Call user defined methods to get predictions and compute loss
+        preds, features = self._predict_with_model(model, input)
+        target = self.transform_target(target)
+        losses = self.compute_training_loss(preds, features, target)
+
+        return losses, preds
+
+    def _apply_backwards_on_losses_and_take_step(
+        self, model: nn.Module, optimizer: Optimizer, losses: TrainingLosses
+    ) -> TrainingLosses:
+        """Helper method within the train step for applying backwards on losses and taking step with optimizer.
+
+        NOTE: Subclasses should implement this helper method if there is a need
+        to specialize this part of the overall train step.
+
+        Args:
+            model (nn.Module): the model used for making predictions. Passed here in case subclasses need it.
+            optimizer (Optimizer): the optimizer with which we take the step
+            losses (TrainingLosses): the losses to apply backwards on
+
+        Returns:
+            TrainingLosses: The losses object post backwards application
+        """
+        # Compute backward pass and update parameters with optimizer
+        losses.backward["backward"].backward()
+        self.transform_gradients(losses)
+        optimizer.step()
+
+        return losses
+
+    def _train_step_with_model_and_optimizer(
+        self, model: torch.nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[TrainingLosses, TorchPredType]:
+        """Helper train step method that allows for injection of model and optimizer.
+
+        NOTE: Subclasses should implement this method if there is a need to specialize
+        the train_step logic.
+
+        Args:
+            input (TorchInputType): The input to be fed into the model.
+            target (TorchTargetType): The target corresponding to the input.
+
+        Returns:
+            tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
+            a dictionary of any predictions produced by the model.
+        """
+
+        losses, preds = self._compute_preds_and_losses(model, optimizer, input, target)
+        losses = self._apply_backwards_on_losses_and_take_step(model, optimizer, losses)
+
+        return losses, preds
+
     def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
         """
         Given a single batch of input and target data, generate predictions, compute loss, update parameters and
@@ -566,18 +683,30 @@ class BasicClient(NumPyClient):
             tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
             a dictionary of any predictions produced by the model.
         """
-        # Clear gradients from optimizer if they exist
-        self.optimizers["global"].zero_grad()
+        return self._train_step_with_model_and_optimizer(self.model, self.optimizers["global"], input, target)
 
-        # Call user defined methods to get predictions and compute loss
-        preds, features = self.predict(input)
-        target = self.transform_target(target)
-        losses = self.compute_training_loss(preds, features, target)
+    def _val_step_with_model(
+        self, model: nn.Module, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[EvaluationLosses, TorchPredType]:
+        """Helper method for val_step that allows for injection of model.
 
-        # Compute backward pass and update parameters with optimizer
-        losses.backward["backward"].backward()
-        self.transform_gradients(losses)
-        self.optimizers["global"].step()
+        NOTE: Subclasses should implement this method if there is a need to
+        specialize the val_step logic.
+
+        Args:
+            input (TorchInputType): The input to be fed into the model.
+            target (TorchTargetType): The target corresponding to the input.
+
+        Returns:
+            tuple[EvaluationLosses, TorchPredType]: The losses object from the val step along with a dictionary of the
+            predictions produced by the model.
+        """
+
+        # Get preds and compute loss
+        with torch.no_grad():
+            preds, features = self._predict_with_model(model, input)
+            target = self.transform_target(target)
+            losses = self.compute_evaluation_loss(preds, features, target)
 
         return losses, preds
 
@@ -593,13 +722,8 @@ class BasicClient(NumPyClient):
             tuple[EvaluationLosses, TorchPredType]: The losses object from the val step along with a dictionary of the
             predictions produced by the model.
         """
-        # Get preds and compute loss
-        with torch.no_grad():
-            preds, features = self.predict(input)
-            target = self.transform_target(target)
-            losses = self.compute_evaluation_loss(preds, features, target)
 
-        return losses, preds
+        return self._val_step_with_model(self.model, input, target)
 
     def train_by_epochs(
         self,
@@ -746,7 +870,7 @@ class BasicClient(NumPyClient):
         self, loss_meter: LossMeter, metric_manager: MetricManager, include_losses_in_metrics: bool = False
     ) -> tuple[float, dict[str, Scalar]]:
         """
-        Evaluate the model on the validation set for a fixed number of steps set by ``self.num_validation_steps``.
+        Evaluate the model on the validation set for a fixed number of steps set by ``self.num_validation_steps``
 
         Args:
             loss_meter (LossMeter): The meter to track the losses.
@@ -757,6 +881,7 @@ class BasicClient(NumPyClient):
         Returns:
             tuple[float, dict[str, Scalar]]: The loss and a dictionary of metrics from evaluation.
         """
+
         assert self.num_validation_steps is not None, "num_validation_steps must be defined to use this function"
 
         self.model.eval()
@@ -943,7 +1068,7 @@ class BasicClient(NumPyClient):
         # Add lr_scheduler to dictionary if user overrides get_lr_scheduler to return
         # scheduler for given optimizer
         self.lr_schedulers = {}
-        for optimizer_key in self.optimizers:
+        for optimizer_key in self.optimizers.keys():
             lr_scheduler = self.get_lr_scheduler(optimizer_key, config)
             if lr_scheduler is not None:
                 self.lr_schedulers[optimizer_key] = lr_scheduler
@@ -966,6 +1091,55 @@ class BasicClient(NumPyClient):
         """
         return FullParameterExchanger()
 
+    def _predict_with_model(
+        self, model: torch.nn.Module, input: TorchInputType
+    ) -> tuple[TorchPredType, TorchFeatureType]:
+        """Helper predict method that allows for injection of model.
+
+        NOTE: Subclasses should implement this method if there is need to specialize
+        the predict logic of the client.
+
+        Args:
+            model (torch.nn.Module): the model with which to make predictions
+            input (TorchInputType): Inputs to be fed into the model. If input is of type ``dict[str, torch.Tensor]``,
+                it is assumed that the keys of input match the names of the keyword arguments of
+                ``self.model.forward().`
+
+        Returns:
+            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains a dictionary of
+            predictions indexed by name and the second element contains intermediate activations indexed by name. By
+            passing features, we can compute losses such as the contrastive loss in MOON. All predictions included in
+            dictionary will by default be used to compute metrics separately.
+
+        Raises:
+            TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model's
+                forward method.
+            ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
+                forward.
+        """
+
+        if isinstance(input, torch.Tensor):
+            output = model(input)
+        elif isinstance(input, dict):
+            # If input is a dictionary, then we unpack it before computing the forward pass.
+            # Note that this assumes the keys of the input match (exactly) the keyword args
+            # of self.model.forward().
+            output = model(**input)
+        else:
+            raise TypeError("'input' must be of type torch.Tensor or dict[str, torch.Tensor].")
+
+        if isinstance(output, dict):
+            return output, {}
+        elif isinstance(output, torch.Tensor):
+            return {"prediction": output}, {}
+        elif isinstance(output, tuple):
+            if len(output) != 2:
+                raise ValueError(f"Output tuple should have length 2 but has length {len(output)}")
+            preds, features = output
+            return preds, features
+        else:
+            raise ValueError("Model forward did not return a tensor, dictionary of tensors, or tuple of tensors")
+
     def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the prediction(s), and potentially features, of the model(s) given the input.
@@ -987,26 +1161,7 @@ class BasicClient(NumPyClient):
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
                 forward.
         """
-        if isinstance(input, torch.Tensor):
-            output = self.model(input)
-        elif isinstance(input, dict):
-            # If input is a dictionary, then we unpack it before computing the forward pass.
-            # Note that this assumes the keys of the input match (exactly) the keyword args
-            # of self.model.forward().
-            output = self.model(**input)
-        else:
-            raise TypeError("'input' must be of type torch.Tensor or dict[str, torch.Tensor].")
-
-        if isinstance(output, dict):
-            return output, {}
-        if isinstance(output, torch.Tensor):
-            return {"prediction": output}, {}
-        if isinstance(output, tuple):
-            if len(output) != 2:
-                raise ValueError(f"Output tuple should have length 2 but has length {len(output)}")
-            preds, features = output
-            return preds, features
-        raise ValueError("Model forward did not return a tensor, dictionary of tensors, or tuple of tensors")
+        return self._predict_with_model(self.model, input)
 
     def compute_loss_and_additional_losses(
         self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
@@ -1086,7 +1241,8 @@ class BasicClient(NumPyClient):
 
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         """
-        User defined method that returns a PyTorch Train DataLoader and a PyTorch Validation DataLoader.
+        User defined method that returns a PyTorch Train DataLoader
+        and a PyTorch Validation DataLoader
 
         Args:
             config (Config): The config from the server.
@@ -1202,6 +1358,7 @@ class BasicClient(NumPyClient):
             step (int | None): If using ``local_steps``, current step of this round. Otherwise None.
             epoch (int | None): If using ``local_epochs`` current epoch of this round. Otherwise None.
         """
+
         assert (step is None) ^ (epoch is None)
 
         for lr_scheduler in self.lr_schedulers.values():
@@ -1261,11 +1418,24 @@ class BasicClient(NumPyClient):
     def update_before_epoch(self, epoch: int) -> None:
         """
         Hook method called before local epoch on client. Only called if client is being trained by epochs
-        (i.e. using ``local_epochs`` key instead of local steps in the server config file).
+        (i.e. using ``local_epochs`` key instead of local steps in the server config file)
 
         Args:
             epoch (int): Integer representing the epoch about to begin
         """
+        pass
+
+    def _transform_gradients_with_model(self, model: torch.nn.Module, losses: TrainingLosses) -> None:
+        """Helper transform gradients method that allows for injection of model.
+
+        NOTE: Subclasses should implement this helper should there be a need to specialize the logic
+        for transforming gradients.
+
+        Args:
+            model (torch.nn.Module): the model used to generate predictions to compute losses
+            losses (TrainingLosses): The losses object from the train step
+        """
+
         pass
 
     def transform_gradients(self, losses: TrainingLosses) -> None:
@@ -1276,23 +1446,53 @@ class BasicClient(NumPyClient):
         Args:
             losses (TrainingLosses): The losses object from the train step
         """
-        pass
+        return self._transform_gradients_with_model(self.model, losses)
 
     def _save_client_state(self) -> None:
         """
-        Save a checkpoint of the client's state as defined by the state_checkpointer's snapshot_attrs.
-        By default, snapshot_attrs includes attributes such as client name, total steps, lr schedulers,
-        metrics reporter, and optimizer states. You can override snapshot_attrs in the state_checkpointer to
-        customize which attributes are saved in the checkpoint.
+        Saves checkpoint dict consisting of client name, total steps, lr schedulers, metrics reporter and
+        optimizers state. Method can be overridden to augment saved checkpointed state.
         """
-        assert self.checkpoint_and_state_module.state_checkpointer is not None
-        self.checkpoint_and_state_module.save_state(self)
+
+        state = {
+            "lr_schedulers_state": {key: scheduler.state_dict() for key, scheduler in self.lr_schedulers.items()},
+            "total_steps": self.total_steps,
+            "client_name": self.client_name,
+            "reports_manager": self.reports_manager,
+            "optimizers_state": {key: optimizer.state_dict()["state"] for key, optimizer in self.optimizers.items()},
+        }
+
+        self.checkpoint_and_state_module.save_state(self.state_checkpoint_name, state)
 
     def _load_client_state(self) -> bool:
         """
         Load checkpoint dict consisting of client name, total steps, lr schedulers, metrics reporter and optimizers
         state. Method can be overridden to augment loaded checkpointed state.
         """
-        assert self.checkpoint_and_state_module.state_checkpointer is not None
-        log(INFO, "Loading client state from checkpoint")
-        return self.checkpoint_and_state_module.maybe_load_state(self)
+        client_state = self.checkpoint_and_state_module.maybe_load_state(self.state_checkpoint_name)
+
+        if client_state is None:
+            return False
+
+        narrow_dict_type_and_set_attribute(self, client_state, "client_name", "client_name", str)
+        narrow_dict_type_and_set_attribute(self, client_state, "total_steps", "total_steps", int)
+        narrow_dict_type_and_set_attribute(self, client_state, "reports_manager", "reports_manager", ReportsManager)
+
+        assert "lr_schedulers_state" in client_state and isinstance(client_state["lr_schedulers_state"], dict)
+        assert "optimizers_state" in client_state and isinstance(client_state["optimizers_state"], dict)
+
+        # Optimizer is updated in setup_client to reference model weights from server
+        # Thus, only optimizer state (per parameter values such as momentum)
+        # should be loaded
+        for key, optimizer in self.optimizers.items():
+            optimizer_state = client_state["optimizers_state"][key]
+            optimizer_state_dict = optimizer.state_dict()
+            optimizer_state_dict["state"] = optimizer_state
+            optimizer.load_state_dict(optimizer_state_dict)
+
+        # Schedulers initialized in setup_client to reference correct optimizers
+        # Here we load in all other aspects of the scheduler state
+        for key in self.lr_schedulers:
+            self.lr_schedulers[key].load_state_dict(client_state["lr_schedulers_state"][key])
+
+        return True

@@ -10,9 +10,9 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch import nn
 from torch.optim import Optimizer
 
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.flexible_client import FlexibleClient
 from fl4health.mixins.adaptive_drift_constrained import AdaptiveDriftConstrainedMixin, AdaptiveDriftConstrainedProtocol
-from fl4health.mixins.core_protocols import BasicClientProtocolPreSetup
+from fl4health.mixins.core_protocols import FlexibleClientProtocolPreSetup
 from fl4health.mixins.personalized.utils import ensure_protocol_compliance
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.config import narrow_dict_type
@@ -46,7 +46,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         """
         This mixin implements the Ditto algorithm from Ditto: Fair and Robust Federated Learning Through
         Personalization. This mixin inherits from the `AdaptiveDriftConstrainedMixin`, and like that mixin,
-        this should be mixed with a `BasicClient` type in order to apply the Ditto personalization method
+        this should be mixed with a `FlexibleClient` type in order to apply the Ditto personalization method
         to that client.
 
         Background Context:
@@ -56,7 +56,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
 
 
         Raises:
-            RuntimeError: If the object does not satisfy the `BasicClientProtocolPreSetup`
+            RuntimeError: If the object does not satisfy the `FlexibleClientProtocolPreSetup`
             then it will raise an error. This is additional validation to ensure that the mixin was
             applied to an appropriate base class.
         """
@@ -70,8 +70,8 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             # if a parent class doesn't take args/kwargs
             super().__init__()
 
-        if not isinstance(self, BasicClientProtocolPreSetup):
-            raise RuntimeError("This object needs to satisfy `BasicClientProtocolPreSetup`.")
+        if not isinstance(self, FlexibleClientProtocolPreSetup):
+            raise RuntimeError("This object needs to satisfy `FlexibleClientProtocolPreSetup`.")
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """This method is called when a class inherits from AdaptiveMixin."""
@@ -85,15 +85,15 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         if hasattr(cls, "_dynamically_created"):
             return
 
-        # Check at class definition time if the parent class satisfies BasicClientProtocol
+        # Check at class definition time if the parent class satisfies FlexibleClientProtocol
         for base in cls.__bases__:
-            if base is not DittoPersonalizedMixin and issubclass(base, BasicClient):
+            if base is not DittoPersonalizedMixin and issubclass(base, FlexibleClient):
                 return
 
         # If we get here, no compatible base was found
         msg = (
             f"Class {cls.__name__} inherits from DittoPersonalizedMixin but none of its other "
-            f"base classes implement BasicClient. This may cause runtime errors."
+            f"base classes implement FlexibleClient. This may cause runtime errors."
         )
         log(WARN, msg)
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
@@ -128,7 +128,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         Helper method to make a copy of the original optimizer for the global model.
 
         Args:
-            original_optimizer (Optimizer): original optimizer of the underlying `BasicClient`.
+            original_optimizer (Optimizer): original optimizer of the underyling `FlexibleClient`.
 
         Returns:
             Optimizer: a copy of the original optimizer to be used by the global model.

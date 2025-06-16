@@ -9,7 +9,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, TensorDataset
 
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.flexible_client import FlexibleClient
 from fl4health.metrics import Accuracy
 from fl4health.mixins.personalized.utils import ensure_protocol_compliance
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
@@ -18,7 +18,7 @@ from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiv
 
 def test_ensure_protocol_compliance_does_not_raise() -> None:
     # arrange
-    class MyClient(BasicClient):
+    class MyClient(FlexibleClient):
         def get_model(self, config: Config) -> nn.Module:
             return self.model
 
@@ -53,7 +53,7 @@ def test_ensure_protocol_compliance_does_not_raise() -> None:
 def test_ensure_protocol_compliance_does_raise_type_error() -> None:
     # arrange
     class MyClient:
-        """My Client DOES not satisfy the protocol of BasicClient."""
+        """My Client DOES not satisfy the protocol of FlexibleClient."""
 
         @ensure_protocol_compliance
         def some_method(self, x: int) -> int:

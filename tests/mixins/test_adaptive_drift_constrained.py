@@ -13,19 +13,19 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, TensorDataset
 
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.flexible_client import FlexibleClient
 from fl4health.metrics import Accuracy
 from fl4health.mixins.adaptive_drift_constrained import (
     AdaptiveDriftConstrainedMixin,
     AdaptiveDriftConstrainedProtocol,
     apply_adaptive_drift_to_client,
 )
-from fl4health.mixins.core_protocols import BasicClientProtocol
+from fl4health.mixins.core_protocols import FlexibleClientProtocol
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 
 
-class _TestBasicClient(BasicClient):
+class _TestFlexibleClient(FlexibleClient):
     def get_model(self, config: Config) -> nn.Module:
         return self.model
 
@@ -39,7 +39,7 @@ class _TestBasicClient(BasicClient):
         return torch.nn.CrossEntropyLoss()
 
 
-class _TestAdaptedClient(AdaptiveDriftConstrainedMixin, _TestBasicClient):
+class _TestAdaptedClient(AdaptiveDriftConstrainedMixin, _TestFlexibleClient):
     pass
 
 
@@ -54,7 +54,7 @@ def test_init() -> None:
     client.initialized = True
     client.setup_client({})
 
-    assert isinstance(client, BasicClientProtocol)
+    assert isinstance(client, FlexibleClientProtocol)
     assert isinstance(client, AdaptiveDriftConstrainedProtocol)
 
 
@@ -65,19 +65,20 @@ def test_init_raises_value_error_when_basic_client_protocol_not_satisfied() -> N
     class _InvalidTestAdaptedClient(AdaptiveDriftConstrainedMixin):
         pass
 
-    with pytest.raises(RuntimeError, match="This object needs to satisfy `BasicClientProtocolPreSetup`."):
+    with pytest.raises(RuntimeError, match="This object needs to satisfy `FlexibleClientProtocolPreSetup`."):
+
         _InvalidTestAdaptedClient(data_path=Path(""), metrics=[Accuracy()])
 
 
 def test_subclass_checks_raise_no_warning() -> None:
     with warnings.catch_warnings(record=True) as recorded_warnings:
 
-        class _TestInheritanceMixin(AdaptiveDriftConstrainedMixin, _TestBasicClient):
-            """subclass should skip validation if is itself a Mixin that inherits AdaptiveDriftConstrainedMixin."""
+        class _TestInheritanceMixin(AdaptiveDriftConstrainedMixin, _TestFlexibleClient):
+            """subclass should skip validation if is itself a Mixin that inherits AdaptiveDriftConstrainedMixin"""
 
             pass
 
-        class _DynamicallyCreatedClass(AdaptiveDriftConstrainedMixin, _TestBasicClient):
+        class _DynamicallyCreatedClass(AdaptiveDriftConstrainedMixin, _TestFlexibleClient):
             """subclass used for dynamic creation of clients with mixins."""
 
             _dynamically_created = True
@@ -88,12 +89,12 @@ def test_subclass_checks_raise_no_warning() -> None:
 def test_subclass_checks_raise_warning() -> None:
     msg = (
         "Class _InvalidSubclass inherits from AdaptiveDriftConstrainedMixin but none of its other "
-        "base classes is a BasicClient. This may cause runtime errors."
+        "base classes is a FlexibleClient. This may cause runtime errors."
     )
     with pytest.warns(RuntimeWarning, match=msg):
 
         class _InvalidSubclass(AdaptiveDriftConstrainedMixin):
-            """Invalid subclass that warns the user that it expects this class to be mixed with a BasicClient."""
+            """Invalid subclass that warns the user that it expects this class to be mixed with a FlexibleClient."""
 
             pass
 
@@ -152,7 +153,7 @@ def test_get_parameters_uninitialized(mock_param_exchanger: MagicMock, mock_setu
 
 
 @patch("fl4health.mixins.adaptive_drift_constrained.log")
-@patch.object(_TestBasicClient, "set_parameters")
+@patch.object(_TestFlexibleClient, "set_parameters")
 def test_set_parameters(mock_super_set_parameters: MagicMock, mock_logger: MagicMock) -> None:
     # setup client
     client = _TestAdaptedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
@@ -184,7 +185,7 @@ def test_set_parameters(mock_super_set_parameters: MagicMock, mock_logger: Magic
 
 
 def test_dynamically_created_class() -> None:
-    adapted_class = apply_adaptive_drift_to_client(_TestBasicClient)
+    adapted_class = apply_adaptive_drift_to_client(_TestFlexibleClient)
 
     client = adapted_class(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
     client.model = torch.nn.Linear(5, 5)
@@ -195,5 +196,5 @@ def test_dynamically_created_class() -> None:
     client.initialized = True
     client.setup_client({})
 
-    assert isinstance(client, BasicClientProtocol)
+    assert isinstance(client, FlexibleClientProtocol)
     assert isinstance(client, AdaptiveDriftConstrainedProtocol)

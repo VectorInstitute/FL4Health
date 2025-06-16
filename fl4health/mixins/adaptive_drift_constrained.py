@@ -8,9 +8,9 @@ import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.flexible_client import FlexibleClient
 from fl4health.losses.weight_drift_loss import WeightDriftLoss
-from fl4health.mixins.core_protocols import BasicClientProtocol, BasicClientProtocolPreSetup
+from fl4health.mixins.core_protocols import FlexibleClientProtocol, FlexibleClientProtocolPreSetup
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -20,7 +20,7 @@ from fl4health.utils.typing import TorchFeatureType, TorchPredType, TorchTargetT
 
 
 @runtime_checkable
-class AdaptiveDriftConstrainedProtocol(BasicClientProtocol, Protocol):
+class AdaptiveDriftConstrainedProtocol(FlexibleClientProtocol, Protocol):
     loss_for_adaptation: float
     drift_penalty_tensors: list[torch.Tensor] | None
     drift_penalty_weight: float | None
@@ -39,7 +39,7 @@ class AdaptiveDriftConstrainedMixin:
         losses via a constrained adaptive drift.
 
         Raises:
-            RuntimeError: when the inheriting class does not satisfy `BasicClientProtocolPreSetup`.
+            RuntimeError: when the inheriting class does not satisfy `FlexibleClientProtocolPreSetup`.
         """
         # Initialize mixin-specific attributes with default values
         self.loss_for_adaptation = 0.1
@@ -54,8 +54,8 @@ class AdaptiveDriftConstrainedMixin:
             super().__init__()
 
         # set penalty_loss_function
-        if not isinstance(self, BasicClientProtocolPreSetup):
-            raise RuntimeError("This object needs to satisfy `BasicClientProtocolPreSetup`.")
+        if not isinstance(self, FlexibleClientProtocolPreSetup):
+            raise RuntimeError("This object needs to satisfy `FlexibleClientProtocolPreSetup`.")
         self.penalty_loss_function = WeightDriftLoss(self.device)
 
     def __init_subclass__(cls, **kwargs: Any):
@@ -70,15 +70,15 @@ class AdaptiveDriftConstrainedMixin:
         if hasattr(cls, "_dynamically_created"):
             return
 
-        # Check at class definition time if the parent class satisfies BasicClientProtocol
+        # Check at class definition time if the parent class satisfies FlexibleClientProtocol
         for base in cls.__bases__:
-            if base is not AdaptiveDriftConstrainedMixin and issubclass(base, BasicClient):
+            if base is not AdaptiveDriftConstrainedMixin and issubclass(base, FlexibleClient):
                 return
 
         # If we get here, no compatible base was found
         msg = (
             f"Class {cls.__name__} inherits from AdaptiveDriftConstrainedMixin but none of its other "
-            f"base classes is a BasicClient. This may cause runtime errors."
+            f"base classes is a FlexibleClient. This may cause runtime errors."
         )
         log(WARN, msg)
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
@@ -218,15 +218,14 @@ class AdaptiveDriftConstrainedMixin:
         return self.penalty_loss_function(self.model, self.drift_penalty_tensors, self.drift_penalty_weight)
 
 
-def apply_adaptive_drift_to_client(client_base_type: type[BasicClient]) -> type[BasicClient]:
-    """
-    Dynamically create an adapted client class.
+def apply_adaptive_drift_to_client(client_base_type: type[FlexibleClient]) -> type[FlexibleClient]:
+    """Dynamically create an adapted client class.
 
     Args:
-        client_base_type (type[BasicClient]): The class to be mixed.
+        client_base_type (type[FlexibleClient]): The class to be mixed.
 
     Returns:
-        type[BasicClient]: A basic client that has been mixed with `AdaptiveDriftConstrainedMixin`.
+        type[FlexibleClient]: A basic client that has been mixed with `AdaptiveDriftConstrainedMixin`.
     """
     return type(
         f"AdaptiveDrift{client_base_type.__name__}",

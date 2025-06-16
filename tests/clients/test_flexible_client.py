@@ -1,27 +1,28 @@
 import datetime
+import re
 from collections.abc import Sequence
 from pathlib import Path
 from unittest.mock import MagicMock
 
 import freezegun
+import pytest
 import torch
 from flwr.common import Scalar
 from flwr.common.typing import Config
 from freezegun import freeze_time
 from torch.utils.data import DataLoader
 
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.flexible_client import FlexibleClient
 from fl4health.reporting import JsonReporter
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.client import fold_loss_dict_into_metrics
 from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.logging import LoggingMode
-from fl4health.utils.losses import EvaluationLosses
+from fl4health.utils.losses import EvaluationLosses, TrainingLosses
 from fl4health.utils.random import set_all_random_seeds, unset_all_random_seeds
-from fl4health.utils.typing import TorchInputType, TorchTargetType
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 from tests.test_utils.models_for_test import LinearModel
-
 
 freezegun.configure(extend_ignore_list=["transformers"])  # type: ignore
 
@@ -38,7 +39,7 @@ DUMMY_DATASET = get_dummy_dataset()
 @freeze_time("2012-12-12 12:12:12")
 def test_json_reporter_setup_client() -> None:
     reporter = JsonReporter()
-    fl_client = MockBasicClient(reporters=[reporter])
+    fl_client = MockFlexibleClient(reporters=[reporter])
     fl_client.setup_client({})
 
     metric_dict = {
@@ -52,7 +53,7 @@ def test_json_reporter_setup_client() -> None:
 @freeze_time("2012-12-12 12:12:12")
 def test_json_reporter_shutdown() -> None:
     reporter = JsonReporter()
-    fl_client = MockBasicClient(reporters=[reporter])
+    fl_client = MockFlexibleClient(reporters=[reporter])
     fl_client.shutdown()
 
     metric_dict = {
@@ -69,7 +70,7 @@ def test_metrics_reporter_fit() -> None:
     test_metrics: dict[str, Scalar] = {"test_metric": 1234}
     reporter = JsonReporter()
 
-    fl_client = MockBasicClient(loss_dict=test_loss_dict, metrics=test_metrics, reporters=[reporter])
+    fl_client = MockFlexibleClient(loss_dict=test_loss_dict, metrics=test_metrics, reporters=[reporter])
     fl_client.fit([], {"current_server_round": test_current_server_round, "local_epochs": 0})
     metric_dict = {
         "host_type": "client",
@@ -102,7 +103,7 @@ def test_metrics_reporter_evaluate() -> None:
         "test - num_examples": 32,
     }
     reporter = JsonReporter()
-    fl_client = MockBasicClient(
+    fl_client = MockFlexibleClient(
         loss=test_loss,
         loss_dict={"checkpoint": test_loss},
         metrics=test_metrics,
@@ -132,7 +133,7 @@ def test_metrics_reporter_evaluate() -> None:
 
 
 def test_evaluate_after_fit_enabled() -> None:
-    fl_client = MockBasicClient()
+    fl_client = MockFlexibleClient()
     fl_client.validate = MagicMock()  # type: ignore
     fl_client.validate.return_value = fl_client.mock_loss, fl_client.mock_metrics
 
@@ -142,7 +143,7 @@ def test_evaluate_after_fit_enabled() -> None:
 
 
 def test_evaluate_after_fit_disabled() -> None:
-    fl_client = MockBasicClient()
+    fl_client = MockFlexibleClient()
     fl_client.validate = MagicMock()  # type: ignore
     fl_client.validate.return_value = fl_client.mock_loss, fl_client.mock_metrics
 
@@ -157,7 +158,7 @@ def test_validate_by_steps() -> None:
     # Set the random seeds
     set_all_random_seeds(2023)
 
-    fl_client = MockBasicClient()
+    fl_client = MockFlexibleClient()
     fl_client.num_validation_steps = 2
     fl_client.model = LinearModel()
     fl_client.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -170,19 +171,19 @@ def test_validate_by_steps() -> None:
 
 
 def test_num_val_samples_correct() -> None:
-    fl_client_no_max = MockBasicClient()
+    fl_client_no_max = MockFlexibleClient()
     fl_client_no_max.setup_client({})
     assert fl_client_no_max.num_validation_steps is None
     assert fl_client_no_max.num_val_samples == 32
 
-    fl_client_max = MockBasicClient()
+    fl_client_max = MockFlexibleClient()
     config: Config = {"num_validation_steps": 2}
     fl_client_max.setup_client(config)
     assert fl_client_max.num_validation_steps == 2
     assert fl_client_max.num_val_samples == 8
 
 
-class MockBasicClient(BasicClient):
+class MockFlexibleClient(FlexibleClient):
     def __init__(
         self,
         loss_dict: dict[str, float] | None = None,
@@ -250,3 +251,50 @@ class MockBasicClient(BasicClient):
             return self.mock_loss, self.mock_metrics
         else:
             return self.mock_loss, self.mock_metrics_test
+
+
+def test_subclass_raises_warning_if_override_predict() -> None:
+    msg = (
+        "`_TestSubclass` overrides `predict()`, but this method should no longer be overridden. "
+        "Please use `_predict_with_model()` instead."
+    )
+    with pytest.warns(RuntimeWarning, match=re.escape(msg)):
+
+        class _TestSubclass(FlexibleClient):
+            """A subclass that overrides predict"""
+
+            def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
+                return super().predict(input)
+
+
+def test_subclass_raises_warning_if_override_val_step() -> None:
+    msg = (
+        "`_TestSubclass` overrides `val_step()`, but this method should no longer be overridden. "
+        "Please use `_val_step_with_model()` instead."
+    )
+    with pytest.warns(RuntimeWarning, match=re.escape(msg)):
+
+        class _TestSubclass(FlexibleClient):
+            """A subclass that overrides val_step"""
+
+            def val_step(
+                self, input: TorchInputType, target: TorchTargetType
+            ) -> tuple[EvaluationLosses, TorchPredType]:
+                return super().val_step(input, target)
+
+
+def test_subclass_raises_warning_if_override_train_step() -> None:
+    msg = (
+        "`_TestSubclass` overrides `train_step()`, but this method should no longer be overridden. "
+        "Please use `_train_step_with_model_and_optimizer()` and its helper methods instead "
+        "for proper customization."
+    )
+    with pytest.warns(RuntimeWarning, match=re.escape(msg)):
+
+        class _TestSubclass(FlexibleClient):
+            """A subclass that overrides train_step"""
+
+            def train_step(
+                self, input: TorchInputType, target: TorchTargetType
+            ) -> tuple[TrainingLosses, TorchPredType]:
+                return super().train_step(input, target)
