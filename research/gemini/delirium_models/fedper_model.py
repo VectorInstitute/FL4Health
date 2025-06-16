@@ -27,7 +27,7 @@ class FedPerGlobalFeatureExtractor(nn.Module):
         return self.activation(self.fc5(x))
 
 
-class FedPerGlobalFeatureExtractorHet(nn.Module):
+class FedPerGlobalFeatureExtractorNet(nn.Module):
     def __init__(self, input_dim: int) -> None:
         super().__init__()
         self.fc1 = nn.Linear(input_dim, 256 * 2)
@@ -62,6 +62,6 @@ class FedPerLocalPredictionHead(nn.Module):
 
 class DeliriumFedPerModel(FedPerModel):
     def __init__(self, input_dim: int, output_dim: int) -> None:
-        base_module = FedPerGlobalFeatureExtractorHet(input_dim)
+        base_module = FedPerGlobalFeatureExtractorNet(input_dim)
         head_module = FedPerLocalPredictionHead(output_dim)
         super().__init__(base_module, head_module)
