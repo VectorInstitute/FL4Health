@@ -1,7 +1,8 @@
 """Ditto Personalized Mixin."""
 
+import copy
 import warnings
-from logging import DEBUG, ERROR, INFO, WARN
+from logging import INFO, WARN
 from typing import Any, Protocol, cast, runtime_checkable
 
 import torch
@@ -32,9 +33,6 @@ class DittoPersonalizedProtocol(AdaptiveDriftConstrainedProtocol, Protocol):
         pass  # pragma: no cover
 
     def set_initial_global_tensors(self) -> None:
-        pass  # pragma: no cover
-
-    def _extract_pred(self, kind: str, preds: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
         pass  # pragma: no cover
 
     def safe_global_model(self) -> nn.Module:
@@ -173,7 +171,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         Returns:
             nn.Module: The PyTorch model serving as the global model for Ditto
         """
-        return self.get_model(config).to(self.device)
+        return copy.deepcopy(self.get_model(config).to(self.device))
 
     @ensure_protocol_compliance
     def get_optimizer(self: DittoPersonalizedProtocol, config: Config) -> dict[str, Optimizer]:
@@ -366,179 +364,63 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             model optimization steps. The prediction dictionary contains predictions indexed a "global" and "local"
             corresponding to predictions from the global and local Ditto models for metric evaluations.
         """
-        # Clear gradients from optimizers if they exist
-        self.optimizers["global"].zero_grad()
-        self.optimizers["local"].zero_grad()
 
-        # Forward pass on both the global and local models
-        preds, features = self.predict(input)
-        target = self.transform_target(target)  # Apply transformation (Defaults to identity)
+        # global
+        global_losses, global_preds = self._compute_preds_and_losses(
+            self.safe_global_model(), self.optimizers["global"], input, target
+        )
+        # local
+        local_losses, local_preds = self._compute_preds_and_losses(self.model, self.optimizers["local"], input, target)
+        local_loss_clone = local_losses.backward["backward"].clone()  # need a clone for later
 
-        # Compute all relevant losses
-        losses = self.compute_training_loss(preds, features, target)
-
-        # Take a step with the global model vanilla loss
-        losses.additional_losses["global_loss"].backward()
-        self.optimizers["global"].step()
-
-        # Take a step with the local model using the local loss and Ditto constraint
-        losses.backward["backward"].backward()
-        self.optimizers["local"].step()
-
-        # Return dictionary of predictions where key is used to name respective MetricMeters
-        return losses, preds
-
-    def predict(
-        self: DittoPersonalizedProtocol,
-        input: TorchInputType,
-    ) -> tuple[TorchPredType, TorchFeatureType]:
-        """
-        Computes the predictions for both the **GLOBAL** and **LOCAL** models and pack them into the prediction
-        dictionary.
-
-        Args:
-            input (TorchInputType): Inputs to be fed into both models.
-
-        Returns:
-            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains predictions indexed by
-            name and the second element contains intermediate activations index by name. For Ditto, we only need the
-            predictions, so the second dictionary is simply empty.
-
-        Raises:
-            ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
-                forward.
-        """
-        if hasattr(self, "_predict"):
-            log(INFO, "Using '_predict' to make predictions")
-            global_preds, _ = self._predict(self.safe_global_model(), input)
-            local_preds, _ = self._predict(self.model, input)
-            log(INFO, "Successfully predicted for global and local models")
-        elif isinstance(input, torch.Tensor):
-            global_preds = self.safe_global_model()(input)
-            local_preds = self.model(input)
-        elif isinstance(input, dict):
-            # If input is a dictionary, then we unpack it before computing the forward pass.
-            # Note that this assumes the keys of the input match (exactly) the keyword args
-            # of the forward method.
-            global_preds = self.safe_global_model()(**input)
-            local_preds = self.model(**input)
-
-        if isinstance(global_preds, torch.Tensor) and isinstance(local_preds, torch.Tensor):
-            return {"global": global_preds, "local": local_preds}, {}
-        if isinstance(global_preds, dict) and isinstance(local_preds, dict):
-            retval = {f"global-{k}": v for k, v in global_preds.items()}
-            retval.update(**{f"local-{k}": v for k, v in local_preds.items()})
-            return retval, {}
-        raise ValueError(f"Unsupported pred types. Global: {type(global_preds)}, local: {type(local_preds)}")
-
-    def _extract_pred(self, kind: str, preds: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
-        """
-        Helper method to extract predictions from global and local models.
-
-        Args:
-            kind (str): the kind of predictions to be extracted i.e., for 'local' or for 'global'
-            preds (dict[str, torch.Tensor]): the full preds result from `self.predict()`
-
-        Raises:
-            ValueError: If supplied `kind` is not of 'global' or 'local'
-
-        Returns:
-            dict[str, torch.Tensor]: the predictions associated with the specified kind
-        """
-        if kind not in ["global", "local"]:
-            raise ValueError("Unsupported kind of prediction. Must be 'global' or 'local'.")
-
-        # filter
-        retval = {k: v for k, v in preds.items() if kind in k}
-        # remove prefix
-        return {k.replace(f"{kind}-", ""): v for k, v in retval.items()}
-
-    def compute_loss_and_additional_losses(
-        self: DittoPersonalizedProtocol,
-        preds: TorchPredType,
-        features: TorchFeatureType,
-        target: TorchTargetType,
-    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """
-        Computes the local model loss and the global Ditto model loss (stored in additional losses) for reporting and
-        training of the global model.
-
-        Args:
-            preds (TorchPredType): Prediction(s) of the model(s) indexed by name.
-            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
-            target (TorchTargetType): Ground truth data to evaluate predictions against.
-
-        Returns:
-            tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
-
-            - The tensor for the model loss
-            - A dictionary with ``local_loss``, ``global_loss`` as additionally reported loss values.
-        """
-        global_preds = self._extract_pred(kind="global", preds=preds)
-        local_preds = self._extract_pred(kind="local", preds=preds)
-
-        log(DEBUG, f"global_preds has keys {global_preds.keys()}")
-        log(DEBUG, f"local_preds has keys {local_preds.keys()}")
-
-        # Compute global model vanilla loss
-
-        if hasattr(self, "_special_compute_loss_and_additional_losses"):
-            log(INFO, "Using '_special_compute_loss_and_additional_losses' to compute loss")
-            global_loss, _ = self._special_compute_loss_and_additional_losses(global_preds, features, target)
-
-            # Compute local model loss
-            local_loss, _ = self._special_compute_loss_and_additional_losses(local_preds, features, target)
-
-        else:
-            global_loss = self.criterion(global_preds["global"], target)
-
-            # Compute local model loss
-            local_loss = self.criterion(local_preds["local"], target)
-
-        additional_losses = {"local_loss": local_loss.clone(), "global_loss": global_loss}
-
-        return local_loss, additional_losses
-
-    def compute_training_loss(
-        self: DittoPersonalizedProtocol,
-        preds: TorchPredType,
-        features: TorchFeatureType,
-        target: TorchTargetType,
-    ) -> TrainingLosses:
-        """
-        Computes training losses given predictions of the global and local models and ground truth data.
-        For the local model we add to the vanilla loss function by including Ditto penalty loss which is the l2 inner
-        product between the initial global model weights and weights of the local model. This is stored in backward
-        The loss to optimize the global model is stored in the additional losses dictionary under "global_loss".
-
-        Args:
-            preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in
-                dictionary will be used to compute metrics.
-            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
-            target: (TorchTargetType): Ground truth data to evaluate predictions against.
-
-        Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed by
-            name. Additional losses includes each loss component and the global model
-            loss tensor.
-        """
-        # Check that both models are in training mode
-        assert self.safe_global_model().training and self.model.training
-
-        # local loss is stored in loss, global model loss is stored in additional losses.
-        loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
-        additional_losses = additional_losses or {}  # make mypy happy
-
-        # Setting the adaptation loss to that of the local model, as its performance should dictate whether more or
-        # less weight is used to constrain it to the global model (as in FedProx)
-        additional_losses["loss_for_adaptation"] = additional_losses["local_loss"].clone()
-
-        # This is the Ditto penalty loss of the local model compared with the original Global model weights, scaled
-        # by drift_penalty_weight (or lambda in the original paper)
+        # take step
+        # global
+        global_losses = self._apply_backwards_on_losses_and_take_step(
+            self.safe_global_model(), self.optimizers["global"], global_losses
+        )
+        # local
         penalty_loss = self.compute_penalty_loss()
-        additional_losses["penalty_loss"] = penalty_loss.clone()
+        local_losses.backward["backward"] = local_losses.backward["backward"] + penalty_loss
+        local_losses = self._apply_backwards_on_losses_and_take_step(
+            self.model, self.optimizers["local"], local_losses
+        )
 
-        return TrainingLosses(backward=loss + penalty_loss, additional_losses=additional_losses)
+        # prepare return values
+        additional_losses = {
+            "penalty_loss": penalty_loss.clone(),
+            "local_loss": local_loss_clone,
+            "global_loss": global_losses.backward["backward"],
+            "loss_for_adaptation": local_loss_clone.clone(),
+        }
+        local_losses.additional_losses = additional_losses
+
+        # combined preds
+        if isinstance(global_preds, torch.Tensor) and isinstance(local_preds, torch.Tensor):
+            combined_preds = {"global": global_preds, "local": local_preds}
+        elif isinstance(global_preds, dict) and isinstance(local_preds, dict):
+            combined_preds = {f"global-{k}": v for k, v in global_preds.items()}
+            combined_preds.update(**{f"local-{k}": v for k, v in local_preds.items()})
+
+        return local_losses, combined_preds
+
+    def val_step(
+        self: DittoPersonalizedProtocol, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[EvaluationLosses, TorchPredType]:
+
+        # global
+        global_losses, global_preds = self._val_step_with_model(self.safe_global_model(), input, target)
+        # local
+        local_losses, local_preds = self._val_step_with_model(self.model, input, target)
+
+        # combine
+        losses = EvaluationLosses(
+            local_losses.checkpoint,
+            additional_losses={"global_loss": global_losses.checkpoint, "local_loss": local_losses.checkpoint},
+        )
+        preds: TorchPredType = {}
+        preds.update(**{f"global-{k}": v for k, v in global_preds.items()})
+        preds.update(**{f"local-{k}": v for k, v in local_preds.items()})
+        return losses, preds
 
     @ensure_protocol_compliance
     def validate(
