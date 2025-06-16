@@ -162,11 +162,6 @@ class ClientCheckpointAndStateModule:
         """
 
         if self.state_checkpointer is not None:
-            if self.state_checkpointer.checkpoint_exists(client.client_name):
-                self.state_checkpointer.load_client_state(client)
-                return True
-            else:
-                log(INFO, "State checkpointer is defined but no state checkpoint exists.")
-                return False
+            return self.state_checkpointer.maybe_load_client_state(client)
         else:
             raise ValueError("Attempting to load state, but no state checkpointer is specified")

@@ -190,17 +190,15 @@ class BaseServerCheckpointAndStateModule:
                 is returned. Otherwise, we return a None (or throw an exception).
         """
         if self.state_checkpointer is not None:
-            if self.state_checkpointer.checkpoint_exists(server.server_name):
-                assert (
-                    self.model is not None
-                ), "Attempting to load state but self.model is None, make sure to pass the model architecture"
+            assert self.model is not None, (
+                "Attempting to load state but self.model is None, make sure to pass the model architecture"
                 " to checkpointing module"
-                server_model = self.state_checkpointer.load_server_state(server, self.model)
+            )
+            server_model = self.state_checkpointer.maybe_load_server_state(server, self.model)
+            if server_model:
                 assert self.parameter_exchanger is not None
                 return ndarrays_to_parameters(self.parameter_exchanger.push_parameters(server_model))
-            else:
-                log(INFO, "State checkpointer is defined but no state checkpoint exists.")
-                return None
+            return None
         else:
             raise ValueError("Attempting to load state, but no state checkpointer is specified")
 

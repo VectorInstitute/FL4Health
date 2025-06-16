@@ -374,7 +374,7 @@ class ClientStateCheckpointer(StateCheckpointer):
         # Clear the client after being checkpointed.
         self.client = None
 
-    def load_client_state(self, client: BasicClient, attributes: list[str] | None = None) -> None:
+    def maybe_load_client_state(self, client: BasicClient, attributes: list[str] | None = None) -> bool:
         """
         Load the state into the client that is being provided.
 
@@ -382,12 +382,25 @@ class ClientStateCheckpointer(StateCheckpointer):
             client (BasicClient): Target client object into which state will be loaded
             attributes (list[str] | None, optional): List of attributes to load from the checkpoint. If None, all
                 attributes specified in ``snapshot_attrs`` are loaded. Defaults to None.
+
+        Returns:
+            bool: True if a checkpoint is successfully loaded. False otherwise
         """
         # Store client for access in functions
         self.client = client
-        self.load_state(attributes)
+        # Setting default name if one doesn't exist. If we're here and it doesn't exist yet, user is expecting
+        # a default name for loading anyway.
+        self.maybe_set_default_checkpoint_name()
+        if self.checkpoint_exists():
+            self.load_state(attributes)
+            log(INFO, f"State checkpoint successfully loaded from: {self.checkpoint_path}")
+            self.client = None
+            return True
+
         # Clear the client after we are done updating its attributes.
+        log(INFO, f"No state checkpoint found at: {self.checkpoint_path}")
         self.client = None
+        return False
 
     def get_attribute(self, name: str) -> Any:
         """
@@ -493,24 +506,40 @@ class ServerStateCheckpointer(StateCheckpointer):
         self.server = None
         self.server_model = None
 
-    def load_server_state(self, server: FlServer, model: nn.Module, attributes: list[str] | None = None) -> nn.Module:
+    def maybe_load_server_state(
+        self, server: FlServer, model: nn.Module, attributes: list[str] | None = None
+    ) -> nn.Module | None:
         """
         Load the state of the server from checkpoint.
 
         Args:
+            server (FlServer): server into which the attributes will be loaded
             model nn.Module: The model structure to be loaded as part of the server state.
             attributes (list[str] | None): List of attributes to load from the checkpoint. If None, all attributes
                 specified in ``snapshot_attrs`` are loaded. Defaults to None.
+
+        Returns:
+            nn.Module | None: Returns a model if a checkpoint exists to load from. Otherwise returns None
         """
         # Store server for access in functions
         self.server = server
         # Server object does not have a model attribute, so we handle it separately.
         self.server_model = model
-        self.load_state(attributes)
-        # Clear the server after we are done updating its attributes.
+        # Setting default name if one doesn't exist. If we're here and it doesn't exist yet, user is expecting
+        self.maybe_set_default_checkpoint_name()
+        if self.checkpoint_exists():
+            self.load_state(attributes)
+            log(INFO, f"State checkpoint successfully loaded from: {self.checkpoint_path}")
+            # Clear the server after we are done updating its attributes.
+            self.server = None
+            # Server model is saved and returned separately for parameter extraction.
+            return self.server_model
+
+        log(INFO, f"No state checkpoint found at: {self.checkpoint_path}")
+        # Clear the server objects after checkpointing.
         self.server = None
-        # Server model is saved and returned separately for parameter extraction.
-        return self.server_model
+        self.server_model = None
+        return None
 
     def get_attribute(self, name: str) -> Any:
         """

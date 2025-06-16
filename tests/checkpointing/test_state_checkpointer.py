@@ -88,7 +88,7 @@ def test_client_state_works_for_per_round_checkpointing(tmp_path: Path) -> None:
     assert copy_client.lr_schedulers["global"].state_dict() != fl_client.lr_schedulers["global"].state_dict()
 
     # Loads fl_client checkpoint (trained client) into the copy client
-    checkpointer.load_client_state(copy_client)
+    checkpointer.maybe_load_client_state(copy_client)
 
     # Check that state is loaded correctly.
     # Check the state of the loaded optimizer.
@@ -146,7 +146,7 @@ def test_client_state_works_for_training_loop_checkpointing(tmp_path: Path) -> N
     assert "train_metric_manager" in snapshot_ckpt
 
     # Use the copy_client to load the state.
-    checkpointer.load_client_state(copy_client)
+    checkpointer.maybe_load_client_state(copy_client)
 
     # Check that the state is loaded correctly.
     # Check the state of the loaded optimizer.
@@ -209,7 +209,7 @@ def test_client_state_checkpointing_with_custom_attrs(tmp_path: Path) -> None:
     assert checkpointer.checkpoint_exists()
 
     # Use the copy_client to load the state.
-    checkpointer.load_client_state(copy_client)
+    checkpointer.maybe_load_client_state(copy_client)
 
     assert "reports_manager" not in checkpointer.snapshot_ckpt
 
@@ -291,7 +291,7 @@ def test_server_state_checkpointer(tmp_path: Path) -> None:
     # but we create one to simulate the situation where the program is
     # restarted due to an interruption.
     new_checkpointer = ServerStateCheckpointer(checkpoint_dir=Path(checkpoint_dir), checkpoint_name="server_state.pt")
-    new_checkpointer.load_server_state(server=new_server, model=new_server_model)
+    new_checkpointer.maybe_load_server_state(server=new_server, model=new_server_model)
 
     # Check that the state is loaded correctly.
     assert all(
@@ -394,7 +394,7 @@ def test_nnunet_server_state_checkpointer(tmp_path: Path) -> None:
         checkpoint_dir=Path(checkpoint_dir), checkpoint_name="server_state.pt"
     )
 
-    new_checkpointer.load_server_state(server=new_server, model=new_server_model)
+    new_checkpointer.maybe_load_server_state(server=new_server, model=new_server_model)
 
     # Check that the state is loaded correctly.
     assert all(

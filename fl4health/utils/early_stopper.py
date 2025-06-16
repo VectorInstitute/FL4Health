@@ -58,7 +58,7 @@ class EarlyStopper:
                 If None, all attributes as defined in ``state_checkpointer`` are loaded. Defaults to None.
         """
         # Load the best snapshot, and update self.client with the values
-        self.state_checkpointer.load_client_state(self.client, attributes)
+        self.state_checkpointer.maybe_load_client_state(self.client, attributes)
 
     def should_stop(self, steps: int) -> bool:
         """
