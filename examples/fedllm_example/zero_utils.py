@@ -23,8 +23,9 @@ def maybe_zero_3(param: Any, ignore_status: bool = False, name: str | None = Non
     Returns:
         Any: The gathered parameter.
     """
-    if hasattr(param, "ds_id") and param.ds_status == ZeroParamStatus.NOT_AVAILABLE and not ignore_status:
-        log(WARNING, f"{name}: param.ds_status != ZeroParamStatus.NOT_AVAILABLE: {param.ds_status}")
+    if hasattr(param, "ds_id"):
+        if param.ds_status == ZeroParamStatus.NOT_AVAILABLE and not ignore_status:
+            log(WARNING, f"{name}: param.ds_status != ZeroParamStatus.NOT_AVAILABLE: {param.ds_status}")
         with zero.GatheredParameters([param]):
             param = param.data.detach().cpu().clone()
     else:
