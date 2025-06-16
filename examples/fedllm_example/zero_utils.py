@@ -60,12 +60,12 @@ def get_peft_state_maybe_zero_3(named_params: Iterator[tuple[str, Parameter]], b
                 lora_bias_names.add(bias_name)
             elif "bias" in k:
                 maybe_lora_bias[k] = t
-        for _, t in maybe_lora_bias.items():
+        for t in maybe_lora_bias.values():
             if bias_name in lora_bias_names:
                 to_return[bias_name] = t
     else:
         raise NotImplementedError
-    # We should gather all parametrs in the model
+    # We should gather all parameters in the model
     return {k: maybe_zero_3(v, ignore_status=True) for k, v in to_return.items()}
 
 
