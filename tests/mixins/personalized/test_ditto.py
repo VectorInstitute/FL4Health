@@ -57,7 +57,7 @@ class _TestFlexibleClientV2(FlexibleClient):
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
 
-    def _predict_with_model(
+    def predict_with_model(
         self, model: torch.nn.Module, input: TorchInputType
     ) -> tuple[TorchPredType, TorchFeatureType]:
         return {}, {}

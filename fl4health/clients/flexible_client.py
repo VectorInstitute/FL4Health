@@ -146,13 +146,6 @@ class FlexibleClient(NumPyClient):
         # check that specific methods are not overridden, otherwise throw warning
         methods_should_not_be_overridden = [
             (
-                "predict",
-                (
-                    f"`{cls.__name__}` overrides `predict()`, but this method should no longer be overridden. "
-                    "Please use `_predict_with_model()` instead."
-                ),
-            ),
-            (
                 "val_step",
                 (
                     f"`{cls.__name__}` overrides `val_step()`, but this method should no longer be overridden. "
@@ -618,7 +611,7 @@ class FlexibleClient(NumPyClient):
         optimizer.zero_grad()
 
         # Call user defined methods to get predictions and compute loss
-        preds, features = self._predict_with_model(model, input)
+        preds, features = self.predict_with_model(model, input)
         target = self.transform_target(target)
         losses = self.compute_training_loss(preds, features, target)
 
@@ -704,7 +697,7 @@ class FlexibleClient(NumPyClient):
 
         # Get preds and compute loss
         with torch.no_grad():
-            preds, features = self._predict_with_model(model, input)
+            preds, features = self.predict_with_model(model, input)
             target = self.transform_target(target)
             losses = self.compute_evaluation_loss(preds, features, target)
 
@@ -1091,7 +1084,7 @@ class FlexibleClient(NumPyClient):
         """
         return FullParameterExchanger()
 
-    def _predict_with_model(
+    def predict_with_model(
         self, model: torch.nn.Module, input: TorchInputType
     ) -> tuple[TorchPredType, TorchFeatureType]:
         """Helper predict method that allows for injection of model.
@@ -1139,29 +1132,6 @@ class FlexibleClient(NumPyClient):
             return preds, features
         else:
             raise ValueError("Model forward did not return a tensor, dictionary of tensors, or tuple of tensors")
-
-    def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
-        """
-        Computes the prediction(s), and potentially features, of the model(s) given the input.
-
-        Args:
-            input (TorchInputType): Inputs to be fed into the model. If input is of type ``dict[str, torch.Tensor]``,
-                it is assumed that the keys of input match the names of the keyword arguments of
-                ``self.model.forward().``
-
-        Returns:
-            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains a dictionary of
-            predictions indexed by name and the second element contains intermediate activations indexed by name. By
-            passing features, we can compute losses such as the contrastive loss in MOON. All predictions included in
-            dictionary will by default be used to compute metrics separately.
-
-        Raises:
-            TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model's
-                forward method.
-            ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
-                forward.
-        """
-        return self._predict_with_model(self.model, input)
 
     def compute_loss_and_additional_losses(
         self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType

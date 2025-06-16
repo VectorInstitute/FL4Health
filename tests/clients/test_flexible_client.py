@@ -20,7 +20,7 @@ from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.logging import LoggingMode
 from fl4health.utils.losses import EvaluationLosses, TrainingLosses
 from fl4health.utils.random import set_all_random_seeds, unset_all_random_seeds
-from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
+from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
 from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 from tests.test_utils.models_for_test import LinearModel
 
@@ -251,20 +251,6 @@ class MockFlexibleClient(FlexibleClient):
             return self.mock_loss, self.mock_metrics
         else:
             return self.mock_loss, self.mock_metrics_test
-
-
-def test_subclass_raises_warning_if_override_predict() -> None:
-    msg = (
-        "`_TestSubclass` overrides `predict()`, but this method should no longer be overridden. "
-        "Please use `_predict_with_model()` instead."
-    )
-    with pytest.warns(RuntimeWarning, match=re.escape(msg)):
-
-        class _TestSubclass(FlexibleClient):
-            """A subclass that overrides predict"""
-
-            def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
-                return super().predict(input)
 
 
 def test_subclass_raises_warning_if_override_val_step() -> None:
