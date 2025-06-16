@@ -35,8 +35,7 @@ def check_shape_match(params1: Iterable[torch.Tensor], params2: Iterable[torch.T
 
     # Check if the number of parameters match
     assert len(params1_list) == len(params2_list), (
-        f"Parameter length mismatch: \
-        {len(params1_list)} vs {len(params2_list)}. {error_message}"
+        f"Parameter length mismatch: {len(params1_list)} vs {len(params2_list)}. {error_message}"
     )
 
     # Check if each corresponding parameter shape matches

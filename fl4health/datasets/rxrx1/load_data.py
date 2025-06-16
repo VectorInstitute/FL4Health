@@ -102,7 +102,7 @@ def create_splits(
 
     # Stratified splitting
     train_indices, val_indices = [], []
-    for _, indices in label_to_indices.items():
+    for indices in label_to_indices.values():
         if seed is not None:
             np_generator = np.random.default_rng(seed)
             np_generator.shuffle(indices)

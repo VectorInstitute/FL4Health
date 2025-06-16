@@ -81,7 +81,7 @@ class AdaptiveDriftConstrainedMixin:
             f"base classes is a BasicClient. This may cause runtime errors."
         )
         log(WARN, msg)
-        warnings.warn(msg, RuntimeWarning, stacklevel=1)
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
     def get_parameters(self: AdaptiveDriftConstrainedProtocol, config: Config) -> NDArrays:
         """

@@ -38,6 +38,7 @@ def load_image(item: dict[str, Any], transform: Callable | None) -> tuple[torch.
     image = Image.open(image_path).convert("RGB")
     image = transform(image) if transform else transforms.ToTensor()(image)
 
+    # Default transformation if none provided
     assert isinstance(image, torch.Tensor), f"Image at {image_path} is not a Tensor"
     target = int(torch.tensor(item["extended_labels"]).argmax().item())
     return image, target

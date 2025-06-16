@@ -30,7 +30,7 @@ class HeadClassifier(nn.Module):
 
     def forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         x = self.dropout(input_tensor)
-        return x.flatten(start_dim=1)
+        return self.fc1(x)
 
 
 class BaseEfficientNet(nn.Module):
