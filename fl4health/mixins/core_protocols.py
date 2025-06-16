@@ -97,7 +97,7 @@ class FlexibleClientProtocol(FlexibleClientProtocolPreSetup, Protocol):
     ) -> tuple[EvaluationLosses, TorchPredType]:
         pass  # pragma: no cover
 
-    def predict_with_model(self, model: nn.Module, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
+    def predict(self, model: nn.Module, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
         pass  # pragma: no cover
 
     def transform_target(self, target: TorchTargetType) -> TorchTargetType:
