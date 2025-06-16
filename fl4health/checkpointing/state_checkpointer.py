@@ -221,15 +221,16 @@ class StateCheckpointer(ABC):
     @abstractmethod
     def maybe_set_default_checkpoint_name(self, object_name: str | None = None) -> None:
         """
-        Potentially sets a default name for the checkpoint to be saved. If ``checkpoint_dir`` is set but
-        ``checkpoint_name`` is None then a default ``checkpoint_name`` based on the underlying name of the object.
-        If ``object_name`` is not provided, the checkpoint_name will be set based on client name or server name.
+        Potentially sets a default name for the checkpoint to be saved or loaded. If ``checkpoint_dir`` is set but
+        ``checkpoint_name`` is None then a default ``checkpoint_name`` based on the given object_name or
+        the underlying name of the object ( either server_name or the client_name) will be set.
 
         Args:
-            object_name (str | None): Name of the object for which the checkpoint name is being set. If None, the
-                default name based on the client or server will be used.
+            object_name (str | None): The name of the object for which the checkpoint name is being set. If None, the
+                default name based on the client or server will be used. Note that if the client or server object
+                if not set yet (i.e. self.client or self.server is None) , this argument must not be None.
         """
-        raise NotImplementedError("set_attribute must be implemented by inheriting classes")
+        raise NotImplementedError("maybe_set_default_checkpoint_name must be implemented by inheriting classes")
 
     def _dict_wrap_attr(self, name: str, expected_type: type[T]) -> dict[str, T]:
         """
