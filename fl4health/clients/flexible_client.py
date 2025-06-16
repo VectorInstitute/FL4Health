@@ -611,7 +611,7 @@ class FlexibleClient(NumPyClient):
         optimizer.zero_grad()
 
         # Call user defined methods to get predictions and compute loss
-        preds, features = self.predict(model, input)
+        preds, features = self.predict_with_model(model, input)
         target = self.transform_target(target)
         losses = self.compute_training_loss(preds, features, target)
 
@@ -697,7 +697,7 @@ class FlexibleClient(NumPyClient):
 
         # Get preds and compute loss
         with torch.no_grad():
-            preds, features = self.predict(model, input)
+            preds, features = self.predict_with_model(model, input)
             target = self.transform_target(target)
             losses = self.compute_evaluation_loss(preds, features, target)
 
@@ -1084,7 +1084,9 @@ class FlexibleClient(NumPyClient):
         """
         return FullParameterExchanger()
 
-    def predict(self, model: torch.nn.Module, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
+    def predict_with_model(
+        self, model: torch.nn.Module, input: TorchInputType
+    ) -> tuple[TorchPredType, TorchFeatureType]:
         """Helper predict method that allows for injection of model.
 
         NOTE: Subclasses should implement this method if there is need to specialize
