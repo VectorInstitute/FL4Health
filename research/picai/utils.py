@@ -1,5 +1,72 @@
+import os
 from enum import Enum
+from logging import ERROR, INFO
+from pathlib import Path
 from typing import Any
+
+import torch
+from flwr.common.logger import log
+
+
+class SimpleDictionaryCheckpointer:
+    def __init__(
+        self,
+        checkpoint_dir: Path,
+        checkpoint_name: str,
+    ) -> None:
+        """
+        A simple state checkpointer that saves and loads an object's attribute state (stored in a dictionary) to and
+        from a file.
+
+        Args:
+            checkpoint_dir (Path): Directory to which checkpoints are saved
+            checkpoint_name (str): Name of the checkpoint to be saved
+        """
+        self.checkpoint_dir = checkpoint_dir
+        self.checkpoint_name = checkpoint_name
+        self.checkpoint_path = os.path.join(self.checkpoint_dir, self.checkpoint_name)
+
+    def save_checkpoint(self, checkpoint_dict: dict[str, Any]) -> None:
+        """
+        Save ``checkpoint_dict`` to checkpoint path defined based on checkpointer dir and checkpoint name.
+
+        Args:
+            checkpoint_dict (dict[str, Any]): A dictionary with string keys and values of type Any representing the
+                state to be saved.
+
+        Raises:
+            e: Will throw an error if there is an issue saving the model. ``Torch.save`` seems to swallow errors in
+                this context, so we explicitly surface the error with a try/except.
+        """
+        try:
+            log(INFO, f"Saving the state as {self.checkpoint_path}")
+            torch.save(checkpoint_dict, self.checkpoint_path)
+        except Exception as e:
+            log(ERROR, f"Encountered the following error while saving the checkpoint: {e}")
+            raise e
+
+    def load_checkpoint(self) -> dict[str, Any]:
+        """
+        Load and return the checkpoint stored in ``checkpoint_dir`` under the  ``checkpoint_name`` if it exists. If
+        it does not exist, an assertion error will be thrown.
+
+        Returns:
+            dict[str, Any]: A dictionary representing the checkpointed state, as loaded by ``torch.load``.
+        """
+        assert self.checkpoint_exists()
+        log(INFO, f"Loading state from checkpoint at {self.checkpoint_path}")
+
+        return torch.load(self.checkpoint_path)
+
+    def checkpoint_exists(self) -> bool:
+        """
+        Check if a checkpoint exists at the checkpoint_path constructed as
+        ``checkpoint_dir`` + ``checkpoint_name`` during initialization.
+
+        Returns:
+            bool: True if checkpoint exists, otherwise false.
+        """
+        return os.path.exists(self.checkpoint_path)
 
 
 class MultiAttributeEnum(Enum):

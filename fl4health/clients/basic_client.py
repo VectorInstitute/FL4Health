@@ -1296,8 +1296,7 @@ class BasicClient(NumPyClient):
         customize which attributes are saved in the checkpoint.
         """
         assert self.checkpoint_and_state_module.state_checkpointer is not None
-        self.checkpoint_and_state_module.state_checkpointer.set_client(self)
-        self.checkpoint_and_state_module.save_state()
+        self.checkpoint_and_state_module.save_state(self)
 
     def _load_client_state(self) -> bool:
         """
@@ -1306,5 +1305,4 @@ class BasicClient(NumPyClient):
         """
         assert self.checkpoint_and_state_module.state_checkpointer is not None
         log(INFO, "Loading client state from checkpoint")
-        self.checkpoint_and_state_module.state_checkpointer.set_client(self)
-        return self.checkpoint_and_state_module.maybe_load_state()
+        return self.checkpoint_and_state_module.maybe_load_state(self)

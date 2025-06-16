@@ -11,8 +11,8 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
-from fl4health.checkpointing.state_checkpointer import SimpleDictCheckpointer
 from fl4health.metrics.metric_managers import MetricManager
+from research.picai.utils import SimpleDictionaryCheckpointer
 
 
 class SingleNodeTrainer:
@@ -34,7 +34,7 @@ class SingleNodeTrainer:
             os.mkdir(checkpoint_dir)
 
         self.state_checkpoint_name = "ckpt.pkl"
-        self.per_epoch_checkpointer = SimpleDictCheckpointer(Path(checkpoint_dir), self.state_checkpoint_name)
+        self.per_epoch_checkpointer = SimpleDictionaryCheckpointer(Path(checkpoint_dir), self.state_checkpoint_name)
         best_metric_checkpoint_name = "best_ckpt.pkl"
         self.checkpointer = BestLossTorchModuleCheckpointer(checkpoint_dir, best_metric_checkpoint_name)
 

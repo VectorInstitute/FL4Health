@@ -405,8 +405,7 @@ class FlServer(Server):
         ckpt state by the checkpoint module
         """
         assert self.checkpoint_and_state_module.state_checkpointer is not None
-        self.checkpoint_and_state_module.state_checkpointer.set_server(self)
-        self.checkpoint_and_state_module.save_state(self.parameters)
+        self.checkpoint_and_state_module.save_state(self, self.parameters)
 
     def _load_server_state(self) -> bool:
         """
@@ -414,9 +413,8 @@ class FlServer(Server):
         The method can be overridden to add any necessary state when loading the checkpoint.
         """
         assert self.checkpoint_and_state_module.state_checkpointer is not None
-        self.checkpoint_and_state_module.state_checkpointer.set_server(self)
         # Attempt to load the server state if it exists.
-        server_parameters = self.checkpoint_and_state_module.maybe_load_state()
+        server_parameters = self.checkpoint_and_state_module.maybe_load_state(self)
         if server_parameters:
             self.parameters = server_parameters
             log(INFO, "Loaded server state from checkpoint")
