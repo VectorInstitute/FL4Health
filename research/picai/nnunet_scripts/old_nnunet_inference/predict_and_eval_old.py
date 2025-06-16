@@ -67,8 +67,7 @@ def pred_and_eval(
     # Ensure an output folder is specified
     if save_probability_maps or save_detection_maps or save_annotations:
         assert output_folder is not None, (
-            "Can not save the probability maps, annotations \
-            or the detection maps if no output folder is specified"
+            "Can not save the probability maps, annotations or the detection maps if no output folder is specified"
         )
 
     # Run inference and maybe save probability maps.

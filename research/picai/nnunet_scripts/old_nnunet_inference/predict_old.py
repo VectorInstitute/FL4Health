@@ -350,10 +350,7 @@ def predict(
     # Logs
     shape = np.shape(final_probs)
     if verbose:
-        log(
-            INFO,
-            (f"Finished running inference with {model_count} models on {shape[0]} samples."),
-        )
+        log(INFO, f"Finished running inference with {model_count} models on {shape[0]} samples.")
         log(INFO, f"\tNum Samples: {shape[0]}")
         log(INFO, f"\tNum Classes: {shape[1]}")
         log(INFO, f"\tSpatial Dimensions {shape[2:]}")
@@ -369,7 +366,10 @@ def predict(
             log(INFO, "")
             log(
                 INFO,
-                f"Saved predicted probability maps to disk: {secs:.1f}s total, {secs / len(case_identifiers):.1f}s/case",
+                (
+                    f"Saved predicted probability maps to disk: {secs:.1f}s "
+                    f"total, {secs / len(case_identifiers):.1f}s/case"
+                ),
             )
 
     # Maybe save predicted annotations

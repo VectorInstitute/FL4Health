@@ -135,7 +135,7 @@ def crop_or_pad(
     crop_only: bool = False,
 ) -> sitk.Image:
     """
-    Esize image by cropping and/or padding.
+    Resize image by cropping and/or padding.
 
     Adapted from https://github.com/DIAGNijmegen/picai_prep.
 

@@ -15,8 +15,7 @@ from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_
 
 def setup_device(device: str) -> torch.device:
     """
-    Checks the device being used, sets the number of threads and returns a
-    pytorch device.
+    Checks the device being used, sets the number of threads and returns a pytorch device.
 
 
     Args:
@@ -95,24 +94,19 @@ def transfer_metadata(finetune_id: int, pretrain_id: int, pretrain_plans: str) -
     """
     Transfers and or modifies metadata necessary for transfer learning.
 
-    Ensures the dataset json, dataset fingerprint and nnunet plans are all
-    ready for transfer learning. Some necessary changes are made to the
-    plans from pretraining to allow finetuning to occur without issue.
-    Note that this function saves the plans for finetuning as
-    'pt_plans_identifier-ptABC' where ABC is pretrain_id. If a plan file
-    is already found that matches this pattern, the function does not
-    overwrite it.
+    Ensures the dataset json, dataset fingerprint and nnunet plans are all ready for transfer learning. Some necessary
+    changes are made to the plans from pretraining to allow finetuning to occur without issue. Note that this
+    function saves the plans for finetuning as 'pt_plans_identifier-ptABC' where ABC is pretrain_id. If a plan file
+    is already found that matches this pattern, the function does not overwrite it.
 
 
     Args:
         finetune_id (int): The nnunet id of the finetuning dataset
         pretrain_id (int): The nnunet id of the pretraining dataset
-        pretrain_plans (str): Path to the nnunet plans json used for
-            pretraining
+        pretrain_plans (str): Path to the nnunet plans json used for pretraining
 
     Returns:
-        str: The name of the plans file for finetuning (without an
-            extension)
+        str: The name of the plans file for finetuning (without an extension)
     """
     # Extract Fingerprint if needed
     ft_dataset_name = convert_id_to_dataset_name(finetune_id)
@@ -154,9 +148,8 @@ def check_configs(plans_path: str, configs: list) -> None:
     plans = load_json(plans_path)
     for c in configs:
         assert c in plans["configurations"], (
-            f"Did not find {c} config in {plans_path}. Note that \
-            3d_lowres and 3d_cascade_fullres are not created for datasets with \
-            small image sizes"
+            f"Did not find {c} config in {plans_path}. Note that 3d_lowres and 3d_cascade_fullres are not created for "
+            "datasets with small image sizes"
         )
 
 
@@ -267,9 +260,8 @@ def main() -> None:
 
     # Ensure a checkpoint was provided for each config
     assert len(args.configs) == len(args.pretrain_checkpoints), (
-        f"The number of \
-        configs ({len(args.configs)}) and number of pretrained checkpoints \
-        ({len(args.pretrain_checkpoints)}) do not match"
+        f"The number of configs ({len(args.configs)}) and number of pretrained checkpoints "
+        f"({len(args.pretrain_checkpoints)}) do not match"
     )
 
     # Transfer Metadata needed for processing the finetuning set

@@ -280,8 +280,8 @@ def evaluate_case_multichannel(
         ground_truth = one_hot_ndarray(ground_truth, num_classes)[1:]
 
     assert detection_map.shape[0] == ground_truth.shape[0], (
-        f"Was expecting detection map and ground truth to be the same shape\
-         detection_map: {detection_map.shape} ground_truth: {ground_truth.shape}"
+        f"Was expecting detection map and ground truth to be the same shape detection_map: {detection_map.shape} "
+        f"ground_truth: {ground_truth.shape}"
     )
 
     num_lesion_classes = detection_map.shape[0]  # One less than num_classes since it does not include background

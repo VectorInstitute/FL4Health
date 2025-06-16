@@ -53,7 +53,7 @@ inner_products_all = mkmmd_loss.compute_euclidean_inner_products(X, Y)
 all_h_us_all = mkmmd_loss.compute_all_h_u_from_inner_products(inner_products_all)
 hat_d_per_kernel_all = mkmmd_loss.compute_hat_d_per_kernel(all_h_us_all)
 kernel_samples_minus_expectation = mkmmd_loss.form_kernel_samples_minus_expectation(all_h_us_all, hat_d_per_kernel_all)
-Q_k = mkmmd_loss.compute_hat_q_k(all_h_us_all, hat_d_per_kernel_all)
+q_k = mkmmd_loss.compute_hat_q_k(all_h_us_all, hat_d_per_kernel_all)
 
 
 def test_normalize_features() -> None:
@@ -416,7 +416,7 @@ def unrolled_summation(kernel_1_index: int, kernel_2_index: int) -> torch.Tensor
 
 
 def test_compute_q_k() -> None:
-    assert Q_k.shape == (3, 3)
+    assert q_k.shape == (3, 3)
 
     q_k_0_0 = (1 / (121 - 1)) * unrolled_summation(0, 0)
     q_k_1_0 = (1 / (121 - 1)) * unrolled_summation(1, 0)
@@ -427,11 +427,11 @@ def test_compute_q_k() -> None:
     assert pytest.approx(q_k_1_0.cpu(), abs=0.00001) == q_k_0_1.cpu()
     assert pytest.approx(q_k_1_2.cpu(), abs=0.00001) == q_k_2_1.cpu()
 
-    assert pytest.approx(Q_k[0, 0].cpu(), abs=0.00001) == q_k_0_0[0].cpu()
-    assert pytest.approx(Q_k[1, 0].cpu(), abs=0.00001) == q_k_1_0[0].cpu()
-    assert pytest.approx(Q_k[0, 1].cpu(), abs=0.00001) == q_k_0_1[0].cpu()
-    assert pytest.approx(Q_k[1, 2].cpu(), abs=0.00001) == q_k_1_2[0].cpu()
-    assert pytest.approx(Q_k[2, 1].cpu(), abs=0.00001) == q_k_2_1[0].cpu()
+    assert pytest.approx(q_k[0, 0].cpu(), abs=0.00001) == q_k_0_0[0].cpu()
+    assert pytest.approx(q_k[1, 0].cpu(), abs=0.00001) == q_k_1_0[0].cpu()
+    assert pytest.approx(q_k[0, 1].cpu(), abs=0.00001) == q_k_0_1[0].cpu()
+    assert pytest.approx(q_k[1, 2].cpu(), abs=0.00001) == q_k_1_2[0].cpu()
+    assert pytest.approx(q_k[2, 1].cpu(), abs=0.00001) == q_k_2_1[0].cpu()
 
 
 def test_beta_with_largest_hat_d() -> None:
