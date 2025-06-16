@@ -136,14 +136,11 @@ class PerFclClient(BasicClient):
             and self.initial_global_module is not None
         )
 
-    def _predict_with_model(
-        self, model: torch.nn.Module, input: TorchInputType
-    ) -> tuple[TorchPredType, TorchFeatureType]:
+    def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the prediction(s) and features of the model(s) given the input.
 
         Args:
-            model (torch.nn.Module): the model with which to make predictions
             input (TorchInputType): Inputs to be fed into the model. ``TorchInputType`` is simply an alias
                 for the union of ``torch.Tensor`` and ``dict[str, torch.Tensor]``.
 
@@ -155,7 +152,7 @@ class PerFclClient(BasicClient):
         """
         # For PerFCL models, we required the input to simply be a torch.Tensor
         assert isinstance(input, torch.Tensor)
-        preds, features = model(input)
+        preds, features = self.model(input)
         # In the first server round, these module will not have been set.
         if (
             self.old_local_module is not None
