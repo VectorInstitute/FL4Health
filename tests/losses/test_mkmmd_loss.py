@@ -135,9 +135,9 @@ def test_inner_product_calculations_all() -> None:
     # Index into X'Y
     assert pytest.approx(inner_products_all[3, 1, 1].cpu(), abs=0.0001) == inner_product_y1_x1
     assert pytest.approx(inner_products_all[3, 3, 3].cpu(), abs=0.0001) == inner_product_y3_x3
-    # Should be transpose in X'Y, but we're looking at the diagonal
+    # Should be transpose in XY', but we're looking at the diagonal
     assert pytest.approx(inner_products_all[2, 1, 1].cpu(), abs=0.0001) == inner_product_y1_x1
-    assert pytest.approx(inner_products_all[2, 3, 1].cpu(), abs=0.0001) == inner_product_y3_x3
+    assert pytest.approx(inner_products_all[2, 3, 3].cpu(), abs=0.0001) == inner_product_y3_x3
 
 
 def test_compute_h_u_from_inner_products_linear() -> None:
@@ -427,11 +427,11 @@ def test_compute_q_k() -> None:
     assert pytest.approx(q_k_1_0.cpu(), abs=0.00001) == q_k_0_1.cpu()
     assert pytest.approx(q_k_1_2.cpu(), abs=0.00001) == q_k_2_1.cpu()
 
-    assert pytest.approx(Q_k[0, 0].cpu(), abs=0.00001) == q_k_0_0.cpu()
-    assert pytest.approx(Q_k[1, 0].cpu(), abs=0.00001) == q_k_1_0.cpu()
-    assert pytest.approx(Q_k[0, 1].cpu(), abs=0.00001) == q_k_0_1.cpu()
-    assert pytest.approx(Q_k[1, 2].cpu(), abs=0.00001) == q_k_1_2.cpu()
-    assert pytest.approx(Q_k[2, 1].cpu(), abs=0.00001) == q_k_2_1.cpu()
+    assert pytest.approx(Q_k[0, 0].cpu(), abs=0.00001) == q_k_0_0[0].cpu()
+    assert pytest.approx(Q_k[1, 0].cpu(), abs=0.00001) == q_k_1_0[0].cpu()
+    assert pytest.approx(Q_k[0, 1].cpu(), abs=0.00001) == q_k_0_1[0].cpu()
+    assert pytest.approx(Q_k[1, 2].cpu(), abs=0.00001) == q_k_1_2[0].cpu()
+    assert pytest.approx(Q_k[2, 1].cpu(), abs=0.00001) == q_k_2_1[0].cpu()
 
 
 def test_beta_with_largest_hat_d() -> None:
