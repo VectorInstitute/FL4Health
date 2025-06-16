@@ -117,16 +117,18 @@ class StateCheckpointer(ABC):
 
         return torch.load(self.checkpoint_path)
 
-    def checkpoint_exists(self) -> bool:
+    def checkpoint_exists(self, object_name: str | None = None) -> bool:
         """
         Check if a checkpoint exists at the checkpoint_path constructed as ``checkpoint_dir`` + ``checkpoint_name``
 
         Returns:
             bool: True if checkpoint exists, otherwise false.
         """
-        if self.checkpoint_path is not None:
-            return os.path.exists(self.checkpoint_path)
-        return False
+        if self.checkpoint_path is None:
+            assert object_name is not None
+            self.maybe_set_default_checkpoint_name(object_name)
+        assert self.checkpoint_path is not None, "A checkpoint name should be provided"
+        return os.path.exists(self.checkpoint_path)
 
     def add_to_snapshot_attr(self, name: str, snapshotter: AbstractSnapshotter, input_type: type[T]) -> None:
         """
@@ -187,6 +189,7 @@ class StateCheckpointer(ABC):
         for attr in attributes:
             snapshotter, expected_type = self.snapshot_attrs[attr]
             self._load_snapshot(snapshotter, attr, expected_type)
+        log(INFO, f"Loaded the checkpointed state from {self.checkpoint_path}")
 
         # Release snapshot memory after loading
         self.snapshot_ckpt.clear()
@@ -212,6 +215,19 @@ class StateCheckpointer(ABC):
         Args:
             name (str): Name of the attribute.
             value (Any): Value to set for the attribute.
+        """
+        raise NotImplementedError("set_attribute must be implemented by inheriting classes")
+
+    @abstractmethod
+    def maybe_set_default_checkpoint_name(self, object_name: str | None = None) -> None:
+        """
+        Potentially sets a default name for the checkpoint to be saved. If ``checkpoint_dir`` is set but
+        ``checkpoint_name`` is None then a default ``checkpoint_name`` based on the underlying name of the object.
+        If ``object_name`` is not provided, the checkpoint_name will be set based on client name or server name.
+
+        Args:
+            object_name (str | None): Name of the object for which the checkpoint name is being set. If None, the
+                default name based on the client or server will be used.
         """
         raise NotImplementedError("set_attribute must be implemented by inheriting classes")
 
@@ -325,18 +341,21 @@ class ClientStateCheckpointer(StateCheckpointer):
         super().__init__(checkpoint_dir, checkpoint_name, snapshot_attrs)
         self.client: BasicClient | None = None
 
-    def maybe_set_default_checkpoint_name(self) -> None:
+    def maybe_set_default_checkpoint_name(self, object_name: str | None = None) -> None:
         """
         Potentially sets a default name for the checkpoint to be saved. If ``checkpoint_dir`` is set but
         ``checkpoint_name`` is None then a default ``checkpoint_name`` based on the underlying name of the client to
         be checkpointed will be set of the form ``f"client_{self.client.client_name}_state.pt"``.
         """
-        assert self.client is not None, "Attempting to save client state but client is None"
-        # Set the checkpoint name based on client's name if not already provided.
-        if self.checkpoint_name is None:
-            # If checkpoint_name is not provided, we set it based on the client name.
-            self.checkpoint_name = f"client_{self.client.client_name}_state.pt"
-            self.set_checkpoint_path(self.checkpoint_dir, self.checkpoint_name)
+        if object_name is not None:
+            self.checkpoint_name = f"client_{object_name}_state.pt"
+        else:
+            assert self.client is not None, "Attempting to save client state but client is None"
+            # Set the checkpoint name based on client's name if not already provided.
+            if self.checkpoint_name is None:
+                # If checkpoint_name is not provided, we set it based on the client name.
+                self.checkpoint_name = f"client_{self.client.client_name}_state.pt"
+        self.set_checkpoint_path(self.checkpoint_dir, self.checkpoint_name)
 
     def save_client_state(self, client: BasicClient) -> None:
         """
@@ -437,18 +456,21 @@ class ServerStateCheckpointer(StateCheckpointer):
         self.server: FlServer | None = None
         self.server_model: nn.Module | None = None
 
-    def maybe_set_default_checkpoint_name(self) -> None:
+    def maybe_set_default_checkpoint_name(self, object_name: str | None = None) -> None:
         """
         Potentially sets a default name for the checkpoint to be saved. If ``checkpoint_dir`` is set but
         ``checkpoint_name`` is None then a default ``checkpoint_name`` based on the underlying name of the server to
         be checkpointed will be set of the form ``f"server_{self.server.server_name}_state.pt"``.
         """
-        assert self.server is not None, "Attempting to save server state but server is None"
-        # Set the checkpoint name based on server's name if not already provided.
-        if self.checkpoint_name is None:
-            # If checkpoint_name is not provided, we set it based on the server's name.
-            self.checkpoint_name = f"server_{self.server.server_name}_state.pt"
-            self.set_checkpoint_path(self.checkpoint_dir, self.checkpoint_name)
+        if object_name is not None:
+            self.checkpoint_name = f"server_{object_name}_state.pt"
+        else:
+            assert self.server is not None, "Attempting to save server state but server is None"
+            # Set the checkpoint name based on server's name if not already provided.
+            if self.checkpoint_name is None:
+                # If checkpoint_name is not provided, we set it based on the server's name.
+                self.checkpoint_name = f"server_{self.server.server_name}_state.pt"
+        self.set_checkpoint_path(self.checkpoint_dir, self.checkpoint_name)
 
     def save_server_state(self, server: FlServer, model: nn.Module) -> None:
         """

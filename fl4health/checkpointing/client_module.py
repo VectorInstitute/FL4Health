@@ -162,7 +162,7 @@ class ClientCheckpointAndStateModule:
         """
 
         if self.state_checkpointer is not None:
-            if self.state_checkpointer.checkpoint_exists():
+            if self.state_checkpointer.checkpoint_exists(client.client_name):
                 self.state_checkpointer.load_client_state(client)
                 return True
             else:

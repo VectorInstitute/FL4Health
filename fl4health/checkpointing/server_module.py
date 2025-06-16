@@ -190,7 +190,7 @@ class BaseServerCheckpointAndStateModule:
                 is returned. Otherwise, we return a None (or throw an exception).
         """
         if self.state_checkpointer is not None:
-            if self.state_checkpointer.checkpoint_exists():
+            if self.state_checkpointer.checkpoint_exists(server.server_name):
                 assert (
                     self.model is not None
                 ), "Attempting to load state but self.model is None, make sure to pass the model architecture"
