@@ -79,6 +79,33 @@ def test_autoencoder_converter_label_conditioned() -> None:
     ) and torch.equal(converted_target, original_data)
 
 
+def test_autoencoder_converter_with_custom_conversion_function() -> None:
+    # Create a dummy dataset for testing
+    dummy_dataset = get_dummy_dataset()
+
+    assert dummy_dataset.targets is not None
+
+    # Initialize the converter and convert the dataset.
+    autoencoder_converter_label = AutoEncoderDatasetConverter(condition="label", do_one_hot_encoding=True)
+    autoencoder_converter_label.convert_dataset(dummy_dataset)
+
+    autoencoder_converter_custom_conversion_function = AutoEncoderDatasetConverter(
+        None, False, autoencoder_converter_label._cat_input_label, 5
+    )
+    autoencoder_converter_custom_conversion_function.convert_dataset(dummy_dataset)
+
+    # Get the size of condition vector (condition is one_hot_encoded target)
+    target_num_conditions = autoencoder_converter_label.get_condition_vector_size()
+    num_conditions = autoencoder_converter_custom_conversion_function.get_condition_vector_size()
+    assert target_num_conditions == num_conditions
+
+    # Because we're using the same conversion function ( one as a custom function, these should be the same)
+    target_converted_data, target_converted_target = autoencoder_converter_label[0]
+    converted_data, converted_target = autoencoder_converter_custom_conversion_function[0]
+    assert torch.equal(converted_target, target_converted_target)
+    assert torch.equal(converted_data, target_converted_data)
+
+
 def test_pack_unpack() -> None:
     batch_size = 10
     # Create a dummy dataset for testing
