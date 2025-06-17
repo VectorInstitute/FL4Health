@@ -27,7 +27,6 @@ from fl4health.mixins.personalized import (
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 from fl4health.utils.losses import EvaluationLosses, TrainingLosses
-from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType
 
 
 class _TestFlexibleClient(FlexibleClient):
@@ -44,30 +43,17 @@ class _TestFlexibleClient(FlexibleClient):
         return torch.nn.CrossEntropyLoss()
 
 
-class _TestFlexibleClientV2(FlexibleClient):
-    def get_model(self, config: Config) -> nn.Module:
-        return self.model
-
-    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
-        return self.train_loader, self.val_loader
-
-    def get_optimizer(self, config: Config) -> Optimizer | dict[str, Optimizer]:
-        return self.optimizers["local"]
-
-    def get_criterion(self, config: Config) -> _Loss:
-        return torch.nn.CrossEntropyLoss()
-
-    def predict_with_model(
-        self, model: torch.nn.Module, input: TorchInputType
-    ) -> tuple[TorchPredType, TorchFeatureType]:
-        return {}, {}
-
-
 class _TestDittoedClient(DittoPersonalizedMixin, _TestFlexibleClient):
     pass
 
 
-class _TestDittoedClientV2(DittoPersonalizedMixin, _TestFlexibleClientV2):
+class _DummyParent:
+
+    def __init__(self) -> None:
+        pass
+
+
+class _TestInvalidDittoedClient(DittoPersonalizedMixin, _DummyParent):
     pass
 
 
@@ -379,3 +365,8 @@ def test_val_step(
             _Call(((client.model, input, target), {})),
         ]
     )
+
+
+def test_raise_runtime_error_not_flexible_client() -> None:
+    with pytest.raises(RuntimeError, match="This object needs to satisfy `FlexibleClientProtocolPreSetup`."):
+        _ = _TestInvalidDittoedClient()
