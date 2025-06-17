@@ -27,7 +27,7 @@ class AdaptiveDriftConstrainedProtocol(BasicClientProtocol, Protocol):
     penalty_loss_function: WeightDriftLoss
     parameter_exchanger: FullParameterExchangerWithPacking[float]
 
-    def compute_penalty_loss(self) -> torch.Tensor: ...  # noqa: E704
+    def compute_penalty_loss(self) -> torch.Tensor: ...
 
 
 class AdaptiveDriftConstrainedMixin:
