@@ -368,5 +368,7 @@ def test_val_step(
 
 
 def test_raise_runtime_error_not_flexible_client() -> None:
+    """Test that an invalid parent raises RuntimeError."""
+
     with pytest.raises(RuntimeError, match="This object needs to satisfy `FlexibleClientProtocolPreSetup`."):
         _ = _TestInvalidDittoedClient()
