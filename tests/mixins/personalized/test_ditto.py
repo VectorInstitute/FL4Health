@@ -1,3 +1,4 @@
+import re
 import warnings
 from logging import INFO
 from pathlib import Path
@@ -370,5 +371,7 @@ def test_val_step(
 def test_raise_runtime_error_not_flexible_client() -> None:
     """Test that an invalid parent raises RuntimeError."""
 
-    with pytest.raises(RuntimeError, match="This object needs to satisfy `FlexibleClientProtocolPreSetup`."):
-        _ = _TestInvalidDittoedClient()
+    with pytest.raises(
+        RuntimeError, match=re.escape("This object needs to satisfy `FlexibleClientProtocolPreSetup`.")
+    ):
+        _TestInvalidDittoedClient()
