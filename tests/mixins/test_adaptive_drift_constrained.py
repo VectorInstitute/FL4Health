@@ -23,6 +23,7 @@ from fl4health.mixins.adaptive_drift_constrained import (
 from fl4health.mixins.core_protocols import FlexibleClientProtocol
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
+from fl4health.utils.losses import TrainingLosses
 
 
 class _TestFlexibleClient(FlexibleClient):
@@ -198,3 +199,48 @@ def test_dynamically_created_class() -> None:
 
     assert isinstance(client, FlexibleClientProtocol)
     assert isinstance(client, AdaptiveDriftConstrainedProtocol)
+
+
+@patch.object(_TestAdaptedClient, "_compute_preds_and_losses")
+@patch.object(_TestAdaptedClient, "compute_penalty_loss")
+@patch.object(_TestAdaptedClient, "_apply_backwards_on_losses_and_take_step")
+def test_train_step(
+    mock_apply_backwards_on_losses_and_take_step: MagicMock,
+    mock_compute_penalty_loss: MagicMock,
+    mock_compute_preds_and_losses: MagicMock,
+) -> None:
+    # setup client
+    client = _TestAdaptedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    client.model = torch.nn.Linear(5, 5)
+    client.optimizers = {"global": torch.optim.SGD(client.model.parameters(), lr=0.0001)}
+    client.train_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
+    client.val_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
+    client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
+    client.initialized = True
+    client.setup_client({})
+
+    # setup mocks
+    dummy_training_losses = TrainingLosses(
+        backward=torch.ones(5),
+    )
+    dummy_pred_type = {"prediction": torch.ones(5)}
+    dummy_penalty_loss = torch.zeros(5)
+    mock_compute_preds_and_losses.return_value = (dummy_training_losses, dummy_pred_type)
+    mock_compute_penalty_loss.return_value = dummy_penalty_loss
+    mock_apply_backwards_on_losses_and_take_step.side_effect = lambda x, y, z: z
+
+    # act
+    dummy_input = torch.ones(5)
+    dummy_target = torch.zeros(5)
+    # TODO: fix the mixin/protocol typing that leads to mypy complaint
+    result = client.train_step(dummy_input, dummy_target)  # type: ignore
+
+    # assert
+    mock_compute_preds_and_losses.assert_called_once_with(
+        client.model, client.optimizers["global"], dummy_input, dummy_target
+    )
+    mock_compute_penalty_loss.assert_called_once()
+    mock_apply_backwards_on_losses_and_take_step.assert_called_once_with(
+        client.model, client.optimizers["global"], dummy_training_losses
+    )
+    assert result[1] == dummy_pred_type
