@@ -69,7 +69,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             super().__init__()
 
         if not isinstance(self, FlexibleClientProtocolPreSetup):
-            raise RuntimeError("This object needs to satisfy `FlexibleClientProtocolPreSetup`.")
+            raise RuntimeError("This object needs to satisfy `FlexibleClientProtocolPreSetup`.")  # pragma: no cover
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """This method is called when a class inherits from AdaptiveMixin."""
