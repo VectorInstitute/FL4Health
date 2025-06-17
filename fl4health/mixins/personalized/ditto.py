@@ -66,7 +66,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             super().__init__(*args, **kwargs)
         except TypeError:
             # if a parent class doesn't take args/kwargs
-            super().__init__()
+            super().__init__()  # pragma: no cover
 
         if not isinstance(self, FlexibleClientProtocolPreSetup):
             raise RuntimeError("This object needs to satisfy `FlexibleClientProtocolPreSetup`.")
