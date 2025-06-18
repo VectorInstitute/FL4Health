@@ -56,7 +56,8 @@ def test_instance_accountant_reproduce_results() -> None:
 
 
 def test_user_level_accountant_poisson_sampling_reproduce_results() -> None:
-    """This test "reproduces" the results of Table 1 from Learning Differentially Private Recurrent Language Models.
+    """
+    This test "reproduces" the results of Table 1 from Learning Differentially Private Recurrent Language Models.
 
     The bounds are actually tighter than those of the paper due to an improvement in the sharpness of such bounds in
     2020 through https://arxiv.org/abs/2004.00010 Proposition 12 (in v4). See the documentation in the

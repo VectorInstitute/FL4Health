@@ -86,7 +86,8 @@ def test_infer_label_dim_failures() -> None:
 def get_dummy_classification_tensors(
     full_tensor_shape: tuple[int, ...], label_dim: int
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Returns 3 versions of the same dummy tensor to use for metric tests. The shape provided in the arguments
+    """
+    Returns 3 versions of the same dummy tensor to use for metric tests. The shape provided in the arguments
     specifies the shape of tensors with vector encoded targets. The function will create "soft" encodings
     (i.e not one-hot), "hard" encodings (i.e. one-hot), and label index encodings.
 

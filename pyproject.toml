@@ -131,7 +131,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
 include = ["*.py", "pyproject.toml"]
-exclude = ["mypy_disallow_legacy_types.py", "*.ipynb"]
+exclude = ["mypy_disallow_legacy_types.py", "*.ipynb", "conf.py"]
 line-length = 119
 
 [tool.ruff.format]
@@ -163,11 +163,7 @@ select = [
 fixable = ["A", "B", "COM", "C4", "RET", "SIM", "ICN", "Q", "RSE", "D", "E", "F", "I", "W", "N", "ERA", "PL", "D213"]
 ignore = [
     "B905", # `zip()` without an explicit `strict=` parameter
-    "E501", # line too long
     "D203", # 1 blank line required before class docstring
-    "D213", # Multi-line docstring summary should start at the second line
-    "D100", # Ignore module level docstrings requirement
-    "D104", # Ignore package level docstrings requirement
     "D205", # 1 blank line required between summary line and description
     "ERA001", # Found commented-out code (too many false positives with math comments)
     "PLR2004", # Replace magic number with named constant
@@ -180,6 +176,8 @@ ignore = [
     "PLW2901", # `for` loop variable `target` overwritten by assignment target
     "D212", # Multi-line docstring summary should start at the first line
     "D301", # r-strings for docstrings with backslashes
+    "D100", # TEMPORARY IGNORE: Ignore module level docstrings requirement
+    "D104", # TEMPORARY IGNORE: Ignore package level docstrings requirement
     "D101", # TEMPORARY IGNORE WILL FIX ONE BY ONE
     "D102", # TEMPORARY IGNORE WILL FIX ONE BY ONE
     "D103", # TEMPORARY IGNORE WILL FIX ONE BY ONE
@@ -193,7 +191,7 @@ ignore = [
 "__init__.py" = ["E402", "F401", "F403", "F811"]
 
 [tool.ruff.lint.pep8-naming]
-ignore-names = ["X*", "setUp", "SimpleITK", "F", "NN"]
+ignore-names = ["SimpleITK", "F", "NN"]
 
 [tool.ruff.lint.isort]
 lines-after-imports = 2

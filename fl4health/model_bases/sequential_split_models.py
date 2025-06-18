@@ -75,7 +75,8 @@ class SequentiallySplitModel(nn.Module):
 
 
 class SequentiallySplitExchangeBaseModel(SequentiallySplitModel, PartialLayerExchangeModel):
-    """This model is a specific type of sequentially split model, where we specify the layers to be exchanged as being
+    """
+    This model is a specific type of sequentially split model, where we specify the layers to be exchanged as being
     those belonging to the ``base_module``.
     """
 

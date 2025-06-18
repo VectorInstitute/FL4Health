@@ -6,7 +6,9 @@ from research.flamby.utils import shutoff_batch_norm_tracking
 
 
 class ApflEfficientNet(nn.Module):
-    """APFL module to serve as both the local and global models
+    """
+    APFL module to serve as both the local and global models.
+
     We use the EfficientNets architecture that many participants in the ISIC
     competition have identified to work best.
     See here the [reference paper](https://arxiv.org/abs/1905.11946)

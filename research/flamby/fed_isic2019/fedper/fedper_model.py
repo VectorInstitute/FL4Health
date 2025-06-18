@@ -34,7 +34,9 @@ class HeadClassifier(nn.Module):
 
 
 class BaseEfficientNet(nn.Module):
-    """FedPer feature extractor module
+    """
+    FedPer feature extractor module.
+
     We use the EfficientNets architecture that many participants in the ISIC
     competition have identified to work best.
     See here the [reference paper](https://arxiv.org/abs/1905.11946)

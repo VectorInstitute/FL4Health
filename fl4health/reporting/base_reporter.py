@@ -1,4 +1,5 @@
-"""Base Class for Reporters.
+"""
+Base Class for Reporters.
 
 Super simple for now but keeping it in a separate file in case we add more base methods.
 """

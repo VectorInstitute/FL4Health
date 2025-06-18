@@ -23,7 +23,8 @@ def _assert(value: Any, saved_value: Any, metric_key: str, tolerance: float = DE
 
 
 def assert_metrics_dict(metrics_to_assert: dict[str, Any], metrics_saved: dict[str, Any]) -> list[str]:
-    """Recursively compares two dictionaries to ensure the values are the same.
+    """
+    Recursively compares two dictionaries to ensure the values are the same.
 
     Ensures that the key value pairs in 'metrics_to_assert' are present and within the requested tolerances in
     'metrics_saved'.

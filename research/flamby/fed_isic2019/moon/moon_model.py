@@ -34,7 +34,9 @@ class HeadClassifier(nn.Module):
 
 
 class BaseEfficientNet(nn.Module):
-    """MOON feature extractor module
+    """
+    MOON feature extractor module.
+
     We use the EfficientNets architecture that many participants in the ISIC competition have identified to work best.
     See here the [reference paper](https://arxiv.org/abs/1905.11946)
     Thank you to [Luke Melas-Kyriazi](https://github.com/lukemelas) for his

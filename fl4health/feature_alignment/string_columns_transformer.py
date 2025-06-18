@@ -74,7 +74,7 @@ class TextColumnTransformer(BaseEstimator, TransformerMixin):
         self.transformer.fit(x[x.columns[0]])
         return self
 
-    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+    def transform(self, x: pd.DataFrame) -> pd.DataFrame:
         """
         Transforms the concatenation of a single column of text in the ``X`` dataframe.
 
@@ -84,5 +84,5 @@ class TextColumnTransformer(BaseEstimator, TransformerMixin):
         Returns:
             pd.DataFrame: Transformed dataframe.
         """
-        assert isinstance(X, pd.DataFrame) and X.shape[1] == 1
-        return self.transformer.transform(X[X.columns[0]])
+        assert isinstance(x, pd.DataFrame) and x.shape[1] == 1
+        return self.transformer.transform(x[x.columns[0]])

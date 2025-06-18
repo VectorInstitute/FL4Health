@@ -6,7 +6,8 @@ from fl4health.metrics import SimpleMetric
 
 
 class AccuracyForTest(SimpleMetric):
-    """Accuracy class strictly reserved for testing the TransformsMetric. More strongly decouples the test from any
+    """
+    Accuracy class strictly reserved for testing the TransformsMetric. More strongly decouples the test from any
     of our metrics implementations.
     """
 

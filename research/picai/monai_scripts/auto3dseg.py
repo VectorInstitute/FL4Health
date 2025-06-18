@@ -1,4 +1,5 @@
-"""Uses Auto3dSeg from monai to train a segmentation model.
+"""
+Uses Auto3dSeg from monai to train a segmentation model.
 
 -Assumes dataset is formatted following nnUNet structure for consistency
 """

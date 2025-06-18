@@ -73,20 +73,20 @@ class PcaModule(nn.Module):
             tuple[Tensor, Tensor]: The principal components (i.e., right singular vectors) and their corresponding
             singular values.
         """
-        X_prime = self.prepare_data_forward(x, center_data=center_data)
+        x_prime = self.prepare_data_forward(x, center_data=center_data)
         if self.low_rank:
             log(INFO, "Assuming data matrix is low rank, using low-rank PCA implementation.")
-            m, n = X_prime.size(0), X_prime.size(1)
+            m, n = x_prime.size(0), x_prime.size(1)
             if self.rank_estimation > m or self.rank_estimation > n:
                 log(WARNING, "Estimate of data rank given by user is larger than the actual rank.")
             q = min(self.rank_estimation, m, n)
-            _, singular_values, principal_components = torch.pca_lowrank(X_prime, q=q, center=False)
+            _, singular_values, principal_components = torch.pca_lowrank(x_prime, q=q, center=False)
         else:
             if self.full_svd:
                 log(INFO, "Performing full SVD on data matrix.")
             else:
                 log(INFO, "Performing reduced SVD on data matrix.")
-            _, singular_values, vh = torch.linalg.svd(X_prime, full_matrices=self.full_svd)
+            _, singular_values, vh = torch.linalg.svd(x_prime, full_matrices=self.full_svd)
             principal_components = vh.T
         return principal_components, singular_values
 

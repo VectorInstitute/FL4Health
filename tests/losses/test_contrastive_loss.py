@@ -9,7 +9,8 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def nt_xent(x1: torch.Tensor, x2: torch.Tensor, t: float = 0.5) -> torch.Tensor:
-    """Fed-X Alternative Implementation of NT-Xent to Compare against.
+    """
+    Fed-X Alternative Implementation of NT-Xent to Compare against.
     https://github.com/Sungwon-Han/FEDX/blob/main/losses.py#L11.
     """
     x1 = F.normalize(x1, dim=1)

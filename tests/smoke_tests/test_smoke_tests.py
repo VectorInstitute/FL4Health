@@ -15,7 +15,8 @@ pytestmark = pytest.mark.asyncio(loop_scope="module")
 
 
 async def try_running_test_task(task: asyncio.Task) -> None:
-    """Helper for running task.
+    """
+    Helper for running task.
 
     If an exception is reached, then cancel the task and wait for it to be cleared.
     """
@@ -28,7 +29,8 @@ async def try_running_test_task(task: asyncio.Task) -> None:
 
 
 def assert_on_done_task(task: asyncio.Task) -> None:
-    """This function takes a done task and makes assert if a result was returned.
+    """
+    This function takes a done task and makes assert if a result was returned.
 
     If an exception was returned, then it fails the pytest for proper shutdown.
     Also, if the task was cancelled, then it cleans up the cancelled tasks so the

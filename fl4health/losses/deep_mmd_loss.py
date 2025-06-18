@@ -308,7 +308,7 @@ class DeepMmdLoss(torch.nn.Module):
 
         return mmd_value_estimate
 
-    def forward(self, Xs: torch.Tensor, Xt: torch.Tensor) -> torch.Tensor:
+    def forward(self, x_s: torch.Tensor, x_t: torch.Tensor) -> torch.Tensor:
         """
         Forward pass of the Deep MMD Loss where it first trains the deep kernel for number of optimization
         steps and then computes the MMD loss.
@@ -322,6 +322,6 @@ class DeepMmdLoss(torch.nn.Module):
         """
         if self.training:
             for _ in range(self.optimization_steps):
-                self.train_kernel(Xs.clone().detach(), Xt.clone().detach())
+                self.train_kernel(x_s.clone().detach(), x_t.clone().detach())
 
-        return self.compute_kernel(Xs, Xt)
+        return self.compute_kernel(x_s, x_t)

@@ -43,7 +43,9 @@ class FendaClassifier(ParallelSplitHeadModule):
 
 
 class LocalEfficientNet(nn.Module):
-    """Local FENDA module
+    """
+    Local FENDA module.
+
     We use the EfficientNets architecture that many participants in the ISIC
     competition have identified to work best.
     See here the [reference paper](https://arxiv.org/abs/1905.11946)
@@ -81,7 +83,9 @@ class LocalEfficientNet(nn.Module):
 
 
 class GlobalEfficientNet(nn.Module):
-    """Global FENDA module
+    """
+    Global FENDA module.
+
     We use the EfficientNets architecture that many participants in the ISIC
     competition have identified to work best.
     See here the [reference paper](https://arxiv.org/abs/1905.11946)

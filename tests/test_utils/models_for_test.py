@@ -195,7 +195,8 @@ class LinearPredictionHead(nn.Module):
 
 
 class UNet3D(nn.Module):
-    """https://pypi.org/project/unet/0.7.7/.
+    """
+    https://pypi.org/project/unet/0.7.7/.
 
     PyTorch implementation of 2D and 3D U-Net (unet 0.7.7)
     License: MIT License (MIT license)

@@ -32,7 +32,8 @@ with warnings.catch_warnings():
 
 
 class NnunetConfig(Enum):
-    """The possible nnunet model configs as of nnunetv2 version 2.5.1.
+    """
+    The possible nnunet model configs as of nnunetv2 version 2.5.1.
 
     See https://github.com/MIC-DKFZ/nnUNet/tree/v2.5.1
     """

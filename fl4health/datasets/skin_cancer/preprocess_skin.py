@@ -1,4 +1,5 @@
-"""The following code is adapted from the preprocess_skin.py script
+"""
+The following code is adapted from the preprocess_skin.py script
 from the medical_federated GitHub repository by Seongjun Yang et al.
 
 Paper: https://arxiv.org/abs/2207.03075
@@ -15,7 +16,8 @@ import pandas as pd
 
 
 def save_to_json(data: dict[str, Any], path: str) -> None:
-    """Saves a dictionary to a JSON file.
+    """
+    Saves a dictionary to a JSON file.
 
     Args:
         data: A dictionary to save.
@@ -34,7 +36,8 @@ def process_client_data(
     original_columns: list[str],
     official_columns: list[str],
 ) -> None:
-    """Processes and saves the client-specific dataset.
+    """
+    Processes and saves the client-specific dataset.
 
     Args:
         dataframe: The dataframe containing the client data.

@@ -70,7 +70,9 @@ class LocalUNetFeatureExtractor(nn.Module):
 
 
 class GlobalUNetFeatureExtractor(nn.Module):
-    """Global FENDA module.
+    """
+    Global FENDA module.
+
     We use a UNet with the classifier head stripped off to extract a set of features on
     which each pixel of the image is classified.
 

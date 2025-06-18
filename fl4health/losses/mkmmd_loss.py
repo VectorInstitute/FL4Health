@@ -62,8 +62,8 @@ class MkMmdLoss(torch.nn.Module):
         self.layer_name = layer_name
         self.perform_linear_approximation = perform_linear_approximation
 
-    def normalize(self, X: torch.Tensor) -> torch.Tensor:
-        return torch.div(X, torch.linalg.norm(X, dim=1, keepdim=True))
+    def normalize(self, x: torch.Tensor) -> torch.Tensor:
+        return torch.div(x, torch.linalg.norm(x, dim=1, keepdim=True))
 
     def construct_quadruples(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         """
@@ -435,7 +435,7 @@ class MkMmdLoss(torch.nn.Module):
         raw_betas = torch.clamp(raw_betas, min=0)
         return (1.0 / torch.sum(raw_betas)) * raw_betas
 
-    def forward(self, Xs: torch.Tensor, Xt: torch.Tensor) -> torch.Tensor:
+    def forward(self, x_s: torch.Tensor, x_t: torch.Tensor) -> torch.Tensor:
         """
         Compute the multi-kernel maximum mean discrepancy (MK-MMD) between the source and target domains.
 
@@ -446,4 +446,4 @@ class MkMmdLoss(torch.nn.Module):
         Returns:
             torch.Tensor: MK-MMD value
         """
-        return self.compute_mkmmd(Xs, Xt, self.betas)
+        return self.compute_mkmmd(x_s, x_t, self.betas)

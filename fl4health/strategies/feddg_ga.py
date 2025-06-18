@@ -223,7 +223,8 @@ class FedDgGa(FedAvg):
             self.num_rounds = n_server_rounds
         else:
             assert n_server_rounds == self.num_rounds, (
-                f"n_server_rounds has changed from the original value of {self.num_rounds} and is now {n_server_rounds}"
+                f"n_server_rounds has changed from the original value of {self.num_rounds} "
+                f"and is now {n_server_rounds}"
             )
 
         return client_fit_ins

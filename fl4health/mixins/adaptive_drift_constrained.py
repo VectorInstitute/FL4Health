@@ -219,7 +219,8 @@ class AdaptiveDriftConstrainedMixin:
 
 
 def apply_adaptive_drift_to_client(client_base_type: type[BasicClient]) -> type[BasicClient]:
-    """Dynamically create an adapted client class.
+    """
+    Dynamically create an adapted client class.
 
     Args:
         client_base_type (type[BasicClient]): The class to be mixed.

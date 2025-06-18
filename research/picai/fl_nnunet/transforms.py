@@ -52,7 +52,8 @@ def get_annotations_from_probs(preds: torch.Tensor, has_regions: bool = False, t
 
 
 def collapse_one_hot_tensor(input: torch.Tensor, dim: int = 0) -> torch.Tensor:
-    """Collapses a one hot encoded tensor so that they are no longer one hot encoded.
+    """
+    Collapses a one hot encoded tensor so that they are no longer one hot encoded.
 
     Args:
         input (torch.Tensor): The binary one hot encoded tensor

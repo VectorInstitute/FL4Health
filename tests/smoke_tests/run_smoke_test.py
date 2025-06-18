@@ -57,7 +57,8 @@ class SmokeTestTimeoutError(Exception):
 
 
 def postprocess_logs(logs: str) -> str:
-    """Postprocess logs to remove spurious Errors.
+    """
+    Postprocess logs to remove spurious Errors.
 
     This function removes a spurious 'error' that is sometimes thrown when
     running smoke tests on certain machines from the tcp_posix.cc library.
@@ -121,7 +122,8 @@ async def run_smoke_test(
     tolerance: float = DEFAULT_TOLERANCE,
     read_logs_timeout: int = DEFAULT_READ_LOGS_TIMEOUT,
 ) -> tuple[list[str], list[str]]:
-    """Runs a smoke test for a given server, client, and dataset configuration.
+    """
+    Runs a smoke test for a given server, client, and dataset configuration.
 
     Uses asyncio to kick off one server instance defined by the `server_python_path` module and N client instances
     defined by the `client_python_path` module (N is defined by the `n_clients` attribute in the config). Waits for the
@@ -367,7 +369,8 @@ async def run_fault_tolerance_smoke_test(
     tolerance: float = DEFAULT_TOLERANCE,
     read_logs_timeout: int = DEFAULT_READ_LOGS_TIMEOUT,
 ) -> tuple[list[str], list[str]]:
-    """Runs a smoke test for a given server, client, and dataset configuration.
+    """
+    Runs a smoke test for a given server, client, and dataset configuration.
 
     Args:
         server_python_path (str): the path for the executable server module
