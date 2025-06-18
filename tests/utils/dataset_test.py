@@ -8,13 +8,13 @@ from fl4health.utils.random import set_all_random_seeds, unset_all_random_seeds
 def construct_dictionary_dataset() -> DictionaryDataset:
     # set seed for creation
     set_all_random_seeds(2025)
-    random_inputs = torch.rand((10, 3))
+    random_inputs = [torch.randn((3)) for _ in range(10)]
     # Note high is exclusive here
     random_labels = torch.randint(low=0, high=5, size=(10, 1))
 
     # unset seed thereafter
     unset_all_random_seeds()
-    return DictionaryDataset({"primary": [random_inputs]}, random_labels)
+    return DictionaryDataset({"primary": random_inputs}, random_labels)
 
 
 def add_one_transform(t: torch.Tensor) -> torch.Tensor:
@@ -50,9 +50,9 @@ def test_select_by_indices() -> None:
     data_1 = dictionary_dataset_subset.data["primary"][1]
     data_5 = dictionary_dataset_subset.data["primary"][2]
 
-    assert torch.allclose(data_0, torch.Tensor([0.6850, 0.9355, 0.2900]), atol=1e-4)
-    assert torch.allclose(data_1, torch.Tensor([0.3991, 0.7470, 0.0215]), atol=1e-4)
-    assert torch.allclose(data_5, torch.Tensor([0.3606, 0.8450, 0.8059]), atol=1e-4)
+    assert torch.allclose(data_0, torch.Tensor([-0.8716, 0.1114, 1.2044]), atol=1e-4)
+    assert torch.allclose(data_1, torch.Tensor([-0.1803, 1.0021, 0.7914]), atol=1e-4)
+    assert torch.allclose(data_5, torch.Tensor([0.0521, 1.1838, 1.6855]), atol=1e-4)
 
     with pytest.raises(TypeError):
         # Intentionally providing a bad type
