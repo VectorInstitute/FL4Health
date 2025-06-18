@@ -185,6 +185,15 @@ class LinearTransform(nn.Module):
         return self.linear(x)
 
 
+class LinearPredictionHead(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.linear = nn.Linear(3, 2, bias=False)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.linear(x)
+
+
 class UNet3D(nn.Module):
     """https://pypi.org/project/unet/0.7.7/.
 

@@ -4,6 +4,7 @@ from collections.abc import Generator
 import pytest
 import torch
 from torch import Tensor
+from torch.nn.parameter import Parameter
 
 from fl4health.model_bases.pca import PcaModule
 from fl4health.utils.random import set_all_random_seeds, unset_all_random_seeds
@@ -70,6 +71,10 @@ def test_centering(setup_random_seeds: Generator[None, None, None]) -> None:
     assert torch.allclose(torch.zeros(new_mean.size()), new_mean, atol=1e-7)
     assert (pca_module.data_mean == data_mean).all()
 
+    x = x - data_mean
+    x_prime = pca_module.prepare_data_forward(x, center_data=False)
+    assert torch.allclose(x_prime, x, atol=1e-7)
+
 
 def test_full_svd_full_rank_data(setup_random_seeds: Generator[None, None, None]) -> None:
     pca_module = PcaModule(low_rank=False, full_svd=True)
@@ -134,3 +139,11 @@ def test_low_rank_svd(setup_random_seeds: Generator[None, None, None]) -> None:
     pca_module.set_principal_components(principal_components, singular_values)
     reconstruction_error = pca_module.compute_reconstruction_error(x, k=small_rank, center_data=True)
     assert math.isclose(reconstruction_error, 0.0, abs_tol=1e-8)
+
+
+def test_compute_explained_variance_ratios() -> None:
+    pca_module = PcaModule()
+    pca_module.singular_values = Parameter(torch.Tensor([2.0, 3.0, 4.0, 5.0]), requires_grad=False)
+    ratios = pca_module.compute_explained_variance_ratios()
+    target_ratios = torch.Tensor([4.0, 9.0, 16.0, 25.0]) / 54.0
+    assert torch.allclose(ratios, target_ratios, atol=1e-7)

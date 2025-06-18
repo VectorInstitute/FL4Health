@@ -2,11 +2,13 @@ import pytest
 import torch
 from flwr.common import Scalar
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from fl4health.utils.client import (
     check_if_batch_is_empty_and_verify_input,
     clone_and_freeze_model,
     fold_loss_dict_into_metrics,
+    maybe_progress_bar,
     move_data_to_device,
     process_and_check_validation_steps,
 )
@@ -116,3 +118,10 @@ def test_move_data_to_device() -> None:
         assert torch.equal(dict_of_same_size_tensors[key], tensor_)
     with pytest.raises(TypeError):
         move_data_to_device(bad_input, torch.device("cpu"))  # type: ignore
+
+
+def test_maybe_progress_bar() -> None:
+    iter_without_progress_bar = [0, 1, 2, 3, 4]
+    iter_with_progress_bar = maybe_progress_bar(iter_without_progress_bar, display_progress_bar=True)
+    assert isinstance(iter_with_progress_bar, tqdm)
+    assert not isinstance(iter_without_progress_bar, tqdm)
