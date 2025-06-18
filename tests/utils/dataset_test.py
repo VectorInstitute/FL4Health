@@ -1,8 +1,20 @@
 import pytest
 import torch
 
-from fl4health.utils.dataset import SslTensorDataset
+from fl4health.utils.dataset import DictionaryDataset, SslTensorDataset, select_by_indices
 from fl4health.utils.random import set_all_random_seeds, unset_all_random_seeds
+
+
+def construct_dictionary_dataset() -> DictionaryDataset:
+    # set seed for creation
+    set_all_random_seeds(2025)
+    random_inputs = torch.rand((10, 3))
+    # Note high is exclusive here
+    random_labels = torch.randint(low=0, high=5, size=(10, 1))
+
+    # unset seed thereafter
+    unset_all_random_seeds()
+    return DictionaryDataset({"primary": [random_inputs]}, random_labels)
 
 
 def add_one_transform(t: torch.Tensor) -> torch.Tensor:
@@ -28,3 +40,20 @@ def test_ssl_tensor_dataset_construction() -> None:
         dataset = SslTensorDataset(data, data, None, None)
 
     unset_all_random_seeds()
+
+
+def test_select_by_indices() -> None:
+    dictionary_dataset = construct_dictionary_dataset()
+    dictionary_dataset_subset = select_by_indices(dictionary_dataset, torch.Tensor([0, 1, 5]).int())
+
+    data_0 = dictionary_dataset_subset.data["primary"][0]
+    data_1 = dictionary_dataset_subset.data["primary"][1]
+    data_5 = dictionary_dataset_subset.data["primary"][2]
+
+    assert torch.allclose(data_0, torch.Tensor([0.6850, 0.9355, 0.2900]), atol=1e-4)
+    assert torch.allclose(data_1, torch.Tensor([0.3991, 0.7470, 0.0215]), atol=1e-4)
+    assert torch.allclose(data_5, torch.Tensor([0.3606, 0.8450, 0.8059]), atol=1e-4)
+
+    with pytest.raises(TypeError):
+        # Intentionally providing a bad type
+        select_by_indices(torch.Tensor([0.1, 0.2]), torch.Tensor([0, 1, 5]))  # type: ignore
