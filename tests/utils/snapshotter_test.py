@@ -35,10 +35,9 @@ def compare_mixed_dictionaries(
             if dict1_value != narrow_dict_type(dict2, key, list):
                 return False
         elif isinstance(dict1_value, dict):
-            for k, v in dict1_value.items():
-                if not compare_mixed_dictionaries(v, narrow_dict_type(dict2, k, dict)):
-                    return False
-                return True
+            if not compare_mixed_dictionaries(dict1_value, narrow_dict_type(dict2, key, dict)):
+                return False
+            return True
         else:
             raise TypeError(f"Unsupported type in dictionary: {type(dict1_value)}")
 
