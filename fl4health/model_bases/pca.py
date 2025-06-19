@@ -6,6 +6,9 @@ from torch import Tensor, nn
 from torch.nn.parameter import Parameter
 
 
+TWO_D_TENSOR_SHAPE_LENGTH = 2
+
+
 class PcaModule(nn.Module):
     def __init__(self, low_rank: bool = False, full_svd: bool = False, rank_estimation: int = 6) -> None:
         """
@@ -101,7 +104,7 @@ class PcaModule(nn.Module):
         Returns:
             Tensor: tensor flattened to be 2D
         """
-        if len(x.size()) == 2:
+        if len(x.size()) == TWO_D_TENSOR_SHAPE_LENGTH:
             return torch.squeeze(x.float())
         dim0 = x.size(0)
         return torch.squeeze(x.view(dim0, -1).float())

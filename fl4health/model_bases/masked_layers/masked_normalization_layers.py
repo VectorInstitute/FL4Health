@@ -11,6 +11,10 @@ from fl4health.utils.functions import bernoulli_sample
 
 TorchShape = int | list[int] | torch.Size
 
+BATCH_NORM_3D_INPUT_LENGTH = 5
+BATCH_NORM_2D_INPUT_LENGTH = 4
+BATCH_NORM_1D_INPUT_LENGTHS = {2, 3}
+
 
 class MaskedLayerNorm(nn.LayerNorm):
     def __init__(
@@ -287,7 +291,7 @@ class MaskedBatchNorm1d(_MaskedBatchNorm):
     """
 
     def _check_input_dim(self, input: Tensor) -> None:
-        if input.dim() != 2 and input.dim() != 3:
+        if input.dim() not in BATCH_NORM_1D_INPUT_LENGTHS:
             raise ValueError(f"expected 2D or 3D input (got {input.dim()}D input)")
 
 
@@ -298,7 +302,7 @@ class MaskedBatchNorm2d(_MaskedBatchNorm):
     """
 
     def _check_input_dim(self, input: Tensor) -> None:
-        if input.dim() != 4:
+        if input.dim() != BATCH_NORM_2D_INPUT_LENGTH:
             raise ValueError(f"expected 4D input (got {input.dim()}D input)")
 
 
@@ -309,5 +313,5 @@ class MaskedBatchNorm3d(_MaskedBatchNorm):
     """
 
     def _check_input_dim(self, input: Tensor) -> None:
-        if input.dim() != 5:
+        if input.dim() != BATCH_NORM_3D_INPUT_LENGTH:
             raise ValueError(f"expected 5D input (got {input.dim()}D input)")

@@ -11,6 +11,9 @@ from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.functions import decode_and_pseudo_sort_results
 
 
+MINIMUM_PCA_ClIENTS = 2
+
+
 class FedPCA(BasicFedAvg):
     def __init__(
         self,
@@ -236,8 +239,8 @@ class FedPCA(BasicFedAvg):
         Returns:
             tuple[NDArray, NDArray]: merged PCs and corresponding singular values.
         """
-        assert len(client_singular_values) >= 2
-        if len(client_singular_values) == 2:
+        assert len(client_singular_values) >= MINIMUM_PCA_ClIENTS
+        if len(client_singular_values) == MINIMUM_PCA_ClIENTS:
             u1, s1 = client_singular_vectors[0], np.diag(client_singular_values[0])
             u2, s2 = client_singular_vectors[1], np.diag(client_singular_values[1])
             return self.merge_two_subspaces_qr((u1, s1), (u2, s2))
