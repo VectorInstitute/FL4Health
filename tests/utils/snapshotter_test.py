@@ -1,11 +1,11 @@
 import copy
-import typing
 
 import torch
 import torch.nn as nn
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
 
+from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.snapshotter import (
     LRSchedulerSnapshotter,
     OptimizerSnapshotter,
@@ -14,7 +14,6 @@ from fl4health.utils.snapshotter import (
 from tests.test_utils.models_for_test import SingleLayerWithSeed
 
 
-@typing.no_type_check
 def compare_mixed_dictionaries(
     dict1: dict[str, torch.Tensor | float | int | list | dict],
     dict2: dict[str, torch.Tensor | float | int | list | dict],
@@ -22,20 +21,26 @@ def compare_mixed_dictionaries(
     if dict1.keys() != dict2.keys():
         return False
 
-    for key in dict1:
-        if isinstance(dict1[key], torch.Tensor):
-            if not torch.equal(dict1[key], dict2[key]):
+    for key, dict1_value in dict1.items():
+        if isinstance(dict1_value, torch.Tensor):
+            if not torch.equal(dict1_value, narrow_dict_type(dict2, key, torch.Tensor)):
                 return False
-        elif isinstance(dict1[key], (float, int, list)):
-            if dict1[key] != dict2[key]:
+        elif isinstance(dict1_value, float):
+            if dict1_value != narrow_dict_type(dict2, key, float):
                 return False
-        elif isinstance(dict1[key], dict):
-            for k, v in dict1.items():
-                if not compare_mixed_dictionaries(v, dict2[k]):
+        elif isinstance(dict1_value, int):
+            if dict1_value != narrow_dict_type(dict2, key, int):
+                return False
+        elif isinstance(dict1_value, list):
+            if dict1_value != narrow_dict_type(dict2, key, list):
+                return False
+        elif isinstance(dict1_value, dict):
+            for k, v in dict1_value.items():
+                if not compare_mixed_dictionaries(v, narrow_dict_type(dict2, k, dict)):
                     return False
                 return True
         else:
-            raise TypeError(f"Unsupported type in dictionary: {type(dict1[key])}")
+            raise TypeError(f"Unsupported type in dictionary: {type(dict1_value)}")
 
     return True
 
