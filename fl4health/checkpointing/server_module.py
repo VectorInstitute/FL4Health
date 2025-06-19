@@ -175,7 +175,7 @@ class BaseServerCheckpointAndStateModule:
     def maybe_load_state(self, server: FlServer) -> Parameters | None:
         """
         Facilitates loading of any pre-existing state in the directory of the state_checkpointer.
-        If a state_checkpointer is defined and a checkpoint exists at its checkpoint_path, this method hydrates
+        If a ``state_checkpointer`` is defined and a checkpoint exists at its checkpoint_path, this method hydrates
         the model with the saved state and returns the corresponding server Parameters. If no checkpoint exists,
         it logs this information and returns None.
 

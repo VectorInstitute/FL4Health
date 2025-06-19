@@ -28,9 +28,9 @@ from fl4health.utils.snapshotter import (
     EnumSnapshotter,
     HistorySnapshotter,
     LRSchedulerSnapshotter,
-    NumberSnapshotter,
     OptimizerSnapshotter,
     SerializableObjectSnapshotter,
+    SingletonSnapshotter,
     StringSnapshotter,
     T,
     TorchModuleSnapshotter,
@@ -124,7 +124,7 @@ class StateCheckpointer(ABC):
         Returns:
             bool: True if checkpoint exists, otherwise false.
         """
-        assert self.checkpoint_path is not None, "A checkpoint name should be provided"
+        assert self.checkpoint_path is not None, "A checkpoint_path should be set but is no"
         return os.path.exists(self.checkpoint_path)
 
     def add_to_snapshot_attr(self, name: str, snapshotter: AbstractSnapshotter, input_type: type[T]) -> None:
@@ -306,8 +306,8 @@ class ClientStateCheckpointer(StateCheckpointer):
                     LRSchedulerSnapshotter(),
                     LRScheduler,
                 ),
-                "total_steps": (NumberSnapshotter(), int),
-                "total_epochs": (NumberSnapshotter(), int),
+                "total_steps": (SingletonSnapshotter(), int),
+                "total_epochs": (SingletonSnapshotter(), int),
                 "reports_manager": (
                     SerializableObjectSnapshotter(),
                     ReportsManager,
@@ -325,21 +325,18 @@ class ClientStateCheckpointer(StateCheckpointer):
         super().__init__(checkpoint_dir, checkpoint_name, snapshot_attrs)
         self.client: BasicClient | None = None
 
-    def maybe_set_default_checkpoint_name(self, object_name: str | None = None) -> None:
+    def maybe_set_default_checkpoint_name(self) -> None:
         """
         Potentially sets a default name for the checkpoint to be saved. If ``checkpoint_dir`` is set but
         ``checkpoint_name`` is None then a default ``checkpoint_name`` based on the underlying name of the client to
         be checkpointed will be set of the form ``f"client_{self.client.client_name}_state.pt"``.
         """
-        if object_name is not None:
-            self.checkpoint_name = f"client_{object_name}_state.pt"
-        else:
-            assert self.client is not None, "Attempting to save client state but client is None"
-            # Set the checkpoint name based on client's name if not already provided.
-            if self.checkpoint_name is None:
-                # If checkpoint_name is not provided, we set it based on the client name.
-                self.checkpoint_name = f"client_{self.client.client_name}_state.pt"
-        self.set_checkpoint_path(self.checkpoint_dir, self.checkpoint_name)
+        assert self.client is not None, "Attempting to save client state but client is None"
+        # Set the checkpoint name based on client's name if not already provided.
+        if self.checkpoint_name is None:
+            # If checkpoint_name is not provided, we set it based on the client name.
+            self.checkpoint_name = f"client_{self.client.client_name}_state.pt"
+            self.set_checkpoint_path(self.checkpoint_dir, self.checkpoint_name)
 
     def save_client_state(self, client: BasicClient) -> None:
         """
@@ -377,11 +374,12 @@ class ClientStateCheckpointer(StateCheckpointer):
         if self.checkpoint_exists():
             self.load_state(attributes)
             log(INFO, f"State checkpoint successfully loaded from: {self.checkpoint_path}")
+            # Clear the client after we are done updating its attributes.
             self.client = None
             return True
 
-        # Clear the client after we are done updating its attributes.
         log(INFO, f"No state checkpoint found at: {self.checkpoint_path}")
+        # Clear the client since no checkpoint exists.
         self.client = None
         return False
 
@@ -441,7 +439,7 @@ class ServerStateCheckpointer(StateCheckpointer):
         if snapshot_attrs is None:
             snapshot_attrs = {
                 "model": (TorchModuleSnapshotter(), nn.Module),
-                "current_round": (NumberSnapshotter(), int),
+                "current_round": (SingletonSnapshotter(), int),
                 "reports_manager": (
                     SerializableObjectSnapshotter(),
                     ReportsManager,
@@ -453,21 +451,19 @@ class ServerStateCheckpointer(StateCheckpointer):
         self.server: FlServer | None = None
         self.server_model: nn.Module | None = None
 
-    def maybe_set_default_checkpoint_name(self, object_name: str | None = None) -> None:
+    def maybe_set_default_checkpoint_name(self) -> None:
         """
         Potentially sets a default name for the checkpoint to be saved. If ``checkpoint_dir`` is set but
         ``checkpoint_name`` is None then a default ``checkpoint_name`` based on the underlying name of the server to
         be checkpointed will be set of the form ``f"server_{self.server.server_name}_state.pt"``.
         """
-        if object_name is not None:
-            self.checkpoint_name = f"server_{object_name}_state.pt"
-        else:
-            assert self.server is not None, "Attempting to save server state but server is None"
-            # Set the checkpoint name based on server's name if not already provided.
-            if self.checkpoint_name is None:
-                # If checkpoint_name is not provided, we set it based on the server's name.
-                self.checkpoint_name = f"server_{self.server.server_name}_state.pt"
-        self.set_checkpoint_path(self.checkpoint_dir, self.checkpoint_name)
+
+        assert self.server is not None, "Attempting to save server state but server is None"
+        # Set the checkpoint name based on server's name if not already provided.
+        if self.checkpoint_name is None:
+            # If checkpoint_name is not provided, we set it based on the server's name.
+            self.checkpoint_name = f"server_{self.server.server_name}_state.pt"
+            self.set_checkpoint_path(self.checkpoint_dir, self.checkpoint_name)
 
     def save_server_state(self, server: FlServer, model: nn.Module) -> None:
         """
@@ -519,7 +515,7 @@ class ServerStateCheckpointer(StateCheckpointer):
             return self.server_model
 
         log(INFO, f"No state checkpoint found at: {self.checkpoint_path}")
-        # Clear the server objects after checkpointing.
+        # Clear the server object since checkpoint is not found.
         self.server = None
         self.server_model = None
         return None
@@ -577,7 +573,7 @@ class NnUnetServerStateCheckpointer(ServerStateCheckpointer):
         # Go beyond default snapshot_attrs with nnUNet-specific attributes.
         nnunet_snapshot_attrs: dict[str, tuple[AbstractSnapshotter, Any]] = {
             "model": (TorchModuleSnapshotter(), nn.Module),
-            "current_round": (NumberSnapshotter(), int),
+            "current_round": (SingletonSnapshotter(), int),
             "reports_manager": (
                 SerializableObjectSnapshotter(),
                 ReportsManager,
@@ -585,8 +581,8 @@ class NnUnetServerStateCheckpointer(ServerStateCheckpointer):
             "server_name": (StringSnapshotter(), str),
             "history": (HistorySnapshotter(), History),
             "nnunet_plans_bytes": (BytesSnapshotter(), bytes),
-            "num_segmentation_heads": (NumberSnapshotter(), int),
-            "num_input_channels": (NumberSnapshotter(), int),
+            "num_segmentation_heads": (SingletonSnapshotter(), int),
+            "num_input_channels": (SingletonSnapshotter(), int),
             "global_deep_supervision": (EnumSnapshotter(), bool),
             "nnunet_config": (EnumSnapshotter(), Enum),
         }

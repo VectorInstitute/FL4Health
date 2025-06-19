@@ -51,7 +51,7 @@ class EarlyStopper:
 
     def load_snapshot(self, attributes: list[str] | None = None) -> None:
         """
-        Load the best snapshot of the client state from the checkpoint directory or memory.
+        Load the best snapshot of the client state from the checkpoint directory.
 
         Args:
             attributes (list[str] | None, optional): List of attributes to load from the checkpoint.

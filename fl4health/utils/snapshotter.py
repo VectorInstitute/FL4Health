@@ -159,26 +159,26 @@ class SerializableObjectSnapshotter(AbstractSnapshotter[MetricManager | LossMete
             attribute[key] = attribute_snapshot[key]
 
 
-class NumberSnapshotter(AbstractSnapshotter[int | float | bool]):
+class SingletonSnapshotter(AbstractSnapshotter[int | float | bool]):
     def save_attribute(self, attribute: dict[str, int | float | bool]) -> dict[str, Any]:
         """
-        Save the state of the numbers (either single or dictionary of them).
+        Save the state of a singleton which could be a number or a boolean (either single or dictionary of them).
 
         Args:
-            attribute (dict[str, int | float]): The numbers to be saved.
+            attribute (dict[str, int | float | bool]): The singleton to be saved.
 
         Returns:
-            dict[str, Any]: A dictionary containing the state of the numbers.
+            dict[str, Any]: A dictionary containing the state of the singletons.
         """
         return attribute
 
     def load_attribute(self, attribute_snapshot: dict[str, Any], attribute: dict[str, int | float | bool]) -> None:
         """
-        Load the state of the numbers (either single or dictionary of them).
+        Load the state of the singleton (either single or dictionary of them).
 
         Args:
-            attribute_snapshot (dict[str, Any]): The snapshot containing the state of the numbers.
-            attribute (dict[str, int | float]): The numbers to be loaded
+            attribute_snapshot (dict[str, Any]): The snapshot containing the state of the singleton.
+            attribute (dict[str, int | float | bool]): The singletons to be loaded
         """
         for key in attribute:
             attribute[key] = attribute_snapshot[key]

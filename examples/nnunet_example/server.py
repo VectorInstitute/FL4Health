@@ -123,7 +123,7 @@ if __name__ == "__main__":
         help="Path to the configuration file. See examples/nnunet_example/README.md for more info",
     )
     parser.add_argument(
-        "--server_address",
+        "--server-address",
         type=str,
         required=False,
         default="0.0.0.0:8080",
@@ -132,14 +132,14 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--intermediate_server_state_dir",
+        "--intermediate-server-state_dir",
         type=str,
         required=False,
         default=None,
         help="[OPTIONAL] Directory to store server state. Defaults to None",
     )
     parser.add_argument(
-        "--server_name",
+        "--server-name",
         type=str,
         required=False,
         default=None,

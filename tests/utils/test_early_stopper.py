@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.early_stopper import EarlyStopper
-from fl4health.utils.snapshotter import NumberSnapshotter
+from fl4health.utils.snapshotter import SingletonSnapshotter
 
 
 class MockBasicClient(BasicClient):
@@ -41,7 +41,7 @@ def test_early_stopper_patience_3(tmp_path: Path) -> None:
     )
     # Override the snapshot_attrs of early stopper's state_checkpointer for test simplicity.
     early_stopper.state_checkpointer.snapshot_attrs = {
-        "total_steps": (NumberSnapshotter(), int),
+        "total_steps": (SingletonSnapshotter(), int),
     }
 
     # Simulate training loop
@@ -69,7 +69,7 @@ def test_early_stopper_patience_4(tmp_path: Path) -> None:
     )
     # Override the snapshot_attrs of early stopper's state_checkpointer for test simplicity.
     early_stopper.state_checkpointer.snapshot_attrs = {
-        "total_steps": (NumberSnapshotter(), int),
+        "total_steps": (SingletonSnapshotter(), int),
     }
 
     # Simulate training loop

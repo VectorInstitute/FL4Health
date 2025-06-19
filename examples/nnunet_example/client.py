@@ -140,14 +140,14 @@ if __name__ == "__main__":
             get_msd_dataset_enum function",
     )
     parser.add_argument(
-        "--always_preprocess",
+        "--always-preprocess",
         action="store_true",
         required=False,
         help="[OPTIONAL] Use this to force preprocessing the nnunet data \
             even if the preprocessed data is found to already exist",
     )
     parser.add_argument(
-        "--server_address",
+        "--server-address",
         type=str,
         required=False,
         default="0.0.0.0:8080",
@@ -169,21 +169,21 @@ if __name__ == "__main__":
         default=INFO,
     )
     parser.add_argument(
-        "--skip_compile",
+        "--skip-compile",
         action="store_true",
         required=False,
         help="[OPTIONAL] Include flag to train without jit compiling the pytorch model first",
     )
 
     parser.add_argument(
-        "--intermediate_client_state_dir",
+        "--intermediate-client-state-dir",
         type=str,
         required=False,
         default=None,
         help="[OPTIONAL] Directory to store client state during training. Defaults to None",
     )
     parser.add_argument(
-        "--client_name",
+        "--client-name",
         type=str,
         required=False,
         default=None,

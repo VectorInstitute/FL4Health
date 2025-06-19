@@ -18,7 +18,12 @@ from fl4health.reporting import JsonReporter
 from fl4health.servers.base_server import FlServer
 from fl4health.servers.nnunet_server import NnunetServer
 from fl4health.utils.metrics import Accuracy
-from fl4health.utils.snapshotter import AbstractSnapshotter, NumberSnapshotter, OptimizerSnapshotter, StringSnapshotter
+from fl4health.utils.snapshotter import (
+    AbstractSnapshotter,
+    OptimizerSnapshotter,
+    SingletonSnapshotter,
+    StringSnapshotter,
+)
 from tests.test_utils.models_for_test import SingleLayerWithSeed
 
 
@@ -190,7 +195,7 @@ def test_client_state_checkpointing_with_custom_attrs(tmp_path: Path) -> None:
     copy_client = copy.deepcopy(fl_client)
 
     snapshot_attrs: dict[str, tuple[AbstractSnapshotter[Any], Any]] = {
-        "total_steps": (NumberSnapshotter(), int),
+        "total_steps": (SingletonSnapshotter(), int),
         "optimizers": (OptimizerSnapshotter(), Optimizer),
         "client_name": (StringSnapshotter(), str),
     }
