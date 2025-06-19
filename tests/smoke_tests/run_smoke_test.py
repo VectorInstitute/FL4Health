@@ -533,8 +533,7 @@ async def run_fault_tolerance_smoke_test(
 
         # client assertions
         client_errors = []
-        for _ in range(len(client_processes)):
-            client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics, tolerance))
+        client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics, tolerance))
 
         return server_errors, client_errors
     except Exception:

@@ -13,17 +13,17 @@ files = [
 
 [[package]]
 name = "accelerate"
-version = "1.7.0"
+version = "1.8.0"
 description = "Accelerate"
 optional = false
 python-versions = ">=3.9.0"
 files = [
-    {file = "accelerate-1.7.0-py3-none-any.whl", hash = "sha256:cf57165cca28769c6cf2650812371c81b18e05743dfa3c748524b1bb4f2b272f"},
-    {file = "accelerate-1.7.0.tar.gz", hash = "sha256:e8a2a5503d6237b9eee73cc8d36cf543f9c2d8dd2c6713450b322f5e6d53a610"},
+    {file = "accelerate-1.8.0-py3-none-any.whl", hash = "sha256:4c3460a8052e122fb124d92ec15618229951febbef1d7336a4c35371f78b72a1"},
+    {file = "accelerate-1.8.0.tar.gz", hash = "sha256:8b56553d570f4787fd34a33dc4613f5444fe1ba3d0e81fedb9ce27bd81e91423"},
 ]
 
 [package.dependencies]
-huggingface-hub = ">=0.21.0"
+huggingface_hub = ">=0.21.0"
 numpy = ">=1.17,<3.0.0"
 packaging = ">=20.0"
 psutil = "*"
@@ -40,7 +40,7 @@ sagemaker = ["sagemaker"]
 test-dev = ["bitsandbytes", "datasets", "diffusers", "evaluate", "scikit-learn", "scipy", "timm", "torchdata (>=0.8.0)", "torchpippy (>=0.2.0)", "tqdm", "transformers"]
 test-fp8 = ["torchao"]
 test-prod = ["parameterized", "pytest (>=7.2.0,<=8.0.0)", "pytest-order", "pytest-subtests", "pytest-xdist"]
-test-trackers = ["comet-ml", "dvclive", "matplotlib", "mlflow", "tensorboard", "wandb"]
+test-trackers = ["comet-ml", "dvclive", "matplotlib", "mlflow", "swanlab", "tensorboard", "wandb"]
 testing = ["bitsandbytes", "datasets", "diffusers", "evaluate", "parameterized", "pytest (>=7.2.0,<=8.0.0)", "pytest-order", "pytest-subtests", "pytest-xdist", "scikit-learn", "scipy", "timm", "torchdata (>=0.8.0)", "torchpippy (>=0.2.0)", "tqdm", "transformers"]
 
 [[package]]
@@ -2965,7 +2965,6 @@ files = [
     {file = "imagecodecs-2025.3.30-cp313-cp313-win32.whl", hash = "sha256:66b614488d85d91f456b949fde4ad678dbe95cde38861043122237de086308c1"},
     {file = "imagecodecs-2025.3.30-cp313-cp313-win_amd64.whl", hash = "sha256:1c51fef75fec66b4ea5e98b4ab47889942049389278749e1f96329c38f31c377"},
     {file = "imagecodecs-2025.3.30-cp313-cp313-win_arm64.whl", hash = "sha256:eda70c0b9d2bcf225f7ae12dbefd0e3ab92ea7db30cdb56b292517fb61357ad7"},
-    {file = "imagecodecs-2025.3.30-cp313-cp313t-win_amd64.whl", hash = "sha256:8861d76ca85b823e88604e58ee31131dd5133bfc30147147368d335c5b0e42e1"},
     {file = "imagecodecs-2025.3.30.tar.gz", hash = "sha256:29256f44a7fcfb8f235a3e9b3bae72b06ea2112e63bcc892267a8c01b7097f90"},
 ]
 
@@ -10606,4 +10605,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10.0,<3.11"
-content-hash = "e129ae4da8518cd21d67916a8e85451374bed07969e2b6522e37ccf3db477708"
+content-hash = "2e5f49d53ecf8f00a119892940f8d68b789117099dcce5cd98698ce7f044ef7a"

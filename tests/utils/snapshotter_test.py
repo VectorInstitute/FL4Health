@@ -1,183 +1,138 @@
 import copy
-from pathlib import Path
 
 import torch
+import torch.nn as nn
+from torch.optim import Optimizer
+from torch.optim.lr_scheduler import LRScheduler
 
-from fl4health.clients.basic_client import BasicClient
-from fl4health.metrics import Accuracy
-from fl4health.metrics.metric_managers import MetricManager
-from fl4health.reporting import JsonReporter
-from fl4health.reporting.reports_manager import ReportsManager
-from fl4health.utils.losses import LossMeter, TrainingLosses
+from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.snapshotter import (
     LRSchedulerSnapshotter,
-    NumberSnapshotter,
     OptimizerSnapshotter,
-    SerializableObjectSnapshotter,
     TorchModuleSnapshotter,
 )
-from fl4health.utils.typing import TorchPredType, TorchTargetType
 from tests.test_utils.models_for_test import SingleLayerWithSeed
 
 
-def test_number_snapshotter() -> None:
-    metrics = [Accuracy("accuracy")]
-    reporter = JsonReporter()
-    fl_client = BasicClient(data_path=Path(""), metrics=metrics, device=torch.device(0), reporters=[reporter])
-    old_total_steps = fl_client.total_steps
-    number_snapshotter = NumberSnapshotter(fl_client)
-    sp = number_snapshotter.save("total_steps", int)
-    fl_client.total_steps += 1
-    assert sp["total_steps"] == {"None": old_total_steps}
-    assert fl_client.total_steps != old_total_steps
-    number_snapshotter.load(sp, "total_steps", int)
-    assert fl_client.total_steps == old_total_steps
+def compare_mixed_dictionaries(
+    dict1: dict[str, torch.Tensor | float | int | list | dict],
+    dict2: dict[str, torch.Tensor | float | int | list | dict],
+) -> bool:
+    if dict1.keys() != dict2.keys():
+        return False
+
+    for key, dict1_value in dict1.items():
+        if isinstance(dict1_value, torch.Tensor):
+            if not torch.equal(dict1_value, narrow_dict_type(dict2, key, torch.Tensor)):
+                return False
+        elif isinstance(dict1_value, float):
+            if dict1_value != narrow_dict_type(dict2, key, float):
+                return False
+        elif isinstance(dict1_value, int):
+            if dict1_value != narrow_dict_type(dict2, key, int):
+                return False
+        elif isinstance(dict1_value, list):
+            if dict1_value != narrow_dict_type(dict2, key, list):
+                return False
+        elif isinstance(dict1_value, dict):
+            if not compare_mixed_dictionaries(dict1_value, narrow_dict_type(dict2, key, dict)):
+                return False
+            return True
+        else:
+            raise TypeError(f"Unsupported type in dictionary: {type(dict1_value)}")
+
+    return True
 
 
-def test_optimizer_scheduler_model_snapshotter() -> None:
-    metrics = [Accuracy("accuracy")]
-    reporter = JsonReporter()
-    fl_client = BasicClient(data_path=Path(""), metrics=metrics, device=torch.device(0), reporters=[reporter])
-    fl_client.model = SingleLayerWithSeed()
-    fl_client.criterion = torch.nn.CrossEntropyLoss()
-
+def test_optimizer_lr_model_snapshotters() -> None:
+    # Define several optimizers for a client
+    local_model = SingleLayerWithSeed()
+    global_model = SingleLayerWithSeed(seed=36)
+    optimizers: dict[str, Optimizer] = {
+        "local": torch.optim.Adam(local_model.parameters(), lr=0.001),
+        "global": torch.optim.Adam(global_model.parameters(), lr=0.01),
+    }
+    lr_schedulers: dict[str, LRScheduler] = {
+        "local": torch.optim.lr_scheduler.StepLR(optimizers["local"], step_size=30, gamma=0.1),
+        "global": torch.optim.lr_scheduler.StepLR(optimizers["global"], step_size=30, gamma=0.1),
+    }
+    models: dict[str, nn.Module] = {
+        "local": local_model,
+        "global": global_model,
+    }
     input_data = torch.randn(32, 100)
     target_data = torch.randn(32, 2)
+    local_output = local_model(input_data)
+    global_output = global_model(input_data)
 
-    fl_client.optimizers = {"global": torch.optim.SGD(fl_client.model.parameters(), lr=0.001, momentum=0.1)}
-    fl_client.lr_schedulers = {
-        "global": torch.optim.lr_scheduler.StepLR(fl_client.optimizers["global"], step_size=30, gamma=0.1)
+    criterion = torch.nn.BCEWithLogitsLoss()
+    local_loss = criterion(local_output, target_data)
+    global_loss = criterion(global_output, target_data)
+
+    local_loss.backward()
+    global_loss.backward()
+
+    optimizers["global"].step()
+    optimizers["local"].step()
+
+    lr_schedulers["local"].step()
+    lr_schedulers["global"].step()
+    # Keep a copy of the client state as reference
+    old_optimizers = copy.deepcopy(optimizers)
+    old_lr_schedulers = copy.deepcopy(lr_schedulers)
+    old_models = copy.deepcopy(models)
+
+    # snapshot client attribute that we want to save
+    optimizer_snapshotter = OptimizerSnapshotter()
+    optimizer_dict_to_be_saved = optimizer_snapshotter.save_attribute(attribute=optimizers)
+    model_snapshotter = TorchModuleSnapshotter()
+    model_dict_to_be_saved = model_snapshotter.save_attribute(attribute=models)
+    lr_scheduler_snapshotter = LRSchedulerSnapshotter()
+    lr_scheduler_dict_to_be_saved = lr_scheduler_snapshotter.save_attribute(attribute=lr_schedulers)
+
+    # Now create new models, optimizers, and rl_schedulers
+    local_model_new = SingleLayerWithSeed(seed=4)
+    global_model_new = SingleLayerWithSeed(seed=5)
+    # New optimizers
+    new_optimizers: dict[str, Optimizer] = {
+        "local": torch.optim.Adam(local_model_new.parameters(), lr=0.001),
+        "global": torch.optim.Adam(global_model_new.parameters(), lr=0.01),
     }
-    old_optimizers = copy.deepcopy(fl_client.optimizers)
-    old_lr_schedulers = copy.deepcopy(fl_client.lr_schedulers)
-    old_model = copy.deepcopy(fl_client.model)
-
-    optimizer_snapshotter = OptimizerSnapshotter(fl_client)
-    lr_scheduler_snapshotter = LRSchedulerSnapshotter(fl_client)
-    model_snapshotter = TorchModuleSnapshotter(fl_client)
-
-    snapshots = {}
-    snapshots.update(optimizer_snapshotter.save("optimizers", torch.optim.Optimizer))
-    snapshots.update(lr_scheduler_snapshotter.save("lr_schedulers", torch.optim.lr_scheduler.LRScheduler))
-    snapshots.update(model_snapshotter.save("model", torch.nn.Module))
-    snapshots = copy.deepcopy(snapshots)
-
-    fl_client.train_step(input_data, target_data)
-
-    fl_client.optimizers["global"].step()
-    fl_client.lr_schedulers["global"].step()
-
-    for key, value in fl_client.model.state_dict().items():
-        assert not torch.equal(value, old_model.state_dict()[key])
-
-    for key, optimizers in fl_client.optimizers.items():
-        assert optimizers.state_dict()["state"] != old_optimizers[key].state_dict()["state"]
-
-    for key, schedulers in fl_client.lr_schedulers.items():
-        assert schedulers.state_dict() != old_lr_schedulers[key].state_dict()
-
-    optimizer_snapshotter.load(snapshots, "optimizers", torch.optim.Optimizer)
-    lr_scheduler_snapshotter.load(snapshots, "lr_schedulers", torch.optim.lr_scheduler.LRScheduler)
-    model_snapshotter.load(snapshots, "model", torch.nn.Module)
-
-    for key, value in fl_client.model.state_dict().items():
-        assert torch.equal(value, old_model.state_dict()[key])
-
-    for key, optimizers in fl_client.optimizers.items():
-        assert optimizers.state_dict()["state"] == old_optimizers[key].state_dict()["state"]
-
-    for key, schedulers in fl_client.lr_schedulers.items():
-        assert schedulers.state_dict() == old_lr_schedulers[key].state_dict()
-
-
-def test_loss_meter_snapshotter() -> None:
-    metrics = [Accuracy("accuracy")]
-    reporter = JsonReporter()
-    fl_client = BasicClient(data_path=Path(""), metrics=metrics, device=torch.device(0), reporters=[reporter])
-    snapshots = {}
-
-    fl_client.train_loss_meter.update(TrainingLosses(backward=torch.Tensor([35]), additional_losses=None))
-    snapshotter = SerializableObjectSnapshotter(fl_client)
-    snapshots.update(snapshotter.save("train_loss_meter", LossMeter))
-    snapshots = copy.deepcopy(snapshots)
-    old_loss_meter = copy.deepcopy(fl_client.train_loss_meter)
-    fl_client.train_loss_meter.update(TrainingLosses(backward=torch.Tensor([10]), additional_losses=None))
-    assert len(old_loss_meter.losses_list) != len(fl_client.train_loss_meter.losses_list)
-
-    snapshotter.load(snapshots, "train_loss_meter", LossMeter)
-
-    assert len(old_loss_meter.losses_list) == len(fl_client.train_loss_meter.losses_list)
-    for i in range(len(fl_client.train_loss_meter.losses_list)):
-        assert old_loss_meter.losses_list[i].backward == fl_client.train_loss_meter.losses_list[i].backward
-        assert (
-            old_loss_meter.losses_list[i].additional_losses
-            == fl_client.train_loss_meter.losses_list[i].additional_losses
-        )
-
-
-def test_reports_manager_snapshotter() -> None:
-    metrics = [Accuracy("accuracy")]
-    reporter = JsonReporter()
-    fl_client = BasicClient(data_path=Path(""), metrics=metrics, device=torch.device(0), reporters=[reporter])
-    snapshots = {}
-
-    fl_client.reports_manager.report({"start": "2012-12-12 12:12:10"})
-    snapshotter = SerializableObjectSnapshotter(fl_client)
-    snapshots.update(snapshotter.save("reports_manager", ReportsManager))
-    snapshots = copy.deepcopy(snapshots)
-    old_reports_manager = copy.deepcopy(fl_client.reports_manager)
-    fl_client.reports_manager.report({"shutdown": "2012-12-12 12:12:12"})
-
-    assert isinstance(old_reports_manager.reporters[0], JsonReporter) and isinstance(
-        fl_client.reports_manager.reporters[0], JsonReporter
-    )
-
-    assert old_reports_manager.reporters[0].metrics != fl_client.reports_manager.reporters[0].metrics
-
-    snapshotter.load(snapshots, "reports_manager", ReportsManager)
-    assert old_reports_manager.reporters[0].metrics == fl_client.reports_manager.reporters[0].metrics
-
-
-def test_metric_manager_snapshotter() -> None:
-    metrics = [Accuracy("accuracy")]
-    reporter = JsonReporter()
-    fl_client = BasicClient(data_path=Path(""), metrics=metrics, device=torch.device(0), reporters=[reporter])
-    snapshots = {}
-    preds: TorchPredType = {
-        "1": torch.tensor([0.7369, 0.5121, 0.2674, 0.5847, 0.4032, 0.7458, 0.9274, 0.3258, 0.7095, 0.0513])
+    # New lr_schedulers
+    new_lr_schedulers: dict[str, LRScheduler] = {
+        "local": torch.optim.lr_scheduler.StepLR(optimizers["local"], step_size=30, gamma=0.1),
+        "global": torch.optim.lr_scheduler.StepLR(optimizers["global"], step_size=30, gamma=0.1),
     }
-    target: TorchTargetType = {"1": torch.tensor([0, 1, 0, 1, 1, 0, 1, 1, 0, 1])}
+    new_models: dict[str, nn.Module] = {
+        "local": local_model_new,
+        "global": global_model_new,
+    }
 
-    fl_client.train_metric_manager.update(preds, target)
-    snapshotter = SerializableObjectSnapshotter(fl_client)
-    snapshots.update(snapshotter.save("train_metric_manager", MetricManager))
-    snapshots = copy.deepcopy(snapshots)
-    old_train_metric_manager = copy.deepcopy(fl_client.train_metric_manager)
-    fl_client.train_metric_manager.update(preds, target)
-    assert isinstance(fl_client.train_metric_manager.metrics_per_prediction_type["1"][0], Accuracy) and isinstance(
-        old_train_metric_manager.metrics_per_prediction_type["1"][0], Accuracy
-    )
-    assert len(fl_client.train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_inputs) != len(
-        old_train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_inputs
-    )
-    assert len(fl_client.train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_targets) != len(
-        old_train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_targets
-    )
+    for key, value in new_models.items():
+        assert not compare_mixed_dictionaries(value.state_dict(), old_models[key].state_dict())
 
-    snapshotter.load(snapshots, "train_metric_manager", MetricManager)
-    assert len(fl_client.train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_inputs) == len(
-        old_train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_inputs
-    )
-    assert len(fl_client.train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_targets) == len(
-        old_train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_targets
-    )
-
-    for i in range(len(fl_client.train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_inputs)):
-        assert torch.all(
-            fl_client.train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_inputs[i]
-            == old_train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_inputs[i]
+    for key, optimizer in new_optimizers.items():
+        assert not compare_mixed_dictionaries(
+            optimizer.state_dict()["state"], old_optimizers[key].state_dict()["state"]
         )
-        assert torch.all(
-            fl_client.train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_targets[i]
-            == old_train_metric_manager.metrics_per_prediction_type["1"][0].accumulated_targets[i]
+
+    for key, schedulers in new_lr_schedulers.items():
+        assert not compare_mixed_dictionaries(schedulers.state_dict(), old_lr_schedulers[key].state_dict())
+
+    # Load the state
+    optimizer_snapshotter.load_attribute(optimizer_dict_to_be_saved, new_optimizers)
+    model_snapshotter.load_attribute(model_dict_to_be_saved, new_models)
+    lr_scheduler_snapshotter.load_attribute(lr_scheduler_dict_to_be_saved, new_lr_schedulers)
+
+    # Check that the state of the new optimizers are the same as the ones saved.
+    for optimizer_type, new_optimizer in new_optimizers.items():
+        assert compare_mixed_dictionaries(
+            new_optimizer.state_dict()["state"], old_optimizers[optimizer_type].state_dict()["state"]
         )
+    # Check that the state of the new models are the same as the ones saved.
+    for model_type, new_model in new_models.items():
+        assert compare_mixed_dictionaries(new_model.state_dict(), old_models[model_type].state_dict())
+
+    # Check that the state of the new lr_schedulers are the same as the ones saved.
+    for scheduler_type, new_scheduler in new_lr_schedulers.items():
+        assert compare_mixed_dictionaries(new_scheduler.state_dict(), old_lr_schedulers[scheduler_type].state_dict())

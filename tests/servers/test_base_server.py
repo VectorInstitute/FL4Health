@@ -12,8 +12,9 @@ from flwr.server.strategy import FedAvg
 from freezegun import freeze_time
 from peft import LoraConfig, get_peft_model
 
-from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, PerRoundStateCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
+from fl4health.checkpointing.state_checkpointer import ServerStateCheckpointer
 from fl4health.client_managers.base_sampling_manager import SimpleClientManager
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.metrics.base_metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, MetricPrefix
@@ -37,7 +38,7 @@ def test_hydration_no_model_with_checkpointer(tmp_path: Path) -> None:
     checkpoint_dir = tmp_path.joinpath("resources")
     checkpoint_dir.mkdir()
     checkpointer = BestLossTorchModuleCheckpointer(str(checkpoint_dir), "best_model.pkl")
-    state_checkpointer = PerRoundStateCheckpointer(checkpoint_dir=checkpoint_dir)
+    state_checkpointer = ServerStateCheckpointer(checkpoint_dir=checkpoint_dir)
     # Checkpointer is defined but there is no server-side model defined to produce a model from the server state.
     # An assertion error should be throw stating this
     with pytest.raises(AssertionError) as assertion_error:

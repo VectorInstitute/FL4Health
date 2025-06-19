@@ -11,7 +11,7 @@ from fl4health.utils.client import fold_loss_dict_into_metrics
 from fl4health.utils.early_stopper import EarlyStopper
 from fl4health.utils.logging import LoggingMode
 from fl4health.utils.losses import EvaluationLosses
-from fl4health.utils.snapshotter import NumberSnapshotter
+from fl4health.utils.snapshotter import SingletonSnapshotter
 from fl4health.utils.typing import TorchInputType, TorchTargetType
 
 
@@ -89,18 +89,18 @@ def test_early_stopper_creation_and_should_stop(tmp_path: Path) -> None:
     snapshot_dir = tmp_path.joinpath("resources")
     snapshot_dir.mkdir()
     client = MockBasicClient()
-    early_stopper = EarlyStopper(client=client, patience=2, interval_steps=2, snapshot_dir=snapshot_dir)
+    early_stopper = EarlyStopper(client=client, patience=2, interval_steps=2, train_loop_checkpoint_dir=snapshot_dir)
 
-    early_stopper.add_default_snapshot_attr("test_attribute_number", lambda x: NumberSnapshotter(x), int)
+    early_stopper.state_checkpointer.add_to_snapshot_attr("test_attribute_number", SingletonSnapshotter(), int)
     # Delete out the complex objects
-    early_stopper.delete_default_snapshot_attr("model")
-    early_stopper.delete_default_snapshot_attr("optimizers")
-    early_stopper.delete_default_snapshot_attr("lr_schedulers")
-    early_stopper.delete_default_snapshot_attr("reports_manager")
-    early_stopper.delete_default_snapshot_attr("train_loss_meter")
-    early_stopper.delete_default_snapshot_attr("train_metric_manager")
+    early_stopper.state_checkpointer.delete_from_snapshot_attr("model")
+    early_stopper.state_checkpointer.delete_from_snapshot_attr("optimizers")
+    early_stopper.state_checkpointer.delete_from_snapshot_attr("lr_schedulers")
+    early_stopper.state_checkpointer.delete_from_snapshot_attr("reports_manager")
+    early_stopper.state_checkpointer.delete_from_snapshot_attr("train_loss_meter")
+    early_stopper.state_checkpointer.delete_from_snapshot_attr("train_metric_manager")
 
-    early_stopper.save_snapshot()
+    early_stopper.state_checkpointer.save_client_state(early_stopper.client)
     early_stopper.load_snapshot()
 
     # Should be false since it's not the right interval (i.e. step divisible by 2)

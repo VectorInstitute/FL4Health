@@ -5,8 +5,8 @@ import warnings
 from functools import partial
 from pathlib import Path
 
-from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.checkpointing.server_module import NnUnetServerCheckpointAndStateModule
+from fl4health.checkpointing.state_checkpointer import NnUnetServerStateCheckpointer
 
 
 with warnings.catch_warnings():
@@ -103,7 +103,7 @@ def main(
         checkpoint_and_state_model = NnUnetServerCheckpointAndStateModule(
             model=None,
             parameter_exchanger=FullParameterExchanger(),
-            state_checkpointer=PerRoundStateCheckpointer(Path(intermediate_server_state_dir)),
+            state_checkpointer=NnUnetServerStateCheckpointer(Path(intermediate_server_state_dir)),
         )
 
     server = NnunetServer(

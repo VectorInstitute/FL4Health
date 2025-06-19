@@ -2,8 +2,6 @@ import os
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from logging import ERROR, INFO, WARNING
-from pathlib import Path
-from typing import Any
 
 import torch
 from flwr.common.logger import log
@@ -311,81 +309,3 @@ class BestMetricTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
             checkpoint_score_name=metric,
             maximize=maximize,
         )
-
-
-class PerRoundStateCheckpointer:
-    def __init__(self, checkpoint_dir: Path) -> None:
-        """
-        Base class that provides a uniform interface for loading, saving and checking if checkpoints exists.
-
-        Args:
-            checkpoint_dir (Path): Base directory to store checkpoints. This checkpoint directory MUST already exist.
-                It will not be created by this state checkpointer.
-        """
-        log(
-            WARNING,
-            "Creating PerRoundCheckpointer. Currently, this functionality is still experimental and only supported "
-            "for BasicClient and NnunetClient, along with their associated servers.",
-        )
-        self.checkpoint_dir = checkpoint_dir
-
-    def save_checkpoint(self, checkpoint_name: str, checkpoint_dict: dict[str, Any]) -> None:
-        """
-        Saves ``checkpoint_dict`` to checkpoint path form from this classes checkpointer dir and the provided
-        checkpoint name.
-
-        Args:
-            checkpoint_name (str): Name of the state checkpoint file.
-            checkpoint_dict (dict[str, Any]): A dictionary with string keys and values of type Any representing the
-                state to checkpoint.
-
-        Raises:
-            e: Will throw an error if there is an issue saving the model. ``Torch.save`` seems to swallow errors in
-                this context, so we explicitly surface the error with a try/except.
-        """
-        checkpoint_path = os.path.join(self.checkpoint_dir, checkpoint_name)
-        try:
-            log(INFO, f"Saving state as {checkpoint_path}")
-            torch.save(checkpoint_dict, checkpoint_path)
-        except Exception as e:
-            log(ERROR, f"Encountered the following error while saving the checkpoint: {e}")
-            raise e
-
-    def load_checkpoint(self, checkpoint_name: str) -> dict[str, Any]:
-        """
-        Loads and returns the checkpoint stored in ``checkpoint_dir`` under the provided name if it exists. If it
-        does not exist, an assertion error will be thrown.
-
-        Args:
-            checkpoint_name (str): Name of the state checkpoint to be loaded.
-
-        Returns:
-            dict[str, Any]: A dictionary representing the checkpointed state, as loaded by ``torch.load``.
-        """
-        assert self.checkpoint_exists(checkpoint_name)
-        checkpoint_path = os.path.join(self.checkpoint_dir, checkpoint_name)
-        log(INFO, f"Loading state from checkpoint at {checkpoint_path}")
-
-        return torch.load(checkpoint_path)
-
-    def checkpoint_exists(self, checkpoint_name: str, **kwargs: Any) -> bool:
-        """
-        Checks if a checkpoint exists at the ``checkpoint_dir`` constructed at initialization + ``checkpoint_name``.
-
-        Args:
-            checkpoint_name (str): Name of checkpoint for existence test. Directory of checkpoint is held internally
-                as state by the checkpointer
-
-        Raises:
-            ValueError: Previously this function supported sending a path, but now requires ``checkpoint_name``. Will
-                raise an error is ``checkpoint_path`` provided.
-
-        Returns:
-            bool: True if checkpoint exists, otherwise false.
-        """
-        if "checkpoint_path" in kwargs:
-            raise ValueError(
-                "Previously this checkpoint supported sending a path, but it now requires a checkpoint_name only"
-            )
-        checkpoint_path = os.path.join(self.checkpoint_dir, checkpoint_name)
-        return os.path.exists(checkpoint_path)

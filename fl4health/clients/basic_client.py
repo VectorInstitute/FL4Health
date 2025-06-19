@@ -29,7 +29,7 @@ from fl4health.utils.client import (
     process_and_check_validation_steps,
     set_pack_losses_with_val_metrics,
 )
-from fl4health.utils.config import narrow_dict_type, narrow_dict_type_and_set_attribute
+from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.early_stopper import EarlyStopper
 from fl4health.utils.logging import LoggingMode
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
@@ -80,8 +80,6 @@ class BasicClient(NumPyClient):
 
         self.client_name = client_name if client_name is not None else generate_hash()
         log(INFO, f"Client Name: {self.client_name}")
-
-        self.state_checkpoint_name = f"client_{self.client_name}_state.pt"
 
         if checkpoint_and_state_module is not None:
             self.checkpoint_and_state_module = checkpoint_and_state_module
@@ -1282,48 +1280,19 @@ class BasicClient(NumPyClient):
 
     def _save_client_state(self) -> None:
         """
-        Saves checkpoint dict consisting of client name, total steps, lr schedulers, metrics reporter and
-        optimizers state. Method can be overridden to augment saved checkpointed state.
+        Save a checkpoint of the client's state as defined by the state_checkpointer's snapshot_attrs.
+        By default, snapshot_attrs includes attributes such as client name, total steps, lr schedulers,
+        metrics reporter, and optimizer states. You can override snapshot_attrs in the state_checkpointer to
+        customize which attributes are saved in the checkpoint.
         """
-        state = {
-            "lr_schedulers_state": {key: scheduler.state_dict() for key, scheduler in self.lr_schedulers.items()},
-            "total_steps": self.total_steps,
-            "client_name": self.client_name,
-            "reports_manager": self.reports_manager,
-            "optimizers_state": {key: optimizer.state_dict()["state"] for key, optimizer in self.optimizers.items()},
-        }
-
-        self.checkpoint_and_state_module.save_state(self.state_checkpoint_name, state)
+        assert self.checkpoint_and_state_module.state_checkpointer is not None
+        self.checkpoint_and_state_module.save_state(self)
 
     def _load_client_state(self) -> bool:
         """
         Load checkpoint dict consisting of client name, total steps, lr schedulers, metrics reporter and optimizers
         state. Method can be overridden to augment loaded checkpointed state.
         """
-        client_state = self.checkpoint_and_state_module.maybe_load_state(self.state_checkpoint_name)
-
-        if client_state is None:
-            return False
-
-        narrow_dict_type_and_set_attribute(self, client_state, "client_name", "client_name", str)
-        narrow_dict_type_and_set_attribute(self, client_state, "total_steps", "total_steps", int)
-        narrow_dict_type_and_set_attribute(self, client_state, "reports_manager", "reports_manager", ReportsManager)
-
-        assert "lr_schedulers_state" in client_state and isinstance(client_state["lr_schedulers_state"], dict)
-        assert "optimizers_state" in client_state and isinstance(client_state["optimizers_state"], dict)
-
-        # Optimizer is updated in setup_client to reference model weights from server
-        # Thus, only optimizer state (per parameter values such as momentum)
-        # should be loaded
-        for key, optimizer in self.optimizers.items():
-            optimizer_state = client_state["optimizers_state"][key]
-            optimizer_state_dict = optimizer.state_dict()
-            optimizer_state_dict["state"] = optimizer_state
-            optimizer.load_state_dict(optimizer_state_dict)
-
-        # Schedulers initialized in setup_client to reference correct optimizers
-        # Here we load in all other aspects of the scheduler state
-        for key in self.lr_schedulers:
-            self.lr_schedulers[key].load_state_dict(client_state["lr_schedulers_state"][key])
-
-        return True
+        assert self.checkpoint_and_state_module.state_checkpointer is not None
+        log(INFO, "Loading client state from checkpoint")
+        return self.checkpoint_and_state_module.maybe_load_state(self)

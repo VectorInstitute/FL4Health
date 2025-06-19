@@ -1,43 +1,23 @@
 from __future__ import annotations
 
-import copy
-from collections.abc import Callable
-from logging import INFO, WARNING
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
-
-from flwr.common.logger import log
-from torch import nn
-from torch.optim import Optimizer
-from torch.optim.lr_scheduler import LRScheduler
-
-from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
-from fl4health.metrics.metric_managers import MetricManager
-from fl4health.reporting.reports_manager import ReportsManager
-from fl4health.utils.logging import LoggingMode
-from fl4health.utils.losses import TrainingLosses
-from fl4health.utils.snapshotter import (
-    AbstractSnapshotter,
-    LRSchedulerSnapshotter,
-    NumberSnapshotter,
-    OptimizerSnapshotter,
-    SerializableObjectSnapshotter,
-    T,
-    TorchModuleSnapshotter,
-)
+from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
     from fl4health.clients.basic_client import BasicClient
+
+from fl4health.checkpointing.state_checkpointer import ClientStateCheckpointer
+from fl4health.utils.logging import LoggingMode
 
 
 class EarlyStopper:
     def __init__(
         self,
         client: BasicClient,
+        train_loop_checkpoint_dir: Path,
         patience: int | None = 1,
         interval_steps: int = 5,
-        snapshot_dir: Path | None = None,
     ) -> None:
         """
         Early stopping class is a plugin for the client that allows to stop local training based on the validation
@@ -47,13 +27,12 @@ class EarlyStopper:
 
         Args:
             client (BasicClient): The client to be monitored.
+            train_loop_checkpoint_dir (Path): Directory to checkpoint the "best" state seen so far.
             patience (int, optional): Number of validation cycles to wait before stopping the training. If it is equal
                 to None client never stops, but still loads the best state before sending the model to the server.
                 Defaults to 1.
             interval_steps (int): Specifies the frequency, in terms of training intervals, at which the early
                 stopping mechanism should evaluate the validation loss. Defaults to 5.
-            snapshot_dir (Path | None, optional): Rather than keeping best state in the memory we can checkpoint it to
-                the given directory. If it is not given, the best state is kept in the memory. Defaults to None.
         """
         self.client = client
 
@@ -61,92 +40,25 @@ class EarlyStopper:
         self.count_down = patience
         self.interval_steps = interval_steps
 
+        # Early stopper uses a default name for the state
+        checkpoint_name = f"temp_{self.client.client_name}.pt"
+
+        self.state_checkpointer = ClientStateCheckpointer(
+            checkpoint_dir=train_loop_checkpoint_dir, checkpoint_name=checkpoint_name
+        )
+
         self.best_score: float | None = None
-        self.snapshot_ckpt: dict[str, tuple[AbstractSnapshotter, Any]] = {}
-
-        self.snapshot_attrs: dict = {
-            "model": (TorchModuleSnapshotter(self.client), nn.Module),
-            "optimizers": (OptimizerSnapshotter(self.client), Optimizer),
-            "lr_schedulers": (
-                LRSchedulerSnapshotter(self.client),
-                LRScheduler,
-            ),
-            "learning_rate": (NumberSnapshotter(self.client), float),
-            "total_steps": (NumberSnapshotter(self.client), int),
-            "total_epochs": (NumberSnapshotter(self.client), int),
-            "reports_manager": (
-                SerializableObjectSnapshotter(self.client),
-                ReportsManager,
-            ),
-            "train_loss_meter": (
-                SerializableObjectSnapshotter(self.client),
-                TrainingLosses,
-            ),
-            "train_metric_manager": (
-                SerializableObjectSnapshotter(self.client),
-                MetricManager,
-            ),
-        }
-
-        if snapshot_dir is not None:
-            # TODO: Move to generic checkpointer
-            self.checkpointer = PerRoundStateCheckpointer(snapshot_dir)
-            self.checkpoint_name = f"temp_{self.client.client_name}.pt"
-        else:
-            log(INFO, "Snapshot is being persisted in memory")
-
-    def add_default_snapshot_attr(
-        self, name: str, snapshot_class: Callable[[BasicClient], AbstractSnapshotter], input_type: type[T]
-    ) -> None:
-        self.snapshot_attrs.update({name: (snapshot_class(self.client), input_type)})
-
-    def delete_default_snapshot_attr(self, name: str) -> None:
-        del self.snapshot_attrs[name]
-
-    def save_snapshot(self) -> None:
-        """Creates a snapshot of the client state and if ``snapshot_ckpt`` is given, saves it to the checkpoint."""
-        for attr, (snapshotter_function, expected_type) in self.snapshot_attrs.items():
-            self.snapshot_ckpt.update(snapshotter_function.save(attr, expected_type))
-
-        if self.checkpointer is not None:
-            log(
-                INFO,
-                f"Saving client best state to checkpoint at {self.checkpointer.checkpoint_dir} "
-                f"with name {self.checkpoint_name}.",
-            )
-            self.checkpointer.save_checkpoint(self.checkpoint_name, self.snapshot_ckpt)
-            self.snapshot_ckpt.clear()
-
-        else:
-            log(
-                WARNING,
-                "Checkpointing directory is not provided. Client best state will be kept in the memory.",
-            )
-            self.snapshot_ckpt = copy.deepcopy(self.snapshot_ckpt)
 
     def load_snapshot(self, attributes: list[str] | None = None) -> None:
         """
-        Load checkpointed snapshot dict consisting to the respective model attributes.
+        Load the best snapshot of the client state from the checkpoint directory.
 
         Args:
-            attributes (list[str] | None): List of attributes to load from the checkpoint. If None, all attributes
-                are loaded. Defaults to None.
+            attributes (list[str] | None, optional): List of attributes to load from the checkpoint.
+                If None, all attributes as defined in ``state_checkpointer`` are loaded. Defaults to None.
         """
-        assert self.checkpointer.checkpoint_exists(self.checkpoint_name) or self.snapshot_ckpt != {}, (
-            "No checkpoint to load"
-        )
-
-        if attributes is None:
-            attributes = list(self.snapshot_attrs.keys())
-
-        log(INFO, f"Loading client best state {attributes} from checkpoint at {self.checkpointer.checkpoint_dir}")
-
-        if self.checkpointer.checkpoint_exists(self.checkpoint_name):
-            self.snapshot_ckpt = self.checkpointer.load_checkpoint(self.checkpoint_name)
-
-        for attr in attributes:
-            snapshotter, expected_type = self.snapshot_attrs[attr]
-            snapshotter.load(self.snapshot_ckpt, attr, expected_type)
+        # Load the best snapshot, and update self.client with the values
+        self.state_checkpointer.maybe_load_client_state(self.client, attributes)
 
     def should_stop(self, steps: int) -> bool:
         """
@@ -175,7 +87,7 @@ class EarlyStopper:
         if self.best_score is None or val_loss < self.best_score:
             self.best_score = val_loss
             self.count_down = self.patience
-            self.save_snapshot()
+            self.state_checkpointer.save_client_state(self.client)
             return False
 
         if self.count_down is not None:

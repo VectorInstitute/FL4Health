@@ -10,8 +10,8 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
+from fl4health.checkpointing.state_checkpointer import ServerStateCheckpointer
 from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.base_server import FlServer
@@ -53,7 +53,7 @@ def main(config: dict[str, Any], server_address: str, n_clients: int, artifact_d
 
     model = get_model()
     parameter_exchanger = FullParameterExchanger()
-    state_checkpointer = PerRoundStateCheckpointer(checkpoint_dir=Path(artifact_dir))
+    state_checkpointer = ServerStateCheckpointer(checkpoint_dir=Path(artifact_dir))
     checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
         model=model,
         parameter_exchanger=parameter_exchanger,
