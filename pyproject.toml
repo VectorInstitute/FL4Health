@@ -176,9 +176,9 @@ ignore = [
     "PLW2901", # `for` loop variable `target` overwritten by assignment target
     "D212", # Multi-line docstring summary should start at the first line
     "D301", # r-strings for docstrings with backslashes
+    "D101", # Public class requires documentation. Ignoring since we document our inits
     "D100", # TEMPORARY IGNORE: Ignore module level docstrings requirement
     "D104", # TEMPORARY IGNORE: Ignore package level docstrings requirement
-    "D101", # TEMPORARY IGNORE WILL FIX ONE BY ONE
     "D102", # TEMPORARY IGNORE WILL FIX ONE BY ONE
     "D103", # TEMPORARY IGNORE WILL FIX ONE BY ONE
     "D107", # TEMPORARY IGNORE WILL FIX ONE BY ONE
