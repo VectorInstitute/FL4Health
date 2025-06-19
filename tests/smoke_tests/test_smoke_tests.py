@@ -311,6 +311,19 @@ async def test_ditto_mnist_dynamic() -> None:
 
 
 @pytest.mark.smoketest
+async def test_ditto_mnist_dynamic_train_by_epochs() -> None:
+    coroutine = run_smoke_test(
+        server_python_path="examples.ditto_example.server",
+        client_python_path="examples.ditto_example.client_dynamic",
+        config_path="tests/smoke_tests/ditto_config_epochs.yaml",
+        dataset_path="examples/datasets/mnist_data/",
+    )
+    task = asyncio.create_task(coroutine)
+    await try_running_test_task(task)
+    assert_on_done_task(task)
+
+
+@pytest.mark.smoketest
 async def test_mr_mtl_mnist(tolerance: float) -> None:
     coroutine = run_smoke_test(
         server_python_path="examples.mr_mtl_example.server",
