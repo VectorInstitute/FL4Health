@@ -2,7 +2,6 @@ import datetime
 from collections.abc import Callable, Sequence
 from logging import DEBUG, ERROR, INFO, WARNING
 
-import torch.nn as nn
 from flwr.common import EvaluateRes, Parameters
 from flwr.common.logger import log
 from flwr.common.typing import Code, Config, GetParametersIns, Scalar
@@ -18,8 +17,6 @@ from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.servers.polling import poll_clients
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
-from fl4health.utils.config import narrow_dict_type_and_set_attribute
-from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import generate_hash
 from fl4health.utils.typing import EvaluateFailures, FitFailures
 
@@ -83,7 +80,6 @@ class FlServer(Server):
         self.server_name = server_name if server_name is not None else generate_hash()
         log(INFO, f"Server Name: {self.server_name}")
 
-        self.state_checkpoint_name = f"server_{self.server_name}_state.pt"
         self.accept_failures = accept_failures
 
         self.current_round: int
@@ -140,17 +136,17 @@ class FlServer(Server):
             seconds.
         """
 
-        # Attempt to load the server state if it exists. If the state checkpoint exists, update history, server
-        # round and model accordingly
+        log(INFO, "Initializing server state and global parameters")
+        self.parameters = self._get_initial_parameters(server_round=0, timeout=timeout)
+        self.history = History()
+        self.current_round = 1
+        # Attempt to load the server state if it exists. If the state checkpoint exists, update the initiated
+        # attributes like history, server round and model accordingly
         state_load_success = self._load_server_state()
         if state_load_success:
             log(INFO, "Server state checkpoint successfully loaded.")
         else:
-            log(INFO, "Initializing server state and global parameters")
-            self.parameters = self._get_initial_parameters(server_round=0, timeout=timeout)
-            self.history = History()
-            self.current_round = 1
-
+            log(INFO, "No server state checkpoint found. Starting from scratch.")
         if self.current_round == 1:
             log(INFO, "Evaluating initial parameters")
             res = self.strategy.evaluate(0, parameters=self.parameters)
@@ -408,43 +404,23 @@ class FlServer(Server):
         method can be overridden to add any necessary state to the checkpoint. The model will be injected into the
         ckpt state by the checkpoint module
         """
-        other_state_to_save = {
-            "history": self.history,
-            "current_round": self.current_round,
-            "reports_manager": self.reports_manager,
-            "server_name": self.server_name,
-        }
-
-        self.checkpoint_and_state_module.save_state(
-            state_checkpoint_name=self.state_checkpoint_name,
-            server_parameters=self.parameters,
-            other_state=other_state_to_save,
-        )
+        assert self.checkpoint_and_state_module.state_checkpointer is not None
+        self.checkpoint_and_state_module.save_state(self, self.parameters)
 
     def _load_server_state(self) -> bool:
         """
         Load server checkpoint consisting of model, history, server name, current round and metrics reporter.
         The method can be overridden to add any necessary state when loading the checkpoint.
         """
-
-        # Attempt to load the server state if it exists. This variable will be None if it does not.
-        server_state = self.checkpoint_and_state_module.maybe_load_state(self.state_checkpoint_name)
-
-        if server_state is None:
+        assert self.checkpoint_and_state_module.state_checkpointer is not None
+        # Attempt to load the server state if it exists.
+        server_parameters = self.checkpoint_and_state_module.maybe_load_state(self)
+        if server_parameters:
+            self.parameters = server_parameters
+            log(INFO, "Loaded server state from checkpoint")
+            return True
+        else:
             return False
-
-        narrow_dict_type_and_set_attribute(self, server_state, "server_name", "server_name", str)
-        narrow_dict_type_and_set_attribute(self, server_state, "current_round", "current_round", int)
-        narrow_dict_type_and_set_attribute(self, server_state, "reports_manager", "reports_manager", ReportsManager)
-        narrow_dict_type_and_set_attribute(self, server_state, "history", "history", History)
-        narrow_dict_type_and_set_attribute(
-            self, server_state, "model", "parameters", nn.Module, func=get_all_model_parameters
-        )
-        # Needed for when _hydrate_model_for_checkpointing is called
-        narrow_dict_type_and_set_attribute(self, server_state, "model", "server_model", nn.Module)
-
-        self.parameters = get_all_model_parameters(server_state["model"])
-        return True
 
     def _terminate_after_unacceptable_failures(self, timeout: float | None) -> None:
         assert not self.accept_failures

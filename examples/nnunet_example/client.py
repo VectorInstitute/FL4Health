@@ -5,8 +5,8 @@ from logging import DEBUG, INFO
 from os.path import exists, join
 from pathlib import Path
 
-from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
+from fl4health.checkpointing.state_checkpointer import ClientStateCheckpointer
 
 with warnings.catch_warnings():
     # Silence deprecation warnings from sentry sdk due to flwr and wandb
@@ -73,7 +73,7 @@ def main(
 
     if intermediate_client_state_dir is not None:
         checkpoint_and_state_module = ClientCheckpointAndStateModule(
-            state_checkpointer=PerRoundStateCheckpointer(Path(intermediate_client_state_dir))
+            state_checkpointer=ClientStateCheckpointer(Path(intermediate_client_state_dir))
         )
     else:
         checkpoint_and_state_module = None
@@ -147,7 +147,7 @@ if __name__ == "__main__":
             even if the preprocessed data is found to already exist",
     )
     parser.add_argument(
-        "--server_address",
+        "--server-address",
         type=str,
         required=False,
         default="0.0.0.0:8080",

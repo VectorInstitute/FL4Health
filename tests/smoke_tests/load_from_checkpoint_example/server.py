@@ -9,12 +9,9 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import Net
-from fl4health.checkpointing.checkpointer import (
-    BestLossTorchModuleCheckpointer,
-    LatestTorchModuleCheckpointer,
-    PerRoundStateCheckpointer,
-)
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
+from fl4health.checkpointing.state_checkpointer import ServerStateCheckpointer
 from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.reporting import JsonReporter
@@ -54,7 +51,7 @@ def main(config: dict[str, Any], intermediate_server_state_dir: str, server_name
         BestLossTorchModuleCheckpointer(config["checkpoint_path"], "best_model.pkl"),
         LatestTorchModuleCheckpointer(config["checkpoint_path"], "latest_model.pkl"),
     ]
-    state_checkpointer = PerRoundStateCheckpointer(Path(intermediate_server_state_dir))
+    state_checkpointer = ServerStateCheckpointer(Path(intermediate_server_state_dir))
     checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
         model=model,
         parameter_exchanger=parameter_exchanger,

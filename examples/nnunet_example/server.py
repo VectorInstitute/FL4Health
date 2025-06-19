@@ -12,8 +12,8 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.checkpointing.server_module import NnUnetServerCheckpointAndStateModule
+from fl4health.checkpointing.state_checkpointer import NnUnetServerStateCheckpointer
 from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.nnunet_server import NnunetServer
@@ -85,7 +85,7 @@ def main(
     )
 
     state_checkpointer = (
-        PerRoundStateCheckpointer(Path(intermediate_server_state_dir))
+        NnUnetServerStateCheckpointer(Path(intermediate_server_state_dir))
         if intermediate_server_state_dir is not None
         else None
     )
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--intermediate-server-state-dir",
+        "--intermediate-server-state_dir",
         type=str,
         required=False,
         default=None,
