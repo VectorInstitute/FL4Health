@@ -679,7 +679,7 @@ Loss is a dictionary of one or more losses that represent the different componen
 <span class="sig-name descname"><span class="pre">train_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/fedrep_client.html#FedRepClient.train_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.fedrep_client.FedRepClient.train_step" title="Link to this definition">¶</a></dt>
 <dd><p>Mechanics of training loop follow the FedRep paper: <a class="reference external" href="https://arxiv.org/pdf/2102.07078.pdf">https://arxiv.org/pdf/2102.07078.pdf</a>. In order to reuse
 the <code class="docutils literal notranslate"><span class="pre">train_step</span></code> functionality, we switch between the appropriate optimizers depending on the
-clients training mode (HEAD vs. REPRESENTATION)</p>
+clients training mode (HEAD vs. REPRESENTATION).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

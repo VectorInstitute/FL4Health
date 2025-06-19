@@ -501,9 +501,8 @@
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">INFO</span><span class="p">,</span> <span class="n">WARNING</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn.parameter</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span>
 
 
@@ -517,7 +516,6 @@
 <span class="sd">        PyTorch module for performing Principal Component Analysis.</span>
 
 <span class="sd">        Notes:</span>
-
 <span class="sd">        - If ``low_rank`` is set to True, then a value :math:`q` for ``rank_estimation`` is required (either specified</span>
 <span class="sd">          by the user or via its default value). If :math:`q` is too far away from the actual rank :math:`k` of the</span>
 <span class="sd">          data matrix, then the resulting rank-q svd approximation is not guaranteed to be a good approximation of the</span>
@@ -564,7 +562,7 @@
 
 <div class="viewcode-block" id="PcaModule.forward">
 <a class="viewcode-back" href="../../../reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.forward">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">center_data</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">center_data</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform PCA on the data matrix X by computing its SVD.</span>
 
@@ -582,27 +580,27 @@
 <span class="sd">            tuple[Tensor, Tensor]: The principal components (i.e., right singular vectors) and their corresponding</span>
 <span class="sd">            singular values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">X_prime</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepare_data_forward</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">center_data</span><span class="o">=</span><span class="n">center_data</span><span class="p">)</span>
+        <span class="n">x_prime</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepare_data_forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">center_data</span><span class="o">=</span><span class="n">center_data</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">low_rank</span><span class="p">:</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Assuming data matrix is low rank, using low-rank PCA implementation.&quot;</span><span class="p">)</span>
-            <span class="n">m</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">X_prime</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">X_prime</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">m</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">x_prime</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">x_prime</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank_estimation</span> <span class="o">&gt;</span> <span class="n">m</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">rank_estimation</span> <span class="o">&gt;</span> <span class="n">n</span><span class="p">:</span>
                 <span class="n">log</span><span class="p">(</span><span class="n">WARNING</span><span class="p">,</span> <span class="s2">&quot;Estimate of data rank given by user is larger than the actual rank.&quot;</span><span class="p">)</span>
             <span class="n">q</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rank_estimation</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
-            <span class="n">_</span><span class="p">,</span> <span class="n">singular_values</span><span class="p">,</span> <span class="n">principal_components</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">pca_lowrank</span><span class="p">(</span><span class="n">X_prime</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">singular_values</span><span class="p">,</span> <span class="n">principal_components</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">pca_lowrank</span><span class="p">(</span><span class="n">x_prime</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">,</span> <span class="n">center</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_svd</span><span class="p">:</span>
                 <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Performing full SVD on data matrix.&quot;</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Performing reduced SVD on data matrix.&quot;</span><span class="p">)</span>
-            <span class="n">_</span><span class="p">,</span> <span class="n">singular_values</span><span class="p">,</span> <span class="n">Vh</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">X_prime</span><span class="p">,</span> <span class="n">full_matrices</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">full_svd</span><span class="p">)</span>
-            <span class="n">principal_components</span> <span class="o">=</span> <span class="n">Vh</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">singular_values</span><span class="p">,</span> <span class="n">vh</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">x_prime</span><span class="p">,</span> <span class="n">full_matrices</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">full_svd</span><span class="p">)</span>
+            <span class="n">principal_components</span> <span class="o">=</span> <span class="n">vh</span><span class="o">.</span><span class="n">T</span>
         <span class="k">return</span> <span class="n">principal_components</span><span class="p">,</span> <span class="n">singular_values</span></div>
 
 
 <div class="viewcode-block" id="PcaModule.maybe_reshape">
 <a class="viewcode-back" href="../../../reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.maybe_reshape">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">maybe_reshape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">maybe_reshape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Reshape input tensor X as needed so SVD can be computed. Reshaping is required when each data point is an</span>
 <span class="sd">        N-dimensional tensor because PCA requires X to be a 2D data matrix.</span>
@@ -613,16 +611,15 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            Tensor: tensor flattened to be 2D</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">())</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">float</span><span class="p">())</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">dim0</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">dim0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">())</span></div>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">())</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">float</span><span class="p">())</span>
+        <span class="n">dim0</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">dim0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">())</span></div>
 
 
 <div class="viewcode-block" id="PcaModule.set_data_mean">
 <a class="viewcode-back" href="../../../reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.set_data_mean">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">set_data_mean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_data_mean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The primary purpose of this method is to store the mean of the training data so it can be used to center</span>
 <span class="sd">        validation/test data later, if needed.</span>
@@ -630,19 +627,19 @@
 <span class="sd">        Args:</span>
 <span class="sd">            X (Tensor): Data matrix</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">data_mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="PcaModule.center_data">
 <a class="viewcode-back" href="../../../reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.center_data">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">center_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">center_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_mean</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="k">return</span> <span class="n">X</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_mean</span></div>
+        <span class="k">return</span> <span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_mean</span></div>
 
 
 <div class="viewcode-block" id="PcaModule.prepare_data_forward">
 <a class="viewcode-back" href="../../../reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.prepare_data_forward">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">prepare_data_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">center_data</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare_data_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">center_data</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Prepare input data X for PCA by reshaping and centering it as needed.</span>
 
@@ -655,21 +652,20 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            Tensor: Prepared data matrix.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">maybe_reshape</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">maybe_reshape</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">center_data</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">set_data_mean</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">center_data</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Check if the mean of X is already (nearly) zero.</span>
-            <span class="c1"># Throw an exception if it is not.</span>
-            <span class="n">data_mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-            <span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">data_mean</span><span class="o">.</span><span class="n">size</span><span class="p">()),</span> <span class="n">data_mean</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">X</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_data_mean</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">center_data</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="c1"># Check if the mean of X is already (nearly) zero.</span>
+        <span class="c1"># Throw an exception if it is not.</span>
+        <span class="n">data_mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">data_mean</span><span class="o">.</span><span class="n">size</span><span class="p">()),</span> <span class="n">data_mean</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span></div>
 
 
 <div class="viewcode-block" id="PcaModule.project_lower_dim">
 <a class="viewcode-back" href="../../../reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.project_lower_dim">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">project_lower_dim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">center_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">project_lower_dim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">center_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Project input data X onto the top k principal components.</span>
 
@@ -687,18 +683,17 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            Tensor: Projection result.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">X_prime</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">maybe_reshape</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">x_prime</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">maybe_reshape</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">center_data</span><span class="p">:</span>
-            <span class="n">X_prime</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">center_data</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="n">x_prime</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">center_data</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">k</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">X_prime</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">principal_components</span><span class="p">[:,</span> <span class="p">:</span><span class="n">k</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">X_prime</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">principal_components</span><span class="p">)</span></div>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">x_prime</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">principal_components</span><span class="p">[:,</span> <span class="p">:</span><span class="n">k</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">x_prime</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">principal_components</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="PcaModule.project_back">
 <a class="viewcode-back" href="../../../reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.project_back">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">project_back</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_lower_dim</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">add_mean</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">project_back</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_lower_dim</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">add_mean</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Project low-dimensional principal representations back into the original space to recover the reconstruction</span>
 <span class="sd">        of data points.</span>
@@ -712,18 +707,17 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            Tensor: Reconstruction of data points.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">X_lower_dim_prime</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">maybe_reshape</span><span class="p">(</span><span class="n">X_lower_dim</span><span class="p">)</span>
-        <span class="n">k</span> <span class="o">=</span> <span class="n">X_lower_dim</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">x_lower_dim_prime</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">maybe_reshape</span><span class="p">(</span><span class="n">x_lower_dim</span><span class="p">)</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="n">x_lower_dim</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">add_mean</span><span class="p">:</span>
             <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_mean</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">X_lower_dim_prime</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">principal_components</span><span class="p">[:,</span> <span class="p">:</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_mean</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">X_lower_dim_prime</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">principal_components</span><span class="p">[:,</span> <span class="p">:</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">)</span></div>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">x_lower_dim_prime</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">principal_components</span><span class="p">[:,</span> <span class="p">:</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_mean</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">x_lower_dim_prime</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">principal_components</span><span class="p">[:,</span> <span class="p">:</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="PcaModule.compute_reconstruction_error">
 <a class="viewcode-back" href="../../../reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.compute_reconstruction_error">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute_reconstruction_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">center_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_reconstruction_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">center_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute the reconstruction error of X under PCA reconstruction.</span>
 
@@ -743,15 +737,15 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            float: reconstruction loss as defined above.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">N</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">X_lower_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_lower_dim</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">center_data</span><span class="o">=</span><span class="n">center_data</span><span class="p">)</span>
-        <span class="n">reconstruction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_back</span><span class="p">(</span><span class="n">X_lower_dim</span><span class="p">,</span> <span class="n">add_mean</span><span class="o">=</span><span class="n">center_data</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">reconstruction</span> <span class="o">-</span> <span class="n">X</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">/</span> <span class="n">N</span></div>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">x_lower_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_lower_dim</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">center_data</span><span class="o">=</span><span class="n">center_data</span><span class="p">)</span>
+        <span class="n">reconstruction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_back</span><span class="p">(</span><span class="n">x_lower_dim</span><span class="p">,</span> <span class="n">add_mean</span><span class="o">=</span><span class="n">center_data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">reconstruction</span> <span class="o">-</span> <span class="n">x</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">/</span> <span class="n">n</span></div>
 
 
 <div class="viewcode-block" id="PcaModule.compute_projection_variance">
 <a class="viewcode-back" href="../../../reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.compute_projection_variance">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute_projection_variance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">center_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_projection_variance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">center_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute the variance of the data matrix X after projection via PCA.</span>
 
@@ -766,7 +760,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            float: variance after projection as defined above.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">project_lower_dim</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">center_data</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span></div>
+        <span class="k">return</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">project_lower_dim</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">center_data</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span></div>
 
 
 <div class="viewcode-block" id="PcaModule.compute_cumulative_explained_variance">

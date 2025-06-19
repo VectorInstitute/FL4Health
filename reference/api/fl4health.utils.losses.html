@@ -523,7 +523,7 @@ dictionary representation.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.losses.EvaluationLosses.aggregate">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">aggregate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_meter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/losses.html#EvaluationLosses.aggregate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.losses.EvaluationLosses.aggregate" title="Link to this definition">¶</a></dt>
-<dd><p>Aggregates the losses in the given <code class="docutils literal notranslate"><span class="pre">LossMeter</span></code> into An instance of <code class="docutils literal notranslate"><span class="pre">EvaluationLosses</span></code></p>
+<dd><p>Aggregates the losses in the given <code class="docutils literal notranslate"><span class="pre">LossMeter</span></code> into An instance of <code class="docutils literal notranslate"><span class="pre">EvaluationLosses</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>loss_meter</strong> (<a class="reference internal" href="#fl4health.utils.losses.LossMeter" title="fl4health.utils.losses.LossMeter"><em>LossMeter</em></a><em>[</em><a class="reference internal" href="#fl4health.utils.losses.EvaluationLosses" title="fl4health.utils.losses.EvaluationLosses"><em>EvaluationLosses</em></a><em>]</em>) – The loss meter object with the collected evaluation losses.</p>
@@ -576,7 +576,7 @@ Losses</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.losses.LossMeter.aggregate_losses_dict">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">aggregate_losses_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_meter_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/losses.html#LossMeter.aggregate_losses_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.losses.LossMeter.aggregate_losses_dict" title="Link to this definition">¶</a></dt>
-<dd><p>Aggregates a list of losses dictionaries into a single dictionary according to the loss meter aggregation type</p>
+<dd><p>Aggregates a list of losses dictionaries into a single dictionary according to the loss meter aggregation type.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -597,7 +597,7 @@ meter type</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.losses.LossMeter.clear">
 <span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/losses.html#LossMeter.clear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.losses.LossMeter.clear" title="Link to this definition">¶</a></dt>
-<dd><p>Resets the meter by re-initializing <code class="docutils literal notranslate"><span class="pre">losses_list</span></code> to be empty</p>
+<dd><p>Resets the meter by re-initializing <code class="docutils literal notranslate"><span class="pre">losses_list</span></code> to be empty.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
@@ -659,7 +659,7 @@ meter type</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.losses.Losses.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">additional_losses</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/losses.html#Losses.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.losses.Losses.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>An abstract class to store the losses</p>
+<dd><p>An abstract class to store the losses.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>additional_losses</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>torch.Tensor</em><em>] </em><em>| </em><em>None</em>) – Optional dictionary of additional losses.</p>
@@ -670,7 +670,7 @@ meter type</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.losses.Losses.aggregate">
 <em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">aggregate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_meter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/losses.html#Losses.aggregate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.losses.Losses.aggregate" title="Link to this definition">¶</a></dt>
-<dd><p>Aggregates the losses in the given <code class="docutils literal notranslate"><span class="pre">LossMeter</span></code> into an instance of Losses</p>
+<dd><p>Aggregates the losses in the given <code class="docutils literal notranslate"><span class="pre">LossMeter</span></code> into an instance of Losses.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>loss_meter</strong> (<a class="reference internal" href="#fl4health.utils.losses.LossMeter" title="fl4health.utils.losses.LossMeter"><em>LossMeter</em></a>) – The loss meter object with the collected losses.</p>
@@ -724,7 +724,7 @@ loss of a model. In the case of an <code class="docutils literal notranslate"><s
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.losses.TrainingLosses.aggregate">
 <em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">aggregate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss_meter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/losses.html#TrainingLosses.aggregate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.losses.TrainingLosses.aggregate" title="Link to this definition">¶</a></dt>
-<dd><p>Aggregates the losses in the given <code class="docutils literal notranslate"><span class="pre">LossMeter</span></code> into An instance of <code class="docutils literal notranslate"><span class="pre">TrainingLosses</span></code></p>
+<dd><p>Aggregates the losses in the given <code class="docutils literal notranslate"><span class="pre">LossMeter</span></code> into An instance of <code class="docutils literal notranslate"><span class="pre">TrainingLosses</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>loss_meter</strong> (<a class="reference internal" href="#fl4health.utils.losses.LossMeter" title="fl4health.utils.losses.LossMeter"><em>LossMeter</em></a><em>[</em><a class="reference internal" href="#fl4health.utils.losses.TrainingLosses" title="fl4health.utils.losses.TrainingLosses"><em>TrainingLosses</em></a><em>]</em>) – The loss meter object with the collected training losses.</p>

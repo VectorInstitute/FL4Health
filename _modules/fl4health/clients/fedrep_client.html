@@ -521,6 +521,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.losses</span><span class="w"> </span><span class="kn">import</span> <span class="n">LossMeterType</span><span class="p">,</span> <span class="n">TrainingLosses</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TorchInputType</span><span class="p">,</span> <span class="n">TorchPredType</span><span class="p">,</span> <span class="n">TorchTargetType</span>
 
+
 <span class="n">EpochsAndStepsTuple</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span>
 
 
@@ -590,8 +591,9 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_train_representations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Handles the components switching needed to train the representation submodule as required by FedRep. This</span>
-<span class="sd">        includes:</span>
+<span class="sd">        Handles the components switching needed to train the representation submodule as required by FedRep.</span>
+
+<span class="sd">        This includes:</span>
 
 <span class="sd">        1. Setting the training mode enum to know which optimizer should be stepping during training</span>
 <span class="sd">        2. Unfreezing the base module, which represents the feature extractor (if frozen)</span>
@@ -604,8 +606,9 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_train_head</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Handles the components switching needed to train the classification submodule as required by FedRep. This</span>
-<span class="sd">        includes:</span>
+<span class="sd">        Handles the components switching needed to train the classification submodule as required by FedRep.</span>
+
+<span class="sd">        This includes:</span>
 
 <span class="sd">        1. Setting the training mode enum to know which optimizer should be stepping during training</span>
 <span class="sd">        2. Freezing the base module, which represents the feature extractor.</span>
@@ -639,7 +642,7 @@
 <span class="sd">        Function parses the configuration specified and extracts the epochs or step based training values necessary</span>
 <span class="sd">        to train a FedRep model. Note that we do not allow for mixed epoch and step based training. You must specify</span>
 <span class="sd">        either epochs or steps for both the head and representation modules. The keys should be either</span>
-<span class="sd">        ``{local_head_epochs, local_rep_epochs}`` or ``{local_head_steps, local_rep_steps}``</span>
+<span class="sd">        ``{local_head_epochs, local_rep_epochs}`` or ``{local_head_steps, local_rep_steps}``.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (Config): Configuration specifying all of the required parameters for training.</span>
@@ -668,7 +671,7 @@
                 <span class="kc">None</span><span class="p">,</span>
                 <span class="kc">None</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="k">elif</span> <span class="n">steps_specified</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">epochs_specified</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">steps_specified</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">epochs_specified</span><span class="p">:</span>
             <span class="n">log</span><span class="p">(</span>
                 <span class="n">INFO</span><span class="p">,</span>
                 <span class="s2">&quot;Steps for head and representation module specified. Proceeding with step-based training&quot;</span><span class="p">,</span>
@@ -679,14 +682,13 @@
                 <span class="n">narrow_dict_type</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;local_head_steps&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
                 <span class="n">narrow_dict_type</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;local_rep_steps&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
             <span class="p">)</span>
-        <span class="k">elif</span> <span class="n">epochs_specified</span> <span class="ow">and</span> <span class="n">steps_specified</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">epochs_specified</span> <span class="ow">and</span> <span class="n">steps_specified</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot specify both epochs and steps based training values in the config&quot;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Either configuration keys not properly present or a mix of steps and epochs based training was &quot;</span>
-                <span class="s2">&quot;specified and is not admissible. Keys should be one of {local_head_epochs, local_rep_epochs} or &quot;</span>
-                <span class="s2">&quot;{local_head_steps, local_rep_steps}&quot;</span>
-            <span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Either configuration keys not properly present or a mix of steps and epochs based training was &quot;</span>
+            <span class="s2">&quot;specified and is not admissible. Keys should be one of {local_head_epochs, local_rep_epochs} or &quot;</span>
+            <span class="s2">&quot;{local_head_steps, local_rep_steps}&quot;</span>
+        <span class="p">)</span>
 
 <div class="viewcode-block" id="FedRepClient.process_fed_rep_config">
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.fedrep_client.html#fl4health.clients.fedrep_client.FedRepClient.process_fed_rep_config">[docs]</a>
@@ -741,9 +743,9 @@
 <span class="sd">            config (Config): The config from the server.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">optimizers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_optimizer</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">optimizers</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">set</span><span class="p">((</span><span class="s2">&quot;representation&quot;</span><span class="p">,</span> <span class="s2">&quot;head&quot;</span><span class="p">))</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span>
-            <span class="n">optimizers</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-        <span class="p">),</span> <span class="s1">&#39;Optimizer keys must be &quot;representation&quot; and &quot;head&quot; to use FedRep&#39;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">optimizers</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="p">{</span><span class="s2">&quot;representation&quot;</span><span class="p">,</span> <span class="s2">&quot;head&quot;</span><span class="p">}</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">optimizers</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="p">(</span>
+            <span class="s1">&#39;Optimizer keys must be &quot;representation&quot; and &quot;head&quot; to use FedRep&#39;</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span> <span class="o">=</span> <span class="n">optimizers</span></div>
 
 
@@ -921,7 +923,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Mechanics of training loop follow the FedRep paper: https://arxiv.org/pdf/2102.07078.pdf. In order to reuse</span>
 <span class="sd">        the ``train_step`` functionality, we switch between the appropriate optimizers depending on the</span>
-<span class="sd">        clients training mode (HEAD vs. REPRESENTATION)</span>
+<span class="sd">        clients training mode (HEAD vs. REPRESENTATION).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            input (TorchInputType): input tensor to be run through the model. Here, ``TorchInputType`` is simply an</span>
@@ -932,7 +934,6 @@
 <span class="sd">            tuple[TrainingLosses, dict[str, torch.Tensor]]: The losses object from the train step along with</span>
 <span class="sd">            a dictionary of any predictions produced by the model.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="c1"># Clear gradients from the optimizers if they exits. We do both regardless of the client mode.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="p">[</span><span class="s2">&quot;representation&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="p">[</span><span class="s2">&quot;head&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>

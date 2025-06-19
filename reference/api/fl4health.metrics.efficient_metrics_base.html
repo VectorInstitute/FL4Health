@@ -607,14 +607,8 @@ per image. A metric could then be computed for each image and then averaged.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric.count_tp_fp_tn_fn">
 <span class="sig-name descname"><span class="pre">count_tp_fp_tn_fn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics_base.html#BinaryClassificationMetric.count_tp_fp_tn_fn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric.count_tp_fp_tn_fn" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</span></p>
-<p>Given two tensors containing model predictions and targets, returns the number of true positives (tp), false
+<dd><p>Given two tensors containing model predictions and targets, returns the number of true positives (tp), false
 positives (fp), true negatives (tn), and false negatives (fn).</p>
-</p>
-</dd>
-</dl>
 <p>The shape of these counts depends on the values of <code class="docutils literal notranslate"><span class="pre">self.batch_dim</span></code> and <code class="docutils literal notranslate"><span class="pre">self.label_dim</span></code> are specified.
 They also depend on the shape of the input and target for this class. As binary predictions may be explicit
 (vector encoded) or implicit (single value implying values for the negative and positive classes).</p>
@@ -622,19 +616,27 @@ They also depend on the shape of the input and target for this class. As binary 
 <div><p>If any of the true positives, false positives, true negative, or false negative counts were specified to be
 discarded during initialization of the class, then that count will not be computed and an empty tensor will be
 returned in its place.</p>
-<dl class="simple">
-<dt>Args:</dt><dd><p>preds (torch.Tensor): Tensor containing model predictions. Must be the same shape as targets
-targets (torch.Tensor): Tensor containing prediction targets. Must be same shape as preds.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>preds</strong> (<em>torch.Tensor</em>) – Tensor containing model predictions. Must be the same shape as targets</p></li>
+<li><p><strong>targets</strong> (<em>torch.Tensor</em>) – Tensor containing prediction targets. Must be same shape as preds.</p></li>
+</ul>
 </dd>
-<dt>Returns:</dt><dd><dl class="simple">
-<dt>tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the</dt><dd><p>specified dimensions for each of true positives, false positives, true negatives, and false negatives,
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>Tensors containing the counts along the</dt><dd><p>specified dimensions for each of true positives, false positives, true negatives, and false negatives,
 respectively. If <cite>self.batch_dim</cite> is not None then these tensors will have shape (batch size, 1),
 Otherwise, it will have shape (1,). The counts will be relative to the index of <code class="docutils literal notranslate"><span class="pre">self.pos_label</span></code></p>
 </dd>
 </dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]</p>
 </dd>
 </dl>
-</div></blockquote>
 </dd></dl>
 
 </dd></dl>
@@ -695,7 +697,7 @@ computation.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics_base.ClassificationMetric.clear">
 <span class="sig-name descname"><span class="pre">clear</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics_base.html#ClassificationMetric.clear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics_base.ClassificationMetric.clear" title="Link to this definition">¶</a></dt>
-<dd><p>Reset accumulated tp, fp, fn and tn’s. They will be initialized with correct shape on next update</p>
+<dd><p>Reset accumulated tp, fp, fn and tn’s. They will be initialized with correct shape on next update.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
@@ -707,7 +709,7 @@ computation.</p></li>
 <dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics_base.ClassificationMetric.compute">
 <span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics_base.html#ClassificationMetric.compute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics_base.ClassificationMetric.compute" title="Link to this definition">¶</a></dt>
 <dd><p>Computes the metrics from the currently saved counts using the compute_from_counts function defined in
-inheriting classes</p>
+inheriting classes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em>) – Optional name used in conjunction with class attribute name to define key in metrics
@@ -876,9 +878,13 @@ dimension. During metric computation, this dimension must have size of AT LEAST 
 <li><p><strong>batch_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – <p>If None, then counts are aggregated across the batch dimension. If
 specified, counts will be computed along the dimension specified. That is, counts are maintained for
 each training sample INDIVIDUALLY. For example, if batch_dim = 1 and label_dim = 0, then</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">]],</span> <span class="p">[[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]]])</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+    <span class="p">[[[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]],</span> <span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]]]</span>
+<span class="p">)</span>
 
-<span class="n">t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">]],</span> <span class="p">[[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]]])</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+    <span class="p">[[[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]],</span> <span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]]]</span>
+<span class="p">)</span>
 
 <span class="bp">self</span><span class="o">.</span><span class="n">tp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">]])</span>
 

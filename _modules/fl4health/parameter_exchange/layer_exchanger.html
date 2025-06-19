@@ -502,13 +502,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TypeVar</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span><span class="p">,</span> <span class="n">NDArrays</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.parameter_exchange.parameter_exchanger_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParameterExchanger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.parameter_exchange.parameter_packer</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParameterPackerWithLayerNames</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.parameter_exchange.partial_parameter_exchanger</span><span class="w"> </span><span class="kn">import</span> <span class="n">PartialParameterExchanger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">LayerSelectionFunction</span>
+
 
 <span class="n">TorchModule</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;TorchModule&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span>
 
@@ -520,7 +521,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.layer_exchanger.html#fl4health.parameter_exchange.layer_exchanger.FixedLayerExchanger.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layers_to_transfer</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Exchanger that only exchanges a static set of layers at each round of FL</span>
+<span class="sd">        Exchanger that only exchanges a static set of layers at each round of FL.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            layers_to_transfer (list[str]): Names of the layers to be exchanged. These should correspond to the</span>
@@ -570,14 +571,13 @@
 <div class="viewcode-block" id="LayerExchangerWithExclusions">
 <a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.layer_exchanger.html#fl4health.parameter_exchange.layer_exchanger.LayerExchangerWithExclusions">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LayerExchangerWithExclusions</span><span class="p">(</span><span class="n">ParameterExchanger</span><span class="p">):</span>
-
 <div class="viewcode-block" id="LayerExchangerWithExclusions.__init__">
 <a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.layer_exchanger.html#fl4health.parameter_exchange.layer_exchanger.LayerExchangerWithExclusions.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">module_exclusions</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">TorchModule</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This class implements exchanging all model layers except those matching a specified set of types. The</span>
 <span class="sd">        constructor is provided with the model in order to extract the proper layers to be exchanged based on the</span>
-<span class="sd">        exclusion criteria</span>
+<span class="sd">        exclusion criteria.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model (nn.Module): Model whose layers are to be exchanged.</span>
@@ -615,14 +615,14 @@
         <span class="c1"># Ex. named module: name: &quot;fc1&quot; module: nn.Linear(10, 10, bias=True)</span>
         <span class="c1"># The state_dict has keys fc1.weight and fc1.bias with associated parameters</span>
         <span class="c1"># We filter out any parameters prefixed with the name of an excluded module, as stored in modules_to_filter</span>
-        <span class="k">return</span> <span class="nb">any</span><span class="p">([</span><span class="n">layer_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">module_to_filter</span><span class="p">)</span> <span class="k">for</span> <span class="n">module_to_filter</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_to_filter</span><span class="p">])</span></div>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">layer_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">module_to_filter</span><span class="p">)</span> <span class="k">for</span> <span class="n">module_to_filter</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_to_filter</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="LayerExchangerWithExclusions.get_layers_to_transfer">
 <a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.layer_exchanger.html#fl4health.parameter_exchange.layer_exchanger.LayerExchangerWithExclusions.get_layers_to_transfer">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_layers_to_transfer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="c1"># We store the state dictionary keys that do not correspond to excluded modules as held in modules_to_filter</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">should_layer_be_excluded</span><span class="p">(</span><span class="n">name</span><span class="p">)]</span></div>
+        <span class="k">return</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">should_layer_be_excluded</span><span class="p">(</span><span class="n">name</span><span class="p">)]</span></div>
 
 
 <div class="viewcode-block" id="LayerExchangerWithExclusions.apply_layer_filter">

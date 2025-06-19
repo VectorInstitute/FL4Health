@@ -698,7 +698,7 @@
         <span class="c1"># cast being used here until the mypy bug mentioned in https://github.com/python/mypy/issues/12800 and the</span>
         <span class="c1"># duplicate ticket https://github.com/python/mypy/issues/10817 are fixed</span>
         <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">modified_dataset</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">DictionaryDataset</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">DictionaryDataset</span><span class="p">):</span>
         <span class="n">new_targets</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">selected_indices</span><span class="p">]</span>
         <span class="n">new_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -708,8 +708,7 @@
         <span class="c1"># cast being used here until the mypy bug mentioned in https://github.com/python/mypy/issues/12800 and the</span>
         <span class="c1"># duplicate ticket https://github.com/python/mypy/issues/10817 are fixed</span>
         <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">DictionaryDataset</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">new_targets</span><span class="p">))</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Dataset type is not supported by this function.&quot;</span><span class="p">)</span></div>
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Dataset type is not supported by this function.&quot;</span><span class="p">)</span></div>
 
 </pre></div>
         </article>

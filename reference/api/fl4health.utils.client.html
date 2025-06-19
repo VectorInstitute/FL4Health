@@ -506,7 +506,7 @@
 <span class="sig-name descname"><span class="pre">check_if_batch_is_empty_and_verify_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/client.html#check_if_batch_is_empty_and_verify_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.client.check_if_batch_is_empty_and_verify_input" title="Link to this definition">¶</a></dt>
 <dd><p>This function checks whether the provided batch (input) is empty. If the input is a dictionary of inputs, it
 first verifies that the length of all inputs is the same, then checks if they are non-empty.
-<strong>NOTE:</strong> This function assumes the input is <strong>BATCH FIRST</strong></p>
+<strong>NOTE:</strong> This function assumes the input is <strong>BATCH FIRST</strong>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>input</strong> (<em>TorchInputType</em>) – Input batch. input can be of type <code class="docutils literal notranslate"><span class="pre">torch.Tensor</span></code> or <code class="docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">torch.Tensor]</span></code>,

@@ -503,9 +503,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span><span class="p">,</span> <span class="n">Scalar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.client_module</span><span class="w"> </span><span class="kn">import</span> <span class="n">CheckpointMode</span><span class="p">,</span> <span class="n">ClientCheckpointAndStateModule</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.clients.ditto_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">DittoClient</span>
@@ -594,7 +594,7 @@
 
         <span class="k">if</span> <span class="n">feature_extraction_layers_with_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">feature_extraction_layers_with_size</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">flatten_feature_extraction_layers</span> <span class="o">=</span> <span class="p">{</span><span class="n">layer</span><span class="p">:</span> <span class="kc">True</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">feature_extraction_layers_with_size</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flatten_feature_extraction_layers</span> <span class="o">=</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">feature_extraction_layers_with_size</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">deep_mmd_losses</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DeepMmdLoss</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="c1"># Save the random state to be restored after initializing the Deep MMD loss layers.</span>
         <span class="n">random_state</span><span class="p">,</span> <span class="n">numpy_state</span><span class="p">,</span> <span class="n">torch_state</span> <span class="o">=</span> <span class="n">save_random_state</span><span class="p">()</span>
@@ -643,7 +643,7 @@
         <span class="c1"># meaning that the betas will be updated after each individual batch based on only that</span>
         <span class="c1"># individual batch</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mmd_kernel_train_interval</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatten_feature_extraction_layers</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatten_feature_extraction_layers</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">deep_mmd_losses</span><span class="p">[</span><span class="n">layer</span><span class="p">]</span><span class="o">.</span><span class="n">training</span> <span class="o">=</span> <span class="kc">True</span></div>
 
 
@@ -689,7 +689,6 @@
 <span class="sd">            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple containing the extracted</span>
 <span class="sd">            features using the local and initial global models.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">local_feature_extractor</span><span class="o">.</span><span class="n">clear_buffers</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">initial_global_feature_extractor</span><span class="o">.</span><span class="n">clear_buffers</span><span class="p">()</span>
 
@@ -746,7 +745,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TorchPredType</span><span class="p">,</span> <span class="n">TorchFeatureType</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes the predictions for both the **GLOBAL** and **LOCAL** models and pack them into the prediction</span>
-<span class="sd">        dictionary</span>
+<span class="sd">        dictionary.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            input (TorchInputType): Inputs to be fed into the model. If input is of type ``dict[str, torch.Tensor]``,</span>
@@ -759,7 +758,6 @@
 <span class="sd">            By passing features, we can compute all the losses. All predictions included in dictionary will by</span>
 <span class="sd">            default be used to compute metrics separately.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="c1"># We use features from initial_global_model to compute the Deep MMD loss not the global_model</span>
         <span class="n">global_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
         <span class="n">local_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
@@ -791,7 +789,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatten_feature_extraction_layers</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatten_feature_extraction_layers</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">deep_mmd_losses</span><span class="p">[</span><span class="n">layer</span><span class="p">]</span><span class="o">.</span><span class="n">training</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">include_losses_in_metrics</span><span class="p">)</span></div>
 
@@ -808,7 +806,7 @@
 <span class="sd">        Computes training losses given predictions of the global and local models and ground truth data.</span>
 <span class="sd">        For the local model we add to the vanilla loss function by including Ditto penalty loss which is the l2 inner</span>
 <span class="sd">        product between the initial global model weights and weights of the local model. This is stored in backward</span>
-<span class="sd">        The loss to optimize the global model is stored in the additional losses dictionary under &quot;global_loss&quot;</span>
+<span class="sd">        The loss to optimize the global model is stored in the additional losses dictionary under &quot;global_loss&quot;.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in</span>

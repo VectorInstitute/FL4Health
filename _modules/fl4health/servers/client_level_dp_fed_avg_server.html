@@ -611,7 +611,6 @@
 <span class="sd">            FL training results, including things like aggregated loss and metrics. Tuple also contains the elapsed</span>
 <span class="sd">            time in seconds for the round.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="p">,</span> <span class="n">ClientLevelDPFedAvgM</span><span class="p">)</span>
 
         <span class="n">sample_counts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">poll_clients_for_sample_counts</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>

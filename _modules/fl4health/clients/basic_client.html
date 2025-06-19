@@ -505,10 +505,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">NumPyClient</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span><span class="p">,</span> <span class="n">NDArrays</span><span class="p">,</span> <span class="n">Scalar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn.modules.loss</span><span class="w"> </span><span class="kn">import</span> <span class="n">_Loss</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim.lr_scheduler</span><span class="w"> </span><span class="kn">import</span> <span class="n">LRScheduler</span>
@@ -577,7 +577,6 @@
 <span class="sd">                If not passed, a hash is randomly generated. Client state will use this as part of its state file</span>
 <span class="sd">                name. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">data_path</span> <span class="o">=</span> <span class="n">data_path</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="n">metrics</span>
@@ -678,12 +677,11 @@
 
             <span class="c1"># Need all parameters even if normally exchanging partial</span>
             <span class="k">return</span> <span class="n">FullParameterExchanger</span><span class="p">()</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="c1"># If the client has early stopping module and the patience is None, we load the best saved state</span>
-            <span class="c1"># to send the best checkpointed local model&#39;s parameters to the server</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_load_saved_best_local_model_state</span><span class="p">()</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span></div>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="c1"># If the client has early stopping module and the patience is None, we load the best saved state</span>
+        <span class="c1"># to send the best checkpointed local model&#39;s parameters to the server</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_maybe_load_saved_best_local_model_state</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_maybe_load_saved_best_local_model_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -737,9 +735,7 @@
 <div class="viewcode-block" id="BasicClient.shutdown">
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.shutdown">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Shuts down the client. Involves shutting down W&amp;B reporter if one exists.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Shuts down the client. Involves shutting down W&amp;B reporter if one exists.&quot;&quot;&quot;</span>
         <span class="c1"># Shutdown reporters</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reports_manager</span><span class="o">.</span><span class="n">report</span><span class="p">({</span><span class="s2">&quot;shutdown&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())})</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reports_manager</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span></div>
@@ -768,7 +764,7 @@
         <span class="c1"># Parse config to determine train by steps or train by epochs</span>
         <span class="k">if</span> <span class="p">(</span><span class="s2">&quot;local_epochs&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="s2">&quot;local_steps&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Config cannot contain both local_epochs and local_steps. Please specify only one.&quot;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="s2">&quot;local_epochs&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;local_epochs&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
             <span class="n">local_epochs</span> <span class="o">=</span> <span class="n">narrow_dict_type</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;local_epochs&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
             <span class="n">local_steps</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">elif</span> <span class="s2">&quot;local_steps&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
@@ -965,8 +961,8 @@
         <span class="n">logging_mode</span><span class="p">:</span> <span class="n">LoggingMode</span> <span class="o">=</span> <span class="n">LoggingMode</span><span class="o">.</span><span class="n">TRAIN</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Logs a header string. By default this is logged at the beginning of each local</span>
-<span class="sd">        epoch or at the beginning of the round if training by steps</span>
+<span class="sd">        Logs a header string. By default this is logged at the beginning of each local epoch or at the beginning of</span>
+<span class="sd">        the round if training by steps.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            current_round (int | None, optional): The current FL round. (Ie current</span>
@@ -974,7 +970,6 @@
 <span class="sd">            current_epoch (int | None, optional): The current epoch of local</span>
 <span class="sd">                training. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">log_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Current FL Round: </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">current_round</span><span class="p">)</span><span class="si">}</span><span class="s2"> &quot;</span> <span class="k">if</span> <span class="n">current_round</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
         <span class="n">log_str</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Current Epoch: </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">current_epoch</span><span class="p">)</span><span class="si">}</span><span class="s2"> &quot;</span> <span class="k">if</span> <span class="n">current_epoch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
 
@@ -995,8 +990,8 @@
         <span class="n">logging_mode</span><span class="p">:</span> <span class="n">LoggingMode</span> <span class="o">=</span> <span class="n">LoggingMode</span><span class="o">.</span><span class="n">TRAIN</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Handles the logging of losses, metrics, and other information to the</span>
-<span class="sd">        output file. Called only at the end of an epoch or server round</span>
+<span class="sd">        Handles the logging of losses, metrics, and other information to the output file. Called only at the end of</span>
+<span class="sd">        an epoch or server round.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            loss_dict (dict[str, float]): A dictionary of losses to log.</span>
@@ -1059,7 +1054,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">get_client_specific_reports</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This function can be overridden by an inheriting client to report additional client specific information to</span>
-<span class="sd">        the ``wandb_reporter``</span>
+<span class="sd">        the ``wandb_reporter``.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            dict[str, Any]: A dictionary of things to report</span>
@@ -1138,7 +1133,6 @@
 <span class="sd">            tuple[EvaluationLosses, TorchPredType]: The losses object from the val step along with a dictionary of the</span>
 <span class="sd">            predictions produced by the model.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="c1"># Get preds and compute loss</span>
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
             <span class="n">preds</span><span class="p">,</span> <span class="n">features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
@@ -1299,7 +1293,7 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">loss_meter</span><span class="p">:</span> <span class="n">LossMeter</span><span class="p">,</span> <span class="n">metric_manager</span><span class="p">:</span> <span class="n">MetricManager</span><span class="p">,</span> <span class="n">include_losses_in_metrics</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Evaluate the model on the validation set for a fixed number of steps set by ``self.num_validation_steps``</span>
+<span class="sd">        Evaluate the model on the validation set for a fixed number of steps set by ``self.num_validation_steps``.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            loss_meter (LossMeter): The meter to track the losses.</span>
@@ -1310,7 +1304,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple[float, dict[str, Scalar]]: The loss and a dictionary of metrics from evaluation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_validation_steps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;num_validation_steps must be defined to use this function&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
@@ -1491,9 +1484,9 @@
         <span class="c1"># batch_size * num_validation_steps</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_val_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">val_loader</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_validation_steps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">val_loader</span><span class="o">.</span><span class="n">batch_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="p">),</span> <span class="s2">&quot;Validation batch size must be defined if we want to limit the number of validation steps&quot;</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_loader</span><span class="o">.</span><span class="n">batch_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="p">(</span>
+                <span class="s2">&quot;Validation batch size must be defined if we want to limit the number of validation steps&quot;</span>
+            <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">num_val_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_validation_steps</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_loader</span><span class="o">.</span><span class="n">batch_size</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_loader</span><span class="p">:</span>
@@ -1505,7 +1498,7 @@
         <span class="c1"># Add lr_scheduler to dictionary if user overrides get_lr_scheduler to return</span>
         <span class="c1"># scheduler for given optimizer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">lr_schedulers</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">optimizer_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">optimizer_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="p">:</span>
             <span class="n">lr_scheduler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_lr_scheduler</span><span class="p">(</span><span class="n">optimizer_key</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">lr_scheduler</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">lr_schedulers</span><span class="p">[</span><span class="n">optimizer_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">lr_scheduler</span>
@@ -1567,15 +1560,14 @@
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">output</span><span class="p">,</span> <span class="p">{}</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;prediction&quot;</span><span class="p">:</span> <span class="n">output</span><span class="p">},</span> <span class="p">{}</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">output</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Output tuple should have length 2 but has length </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">output</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">preds</span><span class="p">,</span> <span class="n">features</span> <span class="o">=</span> <span class="n">output</span>
             <span class="k">return</span> <span class="n">preds</span><span class="p">,</span> <span class="n">features</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model forward did not return a tensor, dictionary of tensors, or tuple of tensors&quot;</span><span class="p">)</span></div>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Model forward did not return a tensor, dictionary of tensors, or tuple of tensors&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="BasicClient.compute_loss_and_additional_losses">
@@ -1670,8 +1662,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.get_data_loaders">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_data_loaders</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">DataLoader</span><span class="p">,</span> <span class="n">DataLoader</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        User defined method that returns a PyTorch Train DataLoader</span>
-<span class="sd">        and a PyTorch Validation DataLoader</span>
+<span class="sd">        User defined method that returns a PyTorch Train DataLoader and a PyTorch Validation DataLoader.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (Config): The config from the server.</span>
@@ -1808,7 +1799,6 @@
 <span class="sd">            step (int | None): If using ``local_steps``, current step of this round. Otherwise None.</span>
 <span class="sd">            epoch (int | None): If using ``local_epochs`` current epoch of this round. Otherwise None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">assert</span> <span class="p">(</span><span class="n">step</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">^</span> <span class="p">(</span><span class="n">epoch</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">lr_scheduler</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr_schedulers</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
@@ -1883,7 +1873,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">update_before_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Hook method called before local epoch on client. Only called if client is being trained by epochs</span>
-<span class="sd">        (i.e. using ``local_epochs`` key instead of local steps in the server config file)</span>
+<span class="sd">        (i.e. using ``local_epochs`` key instead of local steps in the server config file).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            epoch (int): Integer representing the epoch about to begin</span>

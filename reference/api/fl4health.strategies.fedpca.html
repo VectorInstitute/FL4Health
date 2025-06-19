@@ -618,10 +618,12 @@ the corresponding diagonal matrix of singular values, and there are n clients, t
 performing SVD on the matrix</p>
 <p><code class="docutils literal notranslate"><span class="pre">B</span> <span class="pre">=</span> <span class="pre">[U_1</span> <span class="pre">&#64;</span> <span class="pre">S_1</span> <span class="pre">|</span> <span class="pre">U_2</span> <span class="pre">&#64;</span> <span class="pre">S_2</span> <span class="pre">|</span> <span class="pre">...</span> <span class="pre">|</span> <span class="pre">U_n</span> <span class="pre">&#64;</span> <span class="pre">S_n],</span></code></p>
 <p>where the new left singular vectors are returned as the merging result.</p>
-<p>Notes:</p>
-<ol class="arabic">
-<li><p>If <code class="docutils literal notranslate"><span class="pre">U_i</span> <span class="pre">&#64;</span> <span class="pre">S_i</span></code> is of size <code class="docutils literal notranslate"><span class="pre">d</span></code> by <code class="docutils literal notranslate"><span class="pre">N_i</span></code>, then <code class="docutils literal notranslate"><span class="pre">B</span></code> has size <code class="docutils literal notranslate"><span class="pre">d</span></code> by <code class="docutils literal notranslate"><span class="pre">N</span></code>, where
-<code class="docutils literal notranslate"><span class="pre">N</span> <span class="pre">=</span> <span class="pre">N_1</span> <span class="pre">+</span> <span class="pre">N_2</span> <span class="pre">+</span> <span class="pre">...</span> <span class="pre">+</span> <span class="pre">N_n.</span></code></p></li>
+<p>Notes:
+1. If <code class="docutils literal notranslate"><span class="pre">U_i</span> <span class="pre">&#64;</span> <span class="pre">S_i</span></code> is of size <code class="docutils literal notranslate"><span class="pre">d</span></code> by <code class="docutils literal notranslate"><span class="pre">N_i</span></code>, then <code class="docutils literal notranslate"><span class="pre">B</span></code> has size <code class="docutils literal notranslate"><span class="pre">d</span></code> by <code class="docutils literal notranslate"><span class="pre">N</span></code>, where</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">N</span> <span class="pre">=</span> <span class="pre">N_1</span> <span class="pre">+</span> <span class="pre">N_2</span> <span class="pre">+</span> <span class="pre">...</span> <span class="pre">+</span> <span class="pre">N_n.</span></code></p>
+</div></blockquote>
+<ol class="arabic" start="2">
 <li><p>If</p>
 <p><code class="docutils literal notranslate"><span class="pre">U</span> <span class="pre">&#64;</span> <span class="pre">S</span> <span class="pre">&#64;</span> <span class="pre">V.T</span> <span class="pre">=</span> <span class="pre">B</span></code></p>
 <p>is the SVD of <code class="docutils literal notranslate"><span class="pre">B</span></code>, then it turns out that <code class="docutils literal notranslate"><span class="pre">U</span> <span class="pre">=</span> <span class="pre">A</span> <span class="pre">&#64;</span> <span class="pre">U'</span></code>, where the columns of <code class="docutils literal notranslate"><span class="pre">U'</span></code> are the true

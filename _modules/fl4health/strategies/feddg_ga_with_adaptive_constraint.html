@@ -584,7 +584,6 @@
 <span class="sd">                the generalization adjustment weight. It has to be ``0 &lt; adjustment_weight_step_size &lt; 1.``</span>
 <span class="sd">                Optional, default is 0.2.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">loss_weight</span> <span class="o">=</span> <span class="n">initial_loss_weight</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">adapt_loss_weight</span> <span class="o">=</span> <span class="n">adapt_loss_weight</span>
 
@@ -681,7 +680,7 @@
 <span class="sd">        This function takes results returned from a fit round from each of the participating clients and unpacks the</span>
 <span class="sd">        information into the appropriate objects. The parameters contained in the FitRes object are unpacked to</span>
 <span class="sd">        separate the model weights from the training losses. The model weights are reinserted into the parameters</span>
-<span class="sd">        of the FitRes objects and the losses (along with sample counts) are placed in a list and returned</span>
+<span class="sd">        of the FitRes objects and the losses (along with sample counts) are placed in a list and returned.</span>
 
 <span class="sd">        **NOTE:** The results that are passed to this function are **MODIFIED IN-PLACE**.</span>
 
@@ -717,7 +716,6 @@
 <span class="sd">                Constraint clients this should be the aggregated training loss seen by each client participating in</span>
 <span class="sd">                training.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">adapt_loss_weight</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">loss</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">previous_loss</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">loss_weight_patience_counter</span> <span class="o">+=</span> <span class="mi">1</span>

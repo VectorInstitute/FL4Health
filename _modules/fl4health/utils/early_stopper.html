@@ -503,6 +503,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
+
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.clients.basic_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasicClient</span>
 
@@ -537,7 +538,6 @@
 <span class="sd">            interval_steps (int): Specifies the frequency, in terms of training intervals, at which the early</span>
 <span class="sd">                stopping mechanism should evaluate the validation loss. Defaults to 5.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">client</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">patience</span> <span class="o">=</span> <span class="n">patience</span>

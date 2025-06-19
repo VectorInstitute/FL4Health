@@ -502,8 +502,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">INFO</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.hooks</span><span class="w"> </span><span class="kn">import</span> <span class="n">RemovableHandle</span>
 
 
@@ -520,7 +520,6 @@
 <span class="sd">        features as torch Tensors.</span>
 
 <span class="sd">        Attributes:</span>
-
 <span class="sd">        - model (nn.Module): The neural network model.</span>
 <span class="sd">        - flatten_feature_extraction_layers (dict[str, bool]): A dictionary specifying whether to flatten the feature</span>
 <span class="sd">          extraction layers.</span>
@@ -541,7 +540,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">accumulate_features</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">extracted_features_buffers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">layer</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">flatten_feature_extraction_layers</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+            <span class="n">layer</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">flatten_feature_extraction_layers</span>
         <span class="p">}</span></div>
 
 
@@ -573,10 +572,8 @@
 <div class="viewcode-block" id="FeatureExtractorBuffer.clear_buffers">
 <a class="viewcode-back" href="../../../reference/api/fl4health.model_bases.feature_extractor_buffer.html#fl4health.model_bases.feature_extractor_buffer.FeatureExtractorBuffer.clear_buffers">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clear_buffers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Clears the extracted features buffers for all layers.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">extracted_features_buffers</span> <span class="o">=</span> <span class="p">{</span><span class="n">layer</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatten_feature_extraction_layers</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span></div>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clears the extracted features buffers for all layers.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extracted_features_buffers</span> <span class="o">=</span> <span class="p">{</span><span class="n">layer</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatten_feature_extraction_layers</span><span class="p">}</span></div>
 
 
 <div class="viewcode-block" id="FeatureExtractorBuffer.get_hierarchical_attr">
@@ -595,8 +592,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">layer_hierarchy</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">layer_hierarchy</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_hierarchical_attr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">layer_hierarchy</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">layer_hierarchy</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_hierarchical_attr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">layer_hierarchy</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">layer_hierarchy</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span></div>
 
 
 <div class="viewcode-block" id="FeatureExtractorBuffer.find_last_common_prefix">
@@ -629,7 +625,7 @@
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fhooks</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Starting to register hooks:&quot;</span><span class="p">)</span>
             <span class="n">named_layers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">named_modules</span><span class="p">())</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-            <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatten_feature_extraction_layers</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatten_feature_extraction_layers</span><span class="p">:</span>
                 <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Registering hook for layer: </span><span class="si">{</span><span class="n">layer</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="c1"># Find the last specific layer under a given generic name</span>
                 <span class="n">specific_layer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_last_common_prefix</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">named_layers</span><span class="p">)</span>
@@ -651,7 +647,6 @@
 <span class="sd">        any hooks that have been added to the feature extractor buffer. It is typically called prior to checkpointing</span>
 <span class="sd">        the model.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Removing hooks.&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">hook</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fhooks</span><span class="p">:</span>
             <span class="n">hook</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
@@ -693,7 +688,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: The flattened tensor of shape (``batch_size``, ``feature_size``).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">return</span> <span class="n">features</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
 
 

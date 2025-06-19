@@ -508,10 +508,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim.lr_scheduler</span><span class="w"> </span><span class="kn">import</span> <span class="n">LRScheduler</span>
+
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.clients.basic_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasicClient</span>
@@ -540,7 +541,6 @@
 <div class="viewcode-block" id="StateCheckpointer">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">StateCheckpointer</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-
 <div class="viewcode-block" id="StateCheckpointer.__init__">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -635,7 +635,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.checkpoint_exists">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">checkpoint_exists</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Check if a checkpoint exists at the checkpoint_path constructed as ``checkpoint_dir`` + ``checkpoint_name``</span>
+<span class="sd">        Check if a checkpoint exists at the checkpoint_path constructed as ``checkpoint_dir`` + ``checkpoint_name``.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            bool: True if checkpoint exists, otherwise false.</span>
@@ -676,7 +676,8 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.save_state">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">save_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Create a snapshot of the state as defined in ``self.snapshot_attrs``. It is saved at ``self.checkpoint_path``</span>
+<span class="sd">        Create a snapshot of the state as defined in ``self.snapshot_attrs``.</span>
+<span class="sd">        It is saved at ``self.checkpoint_path``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">attr_name</span><span class="p">,</span> <span class="p">(</span><span class="n">snapshotter</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_attrs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_ckpt</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_save_snapshot</span><span class="p">(</span><span class="n">snapshotter</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">))</span>
@@ -698,9 +699,9 @@
 <span class="sd">            attributes (list[str] | None): List of attributes to load from the checkpoint. If None, all attributes</span>
 <span class="sd">                specified in ``snapshot_attrs`` are loaded. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_exists</span><span class="p">()</span>
-        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;No state checkpoint to load. Checkpoint at </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_path</span><span class="si">}</span><span class="s2"> does not exist&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_exists</span><span class="p">(),</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;No state checkpoint to load. Checkpoint at </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_path</span><span class="si">}</span><span class="s2"> does not exist&quot;</span>
+        <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">attributes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">attributes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">snapshot_attrs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
@@ -764,13 +765,12 @@
         <span class="n">attribute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_attribute</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attribute</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;None&quot;</span><span class="p">:</span> <span class="n">attribute</span><span class="p">}</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attribute</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attribute</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">attribute</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">):</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Incompatible type of attribute </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">attribute</span><span class="p">)</span><span class="si">}</span><span class="s2"> for key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">attribute</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Incompatible type of attribute </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">attribute</span><span class="p">)</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">expected_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Incompatible type of attribute </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">attribute</span><span class="p">)</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">expected_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_save_snapshot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">snapshotter</span><span class="p">:</span> <span class="n">AbstractSnapshotter</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -810,7 +810,6 @@
 <div class="viewcode-block" id="ClientStateCheckpointer">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ClientStateCheckpointer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ClientStateCheckpointer</span><span class="p">(</span><span class="n">StateCheckpointer</span><span class="p">):</span>
-
 <div class="viewcode-block" id="ClientStateCheckpointer.__init__">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ClientStateCheckpointer.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -946,8 +945,7 @@
 <span class="sd">            Any: The attribute value.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Client is not set.&quot;</span>
-        <span class="n">attribute</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">attribute</span></div>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ClientStateCheckpointer.set_attribute">
@@ -969,7 +967,6 @@
 <div class="viewcode-block" id="ServerStateCheckpointer">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ServerStateCheckpointer</span><span class="p">(</span><span class="n">StateCheckpointer</span><span class="p">):</span>
-
 <div class="viewcode-block" id="ServerStateCheckpointer.__init__">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -1021,7 +1018,6 @@
 <span class="sd">        ``checkpoint_name`` is None then a default ``checkpoint_name`` based on the underlying name of the server to</span>
 <span class="sd">        be checkpointed will be set of the form ``f&quot;server_{self.server.server_name}_state.pt&quot;``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">server</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Attempting to save server state but server is None&quot;</span>
         <span class="c1"># Set the checkpoint name based on server&#39;s name if not already provided.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1034,7 +1030,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer.save_server_state">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">save_server_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">:</span> <span class="n">FlServer</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Save the state of the server, including a torch model, which is not a required component of the server class</span>
+<span class="sd">        Save the state of the server, including a torch model, which is not a required component of the server class.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            server (FlServer): Server with state to be saved</span>
@@ -1131,7 +1127,6 @@
 <div class="viewcode-block" id="NnUnetServerStateCheckpointer">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.NnUnetServerStateCheckpointer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">NnUnetServerStateCheckpointer</span><span class="p">(</span><span class="n">ServerStateCheckpointer</span><span class="p">):</span>
-
 <div class="viewcode-block" id="NnUnetServerStateCheckpointer.__init__">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.NnUnetServerStateCheckpointer.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -1151,7 +1146,6 @@
 <span class="sd">                checkpointed will be set of the form ``f&quot;f&quot;server_{self.server.server_name}_state.pt&quot;&quot;``. This can be</span>
 <span class="sd">                updated later  with `set_checkpoint_path`. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="c1"># Go beyond default snapshot_attrs with nnUNet-specific attributes.</span>
         <span class="n">nnunet_snapshot_attrs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">AbstractSnapshotter</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">TorchModuleSnapshotter</span><span class="p">(),</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">),</span>

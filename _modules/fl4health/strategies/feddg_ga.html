@@ -514,9 +514,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">decode_and_pseudo_sort_results</span>
 
 
-<div class="viewcode-block" id="SignalForTypeException">
-<a class="viewcode-back" href="../../../reference/api/fl4health.strategies.feddg_ga.html#fl4health.strategies.feddg_ga.SignalForTypeException">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">SignalForTypeException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<div class="viewcode-block" id="SignalForTypeError">
+<a class="viewcode-back" href="../../../reference/api/fl4health.strategies.feddg_ga.html#fl4health.strategies.feddg_ga.SignalForTypeError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SignalForTypeError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Thrown when there is an error in ``signal_for_type`` function.&quot;&quot;&quot;</span>
 
     <span class="k">pass</span></div>
@@ -526,7 +526,7 @@
 <div class="viewcode-block" id="FairnessMetricType">
 <a class="viewcode-back" href="../../../reference/api/fl4health.strategies.feddg_ga.html#fl4health.strategies.feddg_ga.FairnessMetricType">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FairnessMetricType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Defines the basic types for fairness metrics, their default names and their default signals&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Defines the basic types for fairness metrics, their default names and their default signals.&quot;&quot;&quot;</span>
 
     <span class="n">ACCURACY</span> <span class="o">=</span> <span class="s2">&quot;val - prediction - accuracy&quot;</span>
     <span class="n">LOSS</span> <span class="o">=</span> <span class="s2">&quot;val - checkpoint&quot;</span>
@@ -557,7 +557,7 @@
             <span class="k">return</span> <span class="o">-</span><span class="mf">1.0</span>
         <span class="k">if</span> <span class="n">fairness_metric_type</span> <span class="o">==</span> <span class="n">FairnessMetricType</span><span class="o">.</span><span class="n">LOSS</span><span class="p">:</span>
             <span class="k">return</span> <span class="mf">1.0</span>
-        <span class="k">raise</span> <span class="n">SignalForTypeException</span><span class="p">(</span><span class="s2">&quot;This function should not be called with CUSTOM type.&quot;</span><span class="p">)</span></div>
+        <span class="k">raise</span> <span class="n">SignalForTypeError</span><span class="p">(</span><span class="s2">&quot;This function should not be called with CUSTOM type.&quot;</span><span class="p">)</span></div>
 </div>
 
 
@@ -661,7 +661,6 @@
 <span class="sd">                generalization adjustment weights. It has to be ``0 &lt; adjustment_weight_step_size &lt; 1``.</span>
 <span class="sd">                Defaults to 0.2.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">fraction_fit</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
             <span class="n">fraction_evaluate</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
@@ -683,9 +682,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">fairness_metric</span> <span class="o">=</span> <span class="n">fairness_metric</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">adjustment_weight_step_size</span> <span class="o">=</span> <span class="n">adjustment_weight_step_size</span>
-        <span class="k">assert</span> <span class="p">(</span>
-            <span class="mi">0</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">adjustment_weight_step_size</span> <span class="o">&lt;</span> <span class="mi">1</span>
-        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;adjustment_weight_step_size has to be between 0 and 1 (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adjustment_weight_step_size</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">adjustment_weight_step_size</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;adjustment_weight_step_size has to be between 0 and 1 (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adjustment_weight_step_size</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span>
 
         <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;FedDG-GA Strategy initialized with weight_step_size of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adjustment_weight_step_size</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;FedDG-GA Strategy initialized with FairnessMetric </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">fairness_metric</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -719,9 +718,9 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            (list[tuple[ClientProxy, FitIns]]): the input for the clients&#39; fit function.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="n">client_manager</span><span class="p">,</span> <span class="n">FixedSamplingClientManager</span>
-        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Client manager is not of type FixedSamplingClientManager: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">client_manager</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">client_manager</span><span class="p">,</span> <span class="n">FixedSamplingClientManager</span><span class="p">),</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Client manager is not of type FixedSamplingClientManager: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">client_manager</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
 
         <span class="n">client_manager</span><span class="o">.</span><span class="n">reset_sample</span><span class="p">()</span>
 
@@ -745,9 +744,10 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_rounds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">num_rounds</span> <span class="o">=</span> <span class="n">n_server_rounds</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="p">(</span>
-                <span class="n">n_server_rounds</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_rounds</span>
-            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;n_server_rounds has changed from the original value of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_rounds</span><span class="si">}</span><span class="s2"> and is now </span><span class="si">{</span><span class="n">n_server_rounds</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">assert</span> <span class="n">n_server_rounds</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_rounds</span><span class="p">,</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;n_server_rounds has changed from the original value of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_rounds</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;and is now </span><span class="si">{</span><span class="n">n_server_rounds</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">client_fit_ins</span></div>
 
@@ -757,9 +757,9 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">configure_evaluate</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">server_round</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="n">Parameters</span><span class="p">,</span> <span class="n">client_manager</span><span class="p">:</span> <span class="n">ClientManager</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">ClientProxy</span><span class="p">,</span> <span class="n">EvaluateIns</span><span class="p">]]:</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="n">client_manager</span><span class="p">,</span> <span class="n">FixedSamplingClientManager</span>
-        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Client manager is not of type FixedSamplingClientManager: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">client_manager</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">client_manager</span><span class="p">,</span> <span class="n">FixedSamplingClientManager</span><span class="p">),</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Client manager is not of type FixedSamplingClientManager: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">client_manager</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
 
         <span class="n">client_evaluate_ins</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">configure_evaluate</span><span class="p">(</span><span class="n">server_round</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">client_manager</span><span class="p">)</span>
 
@@ -839,7 +839,6 @@
 <span class="sd">            (tuple[float | None, dict[str, Scalar]]): A tuple containing the aggregated evaluation loss and the</span>
 <span class="sd">            aggregated evaluation metrics.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">loss_aggregated</span><span class="p">,</span> <span class="n">metrics_aggregated</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">aggregate_evaluate</span><span class="p">(</span><span class="n">server_round</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">failures</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_metrics</span> <span class="o">=</span> <span class="p">{}</span>
@@ -869,7 +868,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            (NDArrays): the weighted and aggregated results.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">adjustment_weights</span><span class="p">:</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Current adjustment weights by Client ID (CID) are </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adjustment_weights</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -924,9 +922,9 @@
         <span class="n">generalization_gaps</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c1"># calculating local vs global metric difference (generalization gaps)</span>
         <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">cids</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="p">(</span>
-                <span class="n">cid</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_metrics</span> <span class="ow">and</span> <span class="n">cid</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_metrics</span>
-            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cid</span><span class="si">}</span><span class="s2"> not in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">train_metrics</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="s2"> or </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluation_metrics</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">assert</span> <span class="n">cid</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_metrics</span> <span class="ow">and</span> <span class="n">cid</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_metrics</span><span class="p">,</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cid</span><span class="si">}</span><span class="s2"> not in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">train_metrics</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="s2"> or </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluation_metrics</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
 
             <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">fairness_metric</span><span class="o">.</span><span class="n">metric_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 

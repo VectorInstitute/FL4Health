@@ -553,9 +553,13 @@
 
 <span class="sd">                .. code-block:: python</span>
 
-<span class="sd">                    p = torch.tensor([[[1., 1., 1., 0.], [0., 0., 0., 0.]], [[0., 0., 0., 1.], [1., 1., 1., 1.]]])</span>
+<span class="sd">                    p = torch.tensor(</span>
+<span class="sd">                        [[[1.0, 1.0, 1.0, 0.0], [0.0, 0.0, 0.0, 0.0]], [[0.0, 0.0, 0.0, 1.0], [1.0, 1.0, 1.0, 1.0]]]</span>
+<span class="sd">                    )</span>
 
-<span class="sd">                    t = torch.tensor([[[1., 1., 0., 0.], [0., 0., 0., 0.]], [[0., 0., 1., 1.], [1., 1., 1., 1.]]])</span>
+<span class="sd">                    t = torch.tensor(</span>
+<span class="sd">                        [[[1.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]], [[0.0, 0.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0]]]</span>
+<span class="sd">                    )</span>
 
 <span class="sd">                    self.tp = torch.Tensor([[2, 1], [0, 4]])</span>
 
@@ -637,7 +641,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scalar</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Computes the Dice score relative to the single input and target tensors provided</span>
+<span class="sd">        Computes the Dice score relative to the single input and target tensors provided.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            input (torch.Tensor): predictions tensor</span>
@@ -696,9 +700,9 @@
 
 <span class="sd">                .. code-block:: python</span>
 
-<span class="sd">                    predictions = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]]) # shape (1, 2, 4)</span>
+<span class="sd">                    predictions = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])  # shape (1, 2, 4)</span>
 
-<span class="sd">                    targets = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]]) # shape (1, 2, 4)</span>
+<span class="sd">                    targets = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]])  # shape (1, 2, 4)</span>
 
 <span class="sd">                    self.true_positives = torch.Tensor([[0], [4]])</span>
 
@@ -783,7 +787,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scalar</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Computes the Dice score relative to the single input and target tensors provided</span>
+<span class="sd">        Computes the Dice score relative to the single input and target tensors provided.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            input (torch.Tensor): predictions tensor</span>

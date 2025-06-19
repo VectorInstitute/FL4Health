@@ -559,9 +559,9 @@
 <span class="sd">                evaluation from clients or not. If set to False, this will cause the server to shutdown all clients</span>
 <span class="sd">                and throw an exception. Defaults to True.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="n">strategy</span><span class="p">,</span> <span class="n">FedAvgWithAdaptiveConstraint</span>
-        <span class="p">),</span> <span class="s2">&quot;Strategy must be of base type FedAvgWithAdaptiveConstraint&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="n">FedAvgWithAdaptiveConstraint</span><span class="p">),</span> <span class="p">(</span>
+            <span class="s2">&quot;Strategy must be of base type FedAvgWithAdaptiveConstraint&quot;</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="n">checkpoint_and_state_module</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
                 <span class="n">checkpoint_and_state_module</span><span class="p">,</span>

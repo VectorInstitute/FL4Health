@@ -519,7 +519,6 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">make_it_personal</span><span class="p">(</span><span class="n">client_base_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BasicClient</span><span class="p">],</span> <span class="n">mode</span><span class="p">:</span> <span class="n">PersonalizedMode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BasicClient</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A mixed class factory for converting basic clients to personalized versions.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="n">PersonalizedMode</span><span class="o">.</span><span class="n">DITTO</span><span class="p">:</span>
-
         <span class="k">return</span> <span class="nb">type</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Ditto</span><span class="si">{</span><span class="n">client_base_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="p">(</span>
@@ -531,8 +530,7 @@
                 <span class="s2">&quot;_dynamically_created&quot;</span><span class="p">:</span> <span class="kc">True</span>
             <span class="p">},</span>
         <span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unrecognized personalized mode.&quot;</span><span class="p">)</span></div>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unrecognized personalized mode.&quot;</span><span class="p">)</span></div>
 
 
 

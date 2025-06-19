@@ -510,12 +510,14 @@
 <dt class="sig sig-object py" id="fl4health.model_bases.pca.PcaModule.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">low_rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_svd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rank_estimation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>PyTorch module for performing Principal Component Analysis.</p>
-<p>Notes:</p>
-<ul class="simple">
-<li><p>If <code class="docutils literal notranslate"><span class="pre">low_rank</span></code> is set to True, then a value <span class="math notranslate nohighlight">\(q\)</span> for <code class="docutils literal notranslate"><span class="pre">rank_estimation</span></code> is required (either specified
-by the user or via its default value). If <span class="math notranslate nohighlight">\(q\)</span> is too far away from the actual rank <span class="math notranslate nohighlight">\(k\)</span> of the
+<p>Notes:
+- If <code class="docutils literal notranslate"><span class="pre">low_rank</span></code> is set to True, then a value <span class="math notranslate nohighlight">\(q\)</span> for <code class="docutils literal notranslate"><span class="pre">rank_estimation</span></code> is required (either specified</p>
+<blockquote>
+<div><p>by the user or via its default value). If <span class="math notranslate nohighlight">\(q\)</span> is too far away from the actual rank <span class="math notranslate nohighlight">\(k\)</span> of the
 data matrix, then the resulting rank-q svd approximation is not guaranteed to be a good approximation of the
-data matrix.</p></li>
+data matrix.</p>
+</div></blockquote>
+<ul class="simple">
 <li><p>If <code class="docutils literal notranslate"><span class="pre">low_rank</span></code> is set to True, then a value <span class="math notranslate nohighlight">\(q\)</span> for <code class="docutils literal notranslate"><span class="pre">rank_estimation</span></code> can be chosen according to the
 following criteria:</p>
 <ul>
@@ -552,7 +554,7 @@ Defaults to False.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.pca.PcaModule.center_data">
-<span class="sig-name descname"><span class="pre">center_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.center_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.center_data" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">center_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.center_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.center_data" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></span></p>
@@ -582,7 +584,7 @@ Defaults to False.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.pca.PcaModule.compute_projection_variance">
-<span class="sig-name descname"><span class="pre">compute_projection_variance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.compute_projection_variance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.compute_projection_variance" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">compute_projection_variance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.compute_projection_variance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.compute_projection_variance" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the variance of the data matrix X after projection via PCA.</p>
 <p>The variance is defined as <code class="docutils literal notranslate"><span class="pre">|</span> <span class="pre">X</span> <span class="pre">&#64;</span> <span class="pre">U</span> <span class="pre">|_F</span> <span class="pre">**</span> <span class="pre">2</span></code></p>
 <dl class="field-list simple">
@@ -605,7 +607,7 @@ lower-dimensional subspace, and whether to add the data mean after projecting ba
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.pca.PcaModule.compute_reconstruction_error">
-<span class="sig-name descname"><span class="pre">compute_reconstruction_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.compute_reconstruction_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.compute_reconstruction_error" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">compute_reconstruction_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.compute_reconstruction_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.compute_reconstruction_error" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the reconstruction error of X under PCA reconstruction.</p>
 <p>More precisely, if X is an N by d data matrix whose <em>rows</em> are the data points,
 and U is the matrix whose <em>columns</em> are the principal components of X, then the reconstruction
@@ -632,7 +634,7 @@ lower-dimensional subspace, and whether to add the data mean after projecting ba
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.pca.PcaModule.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.forward" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Perform PCA on the data matrix X by computing its SVD.</p>
 <p><strong>NOTE</strong>: the algorithm assumes that the rows of X are the data points (after reshaping as needed).
 Consequently, the principal components, which are the eigenvectors of X.T &#64; X, are the right singular vectors
@@ -658,7 +660,7 @@ singular values.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.pca.PcaModule.maybe_reshape">
-<span class="sig-name descname"><span class="pre">maybe_reshape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.maybe_reshape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.maybe_reshape" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">maybe_reshape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.maybe_reshape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.maybe_reshape" title="Link to this definition">¶</a></dt>
 <dd><p>Reshape input tensor X as needed so SVD can be computed. Reshaping is required when each data point is an
 N-dimensional tensor because PCA requires X to be a 2D data matrix.</p>
 <dl class="field-list simple">
@@ -676,7 +678,7 @@ N-dimensional tensor because PCA requires X to be a 2D data matrix.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.pca.PcaModule.prepare_data_forward">
-<span class="sig-name descname"><span class="pre">prepare_data_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.prepare_data_forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.prepare_data_forward" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">prepare_data_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.prepare_data_forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.prepare_data_forward" title="Link to this definition">¶</a></dt>
 <dd><p>Prepare input data X for PCA by reshaping and centering it as needed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -698,7 +700,7 @@ an exception will be thrown if it is not.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.pca.PcaModule.project_back">
-<span class="sig-name descname"><span class="pre">project_back</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X_lower_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.project_back"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.project_back" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">project_back</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_lower_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.project_back"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.project_back" title="Link to this definition">¶</a></dt>
 <dd><p>Project low-dimensional principal representations back into the original space to recover the reconstruction
 of data points.</p>
 <dl class="field-list simple">
@@ -721,7 +723,7 @@ now wish to add back the data mean. Defaults to False.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.pca.PcaModule.project_lower_dim">
-<span class="sig-name descname"><span class="pre">project_lower_dim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.project_lower_dim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.project_lower_dim" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">project_lower_dim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.project_lower_dim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.project_lower_dim" title="Link to this definition">¶</a></dt>
 <dd><p>Project input data X onto the top k principal components.</p>
 <p><em>NOTE*</em>: The result of projection (after centering) is X &#64; U because this method assumes that the rows of X
 are the data points while the columns of U are the principal components.</p>
@@ -747,7 +749,7 @@ that the data has already been centered in this manner by the user. Defaults to 
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.pca.PcaModule.set_data_mean">
-<span class="sig-name descname"><span class="pre">set_data_mean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.set_data_mean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.set_data_mean" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">set_data_mean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.set_data_mean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.set_data_mean" title="Link to this definition">¶</a></dt>
 <dd><p>The primary purpose of this method is to store the mean of the training data so it can be used to center
 validation/test data later, if needed.</p>
 <dl class="field-list simple">

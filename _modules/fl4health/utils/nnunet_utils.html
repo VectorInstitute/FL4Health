@@ -520,6 +520,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogLevel</span>
 
+
 <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
     <span class="c1"># silences a bunch of deprecation warnings related to scipy.ndimage</span>
     <span class="c1"># Raised an issue with nnunet. https://github.com/MIC-DKFZ/nnUNet/issues/2370</span>
@@ -566,7 +567,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">use_default_signal_handlers</span><span class="p">(</span><span class="n">fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This is a decorator that resets the ``SIGINT`` and ``SIGTERM`` signal handlers back to the python defaults for the</span>
-<span class="sd">    execution of the method</span>
+<span class="sd">    execution of the method.</span>
 
 <span class="sd">    flwr 1.9.0 overrides the default signal handlers with handlers that raise an error on any interruption or</span>
 <span class="sd">    termination. Since nnunet spawns child processes which inherit these handlers, when those subprocesses are</span>
@@ -674,7 +675,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.convert_deep_supervision_dict_to_list">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">convert_deep_supervision_dict_to_list</span><span class="p">(</span><span class="n">tensor_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Converts a dictionary of tensors back into a list so that it can be used by nnunet deep supervision loss functions</span>
+<span class="sd">    Converts a dictionary of tensors back into a list so that it can be used by nnunet deep supervision loss functions.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        tensor_dict (dict[str, torch.Tensor]): Dictionary containing ``torch.Tensors``. The key values must start</span>
@@ -693,7 +694,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.get_segs_from_probs">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_segs_from_probs</span><span class="p">(</span><span class="n">preds</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">has_regions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Converts the nnunet model output probabilities to predicted segmentations</span>
+<span class="sd">    Converts the nnunet model output probabilities to predicted segmentations.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        preds (torch.Tensor): The one hot encoded model output probabilities with shape (batch, classes,</span>
@@ -714,16 +715,15 @@
         <span class="c1"># classified as background are not part of another class</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">pred_segs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">pred_segs</span> <span class="o">*</span> <span class="n">mask</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">pred_segs</span> <span class="o">=</span> <span class="n">preds</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span>  <span class="c1"># shape (batch, 1, additional_dims)</span>
-        <span class="c1"># one hot encode (OHE) predicted segmentations again</span>
-        <span class="c1"># WARNING: Note the &#39;_&#39; after scatter. scatter_ and scatter are both</span>
-        <span class="c1"># functions with different functionality. It is easy to introduce a bug</span>
-        <span class="c1"># here by using the wrong one</span>
-        <span class="n">pred_segs_one_hot</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">preds</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
-        <span class="n">pred_segs_one_hot</span><span class="o">.</span><span class="n">scatter_</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">pred_segs</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># ohe -&gt; One Hot Encoded</span>
-        <span class="c1"># convert output preds to long since it is binary</span>
-        <span class="k">return</span> <span class="n">pred_segs_one_hot</span><span class="o">.</span><span class="n">long</span><span class="p">()</span></div>
+    <span class="n">pred_segs</span> <span class="o">=</span> <span class="n">preds</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="mi">1</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span>  <span class="c1"># shape (batch, 1, additional_dims)</span>
+    <span class="c1"># one hot encode (OHE) predicted segmentations again</span>
+    <span class="c1"># WARNING: Note the &#39;_&#39; after scatter. scatter_ and scatter are both</span>
+    <span class="c1"># functions with different functionality. It is easy to introduce a bug</span>
+    <span class="c1"># here by using the wrong one</span>
+    <span class="n">pred_segs_one_hot</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">preds</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">pred_segs_one_hot</span><span class="o">.</span><span class="n">scatter_</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">pred_segs</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># ohe -&gt; One Hot Encoded</span>
+    <span class="c1"># convert output preds to long since it is binary</span>
+    <span class="k">return</span> <span class="n">pred_segs_one_hot</span><span class="o">.</span><span class="n">long</span><span class="p">()</span></div>
 
 
 
@@ -764,8 +764,7 @@
 
     <span class="c1"># Get total number of voxels in dataset</span>
     <span class="n">image_shape</span> <span class="o">=</span> <span class="n">cfg</span><span class="p">[</span><span class="s2">&quot;median_image_size_in_voxels&quot;</span><span class="p">]</span>
-    <span class="n">approx_n_voxels</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">image_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_cases</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">approx_n_voxels</span></div>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">image_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_cases</span><span class="p">)</span></div>
 
 
 
@@ -785,19 +784,20 @@
     <span class="c1"># TODO: IDK why we have to make assumptions when we could just have a boolean state</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">tensor</span>  <span class="c1"># If input is a tensor then no changes required</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># Assume deep supervision is on and return a list</span>
             <span class="k">return</span> <span class="n">convert_deep_supervision_dict_to_list</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>  <span class="c1"># If dict has only one item, assume deep supervision is off</span>
-            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># return the torch.Tensor</span></div>
+        <span class="c1"># If dict has only one item, assume deep supervision is off</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># return the torch.Tensor</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unrecognized type for tensor: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
 
-<div class="viewcode-block" id="nnUNetDataLoaderWrapper">
-<a class="viewcode-back" href="../../../reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">nnUNetDataLoaderWrapper</span><span class="p">(</span><span class="n">DataLoader</span><span class="p">):</span>
-<div class="viewcode-block" id="nnUNetDataLoaderWrapper.__init__">
-<a class="viewcode-back" href="../../../reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper.__init__">[docs]</a>
+<div class="viewcode-block" id="NnUNetDataLoaderWrapper">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NnUNetDataLoaderWrapper</span><span class="p">(</span><span class="n">DataLoader</span><span class="p">):</span>
+<div class="viewcode-block" id="NnUNetDataLoaderWrapper.__init__">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">nnunet_augmenter</span><span class="p">:</span> <span class="n">SingleThreadedAugmenter</span> <span class="o">|</span> <span class="n">NonDetMultiThreadedAugmenter</span> <span class="o">|</span> <span class="n">MultiThreadedAugmenter</span><span class="p">,</span>
@@ -853,23 +853,19 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">infinite</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_step</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__len__</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
             <span class="k">raise</span> <span class="ne">StopIteration</span>  <span class="c1"># Raise stop iteration after epoch has completed</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">current_step</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">batch</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nnunet_augmenter</span><span class="p">)</span>  <span class="c1"># This returns a dictionary</span>
-            <span class="c1"># Note: When deep supervision is on, target is a list of ground truth</span>
-            <span class="c1"># segmentations at various spatial scales/resolutions</span>
-            <span class="c1"># nnUNet has a wrapper for loss functions to enable deep supervision</span>
-            <span class="n">inputs</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span>
-            <span class="n">targets</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-                <span class="n">target_dict</span> <span class="o">=</span> <span class="n">convert_deep_supervision_list_to_dict</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_spatial_dims</span><span class="p">)</span>
-                <span class="k">return</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">target_dict</span>
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">targets</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                    <span class="s2">&quot;Was expecting the target generated by the nnunet dataloader to be a list or a torch.Tensor&quot;</span>
-                <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_step</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nnunet_augmenter</span><span class="p">)</span>  <span class="c1"># This returns a dictionary</span>
+        <span class="c1"># Note: When deep supervision is on, target is a list of ground truth</span>
+        <span class="c1"># segmentations at various spatial scales/resolutions</span>
+        <span class="c1"># nnUNet has a wrapper for loss functions to enable deep supervision</span>
+        <span class="n">inputs</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span>
+        <span class="n">targets</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">target_dict</span> <span class="o">=</span> <span class="n">convert_deep_supervision_list_to_dict</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_spatial_dims</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">target_dict</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">targets</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Was expecting the target generated by the nnunet dataloader to be a list or a torch.Tensor&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -899,8 +895,8 @@
         <span class="c1"># Scale n_samples and then divide by batch size to get n_steps per epoch</span>
         <span class="k">return</span> <span class="nb">round</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span> <span class="o">*</span> <span class="n">scale</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_dataloader</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span>
 
-<div class="viewcode-block" id="nnUNetDataLoaderWrapper.reset">
-<a class="viewcode-back" href="../../../reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper.reset">[docs]</a>
+<div class="viewcode-block" id="NnUNetDataLoaderWrapper.reset">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper.reset">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_step</span> <span class="o">=</span> <span class="mi">0</span></div>
 
@@ -909,12 +905,10 @@
         <span class="c1"># mypy gets angry that the return type is different</span>
         <span class="k">return</span> <span class="bp">self</span>
 
-<div class="viewcode-block" id="nnUNetDataLoaderWrapper.shutdown">
-<a class="viewcode-back" href="../../../reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper.shutdown">[docs]</a>
+<div class="viewcode-block" id="NnUNetDataLoaderWrapper.shutdown">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper.shutdown">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        The multithreaded augmenters used by nnunet need to be shutdown gracefully to avoid errors</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The multithreaded augmenters used by nnunet need to be shutdown gracefully to avoid errors.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nnunet_augmenter</span><span class="p">,</span> <span class="p">(</span><span class="n">NonDetMultiThreadedAugmenter</span><span class="p">,</span> <span class="n">MultiThreadedAugmenter</span><span class="p">)):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_augmenter</span><span class="o">.</span><span class="n">_finish</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
@@ -926,7 +920,7 @@
 <div class="viewcode-block" id="Module2LossWrapper">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.Module2LossWrapper">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Module2LossWrapper</span><span class="p">(</span><span class="n">_Loss</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts a `` nn.Module`` subclass to a ``_Loss`` subclass&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts a `` nn.Module`` subclass to a ``_Loss`` subclass.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loss</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -1025,7 +1019,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            Sequence[float]: A uniform sequence of LR for each of the parameter groups in the optimizer.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step_count</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">log</span><span class="p">(</span>
                 <span class="n">WARN</span><span class="p">,</span>
@@ -1038,7 +1031,7 @@
 
         <span class="n">new_lr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_lr</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">curr_window</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_windows</span><span class="p">)</span> <span class="o">**</span> <span class="bp">self</span><span class="o">.</span><span class="n">exponent</span>
 
-        <span class="k">if</span> <span class="n">curr_step</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps_per_lr</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">curr_step</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">curr_step</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_steps</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">curr_step</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">steps_per_lr</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">curr_step</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_steps</span><span class="p">}:</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Decaying LR of optimizer to </span><span class="si">{</span><span class="n">new_lr</span><span class="si">}</span><span class="s2"> at step </span><span class="si">{</span><span class="n">curr_step</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="p">[</span><span class="n">new_lr</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">param_groups</span><span class="p">)</span></div>

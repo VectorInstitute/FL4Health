@@ -614,7 +614,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            Metrics: A dictionary of string and ``Scalar`` representing the computed metric and its associated key.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">accumulated_inputs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">accumulated_targets</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
         <span class="n">stacked_inputs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">accumulated_inputs</span><span class="p">)</span>
         <span class="n">stacked_targets</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">accumulated_targets</span><span class="p">)</span>
@@ -627,9 +626,7 @@
 <div class="viewcode-block" id="SimpleMetric.clear">
 <a class="viewcode-back" href="../../../reference/api/fl4health.metrics.metrics.html#fl4health.metrics.SimpleMetric.clear">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Resets metrics by clearing input and target lists.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resets metrics by clearing input and target lists.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">accumulated_inputs</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">accumulated_targets</span> <span class="o">=</span> <span class="p">[]</span></div>
 
@@ -681,10 +678,7 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">logits</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scalar</span><span class="p">:</span>
         <span class="c1"># Assuming the logits are to be mapped to binary. Note that this assumes the logits have already been</span>
         <span class="c1"># constrained to [0, 1]. The metric still functions if not, but results will be unpredictable.</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logits_threshold</span><span class="p">:</span>
-            <span class="n">y_pred</span> <span class="o">=</span> <span class="p">(</span><span class="n">logits</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">logits_threshold</span><span class="p">)</span><span class="o">.</span><span class="n">int</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">y_pred</span> <span class="o">=</span> <span class="n">logits</span>
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="p">(</span><span class="n">logits</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">logits_threshold</span><span class="p">)</span><span class="o">.</span><span class="n">int</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logits_threshold</span> <span class="k">else</span> <span class="n">logits</span>
         <span class="n">intersection</span> <span class="o">=</span> <span class="p">(</span><span class="n">y_pred</span> <span class="o">*</span> <span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">spatial_dimensions</span><span class="p">)</span>
         <span class="n">union</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">y_pred</span> <span class="o">+</span> <span class="n">target</span><span class="p">))</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">spatial_dimensions</span><span class="p">)</span>
         <span class="n">dice</span> <span class="o">=</span> <span class="n">intersection</span> <span class="o">/</span> <span class="p">(</span><span class="n">union</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">epsilon</span><span class="p">)</span>
@@ -714,10 +708,7 @@
         <span class="c1"># assuming batch first</span>
         <span class="k">assert</span> <span class="n">logits</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">target</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="c1"># Single value output, assume binary logits</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">logits</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">logits</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">preds</span> <span class="o">=</span> <span class="p">(</span><span class="n">logits</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">int</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">preds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">preds</span> <span class="o">=</span> <span class="p">(</span><span class="n">logits</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span><span class="o">.</span><span class="n">int</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">logits</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">logits</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">target</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
         <span class="n">preds</span> <span class="o">=</span> <span class="n">preds</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">sklearn_metrics</span><span class="o">.</span><span class="n">accuracy_score</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">preds</span><span class="p">)</span></div>
@@ -731,8 +722,9 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.metrics.metrics.html#fl4health.metrics.BalancedAccuracy.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;balanced_accuracy&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Balanced accuracy metric for classification tasks. Used for the evaluation of imbalanced datasets. For more</span>
-<span class="sd">        information:</span>
+<span class="sd">        Balanced accuracy metric for classification tasks. Used for the evaluation of imbalanced datasets.</span>
+
+<span class="sd">        For more information:</span>
 
 <span class="sd">        https://scikit-learn.org/stable/modules/generated/sklearn.metrics.balanced_accuracy_score.html</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -750,14 +742,16 @@
 
 
 
-<div class="viewcode-block" id="ROC_AUC">
-<a class="viewcode-back" href="../../../reference/api/fl4health.metrics.metrics.html#fl4health.metrics.ROC_AUC">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">ROC_AUC</span><span class="p">(</span><span class="n">SimpleMetric</span><span class="p">):</span>
-<div class="viewcode-block" id="ROC_AUC.__init__">
-<a class="viewcode-back" href="../../../reference/api/fl4health.metrics.metrics.html#fl4health.metrics.ROC_AUC.__init__">[docs]</a>
+<div class="viewcode-block" id="RocAuc">
+<a class="viewcode-back" href="../../../reference/api/fl4health.metrics.metrics.html#fl4health.metrics.RocAuc">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RocAuc</span><span class="p">(</span><span class="n">SimpleMetric</span><span class="p">):</span>
+<div class="viewcode-block" id="RocAuc.__init__">
+<a class="viewcode-back" href="../../../reference/api/fl4health.metrics.metrics.html#fl4health.metrics.RocAuc.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;ROC_AUC score&quot;</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Area under the Receiver Operator Curve (AUCROC) metric for classification. For more information:</span>
+<span class="sd">        Area under the Receiver Operator Curve (AUCROC) metric for classification.</span>
+
+<span class="sd">        For more information:</span>
 
 <span class="sd">        https://scikit-learn.org/stable/modules/generated/sklearn.metrics.balanced_accuracy_score.html</span>
 <span class="sd">        &quot;&quot;&quot;</span>

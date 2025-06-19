@@ -537,7 +537,7 @@ Defaults to 1000.</p></li>
 <span class="sig-name descname"><span class="pre">construct_covariance_matrix</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/data_generation.html#SyntheticFedProxDataset.construct_covariance_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.data_generation.SyntheticFedProxDataset.construct_covariance_matrix" title="Link to this definition">¶</a></dt>
 <dd><p>This function generations the covariance matrix used in generating input features. It is fixed across all
 datasets. It is a diagonal matrix with diagonal entries <span class="math notranslate nohighlight">\(x_{j, j} = j^{-1.2}\)</span>, where <span class="math notranslate nohighlight">\(j\)</span> starts at
-1 in this notation. The matrix is of dimension <code class="docutils literal notranslate"><span class="pre">input_dim</span></code> x <code class="docutils literal notranslate"><span class="pre">input_dim</span></code></p>
+1 in this notation. The matrix is of dimension <code class="docutils literal notranslate"><span class="pre">input_dim</span></code> x <code class="docutils literal notranslate"><span class="pre">input_dim</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Covariance matrix for generation of input features.</p>
@@ -580,9 +580,9 @@ in this function.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.data_generation.SyntheticFedProxDataset.one_layer_map_inputs_to_outputs">
-<span class="sig-name descname"><span class="pre">one_layer_map_inputs_to_outputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/data_generation.html#SyntheticFedProxDataset.one_layer_map_inputs_to_outputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.data_generation.SyntheticFedProxDataset.one_layer_map_inputs_to_outputs" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">one_layer_map_inputs_to_outputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/data_generation.html#SyntheticFedProxDataset.one_layer_map_inputs_to_outputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.data_generation.SyntheticFedProxDataset.one_layer_map_inputs_to_outputs" title="Link to this definition">¶</a></dt>
 <dd><p>This function maps features x to a label y as done in the original paper. The first stage is the affine
-transformation</p>
+transformation.</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[\hat{y} = \frac{1}{T} \cdot (Wx + b).\]</div>
@@ -593,7 +593,7 @@ one hot encode the resulting label sample.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x</strong> (<em>torch.Tensor</em>) – The input features to be mapped to output labels. Shape is (dataset size, <code class="docutils literal notranslate"><span class="pre">input_dim</span></code>)</p></li>
-<li><p><strong>W</strong> (<em>torch.Tensor</em>) – The linear transformation matrix. Shape is (<code class="docutils literal notranslate"><span class="pre">output_dim</span></code>, <code class="docutils literal notranslate"><span class="pre">input_dim</span></code>)</p></li>
+<li><p><strong>w</strong> (<em>torch.Tensor</em>) – The linear transformation matrix. Shape is (<code class="docutils literal notranslate"><span class="pre">output_dim</span></code>, <code class="docutils literal notranslate"><span class="pre">input_dim</span></code>)</p></li>
 <li><p><strong>b</strong> (<em>torch.Tensor</em>) – The bias in the linear transformation. Shape is (<code class="docutils literal notranslate"><span class="pre">output_dim</span></code>, 1)</p></li>
 </ul>
 </dd>
@@ -608,9 +608,9 @@ one hot encode the resulting label sample.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.data_generation.SyntheticFedProxDataset.two_layer_map_inputs_to_outputs">
-<span class="sig-name descname"><span class="pre">two_layer_map_inputs_to_outputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">W_2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/data_generation.html#SyntheticFedProxDataset.two_layer_map_inputs_to_outputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.data_generation.SyntheticFedProxDataset.two_layer_map_inputs_to_outputs" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">two_layer_map_inputs_to_outputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w_2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b_2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/data_generation.html#SyntheticFedProxDataset.two_layer_map_inputs_to_outputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.data_generation.SyntheticFedProxDataset.two_layer_map_inputs_to_outputs" title="Link to this definition">¶</a></dt>
 <dd><p>This function maps features x to a label y in an alternative way to include two layers. The first stage is two
-affine transformations</p>
+affine transformations.</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[latent = \frac{1}{T} \cdot (W_1 \cdot x + b_1)
@@ -622,9 +622,9 @@ one hot encode the resulting label sample.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x</strong> (<em>torch.Tensor</em>) – The input features to be mapped to output labels. Shape is (dataset size, <code class="docutils literal notranslate"><span class="pre">input_dim</span></code>)</p></li>
-<li><p><strong>W_1</strong> (<em>torch.Tensor</em>) – The first linear transformation matrix. Shape is (<code class="docutils literal notranslate"><span class="pre">hidden_dim</span></code>, <code class="docutils literal notranslate"><span class="pre">input_dim</span></code>)</p></li>
+<li><p><strong>w_1</strong> (<em>torch.Tensor</em>) – The first linear transformation matrix. Shape is (<code class="docutils literal notranslate"><span class="pre">hidden_dim</span></code>, <code class="docutils literal notranslate"><span class="pre">input_dim</span></code>)</p></li>
 <li><p><strong>b_1</strong> (<em>torch.Tensor</em>) – The bias in the first linear transformation. Shape is (<code class="docutils literal notranslate"><span class="pre">hidden_dim</span></code>, 1)</p></li>
-<li><p><strong>W_2</strong> (<em>torch.Tensor</em>) – The second linear transformation matrix. Shape is (<code class="docutils literal notranslate"><span class="pre">output_dim</span></code>, <code class="docutils literal notranslate"><span class="pre">hidden_dim</span></code>)</p></li>
+<li><p><strong>w_2</strong> (<em>torch.Tensor</em>) – The second linear transformation matrix. Shape is (<code class="docutils literal notranslate"><span class="pre">output_dim</span></code>, <code class="docutils literal notranslate"><span class="pre">hidden_dim</span></code>)</p></li>
 <li><p><strong>b_2</strong> (<em>torch.Tensor</em>) – The bias in the second linear transformation. Shape is (<code class="docutils literal notranslate"><span class="pre">output_dim</span></code>, 1)</p></li>
 </ul>
 </dd>
@@ -767,7 +767,7 @@ the larger the variance in these values, implying higher probability of heteroge
 <span class="sig-name descname"><span class="pre">get_input_output_tensors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/data_generation.html#SyntheticNonIidFedProxDataset.get_input_output_tensors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.data_generation.SyntheticNonIidFedProxDataset.get_input_output_tensors" title="Link to this definition">¶</a></dt>
 <dd><p>This function takes values for the center of elements in the affine transformation elements (<code class="docutils literal notranslate"><span class="pre">mu</span></code>), the
 centers feature each of the input feature dimensions (<code class="docutils literal notranslate"><span class="pre">v</span></code>), and the covariance of those features (<code class="docutils literal notranslate"><span class="pre">sigma</span></code>)
-and produces the input, output tensor pairs with the appropriate dimensions</p>
+and produces the input, output tensor pairs with the appropriate dimensions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

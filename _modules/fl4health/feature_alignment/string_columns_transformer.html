@@ -509,7 +509,6 @@
 <div class="viewcode-block" id="TextMulticolumnTransformer">
 <a class="viewcode-back" href="../../../reference/api/fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextMulticolumnTransformer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TextMulticolumnTransformer</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">TransformerMixin</span><span class="p">):</span>
-
 <div class="viewcode-block" id="TextMulticolumnTransformer.__init__">
 <a class="viewcode-back" href="../../../reference/api/fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextMulticolumnTransformer.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transformer</span><span class="p">:</span> <span class="n">TextFeatureTransformer</span><span class="p">):</span>
@@ -525,10 +524,10 @@
 
 <div class="viewcode-block" id="TextMulticolumnTransformer.fit">
 <a class="viewcode-back" href="../../../reference/api/fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextMulticolumnTransformer.fit">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TextMulticolumnTransformer</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TextMulticolumnTransformer</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Fit the transformer to the provided dataframe. The dataframe should have multiple string columns</span>
-<span class="sd">        The transformer is fit on the appended text from all columns in the ``X`` dataframe</span>
+<span class="sd">        The transformer is fit on the appended text from all columns in the ``X`` dataframe.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X (pd.DataFrame): Columns on which to fit the transformer</span>
@@ -537,16 +536,16 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            TextMulticolumnTransformer: The fit transformer</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">joined_X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">joined_X</span><span class="p">)</span>
+        <span class="n">joined_x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">joined_x</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 
 <div class="viewcode-block" id="TextMulticolumnTransformer.transform">
 <a class="viewcode-back" href="../../../reference/api/fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextMulticolumnTransformer.transform">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Transforms the concatenation of all columns of text in the ``X`` dataframe</span>
+<span class="sd">        Transforms the concatenation of all columns of text in the ``X`` dataframe.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X (pd.DataFrame): Dataframe of text-based columns to be transformed</span>
@@ -554,8 +553,8 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.DataFrame: Transformed dataframe.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">joined_X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">joined_X</span><span class="p">)</span></div>
+        <span class="n">joined_x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">joined_x</span><span class="p">)</span></div>
 </div>
 
 
@@ -563,7 +562,6 @@
 <div class="viewcode-block" id="TextColumnTransformer">
 <a class="viewcode-back" href="../../../reference/api/fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextColumnTransformer">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TextColumnTransformer</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">,</span> <span class="n">TransformerMixin</span><span class="p">):</span>
-
 <div class="viewcode-block" id="TextColumnTransformer.__init__">
 <a class="viewcode-back" href="../../../reference/api/fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextColumnTransformer.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transformer</span><span class="p">:</span> <span class="n">TextFeatureTransformer</span><span class="p">):</span>
@@ -579,10 +577,10 @@
 
 <div class="viewcode-block" id="TextColumnTransformer.fit">
 <a class="viewcode-back" href="../../../reference/api/fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextColumnTransformer.fit">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TextColumnTransformer</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TextColumnTransformer</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Fit the transformer to the provided dataframe. The dataframe should have a single string column</span>
-<span class="sd">        The transformer is fit on the text from the single columns in the ``X`` dataframe</span>
+<span class="sd">        The transformer is fit on the text from the single columns in the ``X`` dataframe.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X (pd.DataFrame): Column on which to fit the transformer</span>
@@ -591,16 +589,16 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            TextColumnTransformer: The fit transformer</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="ow">and</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">X</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 
 <div class="viewcode-block" id="TextColumnTransformer.transform">
 <a class="viewcode-back" href="../../../reference/api/fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextColumnTransformer.transform">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Transforms the concatenation of a single column of text in the ``X`` dataframe</span>
+<span class="sd">        Transforms the concatenation of a single column of text in the ``X`` dataframe.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            X (pd.DataFrame): Dataframe of text-based column to be transformed</span>
@@ -608,8 +606,8 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.DataFrame: Transformed dataframe.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="ow">and</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">X</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span></div>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span></div>
 </div>
 
 </pre></div>

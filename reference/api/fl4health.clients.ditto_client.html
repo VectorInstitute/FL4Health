@@ -569,7 +569,7 @@ indexed by name.</p>
 <dt class="sig sig-object py" id="fl4health.clients.ditto_client.DittoClient.compute_loss_and_additional_losses">
 <span class="sig-name descname"><span class="pre">compute_loss_and_additional_losses</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/ditto_client.html#DittoClient.compute_loss_and_additional_losses"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.ditto_client.DittoClient.compute_loss_and_additional_losses" title="Link to this definition">¶</a></dt>
 <dd><p>Computes the local model loss and the global Ditto model loss (stored in additional losses) for reporting and
-training of the global model</p>
+training of the global model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -598,7 +598,7 @@ training of the global model</p>
 <dd><p>Computes training losses given predictions of the global and local models and ground truth data.
 For the local model we add to the vanilla loss function by including Ditto penalty loss which is the l2 inner
 product between the initial global model weights and weights of the local model. This is stored in backward
-The loss to optimize the global model is stored in the additional losses dictionary under “global_loss”</p>
+The loss to optimize the global model is stored in the additional losses dictionary under “global_loss”.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -692,7 +692,7 @@ weights together.</p>
 <dt class="sig sig-object py" id="fl4health.clients.ditto_client.DittoClient.predict">
 <span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/ditto_client.html#DittoClient.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.ditto_client.DittoClient.predict" title="Link to this definition">¶</a></dt>
 <dd><p>Computes the predictions for both the <strong>GLOBAL</strong> and <strong>LOCAL</strong> models and pack them into the prediction
-dictionary</p>
+dictionary.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>input</strong> (<em>TorchInputType</em>) – Inputs to be fed into both models.</p>
@@ -785,7 +785,7 @@ setting up the global model.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.ditto_client.DittoClient.train_step">
 <span class="sig-name descname"><span class="pre">train_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/ditto_client.html#DittoClient.train_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.ditto_client.DittoClient.train_step" title="Link to this definition">¶</a></dt>
-<dd><p>Mechanics of training loop follow from original Ditto implementation: <a class="reference external" href="https://github.com/litian96/ditto">https://github.com/litian96/ditto</a></p>
+<dd><p>Mechanics of training loop follow from original Ditto implementation: <a class="reference external" href="https://github.com/litian96/ditto">https://github.com/litian96/ditto</a>.</p>
 <p>As in the implementation there, steps of the global and local models are done in tandem and for the same
 number of steps.</p>
 <dl class="field-list simple">

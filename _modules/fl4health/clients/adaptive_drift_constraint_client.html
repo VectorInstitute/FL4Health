@@ -541,7 +541,7 @@
 <span class="sd">        uses an auxiliary loss penalizing weight drift with a coefficient mu. This client is a simple extension of the</span>
 <span class="sd">        ``BasicClient`` that packs the ``self.loss_for_adaptation`` for exchange with the server and expects to</span>
 <span class="sd">        receive an updated (or constant if non-adaptive) parameter for the loss weight. In many cases, such as FedProx,</span>
-<span class="sd">        the ``loss_for_adaptation`` being packaged is the criterion loss (i.e. loss without the penalty)</span>
+<span class="sd">        the ``loss_for_adaptation`` being packaged is the criterion loss (i.e. loss without the penalty).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            data_path (Path): path to the data to be used to load the data for client-side training</span>
@@ -611,20 +611,14 @@
 
             <span class="c1"># Need all parameters even if normally exchanging partial</span>
             <span class="k">return</span> <span class="n">FullParameterExchanger</span><span class="p">()</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
 
-            <span class="c1"># Make sure the proper components are there</span>
-            <span class="k">assert</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_for_adaptation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="p">)</span>
-            <span class="n">model_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+        <span class="c1"># Make sure the proper components are there</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_for_adaptation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">model_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
 
-            <span class="c1"># Weights and training loss sent to server for aggregation. Training loss is sent because server will</span>
-            <span class="c1"># decide to increase or decrease the penalty weight, if adaptivity is turned on.</span>
-            <span class="n">packed_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">pack_parameters</span><span class="p">(</span><span class="n">model_weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_for_adaptation</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">packed_params</span></div>
+        <span class="c1"># Weights and training loss sent to server for aggregation. Training loss is sent because server will</span>
+        <span class="c1"># decide to increase or decrease the penalty weight, if adaptivity is turned on.</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">pack_parameters</span><span class="p">(</span><span class="n">model_weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_for_adaptation</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="AdaptiveDriftConstraintClient.set_parameters">
@@ -693,8 +687,8 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.adaptive_drift_constraint_client.html#fl4health.clients.adaptive_drift_constraint_client.AdaptiveDriftConstraintClient.get_parameter_exchanger">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_exchanger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParameterExchanger</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Setting up the parameter exchanger to include the appropriate packing functionality.</span>
-<span class="sd">        By default we assume that we&#39;re exchanging all parameters. Can be overridden for other behavior</span>
+<span class="sd">        Setting up the parameter exchanger to include the appropriate packing functionality. By default we assume</span>
+<span class="sd">        that we&#39;re exchanging all parameters. Can be overridden for other behavior.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (Config): The config is sent by the FL server to allow for customization in the function if desired.</span>
@@ -702,7 +696,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            ParameterExchanger: Exchanger that can handle packing/unpacking auxiliary server information.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">return</span> <span class="n">FullParameterExchangerWithPacking</span><span class="p">(</span><span class="n">ParameterPackerAdaptiveConstraint</span><span class="p">())</span></div>
 
 
@@ -729,7 +722,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.adaptive_drift_constraint_client.html#fl4health.clients.adaptive_drift_constraint_client.AdaptiveDriftConstraintClient.compute_penalty_loss">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_penalty_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Computes the drift loss for the client model and drift tensors</span>
+<span class="sd">        Computes the drift loss for the client model and drift tensors.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: Computed penalty loss tensor</span>

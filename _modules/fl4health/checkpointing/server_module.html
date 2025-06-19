@@ -504,11 +504,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">INFO</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameters</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.parameter</span><span class="w"> </span><span class="kn">import</span> <span class="n">ndarrays_to_parameters</span><span class="p">,</span> <span class="n">parameters_to_ndarrays</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Scalar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
+
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.servers.base_server</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlServer</span>
@@ -526,13 +527,13 @@
     <span class="n">SparseCooParameterPacker</span><span class="p">,</span>
 <span class="p">)</span>
 
+
 <span class="n">ModelCheckpointers</span> <span class="o">=</span> <span class="n">TorchModuleCheckpointer</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TorchModuleCheckpointer</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
 
 
 <div class="viewcode-block" id="BaseServerCheckpointAndStateModule">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.BaseServerCheckpointAndStateModule">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseServerCheckpointAndStateModule</span><span class="p">:</span>
-
 <div class="viewcode-block" id="BaseServerCheckpointAndStateModule.__init__">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.BaseServerCheckpointAndStateModule.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -595,7 +596,6 @@
 <span class="sd">        This function is meant to throw an exception if there is an overlap in the paths to which model checkpointers</span>
 <span class="sd">        will save model checkpoints to avoid accidental overwriting.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">checkpointer_paths</span> <span class="o">=</span> <span class="p">(</span>
             <span class="p">[</span><span class="n">checkpointer</span><span class="o">.</span><span class="n">checkpoint_path</span> <span class="k">for</span> <span class="n">checkpointer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_checkpointers</span><span class="p">]</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_checkpointers</span>
@@ -651,9 +651,9 @@
 <span class="sd">            checkpointed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Hydrate model for checkpoint called but self.model is None&quot;</span>
-        <span class="k">assert</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="p">),</span> <span class="s2">&quot;Hydrate model for checkpoint called but self.parameter_exchanger is None&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="p">(</span>
+            <span class="s2">&quot;Hydrate model for checkpoint called but self.parameter_exchanger is None&quot;</span>
+        <span class="p">)</span>
         <span class="n">model_ndarrays</span> <span class="o">=</span> <span class="n">parameters_to_ndarrays</span><span class="p">(</span><span class="n">server_parameters</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">pull_parameters</span><span class="p">(</span><span class="n">model_ndarrays</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
 
@@ -712,8 +712,7 @@
                 <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                 <span class="k">return</span> <span class="n">ndarrays_to_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="n">server_model</span><span class="p">))</span>
             <span class="k">return</span> <span class="kc">None</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Attempting to load state, but no state checkpointer is specified&quot;</span><span class="p">)</span></div>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Attempting to load state, but no state checkpointer is specified&quot;</span><span class="p">)</span></div>
 </div>
 
 
@@ -721,7 +720,6 @@
 <div class="viewcode-block" id="PackingServerCheckpointAndAndStateModule">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.PackingServerCheckpointAndAndStateModule">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PackingServerCheckpointAndAndStateModule</span><span class="p">(</span><span class="n">BaseServerCheckpointAndStateModule</span><span class="p">):</span>
-
 <div class="viewcode-block" id="PackingServerCheckpointAndAndStateModule.__init__">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.PackingServerCheckpointAndAndStateModule.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -732,7 +730,6 @@
         <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">ServerStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-
 <span class="sd">        This module is meant to be a base class for any server-side checkpointing module that relies on unpacking</span>
 <span class="sd">        of parameters to hydrate models for checkpointing. The specifics of the unpacking will be handled by the</span>
 <span class="sd">        child classes of the packer within the parameter exchange.</span>
@@ -756,9 +753,9 @@
 <span class="sd">                Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-                <span class="n">parameter_exchanger</span><span class="p">,</span> <span class="n">FullParameterExchangerWithPacking</span>
-            <span class="p">),</span> <span class="s2">&quot;Parameter exchanger must be of based type FullParameterExchangerWithPacking&quot;</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parameter_exchanger</span><span class="p">,</span> <span class="n">FullParameterExchangerWithPacking</span><span class="p">),</span> <span class="p">(</span>
+                <span class="s2">&quot;Parameter exchanger must be of based type FullParameterExchangerWithPacking&quot;</span>
+            <span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">parameter_exchanger</span><span class="p">,</span> <span class="n">model_checkpointers</span><span class="p">,</span> <span class="n">state_checkpointer</span><span class="p">)</span></div>
 
 
@@ -780,9 +777,9 @@
 <span class="sd">            checkpointed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Hydrate model for checkpoint called but self.model is None&quot;</span>
-        <span class="k">assert</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="p">),</span> <span class="s2">&quot;Hydrate model for checkpoint called but self.parameter_exchanger is None&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="p">(</span>
+            <span class="s2">&quot;Hydrate model for checkpoint called but self.parameter_exchanger is None&quot;</span>
+        <span class="p">)</span>
         <span class="n">packed_parameters</span> <span class="o">=</span> <span class="n">parameters_to_ndarrays</span><span class="p">(</span><span class="n">server_parameters</span><span class="p">)</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="p">,</span> <span class="n">FullParameterExchangerWithPacking</span><span class="p">)</span>
         <span class="c1"># Use the unpacking function of the parameter exchange to handle extraction of model parameters</span>
@@ -1031,27 +1028,23 @@
 <span class="sd">                will be used to preserve FL training state to facilitate restarting training if interrupted.</span>
 <span class="sd">                Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">parameter_exchanger</span><span class="p">,</span> <span class="n">model_checkpointers</span><span class="p">,</span> <span class="n">state_checkpointer</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_checkpointers_are_of_opacus_type</span><span class="p">()</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_checkpointers_are_of_opacus_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Helper function to ensure that the provided checkpointers are explicitly compatible with Opacus</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Helper function to ensure that the provided checkpointers are explicitly compatible with Opacus.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_checkpointers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">checkpointer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_checkpointers</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-                    <span class="n">checkpointer</span><span class="p">,</span> <span class="n">OpacusCheckpointer</span>
-                <span class="p">),</span> <span class="s2">&quot;Provided checkpointers must have base class OpacusCheckpointer&quot;</span></div>
+                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">checkpointer</span><span class="p">,</span> <span class="n">OpacusCheckpointer</span><span class="p">),</span> <span class="p">(</span>
+                    <span class="s2">&quot;Provided checkpointers must have base class OpacusCheckpointer&quot;</span>
+                <span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="NnUnetServerCheckpointAndStateModule">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.NnUnetServerCheckpointAndStateModule">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">NnUnetServerCheckpointAndStateModule</span><span class="p">(</span><span class="n">BaseServerCheckpointAndStateModule</span><span class="p">):</span>
-
 <div class="viewcode-block" id="NnUnetServerCheckpointAndStateModule.__init__">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.NnUnetServerCheckpointAndStateModule.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -1144,14 +1137,12 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_ensure_checkpointers_are_of_opacus_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Helper function to ensure that the provided checkpointers are explicitly compatible with Opacus</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Helper function to ensure that the provided checkpointers are explicitly compatible with Opacus.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_checkpointers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">checkpointer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_checkpointers</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-                    <span class="n">checkpointer</span><span class="p">,</span> <span class="n">OpacusCheckpointer</span>
-                <span class="p">),</span> <span class="s2">&quot;Provided checkpointers must have base class OpacusCheckpointer&quot;</span></div>
+                <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">checkpointer</span><span class="p">,</span> <span class="n">OpacusCheckpointer</span><span class="p">),</span> <span class="p">(</span>
+                    <span class="s2">&quot;Provided checkpointers must have base class OpacusCheckpointer&quot;</span>
+                <span class="p">)</span></div>
 
 </pre></div>
         </article>

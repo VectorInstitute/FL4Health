@@ -574,7 +574,7 @@ dictionary and individual client results (client ids and failures).</p>
 <span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_rounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/servers/base_server.html#FlServer.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.servers.base_server.FlServer.fit" title="Link to this definition">¶</a></dt>
 <dd><p>Run federated learning for a number of rounds. This function also allows the server to perform some operations
 prior to fitting starting. This is useful, for example, if you need to communicate with the clients to
-initialize anything prior to FL starting (see nnunet server for an example)</p>
+initialize anything prior to FL starting (see nnunet server for an example).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -599,7 +599,7 @@ time in seconds for the round.</p>
 <span class="sig-name descname"><span class="pre">fit_round</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server_round</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/servers/base_server.html#FlServer.fit_round"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.servers.base_server.FlServer.fit_round" title="Link to this definition">¶</a></dt>
 <dd><p>This function is called at each round of federated training. The flow is generally the same as a flower
 server, where clients are sampled and client side training is requested from the clients that are chosen.
-This function simply adds a bit of logging, post processing of the results</p>
+This function simply adds a bit of logging, post processing of the results.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

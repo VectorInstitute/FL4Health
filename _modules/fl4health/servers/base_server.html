@@ -569,7 +569,6 @@
 <span class="sd">                evaluation from clients or not. If set to False, this will cause the server to shutdown all clients</span>
 <span class="sd">                and throw an exception. Defaults to True.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">client_manager</span><span class="o">=</span><span class="n">client_manager</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">strategy</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fl_config</span> <span class="o">=</span> <span class="n">fl_config</span>
         <span class="k">if</span> <span class="n">checkpoint_and_state_module</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -648,7 +647,6 @@
 <span class="sd">            metrics computed during training and validation. The second element of the tuple is the elapsed time in</span>
 <span class="sd">            seconds.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Initializing server state and global parameters&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_initial_parameters</span><span class="p">(</span><span class="n">server_round</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="n">History</span><span class="p">()</span>
@@ -728,7 +726,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Run federated learning for a number of rounds. This function also allows the server to perform some operations</span>
 <span class="sd">        prior to fitting starting. This is useful, for example, if you need to communicate with the clients to</span>
-<span class="sd">        initialize anything prior to FL starting (see nnunet server for an example)</span>
+<span class="sd">        initialize anything prior to FL starting (see nnunet server for an example).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            num_rounds (int): Number of server rounds to run.</span>
@@ -780,7 +778,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This function is called at each round of federated training. The flow is generally the same as a flower</span>
 <span class="sd">        server, where clients are sampled and client side training is requested from the clients that are chosen.</span>
-<span class="sd">        This function simply adds a bit of logging, post processing of the results</span>
+<span class="sd">        This function simply adds a bit of logging, post processing of the results.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            server_round (int): Current round number of the FL training. Begins at 1</span>
@@ -793,7 +791,6 @@
 <span class="sd">            second is a dictionary of **AGGREGATED** metrics. The third component holds the individual (non-aggregated)</span>
 <span class="sd">            parameters, loss, and metrics for successful and unsuccessful client-side training.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">round_start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
         <span class="n">fit_round_results</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fit_round</span><span class="p">(</span><span class="n">server_round</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
         <span class="n">round_end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
@@ -821,9 +818,7 @@
 <div class="viewcode-block" id="FlServer.shutdown">
 <a class="viewcode-back" href="../../../reference/api/fl4health.servers.base_server.html#fl4health.servers.base_server.FlServer.shutdown">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Currently just records termination of the server process and disconnects and reporters that need to be.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Currently just records termination of the server process and disconnects and reporters that need to be.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reports_manager</span><span class="o">.</span><span class="n">report</span><span class="p">({</span><span class="s2">&quot;shutdown&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())})</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">reports_manager</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span></div>
 
@@ -885,7 +880,6 @@
 <span class="sd">            tuple[float | None, dict[str, Scalar], EvaluateResultsAndFailures] | None: Tuple of loss value, metrics</span>
 <span class="sd">            dictionary and individual client results (client ids and failures).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1">#</span>
         <span class="n">start_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
         <span class="n">eval_round_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_round</span><span class="p">(</span><span class="n">server_round</span><span class="p">,</span> <span class="n">timeout</span><span class="p">)</span>
         <span class="n">end_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
@@ -931,7 +925,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save server checkpoint consisting of model, history, server round, metrics reporter and server name. This</span>
 <span class="sd">        method can be overridden to add any necessary state to the checkpoint. The model will be injected into the</span>
-<span class="sd">        ckpt state by the checkpoint module</span>
+<span class="sd">        ckpt state by the checkpoint module.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">state_checkpointer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">save_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
@@ -948,8 +942,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">server_parameters</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Loaded server state from checkpoint&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">True</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">False</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_terminate_after_unacceptable_failures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">assert</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">accept_failures</span>

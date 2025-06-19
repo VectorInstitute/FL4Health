@@ -505,7 +505,7 @@
 <dt class="sig sig-object py" id="fl4health.utils.nnunet_utils.Module2LossWrapper">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Module2LossWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/nnunet_utils.html#Module2LossWrapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.nnunet_utils.Module2LossWrapper" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_Loss</span></code></p>
-<p>Converts a `` nn.Module`` subclass to a <code class="docutils literal notranslate"><span class="pre">_Loss</span></code> subclass</p>
+<p>Converts a `` nn.Module`` subclass to a <code class="docutils literal notranslate"><span class="pre">_Loss</span></code> subclass.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.nnunet_utils.Module2LossWrapper.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/nnunet_utils.html#Module2LossWrapper.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.nnunet_utils.Module2LossWrapper.forward" title="Link to this definition">¶</a></dt>
@@ -519,6 +519,61 @@ this function, one should call the <code class="xref py py-class docutils litera
 instead of this since the former takes care of running the
 registered hooks while the latter silently ignores them.</p>
 </div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">NnUNetDataLoaderWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nnunet_augmenter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nnunet_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">infinite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_image_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/nnunet_utils.html#NnUNetDataLoaderWrapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nnunet_augmenter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nnunet_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">infinite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_image_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/nnunet_utils.html#NnUNetDataLoaderWrapper.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Wraps nnunet dataloader classes using the pytorch dataloader to make them pytorch compatible. Also handles
+some unique stuff specific to nnunet such as deep supervision and infinite dataloaders. The nnunet dataloaders
+should only be used for training and validation, not final testing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nnunet_dataloader</strong> (<em>SingleThreadedAugmenter</em><em> | </em><em>NonDetMultiThreadedAugmenter</em><em> | </em><em>MultiThreadedAugmenter</em>) – The
+dataloader used by nnunet</p></li>
+<li><p><strong>nnunet_config</strong> (<em>NnUNetConfig</em>) – The nnunet config. Enum type helps ensure that nnunet config is valid</p></li>
+<li><p><strong>infinite</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether or not to treat the dataset as infinite. The dataloaders sample data
+with replacement either way. The only difference is that if set to False, a <code class="docutils literal notranslate"><span class="pre">StopIteration</span></code> is
+generated after <code class="docutils literal notranslate"><span class="pre">num_samples</span></code>/<code class="docutils literal notranslate"><span class="pre">batch_size</span></code> steps. Defaults to False.</p></li>
+<li><p><strong>set_len</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em>) – If specified overrides the dataloaders estimate of its own length with the provided
+value. A <code class="docutils literal notranslate"><span class="pre">StopIteration</span></code> will be raised after <code class="docutils literal notranslate"><span class="pre">set_len</span></code> steps. If not specified the length is
+determined by scaling the number of samples by the ratio of image size to the networks input patch
+size.</p></li>
+<li><p><strong>ref_image_shape</strong> (<em>Sequence</em><em> | </em><em>None</em>) – The image shape to use when computing the scaling factor used in
+determining the length of the dataloader. Should be representative of the median or average image size
+in the data set. If not specified a random image is loaded and its shape is used in the calculation of
+the scaling factor.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper.reset">
+<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/nnunet_utils.html#NnUNetDataLoaderWrapper.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper.reset" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper.shutdown">
+<span class="sig-name descname"><span class="pre">shutdown</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/nnunet_utils.html#NnUNetDataLoaderWrapper.shutdown"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper.shutdown" title="Link to this definition">¶</a></dt>
+<dd><p>The multithreaded augmenters used by nnunet need to be shutdown gracefully to avoid errors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -636,7 +691,7 @@ the length of the string.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="fl4health.utils.nnunet_utils.convert_deep_supervision_dict_to_list">
 <span class="sig-name descname"><span class="pre">convert_deep_supervision_dict_to_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tensor_dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/nnunet_utils.html#convert_deep_supervision_dict_to_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.nnunet_utils.convert_deep_supervision_dict_to_list" title="Link to this definition">¶</a></dt>
-<dd><p>Converts a dictionary of tensors back into a list so that it can be used by nnunet deep supervision loss functions</p>
+<dd><p>Converts a dictionary of tensors back into a list so that it can be used by nnunet deep supervision loss functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>tensor_dict</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>torch.Tensor</em><em>]</em>) – Dictionary containing <code class="docutils literal notranslate"><span class="pre">torch.Tensors</span></code>. The key values must start
@@ -699,7 +754,7 @@ was the tensor’s index in the list and X,Y,Z are the spatial dimensions of the
 <dl class="py function">
 <dt class="sig sig-object py" id="fl4health.utils.nnunet_utils.get_segs_from_probs">
 <span class="sig-name descname"><span class="pre">get_segs_from_probs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">has_regions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/nnunet_utils.html#get_segs_from_probs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.nnunet_utils.get_segs_from_probs" title="Link to this definition">¶</a></dt>
-<dd><p>Converts the nnunet model output probabilities to predicted segmentations</p>
+<dd><p>Converts the nnunet model output probabilities to predicted segmentations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -720,61 +775,6 @@ integers.</p>
 <dd class="field-odd"><p>torch.Tensor</p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">nnUNetDataLoaderWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nnunet_augmenter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nnunet_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">infinite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_image_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/nnunet_utils.html#nnUNetDataLoaderWrapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nnunet_augmenter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nnunet_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">infinite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_len</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_image_shape</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/nnunet_utils.html#nnUNetDataLoaderWrapper.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>Wraps nnunet dataloader classes using the pytorch dataloader to make them pytorch compatible. Also handles
-some unique stuff specific to nnunet such as deep supervision and infinite dataloaders. The nnunet dataloaders
-should only be used for training and validation, not final testing.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>nnunet_dataloader</strong> (<em>SingleThreadedAugmenter</em><em> | </em><em>NonDetMultiThreadedAugmenter</em><em> | </em><em>MultiThreadedAugmenter</em>) – The
-dataloader used by nnunet</p></li>
-<li><p><strong>nnunet_config</strong> (<em>NnUNetConfig</em>) – The nnunet config. Enum type helps ensure that nnunet config is valid</p></li>
-<li><p><strong>infinite</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether or not to treat the dataset as infinite. The dataloaders sample data
-with replacement either way. The only difference is that if set to False, a <code class="docutils literal notranslate"><span class="pre">StopIteration</span></code> is
-generated after <code class="docutils literal notranslate"><span class="pre">num_samples</span></code>/<code class="docutils literal notranslate"><span class="pre">batch_size</span></code> steps. Defaults to False.</p></li>
-<li><p><strong>set_len</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em>) – If specified overrides the dataloaders estimate of its own length with the provided
-value. A <code class="docutils literal notranslate"><span class="pre">StopIteration</span></code> will be raised after <code class="docutils literal notranslate"><span class="pre">set_len</span></code> steps. If not specified the length is
-determined by scaling the number of samples by the ratio of image size to the networks input patch
-size.</p></li>
-<li><p><strong>ref_image_shape</strong> (<em>Sequence</em><em> | </em><em>None</em>) – The image shape to use when computing the scaling factor used in
-determining the length of the dataloader. Should be representative of the median or average image size
-in the data set. If not specified a random image is loaded and its shape is used in the calculation of
-the scaling factor.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper.reset">
-<span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/nnunet_utils.html#nnUNetDataLoaderWrapper.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper.reset" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper.shutdown">
-<span class="sig-name descname"><span class="pre">shutdown</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/nnunet_utils.html#nnUNetDataLoaderWrapper.shutdown"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper.shutdown" title="Link to this definition">¶</a></dt>
-<dd><p>The multithreaded augmenters used by nnunet need to be shutdown gracefully to avoid errors</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
-</dd>
-</dl>
-</dd></dl>
-
 </dd></dl>
 
 <dl class="py function">
@@ -829,7 +829,7 @@ variables on import, and therefore it must be imported or reloaded after they ar
 <dt class="sig sig-object py" id="fl4health.utils.nnunet_utils.use_default_signal_handlers">
 <span class="sig-name descname"><span class="pre">use_default_signal_handlers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/nnunet_utils.html#use_default_signal_handlers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.nnunet_utils.use_default_signal_handlers" title="Link to this definition">¶</a></dt>
 <dd><p>This is a decorator that resets the <code class="docutils literal notranslate"><span class="pre">SIGINT</span></code> and <code class="docutils literal notranslate"><span class="pre">SIGTERM</span></code> signal handlers back to the python defaults for the
-execution of the method</p>
+execution of the method.</p>
 <p>flwr 1.9.0 overrides the default signal handlers with handlers that raise an error on any interruption or
 termination. Since nnunet spawns child processes which inherit these handlers, when those subprocesses are
 terminated (which is expected behavior), the flwr signal handlers raise an error (which we don’t want).</p>
@@ -921,6 +921,12 @@ terminated (which is expected behavior), the flwr signal handlers raise an error
 <li><a class="reference internal" href="#fl4health.utils.nnunet_utils.Module2LossWrapper.forward"><code class="docutils literal notranslate"><span class="pre">Module2LossWrapper.forward()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper"><code class="docutils literal notranslate"><span class="pre">NnUNetDataLoaderWrapper</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper.__init__"><code class="docutils literal notranslate"><span class="pre">NnUNetDataLoaderWrapper.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper.reset"><code class="docutils literal notranslate"><span class="pre">NnUNetDataLoaderWrapper.reset()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper.shutdown"><code class="docutils literal notranslate"><span class="pre">NnUNetDataLoaderWrapper.shutdown()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#fl4health.utils.nnunet_utils.NnunetConfig"><code class="docutils literal notranslate"><span class="pre">NnunetConfig</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.utils.nnunet_utils.PolyLRSchedulerWrapper"><code class="docutils literal notranslate"><span class="pre">PolyLRSchedulerWrapper</span></code></a><ul>
 <li><a class="reference internal" href="#fl4health.utils.nnunet_utils.PolyLRSchedulerWrapper.__init__"><code class="docutils literal notranslate"><span class="pre">PolyLRSchedulerWrapper.__init__()</span></code></a></li>
@@ -938,12 +944,6 @@ terminated (which is expected behavior), the flwr signal handlers raise an error
 <li><a class="reference internal" href="#fl4health.utils.nnunet_utils.convert_deep_supervision_list_to_dict"><code class="docutils literal notranslate"><span class="pre">convert_deep_supervision_list_to_dict()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.utils.nnunet_utils.get_dataset_n_voxels"><code class="docutils literal notranslate"><span class="pre">get_dataset_n_voxels()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.utils.nnunet_utils.get_segs_from_probs"><code class="docutils literal notranslate"><span class="pre">get_segs_from_probs()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper"><code class="docutils literal notranslate"><span class="pre">nnUNetDataLoaderWrapper</span></code></a><ul>
-<li><a class="reference internal" href="#fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper.__init__"><code class="docutils literal notranslate"><span class="pre">nnUNetDataLoaderWrapper.__init__()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper.reset"><code class="docutils literal notranslate"><span class="pre">nnUNetDataLoaderWrapper.reset()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper.shutdown"><code class="docutils literal notranslate"><span class="pre">nnUNetDataLoaderWrapper.shutdown()</span></code></a></li>
-</ul>
-</li>
 <li><a class="reference internal" href="#fl4health.utils.nnunet_utils.prepare_loss_arg"><code class="docutils literal notranslate"><span class="pre">prepare_loss_arg()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.utils.nnunet_utils.reload_modules"><code class="docutils literal notranslate"><span class="pre">reload_modules()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.utils.nnunet_utils.set_nnunet_env"><code class="docutils literal notranslate"><span class="pre">set_nnunet_env()</span></code></a></li>

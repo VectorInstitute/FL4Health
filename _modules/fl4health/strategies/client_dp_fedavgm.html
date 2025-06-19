@@ -661,8 +661,7 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="n">rep</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;ClientLevelDPFedAvgM(accept_failures=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">accept_failures</span><span class="si">}</span><span class="s2">)&quot;</span>
-        <span class="k">return</span> <span class="n">rep</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;ClientLevelDPFedAvgM(accept_failures=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">accept_failures</span><span class="si">}</span><span class="s2">)&quot;</span>
 
 <div class="viewcode-block" id="ClientLevelDPFedAvgM.modify_noise_multiplier">
 <a class="viewcode-back" href="../../../reference/api/fl4health.strategies.client_dp_fedavgm.html#fl4health.strategies.client_dp_fedavgm.ClientLevelDPFedAvgM.modify_noise_multiplier">[docs]</a>
@@ -702,6 +701,7 @@
 <span class="sd">            results (list[tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training</span>
 <span class="sd">                that need to be aggregated on the server-side. In this strategy, the clients pack the weights to be</span>
 <span class="sd">                aggregated along with a clipping bit calculated during training.</span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple[list[tuple[NDArrays, int]], NDArrays]: The first tuple is the set of (weights, training counts) per</span>
 <span class="sd">            client. The second is a set of clipping bits, one for each client.</span>
@@ -765,7 +765,7 @@
         <span class="n">noised_clipping_bits</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Update the clipping bound help by the server given the noised aggregated clipping bits returned by the clients</span>
+<span class="sd">        Update the clipping bound help by the server given the noised aggregated clipping bits returned by the clients.</span>
 
 <span class="sd">        **NOTE:** The update formula may be found in the original paper.</span>
 
@@ -823,7 +823,6 @@
 <span class="sd">            For this strategy, the server also packs a clipping bound to be sent to the clients. This is sent even</span>
 <span class="sd">            if adaptive clipping is turned off and the value simply remains constant.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">if</span> <span class="ow">not</span> <span class="n">results</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="p">{}</span>
         <span class="c1"># Do not aggregate if there are failures and failures are not accepted</span>
@@ -953,7 +952,6 @@
 <span class="sd">            list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters</span>
 <span class="sd">            to be sent to each client (packaged as ``EvaluateIns``)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="c1"># This strategy requires the client manager to be of type at least BaseFractionSamplingManager</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">client_manager</span><span class="p">,</span> <span class="n">BaseFractionSamplingManager</span><span class="p">)</span>
 

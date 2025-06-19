@@ -506,7 +506,7 @@
 <dt class="sig sig-object py" id="fl4health.clients.scaffold_client.DPScaffoldClient">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DPScaffoldClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_meter_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">LossMeterType.AVERAGE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_and_state_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reporters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/scaffold_client.html#DPScaffoldClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.scaffold_client.DPScaffoldClient" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#fl4health.clients.scaffold_client.ScaffoldClient" title="fl4health.clients.scaffold_client.ScaffoldClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScaffoldClient</span></code></a>, <a class="reference internal" href="fl4health.clients.instance_level_dp_client.html#fl4health.clients.instance_level_dp_client.InstanceLevelDpClient" title="fl4health.clients.instance_level_dp_client.InstanceLevelDpClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstanceLevelDpClient</span></code></a></p>
-<p>Federated Learning client for Instance Level Differentially Private Scaffold strategy</p>
+<p>Federated Learning client for Instance Level Differentially Private Scaffold strategy.</p>
 <p>Implemented as specified in <a class="reference external" href="https://arxiv.org/abs/2111.09278">https://arxiv.org/abs/2111.09278</a></p>
 </dd></dl>
 
@@ -548,7 +548,7 @@ name. Defaults to None.</p></li>
 <dt class="sig sig-object py" id="fl4health.clients.scaffold_client.ScaffoldClient.compute_parameters_delta">
 <span class="sig-name descname"><span class="pre">compute_parameters_delta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params_2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/scaffold_client.html#ScaffoldClient.compute_parameters_delta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.scaffold_client.ScaffoldClient.compute_parameters_delta" title="Link to this definition">¶</a></dt>
 <dd><p>Computes element-wise difference of two lists of <code class="docutils literal notranslate"><span class="pre">NDarray</span></code> where elements in <code class="docutils literal notranslate"><span class="pre">params_2</span></code> are subtracted from
-elements in <code class="docutils literal notranslate"><span class="pre">params_1</span></code></p>
+elements in <code class="docutils literal notranslate"><span class="pre">params_1</span></code>.</p>
 <p>Each <code class="docutils literal notranslate"><span class="pre">NDArray</span></code> in the list of <code class="docutils literal notranslate"><span class="pre">NDArrays</span></code> are subtracted as</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
@@ -573,7 +573,8 @@ elements in <code class="docutils literal notranslate"><span class="pre">params_
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.scaffold_client.ScaffoldClient.compute_updated_control_variates">
 <span class="sig-name descname"><span class="pre">compute_updated_control_variates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_model_weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta_control_variates</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/scaffold_client.html#ScaffoldClient.compute_updated_control_variates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.scaffold_client.ScaffoldClient.compute_updated_control_variates" title="Link to this definition">¶</a></dt>
-<dd><p>Computes the updated local control variates according to option 2 in Equation 4 of paper. The calculation is</p>
+<dd><p>Computes the updated local control variates according to option 2 in Equation 4 of paper.</p>
+<p>The calculation is</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[c_i^+ = c_i - c + \frac{1}{(K \cdot lr)} \cdot (x - y_i)\]</div>
@@ -618,7 +619,7 @@ variates <span class="math notranslate nohighlight">\(c_i - c\)</span>.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.scaffold_client.ScaffoldClient.get_parameters">
 <span class="sig-name descname"><span class="pre">get_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/scaffold_client.html#ScaffoldClient.get_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.scaffold_client.ScaffoldClient.get_parameters" title="Link to this definition">¶</a></dt>
-<dd><p>Packs the parameters and control variates into a single <code class="docutils literal notranslate"><span class="pre">NDArrays</span></code> to be sent to the server for aggregation</p>
+<dd><p>Packs the parameters and control variates into a single <code class="docutils literal notranslate"><span class="pre">NDArrays</span></code> to be sent to the server for aggregation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – The config is sent by the FL server to allow for customization in the function if desired.</p>
@@ -649,7 +650,8 @@ been computed on a batch of data. Updates not applied to params until step is ca
 <span class="sig-name descname"><span class="pre">set_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fitting_round</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/scaffold_client.html#ScaffoldClient.set_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.scaffold_client.ScaffoldClient.set_parameters" title="Link to this definition">¶</a></dt>
 <dd><p>Assumes that the parameters being passed contain model parameters concatenated with server control variates.
 They are unpacked for the clients to use in training. If it’s the first time the model is being initialized,
-we assume the full model is being initialized and use the <code class="docutils literal notranslate"><span class="pre">FullParameterExchanger()</span></code> to set all model weights</p>
+we assume the full model is being initialized and use the <code class="docutils literal notranslate"><span class="pre">FullParameterExchanger()</span></code> to set all model
+weights.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -718,7 +720,7 @@ loss dictionary.</p>
 <dt class="sig sig-object py" id="fl4health.clients.scaffold_client.ScaffoldClient.update_control_variates">
 <span class="sig-name descname"><span class="pre">update_control_variates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_steps</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/scaffold_client.html#ScaffoldClient.update_control_variates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.scaffold_client.ScaffoldClient.update_control_variates" title="Link to this definition">¶</a></dt>
 <dd><p>Updates local control variates along with the corresponding updates according to the option 2 in Equation 4 in
-<a class="reference external" href="https://arxiv.org/pdf/1910.06378.pdf">https://arxiv.org/pdf/1910.06378.pdf</a></p>
+<a class="reference external" href="https://arxiv.org/pdf/1910.06378.pdf">https://arxiv.org/pdf/1910.06378.pdf</a>.</p>
 <p>To be called after weights of local model have been updated.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

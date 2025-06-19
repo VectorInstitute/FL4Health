@@ -689,7 +689,7 @@ each server round or epoch. Elements will also be logged at the end of validatio
 <dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.get_client_specific_reports">
 <span class="sig-name descname"><span class="pre">get_client_specific_reports</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.get_client_specific_reports"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.get_client_specific_reports" title="Link to this definition">¶</a></dt>
 <dd><p>This function can be overridden by an inheriting client to report additional client specific information to
-the <code class="docutils literal notranslate"><span class="pre">wandb_reporter</span></code></p>
+the <code class="docutils literal notranslate"><span class="pre">wandb_reporter</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>A dictionary of things to report</p>
@@ -720,8 +720,7 @@ the <code class="docutils literal notranslate"><span class="pre">wandb_reporter<
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.get_data_loaders">
 <span class="sig-name descname"><span class="pre">get_data_loaders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.get_data_loaders"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.get_data_loaders" title="Link to this definition">¶</a></dt>
-<dd><p>User defined method that returns a PyTorch Train DataLoader
-and a PyTorch Validation DataLoader</p>
+<dd><p>User defined method that returns a PyTorch Train DataLoader and a PyTorch Validation DataLoader.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – The config from the server.</p>
@@ -1167,7 +1166,7 @@ aggregation.</p>
 <dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.update_before_epoch">
 <span class="sig-name descname"><span class="pre">update_before_epoch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">epoch</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.update_before_epoch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.update_before_epoch" title="Link to this definition">¶</a></dt>
 <dd><p>Hook method called before local epoch on client. Only called if client is being trained by epochs
-(i.e. using <code class="docutils literal notranslate"><span class="pre">local_epochs</span></code> key instead of local steps in the server config file)</p>
+(i.e. using <code class="docutils literal notranslate"><span class="pre">local_epochs</span></code> key instead of local steps in the server config file).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>epoch</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Integer representing the epoch about to begin</p>

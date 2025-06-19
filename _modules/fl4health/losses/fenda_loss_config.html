@@ -519,7 +519,7 @@
         <span class="n">local_feature_loss_temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Container to hold the different pieces associated with PerFCL Loss</span>
+<span class="sd">        Container to hold the different pieces associated with PerFCL Loss.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            device (torch.device): Device to which the loss will be sent and computed on.</span>
@@ -563,7 +563,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.losses.fenda_loss_config.html#fl4health.losses.fenda_loss_config.MoonContrastiveLossContainer.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">contrastive_loss_weight</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        _summary_</span>
+<span class="sd">        Container to hold the different pieces associated with Moon Contrastive loss function.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            device (torch.device): Device to which the loss will be sent and computed on.</span>
@@ -589,7 +589,7 @@
         <span class="n">contrastive_loss_config</span><span class="p">:</span> <span class="n">MoonContrastiveLossContainer</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Container to gather all of the possible loss functions used in constrained FENDA model optimization</span>
+<span class="sd">        Container to gather all of the possible loss functions used in constrained FENDA model optimization.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            perfcl_loss_config (PerFclLossContainer | None): PerFCL loss container. If none, the loss isn not used.</span>
@@ -627,7 +627,7 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">positive_pairs</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">negative_pairs</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute the contrastive loss, if it exists, using the configuration</span>
+<span class="sd">        Compute the contrastive loss, if it exists, using the configuration.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            features (torch.Tensor): features from the model</span>
@@ -650,7 +650,7 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">first_features</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">second_features</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute the cosine loss, if it exists, using the configuration</span>
+<span class="sd">        Compute the cosine loss, if it exists, using the configuration.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            first_features (torch.Tensor): first set of features in the cosine comparison</span>
@@ -675,7 +675,7 @@
         <span class="n">initial_global_features</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute the PerFCL loss, if it exists, using the configuration</span>
+<span class="sd">        Compute the PerFCL loss, if it exists, using the configuration.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            local_features (torch.Tensor): See PerFCL loss documentation</span>

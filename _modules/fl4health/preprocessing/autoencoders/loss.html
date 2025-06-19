@@ -543,8 +543,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: KL divergence loss.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">kl_divergence_loss</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">logvar</span> <span class="o">-</span> <span class="n">mu</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">logvar</span><span class="o">.</span><span class="n">exp</span><span class="p">())</span>
-        <span class="k">return</span> <span class="n">kl_divergence_loss</span></div>
+        <span class="k">return</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">logvar</span> <span class="o">-</span> <span class="n">mu</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">logvar</span><span class="o">.</span><span class="n">exp</span><span class="p">())</span></div>
 
 
 <div class="viewcode-block" id="VaeLoss.unpack_model_output">
@@ -560,9 +559,9 @@
 <span class="sd">            tuple[torch.Tensor, torch.Tensor, torch.Tensor]: Unpacked output containing predictions, mu, and logvar.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># This methods assumes &quot;preds&quot; are batch first, and preds are 2D dimensional (already flattened).</span>
-        <span class="k">assert</span> <span class="p">(</span>
-            <span class="n">preds</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span>
-        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Expected a 2D tensor for VaeLoss, but got </span><span class="si">{</span><span class="n">preds</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span><span class="si">}</span><span class="s2">D tensor with shape </span><span class="si">{</span><span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">.&quot;</span>
+        <span class="k">assert</span> <span class="n">preds</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Expected a 2D tensor for VaeLoss, but got </span><span class="si">{</span><span class="n">preds</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span><span class="si">}</span><span class="s2">D tensor with shape </span><span class="si">{</span><span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">.&quot;</span>
+        <span class="p">)</span>
         <span class="c1"># The order of logvar and mu in the output tensor is important.</span>
         <span class="c1"># For each model output, the first self.latent_dim indices are used to store the log variance,</span>
         <span class="c1"># the next self.latent_dim indices are allocated to mu, and the remaining indices store the model predictions.</span>

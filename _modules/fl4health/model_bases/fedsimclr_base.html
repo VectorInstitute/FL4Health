@@ -503,7 +503,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
+
+
+<span class="n">DEFAULT_PROJECTION_HEAD</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Identity</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="FedSimClrModel">
@@ -514,7 +517,7 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">encoder</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
-        <span class="n">projection_head</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Identity</span><span class="p">(),</span>
+        <span class="n">projection_head</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">=</span> <span class="n">DEFAULT_PROJECTION_HEAD</span><span class="p">,</span>
         <span class="n">prediction_head</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">pretrain</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -534,9 +537,9 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
-        <span class="k">assert</span> <span class="ow">not</span> <span class="p">(</span>
-            <span class="n">prediction_head</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">pretrain</span>
-        <span class="p">),</span> <span class="s2">&quot;Model with pretrain==False must have prediction head (ie not None)&quot;</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="p">(</span><span class="n">prediction_head</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">pretrain</span><span class="p">),</span> <span class="p">(</span>
+            <span class="s2">&quot;Model with pretrain==False must have prediction head (ie not None)&quot;</span>
+        <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="n">encoder</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">projection_head</span> <span class="o">=</span> <span class="n">projection_head</span>
@@ -563,11 +566,8 @@
         <span class="n">features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pretrain</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">projection_head</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">prediction_head</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="p">),</span> <span class="s2">&quot;Model with pretrain==False must have prediction_head (ie not None)&quot;</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prediction_head</span><span class="p">(</span><span class="n">features</span><span class="p">)</span></div>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">prediction_head</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Model with pretrain==False must have prediction_head (ie not None)&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prediction_head</span><span class="p">(</span><span class="n">features</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="FedSimClrModel.load_pretrained_model">
@@ -587,13 +587,12 @@
 <span class="sd">            FedSimClrModel: A model with pre-existing weights loaded and ``pretrain`` set to False</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">prev_model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
-        <span class="n">ssl_model</span> <span class="o">=</span> <span class="n">FedSimClrModel</span><span class="p">(</span>
+        <span class="k">return</span> <span class="n">FedSimClrModel</span><span class="p">(</span>
             <span class="n">encoder</span><span class="o">=</span><span class="n">prev_model</span><span class="o">.</span><span class="n">encoder</span><span class="p">,</span>
             <span class="n">projection_head</span><span class="o">=</span><span class="n">prev_model</span><span class="o">.</span><span class="n">projection_head</span><span class="p">,</span>
             <span class="n">prediction_head</span><span class="o">=</span><span class="n">prev_model</span><span class="o">.</span><span class="n">prediction_head</span><span class="p">,</span>
             <span class="n">pretrain</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">ssl_model</span></div>
+        <span class="p">)</span></div>
 </div>
 
 </pre></div>

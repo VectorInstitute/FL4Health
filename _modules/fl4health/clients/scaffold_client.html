@@ -519,6 +519,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.reporting.base_reporter</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseReporter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.losses</span><span class="w"> </span><span class="kn">import</span> <span class="n">LossMeterType</span><span class="p">,</span> <span class="n">TrainingLosses</span>
 
+
 <span class="n">ScaffoldTrainStepOutput</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span>
 
 
@@ -587,7 +588,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.scaffold_client.html#fl4health.clients.scaffold_client.ScaffoldClient.get_parameters">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArrays</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Packs the parameters and control variates into a single ``NDArrays`` to be sent to the server for aggregation</span>
+<span class="sd">        Packs the parameters and control variates into a single ``NDArrays`` to be sent to the server for aggregation.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (Config): The config is sent by the FL server to allow for customization in the function if desired.</span>
@@ -608,19 +609,15 @@
 
             <span class="c1"># Need all parameters even if normally exchanging partial</span>
             <span class="k">return</span> <span class="n">FullParameterExchanger</span><span class="p">()</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
-            <span class="n">model_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">model_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
 
-            <span class="c1"># Weights and control variates updates sent to server for aggregation</span>
-            <span class="c1"># Control variates updates sent because only client has access to previous client control variate</span>
-            <span class="c1"># Therefore it can only be computed locally</span>
-            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">client_control_variates_updates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="n">packed_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">pack_parameters</span><span class="p">(</span>
-                <span class="n">model_weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">client_control_variates_updates</span>
-            <span class="p">)</span>
-            <span class="k">return</span> <span class="n">packed_params</span></div>
+        <span class="c1"># Weights and control variates updates sent to server for aggregation</span>
+        <span class="c1"># Control variates updates sent because only client has access to previous client control variate</span>
+        <span class="c1"># Therefore it can only be computed locally</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">client_control_variates_updates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">pack_parameters</span><span class="p">(</span><span class="n">model_weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">client_control_variates_updates</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ScaffoldClient.set_parameters">
@@ -629,7 +626,8 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Assumes that the parameters being passed contain model parameters concatenated with server control variates.</span>
 <span class="sd">        They are unpacked for the clients to use in training. If it&#39;s the first time the model is being initialized,</span>
-<span class="sd">        we assume the full model is being initialized and use the ``FullParameterExchanger()`` to set all model weights</span>
+<span class="sd">        we assume the full model is being initialized and use the ``FullParameterExchanger()`` to set all model</span>
+<span class="sd">        weights.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            parameters (NDArrays): Parameters have information about model state to be added to the relevant client</span>
@@ -664,7 +662,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">update_control_variates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">local_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Updates local control variates along with the corresponding updates according to the option 2 in Equation 4 in</span>
-<span class="sd">        https://arxiv.org/pdf/1910.06378.pdf</span>
+<span class="sd">        https://arxiv.org/pdf/1910.06378.pdf.</span>
 
 <span class="sd">        To be called after weights of local model have been updated.</span>
 
@@ -732,7 +730,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_parameters_delta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params_1</span><span class="p">:</span> <span class="n">NDArrays</span><span class="p">,</span> <span class="n">params_2</span><span class="p">:</span> <span class="n">NDArrays</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArrays</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes element-wise difference of two lists of ``NDarray`` where elements in ``params_2`` are subtracted from</span>
-<span class="sd">        elements in ``params_1``</span>
+<span class="sd">        elements in ``params_1``.</span>
 
 <span class="sd">        Each ``NDArray`` in the list of ``NDArrays`` are subtracted as</span>
 
@@ -773,7 +771,9 @@
         <span class="n">delta_control_variates</span><span class="p">:</span> <span class="n">NDArrays</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArrays</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Computes the updated local control variates according to option 2 in Equation 4 of paper. The calculation is</span>
+<span class="sd">        Computes the updated local control variates according to option 2 in Equation 4 of paper.</span>
+
+<span class="sd">        The calculation is</span>
 
 <span class="sd">        .. math::</span>
 <span class="sd">            c_i^+ = c_i - c + \\frac{1}{(K \\cdot lr)} \\cdot (x - y_i)</span>
@@ -790,16 +790,14 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            NDArrays: Updated client control variates</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="c1"># coef = 1 / (K * eta_l)</span>
         <span class="n">scaling_coefficient</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">local_steps</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">)</span>
 
         <span class="c1"># c_i^plus = c_i - c + 1/(K*lr) * (x - y_i)</span>
-        <span class="n">updated_client_control_variates</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="k">return</span> <span class="p">[</span>
             <span class="n">delta_control_variate</span> <span class="o">+</span> <span class="n">scaling_coefficient</span> <span class="o">*</span> <span class="n">delta_model_weight</span>
             <span class="k">for</span> <span class="n">delta_control_variate</span><span class="p">,</span> <span class="n">delta_model_weight</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">delta_control_variates</span><span class="p">,</span> <span class="n">delta_model_weights</span><span class="p">)</span>
-        <span class="p">]</span>
-        <span class="k">return</span> <span class="n">updated_client_control_variates</span></div>
+        <span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="ScaffoldClient.get_parameter_exchanger">
@@ -807,8 +805,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_exchanger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParameterExchanger</span><span class="p">:</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">model_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
-        <span class="n">parameter_exchanger</span> <span class="o">=</span> <span class="n">FullParameterExchangerWithPacking</span><span class="p">(</span><span class="n">ParameterPackerWithControlVariates</span><span class="p">(</span><span class="n">model_size</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">parameter_exchanger</span></div>
+        <span class="k">return</span> <span class="n">FullParameterExchangerWithPacking</span><span class="p">(</span><span class="n">ParameterPackerWithControlVariates</span><span class="p">(</span><span class="n">model_size</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="ScaffoldClient.update_after_train">
@@ -851,7 +848,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.scaffold_client.html#fl4health.clients.scaffold_client.DPScaffoldClient">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DPScaffoldClient</span><span class="p">(</span><span class="n">ScaffoldClient</span><span class="p">,</span> <span class="n">InstanceLevelDpClient</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Federated Learning client for Instance Level Differentially Private Scaffold strategy</span>
+<span class="sd">    Federated Learning client for Instance Level Differentially Private Scaffold strategy.</span>
 
 <span class="sd">    Implemented as specified in https://arxiv.org/abs/2111.09278</span>
 <span class="sd">    &quot;&quot;&quot;</span>

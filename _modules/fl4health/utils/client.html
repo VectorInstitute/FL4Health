@@ -506,9 +506,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">LOGGER_NAME</span><span class="p">,</span> <span class="n">console_handler</span><span class="p">,</span> <span class="n">log</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span><span class="p">,</span> <span class="n">Scalar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
@@ -516,6 +516,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">narrow_dict_type</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoggingMode</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TorchInputType</span><span class="p">,</span> <span class="n">TorchTargetType</span>
+
 
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="n">TorchInputType</span><span class="p">,</span> <span class="n">TorchTargetType</span><span class="p">)</span>
 
@@ -567,13 +568,12 @@
     <span class="c1"># or dictionaries of tensors</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">value</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-            <span class="s2">&quot;data must be of type torch.Tensor or dict[str, torch.Tensor]. If definition of TorchInputType or &quot;</span>
-            <span class="s2">&quot;TorchTargetType has changed this method might need to be updated or split into two.&quot;</span>
-        <span class="p">)</span></div>
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+        <span class="s2">&quot;data must be of type torch.Tensor or dict[str, torch.Tensor]. If definition of TorchInputType or &quot;</span>
+        <span class="s2">&quot;TorchTargetType has changed this method might need to be updated or split into two.&quot;</span>
+    <span class="p">)</span></div>
 
 
 
@@ -583,7 +583,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This function checks whether the provided batch (input) is empty. If the input is a dictionary of inputs, it</span>
 <span class="sd">    first verifies that the length of all inputs is the same, then checks if they are non-empty.</span>
-<span class="sd">    **NOTE:** This function assumes the input is **BATCH FIRST**</span>
+<span class="sd">    **NOTE:** This function assumes the input is **BATCH FIRST**.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        input (TorchInputType): Input batch. input can be of type ``torch.Tensor`` or ``dict[str, torch.Tensor]``,</span>
@@ -600,16 +600,14 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="n">input_iter</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">first_val</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">input_iter</span><span class="p">)</span>
         <span class="n">first_val_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">first_val</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">==</span> <span class="n">first_val_len</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">input_iter</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Not all tensors in the dictionary have the same size.&quot;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">first_val_len</span> <span class="o">==</span> <span class="mi">0</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Input must be of type torch.Tensor or dict[str, torch.Tensor].&quot;</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">first_val_len</span> <span class="o">==</span> <span class="mi">0</span>
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Input must be of type torch.Tensor or dict[str, torch.Tensor].&quot;</span><span class="p">)</span></div>
 
 
 
@@ -625,7 +623,6 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        nn.Module: Cloned and frozen model</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">cloned_model</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">cloned_model</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>
         <span class="n">param</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">False</span>
@@ -650,29 +647,28 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">display_progress_bar</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">iterable</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="c1"># We can use the flwr console handler to format progress bar</span>
-        <span class="n">frame</span> <span class="o">=</span> <span class="n">currentframe</span><span class="p">()</span>
-        <span class="n">lineno</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">frame</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">getframeinfo</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span><span class="o">.</span><span class="n">lineno</span>
-        <span class="n">record</span> <span class="o">=</span> <span class="n">LogRecord</span><span class="p">(</span>
-            <span class="n">name</span><span class="o">=</span><span class="n">LOGGER_NAME</span><span class="p">,</span>
-            <span class="n">pathname</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()),</span>
-            <span class="n">lineno</span><span class="o">=</span><span class="n">lineno</span><span class="p">,</span>  <span class="c1">#</span>
-            <span class="n">args</span><span class="o">=</span><span class="p">{},</span>
-            <span class="n">exc_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">level</span><span class="o">=</span><span class="n">INFO</span><span class="p">,</span>
-            <span class="n">msg</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{l_bar}{bar}{r_bar}</span><span class="s2">&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="nb">format</span> <span class="o">=</span> <span class="n">console_handler</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
-        <span class="c1"># Create a clean looking tqdm instance that matches the flwr logging</span>
-        <span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;leave&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-            <span class="s2">&quot;ascii&quot;</span><span class="p">:</span> <span class="s2">&quot; &gt;=&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;steps&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;dynamic_ncols&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-            <span class="s2">&quot;bar_format&quot;</span><span class="p">:</span> <span class="nb">format</span><span class="p">,</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">iterable</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+    <span class="c1"># We can use the flwr console handler to format progress bar</span>
+    <span class="n">frame</span> <span class="o">=</span> <span class="n">currentframe</span><span class="p">()</span>
+    <span class="n">lineno</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">frame</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">getframeinfo</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span><span class="o">.</span><span class="n">lineno</span>
+    <span class="n">record</span> <span class="o">=</span> <span class="n">LogRecord</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">LOGGER_NAME</span><span class="p">,</span>
+        <span class="n">pathname</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()),</span>
+        <span class="n">lineno</span><span class="o">=</span><span class="n">lineno</span><span class="p">,</span>
+        <span class="n">args</span><span class="o">=</span><span class="p">{},</span>
+        <span class="n">exc_info</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">INFO</span><span class="p">,</span>
+        <span class="n">msg</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">{l_bar}{bar}{r_bar}</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">format</span> <span class="o">=</span> <span class="n">console_handler</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+    <span class="c1"># Create a clean looking tqdm instance that matches the flwr logging</span>
+    <span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;leave&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">&quot;ascii&quot;</span><span class="p">:</span> <span class="s2">&quot; &gt;=&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="s2">&quot;steps&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;dynamic_ncols&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">&quot;bar_format&quot;</span><span class="p">:</span> <span class="nb">format</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">iterable</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
 
@@ -697,8 +693,7 @@
                 <span class="sa">f</span><span class="s2">&quot;validation dataloader: </span><span class="si">{</span><span class="n">val_dataloader_len</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">num_validation_steps</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">None</span></div>
+    <span class="k">return</span> <span class="kc">None</span></div>
 
 </pre></div>
         </article>

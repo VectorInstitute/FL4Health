@@ -498,7 +498,7 @@
         </div>
         <article role="main">
           <h1>Source code for fl4health.mixins.adaptive_drift_constrained</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;AdaptiveDriftConstrainedMixin&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot;AdaptiveDriftConstrainedMixin.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">INFO</span><span class="p">,</span> <span class="n">WARN</span>
@@ -531,7 +531,7 @@
 
 <div class="viewcode-block" id="AdaptiveDriftConstrainedProtocol.compute_penalty_loss">
 <a class="viewcode-back" href="../../../reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.AdaptiveDriftConstrainedProtocol.compute_penalty_loss">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute_penalty_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># noqa: E704</span></div>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_penalty_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span> <span class="o">...</span></div>
 </div>
 
 
@@ -542,7 +542,8 @@
 <div class="viewcode-block" id="AdaptiveDriftConstrainedMixin.__init__">
 <a class="viewcode-back" href="../../../reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Adaptive Drift Constrained Mixin</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adaptive Drift Constrained Mixin.</span>
 
 <span class="sd">        To be used with `~fl4health.BaseClient` in order to add the ability to compute</span>
 <span class="sd">        losses via a constrained adaptive drift.</span>
@@ -591,10 +592,7 @@
             <span class="sa">f</span><span class="s2">&quot;base classes is a BasicClient. This may cause runtime errors.&quot;</span>
         <span class="p">)</span>
         <span class="n">log</span><span class="p">(</span><span class="n">WARN</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-            <span class="n">msg</span><span class="p">,</span>
-            <span class="ne">RuntimeWarning</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
 <div class="viewcode-block" id="AdaptiveDriftConstrainedMixin.get_parameters">
 <a class="viewcode-back" href="../../../reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.get_parameters">[docs]</a>
@@ -622,20 +620,14 @@
 
             <span class="c1"># Need all parameters even if normally exchanging partial</span>
             <span class="k">return</span> <span class="n">FullParameterExchanger</span><span class="p">()</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
 
-            <span class="c1"># Make sure the proper components are there</span>
-            <span class="k">assert</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_for_adaptation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="p">)</span>
-            <span class="n">model_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+        <span class="c1"># Make sure the proper components are there</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_for_adaptation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">model_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
 
-            <span class="c1"># Weights and training loss sent to server for aggregation. Training loss is sent because server will</span>
-            <span class="c1"># decide to increase or decrease the penalty weight, if adaptivity is turned on.</span>
-            <span class="n">packed_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">pack_parameters</span><span class="p">(</span><span class="n">model_weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_for_adaptation</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">packed_params</span></div>
+        <span class="c1"># Weights and training loss sent to server for aggregation. Training loss is sent because server will</span>
+        <span class="c1"># decide to increase or decrease the penalty weight, if adaptivity is turned on.</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">pack_parameters</span><span class="p">(</span><span class="n">model_weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_for_adaptation</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="AdaptiveDriftConstrainedMixin.set_parameters">
@@ -707,7 +699,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_exchanger</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">AdaptiveDriftConstrainedProtocol</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParameterExchanger</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Setting up the parameter exchanger to include the appropriate packing functionality.</span>
-<span class="sd">        By default we assume that we&#39;re exchanging all parameters. Can be overridden for other behavior</span>
+<span class="sd">        By default we assume that we&#39;re exchanging all parameters. Can be overridden for other behavior.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (Config): The config is sent by the FL server to allow for customization in the function if desired.</span>
@@ -715,7 +707,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            ParameterExchanger: Exchanger that can handle packing/unpacking auxiliary server information.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">return</span> <span class="n">FullParameterExchangerWithPacking</span><span class="p">(</span><span class="n">ParameterPackerAdaptiveConstraint</span><span class="p">())</span></div>
 
 
@@ -744,7 +735,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.compute_penalty_loss">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_penalty_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">AdaptiveDriftConstrainedProtocol</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Computes the drift loss for the client model and drift tensors</span>
+<span class="sd">        Computes the drift loss for the client model and drift tensors.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: Computed penalty loss tensor</span>
@@ -760,7 +751,8 @@
 <div class="viewcode-block" id="apply_adaptive_drift_to_client">
 <a class="viewcode-back" href="../../../reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.apply_adaptive_drift_to_client">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">apply_adaptive_drift_to_client</span><span class="p">(</span><span class="n">client_base_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BasicClient</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BasicClient</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dynamically create an adapted client class.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Dynamically create an adapted client class.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        client_base_type (type[BasicClient]): The class to be mixed.</span>
@@ -768,7 +760,6 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        type[BasicClient]: A basic client that has been mixed with `AdaptiveDriftConstrainedMixin`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="k">return</span> <span class="nb">type</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;AdaptiveDrift</span><span class="si">{</span><span class="n">client_base_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
         <span class="p">(</span>

@@ -504,9 +504,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span><span class="p">,</span> <span class="n">NDArrays</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.client_module</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientCheckpointAndStateModule</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.clients.basic_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasicClient</span>
@@ -587,7 +587,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Setup the components of the client necessary for client-side training and parameter exchange. Mostly handled</span>
 <span class="sd">        by a call to the basic client flow, but also sets up the initial model to facilitate storage of initial</span>
-<span class="sd">        parameters during training</span>
+<span class="sd">        parameters during training.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (Config): Configuration used to setup the client properly</span>
@@ -623,7 +623,7 @@
 <span class="sd">        Determines which weights are sent back to the server for aggregation. This uses a parameter exchanger to</span>
 <span class="sd">        determine parameters sent. Note that this overrides the basic client ``get_parameters`` function to send the</span>
 <span class="sd">        initial model so that starting weights may be extracted and compared to current weights after local</span>
-<span class="sd">        training</span>
+<span class="sd">        training.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (Config): configuration used to setup the exchange</span>
@@ -644,9 +644,8 @@
 
             <span class="c1"># Need all parameters even if normally exchanging partial</span>
             <span class="k">return</span> <span class="n">FullParameterExchanger</span><span class="p">()</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span></div>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">initial_model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="PartialWeightExchangeClient.set_parameters">

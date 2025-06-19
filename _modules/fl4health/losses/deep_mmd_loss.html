@@ -540,8 +540,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: The output tensor of the deep network.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">feature_latent_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">latent</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">feature_latent_map</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">latent</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span></div>
 </div>
 
 
@@ -584,7 +583,6 @@
 <span class="sd">            optimization_steps (int, optional): The number of optimization steps to train the Deep Kernel in each</span>
 <span class="sd">                forward pass. Defaults to 5.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">lr</span> <span class="o">=</span> <span class="n">lr</span>
@@ -617,7 +615,7 @@
 
 <div class="viewcode-block" id="DeepMmdLoss.pairwise_distance_squared">
 <a class="viewcode-back" href="../../../reference/api/fl4health.losses.deep_mmd_loss.html#fl4health.losses.deep_mmd_loss.DeepMmdLoss.pairwise_distance_squared">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">pairwise_distance_squared</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pairwise_distance_squared</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute the paired distance between x and y.</span>
 
@@ -628,9 +626,9 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: The paired distance between X and Y.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">x_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="n">y_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">Y</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">paired_distance</span> <span class="o">=</span> <span class="n">x_norm</span> <span class="o">+</span> <span class="n">y_norm</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">mm</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">x_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">y_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">paired_distance</span> <span class="o">=</span> <span class="n">x_norm</span> <span class="o">+</span> <span class="n">y_norm</span> <span class="o">-</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">mm</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
         <span class="n">paired_distance</span><span class="p">[</span><span class="n">paired_distance</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">return</span> <span class="n">paired_distance</span></div>
 
@@ -683,9 +681,9 @@
         <span class="k">return</span> <span class="n">mmd2</span><span class="p">,</span> <span class="n">variance_estimate</span></div>
 
 
-<div class="viewcode-block" id="DeepMmdLoss.MMDu">
-<a class="viewcode-back" href="../../../reference/api/fl4health.losses.deep_mmd_loss.html#fl4health.losses.deep_mmd_loss.DeepMmdLoss.MMDu">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">MMDu</span><span class="p">(</span>
+<div class="viewcode-block" id="DeepMmdLoss.mmdu">
+<a class="viewcode-back" href="../../../reference/api/fl4health.losses.deep_mmd_loss.html#fl4health.losses.deep_mmd_loss.DeepMmdLoss.mmdu">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mmdu</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">features</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
         <span class="n">len_s</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -747,7 +745,7 @@
 
 <div class="viewcode-block" id="DeepMmdLoss.train_kernel">
 <a class="viewcode-back" href="../../../reference/api/fl4health.losses.deep_mmd_loss.html#fl4health.losses.deep_mmd_loss.DeepMmdLoss.train_kernel">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">train_kernel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_kernel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Train the Deep MMD kernel.</span>
 
@@ -755,7 +753,6 @@
 <span class="sd">            X (torch.Tensor): The input tensor X.</span>
 <span class="sd">            Y (torch.Tensor): The input tensor Y.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">featurizer</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sigma_q_opt</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sigma_phi_opt</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">True</span>
@@ -763,10 +760,10 @@
 
         <span class="c1"># Shuffle the data to ensure they are not always presented in the same order for training</span>
         <span class="c1"># which might lead to overfitting</span>
-        <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="n">Y</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
-        <span class="n">Y_shuffled</span> <span class="o">=</span> <span class="n">Y</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+        <span class="n">y_shuffled</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
 
-        <span class="n">features</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">X</span><span class="p">,</span> <span class="n">Y_shuffled</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y_shuffled</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
 
         <span class="c1"># ------------------------------</span>
         <span class="c1">#  Train deep network for MMD-D</span>
@@ -780,9 +777,9 @@
         <span class="n">sigma_q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma_q_opt</span><span class="o">**</span><span class="mi">2</span>
         <span class="n">sigma_phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma_phi_opt</span><span class="o">**</span><span class="mi">2</span>
         <span class="c1"># Compute Deep MMD value and variance estimates</span>
-        <span class="n">mmd_value_estimate</span><span class="p">,</span> <span class="n">mmd_var_estimate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MMDu</span><span class="p">(</span>
+        <span class="n">mmd_value_estimate</span><span class="p">,</span> <span class="n">mmd_var_estimate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mmdu</span><span class="p">(</span>
             <span class="n">features</span><span class="o">=</span><span class="n">model_output</span><span class="p">,</span>
-            <span class="n">len_s</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">len_s</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
             <span class="n">features_org</span><span class="o">=</span><span class="n">features</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">features</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
             <span class="n">sigma_q</span><span class="o">=</span><span class="n">sigma_q</span><span class="p">,</span>
             <span class="n">sigma_phi</span><span class="o">=</span><span class="n">sigma_phi</span><span class="p">,</span>
@@ -802,7 +799,7 @@
 
 <div class="viewcode-block" id="DeepMmdLoss.compute_kernel">
 <a class="viewcode-back" href="../../../reference/api/fl4health.losses.deep_mmd_loss.html#fl4health.losses.deep_mmd_loss.DeepMmdLoss.compute_kernel">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute_kernel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_kernel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute the Deep MMD Loss.</span>
 
@@ -813,13 +810,12 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: The value of Deep MMD Loss.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">featurizer</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sigma_q_opt</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sigma_phi_opt</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">epsilon_opt</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">False</span>
 
-        <span class="n">features</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
 
         <span class="c1"># Compute output of deep network</span>
         <span class="n">model_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">featurizer</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
@@ -828,9 +824,9 @@
         <span class="n">sigma_q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma_q_opt</span><span class="o">**</span><span class="mi">2</span>
         <span class="n">sigma_phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigma_phi_opt</span><span class="o">**</span><span class="mi">2</span>
         <span class="c1"># Compute Deep MMD value estimates</span>
-        <span class="n">mmd_value_estimate</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MMDu</span><span class="p">(</span>
+        <span class="n">mmd_value_estimate</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mmdu</span><span class="p">(</span>
             <span class="n">features</span><span class="o">=</span><span class="n">model_output</span><span class="p">,</span>
-            <span class="n">len_s</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">len_s</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
             <span class="n">features_org</span><span class="o">=</span><span class="n">features</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">features</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span>
             <span class="n">sigma_q</span><span class="o">=</span><span class="n">sigma_q</span><span class="p">,</span>
             <span class="n">sigma_phi</span><span class="o">=</span><span class="n">sigma_phi</span><span class="p">,</span>
@@ -843,7 +839,7 @@
 
 <div class="viewcode-block" id="DeepMmdLoss.forward">
 <a class="viewcode-back" href="../../../reference/api/fl4health.losses.deep_mmd_loss.html#fl4health.losses.deep_mmd_loss.DeepMmdLoss.forward">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Xs</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Xt</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_s</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">x_t</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Forward pass of the Deep MMD Loss where it first trains the deep kernel for number of optimization</span>
 <span class="sd">        steps and then computes the MMD loss.</span>
@@ -855,12 +851,11 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: The value of Deep MMD Loss.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimization_steps</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">train_kernel</span><span class="p">(</span><span class="n">Xs</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">(),</span> <span class="n">Xt</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">train_kernel</span><span class="p">(</span><span class="n">x_s</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">(),</span> <span class="n">x_t</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">())</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_kernel</span><span class="p">(</span><span class="n">Xs</span><span class="p">,</span> <span class="n">Xt</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_kernel</span><span class="p">(</span><span class="n">x_s</span><span class="p">,</span> <span class="n">x_t</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

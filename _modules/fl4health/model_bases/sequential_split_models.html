@@ -499,7 +499,7 @@
         <article role="main">
           <h1>Source code for fl4health.model_bases.sequential_split_models</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.model_bases.partial_layer_exchange_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">PartialLayerExchangeModel</span>
 
@@ -513,7 +513,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        These models are split into two sequential stages. The first is ``base_module``, used as a feature extractor.</span>
 <span class="sd">        The second is the ``head_module``, used as a classifier. Features are extracted from the ``base_module`` and</span>
-<span class="sd">        stored for later use, if required</span>
+<span class="sd">        stored for later use, if required.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            base_module (nn.Module): Feature extraction module</span>
@@ -532,7 +532,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_flatten_features</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The features tensor is flattened to be of shape are flattened to be of shape (``batch_size``, -1). It is</span>
-<span class="sd">        expected that the feature tensor is **BATCH FIRST**</span>
+<span class="sd">        expected that the feature tensor is **BATCH FIRST**.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            features (torch.Tensor): Features tensor to be flattened. It is assumed that this tensor is</span>
@@ -566,7 +566,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Run a forward pass using the sequentially split modules ``base_module`` -&gt; ``head_module``. Features from the</span>
 <span class="sd">        base_module are stored either in their original shapes are flattened to be of shape (``batch_size``, -1)</span>
-<span class="sd">        depending on ``self.flatten_features``</span>
+<span class="sd">        depending on ``self.flatten_features``.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            input (torch.Tensor): Input to the model forward pass. Expected to be of shape (``batch_size``, \\*)</span>
@@ -605,7 +605,7 @@
 <span class="sd">            list[str]: The names of the layers to be exchanged with the server. This is used by the</span>
 <span class="sd">            ``FixedLayerExchanger`` class</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">layer_name</span> <span class="k">for</span> <span class="n">layer_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">layer_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;base_module.&quot;</span><span class="p">)]</span></div>
+        <span class="k">return</span> <span class="p">[</span><span class="n">layer_name</span> <span class="k">for</span> <span class="n">layer_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span> <span class="k">if</span> <span class="n">layer_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;base_module.&quot;</span><span class="p">)]</span></div>
 </div>
 
 </pre></div>

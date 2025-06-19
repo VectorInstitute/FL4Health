@@ -785,8 +785,8 @@
 <li class="toctree-l3"><a class="reference internal" href="fl4health.metrics.html#fl4health.metrics.F1.__init__"><code class="docutils literal notranslate"><span class="pre">F1.__init__()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="fl4health.metrics.html#fl4health.metrics.ROC_AUC"><code class="docutils literal notranslate"><span class="pre">ROC_AUC</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.metrics.html#fl4health.metrics.ROC_AUC.__init__"><code class="docutils literal notranslate"><span class="pre">ROC_AUC.__init__()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.metrics.html#fl4health.metrics.RocAuc"><code class="docutils literal notranslate"><span class="pre">RocAuc</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.metrics.html#fl4health.metrics.RocAuc.__init__"><code class="docutils literal notranslate"><span class="pre">RocAuc.__init__()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="fl4health.metrics.html#fl4health.metrics.SimpleMetric"><code class="docutils literal notranslate"><span class="pre">SimpleMetric</span></code></a><ul>
@@ -845,7 +845,7 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics.html#fl4health.metrics.metrics.BalancedAccuracy"><code class="docutils literal notranslate"><span class="pre">BalancedAccuracy</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics.html#fl4health.metrics.metrics.BinarySoftDiceCoefficient"><code class="docutils literal notranslate"><span class="pre">BinarySoftDiceCoefficient</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics.html#fl4health.metrics.metrics.F1"><code class="docutils literal notranslate"><span class="pre">F1</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics.html#fl4health.metrics.metrics.ROC_AUC"><code class="docutils literal notranslate"><span class="pre">ROC_AUC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics.html#fl4health.metrics.metrics.RocAuc"><code class="docutils literal notranslate"><span class="pre">RocAuc</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics.html#fl4health.metrics.metrics.SimpleMetric"><code class="docutils literal notranslate"><span class="pre">SimpleMetric</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.metrics.metrics.html#fl4health.metrics.metrics.TorchMetric"><code class="docutils literal notranslate"><span class="pre">TorchMetric</span></code></a></li>
 </ul>
@@ -1204,7 +1204,7 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.feddg_ga.html#fl4health.strategies.feddg_ga.FairnessMetric"><code class="docutils literal notranslate"><span class="pre">FairnessMetric</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.feddg_ga.html#fl4health.strategies.feddg_ga.FairnessMetricType"><code class="docutils literal notranslate"><span class="pre">FairnessMetricType</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.feddg_ga.html#fl4health.strategies.feddg_ga.FedDgGa"><code class="docutils literal notranslate"><span class="pre">FedDgGa</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.feddg_ga.html#fl4health.strategies.feddg_ga.SignalForTypeException"><code class="docutils literal notranslate"><span class="pre">SignalForTypeException</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.strategies.feddg_ga.html#fl4health.strategies.feddg_ga.SignalForTypeError"><code class="docutils literal notranslate"><span class="pre">SignalForTypeError</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.strategies.feddg_ga_with_adaptive_constraint.html">fl4health.strategies.feddg_ga_with_adaptive_constraint module</a><ul>
@@ -1335,6 +1335,7 @@
 </li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.utils.nnunet_utils.html">fl4health.utils.nnunet_utils module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.Module2LossWrapper"><code class="docutils literal notranslate"><span class="pre">Module2LossWrapper</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper"><code class="docutils literal notranslate"><span class="pre">NnUNetDataLoaderWrapper</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.NnunetConfig"><code class="docutils literal notranslate"><span class="pre">NnunetConfig</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.PolyLRSchedulerWrapper"><code class="docutils literal notranslate"><span class="pre">PolyLRSchedulerWrapper</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.StreamToLogger"><code class="docutils literal notranslate"><span class="pre">StreamToLogger</span></code></a></li>
@@ -1343,7 +1344,6 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.convert_deep_supervision_list_to_dict"><code class="docutils literal notranslate"><span class="pre">convert_deep_supervision_list_to_dict()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.get_dataset_n_voxels"><code class="docutils literal notranslate"><span class="pre">get_dataset_n_voxels()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.get_segs_from_probs"><code class="docutils literal notranslate"><span class="pre">get_segs_from_probs()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper"><code class="docutils literal notranslate"><span class="pre">nnUNetDataLoaderWrapper</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.prepare_loss_arg"><code class="docutils literal notranslate"><span class="pre">prepare_loss_arg()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.reload_modules"><code class="docutils literal notranslate"><span class="pre">reload_modules()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.set_nnunet_env"><code class="docutils literal notranslate"><span class="pre">set_nnunet_env()</span></code></a></li>

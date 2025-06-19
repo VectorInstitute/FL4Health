@@ -502,12 +502,13 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">INFO</span><span class="p">,</span> <span class="n">getLogger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Scalar</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">opacus</span><span class="w"> </span><span class="kn">import</span> <span class="n">GradSampleModule</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.checkpointer</span><span class="w"> </span><span class="kn">import</span> <span class="n">FunctionTorchModuleCheckpointer</span>
+
 
 <span class="c1"># It seems like the opacus package adds a handler to the root logger which causes double logs.</span>
 <span class="c1"># By clearing handlers on the root logger we prevent these double logs whilst also allowing the flwr logger to</span>
@@ -537,9 +538,9 @@
 <span class="sd">            loss (float): Loss value associated with the model to be used in checkpointing decisions.</span>
 <span class="sd">            metrics (dict[str, Scalar]): Metrics associated with the model to be used in checkpointing decisions.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="n">model</span><span class="p">,</span> <span class="n">GradSampleModule</span>
-        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Model is of type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2">. This checkpointer need only be used to checkpoint Opacus modules&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">GradSampleModule</span><span class="p">),</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Model is of type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2">. This checkpointer need only be used to checkpoint Opacus modules&quot;</span>
+        <span class="p">)</span>
         <span class="n">comparison_score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_score_function</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="n">metrics</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_should_checkpoint</span><span class="p">(</span><span class="n">comparison_score</span><span class="p">):</span>
             <span class="n">log</span><span class="p">(</span>
@@ -570,7 +571,6 @@
 <span class="sd">            dict[str, Any]: A state dictionary with the ``_module``. removed from the key prefixes to facilitate</span>
 <span class="sd">            loading the state dictionary into a non-Opacus model.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">return</span> <span class="p">{</span><span class="n">key</span><span class="o">.</span><span class="n">removeprefix</span><span class="p">(</span><span class="s2">&quot;_module.&quot;</span><span class="p">):</span> <span class="n">val</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">opacus_state_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_extract_and_save_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -644,9 +644,9 @@
 <div class="viewcode-block" id="LatestOpacusCheckpointer.maybe_checkpoint">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.opacus_checkpointer.html#fl4health.checkpointing.opacus_checkpointer.LatestOpacusCheckpointer.maybe_checkpoint">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">maybe_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">GradSampleModule</span><span class="p">,</span> <span class="n">loss</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="n">model</span><span class="p">,</span> <span class="n">GradSampleModule</span>
-        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Model is of type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2">. This checkpointer need only be used to checkpoint Opacus modules&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">GradSampleModule</span><span class="p">),</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Model is of type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2">. This checkpointer need only be used to checkpoint Opacus modules&quot;</span>
+        <span class="p">)</span>
         <span class="c1"># Always checkpoint the latest model</span>
         <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Saving latest checkpoint with LatestTorchCheckpointer&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_extract_and_save_state</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></div>
@@ -681,9 +681,9 @@
 <div class="viewcode-block" id="BestLossOpacusCheckpointer.maybe_checkpoint">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.opacus_checkpointer.html#fl4health.checkpointing.opacus_checkpointer.BestLossOpacusCheckpointer.maybe_checkpoint">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">maybe_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">GradSampleModule</span><span class="p">,</span> <span class="n">loss</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="n">model</span><span class="p">,</span> <span class="n">GradSampleModule</span>
-        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Model is of type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2">. This checkpointer need only be used to checkpoint Opacus modules&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">GradSampleModule</span><span class="p">),</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Model is of type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">model</span><span class="p">)</span><span class="si">}</span><span class="s2">. This checkpointer need only be used to checkpoint Opacus modules&quot;</span>
+        <span class="p">)</span>
         <span class="c1"># First we use the provided scoring function to produce a score</span>
         <span class="n">comparison_score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_score_function</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="n">metrics</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_should_checkpoint</span><span class="p">(</span><span class="n">comparison_score</span><span class="p">):</span>

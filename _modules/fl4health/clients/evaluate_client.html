@@ -504,9 +504,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span><span class="p">,</span> <span class="n">NDArrays</span><span class="p">,</span> <span class="n">Scalar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn.modules.loss</span><span class="w"> </span><span class="kn">import</span> <span class="n">_Loss</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span>
 
@@ -598,9 +598,7 @@
 <div class="viewcode-block" id="EvaluateClient.setup_client">
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.evaluate_client.html#fl4health.clients.evaluate_client.EvaluateClient.setup_client">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">setup_client</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Set dataloaders, parameter exchangers and other attributes for the client</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set dataloaders, parameter exchangers and other attributes for the client.&quot;&quot;&quot;</span>
         <span class="p">(</span><span class="n">data_loader</span><span class="p">,)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_data_loader</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data_loader</span> <span class="o">=</span> <span class="n">data_loader</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_global_model</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
@@ -784,7 +782,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Parameter exchange is assumed to always be full for evaluation only clients. If there are partial weights</span>
 <span class="sd">        exchanged during training, we assume that the checkpoint has been saved locally. However, this functionality</span>
-<span class="sd">        may be overridden if a different exchanger is needed</span>
+<span class="sd">        may be overridden if a different exchanger is needed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">FullParameterExchanger</span><span class="p">()</span></div>
 
@@ -792,9 +790,7 @@
 <div class="viewcode-block" id="EvaluateClient.get_data_loader">
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.evaluate_client.html#fl4health.clients.evaluate_client.EvaluateClient.get_data_loader">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_data_loader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">DataLoader</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        User defined method that returns a PyTorch DataLoader for validation</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;User defined method that returns a PyTorch DataLoader for validation.&quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
 
@@ -803,7 +799,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">initialize_global_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        User defined method that to initializes a global model to potentially be hydrated by parameters sent by the</span>
-<span class="sd">        server, by default, no global model is assumed to exist unless specified by the user</span>
+<span class="sd">        server, by default, no global model is assumed to exist unless specified by the user.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="kc">None</span></div>
 
@@ -812,7 +808,8 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.evaluate_client.html#fl4health.clients.evaluate_client.EvaluateClient.get_local_model">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_local_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Functionality for initializing a model from a local checkpoint. This can be overridden for custom behavior</span>
+<span class="sd">        Functionality for initializing a model from a local checkpoint. This can be overridden for custom</span>
+<span class="sd">        behavior.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># If a model checkpoint is provided, we load the checkpoint into the local model to be evaluated.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_checkpoint_path</span><span class="p">:</span>
@@ -821,8 +818,7 @@
                 <span class="sa">f</span><span class="s2">&quot;Loading model checkpoint at: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_checkpoint_path</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_checkpoint_path</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span></div>
+        <span class="k">return</span> <span class="kc">None</span></div>
 </div>
 
 </pre></div>

@@ -502,10 +502,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArrays</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">bernoulli</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">nn</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.model_bases.masked_layers.masked_layers_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_masked_module</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">LayerSelectionFunction</span>
@@ -533,7 +532,7 @@
 <span class="sd">                Defaults to True.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">exchange_percentage</span> <span class="o">&lt;=</span> <span class="mi">1</span>
-        <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">norm_threshold</span>
+        <span class="k">assert</span> <span class="n">norm_threshold</span> <span class="o">&gt;</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">norm_threshold</span> <span class="o">=</span> <span class="n">norm_threshold</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">exchange_percentage</span> <span class="o">=</span> <span class="n">exchange_percentage</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span> <span class="o">=</span> <span class="n">normalize</span>
@@ -620,10 +619,9 @@
             <span class="k">if</span> <span class="n">drift_norm</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
                 <span class="n">layers_to_transfer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer_param</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
                 <span class="n">layer_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer_name</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">drift_norm</span> <span class="o">&lt;=</span> <span class="n">threshold</span><span class="p">:</span>
-                <span class="n">layers_to_transfer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer_param</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
-                <span class="n">layer_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer_name</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">drift_norm</span> <span class="o">&lt;=</span> <span class="n">threshold</span><span class="p">:</span>
+            <span class="n">layers_to_transfer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer_param</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+            <span class="n">layer_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer_name</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">layers_to_transfer</span><span class="p">,</span> <span class="n">layer_names</span></div>
 
 
@@ -740,8 +738,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_sample_masks</span><span class="p">(</span><span class="n">score_tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArray</span><span class="p">:</span>
     <span class="n">bernoulli_probabilities</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">score_tensor</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
     <span class="c1"># Perform Bernoulli sampling.</span>
-    <span class="n">binary_mask</span> <span class="o">=</span> <span class="n">bernoulli</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">bernoulli_probabilities</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">binary_mask</span>
+    <span class="k">return</span> <span class="n">bernoulli</span><span class="o">.</span><span class="n">rvs</span><span class="p">(</span><span class="n">bernoulli_probabilities</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_process_masked_module</span><span class="p">(</span>
@@ -773,7 +770,7 @@
     <span class="c1"># This misalignment was allowed because these parameter names will later be used to load the model anyway.</span>
     <span class="n">masks_to_exchange</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_sample_masks</span><span class="p">(</span><span class="n">weight_scores</span><span class="p">))</span>
     <span class="c1"># Do the same thing with bias_scores if it exists</span>
-    <span class="k">if</span> <span class="s2">&quot;bias_scores&quot;</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">if</span> <span class="s2">&quot;bias_scores&quot;</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">state_dict</span><span class="p">():</span>
         <span class="n">bias_scores_tensor_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">module_name</span><span class="si">}</span><span class="s2">.bias_scores&quot;</span> <span class="k">if</span> <span class="n">module_name</span> <span class="k">else</span> <span class="s2">&quot;bias_scores&quot;</span>
         <span class="n">score_tensor_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bias_scores_tensor_name</span><span class="p">)</span>
         <span class="n">bias_scores</span> <span class="o">=</span> <span class="n">model_state_dict</span><span class="p">[</span><span class="n">bias_scores_tensor_name</span><span class="p">]</span>
@@ -796,17 +793,16 @@
     <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">is_masked_module</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">_process_masked_module</span><span class="p">(</span><span class="n">module</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">model_state_dict</span><span class="o">=</span><span class="n">model_states</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">masks_to_exchange</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="n">score_tensor_names</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">named_modules</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">is_masked_module</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
-                    <span class="n">module_masks</span><span class="p">,</span> <span class="n">module_score_tensor_names</span> <span class="o">=</span> <span class="n">_process_masked_module</span><span class="p">(</span>
-                        <span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">,</span> <span class="n">model_state_dict</span><span class="o">=</span><span class="n">model_states</span><span class="p">,</span> <span class="n">module_name</span><span class="o">=</span><span class="n">name</span>
-                    <span class="p">)</span>
-                    <span class="n">masks_to_exchange</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">module_masks</span><span class="p">)</span>
-                    <span class="n">score_tensor_names</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">module_score_tensor_names</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">masks_to_exchange</span><span class="p">,</span> <span class="n">score_tensor_names</span></div>
+        <span class="n">masks_to_exchange</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">score_tensor_names</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">named_modules</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">is_masked_module</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
+                <span class="n">module_masks</span><span class="p">,</span> <span class="n">module_score_tensor_names</span> <span class="o">=</span> <span class="n">_process_masked_module</span><span class="p">(</span>
+                    <span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">,</span> <span class="n">model_state_dict</span><span class="o">=</span><span class="n">model_states</span><span class="p">,</span> <span class="n">module_name</span><span class="o">=</span><span class="n">name</span>
+                <span class="p">)</span>
+                <span class="n">masks_to_exchange</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">module_masks</span><span class="p">)</span>
+                <span class="n">score_tensor_names</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">module_score_tensor_names</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">masks_to_exchange</span><span class="p">,</span> <span class="n">score_tensor_names</span></div>
 
 </pre></div>
         </article>

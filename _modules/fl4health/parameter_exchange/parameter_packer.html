@@ -506,6 +506,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NDArray</span><span class="p">,</span> <span class="n">NDArrays</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tensor</span>
 
+
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
 
 
@@ -535,7 +536,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.parameter_packer.html#fl4health.parameter_exchange.parameter_packer.ParameterPackerWithControlVariates.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size_of_model_params</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Class to handle the exchange of control variates for the SCAFFOLD FL method</span>
+<span class="sd">        Class to handle the exchange of control variates for the SCAFFOLD FL method.</span>
 
 <span class="sd">        **NOTE** model params exchanged and control variates can be different sizes, for example, when layers are</span>
 <span class="sd">        frozen or the state dictionary contains things like Batch Normalization layers.</span>
@@ -544,7 +545,6 @@
 <span class="sd">            size_of_model_params (int): This is the number of layers that are associated with the parameters of the</span>
 <span class="sd">                model itself. This is used to split the covariates from the model parameters during unpacking.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">size_of_model_params</span> <span class="o">=</span> <span class="n">size_of_model_params</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span></div>
 

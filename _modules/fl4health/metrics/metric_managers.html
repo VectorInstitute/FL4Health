@@ -540,7 +540,7 @@
 <span class="sd">                used for all predictions.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">metrics_per_prediction_type</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_per_prediction_type</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">original_metrics</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">preds</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_per_prediction_type</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">original_metrics</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">preds</span><span class="p">}</span>
 
         <span class="c1"># Check if there are multiple targets</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -579,9 +579,7 @@
 <div class="viewcode-block" id="MetricManager.clear">
 <a class="viewcode-back" href="../../../reference/api/fl4health.metrics.metric_managers.html#fl4health.metrics.metric_managers.MetricManager.clear">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Clears data accumulated in each metric for each of the prediction type.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clears data accumulated in each metric for each of the prediction type.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">metrics_for_prediction_type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metrics_per_prediction_type</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics_for_prediction_type</span><span class="p">:</span>
                 <span class="n">metric</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
@@ -590,9 +588,7 @@
 <div class="viewcode-block" id="MetricManager.reset">
 <a class="viewcode-back" href="../../../reference/api/fl4health.metrics.metric_managers.html#fl4health.metrics.metric_managers.MetricManager.reset">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Resets the metrics to their initial state.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Resets the metrics to their initial state.&quot;&quot;&quot;</span>
         <span class="c1"># On next update, metrics will be recopied from self.original_metrics which are still in their initial state</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metrics_per_prediction_type</span> <span class="o">=</span> <span class="p">{}</span></div>
 

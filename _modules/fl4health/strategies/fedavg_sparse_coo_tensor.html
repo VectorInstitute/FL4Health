@@ -702,8 +702,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">weighted_aggregation</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">weighted_aggregate</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">unweighted_aggregate</span><span class="p">(</span><span class="n">results</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">unweighted_aggregate</span><span class="p">(</span><span class="n">results</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="FedAvgSparseCooTensor.weighted_aggregate">
@@ -764,12 +763,10 @@
                 <span class="n">names_to_dense_tensors</span><span class="p">[</span><span class="n">tensor_name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dense_tensor</span> <span class="o">*</span> <span class="n">num_examples</span><span class="p">)</span>
                 <span class="n">total_num_examples</span><span class="p">[</span><span class="n">tensor_name</span><span class="p">]</span> <span class="o">+=</span> <span class="n">num_examples</span>
 
-        <span class="n">names_to_tensors_aggregated</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="p">{</span>
             <span class="n">name_key</span><span class="p">:</span> <span class="p">(</span><span class="n">reduce</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">names_to_dense_tensors</span><span class="p">[</span><span class="n">name_key</span><span class="p">])</span> <span class="o">/</span> <span class="n">total_num_examples</span><span class="p">[</span><span class="n">name_key</span><span class="p">])</span>
             <span class="k">for</span> <span class="n">name_key</span> <span class="ow">in</span> <span class="n">names_to_dense_tensors</span>
-        <span class="p">}</span>
-
-        <span class="k">return</span> <span class="n">names_to_tensors_aggregated</span></div>
+        <span class="p">}</span></div>
 
 
 <div class="viewcode-block" id="FedAvgSparseCooTensor.unweighted_aggregate">
@@ -829,12 +826,10 @@
                 <span class="n">names_to_dense_tensors</span><span class="p">[</span><span class="n">tensor_name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dense_tensor</span><span class="p">)</span>
                 <span class="n">total_num_clients</span><span class="p">[</span><span class="n">tensor_name</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
 
-        <span class="n">names_to_tensors_aggregated</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="p">{</span>
             <span class="n">name_key</span><span class="p">:</span> <span class="p">(</span><span class="n">reduce</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">names_to_dense_tensors</span><span class="p">[</span><span class="n">name_key</span><span class="p">])</span> <span class="o">/</span> <span class="n">total_num_clients</span><span class="p">[</span><span class="n">name_key</span><span class="p">])</span>
             <span class="k">for</span> <span class="n">name_key</span> <span class="ow">in</span> <span class="n">names_to_dense_tensors</span>
-        <span class="p">}</span>
-
-        <span class="k">return</span> <span class="n">names_to_tensors_aggregated</span></div>
+        <span class="p">}</span></div>
 </div>
 
 </pre></div>

@@ -715,7 +715,7 @@ be checkpointed will be set of the form <code class="docutils literal notranslat
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer.save_server_state">
 <span class="sig-name descname"><span class="pre">save_server_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/state_checkpointer.html#ServerStateCheckpointer.save_server_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer.save_server_state" title="Link to this definition">¶</a></dt>
-<dd><p>Save the state of the server, including a torch model, which is not a required component of the server class</p>
+<dd><p>Save the state of the server, including a torch model, which is not a required component of the server class.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -797,7 +797,7 @@ provides functionality for loading and saving the state of the attribute based o
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.checkpointing.state_checkpointer.StateCheckpointer.checkpoint_exists">
 <span class="sig-name descname"><span class="pre">checkpoint_exists</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/state_checkpointer.html#StateCheckpointer.checkpoint_exists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.state_checkpointer.StateCheckpointer.checkpoint_exists" title="Link to this definition">¶</a></dt>
-<dd><p>Check if a checkpoint exists at the checkpoint_path constructed as <code class="docutils literal notranslate"><span class="pre">checkpoint_dir</span></code> + <code class="docutils literal notranslate"><span class="pre">checkpoint_name</span></code></p>
+<dd><p>Check if a checkpoint exists at the checkpoint_path constructed as <code class="docutils literal notranslate"><span class="pre">checkpoint_dir</span></code> + <code class="docutils literal notranslate"><span class="pre">checkpoint_name</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>True if checkpoint exists, otherwise false.</p>
@@ -892,7 +892,8 @@ this context, so we explicitly surface the error with a try/except.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.checkpointing.state_checkpointer.StateCheckpointer.save_state">
 <span class="sig-name descname"><span class="pre">save_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/state_checkpointer.html#StateCheckpointer.save_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.state_checkpointer.StateCheckpointer.save_state" title="Link to this definition">¶</a></dt>
-<dd><p>Create a snapshot of the state as defined in <code class="docutils literal notranslate"><span class="pre">self.snapshot_attrs</span></code>. It is saved at <code class="docutils literal notranslate"><span class="pre">self.checkpoint_path</span></code></p>
+<dd><p>Create a snapshot of the state as defined in <code class="docutils literal notranslate"><span class="pre">self.snapshot_attrs</span></code>.
+It is saved at <code class="docutils literal notranslate"><span class="pre">self.checkpoint_path</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>

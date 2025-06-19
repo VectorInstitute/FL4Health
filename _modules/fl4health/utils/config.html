@@ -503,6 +503,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
 
+
 <span class="n">REQUIRED_CONFIG</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;n_server_rounds&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="s2">&quot;batch_size&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -521,8 +522,7 @@
 <div class="viewcode-block" id="load_config">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.config.html#fl4health.utils.config.load_config">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">load_config</span><span class="p">(</span><span class="n">config_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load Configuration Dictionary&quot;&quot;&quot;</span>
-
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load Configuration Dictionary.&quot;&quot;&quot;</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
@@ -535,11 +535,10 @@
 <div class="viewcode-block" id="check_config">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.config.html#fl4health.utils.config.check_config">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">check_config</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if Configuration Dictionary is valid&quot;&quot;&quot;</span>
-
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if Configuration Dictionary is valid.&quot;&quot;&quot;</span>
     <span class="c1"># Check for presence of required keys</span>
-    <span class="k">for</span> <span class="n">req_key</span> <span class="ow">in</span> <span class="n">REQUIRED_CONFIG</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">req_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">req_key</span> <span class="ow">in</span> <span class="n">REQUIRED_CONFIG</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">req_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">InvalidConfigError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">req_key</span><span class="si">}</span><span class="s2"> must be specified in Config File&quot;</span><span class="p">)</span>
 
     <span class="c1"># Check for invalid parameter value types</span>
@@ -577,8 +576,7 @@
     <span class="n">value</span> <span class="o">=</span> <span class="n">dictionary</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">narrow_type_to</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">value</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Provided key (</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">) value does not have correct type&quot;</span><span class="p">)</span></div>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Provided key (</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">) value does not have correct type&quot;</span><span class="p">)</span></div>
 
 
 
@@ -631,8 +629,7 @@
         <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;local_epochs&quot;</span><span class="p">:</span> <span class="n">local_epochs</span><span class="p">}</span>
     <span class="k">if</span> <span class="n">local_steps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;local_steps&quot;</span><span class="p">:</span> <span class="n">local_steps</span><span class="p">}</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">{}</span></div>
+    <span class="k">return</span> <span class="p">{}</span></div>
 
 </pre></div>
         </article>

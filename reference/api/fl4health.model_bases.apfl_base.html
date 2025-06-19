@@ -530,7 +530,7 @@ If <code class="docutils literal notranslate"><span class="pre">adaptive_alpha</
 <dt class="sig sig-object py" id="fl4health.model_bases.apfl_base.ApflModule.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/apfl_base.html#ApflModule.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.apfl_base.ApflModule.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Forward function for the full APFL model. This includes mixing of the global and local model predictions using
-<span class="math notranslate nohighlight">\(\alpha\)</span>. The predictions are combined as</p>
+<span class="math notranslate nohighlight">\(\alpha\)</span>. The predictions are combined as follows.</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[\alpha \cdot \text{local_logits} + (1.0 - \alpha) \cdot \text{global_logits}\]</div>
@@ -553,7 +553,7 @@ predictions are stored under the keys “global” and “local.”</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.apfl_base.ApflModule.global_forward">
 <span class="sig-name descname"><span class="pre">global_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/apfl_base.html#ApflModule.global_forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.apfl_base.ApflModule.global_forward" title="Link to this definition">¶</a></dt>
-<dd><p>Forward function that runs the input tensor through the <strong>GLOBAL</strong> model only</p>
+<dd><p>Forward function that runs the input tensor through the <strong>GLOBAL</strong> model only.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>input</strong> (<em>torch.Tensor</em>) – tensor to be run through the global model</p>
@@ -587,7 +587,7 @@ state dictionary of this entire module.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.apfl_base.ApflModule.local_forward">
 <span class="sig-name descname"><span class="pre">local_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/apfl_base.html#ApflModule.local_forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.apfl_base.ApflModule.local_forward" title="Link to this definition">¶</a></dt>
-<dd><p>Forward function that runs the input tensor through the <strong>LOCAL</strong> model only</p>
+<dd><p>Forward function that runs the input tensor through the <strong>LOCAL</strong> model only.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>input</strong> (<em>torch.Tensor</em>) – tensor to be run through the local model</p>

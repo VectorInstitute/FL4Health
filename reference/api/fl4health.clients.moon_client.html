@@ -646,7 +646,7 @@ the old model are returned. All predictions included in dictionary will be used 
 <dt class="sig sig-object py" id="fl4health.clients.moon_client.MoonClient.update_after_train">
 <span class="sig-name descname"><span class="pre">update_after_train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/moon_client.html#MoonClient.update_after_train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.moon_client.MoonClient.update_after_train" title="Link to this definition">¶</a></dt>
 <dd><p>This function is called immediately after client-side training has completed. This function saves the final
-trained model to the list of old models to be used in subsequent server rounds</p>
+trained model to the list of old models to be used in subsequent server rounds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -666,7 +666,7 @@ trained model to the list of old models to be used in subsequent server rounds</
 <span class="sig-name descname"><span class="pre">update_before_train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current_server_round</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/moon_client.html#MoonClient.update_before_train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.moon_client.MoonClient.update_before_train" title="Link to this definition">¶</a></dt>
 <dd><p>This function is called before training, immediately after injecting the aggregated server weights into the
 client model. We clone and free the current model to preserve the aggregated server weights state (i.e. the
-initial model before training starts.)</p>
+initial model before training starts).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>current_server_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Current federated training round being executed.</p>

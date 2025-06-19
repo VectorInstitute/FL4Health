@@ -566,9 +566,9 @@ smoothing by weighting previous scores more heavily. Defaults to 0.1.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.metrics.compound_metrics.EmaMetric.compute">
 <span class="sig-name descname"><span class="pre">compute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/compound_metrics.html#EmaMetric.compute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.compound_metrics.EmaMetric.compute" title="Link to this definition">¶</a></dt>
-<dd><p>Compute metric on state accumulated over updates. This computation considers the exponential moving average
-with respect to previous scores. For time step <span class="math notranslate nohighlight">\(t\)</span>, and metric score <span class="math notranslate nohighlight">\(m_t\)</span>, the EMA score is
-computed</p>
+<dd><p>Compute metric on state accumulated over updates.</p>
+<p>This computation considers the exponential moving average with respect to previous scores. For time step
+<span class="math notranslate nohighlight">\(t\)</span>, and metric score <span class="math notranslate nohighlight">\(m_t\)</span>, the EMA score is computed</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[\text{smoothing_factor} \cdot m_t + (1-\text{smoothing_factor}) \cdot (m_{t-1}).\]</div>
@@ -619,7 +619,7 @@ respective list.</p>
 <dt class="sig sig-object py" id="fl4health.metrics.compound_metrics.TransformsMetric.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pred_transforms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_transforms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/compound_metrics.html#TransformsMetric.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.compound_metrics.TransformsMetric.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>A thin wrapper class to allow transforms to be applied to preds and targets prior to calculating metrics.
-Transforms are applied in the order given</p>
+Transforms are applied in the order given.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

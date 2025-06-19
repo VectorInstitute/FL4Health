@@ -510,7 +510,6 @@
 <div class="viewcode-block" id="WarmedUpModule">
 <a class="viewcode-back" href="../../../reference/api/fl4health.preprocessing.warmed_up_module.html#fl4health.preprocessing.warmed_up_module.WarmedUpModule">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">WarmedUpModule</span><span class="p">:</span>
-
 <div class="viewcode-block" id="WarmedUpModule.__init__">
 <a class="viewcode-back" href="../../../reference/api/fl4health.preprocessing.warmed_up_module.html#fl4health.preprocessing.warmed_up_module.WarmedUpModule.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -521,7 +520,6 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This class is used to load a pretrained model into the target model.</span>
-
 
 <span class="sd">        Initialize the ``WarmedUpModule`` with the pretrained model states and weights mapping dict.</span>
 
@@ -535,18 +533,18 @@
 <span class="sd">                model to the target model.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">pretrained_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">pretrained_model_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="ne">AssertionError</span><span class="p">(</span>
+            <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span>
                 <span class="s2">&quot;pretrained_model_path and pretrained_model is mutually exclusive. Please provide one of them.&quot;</span>
             <span class="p">)</span>
 
-        <span class="k">elif</span> <span class="n">pretrained_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">pretrained_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Pretrained model is provided.&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">pretrained_model_state</span> <span class="o">=</span> <span class="n">pretrained_model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
 
         <span class="k">elif</span> <span class="n">pretrained_model_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span>
-                <span class="n">pretrained_model_path</span>
-            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Pretrained model path </span><span class="si">{</span><span class="n">pretrained_model_path</span><span class="si">}</span><span class="s2"> does not exist.&quot;</span>
+            <span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pretrained_model_path</span><span class="p">),</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Pretrained model path </span><span class="si">{</span><span class="n">pretrained_model_path</span><span class="si">}</span><span class="s2"> does not exist.&quot;</span>
+            <span class="p">)</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Loading pretrained model from </span><span class="si">{</span><span class="n">pretrained_model_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">pretrained_model_state</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">pretrained_model_path</span><span class="p">)</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
 
@@ -580,17 +578,13 @@
 <span class="sd">            str | None: If no weights mapping dict is provided, returns the key. Otherwise, if the key is in the</span>
 <span class="sd">            weights mapping dict, returns the matching component of the key. Otherwise, returns None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights_mapping_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">key</span>
 
         <span class="n">components</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
-
+        <span class="n">matching_component</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">component</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">components</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">matching_component</span> <span class="o">=</span> <span class="n">component</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">matching_component</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">matching_component</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">component</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">matching_component</span> <span class="o">=</span> <span class="n">component</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">matching_component</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">component</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="k">if</span> <span class="n">matching_component</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights_mapping_dict</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights_mapping_dict</span><span class="p">[</span><span class="n">matching_component</span><span class="p">]</span> <span class="o">+</span> <span class="n">key</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">matching_component</span><span class="p">)</span> <span class="p">:]</span>
         <span class="k">return</span> <span class="kc">None</span></div>
@@ -605,19 +599,18 @@
 <span class="sd">        Args:</span>
 <span class="sd">            model (torch.nn.Module): target model.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">pretrained_model_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
         <span class="n">target_model_state</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
 
         <span class="n">matching_state</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">target_model_state</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">target_model_state</span><span class="p">:</span>
             <span class="n">original_state</span> <span class="o">=</span> <span class="n">target_model_state</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
 
             <span class="n">pretrained_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_matching_component</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Matching: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">pretrained_key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">pretrained_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">pretrained_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pretrained_model_state</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">pretrained_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pretrained_model_state</span><span class="p">:</span>
                     <span class="n">pretrained_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pretrained_model_state</span><span class="p">[</span><span class="n">pretrained_key</span><span class="p">]</span>
                     <span class="k">if</span> <span class="n">original_state</span><span class="o">.</span><span class="n">size</span><span class="p">()</span> <span class="o">==</span> <span class="n">pretrained_state</span><span class="o">.</span><span class="n">size</span><span class="p">():</span>
                         <span class="n">matching_state</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">pretrained_state</span>

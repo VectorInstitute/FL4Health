@@ -619,7 +619,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given the predictions and targets this function performs two possible transformations. The first is to map</span>
 <span class="sd">        boolean tensors to integers for computation. The second is to potentially threshold the predictions if</span>
-<span class="sd">        self.threshold is not None</span>
+<span class="sd">        ``self.threshold`` is not None.</span>
 
 <span class="sd">        NOTE: This is a common implementation meant to be called (or overridden) by inheriting classes.</span>
 
@@ -630,7 +630,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple[torch.Tensor, torch.Tensor]: Potentially transformed predictions and targets tensors, in that order</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="c1"># On the off chance were given booleans convert them to integers</span>
         <span class="n">preds</span> <span class="o">=</span> <span class="n">preds</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span> <span class="k">if</span> <span class="n">preds</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">bool</span> <span class="k">else</span> <span class="n">preds</span>
         <span class="n">targets</span> <span class="o">=</span> <span class="n">targets</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span> <span class="k">if</span> <span class="n">targets</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">torch</span><span class="o">.</span><span class="n">bool</span> <span class="k">else</span> <span class="n">targets</span>
@@ -669,7 +668,6 @@
 <span class="sd">            tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: True positive, false positive,</span>
 <span class="sd">                true negative, and false negative indications for each of the predictions in the provided tensors.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">true_positives</span> <span class="o">=</span> <span class="p">(</span><span class="n">preds</span> <span class="o">*</span> <span class="n">targets</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">discard_tp</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([])</span>
         <span class="n">false_positives</span> <span class="o">=</span> <span class="p">(</span><span class="n">preds</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">targets</span><span class="p">))</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">discard_fp</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([])</span>
         <span class="n">false_negatives</span> <span class="o">=</span> <span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">preds</span><span class="p">)</span> <span class="o">*</span> <span class="n">targets</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">discard_fn</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([])</span>
@@ -751,9 +749,7 @@
 <div class="viewcode-block" id="ClassificationMetric.clear">
 <a class="viewcode-back" href="../../../reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.ClassificationMetric.clear">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Reset accumulated tp, fp, fn and tn&#39;s. They will be initialized with correct shape on next update</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset accumulated tp, fp, fn and tn&#39;s. They will be initialized with correct shape on next update.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">true_positives</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">false_positives</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">false_negatives</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([])</span>
@@ -766,7 +762,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Metrics</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes the metrics from the currently saved counts using the compute_from_counts function defined in</span>
-<span class="sd">        inheriting classes</span>
+<span class="sd">        inheriting classes.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            name (str | None): Optional name used in conjunction with class attribute name to define key in metrics</span>
@@ -960,7 +956,7 @@
             <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span>
             <span class="n">discard</span><span class="o">=</span><span class="n">discard</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">assert</span> <span class="n">pos_label</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">pos_label</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;pos_label must be either 0 or 1&quot;</span>
+        <span class="k">assert</span> <span class="n">pos_label</span> <span class="ow">in</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">},</span> <span class="s2">&quot;pos_label must be either 0 or 1&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pos_label</span> <span class="o">=</span> <span class="n">pos_label</span></div>
 
 
@@ -1006,9 +1002,9 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># Both a batch and label dim have been specified. So tensor should be 2D and either have 1 or 2 columns</span>
-            <span class="k">assert</span> <span class="p">(</span>
-                <span class="n">count_ndims</span> <span class="o">==</span> <span class="mi">2</span>
-            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Batch and label dims have been specified, tensor should be 2D, but got </span><span class="si">{</span><span class="n">count_ndims</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">assert</span> <span class="n">count_ndims</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Batch and label dims have been specified, tensor should be 2D, but got </span><span class="si">{</span><span class="n">count_ndims</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_dim</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_dim</span><span class="p">:</span>
                 <span class="c1"># reshape so that batch dimension comes first</span>
@@ -1017,34 +1013,27 @@
             <span class="k">if</span> <span class="n">count_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
                 <span class="c1"># Always return the class with label 1 (pos_label 0 will be handled by rearranging counts if necessary)</span>
                 <span class="k">return</span> <span class="n">count_tensor</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">count_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">count_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">count_tensor</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Label dimension has unexpected size of </span><span class="si">{</span><span class="n">count_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Label dimension has unexpected size of </span><span class="si">{</span><span class="n">count_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># Batch dim has been specified but label dim has not, Tensor should be 1D equivalent to size of the batch</span>
-            <span class="k">assert</span> <span class="p">(</span>
-                <span class="n">count_ndims</span> <span class="o">==</span> <span class="mi">1</span>
-            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Batch dim has been specified but not label dim, tensor should be 1D but got </span><span class="si">{</span><span class="n">count_ndims</span><span class="si">}</span><span class="s2">D&quot;</span>
+            <span class="k">assert</span> <span class="n">count_ndims</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Batch dim has been specified but not label dim, tensor should be 1D but got </span><span class="si">{</span><span class="n">count_ndims</span><span class="si">}</span><span class="s2">D&quot;</span>
+            <span class="p">)</span>
             <span class="k">return</span> <span class="n">count_tensor</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Tensor should be 1D equivalent to size of labels dimension if it has been specified or a single element</span>
-            <span class="c1"># if label dims has not be specified. The label dimension is of size at most 2, but can be of size 1 if</span>
-            <span class="c1"># there is a dimension for an &quot;implied&quot; label (i.e. 0.8 representing vector predictions [0.2, 0.8]). If</span>
-            <span class="c1"># there is no label dimension specified, there should only be a single element as well.</span>
-            <span class="k">assert</span> <span class="p">(</span>
-                <span class="n">count_ndims</span> <span class="o">&lt;=</span> <span class="mi">1</span>
-            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Batch dim has not been specified, tensor should be 0 or 1D but got </span><span class="si">{</span><span class="n">count_ndims</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="k">if</span> <span class="n">count_tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;self.label_dim is None but got two elements in the count_tensor&quot;</span>
-                <span class="c1"># Always return the class with label 1</span>
-                <span class="k">return</span> <span class="n">count_tensor</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">count_tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">count_tensor</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Too many elements in the count tensor, expected 2 or less and got </span><span class="si">{</span><span class="n">count_tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="p">)</span>
+        <span class="c1"># Tensor should be 1D equivalent to size of labels dimension if it has been specified or a single element</span>
+        <span class="c1"># if label dims has not be specified. The label dimension is of size at most 2, but can be of size 1 if</span>
+        <span class="c1"># there is a dimension for an &quot;implied&quot; label (i.e. 0.8 representing vector predictions [0.2, 0.8]). If</span>
+        <span class="c1"># there is no label dimension specified, there should only be a single element as well.</span>
+        <span class="k">assert</span> <span class="n">count_ndims</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Batch dim has not been specified, tensor should be 0 or 1D but got </span><span class="si">{</span><span class="n">count_ndims</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="n">count_tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;self.label_dim is None but got two elements in the count_tensor&quot;</span>
+            <span class="c1"># Always return the class with label 1</span>
+            <span class="k">return</span> <span class="n">count_tensor</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">count_tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">count_tensor</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Too many elements in the count tensor, expected 2 or less and got </span><span class="si">{</span><span class="n">count_tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="BinaryClassificationMetric.count_tp_fp_tn_fn">
 <a class="viewcode-back" href="../../../reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric.count_tp_fp_tn_fn">[docs]</a>
@@ -1052,8 +1041,8 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">preds</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">targets</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">         Given two tensors containing model predictions and targets, returns the number of true positives (tp), false</span>
-<span class="sd">         positives (fp), true negatives (tn), and false negatives (fn).</span>
+<span class="sd">        Given two tensors containing model predictions and targets, returns the number of true positives (tp), false</span>
+<span class="sd">        positives (fp), true negatives (tn), and false negatives (fn).</span>
 
 <span class="sd">        The shape of these counts depends on the values of ``self.batch_dim`` and ``self.label_dim`` are specified.</span>
 <span class="sd">        They also depend on the shape of the input and target for this class. As binary predictions may be explicit</span>
@@ -1063,11 +1052,11 @@
 <span class="sd">         discarded during initialization of the class, then that count will not be computed and an empty tensor will be</span>
 <span class="sd">         returned in its place.</span>
 
-<span class="sd">         Args:</span>
+<span class="sd">        Args:</span>
 <span class="sd">             preds (torch.Tensor): Tensor containing model predictions. Must be the same shape as targets</span>
 <span class="sd">             targets (torch.Tensor): Tensor containing prediction targets. Must be same shape as preds.</span>
 
-<span class="sd">         Returns:</span>
+<span class="sd">        Returns:</span>
 <span class="sd">             tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the</span>
 <span class="sd">                 specified dimensions for each of true positives, false positives, true negatives, and false negatives,</span>
 <span class="sd">                 respectively. If `self.batch_dim` is not None then these tensors will have shape (batch size, 1),</span>
@@ -1079,9 +1068,9 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_assert_correct_ranges</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
 
         <span class="c1"># Make sure after transformation the preds and targets have the right shape</span>
-        <span class="k">assert</span> <span class="p">(</span>
-            <span class="n">preds</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">targets</span><span class="o">.</span><span class="n">shape</span>
-        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Preds and targets must have the same shape but got </span><span class="si">{</span><span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> respectively.&quot;</span>
+        <span class="k">assert</span> <span class="n">preds</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Preds and targets must have the same shape but got </span><span class="si">{</span><span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> respectively.&quot;</span>
+        <span class="p">)</span>
 
         <span class="c1"># Assert that the label dimension for these tensors is of size 2 at most.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1148,7 +1137,7 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scalar</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        User defined convenience method that calculates the desired metric given the predictions and target without</span>
-<span class="sd">        accumulating it into the class itself</span>
+<span class="sd">        accumulating it into the class itself.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            NotImplementedError: User must define this method.</span>
@@ -1172,7 +1161,8 @@
         <span class="n">ignore_background</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">discard</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">MetricOutcome</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;A Base class for multi-class, multi-label classification metrics that can be computed using the true</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A Base class for multi-class, multi-label classification metrics that can be computed using the true</span>
 <span class="sd">        positives (tp), false positive (fp), false negative (fn) and true negative (tn) counts. These counts are</span>
 <span class="sd">        computed for each class independently. How they are composed together for the metric is left to inheriting</span>
 <span class="sd">        classes.</span>
@@ -1207,9 +1197,13 @@
 
 <span class="sd">                .. code-block:: python</span>
 
-<span class="sd">                    p = torch.tensor([[[1., 1., 1., 0.], [0., 0., 0., 0.]], [[0., 0., 0., 1.], [1., 1., 1., 1.]]])</span>
+<span class="sd">                    p = torch.tensor(</span>
+<span class="sd">                        [[[1.0, 1.0, 1.0, 0.0], [0.0, 0.0, 0.0, 0.0]], [[0.0, 0.0, 0.0, 1.0], [1.0, 1.0, 1.0, 1.0]]]</span>
+<span class="sd">                    )</span>
 
-<span class="sd">                    t = torch.tensor([[[1., 1., 0., 0.], [0., 0., 0., 0.]], [[0., 0., 1., 1.], [1., 1., 1., 1.]]])</span>
+<span class="sd">                    t = torch.tensor(</span>
+<span class="sd">                        [[[1.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]], [[0.0, 0.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0]]]</span>
+<span class="sd">                    )</span>
 
 <span class="sd">                    self.tp = torch.Tensor([[2, 1], [0, 4]])</span>
 
@@ -1260,7 +1254,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Removes the first element (channel) from the dimension specified in ignore_background for both the preds</span>
 <span class="sd">        and targets tensors. For example, if preds and targets have shape (64, 10, 10, 3) and ignore_background is 3,</span>
-<span class="sd">        then after removing the specified background, the shapes will be (64, 10, 10, 2)</span>
+<span class="sd">        then after removing the specified background, the shapes will be (64, 10, 10, 2).</span>
 
 <span class="sd">        The tensors should have the same shape before and after removing the background.</span>
 
@@ -1272,9 +1266,9 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple[torch.Tensor, torch.Tensor]: predictions and targets tensor with the appropriate background removed</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="p">(</span>
-            <span class="n">preds</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">targets</span><span class="o">.</span><span class="n">shape</span>
-        <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Preds (</span><span class="si">{</span><span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">) and targets (</span><span class="si">{</span><span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">) should have the same shape but do not.&quot;</span>
+        <span class="k">assert</span> <span class="n">preds</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Preds (</span><span class="si">{</span><span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">) and targets (</span><span class="si">{</span><span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">) should have the same shape but do not.&quot;</span>
+        <span class="p">)</span>
 
         <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">ignore_background</span><span class="p">],</span> <span class="n">device</span><span class="o">=</span><span class="n">preds</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
         <span class="n">preds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">index_select</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">ignore_background</span><span class="p">,</span> <span class="n">indices</span><span class="p">)</span>
@@ -1297,10 +1291,9 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">matrix</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">matrix</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">matrix</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected tensor to either be 2D or empty but has shape </span><span class="si">{</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected tensor to either be 2D or empty but has shape </span><span class="si">{</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_transform_tensors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">preds</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">targets</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -1321,7 +1314,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple[torch.Tensor, torch.Tensor]: Potentially transformed predictions and targets tensors, in that order</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">preds</span><span class="p">,</span> <span class="n">targets</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_transform_tensors</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
 
         <span class="c1"># Attempt to automatically match pred and target shape.</span>
@@ -1359,7 +1351,6 @@
 <span class="sd">                specified dimensions for each of true positives, false positives, true negatives, and false negatives</span>
 <span class="sd">                respectively.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="c1"># Transform preds and targets as necessary/specified before computing counts</span>
         <span class="n">preds</span><span class="p">,</span> <span class="n">targets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_tensors</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
         <span class="c1"># Make sure the tensors have the correct value ranges for sensible computation of the counts</span>
@@ -1439,7 +1430,7 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scalar</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        User defined convenience method that calculates the desired metric given the predictions and target without</span>
-<span class="sd">        accumulating it into the class itself</span>
+<span class="sd">        accumulating it into the class itself.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            NotImplementedError: User must define this method.</span>

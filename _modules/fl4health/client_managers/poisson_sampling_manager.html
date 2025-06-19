@@ -511,8 +511,10 @@
 <div class="viewcode-block" id="PoissonSamplingClientManager">
 <a class="viewcode-back" href="../../../reference/api/fl4health.client_managers.poisson_sampling_manager.html#fl4health.client_managers.poisson_sampling_manager.PoissonSamplingClientManager">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PoissonSamplingClientManager</span><span class="p">(</span><span class="n">BaseFractionSamplingManager</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Overrides the Simple Client Manager to Provide Poisson Sampling for Clients rather than</span>
-<span class="sd">    fixed without replacement sampling&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Overrides the Simple Client Manager to Provide Poisson Sampling for Clients rather than fixed without replacement</span>
+<span class="sd">    sampling.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_poisson_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sampling_probability</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">available_cids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="n">poisson_trials</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">binomial</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">sampling_probability</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">available_cids</span><span class="p">))</span>
@@ -539,7 +541,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            list[ClientProxy]: List of selected ClientProxy objects represented the clients selected by the process.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">available_cids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_and_filter</span><span class="p">(</span><span class="n">min_num_clients</span><span class="p">,</span> <span class="n">criterion</span><span class="p">)</span>
         <span class="n">n_available_cids</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">available_cids</span><span class="p">)</span>
         <span class="n">expected_clients_selected</span> <span class="o">=</span> <span class="n">sample_fraction</span> <span class="o">*</span> <span class="n">n_available_cids</span>

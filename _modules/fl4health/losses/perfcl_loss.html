@@ -499,7 +499,7 @@
         <article role="main">
           <h1>Source code for fl4health.losses.perfcl_loss</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.losses.contrastive_loss</span><span class="w"> </span><span class="kn">import</span> <span class="n">MoonContrastiveLoss</span>
 
@@ -557,6 +557,7 @@
 <span class="sd">            initial_global_features (torch.Tensor): Features produced by the **INITIAL** global feature extractor of</span>
 <span class="sd">                the model at the start of client-side training. This feature extractor is the **AGGREGATED** weights</span>
 <span class="sd">                across clients. Shape (``batch_size``, ``n_features``)</span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple[torch.Tensor, torch.Tensor]: Tuple containing the two components of the PerFCL loss function to</span>
 <span class="sd">            be weighted and summed. The first tensor corresponds to the global feature loss, the second is</span>

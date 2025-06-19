@@ -555,15 +555,12 @@ this context, so we explicitly surface the error with a try/except.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.checkpointing.checkpointer.BestMetricTorchModuleCheckpointer.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">checkpoint_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'val</span> <span class="pre">-</span> <span class="pre">prediction</span> <span class="pre">-</span> <span class="pre">'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/checkpointer.html#BestMetricTorchModuleCheckpointer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.checkpointer.BestMetricTorchModuleCheckpointer.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>Checkpointer that checkpoints based on the value of a user defined metric.
-:type checkpoint_dir: <span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>
-:param checkpoint_dir: Directory to which the model is saved. This directory should already exist. The</p>
-<blockquote>
-<div><p>checkpointer will not create it if it does not.</p>
-</div></blockquote>
+<dd><p>Checkpointer that checkpoints based on the value of a user defined metric.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>checkpoint_dir</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Directory to which the model is saved. This directory should already exist. The
+checkpointer will not create it if it does not.</p></li>
 <li><p><strong>checkpoint_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Name of the checkpoint to be saved.</p></li>
 <li><p><strong>metric</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – The name of the metric to base checkpointing on. After prepending the prefix, should be a
 key in the metrics dictionary passed in <code class="docutils literal notranslate"><span class="pre">self.maybe_checkpoint</span></code>. In BasicClient this is the ‘name’
@@ -655,7 +652,7 @@ checkpointer will not create it if it does not.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.checkpointing.checkpointer.LatestTorchModuleCheckpointer.maybe_checkpoint">
 <span class="sig-name descname"><span class="pre">maybe_checkpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/checkpointer.html#LatestTorchModuleCheckpointer.maybe_checkpoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.checkpointer.LatestTorchModuleCheckpointer.maybe_checkpoint" title="Link to this definition">¶</a></dt>
-<dd><p>This function is essentially a pass through, as this class always checkpoints the provided model</p>
+<dd><p>This function is essentially a pass through, as this class always checkpoints the provided model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

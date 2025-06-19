@@ -503,9 +503,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span><span class="p">,</span> <span class="n">Scalar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.client_module</span><span class="w"> </span><span class="kn">import</span> <span class="n">CheckpointMode</span><span class="p">,</span> <span class="n">ClientCheckpointAndStateModule</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.clients.ditto_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">DittoClient</span>
@@ -605,11 +605,11 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid beta_global_update_interval. It should be either -1, 0 or a positive integer.&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">feature_extraction_layers</span><span class="p">:</span>
             <span class="c1"># By default, all of the features should be flattened for the MK-MMD loss</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">flatten_feature_extraction_layers</span> <span class="o">=</span> <span class="p">{</span><span class="n">layer</span><span class="p">:</span> <span class="kc">True</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">feature_extraction_layers</span><span class="p">}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">flatten_feature_extraction_layers</span> <span class="o">=</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="n">feature_extraction_layers</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">flatten_feature_extraction_layers</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mkmmd_losses</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MkMmdLoss</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatten_feature_extraction_layers</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatten_feature_extraction_layers</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">mkmmd_losses</span><span class="p">[</span><span class="n">layer</span><span class="p">]</span> <span class="o">=</span> <span class="n">MkMmdLoss</span><span class="p">(</span>
                 <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">minimize_type_two_error</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">normalize_features</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">layer_name</span><span class="o">=</span><span class="n">layer</span>
             <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
@@ -667,7 +667,7 @@
             <span class="c1"># Update betas for the MK-MMD loss based on gathered features during training</span>
             <span class="k">for</span> <span class="n">layer</span><span class="p">,</span> <span class="n">layer_mkmmd_loss</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mkmmd_losses</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="n">layer_mkmmd_loss</span><span class="o">.</span><span class="n">betas</span> <span class="o">=</span> <span class="n">layer_mkmmd_loss</span><span class="o">.</span><span class="n">optimize_betas</span><span class="p">(</span>
-                    <span class="n">X</span><span class="o">=</span><span class="n">local_distributions</span><span class="p">[</span><span class="n">layer</span><span class="p">],</span> <span class="n">Y</span><span class="o">=</span><span class="n">initial_global_distributions</span><span class="p">[</span><span class="n">layer</span><span class="p">],</span> <span class="n">lambda_m</span><span class="o">=</span><span class="mf">1e-5</span>
+                    <span class="n">x</span><span class="o">=</span><span class="n">local_distributions</span><span class="p">[</span><span class="n">layer</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="n">initial_global_distributions</span><span class="p">[</span><span class="n">layer</span><span class="p">],</span> <span class="n">lambda_m</span><span class="o">=</span><span class="mf">1e-5</span>
                 <span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update_after_step</span><span class="p">(</span><span class="n">step</span><span class="p">)</span></div>
 
@@ -688,7 +688,6 @@
 <span class="sd">            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple containing the extracted</span>
 <span class="sd">            features using the local and initial global models.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">local_feature_extractor</span><span class="o">.</span><span class="n">clear_buffers</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">initial_global_feature_extractor</span><span class="o">.</span><span class="n">clear_buffers</span><span class="p">()</span>
 
@@ -745,7 +744,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TorchPredType</span><span class="p">,</span> <span class="n">TorchFeatureType</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes the predictions for both the **GLOBAL** and **LOCAL** models and pack them into the prediction</span>
-<span class="sd">        dictionary</span>
+<span class="sd">        dictionary.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">           input (TorchInputType): Inputs to be fed into the model. If input is of type ``dict[str, torch.Tensor]``,</span>
@@ -764,7 +763,6 @@
 <span class="sd">             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model</span>
 <span class="sd">                forward.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="c1"># We use features from initial_global_model to compute the MK-MMD loss not the global_model</span>
         <span class="n">global_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
         <span class="n">local_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
@@ -799,7 +797,7 @@
 <span class="sd">        Computes training losses given predictions of the global and local models and ground truth data.</span>
 <span class="sd">        For the local model we add to the vanilla loss function by including Ditto penalty loss which is the l2 inner</span>
 <span class="sd">        product between the initial global model weights and weights of the local model. This is stored in backward</span>
-<span class="sd">        The loss to optimize the global model is stored in the additional losses dictionary under &quot;global_loss&quot;</span>
+<span class="sd">        The loss to optimize the global model is stored in the additional losses dictionary under &quot;global_loss&quot;.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in</span>
@@ -867,7 +865,7 @@
                 <span class="c1"># Update betas for the MK-MMD loss based on computed features during training</span>
                 <span class="k">for</span> <span class="n">layer</span><span class="p">,</span> <span class="n">layer_mkmmd_loss</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">mkmmd_losses</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                     <span class="n">layer_mkmmd_loss</span><span class="o">.</span><span class="n">betas</span> <span class="o">=</span> <span class="n">layer_mkmmd_loss</span><span class="o">.</span><span class="n">optimize_betas</span><span class="p">(</span>
-                        <span class="n">X</span><span class="o">=</span><span class="n">features</span><span class="p">[</span><span class="n">layer</span><span class="p">],</span> <span class="n">Y</span><span class="o">=</span><span class="n">features</span><span class="p">[</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;init_global&quot;</span><span class="p">,</span> <span class="n">layer</span><span class="p">])],</span> <span class="n">lambda_m</span><span class="o">=</span><span class="mf">1e-5</span>
+                        <span class="n">x</span><span class="o">=</span><span class="n">features</span><span class="p">[</span><span class="n">layer</span><span class="p">],</span> <span class="n">y</span><span class="o">=</span><span class="n">features</span><span class="p">[</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;init_global&quot;</span><span class="p">,</span> <span class="n">layer</span><span class="p">])],</span> <span class="n">lambda_m</span><span class="o">=</span><span class="mf">1e-5</span>
                     <span class="p">)</span>
             <span class="c1"># Compute MK-MMD loss</span>
             <span class="n">total_mkmmd_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>

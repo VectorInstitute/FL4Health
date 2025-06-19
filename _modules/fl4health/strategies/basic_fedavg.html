@@ -630,7 +630,6 @@
 <span class="sd">            list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to</span>
 <span class="sd">            be sent to each client (packaged as ``FitIns``).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">client_manager</span><span class="p">,</span> <span class="n">BaseFractionSamplingManager</span><span class="p">):</span>
             <span class="c1"># Using one of the custom FractionSamplingManager classes, sampling fraction is based on fraction_fit</span>
             <span class="n">config</span> <span class="o">=</span> <span class="p">{}</span>
@@ -646,9 +645,8 @@
 
             <span class="c1"># Return client/config pairs</span>
             <span class="k">return</span> <span class="p">[(</span><span class="n">client</span><span class="p">,</span> <span class="n">fit_ins</span><span class="p">)</span> <span class="k">for</span> <span class="n">client</span> <span class="ow">in</span> <span class="n">clients</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Using the standard Flower ClientManager: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">client_manager</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">configure_fit</span><span class="p">(</span><span class="n">server_round</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">client_manager</span><span class="p">)</span></div>
+        <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Using the standard Flower ClientManager: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">client_manager</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">configure_fit</span><span class="p">(</span><span class="n">server_round</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">client_manager</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="BasicFedAvg.configure_evaluate">
@@ -672,7 +670,6 @@
 <span class="sd">            list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters</span>
 <span class="sd">            to be sent to each client (packaged as ``EvaluateIns``).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="c1"># Do not configure federated evaluation if fraction eval is 0.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fraction_evaluate</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[]</span>
@@ -693,9 +690,8 @@
 
             <span class="c1"># Return client/config pairs</span>
             <span class="k">return</span> <span class="p">[(</span><span class="n">client</span><span class="p">,</span> <span class="n">evaluate_ins</span><span class="p">)</span> <span class="k">for</span> <span class="n">client</span> <span class="ow">in</span> <span class="n">clients</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Using the standard Flower ClientManager: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">client_manager</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">configure_evaluate</span><span class="p">(</span><span class="n">server_round</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">client_manager</span><span class="p">)</span></div>
+        <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Using the standard Flower ClientManager: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">client_manager</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">configure_evaluate</span><span class="p">(</span><span class="n">server_round</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">client_manager</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="BasicFedAvg.configure_poll">

@@ -503,7 +503,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">WARNING</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FitIns</span><span class="p">,</span>
     <span class="n">MetricsAggregationFn</span><span class="p">,</span>
@@ -517,6 +516,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.client_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.client_proxy</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientProxy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">opacus</span><span class="w"> </span><span class="kn">import</span> <span class="n">GradSampleModule</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.client_managers.base_sampling_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseFractionSamplingManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.parameter_exchange.parameter_packer</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParameterPackerWithControlVariates</span>
@@ -551,7 +551,7 @@
         <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Scaffold Federated Learning strategy. Implementation based on https://arxiv.org/pdf/1910.06378.pdf</span>
+<span class="sd">        Scaffold Federated Learning strategy. Implementation based on https://arxiv.org/pdf/1910.06378.pdf.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            initial_parameters (Parameters): Initial model parameters to which all client models are set.</span>
@@ -582,7 +582,6 @@
 <span class="sd">                set the server control variates and the initial control variates on the client side to all zeros.</span>
 <span class="sd">                If ``initial_control_variates`` are provided, they take precedence. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">server_model_weights</span> <span class="o">=</span> <span class="n">parameters_to_ndarrays</span><span class="p">(</span><span class="n">initial_parameters</span><span class="p">)</span>
         <span class="c1"># Setup the initial control variates on the server-side and store them to be transmitted to the clients</span>
         <span class="n">initial_control_variates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialize_control_variates</span><span class="p">(</span><span class="n">initial_control_variates</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
@@ -628,6 +627,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            Parameters: This quantity represents the initial values for the control variates for the server and on the</span>
 <span class="sd">            client-side.</span>
+
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: This error will be raised if neither a model nor initial control variates are provided.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -635,19 +635,18 @@
             <span class="c1"># If we&#39;ve been provided with a set of initial control variates, we use those values</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">server_control_variates</span> <span class="o">=</span> <span class="n">parameters_to_ndarrays</span><span class="p">(</span><span class="n">initial_control_variates</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">initial_control_variates</span>
-        <span class="k">elif</span> <span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># If no initial values are provided but a model structure has been given, we initialize the control</span>
             <span class="c1"># variates to zeros as recommended in the SCAFFOLD paper.</span>
             <span class="n">zero_control_variates</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span> <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">server_control_variates</span> <span class="o">=</span> <span class="n">zero_control_variates</span>
             <span class="k">return</span> <span class="n">ndarrays_to_parameters</span><span class="p">(</span><span class="n">zero_control_variates</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Either a model structure or custom initial values for the control variates must be provided to run</span>
-            <span class="c1"># SCAFFOLD</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Both initial_control_variates and model are None. One must be defined in order to establish &quot;</span>
-                <span class="s2">&quot;initial values for the control variates.&quot;</span>
-            <span class="p">)</span></div>
+        <span class="c1"># Either a model structure or custom initial values for the control variates must be provided to run</span>
+        <span class="c1"># SCAFFOLD</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Both initial_control_variates and model are None. One must be defined in order to establish &quot;</span>
+            <span class="s2">&quot;initial values for the control variates.&quot;</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Scaffold.aggregate_fit">
@@ -738,7 +737,9 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArrays</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes updated_params by moving in the direction of parameter_updates with a step proportional the scaling</span>
-<span class="sd">        coefficient. Calculates</span>
+<span class="sd">        coefficient.</span>
+
+<span class="sd">        Calculates</span>
 
 <span class="sd">        .. math::</span>
 <span class="sd">            \\text{original_params} + \\text{scaling_coefficient} \\cdot \\text{parameter_updates}.</span>
@@ -753,13 +754,10 @@
 <span class="sd">            NDArrays: Updated numpy arrays according to</span>
 <span class="sd">            :math:`\\text{original_params} + \\text{scaling_coefficient} \\cdot \\text{parameter_updates}`</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="n">updated_parameters</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="k">return</span> <span class="p">[</span>
             <span class="n">original_param</span> <span class="o">+</span> <span class="n">scaling_coefficient</span> <span class="o">*</span> <span class="n">update</span>
             <span class="k">for</span> <span class="n">original_param</span><span class="p">,</span> <span class="n">update</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">original_params</span><span class="p">,</span> <span class="n">parameter_updates</span><span class="p">)</span>
-        <span class="p">]</span>
-
-        <span class="k">return</span> <span class="n">updated_parameters</span></div>
+        <span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="Scaffold.aggregate">
@@ -808,7 +806,6 @@
 <span class="sd">            list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to</span>
 <span class="sd">            be sent to each client (packaged as ``FitIns``).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="c1"># This strategy requires the client manager to be of type at least BaseFractionSamplingManager</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">client_manager</span><span class="p">,</span> <span class="n">BaseFractionSamplingManager</span><span class="p">)</span>
 
@@ -849,11 +846,7 @@
         <span class="n">delta_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_parameter_delta</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_model_weights</span><span class="p">)</span>
 
         <span class="c1"># x = x + lr * x_update</span>
-        <span class="n">server_model_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_updated_parameters</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_model_weights</span><span class="p">,</span> <span class="n">delta_weights</span>
-        <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">server_model_weights</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_updated_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_model_weights</span><span class="p">,</span> <span class="n">delta_weights</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="Scaffold.compute_updated_control_variates">
@@ -862,7 +855,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given the aggregated control variates from the clients, this updates the server control variates in line with</span>
 <span class="sd">        the paper. If :math:`c` is the server control variates and ``c_update`` is the client control variates, then</span>
-<span class="sd">        this update takes the form:</span>
+<span class="sd">        this update takes the following form.</span>
 
 <span class="sd">        .. math::</span>
 <span class="sd">            c + \\frac{\\vert S \\vert}{N} \\cdot c_{\\text{update}},</span>
@@ -878,11 +871,9 @@
 <span class="sd">            NDArrays: Updated server control variates according to the formula.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># c = c + |S| / N * c_update</span>
-        <span class="n">server_control_variates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_updated_parameters</span><span class="p">(</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_updated_parameters</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fraction_fit</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_control_variates</span><span class="p">,</span> <span class="n">control_variates_update</span>
-        <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">server_control_variates</span></div>
+        <span class="p">)</span></div>
 </div>
 
 

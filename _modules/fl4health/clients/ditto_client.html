@@ -503,9 +503,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span><span class="p">,</span> <span class="n">NDArrays</span><span class="p">,</span> <span class="n">Scalar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.client_module</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientCheckpointAndStateModule</span>
@@ -602,7 +602,7 @@
 <span class="sd">            config (Config): The config from the server.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">optimizers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_optimizer</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">optimizers</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">set</span><span class="p">((</span><span class="s2">&quot;global&quot;</span><span class="p">,</span> <span class="s2">&quot;local&quot;</span><span class="p">))</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">optimizers</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">optimizers</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="p">{</span><span class="s2">&quot;global&quot;</span><span class="p">,</span> <span class="s2">&quot;local&quot;</span><span class="p">}</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">optimizers</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span> <span class="o">=</span> <span class="n">optimizers</span></div>
 
 
@@ -669,16 +669,14 @@
             <span class="c1"># architecture, it doesn&#39;t matter which we choose as an initializer. The global and local models are set</span>
             <span class="c1"># to the same weights in initialize_all_model_weights</span>
             <span class="k">return</span> <span class="n">FullParameterExchanger</span><span class="p">()</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="c1"># NOTE: the global model weights are sent to the server here.</span>
-            <span class="n">global_model_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">global_model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="c1"># NOTE: the global model weights are sent to the server here.</span>
+        <span class="n">global_model_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">global_model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
 
-            <span class="c1"># Weights and training loss sent to server for aggregation</span>
-            <span class="c1"># Training loss sent because server will decide to increase or decrease the penalty weight, if adaptivity</span>
-            <span class="c1"># is turned on</span>
-            <span class="n">packed_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">pack_parameters</span><span class="p">(</span><span class="n">global_model_weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_for_adaptation</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">packed_params</span></div>
+        <span class="c1"># Weights and training loss sent to server for aggregation</span>
+        <span class="c1"># Training loss sent because server will decide to increase or decrease the penalty weight, if adaptivity</span>
+        <span class="c1"># is turned on</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">pack_parameters</span><span class="p">(</span><span class="n">global_model_weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_for_adaptation</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="DittoClient.set_parameters">
@@ -765,7 +763,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.ditto_client.html#fl4health.clients.ditto_client.DittoClient.train_step">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">train_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">TorchInputType</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">TorchTargetType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TrainingLosses</span><span class="p">,</span> <span class="n">TorchPredType</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Mechanics of training loop follow from original Ditto implementation: https://github.com/litian96/ditto</span>
+<span class="sd">        Mechanics of training loop follow from original Ditto implementation: https://github.com/litian96/ditto.</span>
 
 <span class="sd">        As in the implementation there, steps of the global and local models are done in tandem and for the same</span>
 <span class="sd">        number of steps.</span>
@@ -781,7 +779,6 @@
 <span class="sd">            model optimization steps. The prediction dictionary contains predictions indexed a &quot;global&quot; and &quot;local&quot;</span>
 <span class="sd">            corresponding to predictions from the global and local Ditto models for metric evaluations.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="c1"># Clear gradients from optimizers if they exist</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="p">[</span><span class="s2">&quot;global&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="p">[</span><span class="s2">&quot;local&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
@@ -813,7 +810,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TorchPredType</span><span class="p">,</span> <span class="n">TorchFeatureType</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes the predictions for both the **GLOBAL** and **LOCAL** models and pack them into the prediction</span>
-<span class="sd">        dictionary</span>
+<span class="sd">        dictionary.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            input (TorchInputType): Inputs to be fed into both models.</span>
@@ -854,19 +851,19 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes the local model loss and the global Ditto model loss (stored in additional losses) for reporting and</span>
-<span class="sd">        training of the global model</span>
+<span class="sd">        training of the global model.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            preds (TorchPredType): Prediction(s) of the model(s) indexed by name.</span>
 <span class="sd">            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.</span>
 <span class="sd">            target (TorchTargetType): Ground truth data to evaluate predictions against.</span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:</span>
 
 <span class="sd">            - The tensor for the model loss</span>
 <span class="sd">            - A dictionary with ``local_loss``, ``global_loss`` as additionally reported loss values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="c1"># Compute global model vanilla loss</span>
         <span class="k">assert</span> <span class="s2">&quot;global&quot;</span> <span class="ow">in</span> <span class="n">preds</span>
         <span class="n">global_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">criterion</span><span class="p">(</span><span class="n">preds</span><span class="p">[</span><span class="s2">&quot;global&quot;</span><span class="p">],</span> <span class="n">target</span><span class="p">)</span>
@@ -892,7 +889,7 @@
 <span class="sd">        Computes training losses given predictions of the global and local models and ground truth data.</span>
 <span class="sd">        For the local model we add to the vanilla loss function by including Ditto penalty loss which is the l2 inner</span>
 <span class="sd">        product between the initial global model weights and weights of the local model. This is stored in backward</span>
-<span class="sd">        The loss to optimize the global model is stored in the additional losses dictionary under &quot;global_loss&quot;</span>
+<span class="sd">        The loss to optimize the global model is stored in the additional losses dictionary under &quot;global_loss&quot;.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in</span>

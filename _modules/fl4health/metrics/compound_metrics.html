@@ -510,6 +510,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.metrics.base_metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Metric</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TorchTransformFunction</span>
 
+
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Metric</span><span class="p">)</span>
 
 
@@ -576,9 +577,10 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.EmaMetric.compute">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Metrics</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute metric on state accumulated over updates. This computation considers the exponential moving average</span>
-<span class="sd">        with respect to previous scores. For time step :math:`t`, and metric score :math:`m_t`, the EMA score is</span>
-<span class="sd">        computed</span>
+<span class="sd">        Compute metric on state accumulated over updates.</span>
+
+<span class="sd">        This computation considers the exponential moving average with respect to previous scores. For time step</span>
+<span class="sd">        :math:`t`, and metric score :math:`m_t`, the EMA score is computed</span>
 
 <span class="sd">        .. math ::</span>
 <span class="sd">            \\text{smoothing_factor} \\cdot m_t + (1-\\text{smoothing_factor}) \\cdot (m_{t-1}).</span>
@@ -649,7 +651,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        A thin wrapper class to allow transforms to be applied to preds and targets prior to calculating metrics.</span>
-<span class="sd">        Transforms are applied in the order given</span>
+<span class="sd">        Transforms are applied in the order given.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            metric (Metric): A FL4Health compatible metric</span>

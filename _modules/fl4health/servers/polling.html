@@ -503,6 +503,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Code</span><span class="p">,</span> <span class="n">GetPropertiesIns</span><span class="p">,</span> <span class="n">GetPropertiesRes</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.client_proxy</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientProxy</span>
 
+
 <span class="n">PollResultsAndFailures</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span>
     <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">ClientProxy</span><span class="p">,</span> <span class="n">GetPropertiesRes</span><span class="p">]],</span>
     <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">ClientProxy</span><span class="p">,</span> <span class="n">GetPropertiesRes</span><span class="p">]</span> <span class="o">|</span> <span class="ne">BaseException</span><span class="p">],</span>
@@ -524,7 +525,6 @@
 <span class="sd">        failures (list[tuple[ClientProxy, GetPropertiesRes] | BaseException]): The set of failing results that</span>
 <span class="sd">            have accumulated for the polling.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="c1"># Check if there was an exception</span>
     <span class="n">failure</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">exception</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">failure</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -584,7 +584,6 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        PollResultsAndFailures: Object holding the results and failures associate with the concurrent polling.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="k">with</span> <span class="n">concurrent</span><span class="o">.</span><span class="n">futures</span><span class="o">.</span><span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
         <span class="n">submitted_fs</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">poll_client</span><span class="p">,</span> <span class="n">client_proxy</span><span class="p">,</span> <span class="n">property_ins</span><span class="p">)</span>

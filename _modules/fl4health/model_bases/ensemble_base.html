@@ -501,7 +501,7 @@
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 
 
 <div class="viewcode-block" id="EnsembleAggregationMode">
@@ -590,7 +590,7 @@
         <span class="c1"># Each row of matrix represents the argmax of each model for a given sample</span>
         <span class="n">argmax_per_model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">preds</span> <span class="ow">in</span> <span class="n">preds_list</span><span class="p">])</span>
         <span class="c1"># For each row (sample), compute the unique class predictions and their respective counts</span>
-        <span class="n">index_count_list</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">argmax_per_model</span><span class="o">.</span><span class="n">unbind</span><span class="p">())</span>
+        <span class="n">index_count_list</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">argmax_per_model</span><span class="o">.</span><span class="n">unbind</span><span class="p">())</span>  <span class="c1"># noqa: C417</span>
         <span class="c1"># For each element of list (class index, class count) pairing</span>
         <span class="c1"># extract index with the highest count and create tensor</span>
         <span class="n">indices_with_highest_counts</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">index</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">count</span><span class="p">)]</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">index_count_list</span><span class="p">])</span>
@@ -617,8 +617,7 @@
 <span class="sd">            torch.Tensor: The average prediction of the ensemble.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">stacked_model_preds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">preds_list</span><span class="p">)</span>
-        <span class="n">avg_preds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">stacked_model_preds</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">avg_preds</span></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">stacked_model_preds</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

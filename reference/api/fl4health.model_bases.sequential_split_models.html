@@ -534,7 +534,7 @@ associated with the <code class="docutils literal notranslate"><span class="pre"
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">head_module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flatten_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/sequential_split_models.html#SequentiallySplitModel.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.sequential_split_models.SequentiallySplitModel.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>These models are split into two sequential stages. The first is <code class="docutils literal notranslate"><span class="pre">base_module</span></code>, used as a feature extractor.
 The second is the <code class="docutils literal notranslate"><span class="pre">head_module</span></code>, used as a classifier. Features are extracted from the <code class="docutils literal notranslate"><span class="pre">base_module</span></code> and
-stored for later use, if required</p>
+stored for later use, if required.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -554,7 +554,7 @@ certain loss functions, as in MOON, for example. Defaults to False.</p></li>
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/sequential_split_models.html#SequentiallySplitModel.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.sequential_split_models.SequentiallySplitModel.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Run a forward pass using the sequentially split modules <code class="docutils literal notranslate"><span class="pre">base_module</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">head_module</span></code>. Features from the
 base_module are stored either in their original shapes are flattened to be of shape (<code class="docutils literal notranslate"><span class="pre">batch_size</span></code>, -1)
-depending on <code class="docutils literal notranslate"><span class="pre">self.flatten_features</span></code></p>
+depending on <code class="docutils literal notranslate"><span class="pre">self.flatten_features</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>input</strong> (<em>torch.Tensor</em>) – Input to the model forward pass. Expected to be of shape (<code class="docutils literal notranslate"><span class="pre">batch_size</span></code>, *)</p>

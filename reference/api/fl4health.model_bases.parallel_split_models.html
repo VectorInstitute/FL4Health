@@ -526,7 +526,7 @@
 <dt class="sig sig-object py" id="fl4health.model_bases.parallel_split_models.ParallelSplitHeadModule.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/parallel_split_models.html#ParallelSplitHeadModule.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.parallel_split_models.ParallelSplitHeadModule.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>This is a head module to be used as part of <code class="docutils literal notranslate"><span class="pre">ParallelSplitModel</span></code> type models. This module is responsible for
-merging inputs from two parallel feature extractors and acting on those inputs to produce a prediction</p>
+merging inputs from two parallel feature extractors and acting on those inputs to produce a prediction.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>mode</strong> (<a class="reference internal" href="#fl4health.model_bases.parallel_split_models.ParallelFeatureJoinMode" title="fl4health.model_bases.parallel_split_models.ParallelFeatureJoinMode"><em>ParallelFeatureJoinMode</em></a>) – This determines <strong>HOW</strong> the head module is meant to combine the features
@@ -583,7 +583,7 @@ tensor is then passed through the forward function of the head module.</p>
 <dt class="sig sig-object py" id="fl4health.model_bases.parallel_split_models.ParallelSplitHeadModule.parallel_output_join">
 <em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">parallel_output_join</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_tensor</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/parallel_split_models.html#ParallelSplitHeadModule.parallel_output_join"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.parallel_split_models.ParallelSplitHeadModule.parallel_output_join" title="Link to this definition">¶</a></dt>
 <dd><p>Defines how the local and global feature tensors that are output by the preceding parallel feature extractors
-are meant to be joined together when the <code class="docutils literal notranslate"><span class="pre">self.mode</span></code> is set to <code class="docutils literal notranslate"><span class="pre">ParallelFeatureJoinMode.CONCATENATE</span></code></p>
+are meant to be joined together when the <code class="docutils literal notranslate"><span class="pre">self.mode</span></code> is set to <code class="docutils literal notranslate"><span class="pre">ParallelFeatureJoinMode.CONCATENATE</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -632,7 +632,7 @@ extractors and using them to produce a prediction.</p></li>
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/parallel_split_models.html#ParallelSplitModel.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.parallel_split_models.ParallelSplitModel.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Composite forward function. The input tensor is first passed through the two parallel feature extractors and
 then finally through the head model. The outputs and joining mechanism defined in the head model need to
-be compatible with the head model input itself. This is left to the user to handle</p>
+be compatible with the head model input itself. This is left to the user to handle.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>input</strong> (<em>torch.Tensor</em>) – Input tensor to be passed through the set of forwards.</p>

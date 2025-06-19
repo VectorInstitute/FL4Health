@@ -503,7 +503,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">INFO</span><span class="p">,</span> <span class="n">WARNING</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.parameter</span><span class="w"> </span><span class="kn">import</span> <span class="n">parameters_to_ndarrays</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Scalar</span>
@@ -511,6 +510,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.history</span><span class="w"> </span><span class="kn">import</span> <span class="n">History</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.server</span><span class="w"> </span><span class="kn">import</span> <span class="n">Server</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">Strategy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.checkpointer</span><span class="w"> </span><span class="kn">import</span> <span class="n">LatestTorchModuleCheckpointer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.parameter_exchange.parameter_exchanger_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParameterExchanger</span>
@@ -655,7 +655,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            nn.Module: Torch model to be checkpointed by a torch checkpointer.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="p">(</span>
             <span class="s2">&quot;Model hydration has been called but no server_model is defined to hydrate. The functionality of &quot;</span>
             <span class="s2">&quot;_hydrate_model_for_checkpointing can be overridden if checkpointing without a torch architecture is &quot;</span>

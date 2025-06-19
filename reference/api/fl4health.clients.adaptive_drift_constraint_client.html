@@ -513,7 +513,7 @@ that might be adapted via loss trajectories on the server-side. An example of su
 uses an auxiliary loss penalizing weight drift with a coefficient mu. This client is a simple extension of the
 <code class="docutils literal notranslate"><span class="pre">BasicClient</span></code> that packs the <code class="docutils literal notranslate"><span class="pre">self.loss_for_adaptation</span></code> for exchange with the server and expects to
 receive an updated (or constant if non-adaptive) parameter for the loss weight. In many cases, such as FedProx,
-the <code class="docutils literal notranslate"><span class="pre">loss_for_adaptation</span></code> being packaged is the criterion loss (i.e. loss without the penalty)</p>
+the <code class="docutils literal notranslate"><span class="pre">loss_for_adaptation</span></code> being packaged is the criterion loss (i.e. loss without the penalty).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -542,7 +542,7 @@ name. Defaults to None.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.adaptive_drift_constraint_client.AdaptiveDriftConstraintClient.compute_penalty_loss">
 <span class="sig-name descname"><span class="pre">compute_penalty_loss</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/adaptive_drift_constraint_client.html#AdaptiveDriftConstraintClient.compute_penalty_loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.adaptive_drift_constraint_client.AdaptiveDriftConstraintClient.compute_penalty_loss" title="Link to this definition">¶</a></dt>
-<dd><p>Computes the drift loss for the client model and drift tensors</p>
+<dd><p>Computes the drift loss for the client model and drift tensors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Computed penalty loss tensor</p>
@@ -580,8 +580,8 @@ by name. Additional losses includes penalty loss.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.adaptive_drift_constraint_client.AdaptiveDriftConstraintClient.get_parameter_exchanger">
 <span class="sig-name descname"><span class="pre">get_parameter_exchanger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/adaptive_drift_constraint_client.html#AdaptiveDriftConstraintClient.get_parameter_exchanger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.adaptive_drift_constraint_client.AdaptiveDriftConstraintClient.get_parameter_exchanger" title="Link to this definition">¶</a></dt>
-<dd><p>Setting up the parameter exchanger to include the appropriate packing functionality.
-By default we assume that we’re exchanging all parameters. Can be overridden for other behavior</p>
+<dd><p>Setting up the parameter exchanger to include the appropriate packing functionality. By default we assume
+that we’re exchanging all parameters. Can be overridden for other behavior.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – The config is sent by the FL server to allow for customization in the function if desired.</p>

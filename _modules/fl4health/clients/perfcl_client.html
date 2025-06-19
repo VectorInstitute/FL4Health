@@ -744,7 +744,6 @@
 <span class="sd">              ``local_feature_contrastive_loss`` representing the various and relevant pieces of the loss</span>
 <span class="sd">              calculations</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">criterion</span><span class="p">(</span><span class="n">preds</span><span class="p">[</span><span class="s2">&quot;prediction&quot;</span><span class="p">],</span> <span class="n">target</span><span class="p">)</span>
         <span class="c1"># If any of these are None then we don&#39;t compute the PerFCL loss. This will happen on the first client-side</span>
         <span class="c1"># training run.</span>

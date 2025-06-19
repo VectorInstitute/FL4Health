@@ -506,6 +506,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.feature_alignment.tabular_type</span><span class="w"> </span><span class="kn">import</span> <span class="n">TabularType</span>
 
+
 <span class="n">MetaData</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Scalar</span><span class="p">]</span>
 
 
@@ -573,19 +574,18 @@
 <div class="viewcode-block" id="TabularFeature.get_metadata_dimension">
 <a class="viewcode-back" href="../../../reference/api/fl4health.feature_alignment.tabular_feature.html#fl4health.feature_alignment.tabular_feature.TabularFeature.get_metadata_dimension">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_metadata_dimension</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_type</span> <span class="o">==</span> <span class="n">TabularType</span><span class="o">.</span><span class="n">BINARY</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_type</span> <span class="o">==</span> <span class="n">TabularType</span><span class="o">.</span><span class="n">ORDINAL</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_type</span> <span class="ow">in</span> <span class="p">{</span><span class="n">TabularType</span><span class="o">.</span><span class="n">BINARY</span><span class="p">,</span> <span class="n">TabularType</span><span class="o">.</span><span class="n">ORDINAL</span><span class="p">}:</span>
             <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_type</span> <span class="o">==</span> <span class="n">TabularType</span><span class="o">.</span><span class="n">NUMERIC</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_type</span> <span class="o">==</span> <span class="n">TabularType</span><span class="o">.</span><span class="n">NUMERIC</span><span class="p">:</span>
             <span class="k">return</span> <span class="mi">1</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Metadata dimension is not supported when self.feature_type is TabularType.STRING.&quot;</span><span class="p">)</span></div>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Metadata dimension is not supported when self.feature_type is TabularType.STRING.&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="TabularFeature.to_json">
 <a class="viewcode-back" href="../../../reference/api/fl4health.feature_alignment.tabular_feature.html#fl4health.feature_alignment.tabular_feature.TabularFeature.to_json">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_json</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Converge the information in this class to json format for serialization</span>
+<span class="sd">        Converge the information in this class to json format for serialization.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            str: Json with all of the pieces of information in this class</span>

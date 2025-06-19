@@ -505,7 +505,7 @@
 <dt class="sig sig-object py" id="fl4health.model_bases.fedrep_base.FedRepModel">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">FedRepModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">head_module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">flatten_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/fedrep_base.html#FedRepModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.fedrep_base.FedRepModel" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="fl4health.model_bases.sequential_split_models.html#fl4health.model_bases.sequential_split_models.SequentiallySplitExchangeBaseModel" title="fl4health.model_bases.sequential_split_models.SequentiallySplitExchangeBaseModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">SequentiallySplitExchangeBaseModel</span></code></a></p>
-<p>Implementation of the FedRep model structure: <a class="reference external" href="https://arxiv.org/pdf/2102.07078.pdf">https://arxiv.org/pdf/2102.07078.pdf</a></p>
+<p>Implementation of the FedRep model structure: <a class="reference external" href="https://arxiv.org/pdf/2102.07078.pdf">https://arxiv.org/pdf/2102.07078.pdf</a>.</p>
 <p>The architecture is fairly straightforward. The global module represents the first set of layers. These are
 learned with FedAvg. The <code class="docutils literal notranslate"><span class="pre">local_prediction_head</span></code> are the last layers, these are not exchanged with the server.
 The approach resembles FENDA, but vertical rather than parallel models. It also resembles MOON, but with
@@ -513,7 +513,7 @@ partial weight exchange for weight aggregation.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.fedrep_base.FedRepModel.freeze_base_module">
 <span class="sig-name descname"><span class="pre">freeze_base_module</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/fedrep_base.html#FedRepModel.freeze_base_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.fedrep_base.FedRepModel.freeze_base_module" title="Link to this definition">¶</a></dt>
-<dd><p>Any parameters in the <code class="docutils literal notranslate"><span class="pre">base_module</span></code> are fixed by setting <code class="docutils literal notranslate"><span class="pre">requires_grad</span></code> to False</p>
+<dd><p>Any parameters in the <code class="docutils literal notranslate"><span class="pre">base_module</span></code> are fixed by setting <code class="docutils literal notranslate"><span class="pre">requires_grad</span></code> to False.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
@@ -524,7 +524,7 @@ partial weight exchange for weight aggregation.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.fedrep_base.FedRepModel.freeze_head_module">
 <span class="sig-name descname"><span class="pre">freeze_head_module</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/fedrep_base.html#FedRepModel.freeze_head_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.fedrep_base.FedRepModel.freeze_head_module" title="Link to this definition">¶</a></dt>
-<dd><p>Any parameters in the <code class="docutils literal notranslate"><span class="pre">head_module</span></code> are fixed by setting <code class="docutils literal notranslate"><span class="pre">requires_grad</span></code> to False</p>
+<dd><p>Any parameters in the <code class="docutils literal notranslate"><span class="pre">head_module</span></code> are fixed by setting <code class="docutils literal notranslate"><span class="pre">requires_grad</span></code> to False.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
@@ -535,7 +535,7 @@ partial weight exchange for weight aggregation.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.fedrep_base.FedRepModel.unfreeze_base_module">
 <span class="sig-name descname"><span class="pre">unfreeze_base_module</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/fedrep_base.html#FedRepModel.unfreeze_base_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.fedrep_base.FedRepModel.unfreeze_base_module" title="Link to this definition">¶</a></dt>
-<dd><p>Any parameters in the <code class="docutils literal notranslate"><span class="pre">base_module</span></code> are unfrozen by setting <code class="docutils literal notranslate"><span class="pre">requires_grad</span></code> to True</p>
+<dd><p>Any parameters in the <code class="docutils literal notranslate"><span class="pre">base_module</span></code> are unfrozen by setting <code class="docutils literal notranslate"><span class="pre">requires_grad</span></code> to True.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
@@ -546,7 +546,7 @@ partial weight exchange for weight aggregation.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.fedrep_base.FedRepModel.unfreeze_head_module">
 <span class="sig-name descname"><span class="pre">unfreeze_head_module</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/fedrep_base.html#FedRepModel.unfreeze_head_module"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.fedrep_base.FedRepModel.unfreeze_head_module" title="Link to this definition">¶</a></dt>
-<dd><p>Any parameters in the <code class="docutils literal notranslate"><span class="pre">head_module</span></code> are unfrozen by setting <code class="docutils literal notranslate"><span class="pre">requires_grad</span></code> to True</p>
+<dd><p>Any parameters in the <code class="docutils literal notranslate"><span class="pre">head_module</span></code> are unfrozen by setting <code class="docutils literal notranslate"><span class="pre">requires_grad</span></code> to True.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>

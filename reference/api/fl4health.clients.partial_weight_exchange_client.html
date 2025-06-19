@@ -565,7 +565,7 @@ federated training</p>
 <dd><p>Determines which weights are sent back to the server for aggregation. This uses a parameter exchanger to
 determine parameters sent. Note that this overrides the basic client <code class="docutils literal notranslate"><span class="pre">get_parameters</span></code> function to send the
 initial model so that starting weights may be extracted and compared to current weights after local
-training</p>
+training.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – configuration used to setup the exchange</p>
@@ -611,7 +611,7 @@ round is the very first fitting round. Otherwise, use a <code class="docutils li
 <span class="sig-name descname"><span class="pre">setup_client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/partial_weight_exchange_client.html#PartialWeightExchangeClient.setup_client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.partial_weight_exchange_client.PartialWeightExchangeClient.setup_client" title="Link to this definition">¶</a></dt>
 <dd><p>Setup the components of the client necessary for client-side training and parameter exchange. Mostly handled
 by a call to the basic client flow, but also sets up the initial model to facilitate storage of initial
-parameters during training</p>
+parameters during training.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – Configuration used to setup the client properly</p>

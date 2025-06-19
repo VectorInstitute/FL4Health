@@ -506,7 +506,7 @@
 <div class="viewcode-block" id="BaseFractionSamplingManager">
 <a class="viewcode-back" href="../../../reference/api/fl4health.client_managers.base_sampling_manager.html#fl4health.client_managers.base_sampling_manager.BaseFractionSamplingManager">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseFractionSamplingManager</span><span class="p">(</span><span class="n">SimpleClientManager</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Overrides the Simple Client Manager to Provide Fixed Sampling without replacement for Clients&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Overrides the Simple Client Manager to Provide Fixed Sampling without replacement for Clients.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="BaseFractionSamplingManager.sample">
 <a class="viewcode-back" href="../../../reference/api/fl4health.client_managers.base_sampling_manager.html#fl4health.client_managers.base_sampling_manager.BaseFractionSamplingManager.sample">[docs]</a>
@@ -561,7 +561,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.client_managers.base_sampling_manager.html#fl4health.client_managers.base_sampling_manager.BaseFractionSamplingManager.sample_all">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">sample_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">min_num_clients</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">criterion</span><span class="p">:</span> <span class="n">Criterion</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ClientProxy</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Samples **ALL** available clients</span>
+<span class="sd">        Samples **ALL** available clients.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            min_num_clients (int | None, optional): minimum number of clients to wait to become available before</span>

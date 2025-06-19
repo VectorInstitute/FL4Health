@@ -656,7 +656,7 @@ all <strong>GLOBAL</strong> models across clients AND the local FENDA model’s 
 <dt class="sig sig-object py" id="fl4health.clients.fenda_ditto_client.FendaDittoClient.predict">
 <span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/fenda_ditto_client.html#FendaDittoClient.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.fenda_ditto_client.FendaDittoClient.predict" title="Link to this definition">¶</a></dt>
 <dd><p>Computes the predictions for both the <strong>GLOBAL</strong> and <strong>LOCAL</strong> models and pack them into the prediction
-dictionary</p>
+dictionary.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>input</strong> (<em>TorchInputType</em>) – Inputs to be fed into both models.</p>
@@ -737,7 +737,7 @@ Then set initialized attribute to True. This function simply straps on the compa
 <dt class="sig sig-object py" id="fl4health.clients.fenda_ditto_client.FendaDittoClient.update_before_train">
 <span class="sig-name descname"><span class="pre">update_before_train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current_server_round</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/fenda_ditto_client.html#FendaDittoClient.update_before_train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.fenda_ditto_client.FendaDittoClient.update_before_train" title="Link to this definition">¶</a></dt>
 <dd><p>Follows the same flow as the <code class="docutils literal notranslate"><span class="pre">DittoClient</span></code> parent module, but adds the ability to freeze the global feature
-extractor during training if <code class="docutils literal notranslate"><span class="pre">self.freeze_global_feature_extractor</span></code> is True</p>
+extractor during training if <code class="docutils literal notranslate"><span class="pre">self.freeze_global_feature_extractor</span></code> is True.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>current_server_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Which round we’re currently on</p>

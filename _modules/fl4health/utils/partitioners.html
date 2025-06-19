@@ -508,6 +508,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">DictionaryDataset</span><span class="p">,</span> <span class="n">TensorDataset</span><span class="p">,</span> <span class="n">select_by_indices</span>
 
+
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
 <span class="n">D</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">TensorDataset</span> <span class="o">|</span> <span class="n">DictionaryDataset</span><span class="p">)</span>
 
@@ -546,8 +547,7 @@
 <span class="sd">        .. code-block:: python</span>
 
 <span class="sd">            original_dataset = SyntheticDataset(</span>
-<span class="sd">                torch.rand((10000, 3, 3)),</span>
-<span class="sd">                torch.randint(low=0, high=10, size=(10000, 1))</span>
+<span class="sd">                torch.rand((10000, 3, 3)), torch.randint(low=0, high=10, size=(10000, 1))</span>
 <span class="sd">            )</span>
 
 <span class="sd">            heterogeneous_partitioner = DirichletLabelBasedAllocation(</span>
@@ -576,9 +576,9 @@
 <span class="sd">              the partitioning of test data is similar to the partitioning of the training data. Defaults to None. It</span>
 <span class="sd">              is mutually exclusive with the beta parameter and ``min_label_examples``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="p">(</span><span class="n">beta</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="o">^</span> <span class="p">(</span>
-            <span class="n">prior_distribution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-        <span class="p">),</span> <span class="s2">&quot;Either beta or a prior distribution must be provided, but not both.&quot;</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="n">beta</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="o">^</span> <span class="p">(</span><span class="n">prior_distribution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">),</span> <span class="p">(</span>
+            <span class="s2">&quot;Either beta or a prior distribution must be provided, but not both.&quot;</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">number_of_partitions</span> <span class="o">=</span> <span class="n">number_of_partitions</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">unique_labels</span> <span class="o">=</span> <span class="n">unique_labels</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_unique_labels</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_labels</span><span class="p">)</span>
@@ -586,9 +586,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">min_label_examples</span> <span class="o">=</span> <span class="n">min_label_examples</span> <span class="k">if</span> <span class="n">min_label_examples</span> <span class="k">else</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">prior_distribution</span> <span class="o">=</span> <span class="n">prior_distribution</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_distribution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="p">(</span>
-                <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prior_distribution</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_unique_labels</span>
-            <span class="p">),</span> <span class="s2">&quot;The length of the prior must match the number of labels&quot;</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prior_distribution</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_unique_labels</span><span class="p">,</span> <span class="p">(</span>
+                <span class="s2">&quot;The length of the prior must match the number of labels&quot;</span>
+            <span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_label_examples</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">log</span><span class="p">(</span>
                     <span class="n">WARN</span><span class="p">,</span>
@@ -623,9 +623,9 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_distribution</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">label_prior_distribution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prior_distribution</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
-            <span class="k">assert</span> <span class="p">(</span>
-                <span class="nb">len</span><span class="p">(</span><span class="n">label_prior_distribution</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_partitions</span>
-            <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;The length of the prior distribution for label (</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">label</span><span class="p">)</span><span class="si">}</span><span class="s2">) must match the number of partitions&quot;</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">label_prior_distribution</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_partitions</span><span class="p">,</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;The length of the prior distribution for label (</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">label</span><span class="p">)</span><span class="si">}</span><span class="s2">) must match the number of partitions&quot;</span>
+            <span class="p">)</span>
             <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">label_prior_distribution</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
                 <span class="n">log</span><span class="p">(</span>
                     <span class="n">WARN</span><span class="p">,</span>
@@ -696,7 +696,6 @@
 <span class="sd">            ``self.number_of_partitions``. ``dict[T, np.ndarray]`` is the Dirichlet distribution used to partition the</span>
 <span class="sd">            data points for each label.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">targets</span> <span class="o">=</span> <span class="n">original_dataset</span><span class="o">.</span><span class="n">targets</span>
         <span class="k">assert</span> <span class="n">targets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;A label-based partitioner requires targets but this dataset has no targets&quot;</span>
         <span class="n">partitioned_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([])</span><span class="o">.</span><span class="n">int</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_partitions</span><span class="p">)]</span>

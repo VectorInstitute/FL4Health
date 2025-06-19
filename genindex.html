@@ -745,7 +745,7 @@
 </li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.__init__">(NnunetClient method)</a>
 </li>
-          <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper.__init__">(nnUNetDataLoaderWrapper method)</a>
+          <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper.__init__">(NnUNetDataLoaderWrapper method)</a>
 </li>
           <li><a href="reference/api/fl4health.servers.nnunet_server.html#fl4health.servers.nnunet_server.NnunetServer.__init__">(NnunetServer method)</a>
 </li>
@@ -785,7 +785,7 @@
 </li>
           <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.PolyLRSchedulerWrapper.__init__">(PolyLRSchedulerWrapper method)</a>
 </li>
-          <li><a href="reference/api/fl4health.metrics.html#fl4health.metrics.ROC_AUC.__init__">(ROC_AUC method)</a>, <a href="reference/api/fl4health.metrics.metrics.html#fl4health.metrics.metrics.ROC_AUC.__init__">[1]</a>
+          <li><a href="reference/api/fl4health.metrics.html#fl4health.metrics.RocAuc.__init__">(RocAuc method)</a>, <a href="reference/api/fl4health.metrics.metrics.html#fl4health.metrics.metrics.RocAuc.__init__">[1]</a>
 </li>
           <li><a href="reference/api/fl4health.strategies.scaffold.html#fl4health.strategies.scaffold.Scaffold.__init__">(Scaffold method)</a>
 </li>
@@ -1184,9 +1184,9 @@
 </li>
         <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_d_per_kernel">compute_hat_d_per_kernel() (MkMmdLoss method)</a>
 </li>
-        <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_Q_k">compute_hat_Q_k() (MkMmdLoss method)</a>
+        <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_q_k">compute_hat_q_k() (MkMmdLoss method)</a>
 </li>
-        <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_Q_k_linear">compute_hat_Q_k_linear() (MkMmdLoss method)</a>
+        <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_q_k_linear">compute_hat_q_k_linear() (MkMmdLoss method)</a>
 </li>
         <li><a href="reference/api/fl4health.losses.deep_mmd_loss.html#fl4health.losses.deep_mmd_loss.DeepMmdLoss.compute_kernel">compute_kernel() (DeepMmdLoss method)</a>
 </li>
@@ -3640,7 +3640,7 @@
 </li>
         <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss">MkMmdLoss (class in fl4health.losses.mkmmd_loss)</a>
 </li>
-        <li><a href="reference/api/fl4health.losses.deep_mmd_loss.html#fl4health.losses.deep_mmd_loss.DeepMmdLoss.MMDu">MMDu() (DeepMmdLoss method)</a>
+        <li><a href="reference/api/fl4health.losses.deep_mmd_loss.html#fl4health.losses.deep_mmd_loss.DeepMmdLoss.mmdu">mmdu() (DeepMmdLoss method)</a>
 </li>
         <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.model">model (BasicClientProtocol attribute)</a>
 
@@ -4057,7 +4057,7 @@
 </li>
         <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.NnunetConfig">NnunetConfig (class in fl4health.utils.nnunet_utils)</a>
 </li>
-        <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper">nnUNetDataLoaderWrapper (class in fl4health.utils.nnunet_utils)</a>
+        <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper">NnUNetDataLoaderWrapper (class in fl4health.utils.nnunet_utils)</a>
 </li>
         <li><a href="reference/api/fl4health.servers.nnunet_server.html#fl4health.servers.nnunet_server.NnunetServer">NnunetServer (class in fl4health.servers.nnunet_server)</a>
 </li>
@@ -4352,7 +4352,7 @@
         <li><a href="reference/api/fl4health.metrics.metric_managers.html#fl4health.metrics.metric_managers.MetricManager.reset">reset() (MetricManager method)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper.reset">(nnUNetDataLoaderWrapper method)</a>
+          <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper.reset">(NnUNetDataLoaderWrapper method)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.strategies.fedpm.html#fl4health.strategies.fedpm.FedPm.reset_beta_priors">reset_beta_priors() (FedPm method)</a>
@@ -4361,10 +4361,10 @@
 </li>
         <li><a href="reference/api/fl4health.utils.random.html#fl4health.utils.random.restore_random_state">restore_random_state() (in module fl4health.utils.random)</a>
 </li>
-        <li><a href="reference/api/fl4health.metrics.html#fl4health.metrics.ROC_AUC">ROC_AUC (class in fl4health.metrics)</a>
+        <li><a href="reference/api/fl4health.metrics.html#fl4health.metrics.RocAuc">RocAuc (class in fl4health.metrics)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.metrics.metrics.html#fl4health.metrics.metrics.ROC_AUC">(class in fl4health.metrics.metrics)</a>
+          <li><a href="reference/api/fl4health.metrics.metrics.html#fl4health.metrics.metrics.RocAuc">(class in fl4health.metrics.metrics)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.reporting.html#fl4health.reporting.WandBStepType.ROUND">ROUND (WandBStepType attribute)</a>, <a href="reference/api/fl4health.reporting.wandb_reporter.html#fl4health.reporting.wandb_reporter.WandBStepType.ROUND">[1]</a>
@@ -4509,6 +4509,12 @@
 </li>
         <li><a href="reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.set_data_mean">set_data_mean() (PcaModule method)</a>
 </li>
+        <li><a href="reference/api/fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextColumnTransformer.set_fit_request">set_fit_request() (TextColumnTransformer method)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextMulticolumnTransformer.set_fit_request">(TextMulticolumnTransformer method)</a>
+</li>
+        </ul></li>
         <li><a href="reference/api/fl4health.clients.ditto_client.html#fl4health.clients.ditto_client.DittoClient.set_initial_global_tensors">set_initial_global_tensors() (DittoClient method)</a>
 
         <ul>
@@ -4571,6 +4577,12 @@
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.set_principal_components">set_principal_components() (PcaModule method)</a>
 </li>
+        <li><a href="reference/api/fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextColumnTransformer.set_transform_request">set_transform_request() (TextColumnTransformer method)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextMulticolumnTransformer.set_transform_request">(TextMulticolumnTransformer method)</a>
+</li>
+        </ul></li>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.setup_client">setup_client() (BasicClient method)</a>
 
         <ul>
@@ -4642,7 +4654,7 @@
 </li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.shutdown">(NnunetClient method)</a>
 </li>
-          <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.nnUNetDataLoaderWrapper.shutdown">(nnUNetDataLoaderWrapper method)</a>
+          <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper.shutdown">(NnUNetDataLoaderWrapper method)</a>
 </li>
           <li><a href="reference/api/fl4health.reporting.reports_manager.html#fl4health.reporting.reports_manager.ReportsManager.shutdown">(ReportsManager method)</a>
 </li>
@@ -4655,7 +4667,7 @@
 </li>
         <li><a href="reference/api/fl4health.strategies.feddg_ga.html#fl4health.strategies.feddg_ga.FairnessMetricType.signal_for_type">signal_for_type() (FairnessMetricType class method)</a>
 </li>
-        <li><a href="reference/api/fl4health.strategies.feddg_ga.html#fl4health.strategies.feddg_ga.SignalForTypeException">SignalForTypeException</a>
+        <li><a href="reference/api/fl4health.strategies.feddg_ga.html#fl4health.strategies.feddg_ga.SignalForTypeError">SignalForTypeError</a>
 </li>
         <li><a href="reference/api/fl4health.metrics.html#fl4health.metrics.SimpleMetric">SimpleMetric (class in fl4health.metrics)</a>
 

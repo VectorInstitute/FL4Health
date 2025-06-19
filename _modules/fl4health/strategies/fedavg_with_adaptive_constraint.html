@@ -595,7 +595,6 @@
 <span class="sd">                aggregated using a weighted or unweighted average. These aggregated losses are used to adjust the</span>
 <span class="sd">                proximal weight in the adaptive setting. Defaults to False.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">loss_weight</span> <span class="o">=</span> <span class="n">initial_loss_weight</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">adapt_loss_weight</span> <span class="o">=</span> <span class="n">adapt_loss_weight</span>
 
@@ -708,7 +707,6 @@
 <span class="sd">            Constraint clients this should be the aggregated training loss seen by each client participating in</span>
 <span class="sd">            training.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">adapt_loss_weight</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">loss</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">previous_loss</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">loss_weight_patience_counter</span> <span class="o">+=</span> <span class="mi">1</span>

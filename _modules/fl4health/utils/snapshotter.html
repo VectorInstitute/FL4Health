@@ -504,8 +504,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">TypeVar</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.history</span><span class="w"> </span><span class="kn">import</span> <span class="n">History</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim.lr_scheduler</span><span class="w"> </span><span class="kn">import</span> <span class="n">LRScheduler</span>
 
@@ -513,13 +513,13 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.reporting.reports_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReportsManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.losses</span><span class="w"> </span><span class="kn">import</span> <span class="n">LossMeter</span>
 
+
 <span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;T&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="AbstractSnapshotter">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AbstractSnapshotter</span><span class="p">(</span><span class="n">ABC</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
-
 <div class="viewcode-block" id="AbstractSnapshotter.save_attribute">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter.save_attribute">[docs]</a>
     <span class="nd">@abstractmethod</span>
@@ -555,7 +555,6 @@
 <div class="viewcode-block" id="OptimizerSnapshotter">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.OptimizerSnapshotter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">OptimizerSnapshotter</span><span class="p">(</span><span class="n">AbstractSnapshotter</span><span class="p">[</span><span class="n">Optimizer</span><span class="p">]):</span>
-
 <div class="viewcode-block" id="OptimizerSnapshotter.save_attribute">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.OptimizerSnapshotter.save_attribute">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">save_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optimizer</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -595,7 +594,6 @@
 <div class="viewcode-block" id="LRSchedulerSnapshotter">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.LRSchedulerSnapshotter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">LRSchedulerSnapshotter</span><span class="p">(</span><span class="n">AbstractSnapshotter</span><span class="p">[</span><span class="n">LRScheduler</span><span class="p">]):</span>
-
 <div class="viewcode-block" id="LRSchedulerSnapshotter.save_attribute">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.LRSchedulerSnapshotter.save_attribute">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">save_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">LRScheduler</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -633,7 +631,6 @@
 <div class="viewcode-block" id="TorchModuleSnapshotter">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.TorchModuleSnapshotter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TorchModuleSnapshotter</span><span class="p">(</span><span class="n">AbstractSnapshotter</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">]):</span>
-
 <div class="viewcode-block" id="TorchModuleSnapshotter.save_attribute">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.TorchModuleSnapshotter.save_attribute">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">save_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -809,7 +806,6 @@
 <div class="viewcode-block" id="BytesSnapshotter">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.BytesSnapshotter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BytesSnapshotter</span><span class="p">(</span><span class="n">AbstractSnapshotter</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]):</span>
-
 <div class="viewcode-block" id="BytesSnapshotter.save_attribute">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.BytesSnapshotter.save_attribute">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">save_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -844,7 +840,6 @@
 <div class="viewcode-block" id="EnumSnapshotter">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.EnumSnapshotter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">EnumSnapshotter</span><span class="p">(</span><span class="n">AbstractSnapshotter</span><span class="p">[</span><span class="n">Enum</span><span class="p">]):</span>
-
 <div class="viewcode-block" id="EnumSnapshotter.save_attribute">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.EnumSnapshotter.save_attribute">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">save_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>

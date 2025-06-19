@@ -535,7 +535,7 @@
 <dt class="sig sig-object py" id="fl4health.privacy.fl_accountants.FlClientLevelAccountantFixedSamplingNoReplacement.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_total_clients</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_clients_sampled</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_multiplier</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">moment_orders</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/fl_accountants.html#FlClientLevelAccountantFixedSamplingNoReplacement.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.fl_accountants.FlClientLevelAccountantFixedSamplingNoReplacement.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>This accountant should be used when applying FL with Fixed Sampling with No Replacement and measuring
-client-level privacy</p>
+client-level privacy.</p>
 <p><strong>NOTE</strong>: The above values can be lists, where they are treated as sequences of training with the respective
 parameters</p>
 <dl class="field-list simple">
@@ -554,7 +554,7 @@ epsilon value. Defaults to None. Defaults to None.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.privacy.fl_accountants.FlClientLevelAccountantFixedSamplingNoReplacement.get_delta">
 <span class="sig-name descname"><span class="pre">get_delta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server_updates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/fl_accountants.html#FlClientLevelAccountantFixedSamplingNoReplacement.get_delta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.fl_accountants.FlClientLevelAccountantFixedSamplingNoReplacement.get_delta" title="Link to this definition">¶</a></dt>
-<dd><p>Compute the delta value for the provided epsilon and the number of server updates performed</p>
+<dd><p>Compute the delta value for the provided epsilon and the number of server updates performed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -574,7 +574,7 @@ epsilon value. Defaults to None. Defaults to None.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.privacy.fl_accountants.FlClientLevelAccountantFixedSamplingNoReplacement.get_epsilon">
 <span class="sig-name descname"><span class="pre">get_epsilon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server_updates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/fl_accountants.html#FlClientLevelAccountantFixedSamplingNoReplacement.get_epsilon"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.fl_accountants.FlClientLevelAccountantFixedSamplingNoReplacement.get_epsilon" title="Link to this definition">¶</a></dt>
-<dd><p>Compute the epsilon value for the provided delta and the number of server updates performed</p>
+<dd><p>Compute the epsilon value for the provided delta and the number of server updates performed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -600,7 +600,8 @@ epsilon value. Defaults to None. Defaults to None.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.privacy.fl_accountants.FlClientLevelAccountantPoissonSampling.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client_sampling_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_multiplier</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">moment_orders</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/fl_accountants.html#FlClientLevelAccountantPoissonSampling.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.fl_accountants.FlClientLevelAccountantPoissonSampling.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>This accountant should be used when applying FL with Poisson client sampling and measuring client-level privacy</p>
+<dd><p>This accountant should be used when applying FL with Poisson client sampling and measuring client-level
+privacy.</p>
 <p><strong>NOTE</strong>: The above values can be lists, where they are treated as sequences of training with the respective
 parameters</p>
 <dl class="field-list simple">
@@ -618,7 +619,7 @@ epsilon value. Defaults to None. Defaults to None.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.privacy.fl_accountants.FlClientLevelAccountantPoissonSampling.get_delta">
 <span class="sig-name descname"><span class="pre">get_delta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server_updates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/fl_accountants.html#FlClientLevelAccountantPoissonSampling.get_delta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.fl_accountants.FlClientLevelAccountantPoissonSampling.get_delta" title="Link to this definition">¶</a></dt>
-<dd><p>Compute the delta value for the provided epsilon and the number of server updates performed</p>
+<dd><p>Compute the delta value for the provided epsilon and the number of server updates performed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -638,7 +639,7 @@ epsilon value. Defaults to None. Defaults to None.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.privacy.fl_accountants.FlClientLevelAccountantPoissonSampling.get_epsilon">
 <span class="sig-name descname"><span class="pre">get_epsilon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server_updates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/fl_accountants.html#FlClientLevelAccountantPoissonSampling.get_epsilon"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.fl_accountants.FlClientLevelAccountantPoissonSampling.get_epsilon" title="Link to this definition">¶</a></dt>
-<dd><p>Compute the epsilon value for the provided delta and the number of server updates performed</p>
+<dd><p>Compute the epsilon value for the provided delta and the number of server updates performed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -664,7 +665,7 @@ epsilon value. Defaults to None. Defaults to None.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.privacy.fl_accountants.FlInstanceLevelAccountant.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client_sampling_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">noise_multiplier</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs_per_round</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_batch_sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_dataset_sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">moment_orders</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/fl_accountants.html#FlInstanceLevelAccountant.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.fl_accountants.FlInstanceLevelAccountant.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>This accountant should be used when applying FL and measuring instance-level privacy</p>
+<dd><p>This accountant should be used when applying FL and measuring instance-level privacy.</p>
 <p><strong>NOTE</strong>: This class assumes that all sampling is done via Poisson sampling (client and data point level).
 Further it assumes that the sampling ratio of clients and noise multiplier are fixed throughout training</p>
 <dl class="field-list simple">
@@ -687,7 +688,7 @@ epsilon value. Defaults to None.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.privacy.fl_accountants.FlInstanceLevelAccountant.get_delta">
 <span class="sig-name descname"><span class="pre">get_delta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server_updates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/fl_accountants.html#FlInstanceLevelAccountant.get_delta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.fl_accountants.FlInstanceLevelAccountant.get_delta" title="Link to this definition">¶</a></dt>
-<dd><p>Compute the delta value for the provided epsilon and the number of server updates performed</p>
+<dd><p>Compute the delta value for the provided epsilon and the number of server updates performed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -707,7 +708,7 @@ epsilon value. Defaults to None.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.privacy.fl_accountants.FlInstanceLevelAccountant.get_epsilon">
 <span class="sig-name descname"><span class="pre">get_epsilon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server_updates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/fl_accountants.html#FlInstanceLevelAccountant.get_epsilon"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.fl_accountants.FlInstanceLevelAccountant.get_epsilon" title="Link to this definition">¶</a></dt>
-<dd><p>Compute the epsilon value for the provided delta and the number of server updates performed</p>
+<dd><p>Compute the epsilon value for the provided delta and the number of server updates performed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

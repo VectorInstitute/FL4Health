@@ -564,7 +564,7 @@
         <span class="n">mask_1</span> <span class="o">=</span> <span class="nb">input</span> <span class="o">&gt;</span> <span class="n">threshold</span>
         <span class="n">thresholded_tensor</span><span class="p">[</span><span class="n">mask_1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="n">thresholded_tensor</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">threshold</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">threshold</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
         <span class="c1"># Use argmax to get predicted class labels (hard_preds) and the one-hot-encode them.</span>
         <span class="k">if</span> <span class="n">threshold</span> <span class="o">&gt;=</span> <span class="nb">input</span><span class="o">.</span><span class="n">ndim</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -575,8 +575,7 @@
         <span class="nb">input</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
         <span class="nb">input</span><span class="o">.</span><span class="n">scatter_</span><span class="p">(</span><span class="n">threshold</span><span class="p">,</span> <span class="n">hard_input</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">input</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Was expecting threshold argument to be either a float or an int. Got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">threshold</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Was expecting threshold argument to be either a float or an int. Got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">threshold</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 </pre></div>
         </article>

@@ -541,7 +541,7 @@ name. Defaults to None.</p></li>
 <dt class="sig sig-object py" id="fl4health.clients.flash_client.FlashClient.process_config">
 <span class="sig-name descname"><span class="pre">process_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/flash_client.html#FlashClient.process_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.flash_client.FlashClient.process_config" title="Link to this definition">¶</a></dt>
 <dd><p>Performs the necessary processing of the config from the server. FLASH is not defined for step-wise training.
-So this method straps on a check to ensure that we aren’t trying to do step-wise training</p>
+So this method straps on a check to ensure that we aren’t trying to do step-wise training.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – The config object from the server.</p>
@@ -563,8 +563,8 @@ So this method straps on a check to ensure that we aren’t trying to do step-wi
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.flash_client.FlashClient.setup_client">
 <span class="sig-name descname"><span class="pre">setup_client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/flash_client.html#FlashClient.setup_client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.flash_client.FlashClient.setup_client" title="Link to this definition">¶</a></dt>
-<dd><p>Follows the same flow as BasicClient for setting up the client. This function simply performs an additional
-step to process whether the gamma parameter is in the configuration</p>
+<dd><p>Follows the same flow as <code class="docutils literal notranslate"><span class="pre">BasicClient</span></code> for setting up the client. This function simply performs an additional
+step to process whether the gamma parameter is in the configuration.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – The config object from the server.</p>

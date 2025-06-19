@@ -502,7 +502,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 
 
 <div class="viewcode-block" id="AbstractAe">
@@ -572,8 +572,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: Encoding associated with the input tensor.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">latent_vector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">latent_vector</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="BasicAe.decode">
@@ -588,8 +587,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: Decoded tensor.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decoder</span><span class="p">(</span><span class="n">latent_vector</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">output</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">decoder</span><span class="p">(</span><span class="n">latent_vector</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="BasicAe.forward">
@@ -621,7 +619,8 @@
         <span class="n">encoder</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
         <span class="n">decoder</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Variational Auto-Encoder model base class.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Variational Auto-Encoder model base class.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            encoder (nn.Module): Encoder module defined by the user.</span>
@@ -668,8 +667,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: Decoding from the latent vector</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decoder</span><span class="p">(</span><span class="n">latent_vector</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">output</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">decoder</span><span class="p">(</span><span class="n">latent_vector</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="VariationalAe.sampling">
@@ -677,7 +675,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">logvar</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Sampling using the reparameterization trick to make the VAE differentiable. This sampling produces a vector</span>
-<span class="sd">        as if it were sampled from :math:`\\mathcal{N}\\left(\\mu, \\exp(0.5 \\cdot \\text{logvar}) I \\right)`</span>
+<span class="sd">        as if it were sampled from :math:`\\mathcal{N}\\left(\\mu, \\exp(0.5 \\cdot \\text{logvar}) I \\right)`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            mu (torch.Tensor): Mean of the normal distribution from which to sample.</span>
@@ -718,14 +716,14 @@
         <span class="n">decoder</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
         <span class="n">unpack_input_condition</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Conditional Variational Auto-Encoder model.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Conditional Variational Auto-Encoder model.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            encoder (nn.Module): The encoder used to map input to latent space.</span>
 <span class="sd">            decoder (nn.Module): The decoder used to reconstruct the input using a vector in latent space.</span>
 <span class="sd">            unpack_input_condition (Callable | None, optional): For unpacking the input and condition tensors.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">encoder</span><span class="p">,</span> <span class="n">decoder</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">unpack_input_condition</span> <span class="o">=</span> <span class="n">unpack_input_condition</span></div>
 
@@ -745,7 +743,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple[torch.Tensor, torch.Tensor]: mu and logvar, similar to the variational auto-encoder.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">condition</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span></div>
 
@@ -772,9 +769,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: Decoded tensor from the latent vector and (potentially) the conditioning vector.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decoder</span><span class="p">(</span><span class="n">latent_vector</span><span class="p">,</span> <span class="n">condition</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">output</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">decoder</span><span class="p">(</span><span class="n">latent_vector</span><span class="p">,</span> <span class="n">condition</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ConditionalVae.sampling">
@@ -782,7 +777,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">logvar</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Sampling using the reparameterization trick to make the CVAE differentiable. This sampling produces a vector</span>
-<span class="sd">        as if it were sampled from :math:`\\mathcal{N}\\left(\\mu, \\exp(0.5 \\cdot \\text{logvar}) I \\right)`</span>
+<span class="sd">        as if it were sampled from :math:`\\mathcal{N}\\left(\\mu, \\exp(0.5 \\cdot \\text{logvar}) I \\right)`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            mu (torch.Tensor): Mean of the normal distribution from which to sample.</span>

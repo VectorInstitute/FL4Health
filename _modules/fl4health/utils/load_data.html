@@ -506,15 +506,16 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torchvision.transforms</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">transforms</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchvision</span><span class="w"> </span><span class="kn">import</span> <span class="n">transforms</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchvision.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">CIFAR10</span><span class="p">,</span> <span class="n">MNIST</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">TensorDataset</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.dataset_converter</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetConverter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.msd_dataset_sources</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_msd_dataset_enum</span><span class="p">,</span> <span class="n">msd_md5_hashes</span><span class="p">,</span> <span class="n">msd_urls</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.sampler</span><span class="w"> </span><span class="kn">import</span> <span class="n">LabelBasedSampler</span>
+
 
 <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
     <span class="c1"># ignoring some annoying scipy deprecation warnings</span>
@@ -535,7 +536,6 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">split_data_and_targets</span><span class="p">(</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">targets</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">validation_proportion</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">hash_key</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
-
     <span class="n">total_size</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">train_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">total_size</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">validation_proportion</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">hash_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>

@@ -576,7 +576,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">process_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Performs the necessary processing of the config from the server. FLASH is not defined for step-wise training.</span>
-<span class="sd">        So this method straps on a check to ensure that we aren&#39;t trying to do step-wise training</span>
+<span class="sd">        So this method straps on a check to ensure that we aren&#39;t trying to do step-wise training.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (Config): The config object from the server.</span>
@@ -675,8 +675,8 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.flash_client.html#fl4health.clients.flash_client.FlashClient.setup_client">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">setup_client</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Follows the same flow as BasicClient for setting up the client. This function simply performs an additional</span>
-<span class="sd">        step to process whether the gamma parameter is in the configuration</span>
+<span class="sd">        Follows the same flow as ``BasicClient`` for setting up the client. This function simply performs an additional</span>
+<span class="sd">        step to process whether the gamma parameter is in the configuration.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (Config): The config object from the server.</span>

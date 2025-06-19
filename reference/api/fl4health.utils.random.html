@@ -558,7 +558,8 @@ generators for Python, NumPy, and PyTorch.</p>
 <dt class="sig sig-object py" id="fl4health.utils.random.set_all_random_seeds">
 <span class="sig-name descname"><span class="pre">set_all_random_seeds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_deterministic_torch_algos</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disable_torch_benchmarking</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/random.html#set_all_random_seeds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.random.set_all_random_seeds" title="Link to this definition">¶</a></dt>
 <dd><p>Set seeds for python random, numpy random, and pytorch random. It also offers the option to force pytorch to use
-deterministic algorithm for certain methods and layers see:</p>
+deterministic algorithm for certain methods and layers.</p>
+<p>See:</p>
 <p><a class="reference external" href="https://pytorch.org/docs/stable/generated/torch.use_deterministic_algorithms.html">https://pytorch.org/docs/stable/generated/torch.use_deterministic_algorithms.html</a>)</p>
 <p>for more details. Finally, it allows one to disable cuda benchmarking, which can also affect the determinism of
 pytorch training outside of random seeding. For more information on reproducibility in pytorch see:</p>

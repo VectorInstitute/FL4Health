@@ -502,7 +502,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 
 
 <div class="viewcode-block" id="ParallelFeatureJoinMode">
@@ -521,7 +521,7 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="n">ParallelFeatureJoinMode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This is a head module to be used as part of ``ParallelSplitModel`` type models. This module is responsible for</span>
-<span class="sd">        merging inputs from two parallel feature extractors and acting on those inputs to produce a prediction</span>
+<span class="sd">        merging inputs from two parallel feature extractors and acting on those inputs to produce a prediction.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            mode (ParallelFeatureJoinMode): This determines **HOW** the head module is meant to combine the features</span>
@@ -538,7 +538,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">parallel_output_join</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">local_tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">global_tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Defines how the local and global feature tensors that are output by the preceding parallel feature extractors</span>
-<span class="sd">        are meant to be joined together when the ``self.mode`` is set to ``ParallelFeatureJoinMode.CONCATENATE``</span>
+<span class="sd">        are meant to be joined together when the ``self.mode`` is set to ``ParallelFeatureJoinMode.CONCATENATE``.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            local_tensor (torch.Tensor): First tensor to be joined</span>
@@ -632,7 +632,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Composite forward function. The input tensor is first passed through the two parallel feature extractors and</span>
 <span class="sd">        then finally through the head model. The outputs and joining mechanism defined in the head model need to</span>
-<span class="sd">        be compatible with the head model input itself. This is left to the user to handle</span>
+<span class="sd">        be compatible with the head model input itself. This is left to the user to handle.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            input (torch.Tensor): Input tensor to be passed through the set of forwards.</span>

@@ -511,7 +511,7 @@
 <div class="viewcode-block" id="FixedSamplingByFractionClientManager">
 <a class="viewcode-back" href="../../../reference/api/fl4health.client_managers.fixed_without_replacement_manager.html#fl4health.client_managers.fixed_without_replacement_manager.FixedSamplingByFractionClientManager">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FixedSamplingByFractionClientManager</span><span class="p">(</span><span class="n">BaseFractionSamplingManager</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Overrides the Simple Client Manager to provide Fixed Sampling without replacement for Clients by fraction&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Overrides the Simple Client Manager to provide Fixed Sampling without replacement for Clients by fraction.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="FixedSamplingByFractionClientManager.sample_fraction">
 <a class="viewcode-back" href="../../../reference/api/fl4health.client_managers.fixed_without_replacement_manager.html#fl4health.client_managers.fixed_without_replacement_manager.FixedSamplingByFractionClientManager.sample_fraction">[docs]</a>
@@ -535,7 +535,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            list[ClientProxy]: List of ClientProxy objects representing the selected clients.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">available_cids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_and_filter</span><span class="p">(</span><span class="n">min_num_clients</span><span class="p">,</span> <span class="n">criterion</span><span class="p">)</span>
         <span class="n">n_available_cids</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">available_cids</span><span class="p">)</span>
         <span class="n">num_to_sample</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sample_fraction</span> <span class="o">*</span> <span class="n">n_available_cids</span><span class="p">)</span>

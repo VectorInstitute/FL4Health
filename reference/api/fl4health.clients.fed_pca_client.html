@@ -546,8 +546,8 @@ validation/test set and the <code class="docutils literal notranslate"><span cla
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.fed_pca_client.FedPCAClient.fit">
 <span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/fed_pca_client.html#FedPCAClient.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.fed_pca_client.FedPCAClient.fit" title="Link to this definition">¶</a></dt>
-<dd><p>Function to perform the local side of FedPCA. We don’t use any parameters sent by the server. Hence
-<code class="docutils literal notranslate"><span class="pre">parameters</span></code> is ignored. We need only the <code class="docutils literal notranslate"><span class="pre">train_data_tensor</span></code> to do the work</p>
+<dd><p>Function to perform the local side of <code class="docutils literal notranslate"><span class="pre">FedPCA</span></code>. We don’t use any parameters sent by the server. Hence
+<code class="docutils literal notranslate"><span class="pre">parameters</span></code> is ignored. We need only the <code class="docutils literal notranslate"><span class="pre">train_data_tensor</span></code> to do the work.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -585,7 +585,7 @@ with the number of samples in the local training dataset and the computed metric
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.fed_pca_client.FedPCAClient.get_data_loaders">
 <span class="sig-name descname"><span class="pre">get_data_loaders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/fed_pca_client.html#FedPCAClient.get_data_loaders"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.fed_pca_client.FedPCAClient.get_data_loaders" title="Link to this definition">¶</a></dt>
-<dd><p>User defined method that returns a PyTorch Train DataLoader and a PyTorch Validation DataLoader</p>
+<dd><p>User defined method that returns a PyTorch Train DataLoader and a PyTorch Validation DataLoader.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – Configurations sent by the server to allow for customization of this functions behavior.</p>
@@ -626,7 +626,7 @@ representing all of the data in the loader.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.fed_pca_client.FedPCAClient.get_model">
 <span class="sig-name descname"><span class="pre">get_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/fed_pca_client.html#FedPCAClient.get_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.fed_pca_client.FedPCAClient.get_model" title="Link to this definition">¶</a></dt>
-<dd><p>Returns an instance of the <code class="docutils literal notranslate"><span class="pre">PCAModule</span></code>. This module is used to facilitate FedPCA training on the client side</p>
+<dd><p>Returns an instance of the <code class="docutils literal notranslate"><span class="pre">PCAModule</span></code>. This module is used to facilitate FedPCA training on the client side.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – Configurations sent by the server to allow for customization of this functions behavior.</p>
@@ -644,7 +644,7 @@ representing all of the data in the loader.</p>
 <dt class="sig sig-object py" id="fl4health.clients.fed_pca_client.FedPCAClient.get_parameters">
 <span class="sig-name descname"><span class="pre">get_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/fed_pca_client.html#FedPCAClient.get_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.fed_pca_client.FedPCAClient.get_parameters" title="Link to this definition">¶</a></dt>
 <dd><p>Sends all of the model components back to the server. The model in this case represents the principal
-components that have been computed</p>
+components that have been computed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – Configurations to allow for customization of this functions behavior</p>
@@ -694,7 +694,7 @@ that FedPCA only runs for one round.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.fed_pca_client.FedPCAClient.setup_client">
 <span class="sig-name descname"><span class="pre">setup_client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/fed_pca_client.html#FedPCAClient.setup_client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.fed_pca_client.FedPCAClient.setup_client" title="Link to this definition">¶</a></dt>
-<dd><p>Used to setup all of the components necessary to run FedPCA</p>
+<dd><p>Used to setup all of the components necessary to run <code class="docutils literal notranslate"><span class="pre">FedPCA</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – Configurations sent by the server to allow for customization of this functions behavior.</p>

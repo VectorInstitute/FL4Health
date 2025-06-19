@@ -566,7 +566,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArrays</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Sends all of the model components back to the server. The model in this case represents the principal</span>
-<span class="sd">        components that have been computed</span>
+<span class="sd">        components that have been computed.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (Config): Configurations to allow for customization of this functions behavior</span>
@@ -584,9 +584,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">setup_client</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
             <span class="c1"># Need all parameters even if normally exchanging partial</span>
             <span class="k">return</span> <span class="n">FullParameterExchanger</span><span class="p">()</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span></div>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="FedPCAClient.set_parameters">
@@ -610,7 +609,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.fed_pca_client.html#fl4health.clients.fed_pca_client.FedPCAClient.get_data_loaders">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_data_loaders</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">DataLoader</span><span class="p">,</span> <span class="n">DataLoader</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        User defined method that returns a PyTorch Train DataLoader and a PyTorch Validation DataLoader</span>
+<span class="sd">        User defined method that returns a PyTorch Train DataLoader and a PyTorch Validation DataLoader.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (Config): Configurations sent by the server to allow for customization of this functions behavior.</span>
@@ -628,7 +627,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.fed_pca_client.html#fl4health.clients.fed_pca_client.FedPCAClient.get_model">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PcaModule</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Returns an instance of the ``PCAModule``. This module is used to facilitate FedPCA training on the client side</span>
+<span class="sd">        Returns an instance of the ``PCAModule``. This module is used to facilitate FedPCA training on the client side.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (Config): Configurations sent by the server to allow for customization of this functions behavior.</span>
@@ -646,7 +645,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.fed_pca_client.html#fl4health.clients.fed_pca_client.FedPCAClient.setup_client">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">setup_client</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Used to setup all of the components necessary to run FedPCA</span>
+<span class="sd">        Used to setup all of the components necessary to run ``FedPCA``.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (Config): Configurations sent by the server to allow for customization of this functions behavior.</span>
@@ -689,8 +688,8 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.fed_pca_client.html#fl4health.clients.fed_pca_client.FedPCAClient.fit">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="n">NDArrays</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">NDArrays</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Function to perform the local side of FedPCA. We don&#39;t use any parameters sent by the server. Hence</span>
-<span class="sd">        ``parameters`` is ignored. We need only the ``train_data_tensor`` to do the work</span>
+<span class="sd">        Function to perform the local side of ``FedPCA``. We don&#39;t use any parameters sent by the server. Hence</span>
+<span class="sd">        ``parameters`` is ignored. We need only the ``train_data_tensor`` to do the work.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            parameters (NDArrays): ignored</span>
@@ -735,7 +734,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">set_data_mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">maybe_reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_data_tensor</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">parameters</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
         <span class="n">num_components_eval</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">narrow_dict_type</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;num_components_eval&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">if</span> <span class="s2">&quot;num_components_eval&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">narrow_dict_type</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;num_components_eval&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">if</span> <span class="s2">&quot;num_components_eval&quot;</span> <span class="ow">in</span> <span class="n">config</span> <span class="k">else</span> <span class="kc">None</span>
         <span class="p">)</span>
         <span class="n">val_data_tensor_prepared</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">center_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">maybe_reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">val_data_tensor</span><span class="p">))</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">device</span>

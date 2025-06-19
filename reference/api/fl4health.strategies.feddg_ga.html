@@ -530,7 +530,7 @@ Mandatory if <code class="docutils literal notranslate"><span class="pre">metric
 <dt class="sig sig-object py" id="fl4health.strategies.feddg_ga.FairnessMetricType">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">FairnessMetricType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/strategies/feddg_ga.html#FairnessMetricType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.strategies.feddg_ga.FairnessMetricType" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.10/library/enum.html#enum.Enum" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></a></p>
-<p>Defines the basic types for fairness metrics, their default names and their default signals</p>
+<p>Defines the basic types for fairness metrics, their default names and their default signals.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="fl4health.strategies.feddg_ga.FairnessMetricType.ACCURACY">
 <span class="sig-name descname"><span class="pre">ACCURACY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'val</span> <span class="pre">-</span> <span class="pre">prediction</span> <span class="pre">-</span> <span class="pre">accuracy'</span></em><a class="headerlink" href="#fl4health.strategies.feddg_ga.FairnessMetricType.ACCURACY" title="Link to this definition">¶</a></dt>
@@ -555,7 +555,7 @@ Mandatory if <code class="docutils literal notranslate"><span class="pre">metric
 <dd class="field-odd"><p><strong>fairness_metric_type</strong> (<a class="reference internal" href="#fl4health.strategies.feddg_ga.FairnessMetricType" title="fl4health.strategies.feddg_ga.FairnessMetricType"><em>FairnessMetricType</em></a>) – the fairness metric type.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference internal" href="#fl4health.strategies.feddg_ga.SignalForTypeException" title="fl4health.strategies.feddg_ga.SignalForTypeException"><strong>SignalForTypeException</strong></a> – if type is <code class="docutils literal notranslate"><span class="pre">CUSTOM</span></code> as the signal has to be defined by the user.</p>
+<dd class="field-even"><p><strong>SignalForTypeException</strong> – if type is <code class="docutils literal notranslate"><span class="pre">CUSTOM</span></code> as the signal has to be defined by the user.</p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>-1.0 if <code class="docutils literal notranslate"><span class="pre">FairnessMetricType.ACCURACY</span></code> or 1.0 if <code class="docutils literal notranslate"><span class="pre">FairnessMetricType.LOSS</span></code>.</p>
@@ -750,8 +750,8 @@ round, fit and evaluation metrics.</p>
 </dd></dl>
 
 <dl class="py exception">
-<dt class="sig sig-object py" id="fl4health.strategies.feddg_ga.SignalForTypeException">
-<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SignalForTypeException</span></span><a class="reference internal" href="../../_modules/fl4health/strategies/feddg_ga.html#SignalForTypeException"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.strategies.feddg_ga.SignalForTypeException" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="fl4health.strategies.feddg_ga.SignalForTypeError">
+<em class="property"><span class="pre">exception</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SignalForTypeError</span></span><a class="reference internal" href="../../_modules/fl4health/strategies/feddg_ga.html#SignalForTypeError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.strategies.feddg_ga.SignalForTypeError" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#Exception" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></a></p>
 <p>Thrown when there is an error in <code class="docutils literal notranslate"><span class="pre">signal_for_type</span></code> function.</p>
 </dd></dl>
@@ -853,7 +853,7 @@ round, fit and evaluation metrics.</p>
 <li><a class="reference internal" href="#fl4health.strategies.feddg_ga.FedDgGa.weight_and_aggregate_results"><code class="docutils literal notranslate"><span class="pre">FedDgGa.weight_and_aggregate_results()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#fl4health.strategies.feddg_ga.SignalForTypeException"><code class="docutils literal notranslate"><span class="pre">SignalForTypeException</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.strategies.feddg_ga.SignalForTypeError"><code class="docutils literal notranslate"><span class="pre">SignalForTypeError</span></code></a></li>
 </ul>
 </li>
 </ul>

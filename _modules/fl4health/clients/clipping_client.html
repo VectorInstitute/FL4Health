@@ -579,7 +579,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">calculate_parameters_norm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="n">NDArrays</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given a set of parameters, compute the l2-norm of the parameters. This is a matrix norm: squared sum of all of</span>
-<span class="sd">        the weights</span>
+<span class="sd">        the weights.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            parameters (NDArrays): Tensor to measure with the norm</span>
@@ -596,7 +596,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.clipping_client.html#fl4health.clients.clipping_client.NumpyClippingClient.clip_parameters">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clip_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="n">NDArrays</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">NDArrays</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Performs &quot;flat clipping&quot; on the parameters according to</span>
+<span class="sd">        Performs &quot;flat clipping&quot; on the parameters as follows.</span>
 
 <span class="sd">        .. math::</span>
 <span class="sd">            \\text{parameters} \\cdot \\min \\left(1, \\frac{C}{\\Vert \\text{parameters} \\Vert_2} \\right)</span>
@@ -627,7 +627,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.clipping_client.html#fl4health.clients.clipping_client.NumpyClippingClient.compute_weight_update_and_clip">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_weight_update_and_clip</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="n">NDArrays</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">NDArrays</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute the weight delta (i.e. new weights - old weights) and clip according to `self.clipping_bound`</span>
+<span class="sd">        Compute the weight delta (i.e. new weights - old weights) and clip according to `self.clipping_bound`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            parameters (NDArrays): Updated parameters to compute the delta from and clip thereafter</span>
@@ -650,7 +650,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">get_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArrays</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This function performs clipping through ``compute_weight_update_and_clip`` and stores the clipping bit</span>
-<span class="sd">        as the last entry in the NDArrays</span>
+<span class="sd">        as the last entry in the NDArrays.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span><span class="p">:</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Setting up client and providing full model parameters to the server for initialization&quot;</span><span class="p">)</span>
@@ -661,11 +661,10 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">setup_client</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
             <span class="c1"># Need all parameters even if normally exchanging partial</span>
             <span class="k">return</span> <span class="n">FullParameterExchanger</span><span class="p">()</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="n">model_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
-            <span class="n">clipped_weight_update</span><span class="p">,</span> <span class="n">clipping_bit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_weight_update_and_clip</span><span class="p">(</span><span class="n">model_weights</span><span class="p">)</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">pack_parameters</span><span class="p">(</span><span class="n">clipped_weight_update</span><span class="p">,</span> <span class="n">clipping_bit</span><span class="p">)</span></div>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">model_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">clipped_weight_update</span><span class="p">,</span> <span class="n">clipping_bit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_weight_update_and_clip</span><span class="p">(</span><span class="n">model_weights</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">pack_parameters</span><span class="p">(</span><span class="n">clipped_weight_update</span><span class="p">,</span> <span class="n">clipping_bit</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="NumpyClippingClient.set_parameters">
@@ -709,8 +708,7 @@
 <div class="viewcode-block" id="NumpyClippingClient.get_parameter_exchanger">
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.clipping_client.html#fl4health.clients.clipping_client.NumpyClippingClient.get_parameter_exchanger">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter_exchanger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ParameterExchanger</span><span class="p">:</span>
-        <span class="n">parameter_exchanger</span> <span class="o">=</span> <span class="n">FullParameterExchangerWithPacking</span><span class="p">(</span><span class="n">ParameterPackerWithClippingBit</span><span class="p">())</span>
-        <span class="k">return</span> <span class="n">parameter_exchanger</span></div>
+        <span class="k">return</span> <span class="n">FullParameterExchangerWithPacking</span><span class="p">(</span><span class="n">ParameterPackerWithClippingBit</span><span class="p">())</span></div>
 
 
 <div class="viewcode-block" id="NumpyClippingClient.setup_client">

@@ -532,14 +532,13 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">tabular_type</span> <span class="ow">is</span> <span class="n">TabularType</span><span class="o">.</span><span class="n">NUMERIC</span><span class="p">:</span>
             <span class="k">return</span> <span class="mf">0.0</span>
-        <span class="k">elif</span> <span class="n">tabular_type</span> <span class="ow">is</span> <span class="n">TabularType</span><span class="o">.</span><span class="n">BINARY</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">tabular_type</span> <span class="ow">is</span> <span class="n">TabularType</span><span class="o">.</span><span class="n">BINARY</span><span class="p">:</span>
             <span class="k">return</span> <span class="mi">0</span>
-        <span class="k">elif</span> <span class="n">tabular_type</span> <span class="ow">is</span> <span class="n">TabularType</span><span class="o">.</span><span class="n">STRING</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">tabular_type</span> <span class="ow">is</span> <span class="n">TabularType</span><span class="o">.</span><span class="n">STRING</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;N/A&quot;</span>
-        <span class="k">elif</span> <span class="n">tabular_type</span> <span class="ow">is</span> <span class="n">TabularType</span><span class="o">.</span><span class="n">ORDINAL</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">tabular_type</span> <span class="ow">is</span> <span class="n">TabularType</span><span class="o">.</span><span class="n">ORDINAL</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;UNKNOWN&quot;</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid Tabular Data Type.&quot;</span><span class="p">)</span></div>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid Tabular Data Type.&quot;</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

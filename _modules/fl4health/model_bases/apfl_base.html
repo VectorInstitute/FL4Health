@@ -501,7 +501,7 @@
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.model_bases.partial_layer_exchange_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">PartialLayerExchangeModel</span>
 
@@ -544,7 +544,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.model_bases.apfl_base.html#fl4health.model_bases.apfl_base.ApflModule.global_forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">global_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Forward function that runs the input tensor through the **GLOBAL** model only</span>
+<span class="sd">        Forward function that runs the input tensor through the **GLOBAL** model only.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            input (torch.Tensor): tensor to be run through the global model</span>
@@ -559,7 +559,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.model_bases.apfl_base.html#fl4health.model_bases.apfl_base.ApflModule.local_forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">local_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Forward function that runs the input tensor through the **LOCAL** model only</span>
+<span class="sd">        Forward function that runs the input tensor through the **LOCAL** model only.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            input (torch.Tensor): tensor to be run through the local model</span>
@@ -575,7 +575,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Forward function for the full APFL model. This includes mixing of the global and local model predictions using</span>
-<span class="sd">        :math:`\\alpha`. The predictions are combined as</span>
+<span class="sd">        :math:`\\alpha`. The predictions are combined as follows.</span>
 
 <span class="sd">        .. math::</span>
 <span class="sd">            \\alpha \\cdot \\text{local_logits} + (1.0 - \\alpha) \\cdot \\text{global_logits}</span>
@@ -592,8 +592,7 @@
         <span class="n">global_logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_forward</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
         <span class="n">local_logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_forward</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
         <span class="n">personal_logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">local_logits</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">global_logits</span>
-        <span class="n">preds</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;personal&quot;</span><span class="p">:</span> <span class="n">personal_logits</span><span class="p">,</span> <span class="s2">&quot;global&quot;</span><span class="p">:</span> <span class="n">global_logits</span><span class="p">,</span> <span class="s2">&quot;local&quot;</span><span class="p">:</span> <span class="n">local_logits</span><span class="p">}</span>
-        <span class="k">return</span> <span class="n">preds</span></div>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;personal&quot;</span><span class="p">:</span> <span class="n">personal_logits</span><span class="p">,</span> <span class="s2">&quot;global&quot;</span><span class="p">:</span> <span class="n">global_logits</span><span class="p">,</span> <span class="s2">&quot;local&quot;</span><span class="p">:</span> <span class="n">local_logits</span><span class="p">}</span></div>
 
 
 <div class="viewcode-block" id="ApflModule.update_alpha">
@@ -646,9 +645,7 @@
 <span class="sd">            list[str]: Names of layers associated with the global model. These correspond to the layer names in the</span>
 <span class="sd">            state dictionary of this entire module.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">layers_to_exchange</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">layer</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">layer</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;global_model.&quot;</span><span class="p">)</span>
-        <span class="p">]</span>
+        <span class="n">layers_to_exchange</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">layer</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span> <span class="k">if</span> <span class="n">layer</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;global_model.&quot;</span><span class="p">)]</span>
         <span class="k">return</span> <span class="n">layers_to_exchange</span></div>
 </div>
 

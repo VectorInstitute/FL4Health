@@ -606,7 +606,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">local_epochs</span> <span class="o">=</span> <span class="n">local_epochs</span>
 
         <span class="c1"># Whether or not we have to convert local_steps to local_epochs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">convert_steps_to_epochs</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_epochs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">convert_steps_to_epochs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_epochs</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">noise_multiplier</span> <span class="o">=</span> <span class="n">noise_multiplier</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">num_server_rounds</span> <span class="o">=</span> <span class="n">num_server_rounds</span>
@@ -629,7 +629,6 @@
 <span class="sd">            training results, including things like aggregated loss and metrics. Tuple also includes elapsed time in</span>
 <span class="sd">            seconds for round.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="p">,</span> <span class="n">StrategyWithPolling</span><span class="p">)</span>
         <span class="n">sample_counts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">poll_clients_for_sample_counts</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">setup_privacy_accountant</span><span class="p">(</span><span class="n">sample_counts</span><span class="p">)</span>

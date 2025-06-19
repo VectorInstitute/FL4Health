@@ -581,7 +581,7 @@ number of samples in the local training dataset and the computed metrics through
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.evaluate_client.EvaluateClient.get_data_loader">
 <span class="sig-name descname"><span class="pre">get_data_loader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/evaluate_client.html#EvaluateClient.get_data_loader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.evaluate_client.EvaluateClient.get_data_loader" title="Link to this definition">¶</a></dt>
-<dd><p>User defined method that returns a PyTorch DataLoader for validation</p>
+<dd><p>User defined method that returns a PyTorch DataLoader for validation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code>]</span></p>
@@ -592,7 +592,8 @@ number of samples in the local training dataset and the computed metrics through
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.evaluate_client.EvaluateClient.get_local_model">
 <span class="sig-name descname"><span class="pre">get_local_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/evaluate_client.html#EvaluateClient.get_local_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.evaluate_client.EvaluateClient.get_local_model" title="Link to this definition">¶</a></dt>
-<dd><p>Functionality for initializing a model from a local checkpoint. This can be overridden for custom behavior</p>
+<dd><p>Functionality for initializing a model from a local checkpoint. This can be overridden for custom
+behavior.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> | <a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
@@ -605,7 +606,7 @@ number of samples in the local training dataset and the computed metrics through
 <span class="sig-name descname"><span class="pre">get_parameter_exchanger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/evaluate_client.html#EvaluateClient.get_parameter_exchanger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.evaluate_client.EvaluateClient.get_parameter_exchanger" title="Link to this definition">¶</a></dt>
 <dd><p>Parameter exchange is assumed to always be full for evaluation only clients. If there are partial weights
 exchanged during training, we assume that the checkpoint has been saved locally. However, this functionality
-may be overridden if a different exchanger is needed</p>
+may be overridden if a different exchanger is needed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="fl4health.parameter_exchange.parameter_exchanger_base.html#fl4health.parameter_exchange.parameter_exchanger_base.ParameterExchanger" title="fl4health.parameter_exchange.parameter_exchanger_base.ParameterExchanger"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterExchanger</span></code></a></span></p>
@@ -636,7 +637,7 @@ parameters to be aggregated, but can contain more information.</p>
 <dt class="sig sig-object py" id="fl4health.clients.evaluate_client.EvaluateClient.initialize_global_model">
 <span class="sig-name descname"><span class="pre">initialize_global_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/evaluate_client.html#EvaluateClient.initialize_global_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.evaluate_client.EvaluateClient.initialize_global_model" title="Link to this definition">¶</a></dt>
 <dd><p>User defined method that to initializes a global model to potentially be hydrated by parameters sent by the
-server, by default, no global model is assumed to exist unless specified by the user</p>
+server, by default, no global model is assumed to exist unless specified by the user.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> | <a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
@@ -684,7 +685,7 @@ first fitting round.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.evaluate_client.EvaluateClient.setup_client">
 <span class="sig-name descname"><span class="pre">setup_client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/evaluate_client.html#EvaluateClient.setup_client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.evaluate_client.EvaluateClient.setup_client" title="Link to this definition">¶</a></dt>
-<dd><p>Set dataloaders, parameter exchangers and other attributes for the client</p>
+<dd><p>Set dataloaders, parameter exchangers and other attributes for the client.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>

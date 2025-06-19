@@ -524,7 +524,7 @@
         <span class="n">moment_orders</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        This accountant should be used when applying FL and measuring instance-level privacy</span>
+<span class="sd">        This accountant should be used when applying FL and measuring instance-level privacy.</span>
 
 <span class="sd">        **NOTE**: This class assumes that all sampling is done via Poisson sampling (client and data point level).</span>
 <span class="sd">        Further it assumes that the sampling ratio of clients and noise multiplier are fixed throughout training</span>
@@ -564,7 +564,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlInstanceLevelAccountant.get_epsilon">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_epsilon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_updates</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute the epsilon value for the provided delta and the number of server updates performed</span>
+<span class="sd">        Compute the epsilon value for the provided delta and the number of server updates performed.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            server_updates (int): number of central server updates performed</span>
@@ -586,7 +586,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlInstanceLevelAccountant.get_delta">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_delta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_updates</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute the delta value for the provided epsilon and the number of server updates performed</span>
+<span class="sd">        Compute the delta value for the provided epsilon and the number of server updates performed.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            server_updates (int): number of central server updates performed</span>
@@ -648,7 +648,8 @@
         <span class="n">moment_orders</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        This accountant should be used when applying FL with Poisson client sampling and measuring client-level privacy</span>
+<span class="sd">        This accountant should be used when applying FL with Poisson client sampling and measuring client-level</span>
+<span class="sd">        privacy.</span>
 
 <span class="sd">        **NOTE**: The above values can be lists, where they are treated as sequences of training with the respective</span>
 <span class="sd">        parameters</span>
@@ -672,7 +673,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlClientLevelAccountantPoissonSampling.get_epsilon">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_epsilon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_updates</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute the epsilon value for the provided delta and the number of server updates performed</span>
+<span class="sd">        Compute the epsilon value for the provided delta and the number of server updates performed.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            server_updates (int | list[int]): number of central server updates performed</span>
@@ -689,7 +690,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlClientLevelAccountantPoissonSampling.get_delta">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_delta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_updates</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">epsilon</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute the delta value for the provided epsilon and the number of server updates performed</span>
+<span class="sd">        Compute the delta value for the provided epsilon and the number of server updates performed.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            server_updates (int | list[int]): number of central server updates performed</span>
@@ -707,7 +708,6 @@
 <div class="viewcode-block" id="FlClientLevelAccountantFixedSamplingNoReplacement">
 <a class="viewcode-back" href="../../../reference/api/fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlClientLevelAccountantFixedSamplingNoReplacement">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FlClientLevelAccountantFixedSamplingNoReplacement</span><span class="p">(</span><span class="n">ClientLevelAccountant</span><span class="p">):</span>
-
 <div class="viewcode-block" id="FlClientLevelAccountantFixedSamplingNoReplacement.__init__">
 <a class="viewcode-back" href="../../../reference/api/fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlClientLevelAccountantFixedSamplingNoReplacement.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -719,7 +719,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This accountant should be used when applying FL with Fixed Sampling with No Replacement and measuring</span>
-<span class="sd">        client-level privacy</span>
+<span class="sd">        client-level privacy.</span>
 
 <span class="sd">        **NOTE**: The above values can be lists, where they are treated as sequences of training with the respective</span>
 <span class="sd">        parameters</span>
@@ -746,7 +746,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlClientLevelAccountantFixedSamplingNoReplacement.get_epsilon">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_epsilon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_updates</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute the epsilon value for the provided delta and the number of server updates performed</span>
+<span class="sd">        Compute the epsilon value for the provided delta and the number of server updates performed.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            server_updates (int | list[int]): number of central server updates performed</span>
@@ -763,7 +763,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlClientLevelAccountantFixedSamplingNoReplacement.get_delta">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_delta</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_updates</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">epsilon</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute the delta value for the provided epsilon and the number of server updates performed</span>
+<span class="sd">        Compute the delta value for the provided epsilon and the number of server updates performed.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            server_updates (int | list[int]): number of central server updates performed</span>

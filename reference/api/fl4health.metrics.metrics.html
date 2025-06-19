@@ -525,8 +525,8 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.metrics.metrics.BalancedAccuracy.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'balanced_accuracy'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/metrics.html#BalancedAccuracy.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.metrics.BalancedAccuracy.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>Balanced accuracy metric for classification tasks. Used for the evaluation of imbalanced datasets. For more
-information:</p>
+<dd><p>Balanced accuracy metric for classification tasks. Used for the evaluation of imbalanced datasets.</p>
+<p>For more information:</p>
 <p><a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.balanced_accuracy_score.html">https://scikit-learn.org/stable/modules/generated/sklearn.metrics.balanced_accuracy_score.html</a></p>
 </dd></dl>
 
@@ -584,13 +584,14 @@ string corresponds to those of the <code class="docutils literal notranslate"><s
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="fl4health.metrics.metrics.ROC_AUC">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ROC_AUC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ROC_AUC</span> <span class="pre">score'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/metrics.html#ROC_AUC"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.metrics.ROC_AUC" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="fl4health.metrics.metrics.RocAuc">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">RocAuc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ROC_AUC</span> <span class="pre">score'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/metrics.html#RocAuc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.metrics.RocAuc" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#fl4health.metrics.metrics.SimpleMetric" title="fl4health.metrics.metrics.SimpleMetric"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleMetric</span></code></a></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="fl4health.metrics.metrics.ROC_AUC.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ROC_AUC</span> <span class="pre">score'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/metrics.html#ROC_AUC.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.metrics.ROC_AUC.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>Area under the Receiver Operator Curve (AUCROC) metric for classification. For more information:</p>
+<dt class="sig sig-object py" id="fl4health.metrics.metrics.RocAuc.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ROC_AUC</span> <span class="pre">score'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/metrics.html#RocAuc.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.metrics.RocAuc.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Area under the Receiver Operator Curve (AUCROC) metric for classification.</p>
+<p>For more information:</p>
 <p><a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.metrics.balanced_accuracy_score.html">https://scikit-learn.org/stable/modules/generated/sklearn.metrics.balanced_accuracy_score.html</a></p>
 </dd></dl>
 
@@ -824,8 +825,8 @@ dictionary.</p>
 <li><a class="reference internal" href="#fl4health.metrics.metrics.F1.__init__"><code class="docutils literal notranslate"><span class="pre">F1.__init__()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#fl4health.metrics.metrics.ROC_AUC"><code class="docutils literal notranslate"><span class="pre">ROC_AUC</span></code></a><ul>
-<li><a class="reference internal" href="#fl4health.metrics.metrics.ROC_AUC.__init__"><code class="docutils literal notranslate"><span class="pre">ROC_AUC.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.metrics.metrics.RocAuc"><code class="docutils literal notranslate"><span class="pre">RocAuc</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.metrics.metrics.RocAuc.__init__"><code class="docutils literal notranslate"><span class="pre">RocAuc.__init__()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#fl4health.metrics.metrics.SimpleMetric"><code class="docutils literal notranslate"><span class="pre">SimpleMetric</span></code></a><ul>

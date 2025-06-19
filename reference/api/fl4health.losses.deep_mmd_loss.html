@@ -506,32 +506,6 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DeepMmdLoss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_unbiased</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gaussian_degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/deep_mmd_loss.html#DeepMmdLoss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
 <dl class="py method">
-<dt class="sig sig-object py" id="fl4health.losses.deep_mmd_loss.DeepMmdLoss.MMDu">
-<span class="sig-name descname"><span class="pre">MMDu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">len_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features_org</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_phi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_smooth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_var_computed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/deep_mmd_loss.html#DeepMmdLoss.MMDu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss.MMDu" title="Link to this definition">¶</a></dt>
-<dd><p>Compute value of deep-kernel MMD and std of deep-kernel MMD using merged data.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>features</strong> (<em>torch.Tensor</em>) – The output features of the deep network.</p></li>
-<li><p><strong>len_s</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The length of the sample.</p></li>
-<li><p><strong>features_org</strong> (<em>torch.Tensor</em>) – The original input features of the deep network.</p></li>
-<li><p><strong>sigma_q</strong> (<em>torch.Tensor</em>) – The <code class="docutils literal notranslate"><span class="pre">sigma_q</span></code> parameter.</p></li>
-<li><p><strong>sigma_phi</strong> (<em>torch.Tensor</em>) – The <code class="docutils literal notranslate"><span class="pre">sigma_phi</span></code> parameter.</p></li>
-<li><p><strong>epsilon</strong> (<em>torch.Tensor</em>) – The epsilon parameter.</p></li>
-<li><p><strong>is_smooth</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to use the smooth version of the MMD. Defaults to True.</p></li>
-<li><p><strong>is_var_computed</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to compute the variance of the MMD. Defaults to True.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The value of MMD and the variance of MMD if required to compute.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[torch.Tensor, torch.Tensor | None]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="fl4health.losses.deep_mmd_loss.DeepMmdLoss.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hidden_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_unbiased</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gaussian_degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization_steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/deep_mmd_loss.html#DeepMmdLoss.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the Deep MMD (Maximum Mean Discrepancy) loss, as proposed in the paper Learning Deep Kernels for
@@ -562,7 +536,7 @@ forward pass. Defaults to 5.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.losses.deep_mmd_loss.DeepMmdLoss.compute_kernel">
-<span class="sig-name descname"><span class="pre">compute_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/deep_mmd_loss.html#DeepMmdLoss.compute_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss.compute_kernel" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">compute_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/deep_mmd_loss.html#DeepMmdLoss.compute_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss.compute_kernel" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the Deep MMD Loss.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -582,7 +556,7 @@ forward pass. Defaults to 5.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.losses.deep_mmd_loss.DeepMmdLoss.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Xs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Xt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/deep_mmd_loss.html#DeepMmdLoss.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss.forward" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_t</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/deep_mmd_loss.html#DeepMmdLoss.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Forward pass of the Deep MMD Loss where it first trains the deep kernel for number of optimization
 steps and then computes the MMD loss.</p>
 <dl class="field-list simple">
@@ -624,8 +598,34 @@ steps and then computes the MMD loss.</p>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="fl4health.losses.deep_mmd_loss.DeepMmdLoss.mmdu">
+<span class="sig-name descname"><span class="pre">mmdu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">len_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features_org</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_phi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_smooth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_var_computed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/deep_mmd_loss.html#DeepMmdLoss.mmdu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss.mmdu" title="Link to this definition">¶</a></dt>
+<dd><p>Compute value of deep-kernel MMD and std of deep-kernel MMD using merged data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>features</strong> (<em>torch.Tensor</em>) – The output features of the deep network.</p></li>
+<li><p><strong>len_s</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The length of the sample.</p></li>
+<li><p><strong>features_org</strong> (<em>torch.Tensor</em>) – The original input features of the deep network.</p></li>
+<li><p><strong>sigma_q</strong> (<em>torch.Tensor</em>) – The <code class="docutils literal notranslate"><span class="pre">sigma_q</span></code> parameter.</p></li>
+<li><p><strong>sigma_phi</strong> (<em>torch.Tensor</em>) – The <code class="docutils literal notranslate"><span class="pre">sigma_phi</span></code> parameter.</p></li>
+<li><p><strong>epsilon</strong> (<em>torch.Tensor</em>) – The epsilon parameter.</p></li>
+<li><p><strong>is_smooth</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to use the smooth version of the MMD. Defaults to True.</p></li>
+<li><p><strong>is_var_computed</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to compute the variance of the MMD. Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The value of MMD and the variance of MMD if required to compute.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[torch.Tensor, torch.Tensor | None]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="fl4health.losses.deep_mmd_loss.DeepMmdLoss.pairwise_distance_squared">
-<span class="sig-name descname"><span class="pre">pairwise_distance_squared</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/deep_mmd_loss.html#DeepMmdLoss.pairwise_distance_squared"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss.pairwise_distance_squared" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">pairwise_distance_squared</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/deep_mmd_loss.html#DeepMmdLoss.pairwise_distance_squared"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss.pairwise_distance_squared" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the paired distance between x and y.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -645,7 +645,7 @@ steps and then computes the MMD loss.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.losses.deep_mmd_loss.DeepMmdLoss.train_kernel">
-<span class="sig-name descname"><span class="pre">train_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/deep_mmd_loss.html#DeepMmdLoss.train_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss.train_kernel" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">train_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/deep_mmd_loss.html#DeepMmdLoss.train_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss.train_kernel" title="Link to this definition">¶</a></dt>
 <dd><p>Train the Deep MMD kernel.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -776,11 +776,11 @@ steps and then computes the MMD loss.</p>
             <ul>
 <li><a class="reference internal" href="#">fl4health.losses.deep_mmd_loss module</a><ul>
 <li><a class="reference internal" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss"><code class="docutils literal notranslate"><span class="pre">DeepMmdLoss</span></code></a><ul>
-<li><a class="reference internal" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss.MMDu"><code class="docutils literal notranslate"><span class="pre">DeepMmdLoss.MMDu()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss.__init__"><code class="docutils literal notranslate"><span class="pre">DeepMmdLoss.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss.compute_kernel"><code class="docutils literal notranslate"><span class="pre">DeepMmdLoss.compute_kernel()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss.forward"><code class="docutils literal notranslate"><span class="pre">DeepMmdLoss.forward()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss.h1_mean_var_gram"><code class="docutils literal notranslate"><span class="pre">DeepMmdLoss.h1_mean_var_gram()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss.mmdu"><code class="docutils literal notranslate"><span class="pre">DeepMmdLoss.mmdu()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss.pairwise_distance_squared"><code class="docutils literal notranslate"><span class="pre">DeepMmdLoss.pairwise_distance_squared()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.losses.deep_mmd_loss.DeepMmdLoss.train_kernel"><code class="docutils literal notranslate"><span class="pre">DeepMmdLoss.train_kernel()</span></code></a></li>
 </ul>

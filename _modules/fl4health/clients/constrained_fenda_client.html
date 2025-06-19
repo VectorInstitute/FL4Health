@@ -503,9 +503,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.client_module</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientCheckpointAndStateModule</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.clients.fenda_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">FendaClient</span>
@@ -561,7 +561,6 @@
 <span class="sd">            loss_container (ConstrainedFendaLossContainer | None, optional): Configuration that determines which</span>
 <span class="sd">                losses will be applied during FENDA training. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">data_path</span><span class="o">=</span><span class="n">data_path</span><span class="p">,</span>
             <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">,</span>
@@ -638,11 +637,12 @@
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">FendaModelWithFeatureState</span><span class="p">)</span>
         <span class="n">preds</span><span class="p">,</span> <span class="n">features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_container</span><span class="o">.</span><span class="n">has_contrastive_loss</span><span class="p">()</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_container</span><span class="o">.</span><span class="n">has_perfcl_loss</span><span class="p">():</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loss_container</span><span class="o">.</span><span class="n">has_contrastive_loss</span><span class="p">()</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_container</span><span class="o">.</span><span class="n">has_perfcl_loss</span><span class="p">()</span>
+        <span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">old_local_module</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># If we have defined a contrastive loss function or PerFCL loss function, we attempt to save old local</span>
             <span class="c1"># features.</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">old_local_module</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">features</span><span class="p">[</span><span class="s2">&quot;old_local_features&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flatten</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">old_local_module</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="nb">input</span><span class="p">))</span>
+            <span class="n">features</span><span class="p">[</span><span class="s2">&quot;old_local_features&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flatten</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">old_local_module</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="nb">input</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_container</span><span class="o">.</span><span class="n">has_perfcl_loss</span><span class="p">():</span>
             <span class="c1"># If a PerFCL loss function has been defined, then we also save two additional feature components.</span>
@@ -723,7 +723,6 @@
 <span class="sd">              ``cos_sim_loss``, ``contrastive_loss``, ``contrastive_loss_minimize`` and ``contrastive_loss_minimize``</span>
 <span class="sd">              keys and their respective calculated values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">criterion</span><span class="p">(</span><span class="n">preds</span><span class="p">[</span><span class="s2">&quot;prediction&quot;</span><span class="p">],</span> <span class="n">target</span><span class="p">)</span>
         <span class="n">total_loss</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
         <span class="n">additional_losses</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;loss&quot;</span><span class="p">:</span> <span class="n">loss</span><span class="p">}</span>

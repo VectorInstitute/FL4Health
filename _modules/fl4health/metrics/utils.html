@@ -523,9 +523,9 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        int: Index of the dimension along tensor 1 that corresponds to the label dimension.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">assert</span> <span class="p">(</span>
-        <span class="n">tensor1</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">tensor2</span><span class="o">.</span><span class="n">shape</span>
-    <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Could not infer the label dimension of tensors with the same shape: </span><span class="si">{</span><span class="n">tensor1</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">assert</span> <span class="n">tensor1</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">tensor2</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Could not infer the label dimension of tensors with the same shape: </span><span class="si">{</span><span class="n">tensor1</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
 
     <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="n">tensor1</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="n">tensor2</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;Could not infer the label dimension of tensors with shapes: tensor1: </span><span class="si">{</span><span class="n">tensor1</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">), tensor 2: &quot;</span>
@@ -607,14 +607,14 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">label_index_tensor_shape</span> <span class="o">=</span> <span class="n">label_index_tensor</span><span class="o">.</span><span class="n">shape</span>
 
-    <span class="k">assert</span> <span class="n">label_dim</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span>
-        <span class="n">label_index_tensor_shape</span>
-    <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Label dim: </span><span class="si">{</span><span class="n">label_dim</span><span class="si">}</span><span class="s2"> too large for target shape: </span><span class="si">{</span><span class="n">label_index_tensor_shape</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">assert</span> <span class="n">label_dim</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">label_index_tensor_shape</span><span class="p">),</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Label dim: </span><span class="si">{</span><span class="n">label_dim</span><span class="si">}</span><span class="s2"> too large for target shape: </span><span class="si">{</span><span class="n">label_index_tensor_shape</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
 
     <span class="n">label_dim_of_tensor</span> <span class="o">=</span> <span class="n">label_index_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">label_dim</span><span class="p">]</span>
-    <span class="k">assert</span> <span class="p">(</span>
-        <span class="n">label_dim_of_tensor</span> <span class="o">==</span> <span class="mi">1</span>
-    <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Expected label_dim </span><span class="si">{</span><span class="n">label_dim</span><span class="si">}</span><span class="s2"> of label_index_tensor to be of size 1, but got </span><span class="si">{</span><span class="n">label_dim_of_tensor</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">assert</span> <span class="n">label_dim_of_tensor</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Expected label_dim </span><span class="si">{</span><span class="n">label_dim</span><span class="si">}</span><span class="s2"> of label_index_tensor to be of size 1, but got </span><span class="si">{</span><span class="n">label_dim_of_tensor</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
 
     <span class="n">one_hot_encoded_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">target_shape</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">label_index_tensor</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
     <span class="n">one_hot_encoded_tensor</span><span class="o">.</span><span class="n">scatter_</span><span class="p">(</span><span class="n">label_dim</span><span class="p">,</span> <span class="n">label_index_tensor</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
@@ -663,15 +663,14 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        tuple[torch.Tensor, torch.Tensor]: The pred and target tensors respectively now ensured to have the same shape.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="c1"># Shapes are already aligned.</span>
     <span class="k">if</span> <span class="n">preds</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">preds</span><span class="p">,</span> <span class="n">targets</span>
 
     <span class="c1"># Run this assertion before in case label dim is defined.</span>
-    <span class="k">assert</span> <span class="p">(</span>
-        <span class="nb">abs</span><span class="p">(</span><span class="n">preds</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="n">targets</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span>
-    <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;Can not align pred and target tensors with shapes </span><span class="si">{</span><span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">assert</span> <span class="nb">abs</span><span class="p">(</span><span class="n">preds</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="n">targets</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Can not align pred and target tensors with shapes </span><span class="si">{</span><span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
 
     <span class="c1"># If shapes are different then we assume one tensor has vector encoded labels and the other is label index encoded</span>
     <span class="c1"># and will be mapped to one-hot-encoded format.</span>
@@ -697,8 +696,7 @@
     <span class="k">if</span> <span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">label_dim</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">label_dim</span><span class="p">]:</span>
         <span class="c1"># We need to one-hot the preds tensor</span>
         <span class="k">return</span> <span class="n">map_label_index_tensor_to_one_hot</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">label_dim</span><span class="p">),</span> <span class="n">targets</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">preds</span><span class="p">,</span> <span class="n">map_label_index_tensor_to_one_hot</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">label_dim</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">preds</span><span class="p">,</span> <span class="n">map_label_index_tensor_to_one_hot</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">label_dim</span><span class="p">)</span></div>
 
 </pre></div>
         </article>

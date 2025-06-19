@@ -499,7 +499,7 @@
         <article role="main">
           <h1>Source code for fl4health.model_bases.perfcl_base</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.model_bases.parallel_split_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParallelSplitHeadModule</span><span class="p">,</span> <span class="n">ParallelSplitModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.model_bases.partial_layer_exchange_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">PartialLayerExchangeModel</span>
@@ -540,16 +540,14 @@
 <span class="sd">            list[str]: List of layers associated with the global model (``second_feature_extractor``) corresponding</span>
 <span class="sd">            to keys in the state dictionary.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">[</span>
-            <span class="n">layer_name</span> <span class="k">for</span> <span class="n">layer_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">layer_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;second_feature_extractor.&quot;</span><span class="p">)</span>
-        <span class="p">]</span></div>
+        <span class="k">return</span> <span class="p">[</span><span class="n">layer_name</span> <span class="k">for</span> <span class="n">layer_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span> <span class="k">if</span> <span class="n">layer_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;second_feature_extractor.&quot;</span><span class="p">)]</span></div>
 
 
 <div class="viewcode-block" id="PerFclModel.forward">
 <a class="viewcode-back" href="../../../reference/api/fl4health.model_bases.perfcl_base.html#fl4health.model_bases.perfcl_base.PerFclModel.forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Mapping input through the PerFCL model local and global feature extractors and the classification head</span>
+<span class="sd">        Mapping input through the PerFCL model local and global feature extractors and the classification head.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            input (torch.Tensor): input is expected to be of shape (``batch_size``, \\*)</span>

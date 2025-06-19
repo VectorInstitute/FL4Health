@@ -540,7 +540,7 @@ name. Defaults to None.</p></li>
 <dt class="sig sig-object py" id="fl4health.clients.clipping_client.NumpyClippingClient.calculate_parameters_norm">
 <span class="sig-name descname"><span class="pre">calculate_parameters_norm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/clipping_client.html#NumpyClippingClient.calculate_parameters_norm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.clipping_client.NumpyClippingClient.calculate_parameters_norm" title="Link to this definition">¶</a></dt>
 <dd><p>Given a set of parameters, compute the l2-norm of the parameters. This is a matrix norm: squared sum of all of
-the weights</p>
+the weights.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>parameters</strong> (<em>NDArrays</em>) – Tensor to measure with the norm</p>
@@ -557,7 +557,7 @@ the weights</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.clipping_client.NumpyClippingClient.clip_parameters">
 <span class="sig-name descname"><span class="pre">clip_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/clipping_client.html#NumpyClippingClient.clip_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.clipping_client.NumpyClippingClient.clip_parameters" title="Link to this definition">¶</a></dt>
-<dd><p>Performs “flat clipping” on the parameters according to</p>
+<dd><p>Performs “flat clipping” on the parameters as follows.</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[\text{parameters} \cdot \min \left(1, \frac{C}{\Vert \text{parameters} \Vert_2} \right)\]</div>
@@ -579,7 +579,7 @@ was below <code class="docutils literal notranslate"><span class="pre">self.clip
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.clipping_client.NumpyClippingClient.compute_weight_update_and_clip">
 <span class="sig-name descname"><span class="pre">compute_weight_update_and_clip</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/clipping_client.html#NumpyClippingClient.compute_weight_update_and_clip"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.clipping_client.NumpyClippingClient.compute_weight_update_and_clip" title="Link to this definition">¶</a></dt>
-<dd><p>Compute the weight delta (i.e. new weights - old weights) and clip according to <cite>self.clipping_bound</cite></p>
+<dd><p>Compute the weight delta (i.e. new weights - old weights) and clip according to <cite>self.clipping_bound</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>parameters</strong> (<em>NDArrays</em>) – Updated parameters to compute the delta from and clip thereafter</p>
@@ -614,7 +614,7 @@ was below <code class="docutils literal notranslate"><span class="pre">self.clip
 <dt class="sig sig-object py" id="fl4health.clients.clipping_client.NumpyClippingClient.get_parameters">
 <span class="sig-name descname"><span class="pre">get_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/clipping_client.html#NumpyClippingClient.get_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.clipping_client.NumpyClippingClient.get_parameters" title="Link to this definition">¶</a></dt>
 <dd><p>This function performs clipping through <code class="docutils literal notranslate"><span class="pre">compute_weight_update_and_clip</span></code> and stores the clipping bit
-as the last entry in the NDArrays</p>
+as the last entry in the NDArrays.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Any" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Any" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]]]</span></p>

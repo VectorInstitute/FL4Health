@@ -510,7 +510,7 @@
 <dt class="sig sig-object py" id="fl4health.losses.mkmmd_loss.MkMmdLoss.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gammas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">betas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimize_type_two_error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize_features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perform_linear_approximation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the multi-kernel maximum mean discrepancy (MK-MMD) between the source and target domains. Also allows
-for optimization of the coefficients, beta</p>
+for optimization of the coefficients, beta.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -537,7 +537,7 @@ linear approximations largely hinder the statistical power of Mk-MMD. Defaults t
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.losses.mkmmd_loss.MkMmdLoss.beta_with_extreme_kernel_base_values">
-<span class="sig-name descname"><span class="pre">beta_with_extreme_kernel_base_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hat_d_per_kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hat_Q_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimize_type_two_error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.beta_with_extreme_kernel_base_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.beta_with_extreme_kernel_base_values" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">beta_with_extreme_kernel_base_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hat_d_per_kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hat_q_k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minimize_type_two_error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.beta_with_extreme_kernel_base_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.beta_with_extreme_kernel_base_values" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></span></p>
@@ -547,7 +547,7 @@ linear approximations largely hinder the statistical power of Mk-MMD. Defaults t
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.losses.mkmmd_loss.MkMmdLoss.compute_all_h_u_all_samples">
-<span class="sig-name descname"><span class="pre">compute_all_h_u_all_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.compute_all_h_u_all_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_all_h_u_all_samples" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">compute_all_h_u_all_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.compute_all_h_u_all_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_all_h_u_all_samples" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></span></p>
@@ -577,7 +577,7 @@ linear approximations largely hinder the statistical power of Mk-MMD. Defaults t
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.losses.mkmmd_loss.MkMmdLoss.compute_all_h_u_linear">
-<span class="sig-name descname"><span class="pre">compute_all_h_u_linear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.compute_all_h_u_linear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_all_h_u_linear" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">compute_all_h_u_linear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.compute_all_h_u_linear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_all_h_u_linear" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></span></p>
@@ -587,7 +587,7 @@ linear approximations largely hinder the statistical power of Mk-MMD. Defaults t
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.losses.mkmmd_loss.MkMmdLoss.compute_euclidean_inner_products">
-<span class="sig-name descname"><span class="pre">compute_euclidean_inner_products</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.compute_euclidean_inner_products"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_euclidean_inner_products" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">compute_euclidean_inner_products</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.compute_euclidean_inner_products"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_euclidean_inner_products" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></span></p>
@@ -626,26 +626,6 @@ linear approximations largely hinder the statistical power of Mk-MMD. Defaults t
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_Q_k">
-<span class="sig-name descname"><span class="pre">compute_hat_Q_k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">all_h_u_per_sample</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hat_d_per_kernel</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.compute_hat_Q_k"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_Q_k" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></span></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_Q_k_linear">
-<span class="sig-name descname"><span class="pre">compute_hat_Q_k_linear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">all_h_u_per_v_i</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.compute_hat_Q_k_linear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_Q_k_linear" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></span></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_d_per_kernel">
 <span class="sig-name descname"><span class="pre">compute_hat_d_per_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">all_h_u_per_sample</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.compute_hat_d_per_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_d_per_kernel" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -656,8 +636,28 @@ linear approximations largely hinder the statistical power of Mk-MMD. Defaults t
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_q_k">
+<span class="sig-name descname"><span class="pre">compute_hat_q_k</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">all_h_u_per_sample</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hat_d_per_kernel</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.compute_hat_q_k"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_q_k" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_q_k_linear">
+<span class="sig-name descname"><span class="pre">compute_hat_q_k_linear</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">all_h_u_per_v_i</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.compute_hat_q_k_linear"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_q_k_linear" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="fl4health.losses.mkmmd_loss.MkMmdLoss.compute_mkmmd">
-<span class="sig-name descname"><span class="pre">compute_mkmmd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.compute_mkmmd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_mkmmd" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">compute_mkmmd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.compute_mkmmd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_mkmmd" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></span></p>
@@ -677,9 +677,9 @@ linear approximations largely hinder the statistical power of Mk-MMD. Defaults t
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.losses.mkmmd_loss.MkMmdLoss.construct_quadruples">
-<span class="sig-name descname"><span class="pre">construct_quadruples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.construct_quadruples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.construct_quadruples" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">construct_quadruples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.construct_quadruples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.construct_quadruples" title="Link to this definition">¶</a></dt>
 <dd><p>In this function, we assume that <code class="docutils literal notranslate"><span class="pre">X</span></code>, <code class="docutils literal notranslate"><span class="pre">Y</span></code>: <code class="docutils literal notranslate"><span class="pre">n_samples</span></code>, <code class="docutils literal notranslate"><span class="pre">n_features</span></code> are the same size. We construct
-the quadruples</p>
+the quadruples.</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
 \[v_i = [x_{2i-1}, x_{2i}, y_{2i-1}, y_{2i}]\]</div>
@@ -704,7 +704,7 @@ the quadruples</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.losses.mkmmd_loss.MkMmdLoss.form_and_solve_qp">
-<span class="sig-name descname"><span class="pre">form_and_solve_qp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hat_d_per_kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularized_Q_k</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.form_and_solve_qp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.form_and_solve_qp" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">form_and_solve_qp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hat_d_per_kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">regularized_q_k</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.form_and_solve_qp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.form_and_solve_qp" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></span></p>
@@ -734,7 +734,7 @@ the quadruples</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.losses.mkmmd_loss.MkMmdLoss.forward">
-<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Xs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Xt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.forward" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_s</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_t</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the multi-kernel maximum mean discrepancy (MK-MMD) between the source and target domains.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -754,7 +754,7 @@ the quadruples</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.losses.mkmmd_loss.MkMmdLoss.get_best_vertex_for_objective_function">
-<span class="sig-name descname"><span class="pre">get_best_vertex_for_objective_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hat_d_per_kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hat_Q_k</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.get_best_vertex_for_objective_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.get_best_vertex_for_objective_function" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">get_best_vertex_for_objective_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">hat_d_per_kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hat_q_k</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.get_best_vertex_for_objective_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.get_best_vertex_for_objective_function" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></span></p>
@@ -764,7 +764,7 @@ the quadruples</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.losses.mkmmd_loss.MkMmdLoss.normalize">
-<span class="sig-name descname"><span class="pre">normalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.normalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.normalize" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">normalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.normalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.normalize" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></span></p>
@@ -774,7 +774,7 @@ the quadruples</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.losses.mkmmd_loss.MkMmdLoss.optimize_betas">
-<span class="sig-name descname"><span class="pre">optimize_betas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.optimize_betas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.optimize_betas" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">optimize_betas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lambda_m</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/mkmmd_loss.html#MkMmdLoss.optimize_betas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.optimize_betas" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></span></p>
@@ -870,9 +870,9 @@ the quadruples</p>
 <li><a class="reference internal" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_euclidean_inner_products_linear"><code class="docutils literal notranslate"><span class="pre">MkMmdLoss.compute_euclidean_inner_products_linear()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_h_u_from_inner_products"><code class="docutils literal notranslate"><span class="pre">MkMmdLoss.compute_h_u_from_inner_products()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_h_u_from_inner_products_linear"><code class="docutils literal notranslate"><span class="pre">MkMmdLoss.compute_h_u_from_inner_products_linear()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_Q_k"><code class="docutils literal notranslate"><span class="pre">MkMmdLoss.compute_hat_Q_k()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_Q_k_linear"><code class="docutils literal notranslate"><span class="pre">MkMmdLoss.compute_hat_Q_k_linear()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_d_per_kernel"><code class="docutils literal notranslate"><span class="pre">MkMmdLoss.compute_hat_d_per_kernel()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_q_k"><code class="docutils literal notranslate"><span class="pre">MkMmdLoss.compute_hat_q_k()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_hat_q_k_linear"><code class="docutils literal notranslate"><span class="pre">MkMmdLoss.compute_hat_q_k_linear()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_mkmmd"><code class="docutils literal notranslate"><span class="pre">MkMmdLoss.compute_mkmmd()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_vertices"><code class="docutils literal notranslate"><span class="pre">MkMmdLoss.compute_vertices()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.losses.mkmmd_loss.MkMmdLoss.construct_quadruples"><code class="docutils literal notranslate"><span class="pre">MkMmdLoss.construct_quadruples()</span></code></a></li>

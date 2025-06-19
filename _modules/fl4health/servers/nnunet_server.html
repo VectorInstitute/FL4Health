@@ -517,6 +517,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">narrow_dict_type</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.nnunet_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">NnunetConfig</span>
 
+
 <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
     <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">DeprecationWarning</span><span class="p">)</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">nnunetv2.training.nnUNetTrainer.nnUNetTrainer</span><span class="w"> </span><span class="kn">import</span> <span class="n">nnUNetTrainer</span>
@@ -533,7 +534,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Accepts a flwr Strategy configure function (either ``configure_fit`` or ``configure_evaluate``) and returns a new</span>
 <span class="sd">    function  that returns the same thing except the dictionary items in the items argument have been added to the</span>
-<span class="sd">    config that  is returned by the original function</span>
+<span class="sd">    config that  is returned by the original function.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        fn (CFG_FN): The Strategy configure function to wrap</span>
@@ -753,8 +754,9 @@
             <span class="n">new_eval_cfg_fn</span> <span class="o">=</span> <span class="n">add_items_to_config_fn</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">configure_evaluate</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;nnunet_plans&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_plans_bytes</span><span class="p">}</span>
             <span class="p">)</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="p">,</span> <span class="s2">&quot;configure_fit&quot;</span><span class="p">,</span> <span class="n">new_fit_cfg_fn</span><span class="p">)</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="p">,</span> <span class="s2">&quot;configure_evaluate&quot;</span><span class="p">,</span> <span class="n">new_eval_cfg_fn</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">configure_fit</span> <span class="o">=</span> <span class="n">new_fit_cfg_fn</span>  <span class="c1"># type: ignore</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">configure_evaluate</span> <span class="o">=</span> <span class="n">new_eval_cfg_fn</span>  <span class="c1"># type: ignore</span>
+
         <span class="c1"># Finish</span>
         <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span></div>
 
@@ -765,7 +767,6 @@
 <span class="sd">        method overrides parent to also `checkpoint` ``nnunet_plans``, ``num_input_channels``,</span>
 <span class="sd">        ``num_segmentation_heads`` and ``global_deep_supervision``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">assert</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_plans_bytes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_input_channels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>

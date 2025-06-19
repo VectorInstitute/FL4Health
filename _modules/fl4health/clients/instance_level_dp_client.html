@@ -531,7 +531,7 @@
         <span class="n">client_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Client for Instance/Record level Differentially Private Federated Averaging</span>
+<span class="sd">        Client for Instance/Record level Differentially Private Federated Averaging.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            data_path (Path): path to the data to be used to load the data for client-side training</span>
@@ -595,7 +595,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">setup_opacus_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Validates and potentially fixes the PyTorch model of the client to be compatible with Opacus and privacy</span>
-<span class="sd">        mechanisms, sets up the privacy engine of Opacus using the model, optimizer, dataloaders etc. for DP training</span>
+<span class="sd">        mechanisms, sets up the privacy engine of Opacus using the model, optimizer, dataloaders etc. for DP training.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (Config): Configurations sent by the server to allow for customization of this functions behavior.</span>

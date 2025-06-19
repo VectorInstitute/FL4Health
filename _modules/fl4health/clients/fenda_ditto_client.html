@@ -703,8 +703,7 @@
         <span class="c1"># Weights and training loss sent to server for aggregation</span>
         <span class="c1"># Training loss sent because server will decide to increase or decrease the penalty weight, if adaptivity</span>
         <span class="c1"># is turned on</span>
-        <span class="n">packed_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">pack_parameters</span><span class="p">(</span><span class="n">model_weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_for_adaptation</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">packed_params</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">pack_parameters</span><span class="p">(</span><span class="n">model_weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_for_adaptation</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="FendaDittoClient.set_parameters">
@@ -761,7 +760,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">update_before_train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current_server_round</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Follows the same flow as the ``DittoClient`` parent module, but adds the ability to freeze the global feature</span>
-<span class="sd">        extractor during training if ``self.freeze_global_feature_extractor`` is True</span>
+<span class="sd">        extractor during training if ``self.freeze_global_feature_extractor`` is True.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            current_server_round (int): Which round we&#39;re currently on</span>
@@ -781,7 +780,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TorchPredType</span><span class="p">,</span> <span class="n">TorchFeatureType</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes the predictions for both the **GLOBAL** and **LOCAL** models and pack them into the prediction</span>
-<span class="sd">        dictionary</span>
+<span class="sd">        dictionary.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            input (TorchInputType): Inputs to be fed into both models.</span>

@@ -630,7 +630,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">update_after_train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">local_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">loss_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This function is called immediately after client-side training has completed. This function saves the final</span>
-<span class="sd">        trained model to the list of old models to be used in subsequent server rounds</span>
+<span class="sd">        trained model to the list of old models to be used in subsequent server rounds.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            local_steps (int): Number of local steps performed during training</span>
@@ -655,7 +655,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This function is called before training, immediately after injecting the aggregated server weights into the</span>
 <span class="sd">        client model. We clone and free the current model to preserve the aggregated server weights state (i.e. the</span>
-<span class="sd">        initial model before training starts.)</span>
+<span class="sd">        initial model before training starts).</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            current_server_round (int): Current federated training round being executed.</span>
@@ -690,7 +690,6 @@
 <span class="sd">            - The tensor for the total loss</span>
 <span class="sd">            - A dictionary with `loss`, `contrastive_loss` and `total_loss` keys and their calculated values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">criterion</span><span class="p">(</span><span class="n">preds</span><span class="p">[</span><span class="s2">&quot;prediction&quot;</span><span class="p">],</span> <span class="n">target</span><span class="p">)</span>
         <span class="n">total_loss</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
         <span class="n">additional_losses</span> <span class="o">=</span> <span class="p">{</span>
