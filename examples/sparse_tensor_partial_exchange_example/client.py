@@ -3,8 +3,8 @@ from pathlib import Path
 
 import flwr as fl
 import torch
-import torch.nn as nn
 from flwr.common.typing import Config
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -38,11 +38,10 @@ class CifarSparseCooTensorClient(PartialWeightExchangeClient):
         sparsity_level = narrow_dict_type(config, "sparsity_level", float)
         # The user may pass in a different score_gen_function to allow for alternative
         # selection criterion.
-        parameter_exchanger = SparseCooParameterExchanger(
+        return SparseCooParameterExchanger(
             sparsity_level=sparsity_level,
             score_gen_function=largest_final_magnitude_scores,
         )
-        return parameter_exchanger
 
 
 if __name__ == "__main__":

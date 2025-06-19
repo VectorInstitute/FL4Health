@@ -3,9 +3,9 @@ from logging import WARNING
 from pathlib import Path
 
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config
+from torch import nn
 
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.fenda_client import FendaClient
@@ -57,7 +57,6 @@ class ConstrainedFendaClient(FendaClient):
             loss_container (ConstrainedFendaLossContainer | None, optional): Configuration that determines which
                 losses will be applied during FENDA training. Defaults to None.
         """
-
         super().__init__(
             data_path=data_path,
             metrics=metrics,
@@ -128,11 +127,12 @@ class ConstrainedFendaClient(FendaClient):
         assert isinstance(self.model, FendaModelWithFeatureState)
         preds, features = self.model(input)
 
-        if self.loss_container.has_contrastive_loss() or self.loss_container.has_perfcl_loss():
+        if (
+            self.loss_container.has_contrastive_loss() or self.loss_container.has_perfcl_loss()
+        ) and self.old_local_module is not None:
             # If we have defined a contrastive loss function or PerFCL loss function, we attempt to save old local
             # features.
-            if self.old_local_module is not None:
-                features["old_local_features"] = self._flatten(self.old_local_module.forward(input))
+            features["old_local_features"] = self._flatten(self.old_local_module.forward(input))
 
         if self.loss_container.has_perfcl_loss():
             # If a PerFCL loss function has been defined, then we also save two additional feature components.
@@ -204,7 +204,6 @@ class ConstrainedFendaClient(FendaClient):
               ``cos_sim_loss``, ``contrastive_loss``, ``contrastive_loss_minimize`` and ``contrastive_loss_minimize``
               keys and their respective calculated values.
         """
-
         loss = self.criterion(preds["prediction"], target)
         total_loss = loss.clone()
         additional_losses = {"loss": loss}

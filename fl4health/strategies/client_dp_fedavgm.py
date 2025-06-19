@@ -156,8 +156,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         self.m_t: NDArrays | None = None
 
     def __repr__(self) -> str:
-        rep = f"ClientLevelDPFedAvgM(accept_failures={self.accept_failures})"
-        return rep
+        return f"ClientLevelDPFedAvgM(accept_failures={self.accept_failures})"
 
     def modify_noise_multiplier(self) -> float:
         """
@@ -192,6 +191,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             results (list[tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
                 that need to be aggregated on the server-side. In this strategy, the clients pack the weights to be
                 aggregated along with a clipping bit calculated during training.
+
         Returns:
             tuple[list[tuple[NDArrays, int]], NDArrays]: The first tuple is the set of (weights, training counts) per
             client. The second is a set of clipping bits, one for each client.
@@ -248,7 +248,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         noised_clipping_bits: float,
     ) -> None:
         """
-        Update the clipping bound help by the server given the noised aggregated clipping bits returned by the clients
+        Update the clipping bound help by the server given the noised aggregated clipping bits returned by the clients.
 
         **NOTE:** The update formula may be found in the original paper.
 
@@ -301,7 +301,6 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             For this strategy, the server also packs a clipping bound to be sent to the clients. This is sent even
             if adaptive clipping is turned off and the value simply remains constant.
         """
-
         if not results:
             return None, {}
         # Do not aggregate if there are failures and failures are not accepted
@@ -425,7 +424,6 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
             to be sent to each client (packaged as ``EvaluateIns``)
         """
-
         # This strategy requires the client manager to be of type at least BaseFractionSamplingManager
         assert isinstance(client_manager, BaseFractionSamplingManager)
 

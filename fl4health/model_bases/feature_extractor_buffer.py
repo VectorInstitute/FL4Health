@@ -2,8 +2,8 @@ from collections.abc import Callable
 from logging import INFO
 
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
+from torch import nn
 from torch.utils.hooks import RemovableHandle
 
 
@@ -16,7 +16,6 @@ class FeatureExtractorBuffer:
         features as torch Tensors.
 
         Attributes:
-
         - model (nn.Module): The neural network model.
         - flatten_feature_extraction_layers (dict[str, bool]): A dictionary specifying whether to flatten the feature
           extraction layers.
@@ -37,7 +36,7 @@ class FeatureExtractorBuffer:
 
         self.accumulate_features: bool = False
         self.extracted_features_buffers: dict[str, list[torch.Tensor]] = {
-            layer: [] for layer in flatten_feature_extraction_layers.keys()
+            layer: [] for layer in flatten_feature_extraction_layers
         }
 
     def enable_accumulating_features(self) -> None:
@@ -60,10 +59,8 @@ class FeatureExtractorBuffer:
         self.accumulate_features = False
 
     def clear_buffers(self) -> None:
-        """
-        Clears the extracted features buffers for all layers.
-        """
-        self.extracted_features_buffers = {layer: [] for layer in self.flatten_feature_extraction_layers.keys()}
+        """Clears the extracted features buffers for all layers."""
+        self.extracted_features_buffers = {layer: [] for layer in self.flatten_feature_extraction_layers}
 
     def get_hierarchical_attr(self, module: nn.Module, layer_hierarchy: list[str]) -> nn.Module:
         """
@@ -79,8 +76,7 @@ class FeatureExtractorBuffer:
         """
         if len(layer_hierarchy) == 1:
             return getattr(module, layer_hierarchy[0])
-        else:
-            return self.get_hierarchical_attr(getattr(module, layer_hierarchy[0]), layer_hierarchy[1:])
+        return self.get_hierarchical_attr(getattr(module, layer_hierarchy[0]), layer_hierarchy[1:])
 
     def find_last_common_prefix(self, prefix: str, layers_name: list[str]) -> str:
         """
@@ -109,7 +105,7 @@ class FeatureExtractorBuffer:
         if len(self.fhooks) == 0:
             log(INFO, "Starting to register hooks:")
             named_layers = list(dict(self.model.named_modules()).keys())
-            for layer in self.flatten_feature_extraction_layers.keys():
+            for layer in self.flatten_feature_extraction_layers:
                 log(INFO, f"Registering hook for layer: {layer}")
                 # Find the last specific layer under a given generic name
                 specific_layer = self.find_last_common_prefix(layer, named_layers)
@@ -129,7 +125,6 @@ class FeatureExtractorBuffer:
         any hooks that have been added to the feature extractor buffer. It is typically called prior to checkpointing
         the model.
         """
-
         log(INFO, "Removing hooks.")
         for hook in self.fhooks:
             hook.remove()
@@ -165,7 +160,6 @@ class FeatureExtractorBuffer:
         Returns:
             torch.Tensor: The flattened tensor of shape (``batch_size``, ``feature_size``).
         """
-
         return features.reshape(len(features), -1)
 
     def get_extracted_features(self) -> dict[str, torch.Tensor]:

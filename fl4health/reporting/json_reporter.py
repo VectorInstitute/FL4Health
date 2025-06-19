@@ -88,7 +88,7 @@ class FileReporter(BaseReporter):
 
 class JsonReporter(FileReporter):
     def dump(self) -> None:
-        """Dumps the current metrics to a JSON file at ``{output_folder}/{run_id.json}``"""
+        """Dumps the current metrics to a JSON file at ``{output_folder}/{run_id.json}``."""
         assert self.run_id is not None
         output_file_path = Path(self.output_folder, self.run_id).with_suffix(".json")
         log(INFO, f"Dumping metrics to {str(output_file_path)}")

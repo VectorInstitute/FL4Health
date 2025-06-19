@@ -2,6 +2,7 @@ from typing import Any
 
 from pytest import approx
 
+
 DEFAULT_TOLERANCE = 0.0005
 
 
@@ -22,7 +23,8 @@ def _assert(value: Any, saved_value: Any, metric_key: str, tolerance: float = DE
 
 
 def assert_metrics_dict(metrics_to_assert: dict[str, Any], metrics_saved: dict[str, Any]) -> list[str]:
-    """Recursively compares two dictionaries to ensure the values are the same.
+    """
+    Recursively compares two dictionaries to ensure the values are the same.
 
     Ensures that the key value pairs in 'metrics_to_assert' are present and within the requested tolerances in
     'metrics_saved'.
@@ -39,20 +41,21 @@ def assert_metrics_dict(metrics_to_assert: dict[str, Any], metrics_saved: dict[s
     """
     errors = []
 
-    for metric_key in metrics_to_assert:
+    for metric_key, value_to_assert in metrics_to_assert.items():
         if metric_key not in metrics_saved:
             errors.append(f"Metric '{metric_key}' not found in saved metrics.")
             continue
 
-        value_to_assert = metrics_to_assert[metric_key]
-
-        if isinstance(value_to_assert, dict):
-            if "target_value" not in value_to_assert and "custom_tolerance" not in value_to_assert:
-                # if it's a dictionary, call this function recursively
-                # except when the dictionary has "target_value" and "custom_tolerance", which should
-                # be treated as a regular dictionary
-                errors.extend(assert_metrics_dict(value_to_assert, metrics_saved[metric_key]))
-                continue
+        if (
+            isinstance(value_to_assert, dict)
+            and "target_value" not in value_to_assert
+            and "custom_tolerance" not in value_to_assert
+        ):
+            # if it's a dictionary, call this function recursively
+            # except when the dictionary has "target_value" and "custom_tolerance", which should
+            # be treated as a regular dictionary
+            errors.extend(assert_metrics_dict(value_to_assert, metrics_saved[metric_key]))
+            continue
 
         if isinstance(value_to_assert, list) and len(value_to_assert) > 0:
             # if it's a list, call an assertion for each element of the list

@@ -50,9 +50,9 @@ def test_getting_parameters(get_fedpm_client: FedPmClient) -> None:  # noqa
         for param_name, param_val in fedpm_client.model.state_dict().items()
     }
 
-    for param_name in new_params_local.keys():
+    for param_name, param_val in new_params_local.items():
         if "score" in param_name:
-            assert not (new_params_local[param_name] == old_params_local[param_name]).all()
+            assert not (param_val == old_params_local[param_name]).all()
         else:
-            np.testing.assert_allclose(new_params_local[param_name], old_params_local[param_name], rtol=0, atol=1e-5)
+            np.testing.assert_allclose(param_val, old_params_local[param_name], rtol=0, atol=1e-5)
     torch.seed()  # resetting the seed at the end, just to be safe

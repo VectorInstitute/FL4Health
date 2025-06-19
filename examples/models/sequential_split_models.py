@@ -1,6 +1,6 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 
 class SequentialLocalPredictionHeadMnist(nn.Module):
@@ -11,8 +11,7 @@ class SequentialLocalPredictionHeadMnist(nn.Module):
 
     def forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         x = F.relu(self.fc1(input_tensor))
-        x = self.fc2(x)
-        return x
+        return self.fc2(x)
 
 
 class SequentialGlobalFeatureExtractorMnist(nn.Module):
@@ -27,8 +26,7 @@ class SequentialGlobalFeatureExtractorMnist(nn.Module):
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
         x = x.view(-1, 16 * 4 * 4)
-        x = F.relu(self.fc1(x))
-        return x
+        return F.relu(self.fc1(x))
 
 
 class SequentialLocalPredictionHeadCifar(nn.Module):
@@ -39,8 +37,7 @@ class SequentialLocalPredictionHeadCifar(nn.Module):
 
     def forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         x = F.relu(self.fc1(input_tensor))
-        x = self.fc2(x)
-        return x
+        return self.fc2(x)
 
 
 class SequentialGlobalFeatureExtractorCifar(nn.Module):
@@ -55,5 +52,4 @@ class SequentialGlobalFeatureExtractorCifar(nn.Module):
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
         x = x.view(-1, 16 * 5 * 5)
-        x = F.relu(self.fc1(x))
-        return x
+        return F.relu(self.fc1(x))

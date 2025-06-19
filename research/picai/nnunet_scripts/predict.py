@@ -15,6 +15,7 @@ from flwr.common.logger import log
 
 from research.picai.fl_nnunet.nnunet_utils import NnunetConfig
 
+
 with warnings.catch_warnings():
     # We get a bunch of scipy deprecation warnings from these packages
     # Curiously this only happens if flwr is imported first
@@ -36,29 +37,24 @@ def yaml_join(loader: yaml.Loader, node: yaml.SequenceNode) -> str:
 
 def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, plans: dict) -> nnUNetPredictor:
     """
-    Returns an initialized nnUNetPredictor for a set of nnunet models with the
-    same config and architecture
+    Returns an initialized nnUNetPredictor for a set of nnunet models with the same config and architecture.
 
     Args:
-        ckpt_list (list[str]): A list containing the paths to the checkpoint
-            files for the nnunet models
-        nnunet_config (str): The nnunet config of the the models specific in
-            ckpt_list.
-        dataset_json (dict): The dataset json dict that specifies the label
-            structure for all the models. The dataset json for the training set
-            will suffice
-        plans (dict): The nnunet plans used for the models during training.
-            Contains important information about data preprocessing.
+        ckpt_list (list[str]): A list containing the paths to the checkpoint files for the nnunet models
+        nnunet_config (str): The nnunet config of the the models specific in ckpt_list.
+        dataset_json (dict): The dataset json dict that specifies the label structure for all the models. The dataset
+            json for the training set will suffice
+        plans (dict): The nnunet plans used for the models during training. Contains important information about data
+            preprocessing.
 
     Returns:
-        nUNetPredictor: An nnUNetPredictor class for the set
-            of models specified by the ckpt_list.
+        nUNetPredictor: An ``nnUNetPredictor`` class for the set of models specified by the ckpt_list.
     """
 
     # Helper function to make code cleaner
     def check_for_ckpt_info(model: dict) -> tuple[str, bool]:
         """
-        Checks model dict for trainer name and ``inference_allowed_mirroring_axes``
+        Checks model dict for trainer name and ``inference_allowed_mirroring_axes``.
 
         Returns:
             tuple[str | None, bool]: Tuple with elements ``trainer_name`` and `inference_allowed_mirroring_axes`.
@@ -66,9 +62,9 @@ def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, 
         """
         trainer_name = "nnUNetTrainer"
         inference_allowed_mirror_axes = False
-        if "trainer_name" in model.keys():
+        if "trainer_name" in model:
             trainer_name = model["trainer_name"]
-        if "inference_allowed_mirroring_axes" in model.keys():
+        if "inference_allowed_mirroring_axes" in model:
             inference_allowed_mirror_axes = model["inference_allowed_mirroring_axes"]
 
         return trainer_name, inference_allowed_mirror_axes
@@ -186,9 +182,12 @@ def predict(
     yml_loader.add_constructor("!join", yaml_join)
 
     # Load config and nnunet required dicts
-    config = yaml.load(open(config_path, "r"), Loader=yml_loader)
-    dataset_json = json.load(open(config["dataset_json"], "r"))
-    plans = json.load(open(config["plans"], "r"))
+    with open(config_path, "r") as f:
+        config = yaml.load(f, Loader=yml_loader)
+    with open(config["dataset_json"], "r") as f:
+        dataset_json = json.load(f)
+    with open(config["plans"], "r") as f:
+        plans = json.load(f)
 
     # Get case identifiers
     input_files = create_lists_from_splitted_dataset_folder(
@@ -200,7 +199,7 @@ def predict(
     # Model inference
     model_count = 0
     cfg_folders = []
-    for i, key in enumerate(config.keys()):
+    for key in config:
         if key in [cfg.value for cfg in NnunetConfig]:
             # Get predictor for config
             predictor = get_predictor(
@@ -227,7 +226,7 @@ def predict(
             # Logging
             secs = time.time() - t
             if verbose:
-                log(INFO, f"Inference complete: {secs:.1f}s total, {secs/(num_samples*n_models):.1f}s/case")
+                log(INFO, f"Inference complete: {secs:.1f}s total, {secs / (num_samples * n_models):.1f}s/case")
                 log(INFO, "")
 
     # Now we need to ensemble the predictions from each config
@@ -243,7 +242,7 @@ def predict(
     )
     secs = time.time() - t
     if verbose:
-        log(INFO, f"Ensembling complete in {secs:.1f}s, {secs/num_samples:.1f}s/case")
+        log(INFO, f"Ensembling complete in {secs:.1f}s, {secs / num_samples:.1f}s/case")
         log(INFO, "")
 
     if verbose:
@@ -252,14 +251,16 @@ def predict(
 
     # Copy some metadata files into the output directory
     config_name = basename(config_path)
-    yaml.dump(config, open(join(output_folder, config_name), "w"), sort_keys=False, indent=4)
+    with open(join(output_folder, config_name), "w") as f:
+        yaml.dump(config, f, sort_keys=False, indent=4)
 
     shutil.copy(  # Data properties should be the same for all input images
         src=join(cfg_folders[0], case_identifiers[0] + ".pkl"), dst=join(output_folder, "data_properties.pkl")
     )
 
     plans_name = basename(config["plans"])
-    json.dump(plans, open(join(output_folder, plans_name), "w"), indent=4, sort_keys=False)
+    with open(join(output_folder, plans_name), "w") as f:
+        json.dump(plans, f, indent=4, sort_keys=False)
 
     os.replace(join(output_folder, annotations_folder_name, "dataset.json"), join(output_folder, "dataset.json"))
 
@@ -290,13 +291,13 @@ def predict(
     if verbose:
         log(
             INFO,
-            (f"Finished running inference with {model_count} models on " f"{num_samples} cases."),
+            (f"Finished running inference with {model_count} models on {num_samples} cases."),
         )
         log(INFO, f"\tNum Cases: {num_samples}")
         log(INFO, f"\tNum Classes: {shape[0]}")
         log(INFO, f"\tSpatial Dimensions {shape[1:]}")
         secs = time.time() - t_start
-        log(INFO, f"Total Time: {secs:.1f}s ({secs/num_samples:.1f}s/case)")
+        log(INFO, f"Total Time: {secs:.1f}s ({secs / num_samples:.1f}s/case)")
 
 
 def main() -> None:

@@ -1,6 +1,6 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 
 class ConfigurableMnistNet(nn.Module):
@@ -18,5 +18,4 @@ class ConfigurableMnistNet(nn.Module):
         x = self.pool(F.relu(self.conv2(x)))
         x = x.view(-1, 16 * 4 * 4 * self.out_channel_mult)
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        return x
+        return F.relu(self.fc2(x))

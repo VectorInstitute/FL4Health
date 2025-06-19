@@ -20,7 +20,7 @@ class FlInstanceLevelAccountant:
         moment_orders: list[float] | None = None,
     ) -> None:
         """
-        This accountant should be used when applying FL and measuring instance-level privacy
+        This accountant should be used when applying FL and measuring instance-level privacy.
 
         **NOTE**: This class assumes that all sampling is done via Poisson sampling (client and data point level).
         Further it assumes that the sampling ratio of clients and noise multiplier are fixed throughout training
@@ -57,7 +57,7 @@ class FlInstanceLevelAccountant:
 
     def get_epsilon(self, server_updates: int, delta: float) -> float:
         """
-        Compute the epsilon value for the provided delta and the number of server updates performed
+        Compute the epsilon value for the provided delta and the number of server updates performed.
 
         Args:
             server_updates (int): number of central server updates performed
@@ -76,7 +76,7 @@ class FlInstanceLevelAccountant:
 
     def get_delta(self, server_updates: int, epsilon: float) -> float:
         """
-        Compute the delta value for the provided epsilon and the number of server updates performed
+        Compute the delta value for the provided epsilon and the number of server updates performed.
 
         Args:
             server_updates (int): number of central server updates performed
@@ -123,7 +123,8 @@ class FlClientLevelAccountantPoissonSampling(ClientLevelAccountant):
         moment_orders: list[float] | None = None,
     ) -> None:
         """
-        This accountant should be used when applying FL with Poisson client sampling and measuring client-level privacy
+        This accountant should be used when applying FL with Poisson client sampling and measuring client-level
+        privacy.
 
         **NOTE**: The above values can be lists, where they are treated as sequences of training with the respective
         parameters
@@ -144,7 +145,7 @@ class FlClientLevelAccountantPoissonSampling(ClientLevelAccountant):
 
     def get_epsilon(self, server_updates: int | list[int], delta: float) -> float:
         """
-        Compute the epsilon value for the provided delta and the number of server updates performed
+        Compute the epsilon value for the provided delta and the number of server updates performed.
 
         Args:
             server_updates (int | list[int]): number of central server updates performed
@@ -158,7 +159,7 @@ class FlClientLevelAccountantPoissonSampling(ClientLevelAccountant):
 
     def get_delta(self, server_updates: int | list[int], epsilon: float) -> float:
         """
-        Compute the delta value for the provided epsilon and the number of server updates performed
+        Compute the delta value for the provided epsilon and the number of server updates performed.
 
         Args:
             server_updates (int | list[int]): number of central server updates performed
@@ -172,7 +173,6 @@ class FlClientLevelAccountantPoissonSampling(ClientLevelAccountant):
 
 
 class FlClientLevelAccountantFixedSamplingNoReplacement(ClientLevelAccountant):
-
     def __init__(
         self,
         n_total_clients: int,
@@ -182,7 +182,7 @@ class FlClientLevelAccountantFixedSamplingNoReplacement(ClientLevelAccountant):
     ) -> None:
         """
         This accountant should be used when applying FL with Fixed Sampling with No Replacement and measuring
-        client-level privacy
+        client-level privacy.
 
         **NOTE**: The above values can be lists, where they are treated as sequences of training with the respective
         parameters
@@ -206,7 +206,7 @@ class FlClientLevelAccountantFixedSamplingNoReplacement(ClientLevelAccountant):
 
     def get_epsilon(self, server_updates: int | list[int], delta: float) -> float:
         """
-        Compute the epsilon value for the provided delta and the number of server updates performed
+        Compute the epsilon value for the provided delta and the number of server updates performed.
 
         Args:
             server_updates (int | list[int]): number of central server updates performed
@@ -220,7 +220,7 @@ class FlClientLevelAccountantFixedSamplingNoReplacement(ClientLevelAccountant):
 
     def get_delta(self, server_updates: int | list[int], epsilon: float) -> float:
         """
-        Compute the delta value for the provided epsilon and the number of server updates performed
+        Compute the delta value for the provided epsilon and the number of server updates performed.
 
         Args:
             server_updates (int | list[int]): number of central server updates performed

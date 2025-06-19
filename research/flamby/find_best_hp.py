@@ -22,17 +22,14 @@ def get_weighted_loss_from_server_log(
     server_log_path = os.path.join(run_folder_path, "server.out")
     with open(server_log_path, "r") as handle:
         files_lines = handle.readlines()
-        if experiment_name == "fed_heart_disease":
+        if experiment_name in {"fed_heart_disease", "fed_ixi"}:
             line_to_convert = files_lines[-1].strip()
-        elif experiment_name == "fed_ixi":
+        elif is_partial_efficient_net:
+            # FENDA, FedPer, PerFCL and MOON which use only feature extractor of Efficient Net,
+            # doesn't log the same way as other Fed-ISIC methods
             line_to_convert = files_lines[-1].strip()
         else:
-            if is_partial_efficient_net:
-                # FENDA, FedPer, PerFCL and MOON which use only feature extractor of Efficient Net,
-                # doesn't log the same way as other Fed-ISIC methods
-                line_to_convert = files_lines[-1].strip()
-            else:
-                line_to_convert = files_lines[-3].strip()
+            line_to_convert = files_lines[-3].strip()
         return float(line_to_convert)
 
 

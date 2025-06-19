@@ -124,8 +124,8 @@ def test_user_level_accountant_poisson_sampling_reproduce_results() -> None:
         },
     }
 
-    for K, C, z, q, d in zip(n_clients, clients_per_round, noise_values, sampling_probabilities, target_deltas):
-        expected_epsilons = expected_results[(K, C, z)]
+    for k, c, z, q, d in zip(n_clients, clients_per_round, noise_values, sampling_probabilities, target_deltas):
+        expected_epsilons = expected_results[(k, c, z)]
         for t in updates:
             accountant = FlClientLevelAccountantPoissonSampling(q, z)
             estimated_epsilon = accountant.get_epsilon(t, d)

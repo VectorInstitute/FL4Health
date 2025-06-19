@@ -1,16 +1,14 @@
 import torch
-import torch.nn as nn
 from flamby.datasets.fed_ixi.model import Decoder, Encoder, EncodingBlock
+from torch import nn
 
 
 class FedPerFeatureExtractor(nn.Module):
     """
-    Adapted from
-    https://pypi.org/project/unet/0.7.7/
-    PyTorch implementation of 2D and 3D U-Net (unet 0.7.7)
+    Adapted from https://pypi.org/project/unet/0.7.7/ PyTorch implementation of 2D and 3D U-Net (unet 0.7.7)
     License: MIT License (MIT license)
     Author: Fernando Perez-Garcia
-    Requires: Python >=3.6
+    Requires: Python >=3.6.
     """
 
     def __init__(
@@ -57,10 +55,7 @@ class FedPerFeatureExtractor(nn.Module):
 
         # Bottom (last encoding block)
         in_channels = self.encoder.out_channels
-        if dimensions == 2:
-            out_channels_first = 2 * in_channels
-        else:
-            out_channels_first = in_channels
+        out_channels_first = 2 * in_channels if dimensions == 2 else in_channels
 
         self.bottom_block = EncodingBlock(
             in_channels,
@@ -103,5 +98,4 @@ class FedPerFeatureExtractor(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         skip_connections, encoding = self.encoder(x)
         encoding = self.bottom_block(encoding)
-        x = self.decoder(skip_connections, encoding)
-        return x
+        return self.decoder(skip_connections, encoding)

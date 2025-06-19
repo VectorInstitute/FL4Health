@@ -4,7 +4,6 @@ from logging import INFO
 from typing import Any
 
 import flwr as fl
-import torch.nn as nn
 from delirium_models.perfcl_model import DeliriumPerFclModel
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
@@ -15,6 +14,7 @@ from flwr.server.strategy import FedAvg
 # model
 from mortality_models.perfcl_model import GeminiPerFclModel
 from servers.personal_server import PersonalServer
+from torch import nn
 from utils.random import set_all_random_seeds
 
 from fl4health.utils.config import load_config

@@ -1,4 +1,5 @@
-"""Base Class for Reporters.
+"""
+Base Class for Reporters.
 
 Super simple for now but keeping it in a separate file in case we add more base methods.
 """
@@ -36,7 +37,7 @@ class BaseReporter:
 
     def initialize(self, **kwargs: Any) -> None:
         """
-        Method for initializing reporters with client/server information
+        Method for initializing reporters with client/server information.
 
         This method is called once by the client or server during initialization.
 

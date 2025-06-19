@@ -1,5 +1,5 @@
-import torch.nn as nn
 from opacus import GradSampleModule
+from torch import nn
 
 from fl4health.utils.privacy_utilities import convert_model_to_opacus_model
 

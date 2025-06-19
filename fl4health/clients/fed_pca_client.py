@@ -56,7 +56,7 @@ class FedPCAClient(NumPyClient):
     def get_parameters(self, config: Config) -> NDArrays:
         """
         Sends all of the model components back to the server. The model in this case represents the principal
-        components that have been computed
+        components that have been computed.
 
         Args:
             config (Config): Configurations to allow for customization of this functions behavior
@@ -74,9 +74,8 @@ class FedPCAClient(NumPyClient):
             self.setup_client(config)
             # Need all parameters even if normally exchanging partial
             return FullParameterExchanger().push_parameters(self.model, config=config)
-        else:
-            assert self.model is not None and self.parameter_exchanger is not None
-            return self.parameter_exchanger.push_parameters(self.model, config=config)
+        assert self.model is not None and self.parameter_exchanger is not None
+        return self.parameter_exchanger.push_parameters(self.model, config=config)
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         """
@@ -94,7 +93,7 @@ class FedPCAClient(NumPyClient):
 
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         """
-        User defined method that returns a PyTorch Train DataLoader and a PyTorch Validation DataLoader
+        User defined method that returns a PyTorch Train DataLoader and a PyTorch Validation DataLoader.
 
         Args:
             config (Config): Configurations sent by the server to allow for customization of this functions behavior.
@@ -109,7 +108,7 @@ class FedPCAClient(NumPyClient):
 
     def get_model(self, config: Config) -> PcaModule:
         """
-        Returns an instance of the ``PCAModule``. This module is used to facilitate FedPCA training on the client side
+        Returns an instance of the ``PCAModule``. This module is used to facilitate FedPCA training on the client side.
 
         Args:
             config (Config): Configurations sent by the server to allow for customization of this functions behavior.
@@ -124,7 +123,7 @@ class FedPCAClient(NumPyClient):
 
     def setup_client(self, config: Config) -> None:
         """
-        Used to setup all of the components necessary to run FedPCA
+        Used to setup all of the components necessary to run ``FedPCA``.
 
         Args:
             config (Config): Configurations sent by the server to allow for customization of this functions behavior.
@@ -161,8 +160,8 @@ class FedPCAClient(NumPyClient):
 
     def fit(self, parameters: NDArrays, config: Config) -> tuple[NDArrays, int, dict[str, Scalar]]:
         """
-        Function to perform the local side of FedPCA. We don't use any parameters sent by the server. Hence
-        ``parameters`` is ignored. We need only the ``train_data_tensor`` to do the work
+        Function to perform the local side of ``FedPCA``. We don't use any parameters sent by the server. Hence
+        ``parameters`` is ignored. We need only the ``train_data_tensor`` to do the work.
 
         Args:
             parameters (NDArrays): ignored
@@ -204,7 +203,7 @@ class FedPCAClient(NumPyClient):
             self.model.set_data_mean(self.model.maybe_reshape(self.train_data_tensor))
         self.set_parameters(parameters, config)
         num_components_eval = (
-            narrow_dict_type(config, "num_components_eval", int) if "num_components_eval" in config.keys() else None
+            narrow_dict_type(config, "num_components_eval", int) if "num_components_eval" in config else None
         )
         val_data_tensor_prepared = self.model.center_data(self.model.maybe_reshape(self.val_data_tensor)).to(
             self.device

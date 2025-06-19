@@ -5,9 +5,9 @@ from pathlib import Path
 
 import flwr as fl
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader

@@ -1,6 +1,6 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from fl4health.model_bases.fenda_base import FendaGlobalModule, FendaHeadModule, FendaJoinMode, FendaLocalModule
 
@@ -21,8 +21,7 @@ class FendaClassifier(FendaHeadModule):
     def head_forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         x = F.relu(self.fc1(input_tensor))
         x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+        return self.fc3(x)
 
 
 class LocalMLP(FendaLocalModule):
@@ -35,9 +34,7 @@ class LocalMLP(FendaLocalModule):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.activation(self.fc1(x))
-        x = self.activation(self.fc2(x))
-
-        return x
+        return self.activation(self.fc2(x))
 
 
 class GlobalMLP(FendaGlobalModule):
@@ -49,6 +46,4 @@ class GlobalMLP(FendaGlobalModule):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.activation(self.fc1(x))
-        x = self.activation(self.fc2(x))
-
-        return x
+        return self.activation(self.fc2(x))

@@ -4,12 +4,12 @@ from pathlib import Path
 
 import flwr as fl
 import torch
-import torch.nn as nn
-import torchvision.transforms as transforms
 from flwr.common.typing import Config
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
+from torchvision import transforms
 
 from examples.models.mnist_model import MnistNet
 from fl4health.clients.basic_client import BasicClient

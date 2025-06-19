@@ -64,13 +64,11 @@ def pred_and_eval(
         verbose (bool, optional): Whether or not to print logs to stdout.
             Defaults to True.
     """
-
     # Ensure an output folder is specified
     if save_probability_maps or save_detection_maps or save_annotations:
-        assert (
-            output_folder is not None
-        ), "Can not save the probability maps, annotations \
-            or the detection maps if no output folder is specified"
+        assert output_folder is not None, (
+            "Can not save the probability maps, annotations or the detection maps if no output folder is specified"
+        )
 
     # Run inference and maybe save probability maps.
     # output folders will be created if they dont exist
@@ -103,7 +101,7 @@ def pred_and_eval(
     secs = time.time() - t
 
     if verbose:
-        log(INFO, f"Lesion detection complete: {secs:.2f}s total, {secs/len(case_identifiers):.2f}s/case")
+        log(INFO, f"Lesion detection complete: {secs:.2f}s total, {secs / len(case_identifiers):.2f}s/case")
 
     # Save detection maps
     if save_detection_maps and output_folder is not None:
@@ -116,7 +114,7 @@ def pred_and_eval(
             np.savez_compressed(ofile, detection_map=det)
         secs = time.time() - t
         if verbose:
-            log(INFO, f"Saved detection maps to disk: {secs:.2f}s total, {secs/len(detection_maps):.1f}s/case")
+            log(INFO, f"Saved detection maps to disk: {secs:.2f}s total, {secs / len(detection_maps):.1f}s/case")
 
     # Load the input data
     labels = load_images_from_folder(labels_folder, case_identifiers).astype(int)

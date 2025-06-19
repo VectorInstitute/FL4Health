@@ -1,12 +1,14 @@
 import torch
-import torch.nn as nn
 from flamby.datasets.fed_isic2019 import Baseline
+from torch import nn
 
 from research.flamby.utils import shutoff_batch_norm_tracking
 
 
 class ApflEfficientNet(nn.Module):
-    """APFL module to serve as both the local and global models
+    """
+    APFL module to serve as both the local and global models.
+
     We use the EfficientNets architecture that many participants in the ISIC
     competition have identified to work best.
     See here the [reference paper](https://arxiv.org/abs/1905.11946)
@@ -41,5 +43,4 @@ class ApflEfficientNet(nn.Module):
             self.base_model._modules["base_model"]._modules["_blocks"][block_index].requires_grad_(False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.base_model(x)
-        return x
+        return self.base_model(x)

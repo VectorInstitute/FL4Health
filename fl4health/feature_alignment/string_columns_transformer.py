@@ -7,7 +7,6 @@ from fl4health.feature_alignment.constants import TextFeatureTransformer
 
 
 class TextMulticolumnTransformer(BaseEstimator, TransformerMixin):
-
     def __init__(self, transformer: TextFeatureTransformer):
         """
         The purpose of this class is to enable the application of text feature transformers from sklearn
@@ -18,10 +17,10 @@ class TextMulticolumnTransformer(BaseEstimator, TransformerMixin):
         """
         self.transformer = transformer
 
-    def fit(self, X: pd.DataFrame, y: pd.DataFrame | None = None) -> TextMulticolumnTransformer:
+    def fit(self, x: pd.DataFrame, y: pd.DataFrame | None = None) -> TextMulticolumnTransformer:
         """
         Fit the transformer to the provided dataframe. The dataframe should have multiple string columns
-        The transformer is fit on the appended text from all columns in the ``X`` dataframe
+        The transformer is fit on the appended text from all columns in the ``X`` dataframe.
 
         Args:
             X (pd.DataFrame): Columns on which to fit the transformer
@@ -30,13 +29,13 @@ class TextMulticolumnTransformer(BaseEstimator, TransformerMixin):
         Returns:
             TextMulticolumnTransformer: The fit transformer
         """
-        joined_X = X.apply(lambda x: " ".join(x), axis=1)
-        self.transformer.fit(joined_X)
+        joined_x = x.apply(lambda x: " ".join(x), axis=1)
+        self.transformer.fit(joined_x)
         return self
 
-    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+    def transform(self, x: pd.DataFrame) -> pd.DataFrame:
         """
-        Transforms the concatenation of all columns of text in the ``X`` dataframe
+        Transforms the concatenation of all columns of text in the ``X`` dataframe.
 
         Args:
             X (pd.DataFrame): Dataframe of text-based columns to be transformed
@@ -44,12 +43,11 @@ class TextMulticolumnTransformer(BaseEstimator, TransformerMixin):
         Returns:
             pd.DataFrame: Transformed dataframe.
         """
-        joined_X = X.apply(lambda x: " ".join(x), axis=1)
-        return self.transformer.transform(joined_X)
+        joined_x = x.apply(lambda x: " ".join(x), axis=1)
+        return self.transformer.transform(joined_x)
 
 
 class TextColumnTransformer(BaseEstimator, TransformerMixin):
-
     def __init__(self, transformer: TextFeatureTransformer):
         """
         The purpose of this class is to enable the application of text feature transformers from sklearn
@@ -60,10 +58,10 @@ class TextColumnTransformer(BaseEstimator, TransformerMixin):
         """
         self.transformer = transformer
 
-    def fit(self, X: pd.DataFrame, y: pd.DataFrame | None = None) -> TextColumnTransformer:
+    def fit(self, x: pd.DataFrame, y: pd.DataFrame | None = None) -> TextColumnTransformer:
         """
         Fit the transformer to the provided dataframe. The dataframe should have a single string column
-        The transformer is fit on the text from the single columns in the ``X`` dataframe
+        The transformer is fit on the text from the single columns in the ``X`` dataframe.
 
         Args:
             X (pd.DataFrame): Column on which to fit the transformer
@@ -72,13 +70,13 @@ class TextColumnTransformer(BaseEstimator, TransformerMixin):
         Returns:
             TextColumnTransformer: The fit transformer
         """
-        assert isinstance(X, pd.DataFrame) and X.shape[1] == 1
-        self.transformer.fit(X[X.columns[0]])
+        assert isinstance(x, pd.DataFrame) and x.shape[1] == 1
+        self.transformer.fit(x[x.columns[0]])
         return self
 
-    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+    def transform(self, x: pd.DataFrame) -> pd.DataFrame:
         """
-        Transforms the concatenation of a single column of text in the ``X`` dataframe
+        Transforms the concatenation of a single column of text in the ``X`` dataframe.
 
         Args:
             X (pd.DataFrame): Dataframe of text-based column to be transformed
@@ -86,5 +84,5 @@ class TextColumnTransformer(BaseEstimator, TransformerMixin):
         Returns:
             pd.DataFrame: Transformed dataframe.
         """
-        assert isinstance(X, pd.DataFrame) and X.shape[1] == 1
-        return self.transformer.transform(X[X.columns[0]])
+        assert isinstance(x, pd.DataFrame) and x.shape[1] == 1
+        return self.transformer.transform(x[x.columns[0]])

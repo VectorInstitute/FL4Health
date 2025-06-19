@@ -202,7 +202,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
     ) -> None:
         """
         Custom FL Server for Instance Level Differentially Private Scaffold algorithm as specified in
-        https://arxiv.org/abs/2111.09278
+        https://arxiv.org/abs/2111.09278.
 
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
@@ -248,9 +248,9 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
             accept_failures (bool, optional): Determines whether the server should accept
         """
         # Require the strategy to be an  OpacusStrategy to handle the Opacus model conversion etc.
-        assert isinstance(
-            strategy, OpacusScaffold
-        ), f"Strategy much be of type OpacusScaffold to handle Opacus models but is of type {type(strategy)}"
+        assert isinstance(strategy, OpacusScaffold), (
+            f"Strategy much be of type OpacusScaffold to handle Opacus models but is of type {type(strategy)}"
+        )
         ScaffoldServer.__init__(
             self,
             client_manager=client_manager,

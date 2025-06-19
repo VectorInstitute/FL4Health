@@ -100,8 +100,7 @@ def test_client_state_works_for_per_round_checkpointing(tmp_path: Path) -> None:
     loaded_optimizer_state = copy_client.optimizers["global"].state_dict()["state"]
     saved_optimizer_state = fl_client.optimizers["global"].state_dict()["state"]
     assert all(
-        torch.equal(loaded_optimizer_state[0][key], saved_optimizer_state[0][key])
-        for key in loaded_optimizer_state[0].keys()
+        torch.equal(loaded_optimizer_state[0][key], saved_optimizer_state[0][key]) for key in loaded_optimizer_state[0]
     )
     # Check the state of the loaded lr_scheduler.
     assert copy_client.lr_schedulers["global"].state_dict() == fl_client.lr_schedulers["global"].state_dict()
@@ -158,8 +157,7 @@ def test_client_state_works_for_training_loop_checkpointing(tmp_path: Path) -> N
     loaded_optimizer_state = copy_client.optimizers["global"].state_dict()["state"]
     saved_optimizer_state = fl_client.optimizers["global"].state_dict()["state"]
     assert all(
-        torch.equal(loaded_optimizer_state[0][key], saved_optimizer_state[0][key])
-        for key in loaded_optimizer_state[0].keys()
+        torch.equal(loaded_optimizer_state[0][key], saved_optimizer_state[0][key]) for key in loaded_optimizer_state[0]
     )
     # Check the state of the loaded lr_scheduler.
     assert copy_client.lr_schedulers["global"].state_dict() == fl_client.lr_schedulers["global"].state_dict()
@@ -223,8 +221,7 @@ def test_client_state_checkpointing_with_custom_attrs(tmp_path: Path) -> None:
     loaded_optimizer_state = copy_client.optimizers["global"].state_dict()["state"]
     saved_optimizer_state = fl_client.optimizers["global"].state_dict()["state"]
     assert all(
-        torch.equal(loaded_optimizer_state[0][key], saved_optimizer_state[0][key])
-        for key in loaded_optimizer_state[0].keys()
+        torch.equal(loaded_optimizer_state[0][key], saved_optimizer_state[0][key]) for key in loaded_optimizer_state[0]
     )
 
     # Check the loaded total steps.
@@ -234,9 +231,7 @@ def test_client_state_checkpointing_with_custom_attrs(tmp_path: Path) -> None:
 
 
 def test_server_state_checkpointer(tmp_path: Path) -> None:
-    """
-    Test the server state checkpointer.
-    """
+    """Test the server state checkpointer."""
     fl_server = FlServer(
         client_manager=SimpleClientManager(),
         fl_config={"": ""},
@@ -320,9 +315,7 @@ def test_server_state_checkpointer(tmp_path: Path) -> None:
 
 
 def test_nnunet_server_state_checkpointer(tmp_path: Path) -> None:
-    """
-    Test the nnunet server per round state checkpointer.
-    """
+    """Test the nnunet server per round state checkpointer."""
 
     def dummy_get_config(current_server_round: int) -> dict[str, Any]:
         return {

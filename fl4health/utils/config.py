@@ -3,6 +3,7 @@ from typing import Any, TypeVar
 
 import yaml
 
+
 REQUIRED_CONFIG = {
     "n_server_rounds": int,
     "batch_size": int,
@@ -16,8 +17,7 @@ class InvalidConfigError(ValueError):
 
 
 def load_config(config_path: str) -> dict[str, Any]:
-    """Load Configuration Dictionary"""
-
+    """Load Configuration Dictionary."""
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 
@@ -27,11 +27,10 @@ def load_config(config_path: str) -> dict[str, Any]:
 
 
 def check_config(config: dict[str, Any]) -> None:
-    """Check if Configuration Dictionary is valid"""
-
+    """Check if Configuration Dictionary is valid."""
     # Check for presence of required keys
-    for req_key in REQUIRED_CONFIG.keys():
-        if req_key not in config.keys():
+    for req_key in REQUIRED_CONFIG:
+        if req_key not in config:
             raise InvalidConfigError(f"{req_key} must be specified in Config File")
 
     # Check for invalid parameter value types
@@ -66,8 +65,7 @@ def narrow_dict_type(dictionary: dict[str, Any], key: str, narrow_type_to: type[
     value = dictionary[key]
     if isinstance(value, narrow_type_to):
         return value
-    else:
-        raise ValueError(f"Provided key ({key}) value does not have correct type")
+    raise ValueError(f"Provided key ({key}) value does not have correct type")
 
 
 def narrow_dict_type_and_set_attribute(
@@ -114,5 +112,4 @@ def make_dict_with_epochs_or_steps(local_epochs: int | None = None, local_steps:
         return {"local_epochs": local_epochs}
     if local_steps is not None:
         return {"local_steps": local_steps}
-    else:
-        return {}
+    return {}

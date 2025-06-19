@@ -1,11 +1,11 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 from fl4health.model_bases.moon_base import MoonModel
 
 
 class BaseModule(nn.Module):
-    """Moon feature extractor module"""
+    """Moon feature extractor module."""
 
     def __init__(self, input_dim: int):
         super().__init__()
@@ -19,20 +19,18 @@ class BaseModule(nn.Module):
         x = self.activation(self.fc1(x))
         x = self.activation(self.fc2(x))
         x = self.activation(self.fc3(x))
-        x = self.activation(self.fc4(x))
-        return x
+        return self.activation(self.fc4(x))
 
 
 class HeadClassifier(nn.Module):
-    """Moon head module"""
+    """Moon head module."""
 
     def __init__(self, output_dim: int):
         super().__init__()
         self.fc5 = nn.Linear(64, output_dim)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.fc5(x)
-        return x
+        return self.fc5(x)
 
 
 class MortalityMoonModel(MoonModel):

@@ -100,11 +100,11 @@ class MrMtlMkMmdClient(MrMtlClient):
             raise ValueError("Invalid beta_global_update_interval. It should be either -1, 0 or a positive integer.")
         if feature_extraction_layers:
             # By default, all of the features should be flattened for the MK-MMD loss
-            self.flatten_feature_extraction_layers = {layer: True for layer in feature_extraction_layers}
+            self.flatten_feature_extraction_layers = dict.fromkeys(feature_extraction_layers, True)
         else:
             self.flatten_feature_extraction_layers = {}
         self.mkmmd_losses: dict[str, MkMmdLoss] = {}
-        for layer in self.flatten_feature_extraction_layers.keys():
+        for layer in self.flatten_feature_extraction_layers:
             self.mkmmd_losses[layer] = MkMmdLoss(
                 device=self.device, minimize_type_two_error=True, normalize_features=True, layer_name=layer
             ).to(self.device)
@@ -148,7 +148,7 @@ class MrMtlMkMmdClient(MrMtlClient):
             # Update betas for the MK-MMD loss based on gathered features during training
             for layer, layer_mkmmd_loss in self.mkmmd_losses.items():
                 layer_mkmmd_loss.betas = layer_mkmmd_loss.optimize_betas(
-                    X=local_distributions[layer], Y=initial_global_distributions[layer], lambda_m=1e-5
+                    x=local_distributions[layer], y=initial_global_distributions[layer], lambda_m=1e-5
                 )
         super().update_after_step(step)
 
@@ -166,7 +166,6 @@ class MrMtlMkMmdClient(MrMtlClient):
             tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple containing the extracted
             features using the local and initial global models.
         """
-
         self.local_feature_extractor.clear_buffers()
         self.initial_global_feature_extractor.clear_buffers()
 
@@ -219,7 +218,7 @@ class MrMtlMkMmdClient(MrMtlClient):
         input: TorchInputType,
     ) -> tuple[TorchPredType, TorchFeatureType]:
         """
-        Computes the predictions for both models and pack them into the prediction dictionary
+        Computes the predictions for both models and pack them into the prediction dictionary.
 
         Args:
             input (TorchInputType): Inputs to be fed into the model. If input is of type ``dict[str, torch.Tensor]``,
@@ -267,7 +266,7 @@ class MrMtlMkMmdClient(MrMtlClient):
         Computes training losses given predictions of the global and local models and ground truth data.
         For the local model we add to the vanilla loss function by including Ditto penalty loss which is the l2 inner
         product between the initial global model weights and weights of the local model. This is stored in backward
-        The loss to optimize the global model is stored in the additional losses dictionary under "global_loss"
+        The loss to optimize the global model is stored in the additional losses dictionary under "global_loss".
 
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in
@@ -325,7 +324,6 @@ class MrMtlMkMmdClient(MrMtlClient):
             - The tensor for the loss
             - A dictionary of additional losses with their names and values, or None if there are no additional losses.
         """
-
         assert "prediction" in preds
         # Compute model loss + MR-MTL constraint term
         loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)
@@ -338,7 +336,7 @@ class MrMtlMkMmdClient(MrMtlClient):
                 # Update betas for the MK-MMD loss based on computed features during training
                 for layer, layer_mkmmd_loss in self.mkmmd_losses.items():
                     layer_mkmmd_loss.betas = layer_mkmmd_loss.optimize_betas(
-                        X=features[layer], Y=features[" ".join(["init_global", layer])], lambda_m=1e-5
+                        x=features[layer], y=features[" ".join(["init_global", layer])], lambda_m=1e-5
                     )
             # Compute MK-MMD loss
             total_mkmmd_loss = torch.tensor(0.0, device=self.device)

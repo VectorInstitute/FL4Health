@@ -5,7 +5,6 @@ from logging import INFO
 from typing import Any
 
 import flwr as fl
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.typing import Config, Metrics, Parameters, Scalar
@@ -14,6 +13,7 @@ from flwr.server.server import EvaluateResultsAndFailures
 
 # Specific to fedopt
 from flwr.server.strategy import FedAdagrad, FedAdam, FedAvg, FedAvgM, FedYogi, Strategy
+from torch import nn
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger

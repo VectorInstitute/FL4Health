@@ -1,12 +1,12 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
 
 
 class BaseLogistic(nn.Module):
-    """FedPer feature extractor module"""
+    """FedPer feature extractor module."""
 
     def __init__(self, input_dim: int = 13):
         super().__init__()
@@ -15,12 +15,11 @@ class BaseLogistic(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.linear(x)
         x = F.relu(x)
-        x = x.flatten(start_dim=1)
-        return x
+        return x.flatten(start_dim=1)
 
 
 class HeadClassifier(nn.Module):
-    """FedPer head module"""
+    """FedPer head module."""
 
     def __init__(self, stack_output_dimension: int):
         super().__init__()
@@ -30,8 +29,7 @@ class HeadClassifier(nn.Module):
     def forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         x = self.dropout(input_tensor)
         x = self.fc1(x)
-        x = torch.sigmoid(x)
-        return x
+        return torch.sigmoid(x)
 
 
 class FedHeartDiseaseFedPerModel(SequentiallySplitExchangeBaseModel):

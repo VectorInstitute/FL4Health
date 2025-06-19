@@ -1,8 +1,8 @@
 from collections import OrderedDict
 
 import torch
-import torch.nn as nn
 from flwr.common.typing import Config, NDArrays
+from torch import nn
 
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 
@@ -12,7 +12,8 @@ class FullParameterExchanger(ParameterExchanger):
         self, model: nn.Module, initial_model: nn.Module | None = None, config: Config | None = None
     ) -> NDArrays:
         """
-        Sending all of parameters ordered by state_dict keys
+        Sending all of parameters ordered by state_dict keys.
+
         **NOTE**: Order matters, because it is relied upon by ``pull_parameters`` below
 
         Args:

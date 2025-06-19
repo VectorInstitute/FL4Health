@@ -7,15 +7,14 @@ from fl4health.utils.config import InvalidConfigError, check_config, load_config
 
 
 def test_load_config() -> None:
-    """Ensure loaded config is non empty"""
+    """Ensure loaded config is non empty."""
     config_path = f"{Path(__file__).parent}/resources/config.yaml"
     config = load_config(config_path)
     assert len(config.keys()) != 0
 
 
 def test_check_config() -> None:
-    """Verify invalid configs raise Error"""
-
+    """Verify invalid configs raise Error."""
     # Test missing values
     config_1: Config = {"n_server_rounds": 10}
 

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-import torch.nn as nn
+from torch import nn
 
 
 class PartialLayerExchangeModel(nn.Module, ABC):

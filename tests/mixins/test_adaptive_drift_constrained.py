@@ -6,9 +6,9 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 import torch
-import torch.nn as nn
 from flwr.common.typing import Config, NDArray, Scalar
 from numpy.testing import assert_array_equal
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, TensorDataset
@@ -62,21 +62,18 @@ def test_init() -> None:
 # Since invalid it will raise a warning—see test_subclass_checks_raise_warning
 @pytest.mark.filterwarnings("ignore::RuntimeWarning")
 def test_init_raises_value_error_when_basic_client_protocol_not_satisfied() -> None:
-
     class _InvalidTestAdaptedClient(AdaptiveDriftConstrainedMixin):
         pass
 
     with pytest.raises(RuntimeError, match="This object needs to satisfy `BasicClientProtocolPreSetup`."):
-
         _InvalidTestAdaptedClient(data_path=Path(""), metrics=[Accuracy()])
 
 
 def test_subclass_checks_raise_no_warning() -> None:
-
     with warnings.catch_warnings(record=True) as recorded_warnings:
 
         class _TestInheritanceMixin(AdaptiveDriftConstrainedMixin, _TestBasicClient):
-            """subclass should skip validation if is itself a Mixin that inherits AdaptiveDriftConstrainedMixin"""
+            """subclass should skip validation if is itself a Mixin that inherits AdaptiveDriftConstrainedMixin."""
 
             pass
 
@@ -89,7 +86,6 @@ def test_subclass_checks_raise_no_warning() -> None:
 
 
 def test_subclass_checks_raise_warning() -> None:
-
     msg = (
         "Class _InvalidSubclass inherits from AdaptiveDriftConstrainedMixin but none of its other "
         "base classes is a BasicClient. This may cause runtime errors."

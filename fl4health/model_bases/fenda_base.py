@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 from fl4health.model_bases.parallel_split_models import ParallelSplitHeadModule, ParallelSplitModel
 from fl4health.model_bases.partial_layer_exchange_model import PartialLayerExchangeModel
@@ -24,9 +24,7 @@ class FendaModel(PartialLayerExchangeModel, ParallelSplitModel):
         )
 
     def layers_to_exchange(self) -> list[str]:
-        return [
-            layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("second_feature_extractor.")
-        ]
+        return [layer_name for layer_name in self.state_dict() if layer_name.startswith("second_feature_extractor.")]
 
 
 class FendaModelWithFeatureState(FendaModel):
@@ -42,7 +40,7 @@ class FendaModelWithFeatureState(FendaModel):
         storage of the latent features produced by each of the parallel feature extractors is required/desired. This
         is a FENDA model, but the feature space outputs are guaranteed to be stored with the keys "local_features"
         and "global_features" along with the predictions. The user also has the option to "flatten" these features
-        to be of shape ``batch_size`` x all features
+        to be of shape ``batch_size`` x all features.
 
         Args:
             local_module (nn.Module): Feature extraction module that is NOT exchanged with the server
@@ -58,7 +56,7 @@ class FendaModelWithFeatureState(FendaModel):
 
     def forward(self, input: torch.Tensor) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]:
         """
-        Mapping input through the FENDA model local and global feature extractors and the classification head
+        Mapping input through the FENDA model local and global feature extractors and the classification head.
 
         Args:
             input (torch.Tensor): input is expected to be of shape (``batch_size``, \\*)

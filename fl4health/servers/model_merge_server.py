@@ -3,7 +3,6 @@ import timeit
 from collections.abc import Sequence
 from logging import INFO, WARNING
 
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.parameter import parameters_to_ndarrays
 from flwr.common.typing import Scalar
@@ -11,6 +10,7 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
 from flwr.server.server import Server
 from flwr.server.strategy import Strategy
+from torch import nn
 
 from fl4health.checkpointing.checkpointer import LatestTorchModuleCheckpointer
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -147,7 +147,6 @@ class ModelMergeServer(Server):
         Returns:
             nn.Module: Torch model to be checkpointed by a torch checkpointer.
         """
-
         assert self.server_model is not None, (
             "Model hydration has been called but no server_model is defined to hydrate. The functionality of "
             "_hydrate_model_for_checkpointing can be overridden if checkpointing without a torch architecture is "

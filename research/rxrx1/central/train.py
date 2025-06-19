@@ -4,8 +4,8 @@ from logging import INFO
 from pathlib import Path
 
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
+from torch import nn
 from torch.utils.data import DataLoader
 
 from fl4health.datasets.rxrx1.load_data import load_rxrx1_data
@@ -14,6 +14,7 @@ from fl4health.metrics.metric_managers import MetricManager
 from fl4health.utils.dataset import TensorDataset
 from research.rxrx1.single_node_trainer import SingleNodeTrainer
 from research.rxrx1.utils import get_model
+
 
 NUM_CLIENTS = 4
 EPOCHS = 100

@@ -3,6 +3,7 @@ import torch
 
 from fl4health.losses.cosine_similarity_loss import CosineSimilarityLoss
 
+
 DEVICE = torch.device("cpu")
 
 

@@ -29,9 +29,9 @@ def load_data(data_dir: Path, batch_size: int, scaler_bytes: bytes) -> tuple[Dat
     train_features, train_labels = features[:train_samples, :], labels[:train_samples]
     val_features, val_labels = features[train_samples:, :], labels[train_samples:]
     train_features, val_features = scaler(train_features, val_features)
-    train_X, train_Y = torch.from_numpy(train_features).float(), torch.from_numpy(train_labels).float()
-    val_X, val_Y = torch.from_numpy(val_features).float(), torch.from_numpy(val_labels).float()
-    train_ds, val_ds = TensorDataset(train_X, train_Y), TensorDataset(val_X, val_Y)
+    train_x, train_y = torch.from_numpy(train_features).float(), torch.from_numpy(train_labels).float()
+    val_x, val_y = torch.from_numpy(val_features).float(), torch.from_numpy(val_labels).float()
+    train_ds, val_ds = TensorDataset(train_x, train_y), TensorDataset(val_x, val_y)
     train_loader = DataLoader(train_ds, batch_size=batch_size)
     val_loader = DataLoader(val_ds, batch_size=batch_size)
 

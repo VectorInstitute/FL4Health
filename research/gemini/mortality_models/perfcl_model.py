@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 from fl4health.model_bases.fenda_base import FendaHeadModule, FendaJoinMode, FendaModel
 
@@ -21,12 +21,11 @@ class PerFclClassifier(FendaHeadModule):
     def head_forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.activation(self.fc3(x))
         x = self.activation(self.fc4(x))
-        x = self.fc5(x)
-        return x
+        return self.fc5(x)
 
 
 class LocalLogistic(nn.Module):
-    """Local FENDA module"""
+    """Local FENDA module."""
 
     def __init__(self, input_dim: int):
         super().__init__()
@@ -36,12 +35,11 @@ class LocalLogistic(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.activation(self.fc1(x))
-        x = self.activation(self.fc2(x))
-        return x
+        return self.activation(self.fc2(x))
 
 
 class GlobalLogistic(nn.Module):
-    """Global FENDA module"""
+    """Global FENDA module."""
 
     def __init__(self, input_dim: int) -> None:
         super().__init__()
@@ -51,8 +49,7 @@ class GlobalLogistic(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.activation(self.fc1(x))
-        x = self.activation(self.fc2(x))
-        return x
+        return self.activation(self.fc2(x))
 
 
 class GeminiPerFclModel(FendaModel):

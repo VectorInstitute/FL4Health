@@ -5,6 +5,7 @@ import torch.nn.functional as F
 
 from fl4health.utils.data_generation import SyntheticIidFedProxDataset, SyntheticNonIidFedProxDataset
 
+
 # check if intel or mac chip
 manufacturer: str = cpuinfo.get_cpu_info().get("brand_raw", "Unable to get chip manufacturer")
 APPLE_SILICON = "apple" in manufacturer.lower()
@@ -33,25 +34,25 @@ def test_get_input_output_tensors() -> None:
 
     data_generator = SyntheticNonIidFedProxDataset(5, 1.0, 2.0, samples_per_client=5, input_dim=2, output_dim=3)
     sigma = data_generator.construct_covariance_matrix()
-    X, Y = data_generator.get_input_output_tensors(mu=[1.0], v=torch.ones((2)), sigma=sigma)
+    x, y = data_generator.get_input_output_tensors(mu=[1.0], v=torch.ones((2)), sigma=sigma)
 
     # correct shapes
-    assert X.shape == (5, 2)
-    assert Y.shape == (5, 3)
+    assert x.shape == (5, 2)
+    assert y.shape == (5, 3)
 
-    X_target = torch.Tensor(
+    x_target = torch.Tensor(
         [[1.3607, 0.8114], [0.6062, 1.1603], [-0.3833, -0.5263], [0.6828, 0.4286], [2.7482, 0.8180]]
     )
     # Correct inputs
-    assert torch.allclose(X, X_target, rtol=0.0, atol=1e-4)
+    assert torch.allclose(x, x_target, rtol=0.0, atol=1e-4)
 
     # Correct output calculations
-    W = torch.Tensor([[0.0245, 1.4790], [-1.3652, 0.1953], [1.6587, 0.7414]])
+    w = torch.Tensor([[0.0245, 1.4790], [-1.3652, 0.1953], [1.6587, 0.7414]])
     b = torch.Tensor([[0.7490], [1.4770], [0.4117]])
-    Y_target_1 = F.one_hot(torch.argmax(F.softmax(torch.matmul(W, X[1, :]) + b.T, dim=1), dim=1), 3)
-    Y_target_4 = F.one_hot(torch.argmax(F.softmax(torch.matmul(W, X[4, :]) + b.T, dim=1), dim=1), 3)
-    assert torch.allclose(Y_target_1, Y[1, :], rtol=0.0, atol=1e-4)
-    assert torch.allclose(Y_target_4, Y[4, :], rtol=0.0, atol=1e-4)
+    y_target_1 = F.one_hot(torch.argmax(F.softmax(torch.matmul(w, x[1, :]) + b.T, dim=1), dim=1), 3)
+    y_target_4 = F.one_hot(torch.argmax(F.softmax(torch.matmul(w, x[4, :]) + b.T, dim=1), dim=1), 3)
+    assert torch.allclose(y_target_1, y[1, :], rtol=0.0, atol=1e-4)
+    assert torch.allclose(y_target_4, y[4, :], rtol=0.0, atol=1e-4)
 
     # Unset seed
     torch.seed()

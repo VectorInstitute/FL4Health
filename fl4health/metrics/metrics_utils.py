@@ -59,7 +59,7 @@ def threshold_tensor(input: torch.Tensor, threshold: float | int) -> torch.Tenso
         mask_1 = input > threshold
         thresholded_tensor[mask_1] = 1
         return thresholded_tensor
-    elif isinstance(threshold, int):
+    if isinstance(threshold, int):
         # Use argmax to get predicted class labels (hard_preds) and the one-hot-encode them.
         if threshold >= input.ndim:
             raise ValueError(
@@ -70,5 +70,4 @@ def threshold_tensor(input: torch.Tensor, threshold: float | int) -> torch.Tenso
         input = torch.zeros_like(input)
         input.scatter_(threshold, hard_input, 1)
         return input
-    else:
-        raise ValueError(f"Was expecting threshold argument to be either a float or an int. Got {type(threshold)}")
+    raise ValueError(f"Was expecting threshold argument to be either a float or an int. Got {type(threshold)}")

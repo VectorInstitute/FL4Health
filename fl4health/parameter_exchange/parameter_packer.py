@@ -6,6 +6,7 @@ import torch
 from flwr.common.typing import NDArray, NDArrays
 from torch import Tensor
 
+
 T = TypeVar("T")
 
 
@@ -22,7 +23,7 @@ class ParameterPacker(ABC, Generic[T]):
 class ParameterPackerWithControlVariates(ParameterPacker[NDArrays]):
     def __init__(self, size_of_model_params: int) -> None:
         """
-        Class to handle the exchange of control variates for the SCAFFOLD FL method
+        Class to handle the exchange of control variates for the SCAFFOLD FL method.
 
         **NOTE** model params exchanged and control variates can be different sizes, for example, when layers are
         frozen or the state dictionary contains things like Batch Normalization layers.
@@ -31,7 +32,6 @@ class ParameterPackerWithControlVariates(ParameterPacker[NDArrays]):
             size_of_model_params (int): This is the number of layers that are associated with the parameters of the
                 model itself. This is used to split the covariates from the model parameters during unpacking.
         """
-
         self.size_of_model_params = size_of_model_params
         super().__init__()
 

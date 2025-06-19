@@ -19,6 +19,7 @@ from research.picai.data.preprocessing import (
     preprocess,
 )
 
+
 DEFAULT_TRANSFORMS = [
     ResampleSpacing(),
     CentreCropAndOrPad(),
@@ -57,8 +58,8 @@ def filter_split_on_subject_id(
     train: bool,
 ) -> dict[str, Sequence[float] | Sequence[str]]:
     """
-    Filters the scan_annotation_label_list to only include samples with a subject_id apart of split.
-    Returns Dict with image paths, label paths and case labels
+    Filters the scan_annotation_label_list to only include samples with a subject_id apart of split. Returns Dict with
+    image paths, label paths and case labels.
 
     Args:
         scan_annotation_label_list (Sequence[tuple[list[str], str, float]]): A sequence where each member
@@ -76,7 +77,7 @@ def filter_split_on_subject_id(
     filtered_scan_annotation_label_list: Sequence[tuple[Sequence[str], str, float]] = [
         (scan_paths, annotation_path, label)
         for (scan_paths, annotation_path, label) in scan_annotation_label_list
-        if any([subject_id in annotation_path for subject_id in split[train_or_val_string]])
+        if any(subject_id in annotation_path for subject_id in split[train_or_val_string])
     ]
     labeled_data: dict[str, Sequence[float] | Sequence[str]] = {}
     labeled_data["image_paths"], labeled_data["label_paths"], labeled_data["case_label"] = zip(
@@ -279,9 +280,8 @@ def main() -> None:
         raise ValueError("Argument size must have length 3")
     size = (int(args.size[0]), int(args.size[1]), int(args.size[2])) if args.size else None
 
-    if args.physical_size is not None:
-        if len(args.physical_size) != 3:
-            raise ValueError("Argument physical_size must have length 3")
+    if args.physical_size is not None and len(args.physical_size) != 3:
+        raise ValueError("Argument physical_size must have length 3")
     physical_size = (
         (float(args.physical_size[0]), float(args.physical_size[1]), float(args.physical_size[2]))
         if args.physical_size

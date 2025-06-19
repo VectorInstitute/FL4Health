@@ -57,9 +57,9 @@ class DittoServer(FlServer):
                 evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
                 and throw an exception. Defaults to True.
         """
-        assert isinstance(
-            strategy, FedAvgWithAdaptiveConstraint
-        ), "Strategy must be of base type FedAvgWithAdaptiveConstraint"
+        assert isinstance(strategy, FedAvgWithAdaptiveConstraint), (
+            "Strategy must be of base type FedAvgWithAdaptiveConstraint"
+        )
         if checkpoint_and_state_module is not None:
             assert isinstance(
                 checkpoint_and_state_module,

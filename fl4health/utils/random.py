@@ -13,7 +13,9 @@ def set_all_random_seeds(
 ) -> None:
     """
     Set seeds for python random, numpy random, and pytorch random. It also offers the option to force pytorch to use
-    deterministic algorithm for certain methods and layers see:
+    deterministic algorithm for certain methods and layers.
+
+    See:
 
     https://pytorch.org/docs/stable/generated/torch.use_deterministic_algorithms.html)
 

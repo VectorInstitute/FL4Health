@@ -1,4 +1,6 @@
-import torch.nn as nn
+import torch
+from torch import nn
+from torch.nn.parameter import Parameter
 
 from fl4health.model_bases.masked_layers.masked_conv import (
     MaskedConv1d,
@@ -16,6 +18,7 @@ from fl4health.model_bases.masked_layers.masked_normalization_layers import (
     MaskedBatchNorm3d,
     MaskedLayerNorm,
 )
+from fl4health.utils.random import set_all_random_seeds, unset_all_random_seeds
 from tests.test_utils.models_for_test import CompositeConvNet
 
 
@@ -170,10 +173,33 @@ def test_masked_conv_transposed_3d_from_pretrained() -> None:
 
 
 def test_masked_layer_norm() -> None:
+    set_all_random_seeds(42)
     masked_layer_norm_module = MaskedLayerNorm(10, elementwise_affine=True, bias=True)
     assert (masked_layer_norm_module.bias is not None) and (masked_layer_norm_module.weight is not None)
     assert (not masked_layer_norm_module.weight.requires_grad) and masked_layer_norm_module.weight_scores.requires_grad
     assert (not masked_layer_norm_module.bias.requires_grad) and masked_layer_norm_module.bias_scores.requires_grad
+
+    # Test the forward pass
+    input = torch.randn(10)
+    output = masked_layer_norm_module(input)
+
+    # output should be equivalent to a standard layer norm with the right weights dropped
+    layer_norm_module = nn.LayerNorm(10)
+    layer_norm_module.weight = Parameter(
+        torch.Tensor([1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0]), requires_grad=True
+    )
+    output_target = layer_norm_module(input)
+
+    assert torch.allclose(output, output_target, atol=1e-5)
+
+    non_affine_layer_norm = nn.LayerNorm(10, elementwise_affine=False)
+    non_affine_mask_layer_norm = MaskedLayerNorm(10, elementwise_affine=False)
+    output_target = non_affine_layer_norm(input)
+    output = non_affine_mask_layer_norm(input)
+
+    assert torch.allclose(output, output_target, atol=1e-5)
+
+    unset_all_random_seeds()
 
 
 def test_masked_layer_norm_from_pretrained() -> None:
@@ -189,10 +215,33 @@ def test_masked_layer_norm_from_pretrained() -> None:
 
 
 def test_masked_batch_norm_1d() -> None:
+    set_all_random_seeds(42)
     masked_batch_norm_module = MaskedBatchNorm1d(10, affine=True)
     assert (masked_batch_norm_module.bias is not None) and (masked_batch_norm_module.weight is not None)
     assert (not masked_batch_norm_module.weight.requires_grad) and masked_batch_norm_module.weight_scores.requires_grad
     assert (not masked_batch_norm_module.bias.requires_grad) and masked_batch_norm_module.bias_scores.requires_grad
+
+    # Test the forward pass
+    input = torch.randn((3, 10))
+    output = masked_batch_norm_module(input)
+
+    # output should be equivalent to a standard layer norm with the right weights dropped
+    batch_norm_module = nn.BatchNorm1d(10)
+    batch_norm_module.weight = Parameter(
+        torch.Tensor([0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 1.0]), requires_grad=True
+    )
+    output_target = batch_norm_module(input)
+
+    assert torch.allclose(output, output_target, atol=1e-5)
+
+    non_affine_batch_norm = nn.BatchNorm1d(10, affine=False)
+    non_affine_mask_batch_norm = MaskedBatchNorm1d(10, affine=False)
+    output_target = non_affine_batch_norm(input)
+    output = non_affine_mask_batch_norm(input)
+
+    assert torch.allclose(output, output_target, atol=1e-5)
+
+    unset_all_random_seeds()
 
 
 def test_masked_batch_norm_1d_from_pretrained() -> None:

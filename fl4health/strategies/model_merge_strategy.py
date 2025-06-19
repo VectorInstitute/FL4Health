@@ -45,7 +45,7 @@ class ModelMergeStrategy(Strategy):
         accept_failures: bool = True,
         fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         evaluate_metrics_aggregation_fn: MetricsAggregationFn | None = None,
-        weighted_aggregation: bool = True
+        weighted_aggregation: bool = True,
     ) -> None:
         """
         Model Merging strategy in which weights are loaded from clients, averaged (weighted or unweighted) and
@@ -273,7 +273,7 @@ class ModelMergeStrategy(Strategy):
     def initialize_parameters(self, client_manager: ClientManager) -> Parameters | None:
         """
         Required definition of parent class. ``ModelMergeStrategy`` does not support server side initialization.
-        Parameters are always set to None
+        Parameters are always set to None.
 
         Args:
             client_manager (ClientManager): Unused.

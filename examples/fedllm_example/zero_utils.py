@@ -23,11 +23,9 @@ def maybe_zero_3(param: Any, ignore_status: bool = False, name: str | None = Non
     Returns:
         Any: The gathered parameter.
     """
-
     if hasattr(param, "ds_id"):
-        if param.ds_status == ZeroParamStatus.NOT_AVAILABLE:
-            if not ignore_status:
-                log(WARNING, f"{name}: param.ds_status != ZeroParamStatus.NOT_AVAILABLE: {param.ds_status}")
+        if param.ds_status == ZeroParamStatus.NOT_AVAILABLE and not ignore_status:
+            log(WARNING, f"{name}: param.ds_status != ZeroParamStatus.NOT_AVAILABLE: {param.ds_status}")
         with zero.GatheredParameters([param]):
             param = param.data.detach().cpu().clone()
     else:
@@ -62,14 +60,13 @@ def get_peft_state_maybe_zero_3(named_params: Iterator[tuple[str, Parameter]], b
                 lora_bias_names.add(bias_name)
             elif "bias" in k:
                 maybe_lora_bias[k] = t
-        for k, t in maybe_lora_bias.items():
+        for t in maybe_lora_bias.values():
             if bias_name in lora_bias_names:
                 to_return[bias_name] = t
     else:
         raise NotImplementedError
-    # We should gather all parametrs in the model
-    to_return = {k: maybe_zero_3(v, ignore_status=True) for k, v in to_return.items()}
-    return to_return
+    # We should gather all parameters in the model
+    return {k: maybe_zero_3(v, ignore_status=True) for k, v in to_return.items()}
 
 
 def get_peft_state_non_lora_maybe_zero_3(
@@ -85,13 +82,11 @@ def get_peft_state_non_lora_maybe_zero_3(
     Returns:
         dict[str, Any]: The state dict for the non-LoRA trainable parameters.
     """
-
     to_return = {k: t for k, t in named_params if "lora_" not in k}
     if require_grad_only:
         to_return = {k: t for k, t in to_return.items() if t.requires_grad}
     # We should gather all parametrs in the model
-    to_return = {k: maybe_zero_3(v, ignore_status=True).cpu() for k, v in to_return.items()}
-    return to_return
+    return {k: maybe_zero_3(v, ignore_status=True).cpu() for k, v in to_return.items()}
 
 
 def safe_save_model_for_zero3(model: torch.nn.Module, training_arguments: TrainingArguments) -> None:
@@ -124,4 +119,3 @@ def safe_save_model_for_hf_trainer(trainer: Trainer) -> None:
     torch.cuda.synchronize()
 
     trainer.save_model()  # type:ignore
-    return

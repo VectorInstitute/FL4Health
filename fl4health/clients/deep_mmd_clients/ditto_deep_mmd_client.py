@@ -3,9 +3,9 @@ from logging import ERROR
 from pathlib import Path
 
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, Scalar
+from torch import nn
 
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointAndStateModule
 from fl4health.clients.ditto_client import DittoClient
@@ -90,7 +90,7 @@ class DittoDeepMmdClient(DittoClient):
 
         if feature_extraction_layers_with_size is None:
             feature_extraction_layers_with_size = {}
-        self.flatten_feature_extraction_layers = {layer: True for layer in feature_extraction_layers_with_size.keys()}
+        self.flatten_feature_extraction_layers = dict.fromkeys(feature_extraction_layers_with_size.keys(), True)
         self.deep_mmd_losses: dict[str, DeepMmdLoss] = {}
         # Save the random state to be restored after initializing the Deep MMD loss layers.
         random_state, numpy_state, torch_state = save_random_state()
@@ -133,7 +133,7 @@ class DittoDeepMmdClient(DittoClient):
         # meaning that the betas will be updated after each individual batch based on only that
         # individual batch
         if self.mmd_kernel_train_interval == -1:
-            for layer in self.flatten_feature_extraction_layers.keys():
+            for layer in self.flatten_feature_extraction_layers:
                 self.deep_mmd_losses[layer].training = True
 
     def _should_optimize_betas(self, step: int) -> bool:
@@ -173,7 +173,6 @@ class DittoDeepMmdClient(DittoClient):
             tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple containing the extracted
             features using the local and initial global models.
         """
-
         self.local_feature_extractor.clear_buffers()
         self.initial_global_feature_extractor.clear_buffers()
 
@@ -227,7 +226,7 @@ class DittoDeepMmdClient(DittoClient):
     ) -> tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the predictions for both the **GLOBAL** and **LOCAL** models and pack them into the prediction
-        dictionary
+        dictionary.
 
         Args:
             input (TorchInputType): Inputs to be fed into the model. If input is of type ``dict[str, torch.Tensor]``,
@@ -240,7 +239,6 @@ class DittoDeepMmdClient(DittoClient):
             By passing features, we can compute all the losses. All predictions included in dictionary will by
             default be used to compute metrics separately.
         """
-
         # We use features from initial_global_model to compute the Deep MMD loss not the global_model
         global_preds = self.global_model(input)
         local_preds = self.model(input)
@@ -269,7 +267,7 @@ class DittoDeepMmdClient(DittoClient):
         Returns:
             tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
         """
-        for layer in self.flatten_feature_extraction_layers.keys():
+        for layer in self.flatten_feature_extraction_layers:
             self.deep_mmd_losses[layer].training = False
         return super().validate(include_losses_in_metrics)
 
@@ -283,7 +281,7 @@ class DittoDeepMmdClient(DittoClient):
         Computes training losses given predictions of the global and local models and ground truth data.
         For the local model we add to the vanilla loss function by including Ditto penalty loss which is the l2 inner
         product between the initial global model weights and weights of the local model. This is stored in backward
-        The loss to optimize the global model is stored in the additional losses dictionary under "global_loss"
+        The loss to optimize the global model is stored in the additional losses dictionary under "global_loss".
 
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in

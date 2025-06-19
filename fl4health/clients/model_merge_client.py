@@ -4,9 +4,9 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import torch
-import torch.nn as nn
 from flwr.client import NumPyClient
 from flwr.common.typing import Config, NDArrays, Scalar
+from torch import nn
 from torch.utils.data import DataLoader
 
 from fl4health.metrics.base_metrics import Metric
@@ -150,8 +150,8 @@ class ModelMergeClient(NumPyClient):
 
     def _move_data_to_device(self, data: TorchInputType | TorchTargetType) -> TorchTargetType | TorchInputType:
         """
-        Moving data to self.device where data is intended to be either input to the model or the targets that the
-        model is trying to achieve
+        Moving data to ``self.device`` where data is intended to be either input to the model or the targets that the
+        model is trying to achieve.
 
         Args:
             data (TorchInputType | TorchTargetType): The data to move to ``self.device``. Can be a ``TorchInputType``
@@ -167,13 +167,12 @@ class ModelMergeClient(NumPyClient):
         # or dictionaries of tensors
         if isinstance(data, torch.Tensor):
             return data.to(self.device)
-        elif isinstance(data, dict):
+        if isinstance(data, dict):
             return {key: value.to(self.device) for key, value in data.items()}
-        else:
-            raise TypeError(
-                "data must be of type torch.Tensor or dict[str, torch.Tensor]. If definition of TorchInputType or "
-                " TorchTargetType has  changed this method might need to be updated or split into two"
-            )
+        raise TypeError(
+            "data must be of type torch.Tensor or dict[str, torch.Tensor]. If definition of TorchInputType or "
+            " TorchTargetType has  changed this method might need to be updated or split into two"
+        )
 
     def validate(self) -> dict[str, Scalar]:
         """

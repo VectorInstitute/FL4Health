@@ -5,10 +5,10 @@ from pathlib import Path
 from typing import Any
 
 import torch
-import torch.nn as nn
 from flwr.client import NumPyClient
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
@@ -73,7 +73,6 @@ class BasicClient(NumPyClient):
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
         """
-
         self.data_path = data_path
         self.device = device
         self.metrics = metrics
@@ -171,12 +170,11 @@ class BasicClient(NumPyClient):
 
             # Need all parameters even if normally exchanging partial
             return FullParameterExchanger().push_parameters(self.model, config=config)
-        else:
-            assert self.model is not None and self.parameter_exchanger is not None
-            # If the client has early stopping module and the patience is None, we load the best saved state
-            # to send the best checkpointed local model's parameters to the server
-            self._maybe_load_saved_best_local_model_state()
-            return self.parameter_exchanger.push_parameters(self.model, config=config)
+        assert self.model is not None and self.parameter_exchanger is not None
+        # If the client has early stopping module and the patience is None, we load the best saved state
+        # to send the best checkpointed local model's parameters to the server
+        self._maybe_load_saved_best_local_model_state()
+        return self.parameter_exchanger.push_parameters(self.model, config=config)
 
     def _maybe_load_saved_best_local_model_state(self) -> None:
         if self.early_stopper is not None and self.early_stopper.patience is None:
@@ -221,9 +219,7 @@ class BasicClient(NumPyClient):
         FullParameterExchanger().pull_parameters(parameters, self.model, config)
 
     def shutdown(self) -> None:
-        """
-        Shuts down the client. Involves shutting down W&B reporter if one exists.
-        """
+        """Shuts down the client. Involves shutting down W&B reporter if one exists."""
         # Shutdown reporters
         self.reports_manager.report({"shutdown": str(datetime.datetime.now())})
         self.reports_manager.shutdown()
@@ -249,7 +245,7 @@ class BasicClient(NumPyClient):
         # Parse config to determine train by steps or train by epochs
         if ("local_epochs" in config) and ("local_steps" in config):
             raise ValueError("Config cannot contain both local_epochs and local_steps. Please specify only one.")
-        elif "local_epochs" in config:
+        if "local_epochs" in config:
             local_epochs = narrow_dict_type(config, "local_epochs", int)
             local_steps = None
         elif "local_steps" in config:
@@ -439,8 +435,8 @@ class BasicClient(NumPyClient):
         logging_mode: LoggingMode = LoggingMode.TRAIN,
     ) -> None:
         """
-        Logs a header string. By default this is logged at the beginning of each local
-        epoch or at the beginning of the round if training by steps
+        Logs a header string. By default this is logged at the beginning of each local epoch or at the beginning of
+        the round if training by steps.
 
         Args:
             current_round (int | None, optional): The current FL round. (Ie current
@@ -448,7 +444,6 @@ class BasicClient(NumPyClient):
             current_epoch (int | None, optional): The current epoch of local
                 training. Defaults to None.
         """
-
         log_str = f"Current FL Round: {int(current_round)} " if current_round is not None else ""
         log_str += f"Current Epoch: {int(current_epoch)} " if current_epoch is not None else ""
 
@@ -469,8 +464,8 @@ class BasicClient(NumPyClient):
         logging_mode: LoggingMode = LoggingMode.TRAIN,
     ) -> None:
         """
-        Handles the logging of losses, metrics, and other information to the
-        output file. Called only at the end of an epoch or server round
+        Handles the logging of losses, metrics, and other information to the output file. Called only at the end of
+        an epoch or server round.
 
         Args:
             loss_dict (dict[str, float]): A dictionary of losses to log.
@@ -528,7 +523,7 @@ class BasicClient(NumPyClient):
     def get_client_specific_reports(self) -> dict[str, Any]:
         """
         This function can be overridden by an inheriting client to report additional client specific information to
-        the ``wandb_reporter``
+        the ``wandb_reporter``.
 
         Returns:
             dict[str, Any]: A dictionary of things to report
@@ -598,7 +593,6 @@ class BasicClient(NumPyClient):
             tuple[EvaluationLosses, TorchPredType]: The losses object from the val step along with a dictionary of the
             predictions produced by the model.
         """
-
         # Get preds and compute loss
         with torch.no_grad():
             preds, features = self.predict(input)
@@ -752,7 +746,7 @@ class BasicClient(NumPyClient):
         self, loss_meter: LossMeter, metric_manager: MetricManager, include_losses_in_metrics: bool = False
     ) -> tuple[float, dict[str, Scalar]]:
         """
-        Evaluate the model on the validation set for a fixed number of steps set by ``self.num_validation_steps``
+        Evaluate the model on the validation set for a fixed number of steps set by ``self.num_validation_steps``.
 
         Args:
             loss_meter (LossMeter): The meter to track the losses.
@@ -763,7 +757,6 @@ class BasicClient(NumPyClient):
         Returns:
             tuple[float, dict[str, Scalar]]: The loss and a dictionary of metrics from evaluation.
         """
-
         assert self.num_validation_steps is not None, "num_validation_steps must be defined to use this function"
 
         self.model.eval()
@@ -936,9 +929,9 @@ class BasicClient(NumPyClient):
         # batch_size * num_validation_steps
         self.num_val_samples = len(self.val_loader.dataset)  # type: ignore
         if self.num_validation_steps is not None:
-            assert (
-                self.val_loader.batch_size is not None
-            ), "Validation batch size must be defined if we want to limit the number of validation steps"
+            assert self.val_loader.batch_size is not None, (
+                "Validation batch size must be defined if we want to limit the number of validation steps"
+            )
             self.num_val_samples = self.num_validation_steps * self.val_loader.batch_size
 
         if self.test_loader:
@@ -950,7 +943,7 @@ class BasicClient(NumPyClient):
         # Add lr_scheduler to dictionary if user overrides get_lr_scheduler to return
         # scheduler for given optimizer
         self.lr_schedulers = {}
-        for optimizer_key in self.optimizers.keys():
+        for optimizer_key in self.optimizers:
             lr_scheduler = self.get_lr_scheduler(optimizer_key, config)
             if lr_scheduler is not None:
                 self.lr_schedulers[optimizer_key] = lr_scheduler
@@ -1006,15 +999,14 @@ class BasicClient(NumPyClient):
 
         if isinstance(output, dict):
             return output, {}
-        elif isinstance(output, torch.Tensor):
+        if isinstance(output, torch.Tensor):
             return {"prediction": output}, {}
-        elif isinstance(output, tuple):
+        if isinstance(output, tuple):
             if len(output) != 2:
                 raise ValueError(f"Output tuple should have length 2 but has length {len(output)}")
             preds, features = output
             return preds, features
-        else:
-            raise ValueError("Model forward did not return a tensor, dictionary of tensors, or tuple of tensors")
+        raise ValueError("Model forward did not return a tensor, dictionary of tensors, or tuple of tensors")
 
     def compute_loss_and_additional_losses(
         self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
@@ -1094,8 +1086,7 @@ class BasicClient(NumPyClient):
 
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         """
-        User defined method that returns a PyTorch Train DataLoader
-        and a PyTorch Validation DataLoader
+        User defined method that returns a PyTorch Train DataLoader and a PyTorch Validation DataLoader.
 
         Args:
             config (Config): The config from the server.
@@ -1211,7 +1202,6 @@ class BasicClient(NumPyClient):
             step (int | None): If using ``local_steps``, current step of this round. Otherwise None.
             epoch (int | None): If using ``local_epochs`` current epoch of this round. Otherwise None.
         """
-
         assert (step is None) ^ (epoch is None)
 
         for lr_scheduler in self.lr_schedulers.values():
@@ -1271,7 +1261,7 @@ class BasicClient(NumPyClient):
     def update_before_epoch(self, epoch: int) -> None:
         """
         Hook method called before local epoch on client. Only called if client is being trained by epochs
-        (i.e. using ``local_epochs`` key instead of local steps in the server config file)
+        (i.e. using ``local_epochs`` key instead of local steps in the server config file).
 
         Args:
             epoch (int): Integer representing the epoch about to begin

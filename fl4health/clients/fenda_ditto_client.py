@@ -187,8 +187,7 @@ class FendaDittoClient(DittoClient):
         # Weights and training loss sent to server for aggregation
         # Training loss sent because server will decide to increase or decrease the penalty weight, if adaptivity
         # is turned on
-        packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.loss_for_adaptation)
-        return packed_params
+        return self.parameter_exchanger.pack_parameters(model_weights, self.loss_for_adaptation)
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
@@ -236,7 +235,7 @@ class FendaDittoClient(DittoClient):
     def update_before_train(self, current_server_round: int) -> None:
         """
         Follows the same flow as the ``DittoClient`` parent module, but adds the ability to freeze the global feature
-        extractor during training if ``self.freeze_global_feature_extractor`` is True
+        extractor during training if ``self.freeze_global_feature_extractor`` is True.
 
         Args:
             current_server_round (int): Which round we're currently on
@@ -253,7 +252,7 @@ class FendaDittoClient(DittoClient):
     ) -> tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the predictions for both the **GLOBAL** and **LOCAL** models and pack them into the prediction
-        dictionary
+        dictionary.
 
         Args:
             input (TorchInputType): Inputs to be fed into both models.

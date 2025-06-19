@@ -1,6 +1,6 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 
 class MoonContrastiveLoss(nn.Module):
@@ -19,7 +19,6 @@ class MoonContrastiveLoss(nn.Module):
             device (torch.device): device to use for computation
             temperature (float): temperature to scale the logits
         """
-
         super().__init__()
         self.device = device
         self.temperature = temperature
@@ -97,7 +96,7 @@ class NtXentLoss(nn.Module):
     def __init__(self, device: torch.device, temperature: float = 0.5) -> None:
         """
         Implementation of Normalized Temperature-Scaled Cross Entropy Loss (NT-Xent) proposed in
-        https://papers.nips.cc/paper_files/paper/2016/hash/6b180037abbebea991d8b1232f8a8ca9-Abstract.html
+        https://papers.nips.cc/paper_files/paper/2016/hash/6b180037abbebea991d8b1232f8a8ca9-Abstract.html.
 
         and notably used in:
 
@@ -131,7 +130,6 @@ class NtXentLoss(nn.Module):
         Returns:
             torch.Tensor: Contrastive loss value
         """
-
         features.to(self.device)
         transformed_features.to(self.device)
 
@@ -166,5 +164,4 @@ class NtXentLoss(nn.Module):
         losses = -torch.log(numerator / denominator.sum(dim=1))
 
         # Divide by 2 * batch size because pairs are double counted due to the symmetry of the similarity matrix
-        loss = torch.sum(losses) / (2 * batch_size)
-        return loss
+        return torch.sum(losses) / (2 * batch_size)

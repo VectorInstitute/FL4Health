@@ -7,10 +7,10 @@ import flwr as fl
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from sklearn.preprocessing import MaxAbsScaler
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, TensorDataset
@@ -73,8 +73,7 @@ class Mimic3TabularDataClient(TabularDataClient):
         return torch.nn.CrossEntropyLoss()
 
     def get_data_frame(self, config: Config) -> pd.DataFrame:
-        df = pd.read_csv(self.data_path)
-        return df
+        return pd.read_csv(self.data_path)
 
 
 if __name__ == "__main__":

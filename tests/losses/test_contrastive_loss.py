@@ -4,13 +4,14 @@ import torch.nn.functional as F
 
 from fl4health.losses.contrastive_loss import MoonContrastiveLoss, NtXentLoss
 
+
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def nt_xent(x1: torch.Tensor, x2: torch.Tensor, t: float = 0.5) -> torch.Tensor:
     """
     Fed-X Alternative Implementation of NT-Xent to Compare against.
-    https://github.com/Sungwon-Han/FEDX/blob/main/losses.py#L11
+    https://github.com/Sungwon-Han/FEDX/blob/main/losses.py#L11.
     """
     x1 = F.normalize(x1, dim=1)
     x2 = F.normalize(x2, dim=1)
@@ -21,8 +22,7 @@ def nt_xent(x1: torch.Tensor, x2: torch.Tensor, t: float = 0.5) -> torch.Tensor:
     sim_matrix = sim_matrix.masked_select(mask).view(2 * batch_size, -1)
     pos_sim = torch.exp(torch.sum(x1 * x2, dim=-1) / t)
     pos_sim = torch.cat([pos_sim, pos_sim], dim=0)
-    loss = (-torch.log(pos_sim / sim_matrix.sum(dim=-1))).mean()
-    return loss
+    return (-torch.log(pos_sim / sim_matrix.sum(dim=-1))).mean()
 
 
 def test_moon_contrastive_loss() -> None:

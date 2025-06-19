@@ -1,4 +1,4 @@
-"""AdaptiveDriftConstrainedMixin"""
+"""AdaptiveDriftConstrainedMixin."""
 
 import warnings
 from logging import INFO, WARN
@@ -27,12 +27,13 @@ class AdaptiveDriftConstrainedProtocol(BasicClientProtocol, Protocol):
     penalty_loss_function: WeightDriftLoss
     parameter_exchanger: FullParameterExchangerWithPacking[float]
 
-    def compute_penalty_loss(self) -> torch.Tensor: ...  # noqa: E704
+    def compute_penalty_loss(self) -> torch.Tensor: ...
 
 
 class AdaptiveDriftConstrainedMixin:
     def __init__(self, *args: Any, **kwargs: Any):
-        """Adaptive Drift Constrained Mixin
+        """
+        Adaptive Drift Constrained Mixin.
 
         To be used with `~fl4health.BaseClient` in order to add the ability to compute
         losses via a constrained adaptive drift.
@@ -80,10 +81,7 @@ class AdaptiveDriftConstrainedMixin:
             f"base classes is a BasicClient. This may cause runtime errors."
         )
         log(WARN, msg)
-        warnings.warn(
-            msg,
-            RuntimeWarning,
-        )
+        warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
     def get_parameters(self: AdaptiveDriftConstrainedProtocol, config: Config) -> NDArrays:
         """
@@ -109,20 +107,14 @@ class AdaptiveDriftConstrainedMixin:
 
             # Need all parameters even if normally exchanging partial
             return FullParameterExchanger().push_parameters(self.model, config=config)
-        else:
 
-            # Make sure the proper components are there
-            assert (
-                self.model is not None
-                and self.parameter_exchanger is not None
-                and self.loss_for_adaptation is not None
-            )
-            model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
+        # Make sure the proper components are there
+        assert self.model is not None and self.parameter_exchanger is not None and self.loss_for_adaptation is not None
+        model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
 
-            # Weights and training loss sent to server for aggregation. Training loss is sent because server will
-            # decide to increase or decrease the penalty weight, if adaptivity is turned on.
-            packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.loss_for_adaptation)
-            return packed_params
+        # Weights and training loss sent to server for aggregation. Training loss is sent because server will
+        # decide to increase or decrease the penalty weight, if adaptivity is turned on.
+        return self.parameter_exchanger.pack_parameters(model_weights, self.loss_for_adaptation)
 
     def set_parameters(
         self: AdaptiveDriftConstrainedProtocol, parameters: NDArrays, config: Config, fitting_round: bool
@@ -185,7 +177,7 @@ class AdaptiveDriftConstrainedMixin:
     def get_parameter_exchanger(self: AdaptiveDriftConstrainedProtocol, config: Config) -> ParameterExchanger:
         """
         Setting up the parameter exchanger to include the appropriate packing functionality.
-        By default we assume that we're exchanging all parameters. Can be overridden for other behavior
+        By default we assume that we're exchanging all parameters. Can be overridden for other behavior.
 
         Args:
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
@@ -193,7 +185,6 @@ class AdaptiveDriftConstrainedMixin:
         Returns:
             ParameterExchanger: Exchanger that can handle packing/unpacking auxiliary server information.
         """
-
         return FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
 
     def update_after_train(
@@ -216,7 +207,7 @@ class AdaptiveDriftConstrainedMixin:
 
     def compute_penalty_loss(self: AdaptiveDriftConstrainedProtocol) -> torch.Tensor:
         """
-        Computes the drift loss for the client model and drift tensors
+        Computes the drift loss for the client model and drift tensors.
 
         Returns:
             torch.Tensor: Computed penalty loss tensor
@@ -228,7 +219,8 @@ class AdaptiveDriftConstrainedMixin:
 
 
 def apply_adaptive_drift_to_client(client_base_type: type[BasicClient]) -> type[BasicClient]:
-    """Dynamically create an adapted client class.
+    """
+    Dynamically create an adapted client class.
 
     Args:
         client_base_type (type[BasicClient]): The class to be mixed.
@@ -236,7 +228,6 @@ def apply_adaptive_drift_to_client(client_base_type: type[BasicClient]) -> type[
     Returns:
         type[BasicClient]: A basic client that has been mixed with `AdaptiveDriftConstrainedMixin`.
     """
-
     return type(
         f"AdaptiveDrift{client_base_type.__name__}",
         (

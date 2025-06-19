@@ -4,8 +4,8 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any, Generic, TypeVar
 
-import torch.nn as nn
 from flwr.server.history import History
+from torch import nn
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
 
@@ -13,11 +13,11 @@ from fl4health.metrics.metric_managers import MetricManager
 from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.utils.losses import LossMeter
 
+
 T = TypeVar("T")
 
 
 class AbstractSnapshotter(ABC, Generic[T]):
-
     @abstractmethod
     def save_attribute(self, attribute: dict[str, T]) -> dict[str, Any]:
         """
@@ -44,7 +44,6 @@ class AbstractSnapshotter(ABC, Generic[T]):
 
 
 class OptimizerSnapshotter(AbstractSnapshotter[Optimizer]):
-
     def save_attribute(self, attribute: dict[str, Optimizer]) -> dict[str, Any]:
         """
         Save the state of the optimizers by saving "state" attribute of the optimizers.
@@ -75,7 +74,6 @@ class OptimizerSnapshotter(AbstractSnapshotter[Optimizer]):
 
 
 class LRSchedulerSnapshotter(AbstractSnapshotter[LRScheduler]):
-
     def save_attribute(self, attribute: dict[str, LRScheduler]) -> dict[str, Any]:
         """
         Save the state of the learning rate schedulers.
@@ -104,7 +102,6 @@ class LRSchedulerSnapshotter(AbstractSnapshotter[LRScheduler]):
 
 
 class TorchModuleSnapshotter(AbstractSnapshotter[nn.Module]):
-
     def save_attribute(self, attribute: dict[str, nn.Module]) -> dict[str, Any]:
         """
         Save the state of the ``nn.Modules``.
@@ -235,7 +232,6 @@ class StringSnapshotter(AbstractSnapshotter[str]):
 
 
 class BytesSnapshotter(AbstractSnapshotter[bytes]):
-
     def save_attribute(self, attribute: dict[str, bytes]) -> dict[str, Any]:
         """
         Save the state of the bytes (either single or dictionary of them).
@@ -261,7 +257,6 @@ class BytesSnapshotter(AbstractSnapshotter[bytes]):
 
 
 class EnumSnapshotter(AbstractSnapshotter[Enum]):
-
     def save_attribute(self, attribute: dict[str, Enum]) -> dict[str, Any]:
         """
         Save the state of the Enum (either single or dictionary of them).

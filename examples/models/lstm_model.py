@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 
 class LSTM(nn.Module):
@@ -28,9 +28,7 @@ class LSTM(nn.Module):
         text_fea = self.drop(out_reduced)
 
         text_fea = self.fc(text_fea)
-        text_out = nn.LeakyReLU()(text_fea)
-
-        return text_out
+        return nn.LeakyReLU()(text_fea)
 
     def init_hidden(self, batch_size: int) -> tuple[torch.Tensor, torch.Tensor]:
         # 4 since the number of layers is 2 and it is bidirectional (so 1 per layer per direction)

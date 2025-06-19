@@ -76,7 +76,6 @@ class TabularFeatureAlignmentServer(FlServer):
                 evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
                 and throw an exception. Defaults to True.
         """
-
         if strategy.on_fit_config_fn is not None:
             log(WARNING, "strategy.on_fit_config_fn will be overwritten.")
         if strategy.initial_parameters is not None:
@@ -166,8 +165,7 @@ class TabularFeatureAlignmentServer(FlServer):
 
         assert len(results) == 1
         _, get_properties_res = results[0]
-        feature_info = str(get_properties_res.properties[FEATURE_INFO])
-        return feature_info
+        return str(get_properties_res.properties[FEATURE_INFO])
 
     def poll_clients_for_dimension_info(self, timeout: float | None) -> tuple[int, int]:
         log(INFO, "Waiting for Clients to align features and then polling for dimension information.")

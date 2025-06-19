@@ -26,12 +26,13 @@ def test_poisson_sampling_subset() -> None:  # noqa
     sample = client_manager._poisson_sample(0.3, available_cids)
     expected_sublist = ["c2", "c3", "c8", "c10"]
     assert len(expected_sublist) == len(sample)
-    assert all([a == b for a, b in zip(expected_sublist, sample)])
+    assert all(a == b for a, b in zip(expected_sublist, sample))
 
 
 @pytest.mark.parametrize("client_manager,num_clients", [(PoissonSamplingClientManager(), 7)])
 def test_poisson_sampling_when_low_probability(
-    caplog: pytest.LogCaptureFixture, create_and_register_clients_to_manager: BaseFractionSamplingManager  # noqa
+    caplog: pytest.LogCaptureFixture,
+    create_and_register_clients_to_manager: BaseFractionSamplingManager,  # noqa
 ) -> None:
     np.random.seed(42)
     client_manager = create_and_register_clients_to_manager
@@ -52,7 +53,8 @@ def test_fixed_without_replacement_subset(
 
 @pytest.mark.parametrize("client_manager,num_clients", [(FixedSamplingByFractionClientManager(), 7)])
 def test_fixed_sampling_when_low_probability(
-    caplog: pytest.LogCaptureFixture, create_and_register_clients_to_manager: BaseFractionSamplingManager  # noqa
+    caplog: pytest.LogCaptureFixture,
+    create_and_register_clients_to_manager: BaseFractionSamplingManager,  # noqa
 ) -> None:
     np.random.seed(42)
     client_manager = create_and_register_clients_to_manager

@@ -1,7 +1,7 @@
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
@@ -17,8 +17,7 @@ class ToyModel(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.pool(F.relu(self.conv1(x)))
         x = x.view(-1, 2 * 4 * 4)
-        x = F.relu(self.fc1(x))
-        return x
+        return F.relu(self.fc1(x))
 
 
 def test_apfl_layer_exchange() -> None:

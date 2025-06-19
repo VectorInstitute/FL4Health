@@ -27,7 +27,7 @@ class InstanceLevelDpClient(BasicClient):
         client_name: str | None = None,
     ) -> None:
         """
-        Client for Instance/Record level Differentially Private Federated Averaging
+        Client for Instance/Record level Differentially Private Federated Averaging.
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
@@ -85,7 +85,7 @@ class InstanceLevelDpClient(BasicClient):
     def setup_opacus_objects(self, config: Config) -> None:
         """
         Validates and potentially fixes the PyTorch model of the client to be compatible with Opacus and privacy
-        mechanisms, sets up the privacy engine of Opacus using the model, optimizer, dataloaders etc. for DP training
+        mechanisms, sets up the privacy engine of Opacus using the model, optimizer, dataloaders etc. for DP training.
 
         Args:
             config (Config): Configurations sent by the server to allow for customization of this functions behavior.

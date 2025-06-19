@@ -21,6 +21,7 @@ from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
 
+
 EpochsAndStepsTuple = tuple[int | None, int | None, int | None, int | None]
 
 
@@ -82,8 +83,9 @@ class FedRepClient(BasicClient):
 
     def _prepare_train_representations(self) -> None:
         """
-        Handles the components switching needed to train the representation submodule as required by FedRep. This
-        includes:
+        Handles the components switching needed to train the representation submodule as required by FedRep.
+
+        This includes:
 
         1. Setting the training mode enum to know which optimizer should be stepping during training
         2. Unfreezing the base module, which represents the feature extractor (if frozen)
@@ -96,8 +98,9 @@ class FedRepClient(BasicClient):
 
     def _prepare_train_head(self) -> None:
         """
-        Handles the components switching needed to train the classification submodule as required by FedRep. This
-        includes:
+        Handles the components switching needed to train the classification submodule as required by FedRep.
+
+        This includes:
 
         1. Setting the training mode enum to know which optimizer should be stepping during training
         2. Freezing the base module, which represents the feature extractor.
@@ -131,7 +134,7 @@ class FedRepClient(BasicClient):
         Function parses the configuration specified and extracts the epochs or step based training values necessary
         to train a FedRep model. Note that we do not allow for mixed epoch and step based training. You must specify
         either epochs or steps for both the head and representation modules. The keys should be either
-        ``{local_head_epochs, local_rep_epochs}`` or ``{local_head_steps, local_rep_steps}``
+        ``{local_head_epochs, local_rep_epochs}`` or ``{local_head_steps, local_rep_steps}``.
 
         Args:
             config (Config): Configuration specifying all of the required parameters for training.
@@ -160,7 +163,7 @@ class FedRepClient(BasicClient):
                 None,
                 None,
             )
-        elif steps_specified and not epochs_specified:
+        if steps_specified and not epochs_specified:
             log(
                 INFO,
                 "Steps for head and representation module specified. Proceeding with step-based training",
@@ -171,14 +174,13 @@ class FedRepClient(BasicClient):
                 narrow_dict_type(config, "local_head_steps", int),
                 narrow_dict_type(config, "local_rep_steps", int),
             )
-        elif epochs_specified and steps_specified:
+        if epochs_specified and steps_specified:
             raise ValueError("Cannot specify both epochs and steps based training values in the config")
-        else:
-            raise ValueError(
-                "Either configuration keys not properly present or a mix of steps and epochs based training was "
-                "specified and is not admissible. Keys should be one of {local_head_epochs, local_rep_epochs} or "
-                "{local_head_steps, local_rep_steps}"
-            )
+        raise ValueError(
+            "Either configuration keys not properly present or a mix of steps and epochs based training was "
+            "specified and is not admissible. Keys should be one of {local_head_epochs, local_rep_epochs} or "
+            "{local_head_steps, local_rep_steps}"
+        )
 
     def process_fed_rep_config(self, config: Config) -> tuple[EpochsAndStepsTuple, int, bool]:
         """
@@ -225,9 +227,9 @@ class FedRepClient(BasicClient):
             config (Config): The config from the server.
         """
         optimizers = self.get_optimizer(config)
-        assert isinstance(optimizers, dict) and set(("representation", "head")) == set(
-            optimizers.keys()
-        ), 'Optimizer keys must be "representation" and "head" to use FedRep'
+        assert isinstance(optimizers, dict) and {"representation", "head"} == set(optimizers.keys()), (
+            'Optimizer keys must be "representation" and "head" to use FedRep'
+        )
         self.optimizers = optimizers
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
@@ -390,7 +392,7 @@ class FedRepClient(BasicClient):
         """
         Mechanics of training loop follow the FedRep paper: https://arxiv.org/pdf/2102.07078.pdf. In order to reuse
         the ``train_step`` functionality, we switch between the appropriate optimizers depending on the
-        clients training mode (HEAD vs. REPRESENTATION)
+        clients training mode (HEAD vs. REPRESENTATION).
 
         Args:
             input (TorchInputType): input tensor to be run through the model. Here, ``TorchInputType`` is simply an
@@ -401,7 +403,6 @@ class FedRepClient(BasicClient):
             tuple[TrainingLosses, dict[str, torch.Tensor]]: The losses object from the train step along with
             a dictionary of any predictions produced by the model.
         """
-
         # Clear gradients from the optimizers if they exits. We do both regardless of the client mode.
         self.optimizers["representation"].zero_grad()
         self.optimizers["head"].zero_grad()

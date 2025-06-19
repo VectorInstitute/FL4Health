@@ -6,6 +6,7 @@ from flwr.common.typing import Scalar
 
 from fl4health.feature_alignment.tabular_type import TabularType
 
+
 MetaData = dict[str, int] | list[Scalar]
 
 
@@ -54,16 +55,15 @@ class TabularFeature:
         return self.metadata
 
     def get_metadata_dimension(self) -> int:
-        if self.feature_type == TabularType.BINARY or self.feature_type == TabularType.ORDINAL:
+        if self.feature_type in {TabularType.BINARY, TabularType.ORDINAL}:
             return len(self.metadata)
-        elif self.feature_type == TabularType.NUMERIC:
+        if self.feature_type == TabularType.NUMERIC:
             return 1
-        else:
-            raise ValueError("Metadata dimension is not supported when self.feature_type is TabularType.STRING.")
+        raise ValueError("Metadata dimension is not supported when self.feature_type is TabularType.STRING.")
 
     def to_json(self) -> str:
         """
-        Converge the information in this class to json format for serialization
+        Converge the information in this class to json format for serialization.
 
         Returns:
             str: Json with all of the pieces of information in this class

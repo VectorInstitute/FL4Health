@@ -2,13 +2,14 @@ from collections.abc import Set
 from typing import TypeVar
 
 import torch
-import torch.nn as nn
 from flwr.common.typing import Config, NDArrays
+from torch import nn
 
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithLayerNames
 from fl4health.parameter_exchange.partial_parameter_exchanger import PartialParameterExchanger
 from fl4health.utils.typing import LayerSelectionFunction
+
 
 TorchModule = TypeVar("TorchModule", bound=nn.Module)
 
@@ -16,7 +17,7 @@ TorchModule = TypeVar("TorchModule", bound=nn.Module)
 class FixedLayerExchanger(ParameterExchanger):
     def __init__(self, layers_to_transfer: list[str]) -> None:
         """
-        Exchanger that only exchanges a static set of layers at each round of FL
+        Exchanger that only exchanges a static set of layers at each round of FL.
 
         Args:
             layers_to_transfer (list[str]): Names of the layers to be exchanged. These should correspond to the
@@ -53,12 +54,11 @@ class FixedLayerExchanger(ParameterExchanger):
 
 
 class LayerExchangerWithExclusions(ParameterExchanger):
-
     def __init__(self, model: nn.Module, module_exclusions: Set[type[TorchModule]]) -> None:
         """
         This class implements exchanging all model layers except those matching a specified set of types. The
         constructor is provided with the model in order to extract the proper layers to be exchanged based on the
-        exclusion criteria
+        exclusion criteria.
 
         Args:
             model (nn.Module): Model whose layers are to be exchanged.
@@ -90,11 +90,11 @@ class LayerExchangerWithExclusions(ParameterExchanger):
         # Ex. named module: name: "fc1" module: nn.Linear(10, 10, bias=True)
         # The state_dict has keys fc1.weight and fc1.bias with associated parameters
         # We filter out any parameters prefixed with the name of an excluded module, as stored in modules_to_filter
-        return any([layer_name.startswith(module_to_filter) for module_to_filter in self.modules_to_filter])
+        return any(layer_name.startswith(module_to_filter) for module_to_filter in self.modules_to_filter)
 
     def get_layers_to_transfer(self, model: nn.Module) -> list[str]:
         # We store the state dictionary keys that do not correspond to excluded modules as held in modules_to_filter
-        return [name for name in model.state_dict().keys() if not self.should_layer_be_excluded(name)]
+        return [name for name in model.state_dict() if not self.should_layer_be_excluded(name)]
 
     def apply_layer_filter(self, model: nn.Module) -> NDArrays:
         # NOTE: Filtering layers only works if each client exchanges exactly the same layers

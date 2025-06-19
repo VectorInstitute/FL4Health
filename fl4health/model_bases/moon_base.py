@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 from fl4health.model_bases.sequential_split_models import SequentiallySplitModel
 
@@ -20,7 +20,6 @@ class MoonModel(SequentiallySplitModel):
             projection_module (nn.Module | None, optional): An optional module for manipulating the features before
                 they are passed to the ``head_module``. Defaults to None.
         """
-
         # Features are forced to be stored and flattened in this model, as it is expected to always be used with the
         # contrastive loss function.
         super().__init__(base_module, head_module, flatten_features=True)

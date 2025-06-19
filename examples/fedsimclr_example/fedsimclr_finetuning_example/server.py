@@ -4,10 +4,10 @@ from pathlib import Path
 from typing import Any
 
 import flwr as fl
-import torch.nn as nn
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
+from torch import nn
 
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule

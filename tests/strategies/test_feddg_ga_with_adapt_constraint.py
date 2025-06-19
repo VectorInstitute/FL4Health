@@ -1,7 +1,9 @@
 from copy import deepcopy
+from logging import ERROR
 from unittest.mock import Mock
 
 import numpy as np
+from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.typing import Code, EvaluateRes, FitRes, Parameters, Scalar, Status
 from flwr.server.client_manager import ClientManager, ClientProxy, SimpleClientManager
@@ -11,6 +13,7 @@ from fl4health.client_managers.fixed_sampling_client_manager import FixedSamplin
 from fl4health.strategies.feddg_ga import FairnessMetricType
 from fl4health.strategies.feddg_ga_with_adaptive_constraint import FedDgGaAdaptiveConstraint
 from tests.test_utils.custom_client_proxy import CustomClientProxy
+
 
 INITIAL_PARAMETERS = ndarrays_to_parameters([np.array([0.0, 0.0])])
 
@@ -42,7 +45,8 @@ def test_configure_fit_and_evaluate_success() -> None:
     try:
         strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
     except Exception as e:
-        assert False, f"initialize_parameters threw an exception: {e}"
+        log(ERROR, "initialize_parameters threw an exception")
+        raise e
 
     assert strategy.num_rounds == test_n_server_rounds
     assert strategy.initial_adjustment_weight == 1.0 / fixed_sampling_client_manager.num_available()

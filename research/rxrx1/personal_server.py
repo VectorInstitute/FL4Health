@@ -11,11 +11,11 @@ from fl4health.servers.base_server import FlServer
 
 class PersonalServer(FlServer):
     """
-    The PersonalServer class is used for FL approaches that only have a sense of a PERSONAL model that is checkpointed
-    and valid only on the client size of the FL training framework. FL approaches like APFL and FENDA fall under this
-    category. Each client will have its own model that is specific to its own training. Personal models may have
-    shared components but the full model is specific to each client. As such, there is no sense of a GLOBAL model
-    to be checkpointed on the server-side that is shared by all clients. We eliminate the possibility of
+    The PersonalServer class is used for FL approaches that only have a sense of a PERSONAL model that is
+    checkpointed and valid only on the client size of the FL training framework. FL approaches like APFL and FENDA
+    fall under this category. Each client will have its own model that is specific to its own training. Personal
+    models may have shared components but the full model is specific to each client. As such, there is no sense of a
+    GLOBAL model to be checkpointed on the server-side that is shared by all clients. We eliminate the possibility of
     checkpointing, but still consider the aggregated loss as a means of hyper-parameter tuning.
     """
 

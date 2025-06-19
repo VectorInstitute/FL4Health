@@ -5,6 +5,7 @@ from flwr.common.typing import NDArrays
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPacker
 
+
 T = TypeVar("T")
 
 

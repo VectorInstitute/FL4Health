@@ -5,10 +5,10 @@ from pathlib import Path
 
 import flwr as fl
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from monai.data.dataloader import DataLoader
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torchmetrics.classification import MultilabelAveragePrecision
@@ -29,6 +29,7 @@ from research.picai.data.data_utils import (
 )
 from research.picai.losses import FocalLoss
 from research.picai.model_utils import get_model
+
 
 torch.multiprocessing.set_sharing_strategy("file_system")
 

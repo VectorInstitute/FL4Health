@@ -1,6 +1,6 @@
 import copy
 
-import torch.nn as nn
+from torch import nn
 
 from fl4health.model_bases.masked_layers.masked_conv import (
     MaskedConv1d,

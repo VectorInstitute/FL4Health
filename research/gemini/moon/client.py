@@ -6,7 +6,6 @@ from pathlib import Path
 
 import flwr as fl
 import torch
-import torch.nn as nn
 
 # data and metrics
 from data.data import load_train_delirium, load_train_mortality
@@ -17,6 +16,7 @@ from moon.moon_client import MoonClient
 
 # Models
 from mortality_models.moon_model import MortalityMoonModel
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -25,7 +25,7 @@ from utils.random import set_all_random_seeds
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchModuleCheckpointer
 from fl4health.metrics.base_metrics import Metric
 from fl4health.utils.losses import LossMeterType
-from research.gemini.metrics.metrics import Accuracy, Binary_F1, Binary_ROC_AUC
+from research.gemini.metrics.metrics import Accuracy, BinaryF1, BinaryRocAuc
 
 
 class GeminiMoonClient(MoonClient):
@@ -164,7 +164,7 @@ if __name__ == "__main__":
 
     client = GeminiMoonClient(
         data_path=data_path,
-        metrics=[Binary_ROC_AUC(), Binary_F1(), Accuracy()],
+        metrics=[BinaryRocAuc(), BinaryF1(), Accuracy()],
         device=device,
         hospital_id=args.hospital_id,
         learning_rate=args.learning_rate,

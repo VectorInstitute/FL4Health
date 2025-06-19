@@ -64,9 +64,7 @@ def resample_img(
         resample.SetInterpolator(sitk.sitkBSpline)
 
     # perform resampling
-    image = resample.Execute(image)
-
-    return image
+    return resample.Execute(image)
 
 
 def input_verification_crop_or_pad(
@@ -107,13 +105,12 @@ def input_verification_crop_or_pad(
         if size is None:
             # use physical size
             size = size_zyx
-        else:
-            # verify size
-            if list(size) != list(size_zyx):
-                raise ValueError(
-                    f"Size and physical size do not match. Size: {size}, physical size: "
-                    f"{physical_size}, spacing: {spacing_zyx}, size_zyx: {size_zyx}."
-                )
+        # verify size
+        elif list(size) != list(size_zyx):
+            raise ValueError(
+                f"Size and physical size do not match. Size: {size}, physical size: "
+                f"{physical_size}, spacing: {spacing_zyx}, size_zyx: {size_zyx}."
+            )
 
     if isinstance(image, sitk.Image):
         # determine shape and convert convention of (z, y, x) to (x, y, z) for SimpleITK
@@ -124,9 +121,9 @@ def input_verification_crop_or_pad(
         assert isinstance(image, (np.ndarray, np.generic))
         shape = image.shape
     rank = len(size)
-    assert (
-        rank <= len(shape) <= rank + 1
-    ), f"Example size doesn't fit image size. Got shape={shape}, output size={size}"
+    assert rank <= len(shape) <= rank + 1, (
+        f"Example size doesn't fit image size. Got shape={shape}, output size={size}"
+    )
 
     return shape, size
 

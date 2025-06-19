@@ -56,7 +56,6 @@ def test_ema_metric_computation() -> None:
 
 
 def test_ema_with_no_clear() -> None:
-
     ema = EmaMetric(Accuracy(), 0.1)
 
     preds_1 = torch.Tensor([1, 0, 1])
@@ -90,7 +89,6 @@ def test_ema_with_no_clear() -> None:
 
 
 def test_ema_warning_on_bad_type(caplog: LogCaptureFixture) -> None:
-
     dummy_metric = DummyMetric("dummy")
     ema_dummy_metric = EmaMetric(dummy_metric, 0.2, name="dummy")
 

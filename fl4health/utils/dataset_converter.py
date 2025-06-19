@@ -22,7 +22,6 @@ class DatasetConverter(TensorDataset):
                 defining how the dataset should be converted
             dataset (TensorDataset | None): Dataset to be converted.
         """
-
         assert dataset is None or dataset.targets is not None
         self.converter_function = converter_function
         self.dataset = dataset
@@ -39,8 +38,10 @@ class DatasetConverter(TensorDataset):
         return len(self.dataset)
 
     def convert_dataset(self, dataset: TensorDataset) -> TensorDataset:
-        """Applies the converter function over the dataset when the dataset is used
-        (i.e. during the dataloader creation step)."""
+        """
+        Applies the converter function over the dataset when the dataset is used
+        (i.e. during the dataloader creation step).
+        """
         # Dataset can be added/changed at any point in the pipeline.
         self.dataset = dataset
         # Returning this object as the converted dataset since this class overrides
@@ -72,9 +73,9 @@ class AutoEncoderDatasetConverter(DatasetConverter):
         self.condition = condition
         if isinstance(self.condition, torch.Tensor):
             # Condition should be a ready to use 1D tensor set in the client.
-            assert (
-                self.condition.dim() == 1
-            ), f"Error: condition should be a 1D vector instead of {self.condition.dim()}D tensor."
+            assert self.condition.dim() == 1, (
+                f"Error: condition should be a 1D vector instead of {self.condition.dim()}D tensor."
+            )
         # Will be set in convert_dataset.
         self.data_shape: torch.Size
         self.do_one_hot_encoding = do_one_hot_encoding
@@ -83,9 +84,9 @@ class AutoEncoderDatasetConverter(DatasetConverter):
             self.converter_function = self._setup_converter_function()
         else:
             self.converter_function = custom_converter_function
-            assert (
-                condition_vector_size is not None
-            ), "Error: The condition should be specified for a custom converter function."
+            assert condition_vector_size is not None, (
+                "Error: The condition should be specified for a custom converter function."
+            )
             self.condition_vector_size = condition_vector_size
         super().__init__(self.converter_function, dataset=None)
 
@@ -105,16 +106,14 @@ class AutoEncoderDatasetConverter(DatasetConverter):
             assert self.dataset.targets is not None
             if self.do_one_hot_encoding:
                 return len(torch.unique(self.dataset.targets))
-            else:
-                return len(self.dataset.targets[0])
-        elif isinstance(self.condition, torch.Tensor):
+            return len(self.dataset.targets[0])
+        if isinstance(self.condition, torch.Tensor):
             return self.condition.size(0)
-        elif self.condition_vector_size is not None:
+        if self.condition_vector_size is not None:
             return self.condition_vector_size
-        elif self.condition is None:
+        if self.condition is None:
             return 0
-        else:
-            raise NotImplementedError("Error: support for this type of condition is not added to the data converter.")
+        raise NotImplementedError("Error: support for this type of condition is not added to the data converter.")
 
     def _setup_converter_function(self) -> Callable:
         """

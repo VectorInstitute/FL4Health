@@ -2,10 +2,14 @@ import pytest
 import torch
 from flwr.common import Scalar
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from fl4health.utils.client import (
+    check_if_batch_is_empty_and_verify_input,
     clone_and_freeze_model,
     fold_loss_dict_into_metrics,
+    maybe_progress_bar,
+    move_data_to_device,
     process_and_check_validation_steps,
 )
 from fl4health.utils.dataset import TensorDataset
@@ -23,7 +27,6 @@ DUMMY_DATASET = get_dummy_dataset()
 
 
 def test_process_and_check_validation_steps(caplog: pytest.LogCaptureFixture) -> None:
-
     dataloader = DataLoader(DUMMY_DATASET, batch_size=15, shuffle=False)
 
     # No entry in the config, stays None
@@ -72,3 +75,53 @@ def test_clone_and_freeze_model() -> None:
 
     for param in linear_model.parameters():
         assert param.requires_grad
+
+
+def test_check_if_batch_is_empty_and_verify_input() -> None:
+    empty_tensor = torch.Tensor([])
+    full_tensor = torch.randn((2, 4))
+    dict_of_empty_tensors = {"one": torch.Tensor([]), "two": torch.Tensor([])}
+    dict_of_same_size_tensors = {"one": torch.randn((2, 4)), "two": torch.randn((2, 4))}
+    dict_of_different_size_tensors = {"one": torch.randn((2, 4)), "two": torch.randn((1, 4))}
+    bad_input = 1.0
+
+    # Should return false, because not empty
+    assert not check_if_batch_is_empty_and_verify_input(full_tensor)
+    # Should return false, because not empty
+    assert not check_if_batch_is_empty_and_verify_input(dict_of_same_size_tensors)
+    # Should return true, because empty
+    assert check_if_batch_is_empty_and_verify_input(empty_tensor)
+    # Should return true, because empty
+    assert check_if_batch_is_empty_and_verify_input(dict_of_empty_tensors)
+
+    # Should throw ValueError because of size mismatch
+    with pytest.raises(ValueError):
+        check_if_batch_is_empty_and_verify_input(dict_of_different_size_tensors)
+    # Should throw TypeError because of bad type
+    with pytest.raises(TypeError):
+        check_if_batch_is_empty_and_verify_input(bad_input)  # type: ignore
+
+
+def test_move_data_to_device() -> None:
+    full_tensor = torch.randn((2, 4))
+    dict_of_same_size_tensors = {"one": torch.randn((2, 4)), "two": torch.randn((2, 4))}
+    bad_input = 1.0
+
+    # Best we can do is essentially see that these don't throw errors and return the tensors or dict intact. Mocking
+    # actual transfer is sort of hard.
+    full_tensor_ = move_data_to_device(full_tensor, torch.device("cpu"))
+    assert isinstance(full_tensor_, torch.Tensor)
+    assert torch.equal(full_tensor, full_tensor_)
+    dict_of_same_size_tensors_ = move_data_to_device(dict_of_same_size_tensors, torch.device("cpu"))
+    assert isinstance(dict_of_same_size_tensors_, dict)
+    for key, tensor_ in dict_of_same_size_tensors_.items():
+        assert torch.equal(dict_of_same_size_tensors[key], tensor_)
+    with pytest.raises(TypeError):
+        move_data_to_device(bad_input, torch.device("cpu"))  # type: ignore
+
+
+def test_maybe_progress_bar() -> None:
+    iter_without_progress_bar = [0, 1, 2, 3, 4]
+    iter_with_progress_bar = maybe_progress_bar(iter_without_progress_bar, display_progress_bar=True)
+    assert isinstance(iter_with_progress_bar, tqdm)
+    assert not isinstance(iter_without_progress_bar, tqdm)

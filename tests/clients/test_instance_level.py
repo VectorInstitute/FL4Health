@@ -3,10 +3,10 @@ from pathlib import Path
 
 import pytest
 import torch
-import torch.nn as nn
 from flwr.common.typing import Config
 from opacus.grad_sample.grad_sample_module import GradSampleModule
 from opacus.optimizers.optimizer import DPOptimizer
+from torch import nn
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 

@@ -1,7 +1,7 @@
 import torch
-import torch.nn as nn
 from efficientnet_pytorch import EfficientNet
 from efficientnet_pytorch.utils import url_map
+from torch import nn
 from torch.utils import model_zoo
 
 from fl4health.model_bases.moon_base import MoonModel
@@ -21,7 +21,7 @@ def from_pretrained(model_name: str, in_channels: int = 3, include_top: bool = F
 
 
 class HeadClassifier(nn.Module):
-    """MOON head module"""
+    """MOON head module."""
 
     def __init__(self, stack_output_dimension: int):
         super().__init__()
@@ -30,12 +30,13 @@ class HeadClassifier(nn.Module):
 
     def forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         x = self.dropout(input_tensor)
-        x = self.fc1(x)
-        return x
+        return self.fc1(x)
 
 
 class BaseEfficientNet(nn.Module):
-    """MOON feature extractor module
+    """
+    MOON feature extractor module.
+
     We use the EfficientNets architecture that many participants in the ISIC competition have identified to work best.
     See here the [reference paper](https://arxiv.org/abs/1905.11946)
     Thank you to [Luke Melas-Kyriazi](https://github.com/lukemelas) for his
@@ -69,8 +70,7 @@ class BaseEfficientNet(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.base_model(x)
-        x = x.flatten(start_dim=1)
-        return x
+        return x.flatten(start_dim=1)
 
 
 class FedIsic2019MoonModel(MoonModel):

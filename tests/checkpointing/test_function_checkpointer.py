@@ -8,8 +8,7 @@ def score_function(_: float, metrics: dict[str, Scalar]) -> float:
     precision = metrics["precision"]
     assert isinstance(accuracy, float)
     assert isinstance(precision, float)
-    score = 0.5 * (accuracy + precision)
-    return score
+    return 0.5 * (accuracy + precision)
 
 
 def test_function_checkpointer() -> None:

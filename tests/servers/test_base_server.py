@@ -29,6 +29,7 @@ from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 from tests.test_utils.models_for_test import LinearTransform
 
+
 model = LinearTransform()
 
 

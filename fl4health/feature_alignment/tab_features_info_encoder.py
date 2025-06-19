@@ -13,8 +13,8 @@ from fl4health.feature_alignment.tabular_type import TabularType
 
 class TabularFeaturesInfoEncoder:
     """
-    This class encodes all the information required to perform feature
-    alignment on tabular datasets.
+    This class encodes all the information required to perform feature alignment on tabular datasets.
+
     **NOTE:** targets are not included in tabular_features
 
     Args:
@@ -69,18 +69,17 @@ class TabularFeaturesInfoEncoder:
         else:
             fill_value = fill_values[feature_name]
 
-        if feature_type == TabularType.ORDINAL or feature_type == TabularType.BINARY:
+        if feature_type in {TabularType.ORDINAL, TabularType.BINARY}:
             # Extract categories information.
             feature_categories = sorted(df[feature_name].unique().tolist())
             return TabularFeature(feature_name, feature_type, fill_value, feature_categories)
-        elif feature_type == TabularType.STRING:
+        if feature_type == TabularType.STRING:
             # Extract vocabulary from a string column of df.
             count_vectorizer = CountVectorizer()
             count_vectorizer.fit(df[feature_name])
             vocabulary = count_vectorizer.vocabulary_
             return TabularFeature(feature_name, feature_type, fill_value, vocabulary)
-        else:
-            return TabularFeature(feature_name, feature_type, fill_value)
+        return TabularFeature(feature_name, feature_type, fill_value)
 
     @staticmethod
     def encoder_from_dataframe(

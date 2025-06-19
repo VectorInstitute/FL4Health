@@ -36,8 +36,7 @@ class VaeLoss(_Loss):
         Returns:
             torch.Tensor: KL divergence loss.
         """
-        kl_divergence_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-        return kl_divergence_loss
+        return -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
 
     def unpack_model_output(self, preds: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
@@ -50,9 +49,9 @@ class VaeLoss(_Loss):
             tuple[torch.Tensor, torch.Tensor, torch.Tensor]: Unpacked output containing predictions, mu, and logvar.
         """
         # This methods assumes "preds" are batch first, and preds are 2D dimensional (already flattened).
-        assert (
-            preds.dim() == 2
-        ), f"Expected a 2D tensor for VaeLoss, but got {preds.dim()}D tensor with shape {preds.shape}."
+        assert preds.dim() == 2, (
+            f"Expected a 2D tensor for VaeLoss, but got {preds.dim()}D tensor with shape {preds.shape}."
+        )
         # The order of logvar and mu in the output tensor is important.
         # For each model output, the first self.latent_dim indices are used to store the log variance,
         # the next self.latent_dim indices are allocated to mu, and the remaining indices store the model predictions.

@@ -4,6 +4,7 @@ from flwr.common import NDArray, NDArrays
 
 from fl4health.strategies.fedavg_sparse_coo_tensor import FedAvgSparseCooTensor
 
+
 client1_tensor_names = ["tensor1", "tensor2"]
 client2_tensor_names = ["tensor2", "tensor3"]
 client3_tensor_names = ["tensor3", "tensor4"]
@@ -12,10 +13,7 @@ total_train_size = sum(client_train_sizes)
 
 
 def create_coo_tensor_diagonal(n: int, all_ones: bool) -> tuple[NDArray, NDArray, NDArray]:
-    if all_ones:
-        parameters = np.array([1 for _ in range(1, n + 1)])
-    else:
-        parameters = np.array([x for x in range(1, n + 1)])
+    parameters = np.array([1 for _ in range(1, n + 1)]) if all_ones else np.array(list(range(1, n + 1)))
     indices = np.array([[j, j] for j in range(n)])
     shape = np.array([n, n])
 
@@ -91,5 +89,5 @@ def test_aggregate() -> None:
     }
 
     assert expected_results.keys() == aggregated_results.keys()
-    for key in expected_results.keys():
-        assert (expected_results[key] == aggregated_results[key]).all()
+    for key, expected_val in expected_results.items():
+        assert (expected_val == aggregated_results[key]).all()

@@ -6,6 +6,7 @@ from flwr.server.client_proxy import ClientProxy
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 
+
 strategy = ClientLevelDPFedAvgM(
     initial_parameters=Parameters([], ""),
     adaptive_clipping=True,

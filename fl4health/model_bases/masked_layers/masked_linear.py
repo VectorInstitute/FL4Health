@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-from torch import Tensor
+from torch import Tensor, nn
 from torch.nn.parameter import Parameter
 
 from fl4health.utils.functions import bernoulli_sample
@@ -54,7 +53,7 @@ class MaskedLinear(nn.Linear):
 
     def forward(self, input: Tensor) -> Tensor:
         """
-        Mapping function for the ``MaskedLinear`` layer
+        Mapping function for the ``MaskedLinear`` layer.
 
         Args:
             input (Tensor): input tensor to be transformed

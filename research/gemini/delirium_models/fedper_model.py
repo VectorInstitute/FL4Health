@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 from fl4health.model_bases.fedper_base import FedPerModel
 
@@ -24,11 +24,10 @@ class FedPerGlobalFeatureExtractor(nn.Module):
         x = self.dropout(x)
         x = self.activation(self.fc4(x))
         x = self.dropout(x)
-        x = self.activation(self.fc5(x))
-        return x
+        return self.activation(self.fc5(x))
 
 
-class FedPerGlobalFeatureExtractor_het(nn.Module):
+class FedPerGlobalFeatureExtractorNet(nn.Module):
     def __init__(self, input_dim: int) -> None:
         super().__init__()
         self.fc1 = nn.Linear(input_dim, 256 * 2)
@@ -47,8 +46,7 @@ class FedPerGlobalFeatureExtractor_het(nn.Module):
         x = self.activation(self.fc3(x))
         x = self.dropout(x)
         x = self.activation(self.fc4(x))
-        x = self.dropout(x)
-        return x
+        return self.dropout(x)
 
 
 class FedPerLocalPredictionHead(nn.Module):
@@ -59,12 +57,11 @@ class FedPerLocalPredictionHead(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.dropout(x)
-        x = self.fc6(x)
-        return x
+        return self.fc6(x)
 
 
 class DeliriumFedPerModel(FedPerModel):
     def __init__(self, input_dim: int, output_dim: int) -> None:
-        base_module = FedPerGlobalFeatureExtractor_het(input_dim)
+        base_module = FedPerGlobalFeatureExtractorNet(input_dim)
         head_module = FedPerLocalPredictionHead(output_dim)
         super().__init__(base_module, head_module)

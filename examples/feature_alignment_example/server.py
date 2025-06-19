@@ -15,6 +15,7 @@ from fl4health.servers.tabular_feature_alignment_server import TabularFeatureAli
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config
 
+
 # This data path is used to create a "source of truth" on the server-side as an example.
 # This is used if the config specifies source_specified as true
 DATA_PATH = "examples/feature_alignment_example/mimic3d_hospital1.csv"

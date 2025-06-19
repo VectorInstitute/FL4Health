@@ -37,7 +37,7 @@ class AdaptiveDriftConstraintClient(BasicClient):
         uses an auxiliary loss penalizing weight drift with a coefficient mu. This client is a simple extension of the
         ``BasicClient`` that packs the ``self.loss_for_adaptation`` for exchange with the server and expects to
         receive an updated (or constant if non-adaptive) parameter for the loss weight. In many cases, such as FedProx,
-        the ``loss_for_adaptation`` being packaged is the criterion loss (i.e. loss without the penalty)
+        the ``loss_for_adaptation`` being packaged is the criterion loss (i.e. loss without the penalty).
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
@@ -104,20 +104,14 @@ class AdaptiveDriftConstraintClient(BasicClient):
 
             # Need all parameters even if normally exchanging partial
             return FullParameterExchanger().push_parameters(self.model, config=config)
-        else:
 
-            # Make sure the proper components are there
-            assert (
-                self.model is not None
-                and self.parameter_exchanger is not None
-                and self.loss_for_adaptation is not None
-            )
-            model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
+        # Make sure the proper components are there
+        assert self.model is not None and self.parameter_exchanger is not None and self.loss_for_adaptation is not None
+        model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
 
-            # Weights and training loss sent to server for aggregation. Training loss is sent because server will
-            # decide to increase or decrease the penalty weight, if adaptivity is turned on.
-            packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.loss_for_adaptation)
-            return packed_params
+        # Weights and training loss sent to server for aggregation. Training loss is sent because server will
+        # decide to increase or decrease the penalty weight, if adaptivity is turned on.
+        return self.parameter_exchanger.pack_parameters(model_weights, self.loss_for_adaptation)
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
@@ -177,8 +171,8 @@ class AdaptiveDriftConstraintClient(BasicClient):
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         """
-        Setting up the parameter exchanger to include the appropriate packing functionality.
-        By default we assume that we're exchanging all parameters. Can be overridden for other behavior
+        Setting up the parameter exchanger to include the appropriate packing functionality. By default we assume
+        that we're exchanging all parameters. Can be overridden for other behavior.
 
         Args:
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
@@ -186,7 +180,6 @@ class AdaptiveDriftConstraintClient(BasicClient):
         Returns:
             ParameterExchanger: Exchanger that can handle packing/unpacking auxiliary server information.
         """
-
         return FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
 
     def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
@@ -207,7 +200,7 @@ class AdaptiveDriftConstraintClient(BasicClient):
 
     def compute_penalty_loss(self) -> torch.Tensor:
         """
-        Computes the drift loss for the client model and drift tensors
+        Computes the drift loss for the client model and drift tensors.
 
         Returns:
             torch.Tensor: Computed penalty loss tensor

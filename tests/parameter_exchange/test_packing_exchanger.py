@@ -28,8 +28,7 @@ from tests.test_utils.models_for_test import ConstantConvNet, ToyConvNet
 
 @pytest.fixture
 def get_ndarrays(layer_sizes: list[list[int]]) -> NDArrays:
-    ndarrays = [np.ones(tuple(size)) for size in layer_sizes]
-    return ndarrays
+    return [np.ones(tuple(size)) for size in layer_sizes]
 
 
 @pytest.fixture

@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 from fl4health.parameter_exchange.layer_exchanger import LayerExchangerWithExclusions
 from tests.test_utils.models_for_test import ToyConvNet, UNet3D

@@ -1,7 +1,7 @@
 import copy
 
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
 
@@ -25,11 +25,10 @@ def compare_mixed_dictionaries(
         if isinstance(dict1_value, torch.Tensor):
             if not torch.equal(dict1_value, narrow_dict_type(dict2, key, torch.Tensor)):
                 return False
-        elif isinstance(dict1_value, float):
-            if dict1_value != narrow_dict_type(dict2, key, float):
-                return False
-        elif isinstance(dict1_value, int):
-            if dict1_value != narrow_dict_type(dict2, key, int):
+        elif isinstance(dict1_value, (float, int)):
+            dict2_value = dict2[key]
+            assert isinstance(dict2_value, (float, int))
+            if dict1_value != dict2_value:
                 return False
         elif isinstance(dict1_value, list):
             if dict1_value != narrow_dict_type(dict2, key, list):
@@ -37,7 +36,6 @@ def compare_mixed_dictionaries(
         elif isinstance(dict1_value, dict):
             if not compare_mixed_dictionaries(dict1_value, narrow_dict_type(dict2, key, dict)):
                 return False
-            return True
         else:
             raise TypeError(f"Unsupported type in dictionary: {type(dict1_value)}")
 

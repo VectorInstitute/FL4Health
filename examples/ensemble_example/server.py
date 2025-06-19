@@ -3,9 +3,9 @@ from functools import partial
 from typing import Any
 
 import flwr as fl
-import torch.nn as nn
 from flwr.common.typing import Config
 from flwr.server.strategy import FedAvg
+from torch import nn
 
 from examples.models.ensemble_cnn import ConfigurableMnistNet
 from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn

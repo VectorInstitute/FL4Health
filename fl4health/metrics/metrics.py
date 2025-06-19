@@ -89,7 +89,6 @@ class SimpleMetric(Metric, ABC):
         Returns:
             Metrics: A dictionary of string and ``Scalar`` representing the computed metric and its associated key.
         """
-
         assert len(self.accumulated_inputs) > 0 and len(self.accumulated_targets) > 0
         stacked_inputs = torch.cat(self.accumulated_inputs)
         stacked_targets = torch.cat(self.accumulated_targets)
@@ -99,9 +98,7 @@ class SimpleMetric(Metric, ABC):
         return {result_key: result}
 
     def clear(self) -> None:
-        """
-        Resets metrics by clearing input and target lists.
-        """
+        """Resets metrics by clearing input and target lists."""
         self.accumulated_inputs = []
         self.accumulated_targets = []
 
@@ -146,10 +143,7 @@ class BinarySoftDiceCoefficient(SimpleMetric):
     def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
         # Assuming the logits are to be mapped to binary. Note that this assumes the logits have already been
         # constrained to [0, 1]. The metric still functions if not, but results will be unpredictable.
-        if self.logits_threshold:
-            y_pred = (logits > self.logits_threshold).int()
-        else:
-            y_pred = logits
+        y_pred = (logits > self.logits_threshold).int() if self.logits_threshold else logits
         intersection = (y_pred * target).sum(dim=self.spatial_dimensions)
         union = (0.5 * (y_pred + target)).sum(dim=self.spatial_dimensions)
         dice = intersection / (union + self.epsilon)
@@ -173,10 +167,7 @@ class Accuracy(SimpleMetric):
         # assuming batch first
         assert logits.shape[0] == target.shape[0]
         # Single value output, assume binary logits
-        if len(logits.shape) == 1 or logits.shape[1] == 1:
-            preds = (logits > 0.5).int()
-        else:
-            preds = torch.argmax(logits, 1)
+        preds = (logits > 0.5).int() if len(logits.shape) == 1 or logits.shape[1] == 1 else torch.argmax(logits, 1)
         target = target.cpu().detach()
         preds = preds.cpu().detach()
         return sklearn_metrics.accuracy_score(target, preds)
@@ -185,8 +176,9 @@ class Accuracy(SimpleMetric):
 class BalancedAccuracy(SimpleMetric):
     def __init__(self, name: str = "balanced_accuracy"):
         """
-        Balanced accuracy metric for classification tasks. Used for the evaluation of imbalanced datasets. For more
-        information:
+        Balanced accuracy metric for classification tasks. Used for the evaluation of imbalanced datasets.
+
+        For more information:
 
         https://scikit-learn.org/stable/modules/generated/sklearn.metrics.balanced_accuracy_score.html
         """
@@ -202,10 +194,12 @@ class BalancedAccuracy(SimpleMetric):
         return sklearn_metrics.balanced_accuracy_score(y_true, preds)
 
 
-class ROC_AUC(SimpleMetric):
+class RocAuc(SimpleMetric):
     def __init__(self, name: str = "ROC_AUC score"):
         """
-        Area under the Receiver Operator Curve (AUCROC) metric for classification. For more information:
+        Area under the Receiver Operator Curve (AUCROC) metric for classification.
+
+        For more information:
 
         https://scikit-learn.org/stable/modules/generated/sklearn.metrics.balanced_accuracy_score.html
         """

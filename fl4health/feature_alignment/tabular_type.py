@@ -28,11 +28,10 @@ class TabularType(str, Enum):
         """
         if tabular_type is TabularType.NUMERIC:
             return 0.0
-        elif tabular_type is TabularType.BINARY:
+        if tabular_type is TabularType.BINARY:
             return 0
-        elif tabular_type is TabularType.STRING:
+        if tabular_type is TabularType.STRING:
             return "N/A"
-        elif tabular_type is TabularType.ORDINAL:
+        if tabular_type is TabularType.ORDINAL:
             return "UNKNOWN"
-        else:
-            raise ValueError("Invalid Tabular Data Type.")
+        raise ValueError("Invalid Tabular Data Type.")

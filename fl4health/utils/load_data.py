@@ -6,15 +6,16 @@ from pathlib import Path
 
 import numpy as np
 import torch
-import torchvision.transforms as transforms
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
+from torchvision import transforms
 from torchvision.datasets import CIFAR10, MNIST
 
 from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.dataset_converter import DatasetConverter
 from fl4health.utils.msd_dataset_sources import get_msd_dataset_enum, msd_md5_hashes, msd_urls
 from fl4health.utils.sampler import LabelBasedSampler
+
 
 with warnings.catch_warnings():
     # ignoring some annoying scipy deprecation warnings
@@ -30,7 +31,6 @@ class ToNumpy:
 def split_data_and_targets(
     data: torch.Tensor, targets: torch.Tensor, validation_proportion: float = 0.2, hash_key: int | None = None
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-
     total_size = data.shape[0]
     train_size = int(total_size * (1 - validation_proportion))
     if hash_key is not None:

@@ -7,9 +7,9 @@ from typing import Any
 
 import flwr as fl
 import torch
-import torch.nn as nn
 from flwr.common import Config, NDArrays, Scalar
 from flwr.server.client_manager import SimpleClientManager
+from torch import nn
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet

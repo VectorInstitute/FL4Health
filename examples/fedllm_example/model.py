@@ -14,7 +14,9 @@ def cosine_annealing(
     learning_rate_min: float = 0.0,
 ) -> float:
     """
-    Cosine annealing learning rate schedule for different server rounds. Cosine annealing is computed as:
+    Cosine annealing learning rate schedule for different server rounds.
+
+    Cosine annealing is computed as:
 
     .. math::
             \\text{lr}_t = \\text{lr}_{\\text{min}} + 0.5 \\cdot (\\text{lr}_{\\text{max}} - \\text{lr}_{\\text{min}})
@@ -29,7 +31,6 @@ def cosine_annealing(
     Returns:
         float: The learning rate for the current round.
     """
-
     cos_inner = math.pi * current_round / total_round
     return learning_rate_min + 0.5 * (learning_rate_max - learning_rate_min) * (1 + math.cos(cos_inner))
 
@@ -38,7 +39,7 @@ def get_model(model_cfg: dict[str, Any]) -> torch.nn.Module:
     """
     Load model with appropriate quantization config and other optimizations.
     Please refer to this example for `peft + BitsAndBytes`:
-    https://github.com/huggingface/peft/blob/main/examples/fp4_finetuning/finetune_fp4_opt_bnb_peft.py
+    https://github.com/huggingface/peft/blob/main/examples/fp4_finetuning/finetune_fp4_opt_bnb_peft.py.
 
     Args:
         model_cfg (dict[str, Any]): The model configuration.
@@ -46,7 +47,6 @@ def get_model(model_cfg: dict[str, Any]) -> torch.nn.Module:
     Returns:
         torch.nn.Module: The model.
     """
-
     quantization_config = model_cfg["quantization"]
     if quantization_config == 4:
         quantization_config = BitsAndBytesConfig(load_in_4bit=True)

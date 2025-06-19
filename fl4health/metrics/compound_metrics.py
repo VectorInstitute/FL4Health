@@ -10,6 +10,7 @@ from flwr.common.typing import Metrics
 from fl4health.metrics.base_metrics import Metric
 from fl4health.utils.typing import TorchTransformFunction
 
+
 T = TypeVar("T", bound=Metric)
 
 
@@ -66,9 +67,10 @@ class EmaMetric(Metric, Generic[T]):
 
     def compute(self, name: str | None = None) -> Metrics:
         """
-        Compute metric on state accumulated over updates. This computation considers the exponential moving average
-        with respect to previous scores. For time step :math:`t`, and metric score :math:`m_t`, the EMA score is
-        computed
+        Compute metric on state accumulated over updates.
+
+        This computation considers the exponential moving average with respect to previous scores. For time step
+        :math:`t`, and metric score :math:`m_t`, the EMA score is computed
 
         .. math ::
             \\text{smoothing_factor} \\cdot m_t + (1-\\text{smoothing_factor}) \\cdot (m_{t-1}).
@@ -130,7 +132,7 @@ class TransformsMetric(Metric, Generic[T]):
     ) -> None:
         """
         A thin wrapper class to allow transforms to be applied to preds and targets prior to calculating metrics.
-        Transforms are applied in the order given
+        Transforms are applied in the order given.
 
         Args:
             metric (Metric): A FL4Health compatible metric

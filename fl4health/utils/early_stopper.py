@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from fl4health.clients.basic_client import BasicClient
 
@@ -33,7 +34,6 @@ class EarlyStopper:
             interval_steps (int): Specifies the frequency, in terms of training intervals, at which the early
                 stopping mechanism should evaluate the validation loss. Defaults to 5.
         """
-
         self.client = client
 
         self.patience = patience

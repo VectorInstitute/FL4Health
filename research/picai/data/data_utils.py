@@ -26,7 +26,6 @@ class MoveDim(Transform):
             source_dim (int): The index of the source dimension.
             target_dim (int): The index of the target dimension.
         """
-
         self.source_dim = source_dim
         self.target_dim = target_dim
         super().__init__()
@@ -41,8 +40,7 @@ class MoveDim(Transform):
         Returns:
             torch.Tensor: Data with moved dimensions.
         """
-        data = torch.movedim(data, self.source_dim, self.target_dim)
-        return data
+        return torch.movedim(data, self.source_dim, self.target_dim)
 
 
 class OneHotEncode(Transform):
@@ -70,9 +68,7 @@ class OneHotEncode(Transform):
 
 
 class ZScoreNormalization(Transform):
-    """
-    MONAI transform to perform z score normalization and optional clipping.
-    """
+    """MONAI transform to perform z score normalization and optional clipping."""
 
     def __call__(self, data: torch.Tensor) -> torch.Tensor:
         """
@@ -84,8 +80,7 @@ class ZScoreNormalization(Transform):
         Returns:
             torch.Tensor: Normalized data.
         """
-        data = z_score_norm(data)
-        return data
+        return z_score_norm(data)
 
 
 def get_img_transform() -> Compose:
@@ -146,8 +141,7 @@ def z_score_norm(image: torch.Tensor, quantile: float | None = None) -> torch.Te
     std = torch.std(image).item()
     if std > 0:
         return (image - mean) / std
-    else:
-        return image * 0.0
+    return image * 0.0
 
 
 def get_img_and_seg_paths(
@@ -179,7 +173,6 @@ def get_img_and_seg_paths(
             representing the associated segmentation labels. The final element of the returned tuple is a
             torch tensor that give the class proportions.
     """
-
     # Make sure at least one sequence will be present
     assert any([include_t2w, include_adc, include_hbv])
 
@@ -197,7 +190,7 @@ def get_img_and_seg_paths(
     img_paths = [
         [path for path in path_list if path.endswith(valid_postfix)] for path_list in file_json["image_paths"]
     ]
-    seg_paths = [path for path in file_json["label_paths"]]
+    seg_paths = list(file_json["label_paths"])
 
     # Determine class proportions
     class_ratio = [int(np.sum(file_json["case_label"])), int(len(img_paths) - np.sum(file_json["case_label"]))]
@@ -233,7 +226,7 @@ def split_img_and_seg_paths(
     """
     assert len(img_paths) == len(seg_paths)
     random.seed(seed)
-    client_assignments = [random.choice([i for i in range(splits)]) for _ in range(len(img_paths))]
+    client_assignments = [random.choice(list(range(splits))) for _ in range(len(img_paths))]
     client_img_paths: list[list[list[str]]] = [[] for _ in range(splits)]
     client_seg_paths: list[list[str]] = [[] for _ in range(splits)]
     for i, assignment in enumerate(client_assignments):
@@ -254,6 +247,7 @@ def get_dataloader(
 ) -> DataLoader:
     """
     Initializes and returns MONAI Dataloader.
+
     Args:
         img_paths (Sequence[Sequence[str]]: List of list of strings where the outer list represents a
             list of file paths corresponding to the different MRI Sequences for a given patient exam.
@@ -278,6 +272,4 @@ def get_dataloader(
         seg_transform=seg_transform,
     )
 
-    loader = DataLoader(ds, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
-
-    return loader
+    return DataLoader(ds, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)

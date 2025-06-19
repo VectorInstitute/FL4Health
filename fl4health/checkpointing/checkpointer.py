@@ -4,9 +4,10 @@ from collections.abc import Callable
 from logging import ERROR, INFO, WARNING
 
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Scalar
+from torch import nn
+
 
 CheckpointScoreFunctionType = Callable[[float, dict[str, Scalar]], float]
 
@@ -111,7 +112,6 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
         Returns:
             bool: Whether or not to checkpoint the model based on the provided score
         """
-
         if self.best_score:
             if self.maximize:
                 return self.best_score <= comparison_score
@@ -179,7 +179,7 @@ class LatestTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
 
     def maybe_checkpoint(self, model: nn.Module, loss: float, _: dict[str, Scalar]) -> None:
         """
-        This function is essentially a pass through, as this class always checkpoints the provided model
+        This function is essentially a pass through, as this class always checkpoints the provided model.
 
         Args:
             model (nn.Module): Model to be checkpointed whenever this function is called
@@ -273,7 +273,9 @@ class BestMetricTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
         prefix: str = "val - prediction - ",
         maximize: bool = False,
     ) -> None:
-        """Checkpointer that checkpoints based on the value of a user defined metric.
+        """
+        Checkpointer that checkpoints based on the value of a user defined metric.
+
         Args:
             checkpoint_dir (str): Directory to which the model is saved. This directory should already exist. The
                 checkpointer will not create it if it does not.

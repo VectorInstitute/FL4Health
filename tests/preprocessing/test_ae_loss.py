@@ -14,9 +14,7 @@ def kl_divergence_normal(
     p_distribution = torch.distributions.Normal(mu_p, logvar_p.exp().sqrt())
 
     # Calculate the KL divergence
-    kl_divergence_value = torch.distributions.kl.kl_divergence(q_distribution, p_distribution).sum()
-
-    return kl_divergence_value
+    return torch.distributions.kl.kl_divergence(q_distribution, p_distribution).sum()
 
 
 def test_analytical_kl_divergence_loss() -> None:

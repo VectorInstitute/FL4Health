@@ -6,9 +6,9 @@ from logging import INFO, WARNING, LogRecord
 from typing import Any, TypeVar
 
 import torch
-import torch.nn as nn
 from flwr.common.logger import LOGGER_NAME, console_handler, log
 from flwr.common.typing import Config, Scalar
+from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -16,6 +16,7 @@ from fl4health.metrics.base_metrics import MetricPrefix
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.logging import LoggingMode
 from fl4health.utils.typing import TorchInputType, TorchTargetType
+
 
 T = TypeVar("T", TorchInputType, TorchTargetType)
 
@@ -59,20 +60,19 @@ def move_data_to_device(data: T, device: torch.device) -> T:
     # or dictionaries of tensors
     if isinstance(data, torch.Tensor):
         return data.to(device)
-    elif isinstance(data, dict):
+    if isinstance(data, dict):
         return {key: value.to(device) for key, value in data.items()}
-    else:
-        raise TypeError(
-            "data must be of type torch.Tensor or dict[str, torch.Tensor]. If definition of TorchInputType or "
-            "TorchTargetType has changed this method might need to be updated or split into two."
-        )
+    raise TypeError(
+        "data must be of type torch.Tensor or dict[str, torch.Tensor]. If definition of TorchInputType or "
+        "TorchTargetType has changed this method might need to be updated or split into two."
+    )
 
 
 def check_if_batch_is_empty_and_verify_input(input: TorchInputType) -> bool:
     """
     This function checks whether the provided batch (input) is empty. If the input is a dictionary of inputs, it
     first verifies that the length of all inputs is the same, then checks if they are non-empty.
-    **NOTE:** This function assumes the input is **BATCH FIRST**
+    **NOTE:** This function assumes the input is **BATCH FIRST**.
 
     Args:
         input (TorchInputType): Input batch. input can be of type ``torch.Tensor`` or ``dict[str, torch.Tensor]``,
@@ -89,16 +89,14 @@ def check_if_batch_is_empty_and_verify_input(input: TorchInputType) -> bool:
     """
     if isinstance(input, torch.Tensor):
         return len(input) == 0
-    elif isinstance(input, dict):
+    if isinstance(input, dict):
         input_iter = iter(input.items())
         _, first_val = next(input_iter)
         first_val_len = len(first_val)
         if not all(len(val) == first_val_len for _, val in input_iter):
             raise ValueError("Not all tensors in the dictionary have the same size.")
-        else:
-            return first_val_len == 0
-    else:
-        raise TypeError("Input must be of type torch.Tensor or dict[str, torch.Tensor].")
+        return first_val_len == 0
+    raise TypeError("Input must be of type torch.Tensor or dict[str, torch.Tensor].")
 
 
 def clone_and_freeze_model(model: nn.Module) -> nn.Module:
@@ -111,7 +109,6 @@ def clone_and_freeze_model(model: nn.Module) -> nn.Module:
     Returns:
         nn.Module: Cloned and frozen model
     """
-
     cloned_model = copy.deepcopy(model)
     for param in cloned_model.parameters():
         param.requires_grad = False
@@ -133,29 +130,28 @@ def maybe_progress_bar(iterable: Iterable, display_progress_bar: bool) -> Iterab
     """
     if not display_progress_bar:
         return iterable
-    else:
-        # We can use the flwr console handler to format progress bar
-        frame = currentframe()
-        lineno = 0 if frame is None else getframeinfo(frame).lineno
-        record = LogRecord(
-            name=LOGGER_NAME,
-            pathname=os.path.abspath(os.getcwd()),
-            lineno=lineno,  #
-            args={},
-            exc_info=None,
-            level=INFO,
-            msg="{l_bar}{bar}{r_bar}",
-        )
-        format = console_handler.format(record)
-        # Create a clean looking tqdm instance that matches the flwr logging
-        kwargs: Any = {
-            "leave": True,
-            "ascii": " >=",
-            "unit": "steps",
-            "dynamic_ncols": True,
-            "bar_format": format,
-        }
-        return tqdm(iterable, **kwargs)
+    # We can use the flwr console handler to format progress bar
+    frame = currentframe()
+    lineno = 0 if frame is None else getframeinfo(frame).lineno
+    record = LogRecord(
+        name=LOGGER_NAME,
+        pathname=os.path.abspath(os.getcwd()),
+        lineno=lineno,
+        args={},
+        exc_info=None,
+        level=INFO,
+        msg="{l_bar}{bar}{r_bar}",
+    )
+    format = console_handler.format(record)
+    # Create a clean looking tqdm instance that matches the flwr logging
+    kwargs: Any = {
+        "leave": True,
+        "ascii": " >=",
+        "unit": "steps",
+        "dynamic_ncols": True,
+        "bar_format": format,
+    }
+    return tqdm(iterable, **kwargs)
 
 
 def process_and_check_validation_steps(config: Config, val_loader: DataLoader) -> int | None:
@@ -177,5 +173,4 @@ def process_and_check_validation_steps(config: Config, val_loader: DataLoader) -
                 f"validation dataloader: {val_dataloader_len}",
             )
         return num_validation_steps
-    else:
-        return None
+    return None

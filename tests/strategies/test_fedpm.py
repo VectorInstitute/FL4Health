@@ -2,6 +2,7 @@ import numpy as np
 
 from fl4health.strategies.fedpm import FedPm
 
+
 client0_res = [np.identity(3), np.ones((4, 4))] + [np.array(["layer1", "layer2"])]
 client1_res = [np.ones((4, 4)), np.zeros((5, 5))] + [np.array(["layer2", "layer3"])]
 client2_res = [np.ones((3, 3)), np.identity(5)] + [np.array(["layer1", "layer3"])]
@@ -32,9 +33,9 @@ def test_bayesian_aggregation() -> None:
         "layer4": (np.full((6, 6), 2), np.ones((6, 6))),
     }
     assert expected_beta_parameter_vals.keys() == strategy.beta_parameters.keys()
-    for layer_name in expected_beta_parameter_vals.keys():
+    for layer_name, expected_val in expected_beta_parameter_vals.items():
         alpha, beta = strategy.beta_parameters[layer_name]
-        alpha_expected, beta_expected = expected_beta_parameter_vals[layer_name]
+        alpha_expected, beta_expected = expected_val
         assert (alpha == alpha_expected).all()
         assert (beta == beta_expected).all()
 
@@ -53,8 +54,8 @@ def test_bayesian_aggregation() -> None:
         "layer4": layer4_expected,
     }
     assert expected_result.keys() == aggregation_result.keys()
-    for layer_name in expected_result.keys():
-        assert (expected_result[layer_name] == aggregation_result[layer_name]).all()
+    for layer_name, layer_val in expected_result.items():
+        assert (layer_val == aggregation_result[layer_name]).all()
 
     # Test that aggregation produces the expected result in the second round
     # using the beta parameters from the first round.
@@ -72,8 +73,8 @@ def test_bayesian_aggregation() -> None:
         "layer4": np.ones((6, 6)),
     }
     assert aggregation_result_second_round.keys() == expected_result_second_round.keys()
-    for layer_name in expected_result_second_round.keys():
-        assert (expected_result_second_round[layer_name] == aggregation_result_second_round[layer_name]).all()
+    for layer_name, layer_val in expected_result_second_round.items():
+        assert (layer_val == aggregation_result_second_round[layer_name]).all()
 
     # Finally, test that resetting beta parameters works properly
     strategy.reset_beta_priors()

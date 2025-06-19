@@ -91,7 +91,6 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
                 aggregated using a weighted or unweighted average. These aggregated losses are used to adjust the
                 proximal weight in the adaptive setting. Defaults to False.
         """
-
         self.loss_weight = initial_loss_weight
         self.adapt_loss_weight = adapt_loss_weight
 
@@ -200,7 +199,6 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
             Constraint clients this should be the aggregated training loss seen by each client participating in
             training.
         """
-
         if self.adapt_loss_weight:
             if loss <= self.previous_loss:
                 self.loss_weight_patience_counter += 1

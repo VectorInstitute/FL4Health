@@ -30,7 +30,7 @@ class EvaluateServer(Server):
         reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
         """
-        Server meant to facilitate federated evaluation only (that is, no training)
+        Server meant to facilitate federated evaluation only (that is, no training).
 
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
@@ -62,8 +62,7 @@ class EvaluateServer(Server):
         if self.fraction_evaluate < 1.0:
             log(
                 INFO,
-                f"Fraction Evaluate is {self.fraction_evaluate}. "
-                "Thus, some clients may not participate in evaluation",
+                f"Fraction Evaluate is {self.fraction_evaluate}. Thus, some clients may not participate in evaluation",
             )
         self.server_name = generate_hash()
         self.reporters = [] if reporters is None else list(reporters)
@@ -150,7 +149,6 @@ class EvaluateServer(Server):
             The second is the aggregated metrics passed from the clients, the third is the set of raw results and
             failure objects returned by the clients.
         """
-
         # Get clients and their respective instructions from client manager
         client_instructions = self.configure_evaluate()
 

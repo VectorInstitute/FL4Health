@@ -5,15 +5,17 @@ from enum import Enum
 from logging import INFO
 from typing import TYPE_CHECKING
 
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Scalar
+from torch import nn
+
 
 if TYPE_CHECKING:
     from fl4health.clients.basic_client import BasicClient
 
 from fl4health.checkpointing.checkpointer import TorchModuleCheckpointer
 from fl4health.checkpointing.state_checkpointer import ClientStateCheckpointer
+
 
 ModelCheckpointers = TorchModuleCheckpointer | Sequence[TorchModuleCheckpointer] | None
 
@@ -24,7 +26,6 @@ class CheckpointMode(Enum):
 
 
 class ClientCheckpointAndStateModule:
-
     def __init__(
         self,
         pre_aggregation: ModelCheckpointers = None,
@@ -73,7 +74,6 @@ class ClientCheckpointAndStateModule:
         Raises:
             ValueError: If any of the pre- or post-aggregation model checkpointer paths are not unique.
         """
-
         pre_aggregation_paths = (
             [checkpointer.checkpoint_path for checkpointer in self.pre_aggregation] if self.pre_aggregation else []
         )
@@ -138,7 +138,6 @@ class ClientCheckpointAndStateModule:
         Raises:
             ValueError: Throws an error if this function is called, but no state checkpointer has been provided
         """
-
         if self.state_checkpointer is not None:
             self.state_checkpointer.save_client_state(client)
         else:
@@ -160,8 +159,6 @@ class ClientCheckpointAndStateModule:
             bool : If the state checkpoint properly exists and is loaded correctly, client's attributes
             are set to the loaded values, and True is returned. Otherwise, we return False (or throw an exception).
         """
-
         if self.state_checkpointer is not None:
             return self.state_checkpointer.maybe_load_client_state(client)
-        else:
-            raise ValueError("Attempting to load state, but no state checkpointer is specified")
+        raise ValueError("Attempting to load state, but no state checkpointer is specified")

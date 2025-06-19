@@ -30,8 +30,8 @@ def main(
     test_results: dict[str, float] = {}
     metrics = [BinarySoftDiceCoefficient("FedIXI_dice")]
 
-    all_local_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
-    all_server_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
+    all_local_test_metrics = dict.fromkeys(all_run_folder_dir, 0.0)
+    all_server_test_metrics = dict.fromkeys(all_run_folder_dir, 0.0)
 
     # First we test each client's best model on local test data and the best server model on that same data
 

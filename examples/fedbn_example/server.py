@@ -4,10 +4,10 @@ from logging import INFO
 from typing import Any
 
 import flwr as fl
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
+from torch import nn
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen, SkinCancerNet
 from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn

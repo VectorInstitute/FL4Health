@@ -72,9 +72,9 @@ class SimpleDictionaryCheckpointer:
 class MultiAttributeEnum(Enum):
     def __init__(self, attributes: Any) -> None:
         """
-        A subclass of Enum that allows members to have multiple attributes.
-        Members can be defined by either dictionaries or lists. The attributes
-        of the members must also be defined in the subclass to avoid mypy issues
+        A subclass of Enum that allows members to have multiple attributes. Members can be defined by either
+        dictionaries or lists. The attributes of the members must also be defined in the subclass to avoid mypy issues.
+
         Example Usage:
             Animals(MultiAttributeEnum):
                 # Define Attributes
@@ -88,7 +88,7 @@ class MultiAttributeEnum(Enum):
         By default the main attribute is the first value in the dictionary. So
         for the above example:
 
-        >>> Animals('Canis Lupus Familiaris')
+        >>> Animals("Canis Lupus Familiaris")
         Animals.Dog
 
         The main attribute can be changed by overriding
@@ -131,7 +131,7 @@ class MultiAttributeEnum(Enum):
             for key, value in zip(attribute_keys, attributes):
                 setattr(self, key, value)
 
-        # Creat attributes that will be assigned for each member separately
+        # Create attributes that will be assigned for each member separately
         self.attribute_keys: list[str]
         self.attribute_values: list[Any]
 
@@ -166,6 +166,8 @@ class MultiAttributeEnum(Enum):
 
     def keys(self) -> list[str]:
         """
+        Gets the names of the enum attributes.
+
         Returns:
             list[str]: a list containing the names of the attributes for this member
         """
@@ -173,6 +175,8 @@ class MultiAttributeEnum(Enum):
 
     def values(self) -> list[Any]:
         """
+        Gets enum values.
+
         Returns:
             list[Any]: A list of the attribute values for this member
         """
@@ -180,9 +184,9 @@ class MultiAttributeEnum(Enum):
 
     def get_main_value(self, attributes: Any) -> Any:
         """
-        Returns the main attribute value given a member's attributes. Whatever
-        is returned is what will be used to identify the member when calling
-        the class. The main value can be accessed using member.value
+        Returns the main attribute value given a member's attributes. Whatever is returned is what will be used to
+        identify the member when calling the class. The main value can be accessed using member.value.
+
         Example:
             Animals(MultiAttributeEnum):
                 # Define Attributes
@@ -208,12 +212,13 @@ class MultiAttributeEnum(Enum):
             attributes (Any): The attributes used to define the members
 
         Returns:
-            Any: _description_
+            Any: The main attribute value given a member's attributes.
         """
         if isinstance(attributes, dict):
             return list(attributes.values())[0]
-        elif isinstance(attributes, list):
+        if isinstance(attributes, list):
             return attributes[0]
+        raise ValueError("attributes has an unrecognized type")
 
     def get_attribute_keys(self, attributes: list) -> list[str]:
         raise NotImplementedError(

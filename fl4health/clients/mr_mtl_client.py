@@ -3,9 +3,9 @@ from logging import INFO
 from pathlib import Path
 
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
+from torch import nn
 
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.adaptive_drift_constraint_client import AdaptiveDriftConstraintClient

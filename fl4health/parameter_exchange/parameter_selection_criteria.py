@@ -2,10 +2,9 @@ import math
 from functools import partial
 
 import torch
-import torch.nn as nn
 from flwr.common.typing import NDArray, NDArrays
 from scipy.stats import bernoulli
-from torch import Tensor
+from torch import Tensor, nn
 
 from fl4health.model_bases.masked_layers.masked_layers_utils import is_masked_module
 from fl4health.utils.typing import LayerSelectionFunction
@@ -29,7 +28,7 @@ class LayerSelectionFunctionConstructor:
                 Defaults to True.
         """
         assert 0 < exchange_percentage <= 1
-        assert 0 < norm_threshold
+        assert norm_threshold > 0
         self.norm_threshold = norm_threshold
         self.exchange_percentage = exchange_percentage
         self.normalize = normalize
@@ -106,10 +105,9 @@ def select_layers_by_threshold(
             if drift_norm > threshold:
                 layers_to_transfer.append(layer_param.cpu().numpy())
                 layer_names.append(layer_name)
-        else:
-            if drift_norm <= threshold:
-                layers_to_transfer.append(layer_param.cpu().numpy())
-                layer_names.append(layer_name)
+        elif drift_norm <= threshold:
+            layers_to_transfer.append(layer_param.cpu().numpy())
+            layer_names.append(layer_name)
     return layers_to_transfer, layer_names
 
 
@@ -204,8 +202,7 @@ def smallest_increase_in_magnitude_scores(model: nn.Module, initial_model: nn.Mo
 def _sample_masks(score_tensor: Tensor) -> NDArray:
     bernoulli_probabilities = torch.sigmoid(score_tensor).cpu().numpy()
     # Perform Bernoulli sampling.
-    binary_mask = bernoulli.rvs(bernoulli_probabilities)
-    return binary_mask
+    return bernoulli.rvs(bernoulli_probabilities)
 
 
 def _process_masked_module(
@@ -237,7 +234,7 @@ def _process_masked_module(
     # This misalignment was allowed because these parameter names will later be used to load the model anyway.
     masks_to_exchange.append(_sample_masks(weight_scores))
     # Do the same thing with bias_scores if it exists
-    if "bias_scores" in module.state_dict().keys():
+    if "bias_scores" in module.state_dict():
         bias_scores_tensor_name = f"{module_name}.bias_scores" if module_name else "bias_scores"
         score_tensor_names.append(bias_scores_tensor_name)
         bias_scores = model_state_dict[bias_scores_tensor_name]
@@ -258,14 +255,13 @@ def select_scores_and_sample_masks(model: nn.Module, initial_model: nn.Module | 
     with torch.no_grad():
         if is_masked_module(model):
             return _process_masked_module(module=model, model_state_dict=model_states)
-        else:
-            masks_to_exchange = []
-            score_tensor_names = []
-            for name, module in model.named_modules():
-                if is_masked_module(module):
-                    module_masks, module_score_tensor_names = _process_masked_module(
-                        module=module, model_state_dict=model_states, module_name=name
-                    )
-                    masks_to_exchange.extend(module_masks)
-                    score_tensor_names.extend(module_score_tensor_names)
-            return masks_to_exchange, score_tensor_names
+        masks_to_exchange = []
+        score_tensor_names = []
+        for name, module in model.named_modules():
+            if is_masked_module(module):
+                module_masks, module_score_tensor_names = _process_masked_module(
+                    module=module, model_state_dict=model_states, module_name=name
+                )
+                masks_to_exchange.extend(module_masks)
+                score_tensor_names.extend(module_score_tensor_names)
+        return masks_to_exchange, score_tensor_names

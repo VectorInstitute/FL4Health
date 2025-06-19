@@ -1,6 +1,6 @@
 import torch
-import torch.nn as nn
 from flamby.datasets.fed_ixi import Baseline
+from torch import nn
 
 from research.flamby.utils import shutoff_batch_norm_tracking
 
@@ -19,5 +19,4 @@ class ApflUNet(nn.Module):
             shutoff_batch_norm_tracking(self.base_model)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.base_model(x)
-        return x
+        return self.base_model(x)

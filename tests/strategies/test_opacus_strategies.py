@@ -7,6 +7,7 @@ from fl4health.strategies.scaffold import OpacusScaffold
 from fl4health.utils.privacy_utilities import map_model_to_opacus_model
 from tests.test_utils.models_for_test import MnistNetWithBnAndFrozen
 
+
 model_for_tests = MnistNetWithBnAndFrozen(True)
 
 

@@ -3,14 +3,17 @@ from __future__ import annotations
 from pathlib import Path
 
 import torch
-import torch.nn as nn
+from torch import nn
+
+
+DEFAULT_PROJECTION_HEAD = nn.Identity()
 
 
 class FedSimClrModel(nn.Module):
     def __init__(
         self,
         encoder: nn.Module,
-        projection_head: nn.Module = nn.Identity(),
+        projection_head: nn.Module = DEFAULT_PROJECTION_HEAD,
         prediction_head: nn.Module | None = None,
         pretrain: bool = True,
     ) -> None:
@@ -30,9 +33,9 @@ class FedSimClrModel(nn.Module):
         """
         super().__init__()
 
-        assert not (
-            prediction_head is None and not pretrain
-        ), "Model with pretrain==False must have prediction head (ie not None)"
+        assert not (prediction_head is None and not pretrain), (
+            "Model with pretrain==False must have prediction head (ie not None)"
+        )
 
         self.encoder = encoder
         self.projection_head = projection_head
@@ -56,11 +59,8 @@ class FedSimClrModel(nn.Module):
         features = self.encoder(input)
         if self.pretrain:
             return self.projection_head(features)
-        else:
-            assert (
-                self.prediction_head is not None
-            ), "Model with pretrain==False must have prediction_head (ie not None)"
-            return self.prediction_head(features)
+        assert self.prediction_head is not None, "Model with pretrain==False must have prediction_head (ie not None)"
+        return self.prediction_head(features)
 
     @staticmethod
     def load_pretrained_model(model_path: Path) -> FedSimClrModel:
@@ -77,10 +77,9 @@ class FedSimClrModel(nn.Module):
             FedSimClrModel: A model with pre-existing weights loaded and ``pretrain`` set to False
         """
         prev_model = torch.load(model_path)
-        ssl_model = FedSimClrModel(
+        return FedSimClrModel(
             encoder=prev_model.encoder,
             projection_head=prev_model.projection_head,
             prediction_head=prev_model.prediction_head,
             pretrain=False,
         )
-        return ssl_model

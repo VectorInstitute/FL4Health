@@ -7,7 +7,8 @@ from flwr.common.logger import log
 
 
 def set_all_random_seeds(seed: int = 42) -> None:
-    """Set seeds for python random, numpy random, and pytorch random.
+    """
+    Set seeds for python random, numpy random, and pytorch random.
 
     Will no-op if seed is `None`.
 

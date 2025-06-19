@@ -64,8 +64,7 @@ def gaussian_noisy_unweighted_aggregate(
     # dropping number of data points component
     client_model_updates = [ndarrays for ndarrays, _ in results]
     sigma = noise_multiplier * clipping_bound
-    layer_sums = add_noise_to_ndarrays(client_model_updates, sigma, n_clients)
-    return layer_sums
+    return add_noise_to_ndarrays(client_model_updates, sigma, n_clients)
 
 
 def gaussian_noisy_weighted_aggregate(
@@ -120,9 +119,7 @@ def gaussian_noisy_weighted_aggregate(
     updated_clipping_bound = clipping_bound * max(client_coefficients)
 
     sigma = (noise_multiplier * updated_clipping_bound) / fraction_fit
-    layer_sums = add_noise_to_ndarrays(client_model_updates, sigma, n_clients)
-
-    return layer_sums
+    return add_noise_to_ndarrays(client_model_updates, sigma, n_clients)
 
 
 def gaussian_noisy_aggregate_clipping_bits(bits: NDArrays, noise_std_dev: float) -> float:

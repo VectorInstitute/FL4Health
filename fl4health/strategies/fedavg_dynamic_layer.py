@@ -159,8 +159,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
         """
         if self.weighted_aggregation:
             return self.weighted_aggregate(results)
-        else:
-            return self.unweighted_aggregate(results)
+        return self.unweighted_aggregate(results)
 
     def weighted_aggregate(self, results: list[tuple[NDArrays, int]]) -> dict[str, NDArray]:
         """
@@ -187,12 +186,10 @@ class FedAvgDynamicLayer(BasicFedAvg):
                 names_to_layers[name].append(layer * num_examples)
                 total_num_examples[name] += num_examples
 
-        name_to_layers_aggregated = {
+        return {
             name_key: reduce(np.add, names_to_layers[name_key]) / total_num_examples[name_key]
             for name_key in names_to_layers
         }
-
-        return name_to_layers_aggregated
 
     def unweighted_aggregate(self, results: list[tuple[NDArrays, int]]) -> dict[str, NDArray]:
         """
@@ -219,9 +216,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
                 names_to_layers[name].append(layer)
                 total_num_clients[name] += 1
 
-        name_to_layers_aggregated = {
+        return {
             name_key: reduce(np.add, names_to_layers[name_key]) / total_num_clients[name_key]
             for name_key in names_to_layers
         }
-
-        return name_to_layers_aggregated

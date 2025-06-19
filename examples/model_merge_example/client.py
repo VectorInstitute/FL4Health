@@ -3,8 +3,8 @@ from pathlib import Path
 
 import flwr as fl
 import torch
-import torch.nn as nn
 from flwr.common.typing import Config
+from torch import nn
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet

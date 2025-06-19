@@ -91,8 +91,8 @@ def test_weighted_gaussian_noisy_aggregation_value() -> None:
         for _, n_points in zip(range(n_clients), datapoints_per_client)
     ]
 
-    client_1_weights = [lst for lst in layers[0][0]]
-    client_2_weights = [lst for lst in layers[1][0]]
+    client_1_weights = list(layers[0][0])
+    client_2_weights = list(layers[1][0])
 
     client_1_coef = datapoints_per_client[0] / total_datapoints
     client_2_coef = datapoints_per_client[1] / total_datapoints

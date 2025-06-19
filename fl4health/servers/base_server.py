@@ -65,7 +65,6 @@ class FlServer(Server):
                 evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
                 and throw an exception. Defaults to True.
         """
-
         super().__init__(client_manager=client_manager, strategy=strategy)
         self.fl_config = fl_config
         if checkpoint_and_state_module is not None:
@@ -135,7 +134,6 @@ class FlServer(Server):
             metrics computed during training and validation. The second element of the tuple is the elapsed time in
             seconds.
         """
-
         log(INFO, "Initializing server state and global parameters")
         self.parameters = self._get_initial_parameters(server_round=0, timeout=timeout)
         self.history = History()
@@ -212,7 +210,7 @@ class FlServer(Server):
         """
         Run federated learning for a number of rounds. This function also allows the server to perform some operations
         prior to fitting starting. This is useful, for example, if you need to communicate with the clients to
-        initialize anything prior to FL starting (see nnunet server for an example)
+        initialize anything prior to FL starting (see nnunet server for an example).
 
         Args:
             num_rounds (int): Number of server rounds to run.
@@ -261,7 +259,7 @@ class FlServer(Server):
         """
         This function is called at each round of federated training. The flow is generally the same as a flower
         server, where clients are sampled and client side training is requested from the clients that are chosen.
-        This function simply adds a bit of logging, post processing of the results
+        This function simply adds a bit of logging, post processing of the results.
 
         Args:
             server_round (int): Current round number of the FL training. Begins at 1
@@ -274,7 +272,6 @@ class FlServer(Server):
             second is a dictionary of **AGGREGATED** metrics. The third component holds the individual (non-aggregated)
             parameters, loss, and metrics for successful and unsuccessful client-side training.
         """
-
         round_start = datetime.datetime.now()
         fit_round_results = super().fit_round(server_round, timeout)
         round_end = datetime.datetime.now()
@@ -299,9 +296,7 @@ class FlServer(Server):
         return fit_round_results
 
     def shutdown(self) -> None:
-        """
-        Currently just records termination of the server process and disconnects and reporters that need to be.
-        """
+        """Currently just records termination of the server process and disconnects and reporters that need to be."""
         self.reports_manager.report({"shutdown": str(datetime.datetime.now())})
         self.reports_manager.shutdown()
 
@@ -357,7 +352,6 @@ class FlServer(Server):
             tuple[float | None, dict[str, Scalar], EvaluateResultsAndFailures] | None: Tuple of loss value, metrics
             dictionary and individual client results (client ids and failures).
         """
-        #
         start_time = datetime.datetime.now()
         eval_round_results = self._evaluate_round(server_round, timeout)
         end_time = datetime.datetime.now()
@@ -402,7 +396,7 @@ class FlServer(Server):
         """
         Save server checkpoint consisting of model, history, server round, metrics reporter and server name. This
         method can be overridden to add any necessary state to the checkpoint. The model will be injected into the
-        ckpt state by the checkpoint module
+        ckpt state by the checkpoint module.
         """
         assert self.checkpoint_and_state_module.state_checkpointer is not None
         self.checkpoint_and_state_module.save_state(self, self.parameters)
@@ -419,8 +413,7 @@ class FlServer(Server):
             self.parameters = server_parameters
             log(INFO, "Loaded server state from checkpoint")
             return True
-        else:
-            return False
+        return False
 
     def _terminate_after_unacceptable_failures(self, timeout: float | None) -> None:
         assert not self.accept_failures

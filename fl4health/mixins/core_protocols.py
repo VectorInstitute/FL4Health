@@ -1,8 +1,8 @@
 from typing import Protocol, runtime_checkable
 
 import torch
-import torch.nn as nn
 from flwr.common.typing import Config, NDArrays, Scalar
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader

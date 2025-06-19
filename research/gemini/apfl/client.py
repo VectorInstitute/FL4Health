@@ -15,8 +15,9 @@ from fl4health.metrics import AccumulationMeter, Meter, Metric
 from fl4health.model_bases.apfl_base import APFLModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from research.gemini.delirium_models.NN import NN as delirium_model
-from research.gemini.metrics.metrics import Accuracy, Binary_F1, Binary_ROC_AUC
+from research.gemini.metrics.metrics import Accuracy, BinaryF1, BinaryRocAuc
 from research.gemini.mortality_models.NN import NN as mortality_model
+
 
 LocalLoss = torch.Tensor
 GlobalLoss = torch.Tensor
@@ -283,7 +284,7 @@ if __name__ == "__main__":
 
     client = GeminiApflClient(
         data_path,
-        [Binary_ROC_AUC(), Binary_F1(), Accuracy()],
+        [BinaryRocAuc(), BinaryF1(), Accuracy()],
         args.hospital_id,
         device,
         args.task,

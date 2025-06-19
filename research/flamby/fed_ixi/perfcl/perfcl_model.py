@@ -1,7 +1,7 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from flamby.datasets.fed_ixi.model import ConvolutionalBlock
+from torch import nn
 
 from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode, ParallelSplitHeadModule
 from fl4health.model_bases.perfcl_base import PerFclModel
@@ -50,8 +50,7 @@ class PerFclClassifier(ParallelSplitHeadModule):
     def head_forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         x = self.monte_carlo_layer(input_tensor) if self.monte_carlo_layer is not None else input_tensor
         x = self.classifier(x)
-        x = F.softmax(x, dim=self.CHANNELS_DIMENSION)
-        return x
+        return F.softmax(x, dim=self.CHANNELS_DIMENSION)
 
 
 class LocalUNetFeatureExtractor(nn.Module):
@@ -67,15 +66,14 @@ class LocalUNetFeatureExtractor(nn.Module):
             shutoff_batch_norm_tracking(self.base_model)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.base_model(x)
-        return x
+        return self.base_model(x)
 
 
 class GlobalUNetFeatureExtractor(nn.Module):
-    """Global PerFCL module.
+    """
+    Global PerFCL module.
     We use a UNet with the classifier head stripped off to extract a set of features on
     which each pixel of the image is classified.
-
     """
 
     def __init__(self, turn_off_bn_tracking: bool = False, out_channels_first_layer: int = 8):
@@ -85,8 +83,7 @@ class GlobalUNetFeatureExtractor(nn.Module):
             shutoff_batch_norm_tracking(self.base_model)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.base_model(x)
-        return x
+        return self.base_model(x)
 
 
 class FedIxiPerFclModel(PerFclModel):

@@ -1,6 +1,6 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode, ParallelSplitHeadModule
 
@@ -21,8 +21,7 @@ class Net(nn.Module):
         x = x.view(-1, 16 * 5 * 5)
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+        return self.fc3(x)
 
 
 class LinearModel(nn.Module):
@@ -54,7 +53,7 @@ class ToyConvNet(nn.Module):
             self.bn1 = nn.BatchNorm1d(10)
 
 
-class ToyConvNet_2(nn.Module):
+class ToyConvNet2(nn.Module):
     def __init__(self, include_bn: bool = False) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(1, 8, 5, bias=False)
@@ -78,8 +77,7 @@ class SmallCnn(nn.Module):
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
         x = x.view(-1, 16 * 4 * 4)
-        x = F.relu(self.fc1(x))
-        return x
+        return F.relu(self.fc1(x))
 
 
 class HierarchicalCnn(nn.Module):
@@ -137,9 +135,8 @@ class HierarchicalCnn(nn.Module):
 
         x = torch.flatten(x, 1)
         x = self.classifier["fc"](x)
-        x = self.classifier["relu"](x)
 
-        return x
+        return self.classifier["relu"](x)
 
 
 class FeatureCnn(nn.Module):
@@ -154,8 +151,7 @@ class FeatureCnn(nn.Module):
         x = self.pool(F.relu(self.conv2(x)))
         x = x.view(-1, 16 * 4 * 4)
         x = F.relu(x)
-        x = x.flatten(start_dim=1)
-        return x
+        return x.flatten(start_dim=1)
 
 
 class HeadCnn(nn.Module):
@@ -164,8 +160,7 @@ class HeadCnn(nn.Module):
         self.fc1 = nn.Linear(16 * 4 * 4, 32)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.fc1(x)
-        return x
+        return self.fc1(x)
 
 
 class FendaHeadCnn(ParallelSplitHeadModule):
@@ -178,8 +173,7 @@ class FendaHeadCnn(ParallelSplitHeadModule):
         return torch.concat([local_x, global_x], dim=1)
 
     def head_forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = F.relu(self.fc1(x))
-        return x
+        return F.relu(self.fc1(x))
 
 
 class LinearTransform(nn.Module):
@@ -191,9 +185,19 @@ class LinearTransform(nn.Module):
         return self.linear(x)
 
 
+class LinearPredictionHead(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.linear = nn.Linear(3, 2, bias=False)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.linear(x)
+
+
 class UNet3D(nn.Module):
     """
-    https://pypi.org/project/unet/0.7.7/
+    https://pypi.org/project/unet/0.7.7/.
+
     PyTorch implementation of 2D and 3D U-Net (unet 0.7.7)
     License: MIT License (MIT license)
     Author: Fernando Perez-Garcia
@@ -246,10 +250,7 @@ class UNet3D(nn.Module):
 
         # Bottom (last encoding block)
         in_channels = self.encoder.out_channels
-        if dimensions == 2:
-            out_channels_first = 2 * in_channels
-        else:
-            out_channels_first = in_channels
+        out_channels_first = 2 * in_channels if dimensions == 2 else in_channels
 
         self.bottom_block = EncodingBlock(
             in_channels,
@@ -309,8 +310,7 @@ class UNet3D(nn.Module):
         if self.monte_carlo_layer is not None:
             x = self.monte_carlo_layer(x)
         x = self.classifier(x)
-        x = F.softmax(x, dim=self.CHANNELS_DIMENSION)
-        return x
+        return F.softmax(x, dim=self.CHANNELS_DIMENSION)
 
 
 # Conv
@@ -532,24 +532,21 @@ class DecodingBlock(nn.Module):
         # If skip_connection is 10, 20, 30 and x is (6, 14, 12)
         # Then pad will be (-2, -2, -3, -3, -9, -9)
         pad = -torch.stack((half_crop, half_crop)).t().flatten()
-        skip_connection = F.pad(skip_connection, pad.tolist())
-        return skip_connection
+        return F.pad(skip_connection, pad.tolist())
 
 
 def get_upsampling_layer(upsampling_type: str) -> nn.Upsample:
     if upsampling_type not in UPSAMPLING_MODES:
-        message = 'Upsampling type is "{}"' " but should be one of the following: {}"
+        message = 'Upsampling type is "{}" but should be one of the following: {}'
         message = message.format(upsampling_type, UPSAMPLING_MODES)
         raise ValueError(message)
-    upsample = nn.Upsample(scale_factor=2, mode=upsampling_type, align_corners=False)
-    return upsample
+    return nn.Upsample(scale_factor=2, mode=upsampling_type, align_corners=False)
 
 
 def get_conv_transpose_layer(dimensions: int, in_channels: int, out_channels: int) -> nn.Module:
     class_name = "ConvTranspose{}d".format(dimensions)
     conv_class = getattr(nn, class_name)
-    conv_layer = conv_class(in_channels, out_channels, kernel_size=2, stride=2)
-    return conv_layer
+    return conv_class(in_channels, out_channels, kernel_size=2, stride=2)
 
 
 def fix_upsampling_type(upsampling_type: str, dimensions: int) -> str:
@@ -710,10 +707,9 @@ class EncodingBlock(nn.Module):
             x = self.conv2(x)
         if self.downsample is None:
             return x
-        else:
-            skip_connection = x
-            x = self.downsample(x)
-            return x, skip_connection
+        skip_connection = x
+        x = self.downsample(x)
+        return x, skip_connection
 
     @property
     def out_channels(self) -> int:
@@ -793,8 +789,7 @@ class MnistNetWithBnAndFrozen(nn.Module):
         x = self.pool(F.relu(self.conv2(x)))
         x = self.bn(x)
         x = x.view(-1, 16 * 4 * 4)
-        x = F.relu(self.fc1(x))
-        return x
+        return F.relu(self.fc1(x))
 
 
 class CompositeConvNet(nn.Module):
@@ -835,9 +830,7 @@ class CompositeConvNet(nn.Module):
         x_flat = torch.cat([x1d.flatten(1), x2d.flatten(1), x3d.flatten(1)], dim=1)
         x_flat = self.linear(x_flat)
 
-        x_flat = self.layer_norm(x_flat)
-
-        return x_flat
+        return self.layer_norm(x_flat)
 
 
 class ModelWrapper(nn.Module):

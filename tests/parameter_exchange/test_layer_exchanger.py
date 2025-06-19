@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-import torch.nn as nn
+from torch import nn
 
 from fl4health.model_bases.masked_layers.masked_layers_utils import convert_to_masked_model
 from fl4health.parameter_exchange.fedpm_exchanger import FedPmExchanger

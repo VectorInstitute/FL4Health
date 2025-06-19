@@ -120,7 +120,7 @@ class MoonClient(BasicClient):
     def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
         """
         This function is called immediately after client-side training has completed. This function saves the final
-        trained model to the list of old models to be used in subsequent server rounds
+        trained model to the list of old models to be used in subsequent server rounds.
 
         Args:
             local_steps (int): Number of local steps performed during training
@@ -142,7 +142,7 @@ class MoonClient(BasicClient):
         """
         This function is called before training, immediately after injecting the aggregated server weights into the
         client model. We clone and free the current model to preserve the aggregated server weights state (i.e. the
-        initial model before training starts.)
+        initial model before training starts).
 
         Args:
             current_server_round (int): Current federated training round being executed.
@@ -174,7 +174,6 @@ class MoonClient(BasicClient):
             - The tensor for the total loss
             - A dictionary with `loss`, `contrastive_loss` and `total_loss` keys and their calculated values.
         """
-
         loss = self.criterion(preds["prediction"], target)
         total_loss = loss.clone()
         additional_losses = {

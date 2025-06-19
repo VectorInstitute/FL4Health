@@ -23,8 +23,8 @@ def test_instance_accountant_reproduce_results() -> None:
     updates = [10000, 40000]
     target_delta = 1 / pow(10, 5)
     expected_epsilons = [1.035, 2.213]
-    for T, expected_epsilon in zip(updates, expected_epsilons):
-        epsilon = accountant.get_epsilon(PoissonSampling(sampling_ratio), noise_multiplier, T, target_delta)
+    for t, expected_epsilon in zip(updates, expected_epsilons):
+        epsilon = accountant.get_epsilon(PoissonSampling(sampling_ratio), noise_multiplier, t, target_delta)
         assert pytest.approx(expected_epsilon, abs=0.01) == epsilon
 
     # Instance Level FL with DP-SGD
@@ -50,18 +50,23 @@ def test_instance_accountant_reproduce_results() -> None:
     for server_rounds, z, delta, epsilon in zip(server_rounds_list, noise_multipliers, target_deltas, target_epsilons):
         population_size = n_clients * client_data_points
         sample_size = clients_sampled_per_round * batch_size
-        T = server_rounds * epochs_per_server_round * batch_steps
-        estimated_epsilon = accountant.get_epsilon(PoissonSampling(sample_size / population_size), z, T, delta)
+        t = server_rounds * epochs_per_server_round * batch_steps
+        estimated_epsilon = accountant.get_epsilon(PoissonSampling(sample_size / population_size), z, t, delta)
         assert pytest.approx(epsilon, abs=0.001) == estimated_epsilon
 
 
 def test_user_level_accountant_poisson_sampling_reproduce_results() -> None:
-    # This test "reproduces" the results of Table 1 from Learning Differentially Private Recurrent Language Models.
-    # The bounds are actually tighter than those of the paper due to an improvement in the sharpness of such bounds in
-    # 2020 through https://arxiv.org/abs/2004.00010 Proposition 12 (in v4). See the documentation in the
-    # rdp_privacy_accountant get_epsilon function. If you revert to the previous best bound of
-    #   epsilon = min( rdp - math.log(delta) / (orders - 1) )
-    # from https://arxiv.org/abs/1702.07476 Proposition 3 in v3 the results are reproduced exactly.
+    """
+    This test "reproduces" the results of Table 1 from Learning Differentially Private Recurrent Language Models.
+
+    The bounds are actually tighter than those of the paper due to an improvement in the sharpness of such bounds in
+    2020 through https://arxiv.org/abs/2004.00010 Proposition 12 (in v4). See the documentation in the
+    ``rdp_privacy_accountant`` get_epsilon function. If you revert to the previous best bound of
+
+    :code:`epsilon = min( rdp - math.log(delta) / (orders - 1) )`
+
+    from https://arxiv.org/abs/1702.07476 Proposition 3 in v3 the results are reproduced exactly.
+    """
     accountant = MomentsAccountant()
     noise_values = [1.0, 1.0, 1.0, 1.0, 3.0, 1.0]
     n_clients = [pow(10, 5), pow(10, 6), pow(10, 6), pow(10, 6), pow(10, 6), pow(10, 9)]
@@ -127,8 +132,8 @@ def test_user_level_accountant_poisson_sampling_reproduce_results() -> None:
         },
     }
 
-    for K, C, z, strategy, d in zip(n_clients, clients_per_round, noise_values, sampling_strategies, target_deltas):
-        expected_epsilons = expected_results[(K, C, z)]
+    for k, c, z, strategy, d in zip(n_clients, clients_per_round, noise_values, sampling_strategies, target_deltas):
+        expected_epsilons = expected_results[(k, c, z)]
         for t in updates:
             estimated_epsilon = accountant.get_epsilon(strategy, z, t, d)
             expected_epsilon = expected_epsilons[t]

@@ -17,6 +17,7 @@ from fl4health.servers.base_server import FlServer
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.nnunet_utils import NnunetConfig
 
+
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
@@ -31,7 +32,7 @@ def add_items_to_config_fn(fn: CFG_FN, items: Config) -> CFG_FN:
     """
     Accepts a flwr Strategy configure function (either ``configure_fit`` or ``configure_evaluate``) and returns a new
     function  that returns the same thing except the dictionary items in the items argument have been added to the
-    config that  is returned by the original function
+    config that  is returned by the original function.
 
     Args:
         fn (CFG_FN): The Strategy configure function to wrap
@@ -240,8 +241,9 @@ class NnunetServer(FlServer):
             new_eval_cfg_fn = add_items_to_config_fn(
                 self.strategy.configure_evaluate, {"nnunet_plans": self.nnunet_plans_bytes}
             )
-            setattr(self.strategy, "configure_fit", new_fit_cfg_fn)
-            setattr(self.strategy, "configure_evaluate", new_eval_cfg_fn)
+            self.strategy.configure_fit = new_fit_cfg_fn  # type: ignore
+            self.strategy.configure_evaluate = new_eval_cfg_fn  # type: ignore
+
         # Finish
         log(INFO, "")
 
@@ -251,7 +253,6 @@ class NnunetServer(FlServer):
         method overrides parent to also `checkpoint` ``nnunet_plans``, ``num_input_channels``,
         ``num_segmentation_heads`` and ``global_deep_supervision``.
         """
-
         assert (
             self.nnunet_plans_bytes is not None
             and self.num_input_channels is not None

@@ -8,10 +8,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
+from torch import nn
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
+
 
 if TYPE_CHECKING:
     from fl4health.clients.basic_client import BasicClient
@@ -38,7 +39,6 @@ from fl4health.utils.snapshotter import (
 
 
 class StateCheckpointer(ABC):
-
     def __init__(
         self,
         checkpoint_dir: Path,
@@ -119,7 +119,7 @@ class StateCheckpointer(ABC):
 
     def checkpoint_exists(self) -> bool:
         """
-        Check if a checkpoint exists at the checkpoint_path constructed as ``checkpoint_dir`` + ``checkpoint_name``
+        Check if a checkpoint exists at the checkpoint_path constructed as ``checkpoint_dir`` + ``checkpoint_name``.
 
         Returns:
             bool: True if checkpoint exists, otherwise false.
@@ -151,7 +151,8 @@ class StateCheckpointer(ABC):
 
     def save_state(self) -> None:
         """
-        Create a snapshot of the state as defined in ``self.snapshot_attrs``. It is saved at ``self.checkpoint_path``
+        Create a snapshot of the state as defined in ``self.snapshot_attrs``.
+        It is saved at ``self.checkpoint_path``.
         """
         for attr_name, (snapshotter, expected_type) in self.snapshot_attrs.items():
             self.snapshot_ckpt.update(self._save_snapshot(snapshotter, attr_name, expected_type))
@@ -170,9 +171,9 @@ class StateCheckpointer(ABC):
             attributes (list[str] | None): List of attributes to load from the checkpoint. If None, all attributes
                 specified in ``snapshot_attrs`` are loaded. Defaults to None.
         """
-        assert (
-            self.checkpoint_exists()
-        ), f"No state checkpoint to load. Checkpoint at {self.checkpoint_path} does not exist"
+        assert self.checkpoint_exists(), (
+            f"No state checkpoint to load. Checkpoint at {self.checkpoint_path} does not exist"
+        )
 
         if attributes is None:
             attributes = list(self.snapshot_attrs.keys())
@@ -229,13 +230,12 @@ class StateCheckpointer(ABC):
         attribute = self.get_attribute(name)
         if isinstance(attribute, expected_type):
             return {"None": attribute}
-        elif isinstance(attribute, dict):
+        if isinstance(attribute, dict):
             for key, value in attribute.items():
                 if not isinstance(value, expected_type):
                     raise ValueError(f"Incompatible type of attribute {type(attribute)} for key {key}")
             return attribute
-        else:
-            raise ValueError(f"Incompatible type of attribute {type(attribute)}, expected {expected_type}")
+        raise ValueError(f"Incompatible type of attribute {type(attribute)}, expected {expected_type}")
 
     def _save_snapshot(self, snapshotter: AbstractSnapshotter, name: str, expected_type: type[T]) -> dict[str, Any]:
         """
@@ -272,7 +272,6 @@ class StateCheckpointer(ABC):
 
 
 class ClientStateCheckpointer(StateCheckpointer):
-
     def __init__(
         self,
         checkpoint_dir: Path,
@@ -394,8 +393,7 @@ class ClientStateCheckpointer(StateCheckpointer):
             Any: The attribute value.
         """
         assert self.client is not None, "Client is not set."
-        attribute = getattr(self.client, name)
-        return attribute
+        return getattr(self.client, name)
 
     def set_attribute(self, name: str, value: Any) -> None:
         """
@@ -410,7 +408,6 @@ class ClientStateCheckpointer(StateCheckpointer):
 
 
 class ServerStateCheckpointer(StateCheckpointer):
-
     def __init__(
         self,
         checkpoint_dir: Path,
@@ -457,7 +454,6 @@ class ServerStateCheckpointer(StateCheckpointer):
         ``checkpoint_name`` is None then a default ``checkpoint_name`` based on the underlying name of the server to
         be checkpointed will be set of the form ``f"server_{self.server.server_name}_state.pt"``.
         """
-
         assert self.server is not None, "Attempting to save server state but server is None"
         # Set the checkpoint name based on server's name if not already provided.
         if self.checkpoint_name is None:
@@ -467,7 +463,7 @@ class ServerStateCheckpointer(StateCheckpointer):
 
     def save_server_state(self, server: FlServer, model: nn.Module) -> None:
         """
-        Save the state of the server, including a torch model, which is not a required component of the server class
+        Save the state of the server, including a torch model, which is not a required component of the server class.
 
         Args:
             server (FlServer): Server with state to be saved
@@ -551,7 +547,6 @@ class ServerStateCheckpointer(StateCheckpointer):
 
 
 class NnUnetServerStateCheckpointer(ServerStateCheckpointer):
-
     def __init__(
         self,
         checkpoint_dir: Path,
@@ -569,7 +564,6 @@ class NnUnetServerStateCheckpointer(ServerStateCheckpointer):
                 checkpointed will be set of the form ``f"f"server_{self.server.server_name}_state.pt""``. This can be
                 updated later  with `set_checkpoint_path`. Defaults to None.
         """
-
         # Go beyond default snapshot_attrs with nnUNet-specific attributes.
         nnunet_snapshot_attrs: dict[str, tuple[AbstractSnapshotter, Any]] = {
             "model": (TorchModuleSnapshotter(), nn.Module),

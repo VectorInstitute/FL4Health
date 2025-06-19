@@ -8,6 +8,7 @@ from pathlib import Path
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.checkpointing.state_checkpointer import ClientStateCheckpointer
 
+
 with warnings.catch_warnings():
     # Silence deprecation warnings from sentry sdk due to flwr and wandb
     # https://github.com/adap/flower/issues/4086
@@ -46,19 +47,19 @@ def main(
 
     # Load the dataset if necessary
     msd_dataset_enum = get_msd_dataset_enum(msd_dataset_name)
-    nnUNet_raw = join(dataset_path, "nnunet_raw")
-    if not exists(join(nnUNet_raw, msd_dataset_enum.value)):
+    nn_unet_raw = join(dataset_path, "nnunet_raw")
+    if not exists(join(nn_unet_raw, msd_dataset_enum.value)):
         log(INFO, f"Downloading and extracting {msd_dataset_enum.value} dataset")
-        load_msd_dataset(nnUNet_raw, msd_dataset_name)
+        load_msd_dataset(nn_unet_raw, msd_dataset_name)
 
     # The dataset ID will be the same as the MSD Task number
     dataset_id = int(msd_dataset_enum.value[4:6])
     nnunet_dataset_name = f"Dataset{dataset_id:03d}_{msd_dataset_enum.value.split('_')[1]}"
 
     # Convert the msd dataset if necessary
-    if not exists(join(nnUNet_raw, nnunet_dataset_name)):
+    if not exists(join(nn_unet_raw, nnunet_dataset_name)):
         log(INFO, f"Converting {msd_dataset_enum.value} into nnunet dataset")
-        convert_msd_dataset(source_folder=join(nnUNet_raw, msd_dataset_enum.value))
+        convert_msd_dataset(source_folder=join(nn_unet_raw, msd_dataset_enum.value))
 
     # Create a metric
     dice = TransformsMetric(
@@ -197,13 +198,13 @@ if __name__ == "__main__":
     update_console_handler(level=args.logLevel)
 
     # Create nnunet directory structure and set environment variables
-    nnUNet_raw = join(args.dataset_path, "nnunet_raw")
-    nnUNet_preprocessed = join(args.dataset_path, "nnunet_preprocessed")
-    os.makedirs(nnUNet_raw, exist_ok=True)
-    os.makedirs(nnUNet_preprocessed, exist_ok=True)
+    nn_unet_raw = join(args.dataset_path, "nnunet_raw")
+    nn_unet_preprocessed = join(args.dataset_path, "nnunet_preprocessed")
+    os.makedirs(nn_unet_raw, exist_ok=True)
+    os.makedirs(nn_unet_preprocessed, exist_ok=True)
     set_nnunet_env(
-        nnUNet_raw=nnUNet_raw,
-        nnUNet_preprocessed=nnUNet_preprocessed,
+        nnUNet_raw=nn_unet_raw,
+        nnUNet_preprocessed=nn_unet_preprocessed,
         nnUNet_results=join(args.dataset_path, "nnUNet_results"),
     )
 

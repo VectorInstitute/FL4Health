@@ -5,9 +5,9 @@ from pathlib import Path
 
 import flwr as fl
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -33,7 +33,6 @@ class MnistFedAvgClient(BasicClient):
         checkpoint_dir: str,
         client_name: str,
     ) -> None:
-
         # Checkpointing is crucial for the warm up process
         checkpoint_name = f"client_{client_name}_latest_model.pkl"
         post_aggregation_checkpointer = LatestTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)

@@ -104,7 +104,6 @@ class ClientLevelDPFedAvgServer(FlServer):
             FL training results, including things like aggregated loss and metrics. Tuple also contains the elapsed
             time in seconds for the round.
         """
-
         assert isinstance(self.strategy, ClientLevelDPFedAvgM)
 
         sample_counts = self.poll_clients_for_sample_counts(timeout)

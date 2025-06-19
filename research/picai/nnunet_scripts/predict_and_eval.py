@@ -1,4 +1,5 @@
 import argparse
+import sys
 from logging import INFO
 from os.path import exists, join
 
@@ -156,10 +157,10 @@ def main() -> None:
         print("If you choose to proceed existing files may be overwritten")
         while True:
             proceed = input("Do you wish to proceed (y/n)?: ")
-            if proceed == "y" or proceed == "Y":
+            if proceed in {"y", "Y"}:
                 break
-            elif proceed == "n" or proceed == "N":
-                exit()
+            if proceed in {"n", "N"}:
+                sys.exit()
             else:
                 print("Did not get valid input. Please enter 'y' or 'n'")
 

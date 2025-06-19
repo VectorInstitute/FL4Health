@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 from fl4health.model_bases.partial_layer_exchange_model import PartialLayerExchangeModel
 
@@ -9,7 +9,7 @@ class SequentiallySplitModel(nn.Module):
         """
         These models are split into two sequential stages. The first is ``base_module``, used as a feature extractor.
         The second is the ``head_module``, used as a classifier. Features are extracted from the ``base_module`` and
-        stored for later use, if required
+        stored for later use, if required.
 
         Args:
             base_module (nn.Module): Feature extraction module
@@ -27,7 +27,7 @@ class SequentiallySplitModel(nn.Module):
     def _flatten_features(self, features: torch.Tensor) -> torch.Tensor:
         """
         The features tensor is flattened to be of shape are flattened to be of shape (``batch_size``, -1). It is
-        expected that the feature tensor is **BATCH FIRST**
+        expected that the feature tensor is **BATCH FIRST**.
 
         Args:
             features (torch.Tensor): Features tensor to be flattened. It is assumed that this tensor is
@@ -56,7 +56,7 @@ class SequentiallySplitModel(nn.Module):
         """
         Run a forward pass using the sequentially split modules ``base_module`` -> ``head_module``. Features from the
         base_module are stored either in their original shapes are flattened to be of shape (``batch_size``, -1)
-        depending on ``self.flatten_features``
+        depending on ``self.flatten_features``.
 
         Args:
             input (torch.Tensor): Input to the model forward pass. Expected to be of shape (``batch_size``, \\*)
@@ -89,4 +89,4 @@ class SequentiallySplitExchangeBaseModel(SequentiallySplitModel, PartialLayerExc
             list[str]: The names of the layers to be exchanged with the server. This is used by the
             ``FixedLayerExchanger`` class
         """
-        return [layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("base_module.")]
+        return [layer_name for layer_name in self.state_dict() if layer_name.startswith("base_module.")]

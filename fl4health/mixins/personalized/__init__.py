@@ -14,7 +14,6 @@ PersonalizedMixinRegistry = {PersonalizedMode.DITTO: DittoPersonalizedMixin}
 def make_it_personal(client_base_type: type[BasicClient], mode: PersonalizedMode) -> type[BasicClient]:
     """A mixed class factory for converting basic clients to personalized versions."""
     if mode == PersonalizedMode.DITTO:
-
         return type(
             f"Ditto{client_base_type.__name__}",
             (
@@ -26,8 +25,7 @@ def make_it_personal(client_base_type: type[BasicClient], mode: PersonalizedMode
                 "_dynamically_created": True
             },
         )
-    else:
-        raise ValueError("Unrecognized personalized mode.")
+    raise ValueError("Unrecognized personalized mode.")
 
 
 __all__ = [

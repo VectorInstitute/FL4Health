@@ -42,7 +42,8 @@ def get_config(
 
     # Check if plans were provided
     if nnunet_plans is not None:
-        plans_bytes = pickle.dumps(json.load(open(nnunet_plans, "r")))
+        with open(nnunet_plans, "r") as f:
+            plans_bytes = pickle.dumps(json.load(f))
         config["nnunet_plans"] = plans_bytes
 
     return config

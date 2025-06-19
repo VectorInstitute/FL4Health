@@ -4,9 +4,9 @@ from logging import INFO
 from pathlib import Path
 
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
+from torch import nn
 
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
@@ -80,7 +80,7 @@ class PartialWeightExchangeClient(BasicClient):
         """
         Setup the components of the client necessary for client-side training and parameter exchange. Mostly handled
         by a call to the basic client flow, but also sets up the initial model to facilitate storage of initial
-        parameters during training
+        parameters during training.
 
         Args:
             config (Config): Configuration used to setup the client properly
@@ -110,7 +110,7 @@ class PartialWeightExchangeClient(BasicClient):
         Determines which weights are sent back to the server for aggregation. This uses a parameter exchanger to
         determine parameters sent. Note that this overrides the basic client ``get_parameters`` function to send the
         initial model so that starting weights may be extracted and compared to current weights after local
-        training
+        training.
 
         Args:
             config (Config): configuration used to setup the exchange
@@ -131,9 +131,8 @@ class PartialWeightExchangeClient(BasicClient):
 
             # Need all parameters even if normally exchanging partial
             return FullParameterExchanger().push_parameters(self.model, config=config)
-        else:
-            assert self.model is not None and self.parameter_exchanger is not None
-            return self.parameter_exchanger.push_parameters(self.model, self.initial_model, config=config)
+        assert self.model is not None and self.parameter_exchanger is not None
+        return self.parameter_exchanger.push_parameters(self.model, self.initial_model, config=config)
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """

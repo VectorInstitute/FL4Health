@@ -59,9 +59,9 @@ class MrMtlServer(FlServer):
                 and throw an exception. Defaults to True.
 
         """
-        assert isinstance(
-            strategy, FedAvgWithAdaptiveConstraint
-        ), "Strategy must be of base type FedAvgWithAdaptiveConstraint"
+        assert isinstance(strategy, FedAvgWithAdaptiveConstraint), (
+            "Strategy must be of base type FedAvgWithAdaptiveConstraint"
+        )
         if checkpoint_and_state_module is not None:
             assert isinstance(
                 checkpoint_and_state_module,

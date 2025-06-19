@@ -5,15 +5,16 @@ from logging import INFO
 
 import numpy as np
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Parameters
+from torch import nn
 from torch.utils.data import DataLoader
 from torchinfo import summary
 
 from fl4health.metrics.base_metrics import Metric
 from fl4health.metrics.metric_managers import MetricManager
+
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -51,14 +52,12 @@ def write_measurement_results(eval_write_path: str, results: dict[str, float]) -
 
 def load_local_model(run_folder_dir: str, client_number: int) -> nn.Module:
     model_checkpoint_path = os.path.join(run_folder_dir, f"client_{client_number}_best_model.pkl")
-    model = torch.load(model_checkpoint_path)
-    return model
+    return torch.load(model_checkpoint_path)
 
 
 def load_global_model(run_folder_dir: str) -> nn.Module:
     model_checkpoint_path = os.path.join(run_folder_dir, "server_best_model.pkl")
-    model = torch.load(model_checkpoint_path)
-    return model
+    return torch.load(model_checkpoint_path)
 
 
 def get_metric_avg_std(metrics: list[float]) -> tuple[float, float]:
@@ -135,7 +134,7 @@ def shutoff_batch_norm_tracking(model: nn.Module) -> None:
     # Iterate through all named modules of the model and, if we encounter a batch normalization layer, we set
     # track_running_stats to false instead of true.
     for name, module in model.named_modules():
-        if isinstance(module, nn.BatchNorm3d) or isinstance(module, nn.BatchNorm2d):
+        if isinstance(module, (nn.BatchNorm3d, nn.BatchNorm2d)):
             log(INFO, f"Modifying Batch Normalization Layer: {name}")
             module.track_running_stats = False
             # NOTE: It's apparently not enough to set this boolean to false. We need to set all of the relevant

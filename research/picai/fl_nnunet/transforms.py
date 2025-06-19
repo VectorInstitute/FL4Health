@@ -3,6 +3,7 @@ from logging import WARNING
 import torch
 from flwr.common.logger import log
 
+
 log(
     WARNING,
     (
@@ -15,7 +16,7 @@ log(
 # Some transform functions to use with the TransformsMetric Class
 def get_annotations_from_probs(preds: torch.Tensor, has_regions: bool = False, threshold: float = 0.5) -> torch.Tensor:
     """
-    Converts the model output probabilities to predicted annotations
+    Converts the model output probabilities to predicted annotations.
 
     Args:
         preds (torch.Tensor): The one hot encoded model output probabilities
@@ -39,16 +40,15 @@ def get_annotations_from_probs(preds: torch.Tensor, has_regions: bool = False, t
         # classified as background are not part of another class
         mask = ~pred_annotations[:, 0]
         return pred_annotations * mask
-    else:
-        pred_annotations = preds.argmax(1)[:, None]  # shape (batch, 1, additional_dims)
-        # one hot encode (OHE) predicted annotations again
-        # WARNING: Note the '_' after scatter. scatter_ and scatter are both
-        # functions with different functionality. It is easy to introduce a bug
-        # here by using the wrong one
-        pred_annotations_one_hot = torch.zeros(preds.shape, device=preds.device, dtype=torch.float32)
-        pred_annotations_one_hot.scatter_(1, pred_annotations, 1)  # ohe -> One Hot Encoded
-        # convert output preds to long since it is binary
-        return pred_annotations_one_hot.long()
+    pred_annotations = preds.argmax(1)[:, None]  # shape (batch, 1, additional_dims)
+    # one hot encode (OHE) predicted annotations again
+    # WARNING: Note the '_' after scatter. scatter_ and scatter are both
+    # functions with different functionality. It is easy to introduce a bug
+    # here by using the wrong one
+    pred_annotations_one_hot = torch.zeros(preds.shape, device=preds.device, dtype=torch.float32)
+    pred_annotations_one_hot.scatter_(1, pred_annotations, 1)  # ohe -> One Hot Encoded
+    # convert output preds to long since it is binary
+    return pred_annotations_one_hot.long()
 
 
 def collapse_one_hot_tensor(input: torch.Tensor, dim: int = 0) -> torch.Tensor:

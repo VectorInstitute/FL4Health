@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 
 
 class WeightDriftLoss(nn.Module):
@@ -20,7 +20,7 @@ class WeightDriftLoss(nn.Module):
     def _compute_weight_difference_inner_product(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         """
         Compute the :math:`l_2`-inner product between two tensors. This amounts to the Frobenius norm of the
-        difference between the tensors :math:`\\Vert x - y \\Vert_F.`
+        difference between the tensors :math:`\\Vert x - y \\Vert_F`.
 
         Args:
             x (torch.Tensor): first tensor
@@ -48,7 +48,7 @@ class WeightDriftLoss(nn.Module):
         target_model = target_model.to(self.device)
         constraint_tensors = [constraint_tensor.to(self.device) for constraint_tensor in constraint_tensors]
 
-        model_weights = [layer_weights for layer_weights in target_model.parameters()]
+        model_weights = list(target_model.parameters())
         assert len(constraint_tensors) == len(model_weights)
         assert len(model_weights) > 0
 

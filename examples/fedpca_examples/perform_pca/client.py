@@ -22,8 +22,7 @@ class MnistFedPCAClient(FedPCAClient):
         return train_loader, val_loader
 
     def get_data_tensor(self, data_loader: DataLoader) -> Tensor:
-        all_data_tensor = torch.cat([inputs for inputs, _ in data_loader], dim=0)
-        return all_data_tensor
+        return torch.cat([inputs for inputs, _ in data_loader], dim=0)
 
 
 if __name__ == "__main__":

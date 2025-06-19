@@ -1,8 +1,8 @@
 from collections.abc import Sequence
 
 import torch
-import torch.nn as nn
 from monai.networks.nets.unet import UNet
+from torch import nn
 
 
 def get_model(
@@ -14,8 +14,7 @@ def get_model(
     channels: Sequence[int] = [32, 64, 128, 256, 512, 1024],
     strides: Sequence[tuple[int, ...]] = [(2, 2, 2), (1, 2, 2), (1, 2, 2), (1, 2, 2), (2, 2, 2)],
 ) -> nn.Module:
-    """Select neural network architecture for given run"""
-
+    """Select neural network architecture for given run."""
     if model_type == "unet":
         # ignore typing for strides argument because Sequence[tuple[int, ...]] is valid input type
         # https://docs.monai.io/en/stable/networks.html#unet

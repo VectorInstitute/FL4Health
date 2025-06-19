@@ -1,6 +1,6 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from fl4health.model_bases.masked_layers.masked_conv import MaskedConv2d
 from fl4health.model_bases.masked_layers.masked_linear import MaskedLinear

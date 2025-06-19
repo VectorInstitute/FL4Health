@@ -3,14 +3,14 @@ from collections.abc import Callable
 from logging import INFO, WARNING
 
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
-from torch import Tensor
+from torch import Tensor, nn
 from torch.nn.modules import Module
 
 from fl4health.parameter_exchange.parameter_packer import SparseCooParameterPacker
 from fl4health.parameter_exchange.partial_parameter_exchanger import PartialParameterExchanger
+
 
 ScoreGenFunction = Callable[[nn.Module, nn.Module | None], dict[str, Tensor]]
 
