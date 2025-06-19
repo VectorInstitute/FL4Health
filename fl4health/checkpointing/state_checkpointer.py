@@ -119,7 +119,7 @@ class StateCheckpointer(ABC):
 
     def checkpoint_exists(self) -> bool:
         """
-        Check if a checkpoint exists at the checkpoint_path constructed as ``checkpoint_dir`` + ``checkpoint_name``
+        Check if a checkpoint exists at the checkpoint_path constructed as ``checkpoint_dir`` + ``checkpoint_name``.
 
         Returns:
             bool: True if checkpoint exists, otherwise false.
@@ -151,7 +151,8 @@ class StateCheckpointer(ABC):
 
     def save_state(self) -> None:
         """
-        Create a snapshot of the state as defined in ``self.snapshot_attrs``. It is saved at ``self.checkpoint_path``
+        Create a snapshot of the state as defined in ``self.snapshot_attrs``.
+        It is saved at ``self.checkpoint_path``.
         """
         for attr_name, (snapshotter, expected_type) in self.snapshot_attrs.items():
             self.snapshot_ckpt.update(self._save_snapshot(snapshotter, attr_name, expected_type))
@@ -392,8 +393,7 @@ class ClientStateCheckpointer(StateCheckpointer):
             Any: The attribute value.
         """
         assert self.client is not None, "Client is not set."
-        attribute = getattr(self.client, name)
-        return attribute
+        return getattr(self.client, name)
 
     def set_attribute(self, name: str, value: Any) -> None:
         """
@@ -463,7 +463,7 @@ class ServerStateCheckpointer(StateCheckpointer):
 
     def save_server_state(self, server: FlServer, model: nn.Module) -> None:
         """
-        Save the state of the server, including a torch model, which is not a required component of the server class
+        Save the state of the server, including a torch model, which is not a required component of the server class.
 
         Args:
             server (FlServer): Server with state to be saved
