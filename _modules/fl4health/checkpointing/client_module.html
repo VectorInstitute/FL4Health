@@ -240,6 +240,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.client_module.html">fl4health.checkpointing.client_module module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.opacus_checkpointer.html">fl4health.checkpointing.opacus_checkpointer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.server_module.html">fl4health.checkpointing.server_module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html">fl4health.checkpointing.state_checkpointer module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/fl4health.client_managers.html">fl4health.client_managers package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of fl4health.client_managers package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -497,16 +498,22 @@
         </div>
         <article role="main">
           <h1>Source code for fl4health.checkpointing.client_module</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">INFO</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Scalar</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.checkpointer</span><span class="w"> </span><span class="kn">import</span> <span class="n">PerRoundStateCheckpointer</span><span class="p">,</span> <span class="n">TorchModuleCheckpointer</span>
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.clients.basic_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasicClient</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.checkpointer</span><span class="w"> </span><span class="kn">import</span> <span class="n">TorchModuleCheckpointer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.state_checkpointer</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientStateCheckpointer</span>
 
 <span class="n">ModelCheckpointers</span> <span class="o">=</span> <span class="n">TorchModuleCheckpointer</span> <span class="o">|</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TorchModuleCheckpointer</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
 
@@ -522,13 +529,14 @@
 <div class="viewcode-block" id="ClientCheckpointAndStateModule">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.ClientCheckpointAndStateModule">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ClientCheckpointAndStateModule</span><span class="p">:</span>
+
 <div class="viewcode-block" id="ClientCheckpointAndStateModule.__init__">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.ClientCheckpointAndStateModule.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">pre_aggregation</span><span class="p">:</span> <span class="n">ModelCheckpointers</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">post_aggregation</span><span class="p">:</span> <span class="n">ModelCheckpointers</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">PerRoundStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">ClientStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This module is meant to hold up three to major components that determine how clients handle model and state</span>
@@ -550,9 +558,9 @@
 <span class="sd">            post_aggregation (ModelCheckpointers, optional): If defined, this checkpointer (or sequence</span>
 <span class="sd">                of checkpointers) is used to checkpoint models based on their validation metrics/losses **AFTER**</span>
 <span class="sd">                server-side aggregation. Defaults to None.</span>
-<span class="sd">            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer is used to</span>
-<span class="sd">                preserve client state (not just models), in the event one wants to restart federated training.</span>
-<span class="sd">                Defaults to None.</span>
+<span class="sd">            state_checkpointer (ClientStateCheckpointer | None, optional): If defined, this checkpointer</span>
+<span class="sd">                is used to preserve client state (not just models), in the event one wants to restart</span>
+<span class="sd">                federated training. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pre_aggregation</span> <span class="o">=</span> <span class="p">(</span>
             <span class="p">[</span><span class="n">pre_aggregation</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pre_aggregation</span><span class="p">,</span> <span class="n">TorchModuleCheckpointer</span><span class="p">)</span> <span class="k">else</span> <span class="n">pre_aggregation</span>
@@ -631,56 +639,46 @@
 
 <div class="viewcode-block" id="ClientCheckpointAndStateModule.save_state">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.ClientCheckpointAndStateModule.save_state">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">save_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_checkpoint_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">:</span> <span class="n">BasicClient</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This function is meant to facilitate saving state required to restart an FL process on the client side. This</span>
-<span class="sd">        function will simply save whatever information is passed in the state variable using the file name in</span>
-<span class="sd">        ``state_checkpoint_name``. This function should only be called if a ``state_checkpointer`` exists in this</span>
-<span class="sd">        module</span>
+<span class="sd">        function will simply save all the attributes stated in ``ClientStateCheckpointer.snapshot_attrs``.</span>
+<span class="sd">        This function should only be called if a ``state_checkpointer`` exists in this module.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            state_checkpoint_name (str): Name of the state checkpoint file. The checkpointer itself will have a</span>
-<span class="sd">                directory to which state will be saved.</span>
-<span class="sd">            state (dict[str, Any]): State to be saved so that training might be resumed on the client if federated</span>
-<span class="sd">                training is interrupted. For example, this might contain things like optimizer states, learning rate</span>
-<span class="sd">                scheduler states, etc.</span>
+<span class="sd">            client (BasicClient): The client object from which state will be saved.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: Throws an error if this function is called, but no state checkpointer has been provided</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">(</span><span class="n">state_checkpoint_name</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span><span class="o">.</span><span class="n">save_client_state</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Attempting to save state but no state checkpointer is specified&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ClientCheckpointAndStateModule.maybe_load_state">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.ClientCheckpointAndStateModule.maybe_load_state">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">maybe_load_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_checkpoint_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">maybe_load_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">:</span> <span class="n">BasicClient</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        This function facilitates loading of any pre-existing state (with the name ``state_checkpoint_name``) in the</span>
-<span class="sd">        directory of the ``state_checkpointer``. If the state already exists at the proper path, the state is loaded</span>
-<span class="sd">        and returned. If it doesn&#39;t exist, we return None.</span>
+<span class="sd">        This function facilitates loading of any pre-existing state (with the name ``checkpoint_name``) in the</span>
+<span class="sd">        directory of the ``checkpoint_dir``. If the state already exists at the proper path, the state is loaded</span>
+<span class="sd">        and will be automatically saved into client&#39;s attributes. If it doesn&#39;t exist, we return False.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            state_checkpoint_name (str): Name of the state checkpoint file. The checkpointer itself will have a</span>
-<span class="sd">                directory from which state will be loaded (if it exists).</span>
+<span class="sd">            client (BasicClient): client object into which state will be loaded if a checkpoint exists</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: Throws an error if this function is called, but no state checkpointer has been provided</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            dict[str, Any] | None: If the state checkpoint properly exists and is loaded correctly, this dictionary</span>
-<span class="sd">            carries that state. Otherwise, we return a None (or throw an exception).</span>
+<span class="sd">            bool : If the state checkpoint properly exists and is loaded correctly, client&#39;s attributes</span>
+<span class="sd">            are set to the loaded values, and True is returned. Otherwise, we return False (or throw an exception).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span><span class="o">.</span><span class="n">checkpoint_exists</span><span class="p">(</span><span class="n">state_checkpoint_name</span><span class="p">):</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span><span class="o">.</span><span class="n">load_checkpoint</span><span class="p">(</span><span class="n">state_checkpoint_name</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;State checkpointer is defined but no state checkpoint exists.&quot;</span><span class="p">)</span>
-                <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span><span class="o">.</span><span class="n">maybe_load_client_state</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Attempting to load state, but no state checkpointer is specified&quot;</span><span class="p">)</span></div>
 </div>

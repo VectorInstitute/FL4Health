@@ -240,6 +240,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.client_module.html">fl4health.checkpointing.client_module module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.opacus_checkpointer.html">fl4health.checkpointing.opacus_checkpointer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.server_module.html">fl4health.checkpointing.server_module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html">fl4health.checkpointing.state_checkpointer module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/fl4health.client_managers.html">fl4health.client_managers package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of fl4health.client_managers package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -497,18 +498,24 @@
         </div>
         <article role="main">
           <h1>Source code for fl4health.checkpointing.server_module</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">INFO</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameters</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.parameter</span><span class="w"> </span><span class="kn">import</span> <span class="n">parameters_to_ndarrays</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.parameter</span><span class="w"> </span><span class="kn">import</span> <span class="n">ndarrays_to_parameters</span><span class="p">,</span> <span class="n">parameters_to_ndarrays</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Scalar</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.checkpointer</span><span class="w"> </span><span class="kn">import</span> <span class="n">PerRoundStateCheckpointer</span><span class="p">,</span> <span class="n">TorchModuleCheckpointer</span>
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.servers.base_server</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlServer</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.checkpointer</span><span class="w"> </span><span class="kn">import</span> <span class="n">TorchModuleCheckpointer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.opacus_checkpointer</span><span class="w"> </span><span class="kn">import</span> <span class="n">OpacusCheckpointer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.state_checkpointer</span><span class="w"> </span><span class="kn">import</span> <span class="n">NnUnetServerStateCheckpointer</span><span class="p">,</span> <span class="n">ServerStateCheckpointer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.parameter_exchange.packing_exchanger</span><span class="w"> </span><span class="kn">import</span> <span class="n">FullParameterExchangerWithPacking</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.parameter_exchange.parameter_exchanger_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExchangerType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.parameter_exchange.parameter_packer</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -525,6 +532,7 @@
 <div class="viewcode-block" id="BaseServerCheckpointAndStateModule">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.BaseServerCheckpointAndStateModule">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseServerCheckpointAndStateModule</span><span class="p">:</span>
+
 <div class="viewcode-block" id="BaseServerCheckpointAndStateModule.__init__">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.BaseServerCheckpointAndStateModule.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -532,7 +540,7 @@
         <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">parameter_exchanger</span><span class="p">:</span> <span class="n">ExchangerType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">model_checkpointers</span><span class="p">:</span> <span class="n">ModelCheckpointers</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">PerRoundStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">ServerStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This module is meant to handle basic model and state checkpointing on the server-side of an FL process. Unlike</span>
@@ -554,9 +562,9 @@
 <span class="sd">                parameters go to the right places. Defaults to None.</span>
 <span class="sd">            model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of</span>
 <span class="sd">                checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</span>
-<span class="sd">            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be</span>
-<span class="sd">                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this</span>
-<span class="sd">                checkpointer will save much more than just the model being trained. Defaults to None.</span>
+<span class="sd">            state_checkpointer (ServerStateCheckpointer | None, optional): If defined, this checkpointer</span>
+<span class="sd">                 will be used to preserve FL training state to facilitate restarting training if interrupted.</span>
+<span class="sd">                Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="o">=</span> <span class="n">parameter_exchanger</span>
@@ -651,67 +659,59 @@
 
 <div class="viewcode-block" id="BaseServerCheckpointAndStateModule.save_state">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.BaseServerCheckpointAndStateModule.save_state">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">save_state</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">state_checkpoint_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">server_parameters</span><span class="p">:</span> <span class="n">Parameters</span><span class="p">,</span> <span class="n">other_state</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">:</span> <span class="n">FlServer</span><span class="p">,</span> <span class="n">server_parameters</span><span class="p">:</span> <span class="n">Parameters</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        This function is meant to facilitate saving state required to restart on FL process on the server side. By</span>
-<span class="sd">        default, this function will always at least preserve the model being trained. However, it may be desirable to</span>
-<span class="sd">        save additional information, like the current server round etc. So the ``other_state`` dictionary may be</span>
-<span class="sd">        provided to preserve this additional state.</span>
-
-<span class="sd">        **NOTE:** This function will throw an error if you attempt to save the model under the &#39;model&#39; key in</span>
-<span class="sd">        ``other_state``</span>
+<span class="sd">        Facilitates saving state required to restart the FL process on the server side. By default, this function</span>
+<span class="sd">        will preserve the state of the server as defined by ``snapshot_attrs`` in ``ServerStateCheckpointer`` .</span>
+<span class="sd">        Note that ``server_parameters`` will be hydrated and passed to the state checkpointer module to facilitate</span>
+<span class="sd">        saving the state of the server&#39;s parameters.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            state_checkpoint_name (str): Name of the state checkpoint file. The checkpointer itself will have a</span>
-<span class="sd">                directory to which state will be saved.</span>
+<span class="sd">            server (FlServer): Server object from which state will be extracted and saved.</span>
 <span class="sd">            server_parameters (Parameters): Like model checkpointers, these are the aggregated Parameters stored by</span>
 <span class="sd">                the server representing model state. They are mapped to a torch model architecture via the</span>
 <span class="sd">                ``_hydrate_model_for_checkpointing`` function.</span>
-<span class="sd">            other_state (dict[str, Any]): Any additional state (such as current server round) to be checkpointed in</span>
-<span class="sd">                order to allow FL to restart from where it left off.</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            ValueError: Throws an error if ``other_state`` already has a key called &quot;model&quot;</span>
 <span class="sd">            ValueError: Throws an error if this function is called, but no state checkpointer has been provided</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_hydrate_model_for_checkpointing</span><span class="p">(</span><span class="n">server_parameters</span><span class="p">)</span>
-            <span class="k">if</span> <span class="s2">&quot;model&quot;</span> <span class="ow">in</span> <span class="n">other_state</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Key &#39;model&#39; already exists in the other_state dictionary.&quot;</span><span class="p">)</span>
-
-            <span class="n">checkpoint_dict</span> <span class="o">=</span> <span class="n">other_state</span> <span class="o">|</span> <span class="p">{</span><span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">}</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">(</span><span class="n">state_checkpoint_name</span><span class="p">,</span> <span class="n">checkpoint_dict</span><span class="o">=</span><span class="n">checkpoint_dict</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span><span class="o">.</span><span class="n">save_server_state</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Attempting to save state but no state checkpointer is specified&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="BaseServerCheckpointAndStateModule.maybe_load_state">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.BaseServerCheckpointAndStateModule.maybe_load_state">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">maybe_load_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_checkpoint_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">maybe_load_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">:</span> <span class="n">FlServer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parameters</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        This function facilitates loading of any pre-existing state (with the name ``state_checkpoint_name``) in the</span>
-<span class="sd">        directory of the state_checkpointer. If the state already exists at the proper path, the state is loaded</span>
-<span class="sd">        and returned. If it doesn&#39;t exist, we return None.</span>
+<span class="sd">        Facilitates loading of any pre-existing state in the directory of the state_checkpointer.</span>
+<span class="sd">        If a ``state_checkpointer`` is defined and a checkpoint exists at its checkpoint_path, this method hydrates</span>
+<span class="sd">        the model with the saved state and returns the corresponding server Parameters. If no checkpoint exists,</span>
+<span class="sd">        it logs this information and returns None.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            state_checkpoint_name (str): Name of the state checkpoint file. The checkpointer itself will have a</span>
-<span class="sd">                directory from which state will be loaded (if it exists).</span>
+<span class="sd">            server (FlServer): server into which checkpointed state will be loaded if a checkpoint exists</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: Throws an error if this function is called, but no state checkpointer has been provided</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            dict[str, Any] | None: If the state checkpoint properly exists and is loaded correctly, this dictionary</span>
-<span class="sd">            carries that state. Otherwise, we return a None (or throw an exception).</span>
+<span class="sd">            Parameters | None: If the state checkpoint properly exists and is loaded correctly, server_parameters</span>
+<span class="sd">                is returned. Otherwise, we return a None (or throw an exception).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span><span class="o">.</span><span class="n">checkpoint_exists</span><span class="p">(</span><span class="n">state_checkpoint_name</span><span class="p">):</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span><span class="o">.</span><span class="n">load_checkpoint</span><span class="p">(</span><span class="n">state_checkpoint_name</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;State checkpointer is defined but no state checkpoint exists.&quot;</span><span class="p">)</span>
-                <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="p">(</span>
+                <span class="s2">&quot;Attempting to load state but self.model is None, make sure to pass the model architecture&quot;</span>
+                <span class="s2">&quot; to checkpointing module&quot;</span>
+            <span class="p">)</span>
+            <span class="n">server_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span><span class="o">.</span><span class="n">maybe_load_server_state</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">server_model</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">return</span> <span class="n">ndarrays_to_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="n">server_model</span><span class="p">))</span>
+            <span class="k">return</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Attempting to load state, but no state checkpointer is specified&quot;</span><span class="p">)</span></div>
 </div>
@@ -721,6 +721,7 @@
 <div class="viewcode-block" id="PackingServerCheckpointAndAndStateModule">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.PackingServerCheckpointAndAndStateModule">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PackingServerCheckpointAndAndStateModule</span><span class="p">(</span><span class="n">BaseServerCheckpointAndStateModule</span><span class="p">):</span>
+
 <div class="viewcode-block" id="PackingServerCheckpointAndAndStateModule.__init__">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.PackingServerCheckpointAndAndStateModule.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -728,7 +729,7 @@
         <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">parameter_exchanger</span><span class="p">:</span> <span class="n">FullParameterExchangerWithPacking</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">model_checkpointers</span><span class="p">:</span> <span class="n">ModelCheckpointers</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">PerRoundStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">ServerStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 
@@ -750,9 +751,9 @@
 <span class="sd">                places. Defaults to None.</span>
 <span class="sd">            model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of</span>
 <span class="sd">                checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</span>
-<span class="sd">            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be</span>
-<span class="sd">                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this</span>
-<span class="sd">                checkpointer will save much more than just the model being trained. Defaults to None.</span>
+<span class="sd">            state_checkpointer (ServerStateCheckpointer | None, optional): If defined, this checkpointer</span>
+<span class="sd">                will be used to preserve FL training state to facilitate restarting training if interrupted.</span>
+<span class="sd">                Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
@@ -799,7 +800,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">model_checkpointers</span><span class="p">:</span> <span class="n">ModelCheckpointers</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">PerRoundStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">ServerStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This module is meant to handle SCAFFOLD model and state checkpointing on the server-side of an FL process.</span>
@@ -817,9 +818,9 @@
 <span class="sd">                these parameters to allow for real models to be saved. Defaults to None.</span>
 <span class="sd">            model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of</span>
 <span class="sd">                checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</span>
-<span class="sd">            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be</span>
-<span class="sd">                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this</span>
-<span class="sd">                checkpointer will save much more than just the model being trained. Defaults to None.</span>
+<span class="sd">            state_checkpointer (ServerStateCheckpointer | None, optional): If defined, this checkpointer</span>
+<span class="sd">                will be used to preserve FL training state to facilitate restarting training if interrupted.</span>
+<span class="sd">                Generally, this  checkpointer will save much more than just the model being trained. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">model_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">())</span>
@@ -840,7 +841,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">model_checkpointers</span><span class="p">:</span> <span class="n">ModelCheckpointers</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">PerRoundStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">ServerStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This module is meant to handle FL flows with adaptive constraints, where the server and client communicate</span>
@@ -858,9 +859,9 @@
 <span class="sd">                these parameters to allow for real models to be saved. Defaults to None.</span>
 <span class="sd">            model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of</span>
 <span class="sd">                checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</span>
-<span class="sd">            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be</span>
-<span class="sd">                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this</span>
-<span class="sd">                checkpointer will save much more than just the model being trained. Defaults to None.</span>
+<span class="sd">            state_checkpointer (ServerStateCheckpointer | None, optional): If defined, this checkpointer</span>
+<span class="sd">                will be used to preserve FL training state to facilitate restarting training if interrupted.</span>
+<span class="sd">                Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">parameter_exchanger</span> <span class="o">=</span> <span class="n">FullParameterExchangerWithPacking</span><span class="p">(</span><span class="n">ParameterPackerAdaptiveConstraint</span><span class="p">())</span>
@@ -880,7 +881,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">model_checkpointers</span><span class="p">:</span> <span class="n">ModelCheckpointers</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">PerRoundStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">ServerStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This module is meant to handle FL flows with clipping bits being passed to the server along with the model</span>
@@ -898,9 +899,9 @@
 <span class="sd">                these parameters to allow for real models to be saved. Defaults to None.</span>
 <span class="sd">            model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of</span>
 <span class="sd">                checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</span>
-<span class="sd">            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be</span>
-<span class="sd">                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this</span>
-<span class="sd">                checkpointer will save much more than just the model being trained. Defaults to None.</span>
+<span class="sd">            state_checkpointer (ServerStateCheckpointer | None, optional): If defined, this checkpointer</span>
+<span class="sd">                will be used to preserve FL training state to facilitate restarting training if interrupted.</span>
+<span class="sd">                Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">parameter_exchanger</span> <span class="o">=</span> <span class="n">FullParameterExchangerWithPacking</span><span class="p">(</span><span class="n">ParameterPackerWithClippingBit</span><span class="p">())</span>
@@ -920,7 +921,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">model_checkpointers</span><span class="p">:</span> <span class="n">ModelCheckpointers</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">PerRoundStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">ServerStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This module is meant to handle FL flows with layer names being passed to the server along with the model</span>
@@ -938,9 +939,9 @@
 <span class="sd">                these parameters to allow for real models to be saved. Defaults to None.</span>
 <span class="sd">            model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of</span>
 <span class="sd">                checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</span>
-<span class="sd">            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be</span>
-<span class="sd">                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this</span>
-<span class="sd">                checkpointer will save much more than just the model being trained. Defaults to None.</span>
+<span class="sd">            state_checkpointer (ServerStateCheckpointer | None, optional): If defined, this checkpointer</span>
+<span class="sd">                will be used to preserve FL training state to facilitate restarting training if interrupted.</span>
+<span class="sd">                Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">parameter_exchanger</span> <span class="o">=</span> <span class="n">FullParameterExchangerWithPacking</span><span class="p">(</span><span class="n">ParameterPackerWithLayerNames</span><span class="p">())</span>
@@ -960,7 +961,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">model_checkpointers</span><span class="p">:</span> <span class="n">ModelCheckpointers</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">PerRoundStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">ServerStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This module is meant to handle FL flows with parameters encoded in a sparse COO format being passed to the</span>
@@ -979,9 +980,10 @@
 <span class="sd">                these parameters to allow for real models to be saved. Defaults to None.</span>
 <span class="sd">            model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of</span>
 <span class="sd">                checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</span>
-<span class="sd">            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be</span>
-<span class="sd">                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this</span>
-<span class="sd">                checkpointer will save much more than just the model being trained. Defaults to None.</span>
+<span class="sd">            state_checkpointer (ServerStateCheckpointer | None, optional): If defined, this checkpointer</span>
+<span class="sd">                will be used to preserve FL training state to facilitate restarting training if interrupted.</span>
+<span class="sd">                Generally, this checkpointer will save much more than just the model being trained.</span>
+<span class="sd">                Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">parameter_exchanger</span> <span class="o">=</span> <span class="n">FullParameterExchangerWithPacking</span><span class="p">(</span><span class="n">SparseCooParameterPacker</span><span class="p">())</span>
@@ -1002,7 +1004,7 @@
         <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">parameter_exchanger</span><span class="p">:</span> <span class="n">ExchangerType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">model_checkpointers</span><span class="p">:</span> <span class="n">ModelCheckpointers</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">PerRoundStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">ServerStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This module is meant to handle FL flows with Opacus models where special treatment by the checkpointers is</span>
@@ -1025,9 +1027,9 @@
 <span class="sd">                parameters go to the right places. Defaults to None.</span>
 <span class="sd">            model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of</span>
 <span class="sd">                checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</span>
-<span class="sd">            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be</span>
-<span class="sd">                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this</span>
-<span class="sd">                checkpointer will save much more than just the model being trained. Defaults to None.</span>
+<span class="sd">            state_checkpointer (ServerStateCheckpointer | None, optional): If defined, this checkpointer</span>
+<span class="sd">                will be used to preserve FL training state to facilitate restarting training if interrupted.</span>
+<span class="sd">                Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">parameter_exchanger</span><span class="p">,</span> <span class="n">model_checkpointers</span><span class="p">,</span> <span class="n">state_checkpointer</span><span class="p">)</span>
@@ -1049,6 +1051,7 @@
 <div class="viewcode-block" id="NnUnetServerCheckpointAndStateModule">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.NnUnetServerCheckpointAndStateModule">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">NnUnetServerCheckpointAndStateModule</span><span class="p">(</span><span class="n">BaseServerCheckpointAndStateModule</span><span class="p">):</span>
+
 <div class="viewcode-block" id="NnUnetServerCheckpointAndStateModule.__init__">
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.NnUnetServerCheckpointAndStateModule.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -1056,7 +1059,7 @@
         <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">parameter_exchanger</span><span class="p">:</span> <span class="n">ExchangerType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">model_checkpointers</span><span class="p">:</span> <span class="n">ModelCheckpointers</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">PerRoundStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">NnUnetServerStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This module is meant to be used with the ``NnUnetServer`` class to handle model and state checkpointing on the</span>
@@ -1088,9 +1091,9 @@
 <span class="sd">                parameters go to the right places. Defaults to None.</span>
 <span class="sd">            model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of</span>
 <span class="sd">                checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</span>
-<span class="sd">            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be</span>
-<span class="sd">                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this</span>
-<span class="sd">                checkpointer will save much more than just the model being trained. Defaults to None.</span>
+<span class="sd">            state_checkpointer (NnUnetServerStateCheckpointer | None, optional): If defined, this checkpointer</span>
+<span class="sd">                will be used to preserve FL training state to facilitate restarting training if interrupted.</span>
+<span class="sd">                Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">parameter_exchanger</span><span class="p">,</span> <span class="n">model_checkpointers</span><span class="p">,</span> <span class="n">state_checkpointer</span><span class="p">)</span></div>
 
@@ -1114,7 +1117,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">model_checkpointers</span><span class="p">:</span> <span class="n">ModelCheckpointers</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">PerRoundStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">state_checkpointer</span><span class="p">:</span> <span class="n">ServerStateCheckpointer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This module is meant to handle DP SCAFFOLD model and state checkpointing on the server-side of an FL process.</span>
@@ -1132,9 +1135,9 @@
 <span class="sd">                these parameters to allow for real models to be saved. Defaults to None.</span>
 <span class="sd">            model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of</span>
 <span class="sd">                checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</span>
-<span class="sd">            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be</span>
-<span class="sd">                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this</span>
-<span class="sd">                checkpointer will save much more than just the model being trained. Defaults to None.</span>
+<span class="sd">            state_checkpointer (ServerStateCheckpointer | None, optional): If defined, this checkpointer</span>
+<span class="sd">                will be used to preserve FL training state to facilitate restarting training if interrupted.</span>
+<span class="sd">                Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">model_checkpointers</span><span class="p">,</span> <span class="n">state_checkpointer</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_checkpointers_are_of_opacus_type</span><span class="p">()</span></div>

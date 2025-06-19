@@ -7,7 +7,7 @@
 
     
       <meta name="description" content="aieng-template Python API documentation">
-    <link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="fl4health.client_managers package" href="fl4health.client_managers.html" /><link rel="prev" title="fl4health.checkpointing.opacus_checkpointer module" href="fl4health.checkpointing.opacus_checkpointer.html" />
+    <link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="fl4health.checkpointing.state_checkpointer module" href="fl4health.checkpointing.state_checkpointer.html" /><link rel="prev" title="fl4health.checkpointing.opacus_checkpointer module" href="fl4health.checkpointing.opacus_checkpointer.html" />
 
     <meta name="generator" content="sphinx-8.1.3, furo 2024.08.06"/>
 
@@ -241,6 +241,7 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.client_module.html">fl4health.checkpointing.client_module module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.opacus_checkpointer.html">fl4health.checkpointing.opacus_checkpointer module</a></li>
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">fl4health.checkpointing.server_module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html">fl4health.checkpointing.state_checkpointer module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.client_managers.html">fl4health.client_managers package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of fl4health.client_managers package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -523,9 +524,9 @@ Recall that servers only have parameters rather than torch models. So we need to
 these parameters to allow for real models to be saved. Defaults to None.</p></li>
 <li><p><strong>model_checkpointers</strong> (<em>ModelCheckpointers</em><em>, </em><em>optional</em>) – If defined, this checkpointer (or sequence of
 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</p></li>
-<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer" title="fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer"><em>PerRoundStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer will be
-used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-checkpointer will save much more than just the model being trained. Defaults to None.</p></li>
+<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer" title="fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer"><em>ServerStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer
+will be used to preserve FL training state to facilitate restarting training if interrupted.
+Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</p></li>
 </ul>
 </dd>
 </dl>
@@ -560,9 +561,12 @@ exchanger and the model must match the one used for training and exchange with t
 parameters go to the right places. Defaults to None.</p></li>
 <li><p><strong>model_checkpointers</strong> (<em>ModelCheckpointers</em><em>, </em><em>optional</em>) – If defined, this checkpointer (or sequence of
 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</p></li>
-<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer" title="fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer"><em>PerRoundStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer will be
-used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-checkpointer will save much more than just the model being trained. Defaults to None.</p></li>
+<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer" title="fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer"><em>ServerStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – <dl class="simple">
+<dt>If defined, this checkpointer</dt><dd><p>will be used to preserve FL training state to facilitate restarting training if interrupted.</p>
+</dd>
+</dl>
+<p>Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</p>
+</p></li>
 </ul>
 </dd>
 </dl>
@@ -592,54 +596,49 @@ used by checkpointer to decide whether to checkpoint the model.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.checkpointing.server_module.BaseServerCheckpointAndStateModule.maybe_load_state">
-<span class="sig-name descname"><span class="pre">maybe_load_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_checkpoint_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/server_module.html#BaseServerCheckpointAndStateModule.maybe_load_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.server_module.BaseServerCheckpointAndStateModule.maybe_load_state" title="Link to this definition">¶</a></dt>
-<dd><p>This function facilitates loading of any pre-existing state (with the name <code class="docutils literal notranslate"><span class="pre">state_checkpoint_name</span></code>) in the
-directory of the state_checkpointer. If the state already exists at the proper path, the state is loaded
-and returned. If it doesn’t exist, we return None.</p>
+<span class="sig-name descname"><span class="pre">maybe_load_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/server_module.html#BaseServerCheckpointAndStateModule.maybe_load_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.server_module.BaseServerCheckpointAndStateModule.maybe_load_state" title="Link to this definition">¶</a></dt>
+<dd><p>Facilitates loading of any pre-existing state in the directory of the state_checkpointer.
+If a <code class="docutils literal notranslate"><span class="pre">state_checkpointer</span></code> is defined and a checkpoint exists at its checkpoint_path, this method hydrates
+the model with the saved state and returns the corresponding server Parameters. If no checkpoint exists,
+it logs this information and returns None.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>state_checkpoint_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Name of the state checkpoint file. The checkpointer itself will have a
-directory from which state will be loaded (if it exists).</p>
+<dd class="field-odd"><p><strong>server</strong> (<a class="reference internal" href="fl4health.servers.base_server.html#fl4health.servers.base_server.FlServer" title="fl4health.servers.base_server.FlServer"><em>FlServer</em></a>) – server into which checkpointed state will be loaded if a checkpoint exists</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Throws an error if this function is called, but no state checkpointer has been provided</p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>If the state checkpoint properly exists and is loaded correctly, this dictionary
-carries that state. Otherwise, we return a None (or throw an exception).</p>
+<dd class="field-odd"><p><dl class="simple">
+<dt>If the state checkpoint properly exists and is loaded correctly, server_parameters</dt><dd><p>is returned. Otherwise, we return a None (or throw an exception).</p>
+</dd>
+</dl>
+</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, Any] | None</p>
+<dd class="field-even"><p>Parameters | None</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.checkpointing.server_module.BaseServerCheckpointAndStateModule.save_state">
-<span class="sig-name descname"><span class="pre">save_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_checkpoint_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_state</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/server_module.html#BaseServerCheckpointAndStateModule.save_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.server_module.BaseServerCheckpointAndStateModule.save_state" title="Link to this definition">¶</a></dt>
-<dd><p>This function is meant to facilitate saving state required to restart on FL process on the server side. By
-default, this function will always at least preserve the model being trained. However, it may be desirable to
-save additional information, like the current server round etc. So the <code class="docutils literal notranslate"><span class="pre">other_state</span></code> dictionary may be
-provided to preserve this additional state.</p>
-<p><strong>NOTE:</strong> This function will throw an error if you attempt to save the model under the ‘model’ key in
-<code class="docutils literal notranslate"><span class="pre">other_state</span></code></p>
+<span class="sig-name descname"><span class="pre">save_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_parameters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/server_module.html#BaseServerCheckpointAndStateModule.save_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.server_module.BaseServerCheckpointAndStateModule.save_state" title="Link to this definition">¶</a></dt>
+<dd><p>Facilitates saving state required to restart the FL process on the server side. By default, this function
+will preserve the state of the server as defined by <code class="docutils literal notranslate"><span class="pre">snapshot_attrs</span></code> in <code class="docutils literal notranslate"><span class="pre">ServerStateCheckpointer</span></code> .
+Note that <code class="docutils literal notranslate"><span class="pre">server_parameters</span></code> will be hydrated and passed to the state checkpointer module to facilitate
+saving the state of the server’s parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>state_checkpoint_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Name of the state checkpoint file. The checkpointer itself will have a
-directory to which state will be saved.</p></li>
+<li><p><strong>server</strong> (<a class="reference internal" href="fl4health.servers.base_server.html#fl4health.servers.base_server.FlServer" title="fl4health.servers.base_server.FlServer"><em>FlServer</em></a>) – Server object from which state will be extracted and saved.</p></li>
 <li><p><strong>server_parameters</strong> (<em>Parameters</em>) – Like model checkpointers, these are the aggregated Parameters stored by
 the server representing model state. They are mapped to a torch model architecture via the
 <code class="docutils literal notranslate"><span class="pre">_hydrate_model_for_checkpointing</span></code> function.</p></li>
-<li><p><strong>other_state</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – Any additional state (such as current server round) to be checkpointed in
-order to allow FL to restart from where it left off.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Throws an error if <code class="docutils literal notranslate"><span class="pre">other_state</span></code> already has a key called “model”</p></li>
-<li><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Throws an error if this function is called, but no state checkpointer has been provided</p></li>
-</ul>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Throws an error if this function is called, but no state checkpointer has been provided</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
@@ -672,9 +671,9 @@ Recall that servers only have parameters rather than torch models. So we need to
 these parameters to allow for real models to be saved. Defaults to None.</p></li>
 <li><p><strong>model_checkpointers</strong> (<em>ModelCheckpointers</em><em>, </em><em>optional</em>) – If defined, this checkpointer (or sequence of
 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</p></li>
-<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer" title="fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer"><em>PerRoundStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer will be
-used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-checkpointer will save much more than just the model being trained. Defaults to None.</p></li>
+<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer" title="fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer"><em>ServerStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer
+will be used to preserve FL training state to facilitate restarting training if interrupted.
+Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</p></li>
 </ul>
 </dd>
 </dl>
@@ -705,9 +704,9 @@ Recall that servers only have parameters rather than torch models. So we need to
 these parameters to allow for real models to be saved. Defaults to None.</p></li>
 <li><p><strong>model_checkpointers</strong> (<em>ModelCheckpointers</em><em>, </em><em>optional</em>) – If defined, this checkpointer (or sequence of
 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</p></li>
-<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer" title="fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer"><em>PerRoundStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer will be
-used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-checkpointer will save much more than just the model being trained. Defaults to None.</p></li>
+<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer" title="fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer"><em>ServerStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer
+will be used to preserve FL training state to facilitate restarting training if interrupted.
+Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</p></li>
 </ul>
 </dd>
 </dl>
@@ -738,9 +737,9 @@ Recall that servers only have parameters rather than torch models. So we need to
 these parameters to allow for real models to be saved. Defaults to None.</p></li>
 <li><p><strong>model_checkpointers</strong> (<em>ModelCheckpointers</em><em>, </em><em>optional</em>) – If defined, this checkpointer (or sequence of
 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</p></li>
-<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer" title="fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer"><em>PerRoundStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer will be
-used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-checkpointer will save much more than just the model being trained. Defaults to None.</p></li>
+<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer" title="fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer"><em>ServerStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer
+will be used to preserve FL training state to facilitate restarting training if interrupted.
+Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</p></li>
 </ul>
 </dd>
 </dl>
@@ -782,9 +781,9 @@ exchanger and the model must match the one used for training and exchange with t
 parameters go to the right places. Defaults to None.</p></li>
 <li><p><strong>model_checkpointers</strong> (<em>ModelCheckpointers</em><em>, </em><em>optional</em>) – If defined, this checkpointer (or sequence of
 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</p></li>
-<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer" title="fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer"><em>PerRoundStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer will be
-used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-checkpointer will save much more than just the model being trained. Defaults to None.</p></li>
+<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.NnUnetServerStateCheckpointer" title="fl4health.checkpointing.state_checkpointer.NnUnetServerStateCheckpointer"><em>NnUnetServerStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer
+will be used to preserve FL training state to facilitate restarting training if interrupted.
+Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</p></li>
 </ul>
 </dd>
 </dl>
@@ -820,9 +819,9 @@ exchanger and the model must match the one used for training and exchange with t
 parameters go to the right places. Defaults to None.</p></li>
 <li><p><strong>model_checkpointers</strong> (<em>ModelCheckpointers</em><em>, </em><em>optional</em>) – If defined, this checkpointer (or sequence of
 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</p></li>
-<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer" title="fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer"><em>PerRoundStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer will be
-used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-checkpointer will save much more than just the model being trained. Defaults to None.</p></li>
+<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer" title="fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer"><em>ServerStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer
+will be used to preserve FL training state to facilitate restarting training if interrupted.
+Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</p></li>
 </ul>
 </dd>
 </dl>
@@ -856,9 +855,9 @@ match the one used for training and exchange with the servers to ensure paramete
 places. Defaults to None.</p></li>
 <li><p><strong>model_checkpointers</strong> (<em>ModelCheckpointers</em><em>, </em><em>optional</em>) – If defined, this checkpointer (or sequence of
 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</p></li>
-<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer" title="fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer"><em>PerRoundStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer will be
-used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-checkpointer will save much more than just the model being trained. Defaults to None.</p></li>
+<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer" title="fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer"><em>ServerStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer
+will be used to preserve FL training state to facilitate restarting training if interrupted.
+Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</p></li>
 </ul>
 </dd>
 </dl>
@@ -889,9 +888,9 @@ Recall that servers only have parameters rather than torch models. So we need to
 these parameters to allow for real models to be saved. Defaults to None.</p></li>
 <li><p><strong>model_checkpointers</strong> (<em>ModelCheckpointers</em><em>, </em><em>optional</em>) – If defined, this checkpointer (or sequence of
 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</p></li>
-<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer" title="fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer"><em>PerRoundStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer will be
-used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-checkpointer will save much more than just the model being trained. Defaults to None.</p></li>
+<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer" title="fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer"><em>ServerStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer
+will be used to preserve FL training state to facilitate restarting training if interrupted.
+Generally, this  checkpointer will save much more than just the model being trained. Defaults to None.</p></li>
 </ul>
 </dd>
 </dl>
@@ -923,9 +922,10 @@ Recall that servers only have parameters rather than torch models. So we need to
 these parameters to allow for real models to be saved. Defaults to None.</p></li>
 <li><p><strong>model_checkpointers</strong> (<em>ModelCheckpointers</em><em>, </em><em>optional</em>) – If defined, this checkpointer (or sequence of
 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</p></li>
-<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer" title="fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer"><em>PerRoundStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer will be
-used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
-checkpointer will save much more than just the model being trained. Defaults to None.</p></li>
+<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer" title="fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer"><em>ServerStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer
+will be used to preserve FL training state to facilitate restarting training if interrupted.
+Generally, this checkpointer will save much more than just the model being trained.
+Defaults to None.</p></li>
 </ul>
 </dd>
 </dl>
@@ -940,12 +940,12 @@ checkpointer will save much more than just the model being trained. Defaults to 
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="fl4health.client_managers.html">
+          <a class="next-page" href="fl4health.checkpointing.state_checkpointer.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">fl4health.client_managers package</div>
+                <div class="title">fl4health.checkpointing.state_checkpointer module</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>

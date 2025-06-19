@@ -242,6 +242,7 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.client_module.html">fl4health.checkpointing.client_module module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.opacus_checkpointer.html">fl4health.checkpointing.opacus_checkpointer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.server_module.html">fl4health.checkpointing.server_module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html">fl4health.checkpointing.state_checkpointer module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.client_managers.html">fl4health.client_managers package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of fl4health.client_managers package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -586,10 +587,7 @@
 <li class="toctree-l1"><a class="reference internal" href="fl4health.utils.early_stopper.html">fl4health.utils.early_stopper module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="fl4health.utils.early_stopper.html#fl4health.utils.early_stopper.EarlyStopper"><code class="docutils literal notranslate"><span class="pre">EarlyStopper</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.utils.early_stopper.html#fl4health.utils.early_stopper.EarlyStopper.__init__"><code class="docutils literal notranslate"><span class="pre">EarlyStopper.__init__()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.utils.early_stopper.html#fl4health.utils.early_stopper.EarlyStopper.add_default_snapshot_attr"><code class="docutils literal notranslate"><span class="pre">EarlyStopper.add_default_snapshot_attr()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.utils.early_stopper.html#fl4health.utils.early_stopper.EarlyStopper.delete_default_snapshot_attr"><code class="docutils literal notranslate"><span class="pre">EarlyStopper.delete_default_snapshot_attr()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.utils.early_stopper.html#fl4health.utils.early_stopper.EarlyStopper.load_snapshot"><code class="docutils literal notranslate"><span class="pre">EarlyStopper.load_snapshot()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.utils.early_stopper.html#fl4health.utils.early_stopper.EarlyStopper.save_snapshot"><code class="docutils literal notranslate"><span class="pre">EarlyStopper.save_snapshot()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.utils.early_stopper.html#fl4health.utils.early_stopper.EarlyStopper.should_stop"><code class="docutils literal notranslate"><span class="pre">EarlyStopper.should_stop()</span></code></a></li>
 </ul>
 </li>
@@ -770,22 +768,28 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="fl4health.utils.snapshotter.html">fl4health.utils.snapshotter module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter"><code class="docutils literal notranslate"><span class="pre">AbstractSnapshotter</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter.__init__"><code class="docutils literal notranslate"><span class="pre">AbstractSnapshotter.__init__()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter.dict_wrap_attr"><code class="docutils literal notranslate"><span class="pre">AbstractSnapshotter.dict_wrap_attr()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter.load"><code class="docutils literal notranslate"><span class="pre">AbstractSnapshotter.load()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter.load_attribute"><code class="docutils literal notranslate"><span class="pre">AbstractSnapshotter.load_attribute()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter.save"><code class="docutils literal notranslate"><span class="pre">AbstractSnapshotter.save()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter.save_attribute"><code class="docutils literal notranslate"><span class="pre">AbstractSnapshotter.save_attribute()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.BytesSnapshotter"><code class="docutils literal notranslate"><span class="pre">BytesSnapshotter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.BytesSnapshotter.load_attribute"><code class="docutils literal notranslate"><span class="pre">BytesSnapshotter.load_attribute()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.BytesSnapshotter.save_attribute"><code class="docutils literal notranslate"><span class="pre">BytesSnapshotter.save_attribute()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.EnumSnapshotter"><code class="docutils literal notranslate"><span class="pre">EnumSnapshotter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.EnumSnapshotter.load_attribute"><code class="docutils literal notranslate"><span class="pre">EnumSnapshotter.load_attribute()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.EnumSnapshotter.save_attribute"><code class="docutils literal notranslate"><span class="pre">EnumSnapshotter.save_attribute()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.HistorySnapshotter"><code class="docutils literal notranslate"><span class="pre">HistorySnapshotter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.HistorySnapshotter.load_attribute"><code class="docutils literal notranslate"><span class="pre">HistorySnapshotter.load_attribute()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.HistorySnapshotter.save_attribute"><code class="docutils literal notranslate"><span class="pre">HistorySnapshotter.save_attribute()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.LRSchedulerSnapshotter"><code class="docutils literal notranslate"><span class="pre">LRSchedulerSnapshotter</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.LRSchedulerSnapshotter.load_attribute"><code class="docutils literal notranslate"><span class="pre">LRSchedulerSnapshotter.load_attribute()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.LRSchedulerSnapshotter.save_attribute"><code class="docutils literal notranslate"><span class="pre">LRSchedulerSnapshotter.save_attribute()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.NumberSnapshotter"><code class="docutils literal notranslate"><span class="pre">NumberSnapshotter</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.NumberSnapshotter.load_attribute"><code class="docutils literal notranslate"><span class="pre">NumberSnapshotter.load_attribute()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.NumberSnapshotter.save_attribute"><code class="docutils literal notranslate"><span class="pre">NumberSnapshotter.save_attribute()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.OptimizerSnapshotter"><code class="docutils literal notranslate"><span class="pre">OptimizerSnapshotter</span></code></a><ul>
@@ -796,6 +800,16 @@
 <li class="toctree-l2"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.SerializableObjectSnapshotter"><code class="docutils literal notranslate"><span class="pre">SerializableObjectSnapshotter</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.SerializableObjectSnapshotter.load_attribute"><code class="docutils literal notranslate"><span class="pre">SerializableObjectSnapshotter.load_attribute()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.SerializableObjectSnapshotter.save_attribute"><code class="docutils literal notranslate"><span class="pre">SerializableObjectSnapshotter.save_attribute()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.SingletonSnapshotter"><code class="docutils literal notranslate"><span class="pre">SingletonSnapshotter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.SingletonSnapshotter.load_attribute"><code class="docutils literal notranslate"><span class="pre">SingletonSnapshotter.load_attribute()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.SingletonSnapshotter.save_attribute"><code class="docutils literal notranslate"><span class="pre">SingletonSnapshotter.save_attribute()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.StringSnapshotter"><code class="docutils literal notranslate"><span class="pre">StringSnapshotter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.StringSnapshotter.load_attribute"><code class="docutils literal notranslate"><span class="pre">StringSnapshotter.load_attribute()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.StringSnapshotter.save_attribute"><code class="docutils literal notranslate"><span class="pre">StringSnapshotter.save_attribute()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.TorchModuleSnapshotter"><code class="docutils literal notranslate"><span class="pre">TorchModuleSnapshotter</span></code></a><ul>

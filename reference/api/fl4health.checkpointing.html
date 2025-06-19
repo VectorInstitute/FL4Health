@@ -241,6 +241,7 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.client_module.html">fl4health.checkpointing.client_module module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.opacus_checkpointer.html">fl4health.checkpointing.opacus_checkpointer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.server_module.html">fl4health.checkpointing.server_module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html">fl4health.checkpointing.state_checkpointer module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.client_managers.html">fl4health.client_managers package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of fl4health.client_managers package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -524,13 +525,6 @@
 <li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.LatestTorchModuleCheckpointer.maybe_checkpoint"><code class="docutils literal notranslate"><span class="pre">LatestTorchModuleCheckpointer.maybe_checkpoint()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer"><code class="docutils literal notranslate"><span class="pre">PerRoundStateCheckpointer</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.__init__"><code class="docutils literal notranslate"><span class="pre">PerRoundStateCheckpointer.__init__()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.checkpoint_exists"><code class="docutils literal notranslate"><span class="pre">PerRoundStateCheckpointer.checkpoint_exists()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.load_checkpoint"><code class="docutils literal notranslate"><span class="pre">PerRoundStateCheckpointer.load_checkpoint()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.save_checkpoint"><code class="docutils literal notranslate"><span class="pre">PerRoundStateCheckpointer.save_checkpoint()</span></code></a></li>
-</ul>
-</li>
 <li class="toctree-l2"><a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.TorchModuleCheckpointer"><code class="docutils literal notranslate"><span class="pre">TorchModuleCheckpointer</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.TorchModuleCheckpointer.__init__"><code class="docutils literal notranslate"><span class="pre">TorchModuleCheckpointer.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.TorchModuleCheckpointer.load_checkpoint"><code class="docutils literal notranslate"><span class="pre">TorchModuleCheckpointer.load_checkpoint()</span></code></a></li>
@@ -615,6 +609,45 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.SparseCooServerCheckpointAndStateModule"><code class="docutils literal notranslate"><span class="pre">SparseCooServerCheckpointAndStateModule</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.SparseCooServerCheckpointAndStateModule.__init__"><code class="docutils literal notranslate"><span class="pre">SparseCooServerCheckpointAndStateModule.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html">fl4health.checkpointing.state_checkpointer module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ClientStateCheckpointer"><code class="docutils literal notranslate"><span class="pre">ClientStateCheckpointer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ClientStateCheckpointer.__init__"><code class="docutils literal notranslate"><span class="pre">ClientStateCheckpointer.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ClientStateCheckpointer.get_attribute"><code class="docutils literal notranslate"><span class="pre">ClientStateCheckpointer.get_attribute()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ClientStateCheckpointer.maybe_load_client_state"><code class="docutils literal notranslate"><span class="pre">ClientStateCheckpointer.maybe_load_client_state()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ClientStateCheckpointer.maybe_set_default_checkpoint_name"><code class="docutils literal notranslate"><span class="pre">ClientStateCheckpointer.maybe_set_default_checkpoint_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ClientStateCheckpointer.save_client_state"><code class="docutils literal notranslate"><span class="pre">ClientStateCheckpointer.save_client_state()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ClientStateCheckpointer.set_attribute"><code class="docutils literal notranslate"><span class="pre">ClientStateCheckpointer.set_attribute()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.NnUnetServerStateCheckpointer"><code class="docutils literal notranslate"><span class="pre">NnUnetServerStateCheckpointer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.NnUnetServerStateCheckpointer.__init__"><code class="docutils literal notranslate"><span class="pre">NnUnetServerStateCheckpointer.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer"><code class="docutils literal notranslate"><span class="pre">ServerStateCheckpointer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer.__init__"><code class="docutils literal notranslate"><span class="pre">ServerStateCheckpointer.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer.get_attribute"><code class="docutils literal notranslate"><span class="pre">ServerStateCheckpointer.get_attribute()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer.maybe_load_server_state"><code class="docutils literal notranslate"><span class="pre">ServerStateCheckpointer.maybe_load_server_state()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer.maybe_set_default_checkpoint_name"><code class="docutils literal notranslate"><span class="pre">ServerStateCheckpointer.maybe_set_default_checkpoint_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer.save_server_state"><code class="docutils literal notranslate"><span class="pre">ServerStateCheckpointer.save_server_state()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer.set_attribute"><code class="docutils literal notranslate"><span class="pre">ServerStateCheckpointer.set_attribute()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer"><code class="docutils literal notranslate"><span class="pre">StateCheckpointer</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.__init__"><code class="docutils literal notranslate"><span class="pre">StateCheckpointer.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.add_to_snapshot_attr"><code class="docutils literal notranslate"><span class="pre">StateCheckpointer.add_to_snapshot_attr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.checkpoint_exists"><code class="docutils literal notranslate"><span class="pre">StateCheckpointer.checkpoint_exists()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.delete_from_snapshot_attr"><code class="docutils literal notranslate"><span class="pre">StateCheckpointer.delete_from_snapshot_attr()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.get_attribute"><code class="docutils literal notranslate"><span class="pre">StateCheckpointer.get_attribute()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.load_checkpoint"><code class="docutils literal notranslate"><span class="pre">StateCheckpointer.load_checkpoint()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.load_state"><code class="docutils literal notranslate"><span class="pre">StateCheckpointer.load_state()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.save_checkpoint"><code class="docutils literal notranslate"><span class="pre">StateCheckpointer.save_checkpoint()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.save_state"><code class="docutils literal notranslate"><span class="pre">StateCheckpointer.save_state()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.set_attribute"><code class="docutils literal notranslate"><span class="pre">StateCheckpointer.set_attribute()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.set_checkpoint_path"><code class="docutils literal notranslate"><span class="pre">StateCheckpointer.set_checkpoint_path()</span></code></a></li>
 </ul>
 </li>
 </ul>

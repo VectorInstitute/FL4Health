@@ -241,6 +241,7 @@
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">fl4health.checkpointing.client_module module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.opacus_checkpointer.html">fl4health.checkpointing.opacus_checkpointer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.server_module.html">fl4health.checkpointing.server_module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html">fl4health.checkpointing.state_checkpointer module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.client_managers.html">fl4health.client_managers package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of fl4health.client_managers package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -544,9 +545,9 @@ server-side aggregation. Defaults to None.</p></li>
 <li><p><strong>post_aggregation</strong> (<em>ModelCheckpointers</em><em>, </em><em>optional</em>) – If defined, this checkpointer (or sequence
 of checkpointers) is used to checkpoint models based on their validation metrics/losses <strong>AFTER</strong>
 server-side aggregation. Defaults to None.</p></li>
-<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer" title="fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer"><em>PerRoundStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer is used to
-preserve client state (not just models), in the event one wants to restart federated training.
-Defaults to None.</p></li>
+<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ClientStateCheckpointer" title="fl4health.checkpointing.state_checkpointer.ClientStateCheckpointer"><em>ClientStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer
+is used to preserve client state (not just models), in the event one wants to restart
+federated training. Defaults to None.</p></li>
 </ul>
 </dd>
 </dl>
@@ -581,44 +582,36 @@ available are pre- and post-aggregation.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.checkpointing.client_module.ClientCheckpointAndStateModule.maybe_load_state">
-<span class="sig-name descname"><span class="pre">maybe_load_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_checkpoint_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/client_module.html#ClientCheckpointAndStateModule.maybe_load_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.client_module.ClientCheckpointAndStateModule.maybe_load_state" title="Link to this definition">¶</a></dt>
-<dd><p>This function facilitates loading of any pre-existing state (with the name <code class="docutils literal notranslate"><span class="pre">state_checkpoint_name</span></code>) in the
-directory of the <code class="docutils literal notranslate"><span class="pre">state_checkpointer</span></code>. If the state already exists at the proper path, the state is loaded
-and returned. If it doesn’t exist, we return None.</p>
+<span class="sig-name descname"><span class="pre">maybe_load_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/client_module.html#ClientCheckpointAndStateModule.maybe_load_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.client_module.ClientCheckpointAndStateModule.maybe_load_state" title="Link to this definition">¶</a></dt>
+<dd><p>This function facilitates loading of any pre-existing state (with the name <code class="docutils literal notranslate"><span class="pre">checkpoint_name</span></code>) in the
+directory of the <code class="docutils literal notranslate"><span class="pre">checkpoint_dir</span></code>. If the state already exists at the proper path, the state is loaded
+and will be automatically saved into client’s attributes. If it doesn’t exist, we return False.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>state_checkpoint_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Name of the state checkpoint file. The checkpointer itself will have a
-directory from which state will be loaded (if it exists).</p>
+<dd class="field-odd"><p><strong>client</strong> (<a class="reference internal" href="fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient" title="fl4health.clients.basic_client.BasicClient"><em>BasicClient</em></a>) – client object into which state will be loaded if a checkpoint exists</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Throws an error if this function is called, but no state checkpointer has been provided</p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>If the state checkpoint properly exists and is loaded correctly, this dictionary
-carries that state. Otherwise, we return a None (or throw an exception).</p>
+<dd class="field-odd"><p>If the state checkpoint properly exists and is loaded correctly, client’s attributes
+are set to the loaded values, and True is returned. Otherwise, we return False (or throw an exception).</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, Any] | None</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)">bool</a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.checkpointing.client_module.ClientCheckpointAndStateModule.save_state">
-<span class="sig-name descname"><span class="pre">save_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_checkpoint_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/client_module.html#ClientCheckpointAndStateModule.save_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.client_module.ClientCheckpointAndStateModule.save_state" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">save_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/client_module.html#ClientCheckpointAndStateModule.save_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.client_module.ClientCheckpointAndStateModule.save_state" title="Link to this definition">¶</a></dt>
 <dd><p>This function is meant to facilitate saving state required to restart an FL process on the client side. This
-function will simply save whatever information is passed in the state variable using the file name in
-<code class="docutils literal notranslate"><span class="pre">state_checkpoint_name</span></code>. This function should only be called if a <code class="docutils literal notranslate"><span class="pre">state_checkpointer</span></code> exists in this
-module</p>
+function will simply save all the attributes stated in <code class="docutils literal notranslate"><span class="pre">ClientStateCheckpointer.snapshot_attrs</span></code>.
+This function should only be called if a <code class="docutils literal notranslate"><span class="pre">state_checkpointer</span></code> exists in this module.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>state_checkpoint_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Name of the state checkpoint file. The checkpointer itself will have a
-directory to which state will be saved.</p></li>
-<li><p><strong>state</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – State to be saved so that training might be resumed on the client if federated
-training is interrupted. For example, this might contain things like optimizer states, learning rate
-scheduler states, etc.</p></li>
-</ul>
+<dd class="field-odd"><p><strong>client</strong> (<a class="reference internal" href="fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient" title="fl4health.clients.basic_client.BasicClient"><em>BasicClient</em></a>) – The client object from which state will be saved.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Throws an error if this function is called, but no state checkpointer has been provided</p>

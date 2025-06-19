@@ -240,6 +240,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.client_module.html">fl4health.checkpointing.client_module module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.opacus_checkpointer.html">fl4health.checkpointing.opacus_checkpointer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.server_module.html">fl4health.checkpointing.server_module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html">fl4health.checkpointing.state_checkpointer module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/fl4health.client_managers.html">fl4health.client_managers package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of fl4health.client_managers package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -501,8 +502,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">ERROR</span><span class="p">,</span> <span class="n">INFO</span><span class="p">,</span> <span class="n">WARNING</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
@@ -818,7 +817,6 @@
         <span class="n">maximize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Checkpointer that checkpoints based on the value of a user defined metric.</span>
-
 <span class="sd">        Args:</span>
 <span class="sd">            checkpoint_dir (str): Directory to which the model is saved. This directory should already exist. The</span>
 <span class="sd">                checkpointer will not create it if it does not.</span>
@@ -852,101 +850,6 @@
             <span class="n">checkpoint_score_name</span><span class="o">=</span><span class="n">metric</span><span class="p">,</span>
             <span class="n">maximize</span><span class="o">=</span><span class="n">maximize</span><span class="p">,</span>
         <span class="p">)</span></div>
-</div>
-
-
-
-<div class="viewcode-block" id="PerRoundStateCheckpointer">
-<a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">PerRoundStateCheckpointer</span><span class="p">:</span>
-<div class="viewcode-block" id="PerRoundStateCheckpointer.__init__">
-<a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">checkpoint_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Base class that provides a uniform interface for loading, saving and checking if checkpoints exists.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            checkpoint_dir (Path): Base directory to store checkpoints. This checkpoint directory MUST already exist.</span>
-<span class="sd">                It will not be created by this state checkpointer.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">log</span><span class="p">(</span>
-            <span class="n">WARNING</span><span class="p">,</span>
-            <span class="s2">&quot;Creating PerRoundCheckpointer. Currently, this functionality is still experimental and only supported &quot;</span>
-            <span class="s2">&quot;for BasicClient and NnunetClient, along with their associated servers.&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_dir</span> <span class="o">=</span> <span class="n">checkpoint_dir</span></div>
-
-
-<div class="viewcode-block" id="PerRoundStateCheckpointer.save_checkpoint">
-<a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.save_checkpoint">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">save_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">checkpoint_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">checkpoint_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Saves ``checkpoint_dict`` to checkpoint path form from this classes checkpointer dir and the provided</span>
-<span class="sd">        checkpoint name.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            checkpoint_name (str): Name of the state checkpoint file.</span>
-<span class="sd">            checkpoint_dict (dict[str, Any]): A dictionary with string keys and values of type Any representing the</span>
-<span class="sd">                state to checkpoint.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            e: Will throw an error if there is an issue saving the model. ``Torch.save`` seems to swallow errors in</span>
-<span class="sd">                this context, so we explicitly surface the error with a try/except.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="n">checkpoint_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="p">,</span> <span class="n">checkpoint_name</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Saving state as </span><span class="si">{</span><span class="n">checkpoint_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">checkpoint_dict</span><span class="p">,</span> <span class="n">checkpoint_path</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">log</span><span class="p">(</span><span class="n">ERROR</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Encountered the following error while saving the checkpoint: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">raise</span> <span class="n">e</span></div>
-
-
-<div class="viewcode-block" id="PerRoundStateCheckpointer.load_checkpoint">
-<a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.load_checkpoint">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">load_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">checkpoint_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Loads and returns the checkpoint stored in ``checkpoint_dir`` under the provided name if it exists. If it</span>
-<span class="sd">        does not exist, an assertion error will be thrown.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            checkpoint_name (str): Name of the state checkpoint to be loaded.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            dict[str, Any]: A dictionary representing the checkpointed state, as loaded by ``torch.load``.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_exists</span><span class="p">(</span><span class="n">checkpoint_name</span><span class="p">)</span>
-        <span class="n">checkpoint_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="p">,</span> <span class="n">checkpoint_name</span><span class="p">)</span>
-        <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Loading state from checkpoint at </span><span class="si">{</span><span class="n">checkpoint_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">checkpoint_path</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="PerRoundStateCheckpointer.checkpoint_exists">
-<a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.checkpoint_exists">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">checkpoint_exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">checkpoint_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Checks if a checkpoint exists at the ``checkpoint_dir`` constructed at initialization + ``checkpoint_name``.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            checkpoint_name (str): Name of checkpoint for existence test. Directory of checkpoint is held internally</span>
-<span class="sd">                as state by the checkpointer</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: Previously this function supported sending a path, but now requires ``checkpoint_name``. Will</span>
-<span class="sd">                raise an error is ``checkpoint_path`` provided.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            bool: True if checkpoint exists, otherwise false.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="s2">&quot;checkpoint_path&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Previously this checkpoint supported sending a path, but it now requires a checkpoint_name only&quot;</span>
-            <span class="p">)</span>
-        <span class="n">checkpoint_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="p">,</span> <span class="n">checkpoint_name</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">checkpoint_path</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

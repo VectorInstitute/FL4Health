@@ -238,6 +238,7 @@
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.checkpointing.client_module.html">fl4health.checkpointing.client_module module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.checkpointing.opacus_checkpointer.html">fl4health.checkpointing.opacus_checkpointer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.checkpointing.server_module.html">fl4health.checkpointing.server_module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.checkpointing.state_checkpointer.html">fl4health.checkpointing.state_checkpointer module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="reference/api/fl4health.client_managers.html">fl4health.client_managers package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of fl4health.client_managers package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -506,8 +507,6 @@
         <li><a href="reference/api/fl4health.model_bases.autoencoders_base.html#fl4health.model_bases.autoencoders_base.AbstractAe.__init__">__init__() (AbstractAe method)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter.__init__">(AbstractSnapshotter method)</a>
-</li>
           <li><a href="reference/api/fl4health.metrics.html#fl4health.metrics.Accuracy.__init__">(Accuracy method)</a>, <a href="reference/api/fl4health.metrics.metrics.html#fl4health.metrics.metrics.Accuracy.__init__">[1]</a>
 </li>
           <li><a href="reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.AdaptiveConstraintServerCheckpointAndStateModule.__init__">(AdaptiveConstraintServerCheckpointAndStateModule method)</a>
@@ -553,6 +552,8 @@
           <li><a href="reference/api/fl4health.strategies.client_dp_fedavgm.html#fl4health.strategies.client_dp_fedavgm.ClientLevelDPFedAvgM.__init__">(ClientLevelDPFedAvgM method)</a>
 </li>
           <li><a href="reference/api/fl4health.servers.client_level_dp_fed_avg_server.html#fl4health.servers.client_level_dp_fed_avg_server.ClientLevelDPFedAvgServer.__init__">(ClientLevelDPFedAvgServer method)</a>
+</li>
+          <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ClientStateCheckpointer.__init__">(ClientStateCheckpointer method)</a>
 </li>
           <li><a href="reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.ClippingBitServerCheckpointAndStateModule.__init__">(ClippingBitServerCheckpointAndStateModule method)</a>
 </li>
@@ -750,6 +751,8 @@
 </li>
           <li><a href="reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.NnUnetServerCheckpointAndStateModule.__init__">(NnUnetServerCheckpointAndStateModule method)</a>
 </li>
+          <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.NnUnetServerStateCheckpointer.__init__">(NnUnetServerStateCheckpointer method)</a>
+</li>
           <li><a href="reference/api/fl4health.losses.contrastive_loss.html#fl4health.losses.contrastive_loss.NtXentLoss.__init__">(NtXentLoss method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.clipping_client.html#fl4health.clients.clipping_client.NumpyClippingClient.__init__">(NumpyClippingClient method)</a>
@@ -780,8 +783,6 @@
 </li>
           <li><a href="reference/api/fl4health.model_bases.perfcl_base.html#fl4health.model_bases.perfcl_base.PerFclModel.__init__">(PerFclModel method)</a>
 </li>
-          <li><a href="reference/api/fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.__init__">(PerRoundStateCheckpointer method)</a>
-</li>
           <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.PolyLRSchedulerWrapper.__init__">(PolyLRSchedulerWrapper method)</a>
 </li>
           <li><a href="reference/api/fl4health.metrics.html#fl4health.metrics.ROC_AUC.__init__">(ROC_AUC method)</a>, <a href="reference/api/fl4health.metrics.metrics.html#fl4health.metrics.metrics.ROC_AUC.__init__">[1]</a>
@@ -796,11 +797,15 @@
 </li>
           <li><a href="reference/api/fl4health.model_bases.sequential_split_models.html#fl4health.model_bases.sequential_split_models.SequentiallySplitModel.__init__">(SequentiallySplitModel method)</a>
 </li>
+          <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer.__init__">(ServerStateCheckpointer method)</a>
+</li>
           <li><a href="reference/api/fl4health.metrics.html#fl4health.metrics.SimpleMetric.__init__">(SimpleMetric method)</a>, <a href="reference/api/fl4health.metrics.metrics.html#fl4health.metrics.metrics.SimpleMetric.__init__">[1]</a>
 </li>
           <li><a href="reference/api/fl4health.parameter_exchange.sparse_coo_parameter_exchanger.html#fl4health.parameter_exchange.sparse_coo_parameter_exchanger.SparseCooParameterExchanger.__init__">(SparseCooParameterExchanger method)</a>
 </li>
           <li><a href="reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.SparseCooServerCheckpointAndStateModule.__init__">(SparseCooServerCheckpointAndStateModule method)</a>
+</li>
+          <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.__init__">(StateCheckpointer method)</a>
 </li>
           <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.StreamToLogger.__init__">(StreamToLogger method)</a>
 </li>
@@ -873,13 +878,13 @@
 </li>
         <li><a href="reference/api/fl4health.clients.adaptive_drift_constraint_client.html#fl4health.clients.adaptive_drift_constraint_client.AdaptiveDriftConstraintClient">AdaptiveDriftConstraintClient (class in fl4health.clients.adaptive_drift_constraint_client)</a>
 </li>
-        <li><a href="reference/api/fl4health.utils.early_stopper.html#fl4health.utils.early_stopper.EarlyStopper.add_default_snapshot_attr">add_default_snapshot_attr() (EarlyStopper method)</a>
-</li>
         <li><a href="reference/api/fl4health.servers.nnunet_server.html#fl4health.servers.nnunet_server.add_items_to_config_fn">add_items_to_config_fn() (in module fl4health.servers.nnunet_server)</a>
 </li>
         <li><a href="reference/api/fl4health.strategies.noisy_aggregate.html#fl4health.strategies.noisy_aggregate.add_noise_to_array">add_noise_to_array() (in module fl4health.strategies.noisy_aggregate)</a>
 </li>
         <li><a href="reference/api/fl4health.strategies.noisy_aggregate.html#fl4health.strategies.noisy_aggregate.add_noise_to_ndarrays">add_noise_to_ndarrays() (in module fl4health.strategies.noisy_aggregate)</a>
+</li>
+        <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.add_to_snapshot_attr">add_to_snapshot_attr() (StateCheckpointer method)</a>
 </li>
         <li><a href="reference/api/fl4health.preprocessing.autoencoders.dim_reduction.html#fl4health.preprocessing.autoencoders.dim_reduction.AeProcessor">AeProcessor (class in fl4health.preprocessing.autoencoders.dim_reduction)</a>
 </li>
@@ -1033,6 +1038,8 @@
           <li><a href="reference/api/fl4health.metrics.metrics.html#fl4health.metrics.metrics.BinarySoftDiceCoefficient">(class in fl4health.metrics.metrics)</a>
 </li>
         </ul></li>
+        <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.BytesSnapshotter">BytesSnapshotter (class in fl4health.utils.snapshotter)</a>
+</li>
     </ul></td>
   </tr></table>
 </section>
@@ -1055,7 +1062,7 @@
 </li>
         <li><a href="reference/api/fl4health.metrics.metric_managers.html#fl4health.metrics.metric_managers.MetricManager.check_target_prediction_keys_equal">check_target_prediction_keys_equal() (MetricManager method)</a>
 </li>
-        <li><a href="reference/api/fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.checkpoint_exists">checkpoint_exists() (PerRoundStateCheckpointer method)</a>
+        <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.checkpoint_exists">checkpoint_exists() (StateCheckpointer method)</a>
 </li>
         <li><a href="reference/api/fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.CheckpointMode">CheckpointMode (class in fl4health.checkpointing.client_module)</a>
 </li>
@@ -1088,6 +1095,8 @@
         <li><a href="reference/api/fl4health.strategies.client_dp_fedavgm.html#fl4health.strategies.client_dp_fedavgm.ClientLevelDPFedAvgM">ClientLevelDPFedAvgM (class in fl4health.strategies.client_dp_fedavgm)</a>
 </li>
         <li><a href="reference/api/fl4health.servers.client_level_dp_fed_avg_server.html#fl4health.servers.client_level_dp_fed_avg_server.ClientLevelDPFedAvgServer">ClientLevelDPFedAvgServer (class in fl4health.servers.client_level_dp_fed_avg_server)</a>
+</li>
+        <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ClientStateCheckpointer">ClientStateCheckpointer (class in fl4health.checkpointing.state_checkpointer)</a>
 </li>
         <li><a href="reference/api/fl4health.clients.clipping_client.html#fl4health.clients.clipping_client.NumpyClippingClient.clip_parameters">clip_parameters() (NumpyClippingClient method)</a>
 </li>
@@ -1389,7 +1398,7 @@
 </li>
         <li><a href="reference/api/fl4health.reporting.html#fl4health.reporting.WandBReporter.define_metrics">define_metrics() (WandBReporter method)</a>, <a href="reference/api/fl4health.reporting.wandb_reporter.html#fl4health.reporting.wandb_reporter.WandBReporter.define_metrics">[1]</a>
 </li>
-        <li><a href="reference/api/fl4health.utils.early_stopper.html#fl4health.utils.early_stopper.EarlyStopper.delete_default_snapshot_attr">delete_default_snapshot_attr() (EarlyStopper method)</a>
+        <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.delete_from_snapshot_attr">delete_from_snapshot_attr() (StateCheckpointer method)</a>
 </li>
         <li><a href="reference/api/fl4health.datasets.skin_cancer.preprocess_skin.html#fl4health.datasets.skin_cancer.preprocess_skin.derm7pt_image_path_func">derm7pt_image_path_func() (in module fl4health.datasets.skin_cancer.preprocess_skin)</a>
 </li>
@@ -1401,8 +1410,6 @@
           <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.device">(DittoPersonalizedProtocol attribute)</a>
 </li>
         </ul></li>
-        <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter.dict_wrap_attr">dict_wrap_attr() (AbstractSnapshotter method)</a>
-</li>
         <li><a href="reference/api/fl4health.utils.dataset.html#fl4health.utils.dataset.DictionaryDataset">DictionaryDataset (class in fl4health.utils.dataset)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.partitioners.html#fl4health.utils.partitioners.DirichletLabelBasedAllocation">DirichletLabelBasedAllocation (class in fl4health.utils.partitioners)</a>
@@ -1411,10 +1418,10 @@
 </li>
         <li><a href="reference/api/fl4health.model_bases.feature_extractor_buffer.html#fl4health.model_bases.feature_extractor_buffer.FeatureExtractorBuffer.disable_accumulating_features">disable_accumulating_features() (FeatureExtractorBuffer method)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.PersonalizedMode.DITTO">DITTO (PersonalizedMode attribute)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.clients.ditto_client.html#fl4health.clients.ditto_client.DittoClient">DittoClient (class in fl4health.clients.ditto_client)</a>
 </li>
         <li><a href="reference/api/fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client.html#fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client.DittoDeepMmdClient">DittoDeepMmdClient (class in fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client)</a>
@@ -1501,6 +1508,8 @@
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.EnumSnapshotter">EnumSnapshotter (class in fl4health.utils.snapshotter)</a>
+</li>
         <li><a href="reference/api/fl4health.reporting.html#fl4health.reporting.WandBStepType.EPOCH">EPOCH (WandBStepType attribute)</a>, <a href="reference/api/fl4health.reporting.wandb_reporter.html#fl4health.reporting.wandb_reporter.WandBStepType.EPOCH">[1]</a>
 </li>
         <li><a href="reference/api/fl4health.utils.typing.html#fl4health.utils.typing.LogLevel.ERROR">ERROR (LogLevel attribute)</a>
@@ -1699,6 +1708,13 @@
 
         <ul>
           <li><a href="reference/api/fl4health.checkpointing.server_module.html#module-fl4health.checkpointing.server_module">module</a>
+</li>
+        </ul></li>
+        <li>
+    fl4health.checkpointing.state_checkpointer
+
+        <ul>
+          <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#module-fl4health.checkpointing.state_checkpointer">module</a>
 </li>
         </ul></li>
         <li>
@@ -3030,6 +3046,14 @@
 </li>
         <li><a href="reference/api/fl4health.utils.peft_parameter_extraction.html#fl4health.utils.peft_parameter_extraction.get_all_peft_parameters_from_model">get_all_peft_parameters_from_model() (in module fl4health.utils.peft_parameter_extraction)</a>
 </li>
+        <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ClientStateCheckpointer.get_attribute">get_attribute() (ClientStateCheckpointer method)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer.get_attribute">(ServerStateCheckpointer method)</a>
+</li>
+          <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.get_attribute">(StateCheckpointer method)</a>
+</li>
+        </ul></li>
         <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss.get_best_vertex_for_objective_function">get_best_vertex_for_objective_function() (MkMmdLoss method)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.load_data.html#fl4health.utils.load_data.get_cifar10_data_and_target_tensors">get_cifar10_data_and_target_tensors() (in module fl4health.utils.load_data)</a>
@@ -3138,10 +3162,10 @@
 </li>
         <li><a href="reference/api/fl4health.clients.evaluate_client.html#fl4health.clients.evaluate_client.EvaluateClient.get_local_model">get_local_model() (EvaluateClient method)</a>
 </li>
-        <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.PolyLRSchedulerWrapper.get_lr">get_lr() (PolyLRSchedulerWrapper method)</a>
-</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.PolyLRSchedulerWrapper.get_lr">get_lr() (PolyLRSchedulerWrapper method)</a>
+</li>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.get_lr_scheduler">get_lr_scheduler() (BasicClient method)</a>
 
         <ul>
@@ -3300,6 +3324,8 @@
 </li>
         <li><a href="reference/api/fl4health.model_bases.parallel_split_models.html#fl4health.model_bases.parallel_split_models.ParallelSplitHeadModule.head_forward">head_forward() (ParallelSplitHeadModule method)</a>
 </li>
+        <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.HistorySnapshotter">HistorySnapshotter (class in fl4health.utils.snapshotter)</a>
+</li>
     </ul></td>
   </tr></table>
 </section>
@@ -3412,18 +3438,24 @@
         </ul></li>
         <li><a href="reference/api/fl4health.parameter_exchange.parameter_selection_criteria.html#fl4health.parameter_exchange.parameter_selection_criteria.LayerSelectionFunctionConstructor">LayerSelectionFunctionConstructor (class in fl4health.parameter_exchange.parameter_selection_criteria)</a>
 </li>
-        <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter.load">load() (AbstractSnapshotter method)</a>
-</li>
         <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter.load_attribute">load_attribute() (AbstractSnapshotter method)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.LRSchedulerSnapshotter.load_attribute">(LRSchedulerSnapshotter method)</a>
+          <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.BytesSnapshotter.load_attribute">(BytesSnapshotter method)</a>
 </li>
-          <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.NumberSnapshotter.load_attribute">(NumberSnapshotter method)</a>
+          <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.EnumSnapshotter.load_attribute">(EnumSnapshotter method)</a>
+</li>
+          <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.HistorySnapshotter.load_attribute">(HistorySnapshotter method)</a>
+</li>
+          <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.LRSchedulerSnapshotter.load_attribute">(LRSchedulerSnapshotter method)</a>
 </li>
           <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.OptimizerSnapshotter.load_attribute">(OptimizerSnapshotter method)</a>
 </li>
           <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.SerializableObjectSnapshotter.load_attribute">(SerializableObjectSnapshotter method)</a>
+</li>
+          <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.SingletonSnapshotter.load_attribute">(SingletonSnapshotter method)</a>
+</li>
+          <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.StringSnapshotter.load_attribute">(StringSnapshotter method)</a>
 </li>
           <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.TorchModuleSnapshotter.load_attribute">(TorchModuleSnapshotter method)</a>
 </li>
@@ -3435,7 +3467,7 @@
         <li><a href="reference/api/fl4health.checkpointing.opacus_checkpointer.html#fl4health.checkpointing.opacus_checkpointer.OpacusCheckpointer.load_checkpoint">load_checkpoint() (OpacusCheckpointer method)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.load_checkpoint">(PerRoundStateCheckpointer method)</a>
+          <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.load_checkpoint">(StateCheckpointer method)</a>
 </li>
           <li><a href="reference/api/fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.TorchModuleCheckpointer.load_checkpoint">(TorchModuleCheckpointer method)</a>
 </li>
@@ -3475,6 +3507,8 @@
         <li><a href="reference/api/fl4health.datasets.skin_cancer.load_data.html#fl4health.datasets.skin_cancer.load_data.load_skin_cancer_data">load_skin_cancer_data() (in module fl4health.datasets.skin_cancer.load_data)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.early_stopper.html#fl4health.utils.early_stopper.EarlyStopper.load_snapshot">load_snapshot() (EarlyStopper method)</a>
+</li>
+        <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.load_state">load_state() (StateCheckpointer method)</a>
 </li>
         <li><a href="reference/api/fl4health.model_bases.apfl_base.html#fl4health.model_bases.apfl_base.ApflModule.local_forward">local_forward() (ApflModule method)</a>
 </li>
@@ -3562,6 +3596,10 @@
         </ul></li>
         <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.maybe_extract_fingerprint">maybe_extract_fingerprint() (NnunetClient method)</a>
 </li>
+        <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ClientStateCheckpointer.maybe_load_client_state">maybe_load_client_state() (ClientStateCheckpointer method)</a>
+</li>
+        <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer.maybe_load_server_state">maybe_load_server_state() (ServerStateCheckpointer method)</a>
+</li>
         <li><a href="reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.BaseServerCheckpointAndStateModule.maybe_load_state">maybe_load_state() (BaseServerCheckpointAndStateModule method)</a>
 
         <ul>
@@ -3574,6 +3612,12 @@
 </li>
         <li><a href="reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.maybe_reshape">maybe_reshape() (PcaModule method)</a>
 </li>
+        <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ClientStateCheckpointer.maybe_set_default_checkpoint_name">maybe_set_default_checkpoint_name() (ClientStateCheckpointer method)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer.maybe_set_default_checkpoint_name">(ServerStateCheckpointer method)</a>
+</li>
+        </ul></li>
         <li><a href="reference/api/fl4health.clients.evaluate_client.html#fl4health.clients.evaluate_client.EvaluateClient.merge_metrics">merge_metrics() (EvaluateClient static method)</a>
 </li>
         <li><a href="reference/api/fl4health.strategies.fedpca.html#fl4health.strategies.fedpca.FedPCA.merge_subspaces_qr">merge_subspaces_qr() (FedPCA method)</a>
@@ -3631,6 +3675,8 @@
           <li><a href="reference/api/fl4health.checkpointing.opacus_checkpointer.html#module-fl4health.checkpointing.opacus_checkpointer">fl4health.checkpointing.opacus_checkpointer</a>
 </li>
           <li><a href="reference/api/fl4health.checkpointing.server_module.html#module-fl4health.checkpointing.server_module">fl4health.checkpointing.server_module</a>
+</li>
+          <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#module-fl4health.checkpointing.state_checkpointer">fl4health.checkpointing.state_checkpointer</a>
 </li>
           <li><a href="reference/api/fl4health.client_managers.html#module-fl4health.client_managers">fl4health.client_managers</a>
 </li>
@@ -4019,6 +4065,8 @@
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.NnUnetServerStateCheckpointer">NnUnetServerStateCheckpointer (class in fl4health.checkpointing.state_checkpointer)</a>
+</li>
         <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss.normalize">normalize() (MkMmdLoss method)</a>
 </li>
         <li><a href="reference/api/fl4health.metrics.metric_aggregation.html#fl4health.metrics.metric_aggregation.normalize_metrics">normalize_metrics() (in module fl4health.metrics.metric_aggregation)</a>
@@ -4026,8 +4074,6 @@
         <li><a href="reference/api/fl4health.utils.typing.html#fl4health.utils.typing.LogLevel.NOTSET">NOTSET (LogLevel attribute)</a>
 </li>
         <li><a href="reference/api/fl4health.losses.contrastive_loss.html#fl4health.losses.contrastive_loss.NtXentLoss">NtXentLoss (class in fl4health.losses.contrastive_loss)</a>
-</li>
-        <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.NumberSnapshotter">NumberSnapshotter (class in fl4health.utils.snapshotter)</a>
 </li>
         <li><a href="reference/api/fl4health.feature_alignment.tabular_type.html#fl4health.feature_alignment.tabular_type.TabularType.NUMERIC">NUMERIC (TabularType attribute)</a>
 </li>
@@ -4160,8 +4206,6 @@
         <li><a href="reference/api/fl4health.losses.fenda_loss_config.html#fl4health.losses.fenda_loss_config.PerFclLossContainer">PerFclLossContainer (class in fl4health.losses.fenda_loss_config)</a>
 </li>
         <li><a href="reference/api/fl4health.model_bases.perfcl_base.html#fl4health.model_bases.perfcl_base.PerFclModel">PerFclModel (class in fl4health.model_bases.perfcl_base)</a>
-</li>
-        <li><a href="reference/api/fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer">PerRoundStateCheckpointer (class in fl4health.checkpointing.checkpointer)</a>
 </li>
         <li><a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.PersonalizedMode">PersonalizedMode (class in fl4health.mixins.personalized)</a>
 </li>
@@ -4363,34 +4407,44 @@
         </ul></li>
         <li><a href="reference/api/fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.SamplingStrategy">SamplingStrategy (class in fl4health.privacy.moments_accountant)</a>
 </li>
-        <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter.save">save() (AbstractSnapshotter method)</a>
-</li>
         <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter.save_attribute">save_attribute() (AbstractSnapshotter method)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.LRSchedulerSnapshotter.save_attribute">(LRSchedulerSnapshotter method)</a>
+          <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.BytesSnapshotter.save_attribute">(BytesSnapshotter method)</a>
 </li>
-          <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.NumberSnapshotter.save_attribute">(NumberSnapshotter method)</a>
+          <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.EnumSnapshotter.save_attribute">(EnumSnapshotter method)</a>
+</li>
+          <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.HistorySnapshotter.save_attribute">(HistorySnapshotter method)</a>
+</li>
+          <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.LRSchedulerSnapshotter.save_attribute">(LRSchedulerSnapshotter method)</a>
 </li>
           <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.OptimizerSnapshotter.save_attribute">(OptimizerSnapshotter method)</a>
 </li>
           <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.SerializableObjectSnapshotter.save_attribute">(SerializableObjectSnapshotter method)</a>
 </li>
+          <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.SingletonSnapshotter.save_attribute">(SingletonSnapshotter method)</a>
+</li>
+          <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.StringSnapshotter.save_attribute">(StringSnapshotter method)</a>
+</li>
           <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.TorchModuleSnapshotter.save_attribute">(TorchModuleSnapshotter method)</a>
 </li>
         </ul></li>
-        <li><a href="reference/api/fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.save_checkpoint">save_checkpoint() (PerRoundStateCheckpointer method)</a>
+        <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.save_checkpoint">save_checkpoint() (StateCheckpointer method)</a>
+</li>
+        <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ClientStateCheckpointer.save_client_state">save_client_state() (ClientStateCheckpointer method)</a>
 </li>
         <li><a href="reference/api/fl4health.clients.fed_pca_client.html#fl4health.clients.fed_pca_client.FedPCAClient.save_model">save_model() (FedPCAClient method)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.random.html#fl4health.utils.random.save_random_state">save_random_state() (in module fl4health.utils.random)</a>
 </li>
-        <li><a href="reference/api/fl4health.utils.early_stopper.html#fl4health.utils.early_stopper.EarlyStopper.save_snapshot">save_snapshot() (EarlyStopper method)</a>
+        <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer.save_server_state">save_server_state() (ServerStateCheckpointer method)</a>
 </li>
         <li><a href="reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.BaseServerCheckpointAndStateModule.save_state">save_state() (BaseServerCheckpointAndStateModule method)</a>
 
         <ul>
           <li><a href="reference/api/fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.ClientCheckpointAndStateModule.save_state">(ClientCheckpointAndStateModule method)</a>
+</li>
+          <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.save_state">(StateCheckpointer method)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.datasets.skin_cancer.preprocess_skin.html#fl4health.datasets.skin_cancer.preprocess_skin.save_to_json">save_to_json() (in module fl4health.datasets.skin_cancer.preprocess_skin)</a>
@@ -4439,7 +4493,19 @@
 </li>
         <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.SerializableObjectSnapshotter">SerializableObjectSnapshotter (class in fl4health.utils.snapshotter)</a>
 </li>
+        <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer">ServerStateCheckpointer (class in fl4health.checkpointing.state_checkpointer)</a>
+</li>
         <li><a href="reference/api/fl4health.utils.random.html#fl4health.utils.random.set_all_random_seeds">set_all_random_seeds() (in module fl4health.utils.random)</a>
+</li>
+        <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ClientStateCheckpointer.set_attribute">set_attribute() (ClientStateCheckpointer method)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer.set_attribute">(ServerStateCheckpointer method)</a>
+</li>
+          <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.set_attribute">(StateCheckpointer method)</a>
+</li>
+        </ul></li>
+        <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.set_checkpoint_path">set_checkpoint_path() (StateCheckpointer method)</a>
 </li>
         <li><a href="reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.set_data_mean">set_data_mean() (PcaModule method)</a>
 </li>
@@ -4597,6 +4663,8 @@
           <li><a href="reference/api/fl4health.metrics.metrics.html#fl4health.metrics.metrics.SimpleMetric">(class in fl4health.metrics.metrics)</a>
 </li>
         </ul></li>
+        <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.SingletonSnapshotter">SingletonSnapshotter (class in fl4health.utils.snapshotter)</a>
+</li>
         <li><a href="reference/api/fl4health.parameter_exchange.parameter_selection_criteria.html#fl4health.parameter_exchange.parameter_selection_criteria.smallest_final_magnitude_scores">smallest_final_magnitude_scores() (in module fl4health.parameter_exchange.parameter_selection_criteria)</a>
 </li>
         <li><a href="reference/api/fl4health.parameter_exchange.parameter_selection_criteria.html#fl4health.parameter_exchange.parameter_selection_criteria.smallest_increase_in_magnitude_scores">smallest_increase_in_magnitude_scores() (in module fl4health.parameter_exchange.parameter_selection_criteria)</a>
@@ -4619,6 +4687,8 @@
 </li>
         <li><a href="reference/api/fl4health.reporting.html#fl4health.reporting.WandBReporter.start_run">start_run() (WandBReporter method)</a>, <a href="reference/api/fl4health.reporting.wandb_reporter.html#fl4health.reporting.wandb_reporter.WandBReporter.start_run">[1]</a>
 </li>
+        <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer">StateCheckpointer (class in fl4health.checkpointing.state_checkpointer)</a>
+</li>
         <li><a href="reference/api/fl4health.reporting.html#fl4health.reporting.WandBStepType.STEP">STEP (WandBStepType attribute)</a>, <a href="reference/api/fl4health.reporting.wandb_reporter.html#fl4health.reporting.wandb_reporter.WandBStepType.STEP">[1]</a>
 </li>
         <li><a href="reference/api/fl4health.strategies.strategy_with_poll.html#fl4health.strategies.strategy_with_poll.StrategyWithPolling">StrategyWithPolling (class in fl4health.strategies.strategy_with_poll)</a>
@@ -4626,6 +4696,8 @@
         <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.StreamToLogger">StreamToLogger (class in fl4health.utils.nnunet_utils)</a>
 </li>
         <li><a href="reference/api/fl4health.feature_alignment.tabular_type.html#fl4health.feature_alignment.tabular_type.TabularType.STRING">STRING (TabularType attribute)</a>
+</li>
+        <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.StringSnapshotter">StringSnapshotter (class in fl4health.utils.snapshotter)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.sampler.html#fl4health.utils.sampler.DirichletLabelBasedSampler.subsample">subsample() (DirichletLabelBasedSampler method)</a>
 

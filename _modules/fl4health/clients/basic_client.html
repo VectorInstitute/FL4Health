@@ -240,6 +240,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.client_module.html">fl4health.checkpointing.client_module module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.opacus_checkpointer.html">fl4health.checkpointing.opacus_checkpointer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.server_module.html">fl4health.checkpointing.server_module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html">fl4health.checkpointing.state_checkpointer module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/fl4health.client_managers.html">fl4health.client_managers package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of fl4health.client_managers package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -528,7 +529,7 @@
     <span class="n">process_and_check_validation_steps</span><span class="p">,</span>
     <span class="n">set_pack_losses_with_val_metrics</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">narrow_dict_type</span><span class="p">,</span> <span class="n">narrow_dict_type_and_set_attribute</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">narrow_dict_type</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.early_stopper</span><span class="w"> </span><span class="kn">import</span> <span class="n">EarlyStopper</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoggingMode</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.losses</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluationLosses</span><span class="p">,</span> <span class="n">LossMeter</span><span class="p">,</span> <span class="n">LossMeterType</span><span class="p">,</span> <span class="n">TrainingLosses</span>
@@ -584,8 +585,6 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">client_name</span> <span class="o">=</span> <span class="n">client_name</span> <span class="k">if</span> <span class="n">client_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">generate_hash</span><span class="p">()</span>
         <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Client Name: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">client_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpoint_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;client_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">client_name</span><span class="si">}</span><span class="s2">_state.pt&quot;</span>
 
         <span class="k">if</span> <span class="n">checkpoint_and_state_module</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span> <span class="o">=</span> <span class="n">checkpoint_and_state_module</span>
@@ -1907,52 +1906,22 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_save_client_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Saves checkpoint dict consisting of client name, total steps, lr schedulers, metrics reporter and</span>
-<span class="sd">        optimizers state. Method can be overridden to augment saved checkpointed state.</span>
+<span class="sd">        Save a checkpoint of the client&#39;s state as defined by the state_checkpointer&#39;s snapshot_attrs.</span>
+<span class="sd">        By default, snapshot_attrs includes attributes such as client name, total steps, lr schedulers,</span>
+<span class="sd">        metrics reporter, and optimizer states. You can override snapshot_attrs in the state_checkpointer to</span>
+<span class="sd">        customize which attributes are saved in the checkpoint.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="n">state</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;lr_schedulers_state&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">scheduler</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr_schedulers</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
-            <span class="s2">&quot;total_steps&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_steps</span><span class="p">,</span>
-            <span class="s2">&quot;client_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">client_name</span><span class="p">,</span>
-            <span class="s2">&quot;reports_manager&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">reports_manager</span><span class="p">,</span>
-            <span class="s2">&quot;optimizers_state&quot;</span><span class="p">:</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">optimizer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
-        <span class="p">}</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">save_state</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state_checkpoint_name</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">state_checkpointer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">save_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_load_client_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Load checkpoint dict consisting of client name, total steps, lr schedulers, metrics reporter and optimizers</span>
 <span class="sd">        state. Method can be overridden to augment loaded checkpointed state.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">client_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">maybe_load_state</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state_checkpoint_name</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">client_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>
-
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client_state</span><span class="p">,</span> <span class="s2">&quot;client_name&quot;</span><span class="p">,</span> <span class="s2">&quot;client_name&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client_state</span><span class="p">,</span> <span class="s2">&quot;total_steps&quot;</span><span class="p">,</span> <span class="s2">&quot;total_steps&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client_state</span><span class="p">,</span> <span class="s2">&quot;reports_manager&quot;</span><span class="p">,</span> <span class="s2">&quot;reports_manager&quot;</span><span class="p">,</span> <span class="n">ReportsManager</span><span class="p">)</span>
-
-        <span class="k">assert</span> <span class="s2">&quot;lr_schedulers_state&quot;</span> <span class="ow">in</span> <span class="n">client_state</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">client_state</span><span class="p">[</span><span class="s2">&quot;lr_schedulers_state&quot;</span><span class="p">],</span> <span class="nb">dict</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="s2">&quot;optimizers_state&quot;</span> <span class="ow">in</span> <span class="n">client_state</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">client_state</span><span class="p">[</span><span class="s2">&quot;optimizers_state&quot;</span><span class="p">],</span> <span class="nb">dict</span><span class="p">)</span>
-
-        <span class="c1"># Optimizer is updated in setup_client to reference model weights from server</span>
-        <span class="c1"># Thus, only optimizer state (per parameter values such as momentum)</span>
-        <span class="c1"># should be loaded</span>
-        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">optimizer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">optimizer_state</span> <span class="o">=</span> <span class="n">client_state</span><span class="p">[</span><span class="s2">&quot;optimizers_state&quot;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span>
-            <span class="n">optimizer_state_dict</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
-            <span class="n">optimizer_state_dict</span><span class="p">[</span><span class="s2">&quot;state&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">optimizer_state</span>
-            <span class="n">optimizer</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">optimizer_state_dict</span><span class="p">)</span>
-
-        <span class="c1"># Schedulers initialized in setup_client to reference correct optimizers</span>
-        <span class="c1"># Here we load in all other aspects of the scheduler state</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr_schedulers</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">lr_schedulers</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">client_state</span><span class="p">[</span><span class="s2">&quot;lr_schedulers_state&quot;</span><span class="p">][</span><span class="n">key</span><span class="p">])</span>
-
-        <span class="k">return</span> <span class="kc">True</span></div>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">state_checkpointer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Loading client state from checkpoint&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">maybe_load_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
 </pre></div>
         </article>

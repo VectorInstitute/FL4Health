@@ -241,6 +241,7 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.client_module.html">fl4health.checkpointing.client_module module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.opacus_checkpointer.html">fl4health.checkpointing.opacus_checkpointer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.server_module.html">fl4health.checkpointing.server_module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html">fl4health.checkpointing.state_checkpointer module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.client_managers.html">fl4health.client_managers package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of fl4health.client_managers package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -554,12 +555,15 @@ this context, so we explicitly surface the error with a try/except.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.checkpointing.checkpointer.BestMetricTorchModuleCheckpointer.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">checkpoint_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'val</span> <span class="pre">-</span> <span class="pre">prediction</span> <span class="pre">-</span> <span class="pre">'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/checkpointer.html#BestMetricTorchModuleCheckpointer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.checkpointer.BestMetricTorchModuleCheckpointer.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>Checkpointer that checkpoints based on the value of a user defined metric.</p>
+<dd><p>Checkpointer that checkpoints based on the value of a user defined metric.
+:type checkpoint_dir: <span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span>
+:param checkpoint_dir: Directory to which the model is saved. This directory should already exist. The</p>
+<blockquote>
+<div><p>checkpointer will not create it if it does not.</p>
+</div></blockquote>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>checkpoint_dir</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Directory to which the model is saved. This directory should already exist. The
-checkpointer will not create it if it does not.</p></li>
 <li><p><strong>checkpoint_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Name of the checkpoint to be saved.</p></li>
 <li><p><strong>metric</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – The name of the metric to base checkpointing on. After prepending the prefix, should be a
 key in the metrics dictionary passed in <code class="docutils literal notranslate"><span class="pre">self.maybe_checkpoint</span></code>. In BasicClient this is the ‘name’
@@ -660,87 +664,6 @@ checkpointer will not create it if it does not.</p></li>
 decision, based on the score function. NOT USED.</p></li>
 <li><p><strong>metrics</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Scalar</em><em>]</em>) – Metrics associated with the provided model. Will potentially contribute to
 the checkpointing decision, based on the score function. NOT USED.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>e</strong> – Will throw an error if there is an issue saving the model. <code class="docutils literal notranslate"><span class="pre">Torch.save</span></code> seems to swallow errors in
-this context, so we explicitly surface the error with a try/except.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PerRoundStateCheckpointer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">checkpoint_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/checkpointer.html#PerRoundStateCheckpointer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">checkpoint_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/checkpointer.html#PerRoundStateCheckpointer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>Base class that provides a uniform interface for loading, saving and checking if checkpoints exists.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>checkpoint_dir</strong> (<em>Path</em>) – Base directory to store checkpoints. This checkpoint directory MUST already exist.
-It will not be created by this state checkpointer.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.checkpoint_exists">
-<span class="sig-name descname"><span class="pre">checkpoint_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">checkpoint_name</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/checkpointer.html#PerRoundStateCheckpointer.checkpoint_exists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.checkpoint_exists" title="Link to this definition">¶</a></dt>
-<dd><p>Checks if a checkpoint exists at the <code class="docutils literal notranslate"><span class="pre">checkpoint_dir</span></code> constructed at initialization + <code class="docutils literal notranslate"><span class="pre">checkpoint_name</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>checkpoint_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Name of checkpoint for existence test. Directory of checkpoint is held internally
-as state by the checkpointer</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Previously this function supported sending a path, but now requires <code class="docutils literal notranslate"><span class="pre">checkpoint_name</span></code>. Will
-raise an error is <code class="docutils literal notranslate"><span class="pre">checkpoint_path</span></code> provided.</p>
-</dd>
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>True if checkpoint exists, otherwise false.</p>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)">bool</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.load_checkpoint">
-<span class="sig-name descname"><span class="pre">load_checkpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">checkpoint_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/checkpointer.html#PerRoundStateCheckpointer.load_checkpoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.load_checkpoint" title="Link to this definition">¶</a></dt>
-<dd><p>Loads and returns the checkpoint stored in <code class="docutils literal notranslate"><span class="pre">checkpoint_dir</span></code> under the provided name if it exists. If it
-does not exist, an assertion error will be thrown.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>checkpoint_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Name of the state checkpoint to be loaded.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A dictionary representing the checkpointed state, as loaded by <code class="docutils literal notranslate"><span class="pre">torch.load</span></code>.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, Any]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.save_checkpoint">
-<span class="sig-name descname"><span class="pre">save_checkpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">checkpoint_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/checkpointer.html#PerRoundStateCheckpointer.save_checkpoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.save_checkpoint" title="Link to this definition">¶</a></dt>
-<dd><p>Saves <code class="docutils literal notranslate"><span class="pre">checkpoint_dict</span></code> to checkpoint path form from this classes checkpointer dir and the provided
-checkpoint name.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>checkpoint_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Name of the state checkpoint file.</p></li>
-<li><p><strong>checkpoint_dict</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – A dictionary with string keys and values of type Any representing the
-state to checkpoint.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
@@ -911,13 +834,6 @@ should determine whether to produce a checkpoint AND save it if applicable.</p>
 <li><a class="reference internal" href="#fl4health.checkpointing.checkpointer.LatestTorchModuleCheckpointer"><code class="docutils literal notranslate"><span class="pre">LatestTorchModuleCheckpointer</span></code></a><ul>
 <li><a class="reference internal" href="#fl4health.checkpointing.checkpointer.LatestTorchModuleCheckpointer.__init__"><code class="docutils literal notranslate"><span class="pre">LatestTorchModuleCheckpointer.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.checkpointing.checkpointer.LatestTorchModuleCheckpointer.maybe_checkpoint"><code class="docutils literal notranslate"><span class="pre">LatestTorchModuleCheckpointer.maybe_checkpoint()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer"><code class="docutils literal notranslate"><span class="pre">PerRoundStateCheckpointer</span></code></a><ul>
-<li><a class="reference internal" href="#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.__init__"><code class="docutils literal notranslate"><span class="pre">PerRoundStateCheckpointer.__init__()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.checkpoint_exists"><code class="docutils literal notranslate"><span class="pre">PerRoundStateCheckpointer.checkpoint_exists()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.load_checkpoint"><code class="docutils literal notranslate"><span class="pre">PerRoundStateCheckpointer.load_checkpoint()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.checkpointing.checkpointer.PerRoundStateCheckpointer.save_checkpoint"><code class="docutils literal notranslate"><span class="pre">PerRoundStateCheckpointer.save_checkpoint()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#fl4health.checkpointing.checkpointer.TorchModuleCheckpointer"><code class="docutils literal notranslate"><span class="pre">TorchModuleCheckpointer</span></code></a><ul>

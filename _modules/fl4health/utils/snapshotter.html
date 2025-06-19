@@ -240,6 +240,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.client_module.html">fl4health.checkpointing.client_module module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.opacus_checkpointer.html">fl4health.checkpointing.opacus_checkpointer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.server_module.html">fl4health.checkpointing.server_module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html">fl4health.checkpointing.state_checkpointer module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/fl4health.client_managers.html">fl4health.client_managers package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of fl4health.client_managers package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -500,14 +501,13 @@
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">TypeVar</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">TypeVar</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.history</span><span class="w"> </span><span class="kn">import</span> <span class="n">History</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim.lr_scheduler</span><span class="w"> </span><span class="kn">import</span> <span class="n">LRScheduler</span>
-
-<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.clients.basic_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasicClient</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.metrics.metric_managers</span><span class="w"> </span><span class="kn">import</span> <span class="n">MetricManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.reporting.reports_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReportsManager</span>
@@ -519,85 +519,13 @@
 <div class="viewcode-block" id="AbstractSnapshotter">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AbstractSnapshotter</span><span class="p">(</span><span class="n">ABC</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
-<div class="viewcode-block" id="AbstractSnapshotter.__init__">
-<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">:</span> <span class="n">BasicClient</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Abstract class for saving and loading the state of the client&#39;s attributes.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            client (BasicClient): The client to be monitored.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">client</span></div>
-
-
-<div class="viewcode-block" id="AbstractSnapshotter.dict_wrap_attr">
-<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter.dict_wrap_attr">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">dict_wrap_attr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">T</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Wrap the attribute in a dictionary if it is not already a dictionary.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            name (str): Name of the attribute.</span>
-<span class="sd">            expected_type (type[T]): Expected type of the attribute.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            dict[str, T]: Wrapped attribute as a dictionary.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">attribute</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attribute</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">):</span>
-            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;None&quot;</span><span class="p">:</span> <span class="n">attribute</span><span class="p">}</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attribute</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">attribute</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">):</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Incompatible type of attribute </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">attribute</span><span class="p">)</span><span class="si">}</span><span class="s2"> for key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">attribute</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Incompatible type of attribute </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">attribute</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="AbstractSnapshotter.save">
-<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter.save">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Save the state of the attribute.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            name (str): Name of the attribute.</span>
-<span class="sd">            expected_type (type[T]): Expected type of the attribute.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            dict[str, Any]: A dictionary containing the state of the attribute.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">attribute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dict_wrap_attr</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">save_attribute</span><span class="p">(</span><span class="n">attribute</span><span class="p">)}</span></div>
-
-
-<div class="viewcode-block" id="AbstractSnapshotter.load">
-<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter.load">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">snapshot</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Load the state of the attribute to the client.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            snapshot (dict[str, Any]): Snapshot containing the state of the attribute.</span>
-<span class="sd">            name (str): Name of the attribute.</span>
-<span class="sd">            expected_type (type[T]): Expected type of the attribute.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">attribute</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dict_wrap_attr</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">load_attribute</span><span class="p">(</span><span class="n">snapshot</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">attribute</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">list</span><span class="p">(</span><span class="n">attribute</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="p">[</span><span class="s2">&quot;None&quot;</span><span class="p">]:</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">attribute</span><span class="p">[</span><span class="s2">&quot;None&quot;</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">attribute</span><span class="p">)</span></div>
-
 
 <div class="viewcode-block" id="AbstractSnapshotter.save_attribute">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter.save_attribute">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">save_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Abstract method to save the state of the attribute. This method should be implemented based on the type of</span>
+<span class="sd">        Abstract method used to save the state of the attribute. This method should be implemented based on the type of</span>
 <span class="sd">        the attribute and the way it should be saved.</span>
 
 <span class="sd">        Args:</span>
@@ -632,7 +560,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.OptimizerSnapshotter.save_attribute">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">save_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optimizer</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Save the state of the optimizers by saving &quot;state&quot; attribute of the optimizer.</span>
+<span class="sd">        Save the state of the optimizers by saving &quot;state&quot; attribute of the optimizers.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            attribute (dict[str, Optimizer]): The optimizers to be saved.</span>
@@ -650,7 +578,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.OptimizerSnapshotter.load_attribute">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">load_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute_snapshot</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Optimizer</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Load the state of the optimizers by loading &quot;state&quot; attribute of the optimizer</span>
+<span class="sd">        Load the state of the optimizers by loading &quot;state&quot; attribute of the optimizers.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            attribute_snapshot (dict[str, Any]): The snapshot containing the state of the optimizers.</span>
@@ -776,33 +704,171 @@
 
 
 
-<div class="viewcode-block" id="NumberSnapshotter">
-<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.NumberSnapshotter">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">NumberSnapshotter</span><span class="p">(</span><span class="n">AbstractSnapshotter</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]):</span>
-<div class="viewcode-block" id="NumberSnapshotter.save_attribute">
-<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.NumberSnapshotter.save_attribute">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">save_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<div class="viewcode-block" id="SingletonSnapshotter">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.SingletonSnapshotter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SingletonSnapshotter</span><span class="p">(</span><span class="n">AbstractSnapshotter</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">bool</span><span class="p">]):</span>
+<div class="viewcode-block" id="SingletonSnapshotter.save_attribute">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.SingletonSnapshotter.save_attribute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">bool</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Save the state of the numbers (either single or dictionary of them).</span>
+<span class="sd">        Save the state of a singleton which could be a number or a boolean (either single or dictionary of them).</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            attribute (dict[str, int | float]): The numbers to be saved.</span>
+<span class="sd">            attribute (dict[str, int | float | bool]): The singleton to be saved.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            dict[str, Any]: A dictionary containing the state of the numbers.</span>
+<span class="sd">            dict[str, Any]: A dictionary containing the state of the singletons.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">attribute</span></div>
 
 
-<div class="viewcode-block" id="NumberSnapshotter.load_attribute">
-<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.NumberSnapshotter.load_attribute">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">load_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute_snapshot</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="SingletonSnapshotter.load_attribute">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.SingletonSnapshotter.load_attribute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute_snapshot</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">bool</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Load the state of the numbers (either single or dictionary of them).</span>
+<span class="sd">        Load the state of the singleton (either single or dictionary of them).</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            attribute_snapshot (dict[str, Any]): The snapshot containing the state of the numbers.</span>
-<span class="sd">            attribute (dict[str, int | float]): The numbers to be loaded</span>
+<span class="sd">            attribute_snapshot (dict[str, Any]): The snapshot containing the state of the singleton.</span>
+<span class="sd">            attribute (dict[str, int | float | bool]): The singletons to be loaded</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attribute</span><span class="p">:</span>
+            <span class="n">attribute</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">attribute_snapshot</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="HistorySnapshotter">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.HistorySnapshotter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HistorySnapshotter</span><span class="p">(</span><span class="n">AbstractSnapshotter</span><span class="p">[</span><span class="n">History</span><span class="p">]):</span>
+<div class="viewcode-block" id="HistorySnapshotter.save_attribute">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.HistorySnapshotter.save_attribute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">History</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save the state of the history objects (either single or dictionary of them).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            attribute (dict[str, History]): The history to be saved.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict[str, Any]: A dictionary containing the state of the history.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">attribute</span></div>
+
+
+<div class="viewcode-block" id="HistorySnapshotter.load_attribute">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.HistorySnapshotter.load_attribute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute_snapshot</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">History</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load the state of the history (either single or dictionary of them).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            attribute_snapshot (dict[str, Any]): The snapshot containing the state of the history.</span>
+<span class="sd">            attribute (dict[str, History]): The history to be loaded</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attribute</span><span class="p">:</span>
+            <span class="n">attribute</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">attribute_snapshot</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="StringSnapshotter">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.StringSnapshotter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StringSnapshotter</span><span class="p">(</span><span class="n">AbstractSnapshotter</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+<div class="viewcode-block" id="StringSnapshotter.save_attribute">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.StringSnapshotter.save_attribute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save the state of the strings (either single or dictionary of them).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            attribute (dict[str, str]): The string to be saved.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict[str, Any]: A dictionary containing the state of the strings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">attribute</span></div>
+
+
+<div class="viewcode-block" id="StringSnapshotter.load_attribute">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.StringSnapshotter.load_attribute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute_snapshot</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load the state of the strings (either single or dictionary of them).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            attribute_snapshot (dict[str, Any]): The snapshot containing the state of the strings.</span>
+<span class="sd">            attribute (dict[str, str]): The strings to be loaded</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attribute</span><span class="p">:</span>
+            <span class="n">attribute</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">attribute_snapshot</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="BytesSnapshotter">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.BytesSnapshotter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BytesSnapshotter</span><span class="p">(</span><span class="n">AbstractSnapshotter</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]):</span>
+
+<div class="viewcode-block" id="BytesSnapshotter.save_attribute">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.BytesSnapshotter.save_attribute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save the state of the bytes (either single or dictionary of them).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            attribute (dict[str, str]): The string to be saved.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict[str, Any]: A dictionary containing the state of the bytes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">attribute</span></div>
+
+
+<div class="viewcode-block" id="BytesSnapshotter.load_attribute">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.BytesSnapshotter.load_attribute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute_snapshot</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load the state of the bytes (either single or dictionary of them).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            attribute_snapshot (dict[str, Any]): The snapshot containing the state of the bytes.</span>
+<span class="sd">            attribute (dict[str, str]): The bytes to be loaded</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attribute</span><span class="p">:</span>
+            <span class="n">attribute</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">attribute_snapshot</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="EnumSnapshotter">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.EnumSnapshotter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EnumSnapshotter</span><span class="p">(</span><span class="n">AbstractSnapshotter</span><span class="p">[</span><span class="n">Enum</span><span class="p">]):</span>
+
+<div class="viewcode-block" id="EnumSnapshotter.save_attribute">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.EnumSnapshotter.save_attribute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save the state of the Enum (either single or dictionary of them).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            attribute (dict[str, Enum]): The enum to be saved.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict[str, Any]: A dictionary containing the state of the enum.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">attribute</span></div>
+
+
+<div class="viewcode-block" id="EnumSnapshotter.load_attribute">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.EnumSnapshotter.load_attribute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attribute_snapshot</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">attribute</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load the state of the num (either single or dictionary of them).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            attribute_snapshot (dict[str, Any]): The snapshot containing the state of the enum.</span>
+<span class="sd">            attribute (dict[str, Enum]): The enum to be loaded</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attribute</span><span class="p">:</span>
             <span class="n">attribute</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">attribute_snapshot</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>

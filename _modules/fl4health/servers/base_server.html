@@ -240,6 +240,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.client_module.html">fl4health.checkpointing.client_module module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.opacus_checkpointer.html">fl4health.checkpointing.opacus_checkpointer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.server_module.html">fl4health.checkpointing.server_module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html">fl4health.checkpointing.state_checkpointer module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/fl4health.client_managers.html">fl4health.client_managers package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of fl4health.client_managers package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -501,7 +502,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEBUG</span><span class="p">,</span> <span class="n">ERROR</span><span class="p">,</span> <span class="n">INFO</span><span class="p">,</span> <span class="n">WARNING</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluateRes</span><span class="p">,</span> <span class="n">Parameters</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Code</span><span class="p">,</span> <span class="n">Config</span><span class="p">,</span> <span class="n">GetParametersIns</span><span class="p">,</span> <span class="n">Scalar</span>
@@ -517,8 +517,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.reporting.reports_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReportsManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.servers.polling</span><span class="w"> </span><span class="kn">import</span> <span class="n">poll_clients</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.strategies.strategy_with_poll</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrategyWithPolling</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">narrow_dict_type_and_set_attribute</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.parameter_extraction</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_all_model_parameters</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.random</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_hash</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluateFailures</span><span class="p">,</span> <span class="n">FitFailures</span>
 
@@ -586,7 +584,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">server_name</span> <span class="o">=</span> <span class="n">server_name</span> <span class="k">if</span> <span class="n">server_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">generate_hash</span><span class="p">()</span>
         <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Server Name: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">server_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpoint_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;server_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">server_name</span><span class="si">}</span><span class="s2">_state.pt&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">accept_failures</span> <span class="o">=</span> <span class="n">accept_failures</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">current_round</span><span class="p">:</span> <span class="nb">int</span>
@@ -652,17 +649,17 @@
 <span class="sd">            seconds.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="c1"># Attempt to load the server state if it exists. If the state checkpoint exists, update history, server</span>
-        <span class="c1"># round and model accordingly</span>
+        <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Initializing server state and global parameters&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_initial_parameters</span><span class="p">(</span><span class="n">server_round</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="n">History</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_round</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="c1"># Attempt to load the server state if it exists. If the state checkpoint exists, update the initiated</span>
+        <span class="c1"># attributes like history, server round and model accordingly</span>
         <span class="n">state_load_success</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_server_state</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">state_load_success</span><span class="p">:</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Server state checkpoint successfully loaded.&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Initializing server state and global parameters&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_initial_parameters</span><span class="p">(</span><span class="n">server_round</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="n">History</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">current_round</span> <span class="o">=</span> <span class="mi">1</span>
-
+            <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;No server state checkpoint found. Starting from scratch.&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_round</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Evaluating initial parameters&quot;</span><span class="p">)</span>
             <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">parameters</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
@@ -936,43 +933,23 @@
 <span class="sd">        method can be overridden to add any necessary state to the checkpoint. The model will be injected into the</span>
 <span class="sd">        ckpt state by the checkpoint module</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">other_state_to_save</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;history&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">,</span>
-            <span class="s2">&quot;current_round&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_round</span><span class="p">,</span>
-            <span class="s2">&quot;reports_manager&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">reports_manager</span><span class="p">,</span>
-            <span class="s2">&quot;server_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_name</span><span class="p">,</span>
-        <span class="p">}</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">save_state</span><span class="p">(</span>
-            <span class="n">state_checkpoint_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">state_checkpoint_name</span><span class="p">,</span>
-            <span class="n">server_parameters</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span>
-            <span class="n">other_state</span><span class="o">=</span><span class="n">other_state_to_save</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">state_checkpointer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">save_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_load_server_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Load server checkpoint consisting of model, history, server name, current round and metrics reporter.</span>
 <span class="sd">        The method can be overridden to add any necessary state when loading the checkpoint.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="c1"># Attempt to load the server state if it exists. This variable will be None if it does not.</span>
-        <span class="n">server_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">maybe_load_state</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state_checkpoint_name</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">server_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">state_checkpointer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="c1"># Attempt to load the server state if it exists.</span>
+        <span class="n">server_parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">maybe_load_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">server_parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">server_parameters</span>
+            <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Loaded server state from checkpoint&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
-
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_state</span><span class="p">,</span> <span class="s2">&quot;server_name&quot;</span><span class="p">,</span> <span class="s2">&quot;server_name&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_state</span><span class="p">,</span> <span class="s2">&quot;current_round&quot;</span><span class="p">,</span> <span class="s2">&quot;current_round&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_state</span><span class="p">,</span> <span class="s2">&quot;reports_manager&quot;</span><span class="p">,</span> <span class="s2">&quot;reports_manager&quot;</span><span class="p">,</span> <span class="n">ReportsManager</span><span class="p">)</span>
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_state</span><span class="p">,</span> <span class="s2">&quot;history&quot;</span><span class="p">,</span> <span class="s2">&quot;history&quot;</span><span class="p">,</span> <span class="n">History</span><span class="p">)</span>
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">server_state</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;parameters&quot;</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">get_all_model_parameters</span>
-        <span class="p">)</span>
-        <span class="c1"># Needed for when _hydrate_model_for_checkpointing is called</span>
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_state</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;server_model&quot;</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">parameters</span> <span class="o">=</span> <span class="n">get_all_model_parameters</span><span class="p">(</span><span class="n">server_state</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">])</span>
-        <span class="k">return</span> <span class="kc">True</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_terminate_after_unacceptable_failures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">assert</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">accept_failures</span>

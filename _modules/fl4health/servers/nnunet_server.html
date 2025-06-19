@@ -240,6 +240,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.client_module.html">fl4health.checkpointing.client_module module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.opacus_checkpointer.html">fl4health.checkpointing.opacus_checkpointer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.server_module.html">fl4health.checkpointing.server_module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html">fl4health.checkpointing.state_checkpointer module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/fl4health.client_managers.html">fl4health.client_managers package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of fl4health.client_managers package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -503,22 +504,18 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">INFO</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameters</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Code</span><span class="p">,</span> <span class="n">Config</span><span class="p">,</span> <span class="n">EvaluateIns</span><span class="p">,</span> <span class="n">FitIns</span><span class="p">,</span> <span class="n">GetPropertiesIns</span><span class="p">,</span> <span class="n">Scalar</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.client_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.client_proxy</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientProxy</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.history</span><span class="w"> </span><span class="kn">import</span> <span class="n">History</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">Strategy</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.server_module</span><span class="w"> </span><span class="kn">import</span> <span class="n">NnUnetServerCheckpointAndStateModule</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.reporting.base_reporter</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseReporter</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.reporting.reports_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReportsManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.servers.base_server</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlServer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">narrow_dict_type</span><span class="p">,</span> <span class="n">narrow_dict_type_and_set_attribute</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">narrow_dict_type</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.nnunet_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">NnunetConfig</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.parameter_extraction</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_all_model_parameters</span>
 
 <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
     <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">DeprecationWarning</span><span class="p">)</span>
@@ -663,7 +660,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">num_segmentation_heads</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">global_deep_supervision</span><span class="p">,</span>
         <span class="p">)</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span></div>
 
 
@@ -703,18 +699,7 @@
             <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">model_checkpointers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="p">)</span>
 
-        <span class="c1"># If the state_checkpointer has been specified and a state checkpoint exists, we load state</span>
-        <span class="c1"># NOTE: Inherent assumption that if checkpoint exists for server that it also will exist for client.</span>
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">state_checkpointer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">state_checkpointer</span><span class="o">.</span><span class="n">checkpoint_exists</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpoint_name</span>
-            <span class="p">)</span>  <span class="c1"># self.state_checkpoint_name initialized in base FLServer Class</span>
-        <span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_load_server_state</span><span class="p">()</span>
-
-        <span class="c1"># Otherwise, we&#39;re starting training from &quot;scratch&quot;</span>
-        <span class="k">elif</span> <span class="n">checkpointer_exists</span> <span class="ow">or</span> <span class="n">plans_bytes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">checkpointer_exists</span> <span class="ow">or</span> <span class="n">plans_bytes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;[PRE-INIT]&quot;</span><span class="p">)</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Requesting properties from one random client via get_properties&quot;</span><span class="p">)</span>
@@ -757,6 +742,10 @@
             <span class="k">if</span> <span class="n">checkpointer_exists</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">initialize_server_model</span><span class="p">()</span>
 
+            <span class="c1"># If the state_checkpointer has been specified and a state checkpoint exists, the state</span>
+            <span class="c1"># will be loaded when executing ``fit_with_per_round_checkpointing`` of the base_server.</span>
+            <span class="c1"># NOTE: Inherent assumption that if checkpoint exists for server that it also will exist for client.</span>
+
             <span class="c1"># Wrap config functions so that we are sure the nnunet_plans are included</span>
             <span class="n">new_fit_cfg_fn</span> <span class="o">=</span> <span class="n">add_items_to_config_fn</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">configure_fit</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;nnunet_plans&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_plans_bytes</span><span class="p">}</span>
@@ -766,13 +755,10 @@
             <span class="p">)</span>
             <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="p">,</span> <span class="s2">&quot;configure_fit&quot;</span><span class="p">,</span> <span class="n">new_fit_cfg_fn</span><span class="p">)</span>
             <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="p">,</span> <span class="s2">&quot;configure_evaluate&quot;</span><span class="p">,</span> <span class="n">new_eval_cfg_fn</span><span class="p">)</span>
-
         <span class="c1"># Finish</span>
         <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span></div>
 
 
-    <span class="c1"># TODO: We should have a get server state method</span>
-    <span class="c1"># subclass could call parent method and not have to copy entire state.</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_save_server_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save server checkpoint consisting of model, history, server round, metrics reporter and server name. This</span>
@@ -788,55 +774,7 @@
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="p">)</span>
 
-        <span class="n">other_state_to_save</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;history&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">,</span>
-            <span class="s2">&quot;current_round&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_round</span><span class="p">,</span>
-            <span class="s2">&quot;reports_manager&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">reports_manager</span><span class="p">,</span>
-            <span class="s2">&quot;server_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_name</span><span class="p">,</span>
-            <span class="s2">&quot;nnunet_plans_bytes&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_plans_bytes</span><span class="p">,</span>
-            <span class="s2">&quot;num_input_channels&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_input_channels</span><span class="p">,</span>
-            <span class="s2">&quot;num_segmentation_heads&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_segmentation_heads</span><span class="p">,</span>
-            <span class="s2">&quot;global_deep_supervision&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_deep_supervision</span><span class="p">,</span>
-            <span class="s2">&quot;nnunet_config&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_config</span><span class="p">,</span>
-        <span class="p">}</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">save_state</span><span class="p">(</span>
-            <span class="n">state_checkpoint_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">state_checkpoint_name</span><span class="p">,</span>
-            <span class="n">server_parameters</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span>
-            <span class="n">other_state</span><span class="o">=</span><span class="n">other_state_to_save</span><span class="p">,</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_load_server_state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Load server checkpoint consisting of model, history, server name, current round and metrics reporter.</span>
-<span class="sd">        The method overrides parent to add any necessary state when loading the checkpoint.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Attempt to load the server state if it exists. This variable will be None if it does not.</span>
-        <span class="n">server_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">maybe_load_state</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state_checkpoint_name</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">server_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">False</span>
-
-        <span class="c1"># Standard attributes to load</span>
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_state</span><span class="p">,</span> <span class="s2">&quot;current_round&quot;</span><span class="p">,</span> <span class="s2">&quot;current_round&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_state</span><span class="p">,</span> <span class="s2">&quot;server_name&quot;</span><span class="p">,</span> <span class="s2">&quot;server_name&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_state</span><span class="p">,</span> <span class="s2">&quot;reports_manager&quot;</span><span class="p">,</span> <span class="s2">&quot;reports_manager&quot;</span><span class="p">,</span> <span class="n">ReportsManager</span><span class="p">)</span>
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_state</span><span class="p">,</span> <span class="s2">&quot;history&quot;</span><span class="p">,</span> <span class="s2">&quot;history&quot;</span><span class="p">,</span> <span class="n">History</span><span class="p">)</span>
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">server_state</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;parameters&quot;</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">get_all_model_parameters</span>
-        <span class="p">)</span>
-        <span class="c1"># Needed for when _hydrate_model_for_checkpointing is called</span>
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_state</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;server_model&quot;</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">)</span>
-
-        <span class="c1"># NnunetServer specific attributes to load</span>
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_state</span><span class="p">,</span> <span class="s2">&quot;nnunet_plans_bytes&quot;</span><span class="p">,</span> <span class="s2">&quot;nnunet_plans_bytes&quot;</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)</span>
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_state</span><span class="p">,</span> <span class="s2">&quot;num_segmentation_heads&quot;</span><span class="p">,</span> <span class="s2">&quot;num_segmentation_heads&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_state</span><span class="p">,</span> <span class="s2">&quot;num_input_channels&quot;</span><span class="p">,</span> <span class="s2">&quot;num_input_channels&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">server_state</span><span class="p">,</span> <span class="s2">&quot;global_deep_supervision&quot;</span><span class="p">,</span> <span class="s2">&quot;global_deep_supervision&quot;</span><span class="p">,</span> <span class="nb">bool</span>
-        <span class="p">)</span>
-        <span class="n">narrow_dict_type_and_set_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_state</span><span class="p">,</span> <span class="s2">&quot;nnunet_config&quot;</span><span class="p">,</span> <span class="s2">&quot;nnunet_config&quot;</span><span class="p">,</span> <span class="n">NnunetConfig</span><span class="p">)</span>
-        <span class="k">return</span> <span class="kc">True</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_save_server_state</span><span class="p">()</span></div>
 
 </pre></div>
         </article>

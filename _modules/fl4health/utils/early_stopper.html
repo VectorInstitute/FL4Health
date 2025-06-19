@@ -240,6 +240,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.client_module.html">fl4health.checkpointing.client_module module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.opacus_checkpointer.html">fl4health.checkpointing.opacus_checkpointer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.server_module.html">fl4health.checkpointing.server_module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html">fl4health.checkpointing.state_checkpointer module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/fl4health.client_managers.html">fl4health.client_managers package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of fl4health.client_managers package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -499,34 +500,14 @@
           <h1>Source code for fl4health.utils.early_stopper</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">INFO</span><span class="p">,</span> <span class="n">WARNING</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
-
-<span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim.lr_scheduler</span><span class="w"> </span><span class="kn">import</span> <span class="n">LRScheduler</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.checkpointer</span><span class="w"> </span><span class="kn">import</span> <span class="n">PerRoundStateCheckpointer</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.metrics.metric_managers</span><span class="w"> </span><span class="kn">import</span> <span class="n">MetricManager</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.reporting.reports_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReportsManager</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoggingMode</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.losses</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrainingLosses</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.snapshotter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">AbstractSnapshotter</span><span class="p">,</span>
-    <span class="n">LRSchedulerSnapshotter</span><span class="p">,</span>
-    <span class="n">NumberSnapshotter</span><span class="p">,</span>
-    <span class="n">OptimizerSnapshotter</span><span class="p">,</span>
-    <span class="n">SerializableObjectSnapshotter</span><span class="p">,</span>
-    <span class="n">T</span><span class="p">,</span>
-    <span class="n">TorchModuleSnapshotter</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
 
 <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.clients.basic_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasicClient</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.state_checkpointer</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientStateCheckpointer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">LoggingMode</span>
 
 
 <div class="viewcode-block" id="EarlyStopper">
@@ -537,9 +518,9 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">client</span><span class="p">:</span> <span class="n">BasicClient</span><span class="p">,</span>
+        <span class="n">train_loop_checkpoint_dir</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
         <span class="n">patience</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
         <span class="n">interval_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
-        <span class="n">snapshot_dir</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Early stopping class is a plugin for the client that allows to stop local training based on the validation</span>
@@ -549,13 +530,12 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            client (BasicClient): The client to be monitored.</span>
+<span class="sd">            train_loop_checkpoint_dir (Path): Directory to checkpoint the &quot;best&quot; state seen so far.</span>
 <span class="sd">            patience (int, optional): Number of validation cycles to wait before stopping the training. If it is equal</span>
 <span class="sd">                to None client never stops, but still loads the best state before sending the model to the server.</span>
 <span class="sd">                Defaults to 1.</span>
 <span class="sd">            interval_steps (int): Specifies the frequency, in terms of training intervals, at which the early</span>
 <span class="sd">                stopping mechanism should evaluate the validation loss. Defaults to 5.</span>
-<span class="sd">            snapshot_dir (Path | None, optional): Rather than keeping best state in the memory we can checkpoint it to</span>
-<span class="sd">                the given directory. If it is not given, the best state is kept in the memory. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">client</span>
@@ -564,106 +544,28 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">count_down</span> <span class="o">=</span> <span class="n">patience</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">interval_steps</span> <span class="o">=</span> <span class="n">interval_steps</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">best_score</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_ckpt</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">AbstractSnapshotter</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># Early stopper uses a default name for the state</span>
+        <span class="n">checkpoint_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;temp_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">client_name</span><span class="si">}</span><span class="s2">.pt&quot;</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_attrs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">TorchModuleSnapshotter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">),</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">),</span>
-            <span class="s2">&quot;optimizers&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">OptimizerSnapshotter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">),</span> <span class="n">Optimizer</span><span class="p">),</span>
-            <span class="s2">&quot;lr_schedulers&quot;</span><span class="p">:</span> <span class="p">(</span>
-                <span class="n">LRSchedulerSnapshotter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">),</span>
-                <span class="n">LRScheduler</span><span class="p">,</span>
-            <span class="p">),</span>
-            <span class="s2">&quot;learning_rate&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">NumberSnapshotter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">),</span> <span class="nb">float</span><span class="p">),</span>
-            <span class="s2">&quot;total_steps&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">NumberSnapshotter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">),</span> <span class="nb">int</span><span class="p">),</span>
-            <span class="s2">&quot;total_epochs&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">NumberSnapshotter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">),</span> <span class="nb">int</span><span class="p">),</span>
-            <span class="s2">&quot;reports_manager&quot;</span><span class="p">:</span> <span class="p">(</span>
-                <span class="n">SerializableObjectSnapshotter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">),</span>
-                <span class="n">ReportsManager</span><span class="p">,</span>
-            <span class="p">),</span>
-            <span class="s2">&quot;train_loss_meter&quot;</span><span class="p">:</span> <span class="p">(</span>
-                <span class="n">SerializableObjectSnapshotter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">),</span>
-                <span class="n">TrainingLosses</span><span class="p">,</span>
-            <span class="p">),</span>
-            <span class="s2">&quot;train_metric_manager&quot;</span><span class="p">:</span> <span class="p">(</span>
-                <span class="n">SerializableObjectSnapshotter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">),</span>
-                <span class="n">MetricManager</span><span class="p">,</span>
-            <span class="p">),</span>
-        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span> <span class="o">=</span> <span class="n">ClientStateCheckpointer</span><span class="p">(</span>
+            <span class="n">checkpoint_dir</span><span class="o">=</span><span class="n">train_loop_checkpoint_dir</span><span class="p">,</span> <span class="n">checkpoint_name</span><span class="o">=</span><span class="n">checkpoint_name</span>
+        <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">snapshot_dir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># TODO: Move to generic checkpointer</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">checkpointer</span> <span class="o">=</span> <span class="n">PerRoundStateCheckpointer</span><span class="p">(</span><span class="n">snapshot_dir</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;temp_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">client_name</span><span class="si">}</span><span class="s2">.pt&quot;</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Snapshot is being persisted in memory&quot;</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="EarlyStopper.add_default_snapshot_attr">
-<a class="viewcode-back" href="../../../reference/api/fl4health.utils.early_stopper.html#fl4health.utils.early_stopper.EarlyStopper.add_default_snapshot_attr">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">add_default_snapshot_attr</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">snapshot_class</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">BasicClient</span><span class="p">],</span> <span class="n">AbstractSnapshotter</span><span class="p">],</span> <span class="n">input_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_attrs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="p">(</span><span class="n">snapshot_class</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">),</span> <span class="n">input_type</span><span class="p">)})</span></div>
-
-
-<div class="viewcode-block" id="EarlyStopper.delete_default_snapshot_attr">
-<a class="viewcode-back" href="../../../reference/api/fl4health.utils.early_stopper.html#fl4health.utils.early_stopper.EarlyStopper.delete_default_snapshot_attr">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">delete_default_snapshot_attr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_attrs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span></div>
-
-
-<div class="viewcode-block" id="EarlyStopper.save_snapshot">
-<a class="viewcode-back" href="../../../reference/api/fl4health.utils.early_stopper.html#fl4health.utils.early_stopper.EarlyStopper.save_snapshot">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">save_snapshot</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Creates a snapshot of the client state and if ``snapshot_ckpt`` is given, saves it to the checkpoint.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">attr</span><span class="p">,</span> <span class="p">(</span><span class="n">snapshotter_function</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_attrs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_ckpt</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">snapshotter_function</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">))</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpointer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">log</span><span class="p">(</span>
-                <span class="n">INFO</span><span class="p">,</span>
-                <span class="sa">f</span><span class="s2">&quot;Saving client best state to checkpoint at </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpointer</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="si">}</span><span class="s2"> &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;with name </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_name</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">checkpointer</span><span class="o">.</span><span class="n">save_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_ckpt</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_ckpt</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">log</span><span class="p">(</span>
-                <span class="n">WARNING</span><span class="p">,</span>
-                <span class="s2">&quot;Checkpointing directory is not provided. Client best state will be kept in the memory.&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_ckpt</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">snapshot_ckpt</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_score</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
 <div class="viewcode-block" id="EarlyStopper.load_snapshot">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.early_stopper.html#fl4health.utils.early_stopper.EarlyStopper.load_snapshot">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">load_snapshot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attributes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Load checkpointed snapshot dict consisting to the respective model attributes.</span>
+<span class="sd">        Load the best snapshot of the client state from the checkpoint directory.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            attributes (list[str] | None): List of attributes to load from the checkpoint. If None, all attributes</span>
-<span class="sd">                are loaded. Defaults to None.</span>
+<span class="sd">            attributes (list[str] | None, optional): List of attributes to load from the checkpoint.</span>
+<span class="sd">                If None, all attributes as defined in ``state_checkpointer`` are loaded. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">checkpointer</span><span class="o">.</span><span class="n">checkpoint_exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_name</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_ckpt</span> <span class="o">!=</span> <span class="p">{}</span>
-        <span class="p">),</span> <span class="s2">&quot;No checkpoint to load&quot;</span>
-
-        <span class="k">if</span> <span class="n">attributes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">attributes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">snapshot_attrs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-
-        <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Loading client best state </span><span class="si">{</span><span class="n">attributes</span><span class="si">}</span><span class="s2"> from checkpoint at </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpointer</span><span class="o">.</span><span class="n">checkpoint_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpointer</span><span class="o">.</span><span class="n">checkpoint_exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_name</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_ckpt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpointer</span><span class="o">.</span><span class="n">load_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_name</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">attributes</span><span class="p">:</span>
-            <span class="n">snapshotter</span><span class="p">,</span> <span class="n">expected_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_attrs</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span>
-            <span class="n">snapshotter</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">snapshot_ckpt</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">expected_type</span><span class="p">)</span></div>
+        <span class="c1"># Load the best snapshot, and update self.client with the values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span><span class="o">.</span><span class="n">maybe_load_client_state</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">,</span> <span class="n">attributes</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="EarlyStopper.should_stop">
@@ -695,7 +597,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_score</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">val_loss</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">best_score</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">best_score</span> <span class="o">=</span> <span class="n">val_loss</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">count_down</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">patience</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">save_snapshot</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span><span class="o">.</span><span class="n">save_client_state</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">False</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">count_down</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>

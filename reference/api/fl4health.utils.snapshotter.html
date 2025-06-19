@@ -241,6 +241,7 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.client_module.html">fl4health.checkpointing.client_module module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.opacus_checkpointer.html">fl4health.checkpointing.opacus_checkpointer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.server_module.html">fl4health.checkpointing.server_module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html">fl4health.checkpointing.state_checkpointer module</a></li>
 </ul>
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.client_managers.html">fl4health.client_managers package</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of fl4health.client_managers package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -502,57 +503,8 @@
 <span id="fl4health-utils-snapshotter-module"></span><h1>fl4health.utils.snapshotter module<a class="headerlink" href="#module-fl4health.utils.snapshotter" title="Link to this heading">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="fl4health.utils.snapshotter.AbstractSnapshotter">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">AbstractSnapshotter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#AbstractSnapshotter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.AbstractSnapshotter" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">AbstractSnapshotter</span></span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#AbstractSnapshotter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.AbstractSnapshotter" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.10/library/abc.html#abc.ABC" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Generic" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code></a>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">T</span></code>]</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.utils.snapshotter.AbstractSnapshotter.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#AbstractSnapshotter.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.AbstractSnapshotter.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>Abstract class for saving and loading the state of the client’s attributes.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>client</strong> (<a class="reference internal" href="fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient" title="fl4health.clients.basic_client.BasicClient"><em>BasicClient</em></a>) – The client to be monitored.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.utils.snapshotter.AbstractSnapshotter.dict_wrap_attr">
-<span class="sig-name descname"><span class="pre">dict_wrap_attr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#AbstractSnapshotter.dict_wrap_attr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.AbstractSnapshotter.dict_wrap_attr" title="Link to this definition">¶</a></dt>
-<dd><p>Wrap the attribute in a dictionary if it is not already a dictionary.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Name of the attribute.</p></li>
-<li><p><strong>expected_type</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#type" title="(in Python v3.10)"><em>type</em></a><em>[</em><em>T</em><em>]</em>) – Expected type of the attribute.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Wrapped attribute as a dictionary.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, T]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.utils.snapshotter.AbstractSnapshotter.load">
-<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">snapshot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#AbstractSnapshotter.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.AbstractSnapshotter.load" title="Link to this definition">¶</a></dt>
-<dd><p>Load the state of the attribute to the client.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>snapshot</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – Snapshot containing the state of the attribute.</p></li>
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Name of the attribute.</p></li>
-<li><p><strong>expected_type</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#type" title="(in Python v3.10)"><em>type</em></a><em>[</em><em>T</em><em>]</em>) – Expected type of the attribute.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
-</dd>
-</dl>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.snapshotter.AbstractSnapshotter.load_attribute">
 <em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">load_attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute_snapshot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#AbstractSnapshotter.load_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.AbstractSnapshotter.load_attribute" title="Link to this definition">¶</a></dt>
@@ -572,29 +524,9 @@ the attribute and the way it should be loaded.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="fl4health.utils.snapshotter.AbstractSnapshotter.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expected_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#AbstractSnapshotter.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.AbstractSnapshotter.save" title="Link to this definition">¶</a></dt>
-<dd><p>Save the state of the attribute.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Name of the attribute.</p></li>
-<li><p><strong>expected_type</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#type" title="(in Python v3.10)"><em>type</em></a><em>[</em><em>T</em><em>]</em>) – Expected type of the attribute.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A dictionary containing the state of the attribute.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, Any]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.snapshotter.AbstractSnapshotter.save_attribute">
 <em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">save_attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#AbstractSnapshotter.save_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.AbstractSnapshotter.save_attribute" title="Link to this definition">¶</a></dt>
-<dd><p>Abstract method to save the state of the attribute. This method should be implemented based on the type of
+<dd><p>Abstract method used to save the state of the attribute. This method should be implemented based on the type of
 the attribute and the way it should be saved.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -612,8 +544,128 @@ the attribute and the way it should be saved.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="fl4health.utils.snapshotter.BytesSnapshotter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BytesSnapshotter</span></span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#BytesSnapshotter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.BytesSnapshotter" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#fl4health.utils.snapshotter.AbstractSnapshotter" title="fl4health.utils.snapshotter.AbstractSnapshotter"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractSnapshotter</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#bytes" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a>]</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.utils.snapshotter.BytesSnapshotter.load_attribute">
+<span class="sig-name descname"><span class="pre">load_attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute_snapshot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#BytesSnapshotter.load_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.BytesSnapshotter.load_attribute" title="Link to this definition">¶</a></dt>
+<dd><p>Load the state of the bytes (either single or dictionary of them).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>attribute_snapshot</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – The snapshot containing the state of the bytes.</p></li>
+<li><p><strong>attribute</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>]</em>) – The bytes to be loaded</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.utils.snapshotter.BytesSnapshotter.save_attribute">
+<span class="sig-name descname"><span class="pre">save_attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#BytesSnapshotter.save_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.BytesSnapshotter.save_attribute" title="Link to this definition">¶</a></dt>
+<dd><p>Save the state of the bytes (either single or dictionary of them).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>attribute</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>]</em>) – The string to be saved.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary containing the state of the bytes.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, Any]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="fl4health.utils.snapshotter.EnumSnapshotter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">EnumSnapshotter</span></span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#EnumSnapshotter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.EnumSnapshotter" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#fl4health.utils.snapshotter.AbstractSnapshotter" title="fl4health.utils.snapshotter.AbstractSnapshotter"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractSnapshotter</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/enum.html#enum.Enum" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></a>]</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.utils.snapshotter.EnumSnapshotter.load_attribute">
+<span class="sig-name descname"><span class="pre">load_attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute_snapshot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#EnumSnapshotter.load_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.EnumSnapshotter.load_attribute" title="Link to this definition">¶</a></dt>
+<dd><p>Load the state of the num (either single or dictionary of them).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>attribute_snapshot</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – The snapshot containing the state of the enum.</p></li>
+<li><p><strong>attribute</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Enum</em><em>]</em>) – The enum to be loaded</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.utils.snapshotter.EnumSnapshotter.save_attribute">
+<span class="sig-name descname"><span class="pre">save_attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#EnumSnapshotter.save_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.EnumSnapshotter.save_attribute" title="Link to this definition">¶</a></dt>
+<dd><p>Save the state of the Enum (either single or dictionary of them).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>attribute</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Enum</em><em>]</em>) – The enum to be saved.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary containing the state of the enum.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, Any]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="fl4health.utils.snapshotter.HistorySnapshotter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">HistorySnapshotter</span></span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#HistorySnapshotter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.HistorySnapshotter" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#fl4health.utils.snapshotter.AbstractSnapshotter" title="fl4health.utils.snapshotter.AbstractSnapshotter"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractSnapshotter</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">History</span></code>]</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.utils.snapshotter.HistorySnapshotter.load_attribute">
+<span class="sig-name descname"><span class="pre">load_attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute_snapshot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#HistorySnapshotter.load_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.HistorySnapshotter.load_attribute" title="Link to this definition">¶</a></dt>
+<dd><p>Load the state of the history (either single or dictionary of them).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>attribute_snapshot</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – The snapshot containing the state of the history.</p></li>
+<li><p><strong>attribute</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>History</em><em>]</em>) – The history to be loaded</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.utils.snapshotter.HistorySnapshotter.save_attribute">
+<span class="sig-name descname"><span class="pre">save_attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#HistorySnapshotter.save_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.HistorySnapshotter.save_attribute" title="Link to this definition">¶</a></dt>
+<dd><p>Save the state of the history objects (either single or dictionary of them).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>attribute</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>History</em><em>]</em>) – The history to be saved.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary containing the state of the history.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, Any]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="fl4health.utils.snapshotter.LRSchedulerSnapshotter">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">LRSchedulerSnapshotter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#LRSchedulerSnapshotter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.LRSchedulerSnapshotter" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">LRSchedulerSnapshotter</span></span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#LRSchedulerSnapshotter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.LRSchedulerSnapshotter" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#fl4health.utils.snapshotter.AbstractSnapshotter" title="fl4health.utils.snapshotter.AbstractSnapshotter"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractSnapshotter</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">LRScheduler</span></code>]</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.snapshotter.LRSchedulerSnapshotter.load_attribute">
@@ -652,53 +704,13 @@ the attribute and the way it should be saved.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="fl4health.utils.snapshotter.NumberSnapshotter">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">NumberSnapshotter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#NumberSnapshotter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.NumberSnapshotter" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#fl4health.utils.snapshotter.AbstractSnapshotter" title="fl4health.utils.snapshotter.AbstractSnapshotter"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractSnapshotter</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> | <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.utils.snapshotter.NumberSnapshotter.load_attribute">
-<span class="sig-name descname"><span class="pre">load_attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute_snapshot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#NumberSnapshotter.load_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.NumberSnapshotter.load_attribute" title="Link to this definition">¶</a></dt>
-<dd><p>Load the state of the numbers (either single or dictionary of them).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>attribute_snapshot</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – The snapshot containing the state of the numbers.</p></li>
-<li><p><strong>attribute</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>]</em>) – The numbers to be loaded</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.utils.snapshotter.NumberSnapshotter.save_attribute">
-<span class="sig-name descname"><span class="pre">save_attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#NumberSnapshotter.save_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.NumberSnapshotter.save_attribute" title="Link to this definition">¶</a></dt>
-<dd><p>Save the state of the numbers (either single or dictionary of them).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>attribute</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>]</em>) – The numbers to be saved.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A dictionary containing the state of the numbers.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, Any]</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
 <dt class="sig sig-object py" id="fl4health.utils.snapshotter.OptimizerSnapshotter">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">OptimizerSnapshotter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#OptimizerSnapshotter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.OptimizerSnapshotter" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">OptimizerSnapshotter</span></span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#OptimizerSnapshotter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.OptimizerSnapshotter" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#fl4health.utils.snapshotter.AbstractSnapshotter" title="fl4health.utils.snapshotter.AbstractSnapshotter"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractSnapshotter</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Optimizer</span></code>]</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.snapshotter.OptimizerSnapshotter.load_attribute">
 <span class="sig-name descname"><span class="pre">load_attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute_snapshot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#OptimizerSnapshotter.load_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.OptimizerSnapshotter.load_attribute" title="Link to this definition">¶</a></dt>
-<dd><p>Load the state of the optimizers by loading “state” attribute of the optimizer</p>
+<dd><p>Load the state of the optimizers by loading “state” attribute of the optimizers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -715,7 +727,7 @@ the attribute and the way it should be saved.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.snapshotter.OptimizerSnapshotter.save_attribute">
 <span class="sig-name descname"><span class="pre">save_attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#OptimizerSnapshotter.save_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.OptimizerSnapshotter.save_attribute" title="Link to this definition">¶</a></dt>
-<dd><p>Save the state of the optimizers by saving “state” attribute of the optimizer.</p>
+<dd><p>Save the state of the optimizers by saving “state” attribute of the optimizers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>attribute</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Optimizer</em><em>]</em>) – The optimizers to be saved.</p>
@@ -733,7 +745,7 @@ the attribute and the way it should be saved.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="fl4health.utils.snapshotter.SerializableObjectSnapshotter">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SerializableObjectSnapshotter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#SerializableObjectSnapshotter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.SerializableObjectSnapshotter" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SerializableObjectSnapshotter</span></span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#SerializableObjectSnapshotter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.SerializableObjectSnapshotter" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#fl4health.utils.snapshotter.AbstractSnapshotter" title="fl4health.utils.snapshotter.AbstractSnapshotter"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractSnapshotter</span></code></a>[<a class="reference internal" href="fl4health.metrics.metric_managers.html#fl4health.metrics.metric_managers.MetricManager" title="fl4health.metrics.metric_managers.MetricManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricManager</span></code></a> | <a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.LossMeter" title="fl4health.utils.losses.LossMeter"><code class="xref py py-class docutils literal notranslate"><span class="pre">LossMeter</span></code></a> | <a class="reference internal" href="fl4health.reporting.reports_manager.html#fl4health.reporting.reports_manager.ReportsManager" title="fl4health.reporting.reports_manager.ReportsManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReportsManager</span></code></a>]</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.snapshotter.SerializableObjectSnapshotter.load_attribute">
@@ -772,8 +784,88 @@ the attribute and the way it should be saved.</p>
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="fl4health.utils.snapshotter.SingletonSnapshotter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SingletonSnapshotter</span></span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#SingletonSnapshotter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.SingletonSnapshotter" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#fl4health.utils.snapshotter.AbstractSnapshotter" title="fl4health.utils.snapshotter.AbstractSnapshotter"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractSnapshotter</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> | <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> | <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>]</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.utils.snapshotter.SingletonSnapshotter.load_attribute">
+<span class="sig-name descname"><span class="pre">load_attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute_snapshot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#SingletonSnapshotter.load_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.SingletonSnapshotter.load_attribute" title="Link to this definition">¶</a></dt>
+<dd><p>Load the state of the singleton (either single or dictionary of them).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>attribute_snapshot</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – The snapshot containing the state of the singleton.</p></li>
+<li><p><strong>attribute</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>]</em>) – The singletons to be loaded</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.utils.snapshotter.SingletonSnapshotter.save_attribute">
+<span class="sig-name descname"><span class="pre">save_attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#SingletonSnapshotter.save_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.SingletonSnapshotter.save_attribute" title="Link to this definition">¶</a></dt>
+<dd><p>Save the state of a singleton which could be a number or a boolean (either single or dictionary of them).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>attribute</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>]</em>) – The singleton to be saved.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary containing the state of the singletons.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, Any]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="fl4health.utils.snapshotter.StringSnapshotter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">StringSnapshotter</span></span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#StringSnapshotter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.StringSnapshotter" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#fl4health.utils.snapshotter.AbstractSnapshotter" title="fl4health.utils.snapshotter.AbstractSnapshotter"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractSnapshotter</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.utils.snapshotter.StringSnapshotter.load_attribute">
+<span class="sig-name descname"><span class="pre">load_attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute_snapshot</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attribute</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#StringSnapshotter.load_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.StringSnapshotter.load_attribute" title="Link to this definition">¶</a></dt>
+<dd><p>Load the state of the strings (either single or dictionary of them).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>attribute_snapshot</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – The snapshot containing the state of the strings.</p></li>
+<li><p><strong>attribute</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>]</em>) – The strings to be loaded</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.utils.snapshotter.StringSnapshotter.save_attribute">
+<span class="sig-name descname"><span class="pre">save_attribute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">attribute</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#StringSnapshotter.save_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.StringSnapshotter.save_attribute" title="Link to this definition">¶</a></dt>
+<dd><p>Save the state of the strings (either single or dictionary of them).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>attribute</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>]</em>) – The string to be saved.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary containing the state of the strings.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, Any]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="fl4health.utils.snapshotter.TorchModuleSnapshotter">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TorchModuleSnapshotter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#TorchModuleSnapshotter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.TorchModuleSnapshotter" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TorchModuleSnapshotter</span></span><a class="reference internal" href="../../_modules/fl4health/utils/snapshotter.html#TorchModuleSnapshotter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.snapshotter.TorchModuleSnapshotter" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#fl4health.utils.snapshotter.AbstractSnapshotter" title="fl4health.utils.snapshotter.AbstractSnapshotter"><code class="xref py py-class docutils literal notranslate"><span class="pre">AbstractSnapshotter</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code>]</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.snapshotter.TorchModuleSnapshotter.load_attribute">
@@ -887,22 +979,28 @@ the attribute and the way it should be saved.</p>
             <ul>
 <li><a class="reference internal" href="#">fl4health.utils.snapshotter module</a><ul>
 <li><a class="reference internal" href="#fl4health.utils.snapshotter.AbstractSnapshotter"><code class="docutils literal notranslate"><span class="pre">AbstractSnapshotter</span></code></a><ul>
-<li><a class="reference internal" href="#fl4health.utils.snapshotter.AbstractSnapshotter.__init__"><code class="docutils literal notranslate"><span class="pre">AbstractSnapshotter.__init__()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.utils.snapshotter.AbstractSnapshotter.dict_wrap_attr"><code class="docutils literal notranslate"><span class="pre">AbstractSnapshotter.dict_wrap_attr()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.utils.snapshotter.AbstractSnapshotter.load"><code class="docutils literal notranslate"><span class="pre">AbstractSnapshotter.load()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.utils.snapshotter.AbstractSnapshotter.load_attribute"><code class="docutils literal notranslate"><span class="pre">AbstractSnapshotter.load_attribute()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.utils.snapshotter.AbstractSnapshotter.save"><code class="docutils literal notranslate"><span class="pre">AbstractSnapshotter.save()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.utils.snapshotter.AbstractSnapshotter.save_attribute"><code class="docutils literal notranslate"><span class="pre">AbstractSnapshotter.save_attribute()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#fl4health.utils.snapshotter.BytesSnapshotter"><code class="docutils literal notranslate"><span class="pre">BytesSnapshotter</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.utils.snapshotter.BytesSnapshotter.load_attribute"><code class="docutils literal notranslate"><span class="pre">BytesSnapshotter.load_attribute()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.utils.snapshotter.BytesSnapshotter.save_attribute"><code class="docutils literal notranslate"><span class="pre">BytesSnapshotter.save_attribute()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#fl4health.utils.snapshotter.EnumSnapshotter"><code class="docutils literal notranslate"><span class="pre">EnumSnapshotter</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.utils.snapshotter.EnumSnapshotter.load_attribute"><code class="docutils literal notranslate"><span class="pre">EnumSnapshotter.load_attribute()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.utils.snapshotter.EnumSnapshotter.save_attribute"><code class="docutils literal notranslate"><span class="pre">EnumSnapshotter.save_attribute()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#fl4health.utils.snapshotter.HistorySnapshotter"><code class="docutils literal notranslate"><span class="pre">HistorySnapshotter</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.utils.snapshotter.HistorySnapshotter.load_attribute"><code class="docutils literal notranslate"><span class="pre">HistorySnapshotter.load_attribute()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.utils.snapshotter.HistorySnapshotter.save_attribute"><code class="docutils literal notranslate"><span class="pre">HistorySnapshotter.save_attribute()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#fl4health.utils.snapshotter.LRSchedulerSnapshotter"><code class="docutils literal notranslate"><span class="pre">LRSchedulerSnapshotter</span></code></a><ul>
 <li><a class="reference internal" href="#fl4health.utils.snapshotter.LRSchedulerSnapshotter.load_attribute"><code class="docutils literal notranslate"><span class="pre">LRSchedulerSnapshotter.load_attribute()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.utils.snapshotter.LRSchedulerSnapshotter.save_attribute"><code class="docutils literal notranslate"><span class="pre">LRSchedulerSnapshotter.save_attribute()</span></code></a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#fl4health.utils.snapshotter.NumberSnapshotter"><code class="docutils literal notranslate"><span class="pre">NumberSnapshotter</span></code></a><ul>
-<li><a class="reference internal" href="#fl4health.utils.snapshotter.NumberSnapshotter.load_attribute"><code class="docutils literal notranslate"><span class="pre">NumberSnapshotter.load_attribute()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.utils.snapshotter.NumberSnapshotter.save_attribute"><code class="docutils literal notranslate"><span class="pre">NumberSnapshotter.save_attribute()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#fl4health.utils.snapshotter.OptimizerSnapshotter"><code class="docutils literal notranslate"><span class="pre">OptimizerSnapshotter</span></code></a><ul>
@@ -913,6 +1011,16 @@ the attribute and the way it should be saved.</p>
 <li><a class="reference internal" href="#fl4health.utils.snapshotter.SerializableObjectSnapshotter"><code class="docutils literal notranslate"><span class="pre">SerializableObjectSnapshotter</span></code></a><ul>
 <li><a class="reference internal" href="#fl4health.utils.snapshotter.SerializableObjectSnapshotter.load_attribute"><code class="docutils literal notranslate"><span class="pre">SerializableObjectSnapshotter.load_attribute()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.utils.snapshotter.SerializableObjectSnapshotter.save_attribute"><code class="docutils literal notranslate"><span class="pre">SerializableObjectSnapshotter.save_attribute()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#fl4health.utils.snapshotter.SingletonSnapshotter"><code class="docutils literal notranslate"><span class="pre">SingletonSnapshotter</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.utils.snapshotter.SingletonSnapshotter.load_attribute"><code class="docutils literal notranslate"><span class="pre">SingletonSnapshotter.load_attribute()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.utils.snapshotter.SingletonSnapshotter.save_attribute"><code class="docutils literal notranslate"><span class="pre">SingletonSnapshotter.save_attribute()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#fl4health.utils.snapshotter.StringSnapshotter"><code class="docutils literal notranslate"><span class="pre">StringSnapshotter</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.utils.snapshotter.StringSnapshotter.load_attribute"><code class="docutils literal notranslate"><span class="pre">StringSnapshotter.load_attribute()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.utils.snapshotter.StringSnapshotter.save_attribute"><code class="docutils literal notranslate"><span class="pre">StringSnapshotter.save_attribute()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#fl4health.utils.snapshotter.TorchModuleSnapshotter"><code class="docutils literal notranslate"><span class="pre">TorchModuleSnapshotter</span></code></a><ul>
