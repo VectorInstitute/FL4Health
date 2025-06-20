@@ -1,0 +1,18 @@
+# YAML parser's must-have configs
+n_server_rounds: 500
+
+# must have at least 3 clients
+n_clients: 500    # set this parameter in run.sh as well
+n_clients_per_node: 25 # match this parameter with the client slurm script 
+fraction_rate: 0.2
+batch_size: 30
+
+dataset: "femnist"
+
+
+# Other configs
+# local_epochs: None
+local_steps: 1
+global_lr: 1
+checkpoint_path: "examples/basic_femnist_example"
+

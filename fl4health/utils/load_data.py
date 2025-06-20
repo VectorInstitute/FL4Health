@@ -365,6 +365,7 @@ def load_femnist_data(
     target_transform: Callable | None = None,
     # dataset_converter: DatasetConverter | None = None,
     validation_proportion: float = 0.2,
+    num_workers: int = 0,
     # hash_key: int | None = None,
 ) -> tuple[DataLoader, DataLoader, dict[str, int]]:
     """
@@ -388,8 +389,8 @@ def load_femnist_data(
     #     training_set = dataset_converter.convert_dataset(training_set)
     #     validation_set = dataset_converter.convert_dataset(validation_set)
 
-    train_loader = DataLoader(training_set, batch_size=batch_size, shuffle=True)
-    validation_loader = DataLoader(validation_set, batch_size=batch_size)
+    train_loader = DataLoader(training_set, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    validation_loader = DataLoader(validation_set, batch_size=batch_size, num_workers=num_workers)
 
     num_examples = {"train_set": len(training_set), "validation_set": len(validation_set)}
     return train_loader, validation_loader, num_examples
