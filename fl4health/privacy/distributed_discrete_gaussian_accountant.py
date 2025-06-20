@@ -83,14 +83,15 @@ def get_heuristic_granularity(noise_scale: float, l2_norm_clip: float, bits: int
     n = num_clients
     d = private_vector_dimension
     sigma = noise_scale
+    # sqrt_d = sqrt(d)
 
-    field_size_squared = pow(4, bits)
+    field_size_squared = 2 ** (2 * bits)
     
     assert field_size_squared > pow(k, 2) * n
 
     granularity_squared = 4 * pow(k, 2) * (pow(c, 2) * pow(n, 2) / d + pow(sigma, 2) * n) / ( field_size_squared - pow(k, 2) * n )
 
-    return sqrt(granularity_squared)
+    return sqrt(granularity_squared) * 0.001
 
 
 class DDGaussAccountant:
@@ -311,13 +312,13 @@ if __name__ == '__main__':
     assert pow(4, 16) == 4 ** 16
 
     parameters = {
-        'l2_norm_clip': 0.03,
+        'l2_norm_clip': 3,
         'private_vector_dimension': 1_018_174,
-        'noise_scale': 1.2, 
-        'n_trustworthy_clients': 3400,
-        'n_fl_rounds': 1500,
-        'privacy_amplification_sampling_ratio': 1/34,
-        'bias': exp(-0.5), 
+        'noise_scale': 0.07, 
+        'n_trustworthy_clients': 500,
+        'n_fl_rounds': 500,
+        'privacy_amplification_sampling_ratio': 1/10,
+        'bias': 0.06, 
         'approximate_dp_delta': 1/3400,
         'bits': 16,
         'k': 4

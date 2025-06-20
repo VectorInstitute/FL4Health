@@ -146,19 +146,13 @@ def random_sign_vector(dim: int, sampling_probability: float) -> torch.Tensor:
     return 2 * torch.bernoulli(sampling_probability * torch.ones(dim)) - torch.ones(dim)
 
 
-def generate_sign_diagonal_matrix(dim: int, sampling_probability=0.5, seed=0) -> torch.Tensor:
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(seed)
-    else:
-        torch.manual_seed(seed)
-    return torch.diag(random_sign_vector(dim=dim, sampling_probability=0.5))
+def generate_sign_diagonal_matrix(dim: int, sampling_probability=0.5, seed=42) -> torch.Tensor:
+    torch.manual_seed(seed)
+    return torch.diag(random_sign_vector(dim=dim, sampling_probability=sampling_probability))
 
-def generate_random_sign_vector(dim: int, sampling_probability=0.5, seed=0) -> torch.Tensor:
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(seed)
-    else:
-        torch.manual_seed(seed)
-    return random_sign_vector(dim=dim, sampling_probability=0.5)
+def generate_random_sign_vector(dim: int, sampling_probability=0.5, seed=42) -> torch.Tensor:
+    torch.manual_seed(seed)
+    return random_sign_vector(dim=dim, sampling_probability=sampling_probability)
 
 
 def pad_zeros(vector: torch.Tensor) -> torch.Tensor:
@@ -389,17 +383,19 @@ def clip_vector(vector: torch.Tensor, granularity: float, clip: float) -> torch.
     assert vector.dim() == 1  
     if vector.dtype is not torch.float64:
         vector = vector.to(dtype=torch.float64)
-    scalar = min(1, clip/vector_norm(vector)) / granularity
+    scalar = min(1, clip/ (vector_norm(vector, ord=2, keepdim=True) + 1e-6) ) / granularity
     return scalar * vector
 
+
 if __name__ == '__main__':
-    # v = torch.tensor([3,4])
-    # clipped = clip_vector(v, 10, 0.5)
-    # print(clipped)
-    torch.set_default_device('cuda')
+    v = torch.tensor([-3,4], dtype=torch.float32)
+    print(vector_norm(v, ord=2, keepdim=True), vector_norm(v, ord=2, dim=0, keepdim=True))
+    clipped = clip_vector(v, 10, 0.5)
+    print(clipped)
+    # torch.set_default_device('cuda')
     # for i in range(1, 17):
     #     print(i, get_exponent(i))
-    v = torch.rand(8)
+    # v = torch.rand(8)
     # down_probs = torch.ceil(v) - v
 
     # rounder = torch.vmap(lambda x, coin: torch.where(coin==1, torch.floor(x), torch.ceil(x)))

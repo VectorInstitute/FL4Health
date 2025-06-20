@@ -1,14 +1,11 @@
 from logging import DEBUG, INFO, WARNING
 from typing import Callable, Dict, List, Optional, Tuple, Union
-from functools import reduce
-import numpy as np
 import torch
 import torch.nn as nn
+from torch.linalg import vector_norm
 
 from flwr.common import (
     parameters_to_ndarrays,
-    EvaluateIns,
-    EvaluateRes,
     FitIns,
     FitRes,
     GetPropertiesIns,
@@ -30,7 +27,6 @@ from fl4health.servers.secure_aggregation_utils import vectorize_model, unvector
 from fl4health.utils.functions import decode_and_pseudo_sort_results
 
 from fl4health.privacy_mechanisms.discrete_gaussian_mechanism import (
-    generate_discrete_gaussian_vector,
     fwht,
     shift_transform,
     shift_transform_torch
@@ -64,7 +60,8 @@ class DDGMStrategy(BasicFedAvg):
         evaluate_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         weighted_aggregation: bool = True,
         weighted_eval_losses: bool = True,
-        ddgm_config: dict[str, float] = None,
+        beta: float = 0.9,
+        ddgm_config: dict[str, Scalar] = {},
     ) -> None:
         super().__init__(
             fraction_fit=fraction_fit,
@@ -86,6 +83,28 @@ class DDGMStrategy(BasicFedAvg):
         
         self.granularity = ddgm_config['granularity']
         self.model_dim = ddgm_config['model_dim']
+        self.global_lr = ddgm_config['global_lr']
+        self.clipping_object = ddgm_config['clipping_object']
+
+        assert self.clipping_object in ("diff_params", "params"), f"s must be 'diff_params' or 'params', but got '{self.clipping_object}'"
+
+        self.beta = beta
+        if self.beta != 0:
+            log(INFO, f"enable server momentum update, momentum {self.beta}")
+        self.m_t: torch.Tensor | None = None
+
+    def calculate_update_with_momentum(self, weights_update: torch.Tensor) -> None:
+        """
+        Performs a weight update with momentum. That is, combining some weighted value of the previous update with
+        the current update.
+
+        Args:
+            weights_update (Tensor, vectorized update): The current update after the weights have been aggregated from the training round.
+        """
+        if self.m_t is None:
+            self.m_t = weights_update
+        else:
+            self.m_t = self.beta * self.m_t + (1 - self.beta) *  weights_update
         
     def aggregate_modular_sum(self, params: list[torch.Tensor], arithmetic_modulus: int) -> torch.Tensor:
         """
@@ -95,32 +114,43 @@ class DDGMStrategy(BasicFedAvg):
         # Compute sum of weights of each layer
         summed = torch.stack(params).sum(dim=0)
         
+        if (summed > arithmetic_modulus).any():
+            # log(DEBUG, f"Modulus wrap up err included. modulus: {arithmetic_modulus}")
+            log(DEBUG, f"Scale of summed params vector before modulus strategy: min {torch.min(summed)} max {torch.max(summed)} vector norm {vector_norm(summed)}")
+
         # Apply modular arithmetic
         aggregated = summed % arithmetic_modulus
         
         return aggregated
     
-    def ddgm_server_aggregation(self, deltas: list[torch.Tensor], arithmetic_modulus: int, sign_vector: torch.Tensor) -> torch.Tensor:
+    def aggregated_sum(self, params: list[torch.Tensor]) -> torch.Tensor:
+        return torch.stack(params).sum(dim=0)
+    
+    def ddgm_server_aggregation(self, client_vectors: list[torch.Tensor], arithmetic_modulus: int, sign_vector: torch.Tensor) -> torch.Tensor:
         """
         Aggregate the parameters from the clients.
         DDGM Server Process
         """
-        num_clients = len(deltas)
+        num_clients = len(client_vectors)
+        log(DEBUG, f"num of clients in this round to avg: {num_clients}")
         
         # aggregate (sum) the results
-        aggregated_vector = self.aggregate_modular_sum(deltas, arithmetic_modulus) 
+        aggregated_vector = self.aggregate_modular_sum(client_vectors, arithmetic_modulus) 
+
+        log(DEBUG, f"Scale of aggregated params vector before avg strategy: min {torch.min(aggregated_vector)} max {torch.max(aggregated_vector)} vector norm {vector_norm(aggregated_vector)}")
         
         # server procedure
         vector = shift_transform_torch(aggregated_vector, arithmetic_modulus)
+
+        log(DEBUG, f"Scale of aggregated params vector after shifting: min {torch.min(vector)} max {torch.max(vector)} vector norm {vector_norm(vector)}")
         
         vector = fwht(vector).to(device)
-        vector = torch.mul(
-            self.granularity * sign_vector.to(device),
-            vector.to(device)
-        )
+        vector = self.granularity * sign_vector.to(device) * vector.to(device)
         
         vector = vector[:self.model_dim] 
         vector /= num_clients
+
+        log(DEBUG, f"Scale of aggregated params vector after avg strategy: min {torch.min(vector)} max {torch.max(vector)} vector norm {vector_norm(vector)}")
 
         log(INFO, f'finished server procedure')
         return vector
@@ -143,16 +173,34 @@ class DDGMStrategy(BasicFedAvg):
         
         #  process the results
         # each element in deltas is a noisy vector from the client
-        deltas = [torch.from_numpy(parameters_to_ndarrays(client_response.parameters)[0]) for _, client_response in results]
+        client_vectors = [torch.from_numpy(parameters_to_ndarrays(client_response.parameters)[0]) for _, client_response in results]
 
-        log(INFO, f'type of element in results: {type(deltas[0])}')
+        log(INFO, f'type of element in results: {type(client_vectors[0])}')
         
         # apply the DDGM server aggregation
-        recovered_delta_avged = self.ddgm_server_aggregation(deltas, arithmetic_modulus, sign_vector)
+        aggregated_vector = self.ddgm_server_aggregation(client_vectors, arithmetic_modulus, sign_vector)
+        log(DEBUG, f"Scale of aggregated secure vector: min {torch.min(aggregated_vector)} max {torch.max(aggregated_vector)} vector norm {vector_norm(aggregated_vector)}")
 
         dtypes = get_model_layer_types(server_model)
+
+        # WARNING: for debug use only
+        client_ground_truth_vectors = [torch.from_numpy(parameters_to_ndarrays(client_response.parameters)[1]) for _, client_response in results]
+        aggregated_ground_truth = self.aggregated_sum(client_ground_truth_vectors).to(device=aggregated_vector.device)
+        aggregated_ground_truth /= len(client_ground_truth_vectors)
+        log(DEBUG, f'Scale of aggregated_sum ground truth: min {torch.min(aggregated_ground_truth)} max {torch.max(aggregated_ground_truth)} vector norm {vector_norm(aggregated_ground_truth)}')
+        gap_gt_sec = aggregated_vector - aggregated_ground_truth
+        log(DEBUG, f"Scale of gap between gt and sec vector: min {torch.min(gap_gt_sec)} max {torch.max(gap_gt_sec)} vector norm {vector_norm(gap_gt_sec)}")
+
+        if self.beta != 0:
+            # enable momentum at server side
+            self.calculate_update_with_momentum(aggregated_vector)
+            aggregated_vector = self.m_t
+
+        if self.clipping_object == "diff_params":
+            
+            aggregated_vector = vectorize_model(server_model) - aggregated_vector * self.global_lr
         
-        server_model = unvectorize_model(server_model, recovered_delta_avged)
+        server_model = unvectorize_model(server_model, aggregated_vector)
 
         self.server_model = change_model_dtypes(server_model, dtypes)
 

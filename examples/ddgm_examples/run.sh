@@ -6,7 +6,7 @@ set -euo pipefail
 
 LOG_DIR="examples/ddgm_examples/log"
 PID_FILE="$LOG_DIR/running_pid.txt"
-num_clients=3
+num_clients=5
 
 
 mkdir -p "$LOG_DIR"

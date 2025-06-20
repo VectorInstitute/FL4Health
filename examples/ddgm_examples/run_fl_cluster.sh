@@ -7,13 +7,13 @@ SERVER_CONFIG_PATH="examples/ddgm_examples/config.yaml"
 LOG_DIR="examples/ddgm_examples/log"
 VENV_PATH="fl4health_ddgm"
 
-num_clients=300
+num_clients=500
 CLIENT_BATCH_SIZE=20
-NUM_CLIENT_PER_BATCH=15 # num of slurm jobs
+NUM_SLURM=25 # num of slurm jobs
 
 # num_clients = CLIENT_BATCH_SIZE * NUM_CLIENT_PER_BATCH
 
-if (( num_clients % CLIENT_BATCH_SIZE != 0 )); then
+if (( NUM_SLURM * CLIENT_BATCH_SIZE != num_clients )); then
   echo "ERROR: num_clients must be a multiple of CLIENT_BATCH_SIZE" >&2
   exit 1
 fi

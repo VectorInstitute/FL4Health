@@ -7,9 +7,11 @@ import torch.utils
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 import torch.utils.data
+from torch.linalg import vector_norm
 
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
+from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
@@ -24,7 +26,6 @@ from fl4health.privacy_mechanisms.discrete_gaussian_mechanism import (
     generate_discrete_gaussian_vector,
     fwht
 )
-from fl4health.privacy_mechanisms.index import PrivacyMechanismIndex
 from fl4health.servers.secure_aggregation_utils import get_model_norm, vectorize_model, get_model_layer_types, change_model_dtypes
 
 from fl4health.reporting.base_reporter import BaseReporter
@@ -58,19 +59,23 @@ class DDGMClient(BasicClient):
         self.client_number: int = client_number
 
         self.privacy_settings = privacy_settings
+        assert 0 <= self.privacy_settings["bias"] < 1, "Bias must be in [0, 1)"
+
+        self.clipping_object = privacy_settings['clipping_object']
+        assert self.clipping_object in ("diff_params", "params"), f"s must be 'diff_params' or 'params', but got '{self.clipping_object}'"
+
         self.clipping_bound: float = privacy_settings["clipping_bound"]
         self.noise_multiplier: float = privacy_settings["noise_multiplier"]
         self.granularity: float | None = privacy_settings.get("granularity", None)
         self.bits: int = privacy_settings['bits']
         self.dataset_name: str = privacy_settings["dataset"]
         self.n_clients_round: int = privacy_settings["n_clients_round"]
+        self.n_clients_per_node: int = privacy_settings["n_clients_per_node"]
                 
         self.parameter_exchanger = SecureAggregationExchanger()
         
         self.model_dim = None
         self.padded_model_dim = None
-    
-        assert 0 <= self.privacy_settings["bias"] < 1, "Bias must be in [0, 1)"
         
         log(INFO, f"Client {self.client_name} initialized")
     
@@ -106,6 +111,11 @@ class DDGMClient(BasicClient):
 
         # store the parameters get from the server
         self.server_model_this_round_vectorized = vectorize_model(self.model).to(self.device)
+
+        current_server_round = narrow_dict_type(config, "current_server_round", int)
+        log(INFO, f"saved round {current_server_round}")
+
+        log(DEBUG, f"Scale of model params vector before training: min {torch.min(self.server_model_this_round_vectorized)} max {torch.max(self.server_model_this_round_vectorized)} vector norm {vector_norm(self.server_model_this_round_vectorized)}")
     
     def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
         """
@@ -115,34 +125,57 @@ class DDGMClient(BasicClient):
         # get parameters after training and concatenate the parameters into a vectorized torch.Tensor
         parameters = vectorize_model(self.model).to(self.device)
 
+        if torch.allclose(parameters, self.server_model_this_round_vectorized):
+            log(WARN, f"No parameters change this round")
+
         log(INFO, f'Size of parameters: {len(parameters)}, Type of parameters: {parameters.type}')
         
-        # delta_parameters = parameters - self.server_model_this_round_vectorized
-        
-        # pad the delta parameters
-        log(INFO, f'len of delta parameters: {len(parameters)}')
-        padded_delta_parameters = pad_zeros(parameters)
-        padded_model_dim = len(padded_delta_parameters)
+        log(DEBUG, f"Scale of model params vector after training: min {torch.min(parameters)} max {torch.max(parameters)} vector norm {vector_norm(parameters)}")
 
-        log(INFO, f'Size of padded parameters: {len(padded_delta_parameters)}')
+        if self.clipping_object == "diff_params":
+
+            parameters = self.server_model_this_round_vectorized - parameters
+
+            log(INFO, f"calculated difference in model parameters (before and after training)")
+            log(DEBUG, f"Scale of diff vector: min {torch.min(parameters)} max {torch.max(parameters)} vector norm {vector_norm(parameters)}")
         
+        # WARNING: for debug only
+        self.ground_truth_vector = parameters.detach().cpu().numpy()
+
+        # pad the delta parameters
+        padded_parameters = pad_zeros(parameters)
+        padded_model_dim = len(padded_parameters)
+        log(INFO, f'Size of padded parameters: {padded_model_dim}')
+
         # clip the vector as part of the steps to achieve client-level DP. Note that, we are clipping the model vector
         c, g = self.clipping_bound, self.granularity
-        clipped_vector = clip_vector(vector=padded_delta_parameters, clip=c, granularity=g)
+        clipped_vector = clip_vector(vector=padded_parameters, clip=c, granularity=g)
+
+        log(DEBUG, f"Scale of clipped vector: min {torch.min(clipped_vector)} max {torch.max(clipped_vector)} vector norm {vector_norm(clipped_vector)}")
         
         # hadamard product
-        vector = torch.mul(clipped_vector, self.sign_vector.to(clipped_vector.device))
+        # matrix product with diagonal matrix is same as element-wise product with sign vector
+        vector = self.sign_vector.to(clipped_vector.device) * clipped_vector
         log(INFO, f'Starting Welsh Hadamard Transform')
         t0 = time.perf_counter()
         vector = fwht(vector)
         t1 = time.perf_counter()
         log(INFO, f'Welsh Hadamard Transform finished in {t1-t0} sec')
         
+        log(DEBUG, f"Scale of vector after fwht: min {torch.min(vector)} max {torch.max(vector)} vector norm {vector_norm(vector)}")
+
         # randomized rounding to discrete space
         b = self.privacy_settings['bias']
         l2_upper_bound = calculate_l2_upper_bound(c, g, padded_model_dim, b)
+
+        log(DEBUG, f"randomized rounding upper bound: {l2_upper_bound}")
+
         vector = randomized_rounding(vector, l2_upper_bound)
-        vector = vector.cpu().numpy()
+
+        log(DEBUG, f"Scale of vector after randomized rounding: min {torch.min(vector)} max {torch.max(vector)} vector norm {vector_norm(vector)}")
+
+        vector = vector.detach()
+        # .cpu().numpy()
 
         # adding noise if DP is enabled
         if self.privacy_settings['enable_dp'] is True:
@@ -152,13 +185,23 @@ class DDGMClient(BasicClient):
             v = (self.noise_multiplier / g) ** 2
             log(INFO, f'noise scale: {v}')
 
-            noise_vector = generate_discrete_gaussian_vector(dim=padded_model_dim, variance=v)
+            noise_vector = torch.from_numpy(generate_discrete_gaussian_vector(dim=padded_model_dim, variance=v)).to(dtype=torch.float32, device=self.device)
+
+            log(DEBUG, f"Scale of noise vector: min {torch.min(noise_vector)} max {torch.max(noise_vector)} vector norm {vector_norm(noise_vector)}")
+
             vector += noise_vector
 
             log(INFO, f'Finished noise calibration.')
 
+        if (vector > config["arithmetic_modulus"]).any():
+            mod = config["arithmetic_modulus"]
+            log(DEBUG, f"Modulus wrap up err included. modulus: {mod}")
+            log(DEBUG, f"Scale of vector before modulus: min {torch.min(vector)} max {torch.max(vector)} vector norm {vector_norm(vector)}")
+
         vector = vector % config["arithmetic_modulus"]
-        self.ddgm_returned_vector = vector
+        self.ddgm_returned_vector = vector.cpu().numpy()
+
+        log(DEBUG, f"Scale of returned vector after modulus: min {torch.min(vector)} max {torch.max(vector)} vector norm {vector_norm(vector)} moduli: {config['arithmetic_modulus']}")
         log(INFO, f'End of this client step.')
         
     def fit(self, parameters: NDArrays, config: Config) -> tuple[NDArrays, int, dict[str, Scalar]]:
@@ -171,7 +214,7 @@ class DDGMClient(BasicClient):
         _, num_train_samples,metrics = super().fit(parameters, config)
 
         return (
-            [self.ddgm_returned_vector],
+            [self.ddgm_returned_vector, self.ground_truth_vector],
             num_train_samples,
             metrics,
         ) 

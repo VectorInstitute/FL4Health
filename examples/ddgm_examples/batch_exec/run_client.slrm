@@ -4,10 +4,12 @@
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
-#SBATCH --gres=gpu:1
-#SBATCH --mem=16G
-#SBATCH --partition=t4v2
-#SBATCH --qos=m
+#SBATCH --gres=gpu:0
+#SBATCH --mem=32G
+#SBATCH --time=4:00:00
+#SBATCH --partition=cpu
+#SBATCH --qos=scavenger
+
 
 # Note:
 #	  ntasks: Total number of processes to use across world
@@ -18,6 +20,8 @@
 # NCCL backend to communicate between GPU workers is not provided in vector's cluster.
 # Disable this option in slurm.
 export NCCL_IB_DISABLE=1
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
 
 if [[ "${SLURM_JOB_PARTITION}" == "t4v2" ]] || \
     [[ "${SLURM_JOB_PARTITION}" == "rtx6000" ]]; then
@@ -60,8 +64,13 @@ echo "Job Hash: ${JOB_HASH}"
 echo "Placing logs in: ${LOG_DIR}"
 echo "World size: ${SLURM_NTASKS}"
 echo "Number of nodes: ${SLURM_NNODES}"
-NUM_GPUs=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
-echo "GPUs per node: ${NUM_GPUs}"
+
+if command -v nvidia-smi &> /dev/null; then
+    NUM_GPUs=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
+    echo "GPUs per node: ${NUM_GPUs}"
+else
+    echo "Running on CPU node — no GPUs available"
+fi
 
 
 echo "Server Address used by Client: ${SERVER_ADDRESS}"

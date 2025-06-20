@@ -1,64 +1,27 @@
 # ddgm non-private server
 import datetime
-import pickle
-import timeit
-from dataclasses import dataclass
-from itertools import product
 from logging import DEBUG, INFO, WARN
 # from typing import Any, Dict, List, Optional, Set, Tuple
-from flwr.common.typing import Code, Config, GetParametersIns, Scalar
+from flwr.common.typing import Config, Scalar
 
-from numba import jit, prange
-import numpy as np
 import torch
-from flwr.common import GetPropertiesIns, Parameters, ndarrays_to_parameters, parameters_to_ndarrays
+from flwr.common import Parameters
 from flwr.common.logger import log
-from flwr.common.typing import NDArrays, Scalar
-from flwr.server.client_manager import ClientManager, ClientProxy
-from flwr.server.history import History
+from flwr.common.typing import Scalar
+from flwr.server.client_manager import ClientManager
 from flwr.server.server import FitResultsAndFailures, fit_clients
-from torch.nn import Module
 
-from fl4health.checkpointing.checkpointer import TorchModuleCheckpointer
 from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
-from fl4health.privacy_mechanisms.slow_discrete_gaussian_mechanism import (
-    generate_random_sign_vector,
-    generate_walsh_hadamard_matrix,
-    get_exponent
-)
-from fl4health.privacy_mechanisms.discrete_gaussian_mechanism import (
-    fwht,
-    shift_transform, 
-    modular_clipping
-)
-from fl4health.privacy_mechanisms.index import PrivacyMechanismIndex
+
 from fl4health.reporting.wandb_reporter import WandBReporter
-from fl4health.reporting.secure_aggregation_blackbox import BlackBox
-
-from fl4health.parameter_exchange.parameter_exchanger_base import ExchangerType
 from fl4health.servers.base_server import FlServer
-from fl4health.servers.polling import poll_clients
-from fl4health.servers.secure_aggregation_utils import (
-    get_model_dimension,
-    unvectorize_model,
-    vectorize_model,
-    get_model_layer_types,
-    get_arithmetic_modulus
-)
+
+from fl4health.servers.secure_aggregation_utils import get_arithmetic_modulus
 from fl4health.strategies.ddgm_strategy import DDGMStrategy
-
-from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
 from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
-
-import json
-import os
-
-from fl4health.privacy_mechanisms.gaussian_mechanism import gaussian_mechanism
-
 from fl4health.privacy.distributed_discrete_gaussian_accountant import DDGaussAccountant
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
-
 
 class DDGMServer(FlServer):
     def __init__(

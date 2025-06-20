@@ -19,11 +19,11 @@ def bernoulli_exp(negative_gamma: float) -> int:
 
     if g <= 1:
         K = 1
-        while np.random.binomial(n=1, p=g/K):
+        while np.random.uniform() < (g/K):
             K += 1
         return K % 2
     else:
-        for _ in prange(int(np.floor(g))):
+        for _ in range(int(np.floor(g))):
             if bernoulli_exp(-1) == 0:
                 return 0
         return bernoulli_exp(np.floor(g)-g)

@@ -5,7 +5,8 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
 #SBATCH --gres=gpu:1
-#SBATCH --mem=16G
+#SBATCH --mem=64G
+#SBATCH --time=6:00:00
 #SBATCH --partition=t4v2
 #SBATCH --qos=m
 
@@ -62,8 +63,13 @@ echo "Server Address: ${SERVER_ADDRESS}"
 echo "Placing logs in: ${LOG_DIR}"
 echo "World size: ${SLURM_NTASKS}"
 echo "Number of nodes: ${SLURM_NNODES}"
-NUM_GPUs=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
-echo "GPUs per node: ${NUM_GPUs}"
+
+if command -v nvidia-smi &> /dev/null; then
+    NUM_GPUs=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
+    echo "GPUs per node: ${NUM_GPUs}"
+else
+    echo "Running on CPU node — no GPUs available"
+fi
 
 
 echo "→ Starting server…"

@@ -6,6 +6,7 @@ import flwr as fl
 from flwr.common.typing import Config
 from flwr.server import ServerConfig
 from flwr.server.client_manager import SimpleClientManager
+from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 
 from logging import INFO
 from flwr.common.logger import log
@@ -16,16 +17,12 @@ from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, 
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
-from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.servers.ddgm_server import DDGMServer
 from examples.utils.functions import make_dict_with_epochs_or_steps
-
 
 # replace later with secure aggregation strategy
 from fl4health.strategies.ddgm_strategy import DDGMStrategy
 from fl4health.utils.config import load_config
-
-from examples.ddgm_examples.utils import generate_config
 
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 
@@ -37,7 +34,6 @@ from fl4health.privacy.distributed_discrete_gaussian_accountant import get_heuri
 
 
 torch.set_default_dtype(torch.float64)
-DEFAULT_MODEL_INTEGER_RANGE = 1 << 30
 
 def fit_config(
     batch_size: int,
@@ -76,16 +72,20 @@ if __name__ == "__main__":
     privacy_settings = {
         'enable_dp': config['enable_dp'],
         'clipping_bound': config['clipping_bound'],
-        'granularity': config['granularity'],
         'sign_vector_seed': config['sign_vector_seed'],
         'bits': config['model_integer_range_exponent'],
         'model_integer_range': 1 << config['model_integer_range_exponent'],   
         'noise_multiplier': config['noise_multiplier'],
         'bias': config['bias'],
+        'n_active_clients': config['n_clients'],
+        'fraction_rate': config['privacy_amplification_sampling_ratio'],
         'n_clients_round': round(config['n_clients'] * config['privacy_amplification_sampling_ratio']),
+        'clipping_object': config['clipping_object'],
     }
 
-    
+
+
+    log(INFO, f"Num of client per round: {privacy_settings['n_clients_round']}")
 
     # global model (server side)
     model: nn.Module
@@ -106,7 +106,6 @@ if __name__ == "__main__":
 
     checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
         model=model, parameter_exchanger=parameter_exchanger,model_checkpointers=checkpointers,
-        # state_checkpointer=state_checkpointer
     )
     
     len_parameters = len(vectorize_model(model))
@@ -115,7 +114,12 @@ if __name__ == "__main__":
     
     config["model_dim"] = len_parameters
 
-    privacy_settings['granularity'] = get_heuristic_granularity(privacy_settings["noise_multiplier"], privacy_settings['clipping_bound'], privacy_settings['bits'], privacy_settings['n_clients_round'], padded_model_dim)
+    privacy_settings['granularity'] = get_heuristic_granularity(privacy_settings["noise_multiplier"], privacy_settings['clipping_bound'], privacy_settings['bits'], privacy_settings['n_clients_round'], padded_model_dim) 
+    config.setdefault('granularity', privacy_settings['granularity'])
+    
+
+    log(INFO, f"get heuristic granularity: {config['granularity']}")
+
 
     # consumed by strategy below
     fit_config_fn = partial(
@@ -126,24 +130,24 @@ if __name__ == "__main__":
     )
 
     strategy = DDGMStrategy(
+        fraction_fit=privacy_settings['fraction_rate'],
+        fraction_evaluate=privacy_settings['fraction_rate'],
         min_fit_clients=privacy_settings['n_clients_round'],
         min_evaluate_clients=privacy_settings['n_clients_round'],
-        min_available_clients=privacy_settings['n_clients_round'],
+        min_available_clients=privacy_settings['n_active_clients'],
         on_fit_config_fn=fit_config_fn,
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_all_model_parameters(model),
+        beta=config['momentum'],
         ddgm_config=config,
     )
     
-    
-
-    if "model_integer_range" not in config:
-        config["model_integer_range"] = DEFAULT_MODEL_INTEGER_RANGE
     # configure server
+    client_manager = PoissonSamplingClientManager()
     server = DDGMServer(
-        client_manager=SimpleClientManager(),
+        client_manager=client_manager,
         fl_config=config,
         strategy=strategy,
         checkpoint_and_state_module=checkpoint_and_state_module,

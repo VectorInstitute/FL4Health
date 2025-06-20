@@ -3,10 +3,10 @@ from typing import Tuple, List
 
 from torch import Size, Tensor, cat, flatten, float64, nn, prod, tensor
 import torch 
+from torch.nn.utils import vector_to_parameters, parameters_to_vector
 from torch.linalg import vector_norm
 from flwr.common.logger import log
 from logging import INFO
-
 
 def get_model_dimension(model: nn.Module) -> int:
     return sum(p.numel() for p in model.state_dict().values())
@@ -17,33 +17,41 @@ def tensor_shape_to_parameter_count(tensor_shape: Size) -> int:
     return prod(tensor(list(tensor_shape))).item()
 
 
+# def vectorize_model_old(model: nn.Module) -> Tensor:
+#     """Get model vector by vectorizing each layer and concatenating them."""
+#     vectorized_layers = [flatten(layer) for layer in model.state_dict().values()]
+#     return cat(tuple(vectorized_layers))
+
 def vectorize_model(model: nn.Module) -> Tensor:
-    """Get model vector by vectorizing each layer and concatenating them."""
-    vectorized_layers = [flatten(layer) for layer in model.state_dict().values()]
-    return cat(tuple(vectorized_layers))
+    return parameters_to_vector(model.parameters())
 
 
 def unvectorize_model(model: nn.Module, parameter_vector: Tensor) -> nn.Module:
-    """Hydrate model from parameter vector."""
-    assert parameter_vector.dim() == 1  # ensure we received a vector
-    assert get_model_dimension(model) == parameter_vector.numel()  # ensure dimensions agree
-
-    start = end = 0
-    state_dict = model.state_dict()
-    for layer_name, layer_params in state_dict.items():
-        shape = layer_params.size()
-        end += layer_params.numel()
-        # if layer_params.numel() == 1:
-        #     log(INFO, layer_name)
-        #     log(INFO, layer_params)
-        #     log(INFO, get_model_dimension(model))
-        # log(INFO, f'start: {start}, end {end}, shape {shape}, numel: {layer_params.numel()}')
-        segment = parameter_vector[start:end]
-        state_dict[layer_name] = segment.view(shape)    
-        start = end
-
-    model.load_state_dict(state_dict)
+    """Assign a flat parameter vector back into the model's parameters."""
+    vector_to_parameters(parameter_vector, model.parameters())
     return model
+
+# def unvectorize_model_old(model: nn.Module, parameter_vector: Tensor) -> nn.Module:
+#     """Hydrate model from parameter vector."""
+#     assert parameter_vector.dim() == 1  # ensure we received a vector
+#     assert get_model_dimension(model) == parameter_vector.numel()  # ensure dimensions agree
+
+#     start = end = 0
+#     state_dict = model.state_dict()
+#     for layer_name, layer_params in state_dict.items():
+#         shape = layer_params.size()
+#         end += layer_params.numel()
+#         # if layer_params.numel() == 1:
+#         #     log(INFO, layer_name)
+#         #     log(INFO, layer_params)
+#         #     log(INFO, get_model_dimension(model))
+#         # log(INFO, f'start: {start}, end {end}, shape {shape}, numel: {layer_params.numel()}')
+#         segment = parameter_vector[start:end]
+#         state_dict[layer_name] = segment.view(shape)    
+#         start = end
+
+#     model.load_state_dict(state_dict)
+#     return model
 
 
 def get_model_norm(model: nn.Module, p=2) -> Tensor:
