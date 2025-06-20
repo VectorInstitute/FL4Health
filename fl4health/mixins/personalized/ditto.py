@@ -171,7 +171,8 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         Returns:
             nn.Module: The PyTorch model serving as the global model for Ditto
         """
-        return copy.deepcopy(self.get_model(config).to(self.device))
+        model_copy = copy.deepcopy(self.get_model(config))
+        return model_copy.to(self.device)
 
     @ensure_protocol_compliance
     def get_optimizer(self: DittoPersonalizedProtocol, config: Config) -> dict[str, Optimizer]:
