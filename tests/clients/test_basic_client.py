@@ -248,5 +248,4 @@ class MockBasicClient(BasicClient):
             fold_loss_dict_into_metrics(self.mock_metrics, self.mock_loss_dict, logging_mode)
         if logging_mode == LoggingMode.VALIDATION:
             return self.mock_loss, self.mock_metrics
-        else:
-            return self.mock_loss, self.mock_metrics_test
+        return self.mock_loss, self.mock_metrics_test

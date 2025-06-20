@@ -2,7 +2,7 @@
 
 import copy
 import warnings
-from logging import INFO, WARN
+from logging import ERROR, INFO, WARN
 from typing import Any, Protocol, cast, runtime_checkable
 
 import torch
@@ -364,7 +364,6 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             model optimization steps. The prediction dictionary contains predictions indexed a "global" and "local"
             corresponding to predictions from the global and local Ditto models for metric evaluations.
         """
-
         # global
         global_losses, global_preds = self._compute_preds_and_losses(
             self.safe_global_model(), self.optimizers["global"], input, target
@@ -406,7 +405,6 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
     def val_step(
         self: DittoPersonalizedProtocol, input: TorchInputType, target: TorchTargetType
     ) -> tuple[EvaluationLosses, TorchPredType]:
-
         # global
         global_losses, global_preds = self._val_step_with_model(self.safe_global_model(), input, target)
         # local
