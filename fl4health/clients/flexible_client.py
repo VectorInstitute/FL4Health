@@ -40,6 +40,10 @@ class FlexibleClient(BasicClient):
     ) -> None:
         """
         Flexible FL Client with functionality to train, evaluate, log, report and checkpoint.
+
+        `FlexibleClient` is similar to `BasicClient` but provides added flexibility with respect
+        to methods
+
         User is responsible for implementing methods: ``get_model``, ``get_optimizer``, ``get_data_loaders``,
         ``get_criterion`` Other methods can be overridden to achieve custom functionality.
 
@@ -712,3 +716,26 @@ class FlexibleClient(BasicClient):
             preds, features = output
             return preds, features
         raise ValueError("Model forward did not return a tensor, dictionary of tensors, or tuple of tensors")
+
+    def _transform_gradients_with_model(self, model: torch.nn.Module, losses: TrainingLosses) -> None:
+        """
+        Helper transform gradients method that allows for injection of model.
+
+        NOTE: Subclasses should implement this helper should there be a need to specialize the logic
+        for transforming gradients.
+
+        Args:
+            model (torch.nn.Module): the model used to generate predictions to compute losses
+            losses (TrainingLosses): The losses object from the train step
+        """
+        pass
+
+    def transform_gradients(self, losses: TrainingLosses) -> None:
+        """
+        Hook function for model training only called after backwards pass but before optimizer step. Useful for
+        transforming the gradients (such as with gradient clipping) before they are applied to the model weights.
+
+        Args:
+            losses (TrainingLosses): The losses object from the train step
+        """
+        return self._transform_gradients_with_model(self.model, losses)
