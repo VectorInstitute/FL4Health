@@ -57,6 +57,7 @@ def collapse_one_hot_tensor(input: torch.Tensor, dim: int = 0) -> torch.Tensor:
 
     Args:
         input (torch.Tensor): The binary one hot encoded tensor
+        dim (int, optional): Dimension over which to collapse the one-hot tensor. Defaults to 0.
 
     Returns:
         torch.Tensor: Integer tensor with the specified dim collapsed

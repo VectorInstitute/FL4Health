@@ -11,6 +11,12 @@ from fl4health.metrics.metrics_utils import threshold_tensor
 from fl4health.metrics.utils import align_pred_and_target_shapes
 
 
+N_DIM_2D_TENSOR = 2
+EXPECTED_BINARY_LABEL_DIM_SIZE = 2
+BINARY_COUNT_TENSOR_MAX_SIZE = 2
+BINARY_COUNT_TENSOR_N_DIMS = 2
+
+
 class MetricOutcome(Enum):
     TRUE_POSITIVE = "true_positive"
     FALSE_POSITIVE = "false_positive"
@@ -473,7 +479,7 @@ class BinaryClassificationMetric(ClassificationMetric):
 
         if self.batch_dim is not None and self.label_dim is not None:
             # Both a batch and label dim have been specified. So tensor should be 2D and either have 1 or 2 columns
-            assert count_ndims == 2, (
+            assert count_ndims == BINARY_COUNT_TENSOR_N_DIMS, (
                 f"Batch and label dims have been specified, tensor should be 2D, but got {count_ndims}"
             )
 
@@ -481,7 +487,7 @@ class BinaryClassificationMetric(ClassificationMetric):
                 # reshape so that batch dimension comes first
                 count_tensor = count_tensor.transpose(0, 1)
 
-            if count_tensor.shape[1] == 2:
+            if count_tensor.shape[1] == BINARY_COUNT_TENSOR_MAX_SIZE:
                 # Always return the class with label 1 (pos_label 0 will be handled by rearranging counts if necessary)
                 return count_tensor[:, 1].unsqueeze(1)
             if count_tensor.shape[1] == 1:
@@ -498,7 +504,7 @@ class BinaryClassificationMetric(ClassificationMetric):
         # there is a dimension for an "implied" label (i.e. 0.8 representing vector predictions [0.2, 0.8]). If
         # there is no label dimension specified, there should only be a single element as well.
         assert count_ndims <= 1, f"Batch dim has not been specified, tensor should be 0 or 1D but got {count_ndims}"
-        if count_tensor.numel() == 2:
+        if count_tensor.numel() == BINARY_COUNT_TENSOR_MAX_SIZE:
             assert self.label_dim is not None, "self.label_dim is None but got two elements in the count_tensor"
             # Always return the class with label 1
             return count_tensor[1].unsqueeze(0)
@@ -543,11 +549,11 @@ class BinaryClassificationMetric(ClassificationMetric):
 
         # Assert that the label dimension for these tensors is of size 2 at most.
         if self.label_dim is not None:
-            assert preds.shape[self.label_dim] <= 2, (
+            assert preds.shape[self.label_dim] <= EXPECTED_BINARY_LABEL_DIM_SIZE, (
                 f"Label dimension for preds tensor is greater than 2 {preds.shape[self.label_dim]}. This class is "
                 "meant for binary metric computation only"
             )
-            assert targets.shape[self.label_dim] <= 2, (
+            assert targets.shape[self.label_dim] <= EXPECTED_BINARY_LABEL_DIM_SIZE, (
                 f"Label dimension for targets tensor is greater than 2 {targets.shape[self.label_dim]}. This class is "
                 "meant for binary metric computation only"
             )
@@ -748,7 +754,7 @@ class MultiClassificationMetric(ClassificationMetric):
             torch.Tensor: transposed tensor if 2D, unchanged tensor if empty, and throw error if shape differs from
                 those two expected settings
         """
-        if matrix.ndim == 2:
+        if matrix.ndim == N_DIM_2D_TENSOR:
             return matrix.transpose(0, 1)
         if matrix.numel() == 0:
             return matrix

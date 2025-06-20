@@ -7,6 +7,10 @@ from peft.utils import prepare_model_for_kbit_training
 from transformers import AutoModelForCausalLM, BitsAndBytesConfig
 
 
+EIGHT_BIT = 8
+FOUR_BIT = 4
+
+
 def cosine_annealing(
     total_round: int,
     current_round: int = 0,
@@ -48,9 +52,9 @@ def get_model(model_cfg: dict[str, Any]) -> torch.nn.Module:
         torch.nn.Module: The model.
     """
     quantization_config = model_cfg["quantization"]
-    if quantization_config == 4:
+    if quantization_config == FOUR_BIT:
         quantization_config = BitsAndBytesConfig(load_in_4bit=True)
-    elif quantization_config == 8:
+    elif quantization_config == EIGHT_BIT:
         quantization_config = BitsAndBytesConfig(load_in_8bit=True)
     else:
         raise ValueError(f"Use 4-bit or 8-bit quantization. You passed: {quantization_config}/")

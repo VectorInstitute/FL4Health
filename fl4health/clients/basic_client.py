@@ -37,6 +37,9 @@ from fl4health.utils.random import generate_hash
 from fl4health.utils.typing import LogLevel, TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
+EXPECTED_OUTPUT_TUPLE_SIZE = 2
+
+
 class BasicClient(NumPyClient):
     def __init__(
         self,
@@ -140,8 +143,10 @@ class BasicClient(NumPyClient):
         If checkpointer exists, maybe checkpoint model based on the provided metric values.
 
         Args:
-            loss (float): validation loss to potentially be used for checkpointing
-            metrics (dict[str, float]): validation metrics to potentially be used for checkpointing
+            loss (float): Validation loss to potentially be used for checkpointing.
+            metrics (dict[str, Scalar]): Validation metrics to potentially be used for checkpointing
+            checkpoint_mode (CheckpointMode): Whether we're doing checkpointing pre- or post-aggregation on the server
+                side.
         """
         self.checkpoint_and_state_module.maybe_checkpoint(self.model, loss, metrics, checkpoint_mode)
 
@@ -439,10 +444,10 @@ class BasicClient(NumPyClient):
         the round if training by steps.
 
         Args:
-            current_round (int | None, optional): The current FL round. (Ie current
-                server round). Defaults to None.
-            current_epoch (int | None, optional): The current epoch of local
-                training. Defaults to None.
+            current_round (int | None, optional): The current FL round. (Ie current server round). Defaults to None.
+            current_epoch (int | None, optional): The current epoch of local training. Defaults to None.
+            logging_mode (LoggingMode, optional): The logging mode to be used in logging. This mainly changes the
+                way in which logging is decorated. Defaults to LoggingMode.TRAIN.
         """
         log_str = f"Current FL Round: {int(current_round)} " if current_round is not None else ""
         log_str += f"Current Epoch: {int(current_epoch)} " if current_epoch is not None else ""
@@ -1002,7 +1007,7 @@ class BasicClient(NumPyClient):
         if isinstance(output, torch.Tensor):
             return {"prediction": output}, {}
         if isinstance(output, tuple):
-            if len(output) != 2:
+            if len(output) != EXPECTED_OUTPUT_TUPLE_SIZE:
                 raise ValueError(f"Output tuple should have length 2 but has length {len(output)}")
             preds, features = output
             return preds, features

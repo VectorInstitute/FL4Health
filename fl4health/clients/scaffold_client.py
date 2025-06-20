@@ -123,6 +123,7 @@ class ScaffoldClient(BasicClient):
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
                 model and also the server control variates (initial or after aggregation)
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
+            fitting_round (bool): Which fitting round (i.e. server round of fitting) that we're on.
         """
         assert self.model is not None and self.parameter_exchanger is not None
 
@@ -309,12 +310,6 @@ class ScaffoldClient(BasicClient):
 
 
 class DPScaffoldClient(ScaffoldClient, InstanceLevelDpClient):
-    """
-    Federated Learning client for Instance Level Differentially Private Scaffold strategy.
-
-    Implemented as specified in https://arxiv.org/abs/2111.09278
-    """
-
     def __init__(
         self,
         data_path: Path,
@@ -326,6 +321,30 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelDpClient):
         progress_bar: bool = False,
         client_name: str | None = None,
     ) -> None:
+        """
+        Federated Learning client for Instance Level Differentially Private Scaffold strategy.
+
+        Implemented as specified in https://arxiv.org/abs/2111.09278
+
+        Args:
+            data_path (Path): path to the data to be used to load the data for client-side training
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
+                "cuda"
+            loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
+                each batch. Defaults to ``LossMeterType.AVERAGE``.
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
+                both checkpointing and state saving. The module, and its underlying model and state checkpointing
+                components will determine when and how to do checkpointing during client-side training.
+                No checkpointing (state or model) is done if not provided. Defaults to None.
+            reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
+                should send data to. Defaults to None.
+            progress_bar (bool, optional): Whether or not to display a progress bar during client training and
+                validation. Uses ``tqdm``. Defaults to False.
+            client_name (str | None, optional): n optional client name that uniquely identifies a client.
+                If not passed, a hash is randomly generated. Client state will use this as part of its state file
+                name. Defaults to None.
+        """
         ScaffoldClient.__init__(
             self,
             data_path=data_path,

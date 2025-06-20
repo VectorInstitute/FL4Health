@@ -62,7 +62,7 @@ def _calculate_drift_norm(t1: torch.Tensor, t2: torch.Tensor, normalize: bool) -
         normalize (bool): Whether to divide the difference between the tensors by their number of elements.
 
     Returns:
-        float: _description_
+        float: Norm of the difference between ``t1`` and ``t2`` based on the specified calculation
     """
     t_diff = (t1 - t2).float()
     drift_norm = torch.linalg.norm(t_diff)

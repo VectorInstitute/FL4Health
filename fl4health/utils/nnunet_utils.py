@@ -93,7 +93,7 @@ def reload_modules(packages: Sequence[str]) -> None:
     package or the modules themselves if a module was specified.
 
     Args:
-        package (Sequence[str]): The absolute names of the packages, subpackages or modules to reload. The entire
+        packages (Sequence[str]): The absolute names of the packages, subpackages or modules to reload. The entire
             import hierarchy must be specified. Eg. ``package.subpackage`` to reload all modules in subpackage, not
             just ``subpackage``. Packages are reloaded in the order they are given.
     """
@@ -212,6 +212,7 @@ def collapse_one_hot_tensor(input: torch.Tensor, dim: int = 0) -> torch.Tensor:
 
     Args:
         input (torch.Tensor): The binary one hot encoded tensor
+        dim (int, optional): Dimension over which to collapse the one-hot tensor. Defaults to 0.
 
     Returns:
         torch.Tensor: Integer tensor with the specified dim collapsed
@@ -278,20 +279,20 @@ class NnUNetDataLoaderWrapper(DataLoader):
         should only be used for training and validation, not final testing.
 
         Args:
-            nnunet_dataloader (SingleThreadedAugmenter | NonDetMultiThreadedAugmenter | MultiThreadedAugmenter): The
+            nnunet_augmenter (SingleThreadedAugmenter | NonDetMultiThreadedAugmenter | MultiThreadedAugmenter): The
                 dataloader used by nnunet
-            nnunet_config (NnUNetConfig): The nnunet config. Enum type helps ensure that nnunet config is valid
+            nnunet_config (NnunetConfig | str): The nnunet config. Enum type helps ensure that nnunet config is valid
             infinite (bool, optional): Whether or not to treat the dataset as infinite. The dataloaders sample data
                 with replacement either way. The only difference is that if set to False, a ``StopIteration`` is
                 generated after ``num_samples``/``batch_size`` steps. Defaults to False.
-            set_len (int | None): If specified overrides the dataloaders estimate of its own length with the provided
-                value. A ``StopIteration`` will be raised after ``set_len`` steps. If not specified the length is
-                determined by scaling the number of samples by the ratio of image size to the networks input patch
-                size.
-            ref_image_shape (Sequence | None): The image shape to use when computing the scaling factor used in
-                determining the length of the dataloader. Should be representative of the median or average image size
-                in the data set. If not specified a random image is loaded and its shape is used in the calculation of
-                the scaling factor.
+            set_len (int | None, optional): If specified overrides the dataloaders estimate of its own length with the
+                provided value. A ``StopIteration`` will be raised after ``set_len`` steps. If not specified the
+                length is determined by scaling the number of samples by the ratio of image size to the networks input
+                patch size. Defaults to None.
+            ref_image_shape (Sequence | None, optional): The image shape to use when computing the scaling factor used
+                in determining the length of the dataloader. Should be representative of the median or average image
+                size in the data set. If not specified a random image is loaded and its shape is used in the
+                calculation of the scaling factor. Defaults to None.
         """
         # The augmenter is a wrapper on the nnunet dataloader
         self.nnunet_augmenter = nnunet_augmenter
@@ -315,6 +316,18 @@ class NnUNetDataLoaderWrapper(DataLoader):
         self.set_len = set_len
 
     def __next__(self) -> tuple[torch.Tensor, torch.Tensor | dict[str, torch.Tensor]]:
+        """
+        Define how the NnUNetDataLoaderWrapper selects the next item as part of standard iteration through the data
+        in the data loader. This is slightly more complicated due to the potentially "infinite" nature of these
+        data loaders within nnUnet and the use of deep supervision. See class description for more information.
+
+        Raises:
+            StopIteration: When we hit the "end" of the dataset through iteration.
+            TypeError: Raised when the targets extracted from the batch objects are not of the right types.
+
+        Returns:
+            tuple[torch.Tensor, torch.Tensor | dict[str, torch.Tensor]]: A batch of input and target data.
+        """
         if not self.infinite and self.current_step == self.__len__():
             self.reset()
             raise StopIteration  # Raise stop iteration after epoch has completed
@@ -364,6 +377,12 @@ class NnUNetDataLoaderWrapper(DataLoader):
         self.current_step = 0
 
     def __iter__(self) -> DataLoader:  # type: ignore
+        """
+        Define the iter conversion for an NnUNetDataLoaderWrapper.
+
+        Returns:
+            DataLoader: The iterator, which is just the NnUNetDataLoaderWrapper itself
+        """
         # mypy gets angry that the return type is different
         return self
 
@@ -376,9 +395,15 @@ class NnUNetDataLoaderWrapper(DataLoader):
 
 
 class Module2LossWrapper(_Loss):
-    """Converts a `` nn.Module`` subclass to a ``_Loss`` subclass."""
-
     def __init__(self, loss: nn.Module, **kwargs: Any) -> None:
+        """
+        Converts a `` nn.Module`` subclass to a ``_Loss`` subclass. NnUnet defines their loss functions as modules
+        rather than true losses. This provides a type conversion.
+
+        Args:
+            loss (nn.Module): Loss to be wrapped.
+            **kwargs (Any): Any other key word arguments that need to go to the _Loss base class.
+        """
         super().__init__(**kwargs)
         self.loss = loss
 

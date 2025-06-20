@@ -20,10 +20,10 @@ class TextMulticolumnTransformer(BaseEstimator, TransformerMixin):
     def fit(self, x: pd.DataFrame, y: pd.DataFrame | None = None) -> TextMulticolumnTransformer:
         """
         Fit the transformer to the provided dataframe. The dataframe should have multiple string columns
-        The transformer is fit on the appended text from all columns in the ``X`` dataframe.
+        The transformer is fit on the appended text from all columns in the ``x`` dataframe.
 
         Args:
-            X (pd.DataFrame): Columns on which to fit the transformer
+            x (pd.DataFrame): Columns on which to fit the transformer
             y (pd.DataFrame | None, optional): Not used. Defaults to None.
 
         Returns:
@@ -35,10 +35,10 @@ class TextMulticolumnTransformer(BaseEstimator, TransformerMixin):
 
     def transform(self, x: pd.DataFrame) -> pd.DataFrame:
         """
-        Transforms the concatenation of all columns of text in the ``X`` dataframe.
+        Transforms the concatenation of all columns of text in the ``x`` dataframe.
 
         Args:
-            X (pd.DataFrame): Dataframe of text-based columns to be transformed
+            x (pd.DataFrame): Dataframe of text-based columns to be transformed
 
         Returns:
             pd.DataFrame: Transformed dataframe.
@@ -61,10 +61,10 @@ class TextColumnTransformer(BaseEstimator, TransformerMixin):
     def fit(self, x: pd.DataFrame, y: pd.DataFrame | None = None) -> TextColumnTransformer:
         """
         Fit the transformer to the provided dataframe. The dataframe should have a single string column
-        The transformer is fit on the text from the single columns in the ``X`` dataframe.
+        The transformer is fit on the text from the single columns in the ``x`` dataframe.
 
         Args:
-            X (pd.DataFrame): Column on which to fit the transformer
+            x (pd.DataFrame): Column on which to fit the transformer
             y (pd.DataFrame | None, optional): Not used. Defaults to None.
 
         Returns:
@@ -76,10 +76,10 @@ class TextColumnTransformer(BaseEstimator, TransformerMixin):
 
     def transform(self, x: pd.DataFrame) -> pd.DataFrame:
         """
-        Transforms the concatenation of a single column of text in the ``X`` dataframe.
+        Transforms the concatenation of a single column of text in the ``x`` dataframe.
 
         Args:
-            X (pd.DataFrame): Dataframe of text-based column to be transformed
+            x (pd.DataFrame): Dataframe of text-based column to be transformed
 
         Returns:
             pd.DataFrame: Transformed dataframe.

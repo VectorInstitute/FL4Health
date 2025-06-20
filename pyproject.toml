@@ -166,7 +166,6 @@ ignore = [
     "D203", # 1 blank line required before class docstring
     "D205", # 1 blank line required between summary line and description
     "ERA001", # Found commented-out code (too many false positives with math comments)
-    "PLR2004", # Replace magic number with named constant
     "PLR0913", # Too many arguments
     "COM812", # Missing trailing comma
     "A001", # Ignore variable `input` is shadowing a Python builtin
@@ -179,16 +178,19 @@ ignore = [
     "D101", # Public class requires documentation. Ignoring since we document our inits
     "D100", # TEMPORARY IGNORE: Ignore module level docstrings requirement
     "D104", # TEMPORARY IGNORE: Ignore package level docstrings requirement
-    "D102", # TEMPORARY IGNORE WILL FIX ONE BY ONE
-    "D103", # TEMPORARY IGNORE WILL FIX ONE BY ONE
-    "D107", # TEMPORARY IGNORE WILL FIX ONE BY ONE
-    "D417", # TEMPORARY IGNORE WILL FIX ONE BY ONE
-    "D105", # TEMPORARY IGNORE WILL FIX ONE BY ONE
+    "D103", # TEMPORARY IGNORE WILL FIX: Undocumented public function
+    "D102", # TEMPORARY IGNORE WILL FIX: Undocumented public method
 ]
 
 # Ignore import violations in all `__init__.py` files.
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["E402", "F401", "F403", "F811"]
+# Ignoring undocumented public functions, public init, magic method, and magic numbers
+"tests/*" = ["D103", "D105", "D107", "PLR2004"]
+# Ignoring undocumented, public init, magic method, and magic numbers
+"research/*" = ["PLR2004", "D105", "D107"]
+# Ignoring undocumented public init
+"examples/*" = ["D107"]
 
 [tool.ruff.lint.pep8-naming]
 ignore-names = ["SimpleITK", "F", "NN"]

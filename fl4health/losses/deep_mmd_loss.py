@@ -104,8 +104,8 @@ class DeepMmdLoss(torch.nn.Module):
         Compute the paired distance between x and y.
 
         Args:
-            X (torch.Tensor): The input tensor X.
-            Y (torch.Tensor): The input tensor Y.
+            x (torch.Tensor): The input tensor x.
+            y (torch.Tensor): The input tensor y.
 
         Returns:
             torch.Tensor: The paired distance between X and Y.
@@ -225,8 +225,8 @@ class DeepMmdLoss(torch.nn.Module):
         Train the Deep MMD kernel.
 
         Args:
-            X (torch.Tensor): The input tensor X.
-            Y (torch.Tensor): The input tensor Y.
+            x (torch.Tensor): The input tensor x.
+            y (torch.Tensor): The input tensor y.
         """
         self.featurizer.train()
         self.sigma_q_opt.requires_grad = True
@@ -276,8 +276,8 @@ class DeepMmdLoss(torch.nn.Module):
         Compute the Deep MMD Loss.
 
         Args:
-            X (torch.Tensor): The input tensor X.
-            Y (torch.Tensor): The input tensor Y.
+            x (torch.Tensor): The input tensor x.
+            y (torch.Tensor): The input tensor y.
 
         Returns:
             torch.Tensor: The value of Deep MMD Loss.
@@ -314,8 +314,8 @@ class DeepMmdLoss(torch.nn.Module):
         steps and then computes the MMD loss.
 
         Args:
-            Xs (torch.Tensor): The source input tensor.
-            Xt (torch.Tensor): The target input tensor.
+            x_s (torch.Tensor): The source input tensor.
+            x_t (torch.Tensor): The target input tensor.
 
         Returns:
             torch.Tensor: The value of Deep MMD Loss.

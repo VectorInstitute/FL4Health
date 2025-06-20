@@ -11,20 +11,19 @@ def ensure_protocol_compliance(func: Callable, instance: Any | None, args: Any, 
     """
     Wrapper to ensure that a the instance is of `BasicClient` type.
 
-    NOTE: this should only be used within a `BasicClient`.
+    NOTE: This should only be used within a `BasicClient`. Params specified and supplied by the `wrapt` decorator
 
     Args:
-        # are params specified and supplied by the `wrapt` decorator
-        func (Callable): the function to be wrapped
-        instance (Any | None): the associated instance if it is a method belonging to a class or a standalone
+        func (Callable): The function to be wrapped
+        instance (Any | None): The associated instance if it is a method belonging to a class or a standalone
         args (Any): args passed to func
         kwargs (Any): kwargs passed to func
 
     Raises:
-        TypeError: we raise error if the instance is not a `BasicClient`.
+        TypeError: Thrown if the protocol requirements are not met
 
     Returns:
-        _type_: _description_
+        Any: Application of the function to the args and kwargs.
     """
     # validate self is a BasicClient
     if not isinstance(instance, BasicClient):

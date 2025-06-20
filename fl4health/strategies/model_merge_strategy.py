@@ -221,11 +221,12 @@ class ModelMergeStrategy(Strategy):
         assumes only metrics will be computed on client and loss is set to None.
 
         Args:
+            server_round (int): Which server round we're currently on.
             results (list[tuple[ClientProxy, EvaluateRes]]): The client identifiers and the results of their local
                 evaluation that need to be aggregated on the server-side. These results are loss values
                 (None in this case) and the metrics dictionary.
-            failures (list[tuple[ClientProxy, EvaluateRes] | BaseException]): These are the results and
-                exceptions from clients that experienced an issue during evaluation, such as timeouts or exceptions.
+            failures (list[tuple[ClientProxy, EvaluateRes]  |  BaseException]): These are the results and exceptions
+                from clients that experienced an issue during evaluation, such as timeouts or exceptions.
 
         Returns:
             tuple[float | None, dict[str, Scalar]]: Aggregated loss values and the aggregated metrics. The metrics

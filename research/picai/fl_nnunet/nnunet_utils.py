@@ -151,9 +151,9 @@ class NnUNetDataLoaderWrapper(DataLoader):
         should only be used for training and validation, not final testing.
 
         Args:
-            nnunet_dataloader (SingleThreadedAugmenter | NonDetMultiThreadedAugmenter | MultiThreadedAugmenter): The
+            nnunet_augmenter (SingleThreadedAugmenter | NonDetMultiThreadedAugmenter | MultiThreadedAugmenter): The
                 dataloader used by nnunet
-            nnunet_config (NnUNetConfig): The nnunet config. Enum type helps ensure that nnunet config is valid
+            nnunet_config (NnunetConfig | str): The nnunet config. Enum type helps ensure that nnunet config is valid.
             infinite (bool, optional): Whether or not to treat the dataset as infinite. The dataloaders sample data
                 with replacement either way. The only difference is that if set to False, a StopIteration is
                 generated after num_samples/batch_size steps. Defaults to False.

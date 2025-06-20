@@ -11,6 +11,17 @@ class PerFclLoss(nn.Module):
         global_feature_loss_temperature: float = 0.5,
         local_feature_loss_temperature: float = 0.5,
     ) -> None:
+        """
+        Loss function for local model training with the PerFCL Method: https://ieeexplore.ieee.org/document/10020518/
+        It is essentially a combination of two separate MOON contrastive losses.
+
+        Args:
+            device (torch.device): Device onto which this loss should be transferred.
+            global_feature_loss_temperature (float, optional): Temperature for the contrastive loss associated with
+                the global features. Defaults to 0.5.
+            local_feature_loss_temperature (float, optional): Temperature for the contrastive loss associated with
+                the local features. Defaults to 0.5.
+        """
         super().__init__()
         self.global_feature_contrastive_loss = MoonContrastiveLoss(device, global_feature_loss_temperature)
         self.local_feature_contrastive_loss = MoonContrastiveLoss(device, local_feature_loss_temperature)

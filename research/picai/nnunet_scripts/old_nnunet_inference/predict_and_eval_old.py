@@ -27,42 +27,33 @@ def pred_and_eval(
     verbose: bool = True,
 ) -> None:
     """
-    Runs inference on raw input data given a number of compatible nnunet
-    models. Then extracts detection maps from those predictions and evaluates
-    the model using the standardPICAI evaluation metrics.
+    Runs inference on raw input data given a number of compatible nnunet models. Then extracts detection maps from
+    those predictions and evaluates the model using the standardPICAI evaluation metrics.
 
     Args:
-        config_path (str): Path to a yaml config file. The three required keys
-            are plans, dataset_json and one or more nnunet_configs (e.g. 2d,
-            3d_fullres etc.). The nnunet config keys should contain a list of
-            paths. If the path points to a file it should be a model
-            checkpoint. The model checkpoints can be dicts with the
-            'network_weights' key or nn.Modules. If the path points to a
-            directory it should be an nnunet results folder for a particular
-            dataset-config-trainer combo. The plans key should be the path to
-            the nnunet model plans json file. The dataset_json key should be
-            the path to the dataset json of one of the training datasets. Or
-            create a new json yourself with the 'label' and 'file_ending' keys
-            and their corresponding values as specified by nnunet.
-        inputs_folder (str): Path to the folder containing the raw input data
-            that has not been processed by nnunet yet. File names must follow
-            the nnunet convention where each channel modality is stored as a
-            separate file. File names should be case-identifier_0000 where
-            0000 is a 4 digit integer representing the channel/modality of the
-            image. All cases must have the same N channels numbered from 0 to
-            N.
-        labels_folder (str): Path to the folder containing the ground truth
-            annotation maps. File names must match the case identifiers of the input images
-        output_folder (str | None, optional): Path to the output folder. By
-            default the only output is a 'metrics.json' file containing the
-            evaluation results. If left as none then nothing is saved.
-            Defaults to None.
-        save_probability_maps (bool, optional): Whether or not to save the
-            predicted probability maps. Defaults to False.
-        save_detection_maps (bool, optional): Whether or not to save the
-            predicted lesion detection maps. Defaults to False.
-        verbose (bool, optional): Whether or not to print logs to stdout.
-            Defaults to True.
+        config_path (str): Path to a yaml config file. The three required keys are plans, dataset_json and one or more
+            nnunet_configs (e.g. 2d, 3d_fullres etc.). The nnunet config keys should contain a list of paths. If the
+            path points to a file it should be a model checkpoint. The model checkpoints can be dicts with the
+            'network_weights' key or nn.Modules. If the path points to a directory it should be an nnunet results
+            folder for a particular dataset-config-trainer combo. The plans key should be the path to the nnunet model
+            plans json file. The dataset_json key should be the path to the dataset json of one of the training
+            datasets. Or create a new json yourself with the 'label' and 'file_ending' keys and their corresponding
+            values as specified by nnunet.
+        inputs_folder (str): Path to the folder containing the raw input data that has not been processed by nnunet
+            yet. File names must follow the nnunet convention where each channel modality is stored as a separate
+            file. File names should be case-identifier_0000 where 0000 is a 4 digit integer representing the
+            channel/modality of the image. All cases must have the same N channels numbered from 0 to N.
+        labels_folder (str): Path to the folder containing the ground truth annotation maps. File names must match
+            the case identifiers of the input images
+        output_folder (str | None, optional): Path to the output folder. By default the only output is a
+            'metrics.json' file containing the evaluation results. If left as none then nothing is saved.
+        save_probability_maps (bool, optional): Whether or not to save the predicted probability maps.
+            Defaults to False.
+        save_detection_maps (bool, optional): Whether or not to save the predicted lesion detection maps.
+            Defaults to False.
+        save_annotations (bool, optional): Whether or not to save the predicted lesion annotations maps.
+            Defaults to False.
+        verbose (bool, optional): Whether or not to print logs to stdout. Defaults to True.
     """
     # Ensure an output folder is specified
     if save_probability_maps or save_detection_maps or save_annotations:

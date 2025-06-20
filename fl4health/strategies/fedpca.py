@@ -12,6 +12,7 @@ from fl4health.utils.functions import decode_and_pseudo_sort_results
 
 
 MINIMUM_PCA_ClIENTS = 2
+EVALUATE_FN_TYPE = Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None
 
 
 class FedPCA(BasicFedAvg):
@@ -23,9 +24,7 @@ class FedPCA(BasicFedAvg):
         min_fit_clients: int = 2,
         min_evaluate_clients: int = 2,
         min_available_clients: int = 2,
-        evaluate_fn: (
-            Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None
-        ) = None,
+        evaluate_fn: EVALUATE_FN_TYPE = None,
         on_fit_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         on_evaluate_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
@@ -43,27 +42,29 @@ class FedPCA(BasicFedAvg):
         Args:
             fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0.
             fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.
-            min_available_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
-            evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
-                Optional function used for central server-side evaluation. Defaults to None.
+            min_fit_clients (int, optional): Minimum number of clients used during fit. Defaults to 2.
+            min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
+            min_available_clients (int, optional): Minimum number of clients before starting FL. Defaults to 2.
+            evaluate_fn (EVALUATE_FN_TYPE, optional): Optional function used for central server-side evaluation.
+                Defaults to None.
             on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
                 training by providing a configuration dictionary. Defaults to None.
             on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
                 client-side validation by providing a ``Config`` dictionary. Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             initial_parameters (Parameters | None, optional): Initial global model parameters. Defaults to None.
-            fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
-                Defaults to None.
+            fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function. Defaults
+                to None.
             evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
             weighted_aggregation (bool, optional): Determines whether parameter aggregation is a linearly weighted
-                average or a uniform average. FedAvg default is weighted average by client dataset counts.
-                Defaults to True.
+                average or a uniform average. FedAvg default is weighted average by client dataset counts. Defaults to
+                True.
             weighted_eval_losses (bool, optional): Determines whether losses during evaluation are linearly weighted
                 averages or a uniform average. FedAvg default is weighted average of the losses by client dataset
                 counts. Defaults to True.
-            svd_merging (bool): Indicates whether merging of client principal components is done by directly performing
-                SVD or using a procedure based on QR decomposition. Defaults to True.
+            svd_merging (bool, optional): Indicates whether merging of client principal components is done by directly
+                performing SVD or using a procedure based on QR decomposition. Defaults to True.
         """
         super().__init__(
             fraction_fit=fraction_fit,

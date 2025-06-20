@@ -156,6 +156,12 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         self.m_t: NDArrays | None = None
 
     def __repr__(self) -> str:
+        """
+        Printable representation of the object.
+
+        Returns:
+            str: Printable representation of the object.
+        """
         return f"ClientLevelDPFedAvgM(accept_failures={self.accept_failures})"
 
     def modify_noise_multiplier(self) -> float:

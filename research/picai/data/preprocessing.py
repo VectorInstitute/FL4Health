@@ -72,7 +72,7 @@ class Case(ABC):
 
         Args:
             scan_paths (Sequence[Path]): The set of paths where the scans associated with the Case are located.
-            annotation_write_dir (Path): The path where the annotation associated with the Case is located.
+            annotations_path (Path): The path where the annotation associated with the Case is located.
             settings (PreprocessingSettings): The settings determining how the case is preprocessed.
         """
         self.scan_paths = scan_paths
@@ -128,7 +128,7 @@ class PicaiCase(Case):
         Args:
             scan_paths (Sequence[Path]): The set of paths where the scans associated with the Case are located.
                 **NOTE:** self.scans will inherit the ordering of scan_paths and must remain consistently ordered.
-            annotation_write_dir (Path): The path where the annotation associated with the Case is located.
+            annotations_path (Path): The path where the annotation associated with the Case is located.
             settings (PreprocessingSettings): The settings determining how the case is preprocessed.
         """
         super().__init__(scan_paths, annotations_path, settings)
@@ -367,7 +367,7 @@ def preprocess(
     Args:
         cases (list[Case]): A list of cases to be preprocessed.
         transforms (Sequence[PreprocessingTransform]): The sequence of transformation to be applied.
-        nums_threads (int): The number of threads to use for preprocessing.
+        num_threads (int): The number of threads to use for preprocessing.
 
     Returns:
         Sequence[tuple[Sequence[Path], Path]]: A sequence of tuples in which the first entry is a sequence of

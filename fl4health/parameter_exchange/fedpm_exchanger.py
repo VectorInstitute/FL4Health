@@ -9,6 +9,10 @@ from fl4health.utils.functions import sigmoid_inverse
 
 class FedPmExchanger(DynamicLayerExchanger):
     def __init__(self) -> None:
+        """
+        Exchanger specifically tailored to exchange parameters and other information between FedPM servers and
+        clients. FedPM has a special set of information that needs to be exchanged, which is handled by this class.
+        """
         super().__init__(select_scores_and_sample_masks)
 
     def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Config | None = None) -> None:

@@ -249,17 +249,17 @@ def get_dataloader(
     Initializes and returns MONAI Dataloader.
 
     Args:
-        img_paths (Sequence[Sequence[str]]: List of list of strings where the outer list represents a
+        img_paths (Sequence[Sequence[str]] | Sequence[str]): List of list of strings where the outer list represents a
             list of file paths corresponding to the different MRI Sequences for a given patient exam.
         seg_paths (Sequence[str]): List of strings representing the segmentation labels associated with images.
-        batch_size (str): The number of samples per batch yielded by the DataLoader.
+        batch_size (int): The number of samples per batch yielded by the DataLoader.
         img_transform (Compose): The series of transformations applied to input images during dataloading.
         seg_transform (Compose): The series of transformations applied to the segmentation labels during dataloading.
-        shuffle (bool): Whether or not to shuffle the dataset.
-        num_workers (int): The number of workers used by the DataLoader.
+        shuffle (bool, optional): Whether or not to shuffle the dataset. Defaults to False.
+        num_workers (int, optional): The number of workers used by the DataLoader. Defaults to 2.
 
     Returns:
-       DataLoader: MONAI dataloader.
+        DataLoader: MONAI dataloader.
     """
     # Ignoring type of image_files because Sequence[Sequence[str]] is valid input
     # list of files interpreted as multi-parametric sequence. Supported by image loader:

@@ -33,6 +33,8 @@ class MaskedLinear(nn.Linear):
             in_features: size of each input sample
             out_features: size of each output sample
             bias: If set to ``False``, the layer will not learn an additive bias. Default: ``True``
+            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.
+            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.
         """
         # Attributes:
         # weight: weights of the module.

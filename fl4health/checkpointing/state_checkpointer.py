@@ -488,13 +488,13 @@ class ServerStateCheckpointer(StateCheckpointer):
         Load the state of the server from checkpoint.
 
         Args:
-            server (FlServer): server into which the attributes will be loaded
-            model nn.Module: The model structure to be loaded as part of the server state.
-            attributes (list[str] | None): List of attributes to load from the checkpoint. If None, all attributes
-                specified in ``snapshot_attrs`` are loaded. Defaults to None.
+            server (FlServer): Server into which the attributes will be loaded.
+            model (nn.Module): The model structure to be loaded as part of the server state.
+            attributes (list[str] | None, optional): List of attributes to load from the checkpoint. If None, all
+                attributes specified in ``snapshot_attrs`` are loaded. Defaults to None.
 
         Returns:
-            nn.Module | None: Returns a model if a checkpoint exists to load from. Otherwise returns None
+            nn.Module | None: Returns a model if a checkpoint exists to load from. Otherwise returns None.
         """
         # Store server for access in functions
         self.server = server

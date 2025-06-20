@@ -49,6 +49,8 @@ class MaskedLayerNorm(nn.LayerNorm):
                 affine parameters initialized to ones (for weights) and zeros (for biases). Default: ``True``.
             bias: If set to ``False``, the layer will not learn an additive bias (only relevant if
                 ``elementwise_affine`` is ``True``). Default: ``True``.
+            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.
+            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.
         """
         # Attributes:
         # weight: the weights of the module. The values are initialized to 1.
@@ -168,17 +170,19 @@ class _MaskedBatchNorm(_BatchNorm):
         **NOTE:** The scores are not assumed to be bounded between 0 and 1.
 
         Args:
-            num_features: number of features or channels :math:`C` of the input
-            eps: a value added to the denominator for numerical stability. Default: 1e-5
-            momentum: the value used for the running_mean and ``running_var`` computation. Can be set to ``None`` for
-                cumulative moving average (i.e. simple average). Default: 0.1
-            affine: a boolean value that when set to ``True``, this module has learnable affine parameters.
-                Default: ``True``
-            track_running_stats: a boolean value that when set to ``True``, this module tracks the running mean and
-                variance, and when set to ``False``, this module does not track such statistics, and initializes
-                statistics buffers :attr:`running_mean` and :attr:`running_var` as ``None``. When these buffers
-                are ``None``, this module always uses batch statistics. in both training and eval modes.
-                Default: ``True``
+            num_features (int): Number of features or channels :math:`C` of the input
+            eps (float, optional): A value added to the denominator for numerical stability. Defaults to 1e-5.
+            momentum (float | None, optional): The value used for the running_mean and ``running_var`` computation.
+                Can be set to ``None`` for cumulative moving average (i.e. simple average). Defaults to 0.1.
+            affine (bool, optional): A boolean value that when set to ``True``, this module has learnable affine
+                parameters. Defaults to True.
+            track_running_stats (bool, optional): A boolean value that when set to ``True``, this module tracks the
+                running mean and variance, and when set to ``False``, this module does not track such statistics, and
+                initializes statistics buffers :attr:`running_mean` and :attr:`running_var` as ``None``. When these
+                buffers are ``None``, this module always uses batch statistics. in both training and eval modes.
+                Defaults to True.
+            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.
+            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.
         """
         # Attributes:
         # weight: the weights of the module. The values are initialized to 1.
