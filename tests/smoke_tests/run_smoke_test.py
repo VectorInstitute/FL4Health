@@ -190,8 +190,8 @@ async def run_smoke_test(
         loop.close()
 
     Args:
-        server_python_path (str): The path for the executable server module
-        client_python_path (str): The path for the executable client module
+        server_python_path (str): The path for the executable server module.
+        client_python_path (str): The path for the executable client module.
         config_path (str): The path for the config yaml file. The following attributes are required by this function:
 
             - `n_clients`: the number of clients to be started
@@ -392,8 +392,8 @@ async def run_fault_tolerance_smoke_test(
     Runs a smoke test for a given server, client, and dataset configuration.
 
     Args:
-        server_python_path (str): The path for the executable server module
-        client_python_path (str): The path for the executable client module
+        server_python_path (str): The path for the executable server module.
+        client_python_path (str): The path for the executable client module.
         config_path (str): The path for the config yaml file. The following attributes are required by this function:
 
             - `n_clients`: the number of clients to be started

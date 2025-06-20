@@ -44,13 +44,13 @@ class BaseDataset(ABC, Dataset):
         the underlying data.
 
         Args:
-            index (int): Index at which to extract the data from the dataset
+            index (int): Index at which to extract the data from the dataset.
 
         Raises:
             NotImplementedError: Throws if one attempts to use this function.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: input and target tensors extracted at the provided index.
+            tuple[torch.Tensor, torch.Tensor]: Input and target tensors extracted at the provided index.
         """
         raise NotImplementedError
 
@@ -82,8 +82,8 @@ class TensorDataset(BaseDataset):
         data augmentation, label blurring, etc.
 
         Args:
-            data (torch.Tensor): input data for training
-            targets (torch.Tensor | None, optional): target data for training. Defaults to None.
+            data (torch.Tensor): Input data for training.
+            targets (torch.Tensor | None, optional): Target data for training. Defaults to None.
             transform (Callable | None, optional): Optional transformation to be applied to the input data.
                 NOTE: This transformation is applied at load time within ``__get_item__``
                 Defaults to None.
@@ -125,7 +125,7 @@ class TensorDataset(BaseDataset):
         Length of the dataset as determined by len() applied to torch dataset.
 
         Returns:
-            int: length of dataset.
+            int: Length of dataset.
         """
         return len(self.data)
 
@@ -259,7 +259,7 @@ class SyntheticDataset(TensorDataset):
             index (int): Index of the data in the dataset to be returned
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: input and targets at the provided index
+            tuple[torch.Tensor, torch.Tensor]: Input and targets at the provided index.
         """
         assert self.targets is not None
 

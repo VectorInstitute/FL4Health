@@ -32,7 +32,7 @@ class DatasetConverter(TensorDataset):
         ``converter_function`` is applied after the transformers.
 
         Args:
-            index (int): The index of the batch of data to be extracted
+            index (int): The index of the batch of data to be extracted.
 
         Returns:
             tuple[torch.Tensor, torch.Tensor]: Get the raw batch data (input, target) and apply the

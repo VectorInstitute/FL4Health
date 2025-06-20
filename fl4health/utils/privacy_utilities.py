@@ -78,14 +78,14 @@ def map_model_to_opacus_model(
 
     Args:
         model (nn.Module): Pytorch model to be converted to an Opacus compliant ``GradSampleModule``
-        grad_sample_mode (str, optional): his determines how Opacus performs the conversion under the hood. The
+        grad_sample_mode (str, optional): This determines how Opacus performs the conversion under the hood. The
             standard mechanism is indicated by "hooks" but other approaches may be necessary depending on how the
             pytorch module is defined. Defaults to "hooks".
         *args (Any): Any other args that need to go to the conversion function.
         **kwargs (Any): Another other kwargs that need to go to the conversion function.
 
     Returns:
-        GradSampleModule: The Opacus-compliant, wrapped ``GradSampleModule``
+        GradSampleModule: The Opacus-compliant, wrapped ``GradSampleModule``.
     """
     model, _ = privacy_validate_and_fix_modules(model)
     return convert_model_to_opacus_model(model, grad_sample_mode, *args, **kwargs)

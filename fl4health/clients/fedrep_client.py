@@ -323,7 +323,7 @@ class FedRepClient(BasicClient):
 
         Returns:
             tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
-                L oss is a dictionary of one or more losses that represent the different components of the loss.
+                Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         # First we train the head module for head_epochs with the representations frozen in place
         self._prepare_train_head()

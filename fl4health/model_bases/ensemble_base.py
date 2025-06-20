@@ -9,7 +9,7 @@ class EnsembleAggregationMode(Enum):
     AVERAGE = "AVERAGE"
 
 
-EXPECTED_PRED_N_DIMS = 2
+EXPECTED_MAX_PRED_N_DIMS = 2
 
 
 class EnsembleModel(nn.Module):
@@ -73,7 +73,7 @@ class EnsembleModel(nn.Module):
         preds_dimension = list(preds_list[0].shape)
 
         # If larger than two dimensions, we map to 2D to perform voting operation (and reshape later)
-        if len(preds_dimension) > EXPECTED_PRED_N_DIMS:
+        if len(preds_dimension) > EXPECTED_MAX_PRED_N_DIMS:
             preds_list = [preds.reshape(-1, preds_dimension[-1]) for preds in preds_list]
 
         # For each model prediction, compute the argmax of the model over the classes and stack column-wise into matrix
@@ -88,7 +88,7 @@ class EnsembleModel(nn.Module):
         vote_preds = nn.functional.one_hot(indices_with_highest_counts, num_classes=preds_dimension[-1])
 
         # If larger than two dimensions, map back to original dimensions
-        if len(preds_dimension) > EXPECTED_PRED_N_DIMS:
+        if len(preds_dimension) > EXPECTED_MAX_PRED_N_DIMS:
             vote_preds = vote_preds.reshape(*preds_dimension)
 
         return vote_preds

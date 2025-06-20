@@ -381,7 +381,7 @@ class NnUNetDataLoaderWrapper(DataLoader):
         Define the iter conversion for an NnUNetDataLoaderWrapper.
 
         Returns:
-            DataLoader: The iterator, which is just the NnUNetDataLoaderWrapper itself
+            DataLoader: The iterator, which is just the NnUNetDataLoaderWrapper itself.
         """
         # mypy gets angry that the return type is different
         return self

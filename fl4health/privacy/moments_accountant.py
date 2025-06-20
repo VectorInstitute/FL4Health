@@ -50,8 +50,8 @@ class FixedSamplingWithoutReplacement(SamplingStrategy):
         This class is specific to fixed sampling without replacement.
 
         Args:
-            population_size (int): Size of the total population from which sampling is performed
-            sample_size (int): Size of the desired sample
+            population_size (int): Size of the total population from which sampling is performed.
+            sample_size (int): Size of the desired sample.
         """
         self.population_size = population_size
         self.sample_size = sample_size

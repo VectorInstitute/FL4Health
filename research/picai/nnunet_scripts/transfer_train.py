@@ -142,8 +142,8 @@ def check_configs(plans_path: str, configs: list) -> None:
     Raises an error if configs are not found in plans json.
 
     Args:
-        plans_path (str): Path to the plans file to check
-        configs (list): A list of nnunet configs to check for
+        plans_path (str): Path to the plans file to check.
+        configs (list): A list of nnunet configs for which to check.
     """
     plans = load_json(plans_path)
     for c in configs:

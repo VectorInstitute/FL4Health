@@ -164,7 +164,7 @@ def prepare_data(
     Args:
         scans_read_dir (Path): The path to read the scans from. Should be a directory with subdirectories
             for each patient_id. Inside the subdirectories should be all the scan files for a given patient.
-        annotation_read_dir (Path): he path to read the annotations from. Should be a flat directory with all
+        annotation_read_dir (Path): The path to read the annotations from. Should be a flat directory with all
             annotation files.
         scans_write_dir (Path): The path to write the scans to. All scans are written into same directory.
         annotation_write_dir (Path): The path to write the annotations to. All annotations are written into same

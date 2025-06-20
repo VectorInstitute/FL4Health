@@ -45,7 +45,7 @@ class EvaluateClient(BasicClient):
                 "cuda"
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to ``LossMeterType.AVERAGE``.
-            model_checkpoint_path (Path | None, optional): path to which the model should be checkpointed. Defaults to
+            model_checkpoint_path (Path | None, optional): Path to which the model should be checkpointed. Defaults to
                 None.
             reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
                 should send data to. Defaults to None.
