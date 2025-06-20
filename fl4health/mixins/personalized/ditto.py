@@ -372,12 +372,11 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         local_losses, local_preds = self._compute_preds_and_losses(self.model, self.optimizers["local"], input, target)
         local_loss_clone = local_losses.backward["backward"].clone()  # need a clone for later
 
-        # take step
-        # global
+        # take step global
         global_losses = self._apply_backwards_on_losses_and_take_step(
             self.safe_global_model(), self.optimizers["global"], global_losses
         )
-        # local
+        # take step local
         penalty_loss = self.compute_penalty_loss()
         local_losses.backward["backward"] = local_losses.backward["backward"] + penalty_loss
         local_losses = self._apply_backwards_on_losses_and_take_step(
