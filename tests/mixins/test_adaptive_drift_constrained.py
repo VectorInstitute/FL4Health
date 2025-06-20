@@ -67,7 +67,6 @@ def test_init_raises_value_error_when_basic_client_protocol_not_satisfied() -> N
         pass
 
     with pytest.raises(RuntimeError, match="This object needs to satisfy `FlexibleClientProtocolPreSetup`."):
-
         _InvalidTestAdaptedClient(data_path=Path(""), metrics=[Accuracy()])
 
 
@@ -75,7 +74,7 @@ def test_subclass_checks_raise_no_warning() -> None:
     with warnings.catch_warnings(record=True) as recorded_warnings:
 
         class _TestInheritanceMixin(AdaptiveDriftConstrainedMixin, _TestFlexibleClient):
-            """subclass should skip validation if is itself a Mixin that inherits AdaptiveDriftConstrainedMixin"""
+            """Subclass should skip validation if is itself a Mixin that inherits AdaptiveDriftConstrainedMixin."""
 
             pass
 

@@ -24,6 +24,7 @@ from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetTyp
 from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 from tests.test_utils.models_for_test import LinearModel
 
+
 freezegun.configure(extend_ignore_list=["transformers"])  # type: ignore
 
 
@@ -249,8 +250,7 @@ class MockFlexibleClient(FlexibleClient):
             fold_loss_dict_into_metrics(self.mock_metrics, self.mock_loss_dict, logging_mode)
         if logging_mode == LoggingMode.VALIDATION:
             return self.mock_loss, self.mock_metrics
-        else:
-            return self.mock_loss, self.mock_metrics_test
+        return self.mock_loss, self.mock_metrics_test
 
 
 def test_subclass_raises_warning_if_override_val_step() -> None:
@@ -261,7 +261,7 @@ def test_subclass_raises_warning_if_override_val_step() -> None:
     with pytest.warns(RuntimeWarning, match=re.escape(msg)):
 
         class _TestSubclass(FlexibleClient):
-            """A subclass that overrides val_step"""
+            """A subclass that overrides val_step."""
 
             def val_step(
                 self, input: TorchInputType, target: TorchTargetType
@@ -278,7 +278,7 @@ def test_subclass_raises_warning_if_override_train_step() -> None:
     with pytest.warns(RuntimeWarning, match=re.escape(msg)):
 
         class _TestSubclass(FlexibleClient):
-            """A subclass that overrides train_step"""
+            """A subclass that overrides train_step."""
 
             def train_step(
                 self, input: TorchInputType, target: TorchTargetType

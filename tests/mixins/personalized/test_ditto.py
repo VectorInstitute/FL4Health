@@ -49,7 +49,6 @@ class _TestDittoedClient(DittoPersonalizedMixin, _TestFlexibleClient):
 
 
 class _DummyParent:
-
     def __init__(self) -> None:
         pass
 
@@ -81,7 +80,6 @@ def test_init_raises_value_error_when_basic_client_protocol_not_satisfied() -> N
         pass
 
     with pytest.raises(RuntimeError, match="This object needs to satisfy `FlexibleClientProtocolPreSetup`."):
-
         _InvalidTestDittoClient(data_path=Path(""), metrics=[Accuracy()])
 
 
@@ -89,7 +87,7 @@ def test_subclass_checks_raise_no_warning() -> None:
     with warnings.catch_warnings(record=True) as recorded_warnings:
 
         class _TestInheritanceMixin(DittoPersonalizedMixin, _TestFlexibleClient):
-            """subclass should skip validation if is itself a Mixin that inherits DittoPersonalizedMixin"""
+            """Subclass should skip validation if is itself a Mixin that inherits DittoPersonalizedMixin."""
 
             pass
 
@@ -370,7 +368,6 @@ def test_val_step(
 
 def test_raise_runtime_error_not_flexible_client() -> None:
     """Test that an invalid parent raises RuntimeError."""
-
     with pytest.raises(
         RuntimeError, match=re.escape("This object needs to satisfy `FlexibleClientProtocolPreSetup`.")
     ):
