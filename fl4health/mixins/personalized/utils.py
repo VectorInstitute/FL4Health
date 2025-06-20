@@ -8,7 +8,8 @@ from fl4health.clients.flexible_client import FlexibleClient
 
 @wrapt.decorator
 def ensure_protocol_compliance(func: Callable, instance: Any | None, args: Any, kwargs: Any) -> Any:
-    """Wrapper to ensure that a the instance is of `FlexibleClient` type.
+    """
+    Wrapper to ensure that a the instance is of `FlexibleClient` type.
 
     NOTE: this should only be used within a `FlexibleClient`.
 

@@ -6,9 +6,9 @@ from pathlib import Path
 from typing import Any
 
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
@@ -74,7 +74,6 @@ class FlexibleClient(BasicClient):
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
         """
-
         self.data_path = data_path
         self.device = device
         self.metrics = metrics
@@ -140,7 +139,7 @@ class FlexibleClient(BasicClient):
         self.val_iterator: Iterator | None = None
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
-        """Perform some validations on subclasses of BasicClient"""
+        """Perform some validations on subclasses of FlexibleClient."""
         super().__init_subclass__(**kwargs)
 
         # check that specific methods are not overridden, otherwise throw warning
@@ -202,12 +201,11 @@ class FlexibleClient(BasicClient):
 
             # Need all parameters even if normally exchanging partial
             return FullParameterExchanger().push_parameters(self.model, config=config)
-        else:
-            assert self.model is not None and self.parameter_exchanger is not None
-            # If the client has early stopping module and the patience is None, we load the best saved state
-            # to send the best checkpointed local model's parameters to the server
-            self._maybe_load_saved_best_local_model_state()
-            return self.parameter_exchanger.push_parameters(self.model, config=config)
+        assert self.model is not None and self.parameter_exchanger is not None
+        # If the client has early stopping module and the patience is None, we load the best saved state
+        # to send the best checkpointed local model's parameters to the server
+        self._maybe_load_saved_best_local_model_state()
+        return self.parameter_exchanger.push_parameters(self.model, config=config)
 
     def _maybe_load_saved_best_local_model_state(self) -> None:
         if self.early_stopper is not None and self.early_stopper.patience is None:
@@ -253,7 +251,9 @@ class FlexibleClient(BasicClient):
 
     def shutdown(self) -> None:
         """
-        Shuts down the client. Involves shutting down W&B reporter if one exists.
+        Shuts down the client.
+
+        NOTE: Involves shutting down W&B reporter if one exists.
         """
         # Shutdown reporters
         self.reports_manager.report({"shutdown": str(datetime.datetime.now())})
@@ -280,7 +280,7 @@ class FlexibleClient(BasicClient):
         # Parse config to determine train by steps or train by epochs
         if ("local_epochs" in config) and ("local_steps" in config):
             raise ValueError("Config cannot contain both local_epochs and local_steps. Please specify only one.")
-        elif "local_epochs" in config:
+        if "local_epochs" in config:
             local_epochs = narrow_dict_type(config, "local_epochs", int)
             local_steps = None
         elif "local_steps" in config:
@@ -470,7 +470,9 @@ class FlexibleClient(BasicClient):
         logging_mode: LoggingMode = LoggingMode.TRAIN,
     ) -> None:
         """
-        Logs a header string. By default this is logged at the beginning of each local
+        Logs a header string.
+
+        NOTE: By default this is logged at the beginning of each local
         epoch or at the beginning of the round if training by steps
 
         Args:
@@ -479,7 +481,6 @@ class FlexibleClient(BasicClient):
             current_epoch (int | None, optional): The current epoch of local
                 training. Defaults to None.
         """
-
         log_str = f"Current FL Round: {int(current_round)} " if current_round is not None else ""
         log_str += f"Current Epoch: {int(current_epoch)} " if current_epoch is not None else ""
 
@@ -500,8 +501,9 @@ class FlexibleClient(BasicClient):
         logging_mode: LoggingMode = LoggingMode.TRAIN,
     ) -> None:
         """
-        Handles the logging of losses, metrics, and other information to the
-        output file. Called only at the end of an epoch or server round
+        Handles the logging of losses, metrics, and other information to the output file.
+
+        NOTE: Called only at the end of an epoch or server round
 
         Args:
             loss_dict (dict[str, float]): A dictionary of losses to log.
@@ -558,8 +560,10 @@ class FlexibleClient(BasicClient):
 
     def get_client_specific_reports(self) -> dict[str, Any]:
         """
-        This function can be overridden by an inheriting client to report additional client specific information to
-        the ``wandb_reporter``
+        Get client specific reports.
+
+        NOTE: This function can be overridden by an inheriting client to report
+        additional client specific information to the ``wandb_reporter``
 
         Returns:
             dict[str, Any]: A dictionary of things to report
@@ -591,7 +595,8 @@ class FlexibleClient(BasicClient):
     def _compute_preds_and_losses(
         self, model: nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
     ) -> tuple[TrainingLosses, TorchPredType]:
-        """Helper method within the train step for computing preds and losses.
+        """
+        Helper method within the train step for computing preds and losses.
 
         NOTE: Subclasses should implement this helper method if there is a need
         to specialize this part of the overall train step.
@@ -620,7 +625,8 @@ class FlexibleClient(BasicClient):
     def _apply_backwards_on_losses_and_take_step(
         self, model: nn.Module, optimizer: Optimizer, losses: TrainingLosses
     ) -> TrainingLosses:
-        """Helper method within the train step for applying backwards on losses and taking step with optimizer.
+        """
+        Helper method within the train step for applying backwards on losses and taking step with optimizer.
 
         NOTE: Subclasses should implement this helper method if there is a need
         to specialize this part of the overall train step.
@@ -643,7 +649,8 @@ class FlexibleClient(BasicClient):
     def _train_step_with_model_and_optimizer(
         self, model: torch.nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
     ) -> tuple[TrainingLosses, TorchPredType]:
-        """Helper train step method that allows for injection of model and optimizer.
+        """
+        Helper train step method that allows for injection of model and optimizer.
 
         NOTE: Subclasses should implement this method if there is a need to specialize
         the train_step logic.
@@ -656,7 +663,6 @@ class FlexibleClient(BasicClient):
             tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
             a dictionary of any predictions produced by the model.
         """
-
         losses, preds = self._compute_preds_and_losses(model, optimizer, input, target)
         losses = self._apply_backwards_on_losses_and_take_step(model, optimizer, losses)
 
@@ -681,7 +687,8 @@ class FlexibleClient(BasicClient):
     def _val_step_with_model(
         self, model: nn.Module, input: TorchInputType, target: TorchTargetType
     ) -> tuple[EvaluationLosses, TorchPredType]:
-        """Helper method for val_step that allows for injection of model.
+        """
+        Helper method for val_step that allows for injection of model.
 
         NOTE: Subclasses should implement this method if there is a need to
         specialize the val_step logic.
@@ -694,7 +701,6 @@ class FlexibleClient(BasicClient):
             tuple[EvaluationLosses, TorchPredType]: The losses object from the val step along with a dictionary of the
             predictions produced by the model.
         """
-
         # Get preds and compute loss
         with torch.no_grad():
             preds, features = self.predict_with_model(model, input)
@@ -715,7 +721,6 @@ class FlexibleClient(BasicClient):
             tuple[EvaluationLosses, TorchPredType]: The losses object from the val step along with a dictionary of the
             predictions produced by the model.
         """
-
         return self._val_step_with_model(self.model, input, target)
 
     def train_by_epochs(
@@ -863,7 +868,7 @@ class FlexibleClient(BasicClient):
         self, loss_meter: LossMeter, metric_manager: MetricManager, include_losses_in_metrics: bool = False
     ) -> tuple[float, dict[str, Scalar]]:
         """
-        Evaluate the model on the validation set for a fixed number of steps set by ``self.num_validation_steps``
+        Evaluate the model on the validation set for a fixed number of steps set by ``self.num_validation_steps``.
 
         Args:
             loss_meter (LossMeter): The meter to track the losses.
@@ -874,7 +879,6 @@ class FlexibleClient(BasicClient):
         Returns:
             tuple[float, dict[str, Scalar]]: The loss and a dictionary of metrics from evaluation.
         """
-
         assert self.num_validation_steps is not None, "num_validation_steps must be defined to use this function"
 
         self.model.eval()
@@ -1047,9 +1051,9 @@ class FlexibleClient(BasicClient):
         # batch_size * num_validation_steps
         self.num_val_samples = len(self.val_loader.dataset)  # type: ignore
         if self.num_validation_steps is not None:
-            assert (
-                self.val_loader.batch_size is not None
-            ), "Validation batch size must be defined if we want to limit the number of validation steps"
+            assert self.val_loader.batch_size is not None, (
+                "Validation batch size must be defined if we want to limit the number of validation steps"
+            )
             self.num_val_samples = self.num_validation_steps * self.val_loader.batch_size
 
         if self.test_loader:
@@ -1061,7 +1065,7 @@ class FlexibleClient(BasicClient):
         # Add lr_scheduler to dictionary if user overrides get_lr_scheduler to return
         # scheduler for given optimizer
         self.lr_schedulers = {}
-        for optimizer_key in self.optimizers.keys():
+        for optimizer_key in self.optimizers:
             lr_scheduler = self.get_lr_scheduler(optimizer_key, config)
             if lr_scheduler is not None:
                 self.lr_schedulers[optimizer_key] = lr_scheduler
@@ -1074,7 +1078,9 @@ class FlexibleClient(BasicClient):
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         """
-        Returns Full Parameter Exchangers. Subclasses that require custom Parameter Exchangers can override this.
+        Returns Full Parameter Exchangers.
+
+        NOTE: Subclasses that require custom Parameter Exchangers can override this.
 
         Args:
             config (Config): The config from server.
@@ -1087,7 +1093,8 @@ class FlexibleClient(BasicClient):
     def predict_with_model(
         self, model: torch.nn.Module, input: TorchInputType
     ) -> tuple[TorchPredType, TorchFeatureType]:
-        """Helper predict method that allows for injection of model.
+        """
+        Helper predict method that allows for injection of model.
 
         NOTE: Subclasses should implement this method if there is need to specialize
         the predict logic of the client.
@@ -1110,7 +1117,6 @@ class FlexibleClient(BasicClient):
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
                 forward.
         """
-
         if isinstance(input, torch.Tensor):
             output = model(input)
         elif isinstance(input, dict):
@@ -1123,15 +1129,14 @@ class FlexibleClient(BasicClient):
 
         if isinstance(output, dict):
             return output, {}
-        elif isinstance(output, torch.Tensor):
+        if isinstance(output, torch.Tensor):
             return {"prediction": output}, {}
-        elif isinstance(output, tuple):
+        if isinstance(output, tuple):
             if len(output) != 2:
                 raise ValueError(f"Output tuple should have length 2 but has length {len(output)}")
             preds, features = output
             return preds, features
-        else:
-            raise ValueError("Model forward did not return a tensor, dictionary of tensors, or tuple of tensors")
+        raise ValueError("Model forward did not return a tensor, dictionary of tensors, or tuple of tensors")
 
     def compute_loss_and_additional_losses(
         self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
@@ -1211,8 +1216,7 @@ class FlexibleClient(BasicClient):
 
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         """
-        User defined method that returns a PyTorch Train DataLoader
-        and a PyTorch Validation DataLoader
+        User defined method that returns a PyTorch Train DataLoader and a PyTorch Validation DataLoader.
 
         Args:
             config (Config): The config from the server.
@@ -1328,7 +1332,6 @@ class FlexibleClient(BasicClient):
             step (int | None): If using ``local_steps``, current step of this round. Otherwise None.
             epoch (int | None): If using ``local_epochs`` current epoch of this round. Otherwise None.
         """
-
         assert (step is None) ^ (epoch is None)
 
         for lr_scheduler in self.lr_schedulers.values():
@@ -1373,10 +1376,13 @@ class FlexibleClient(BasicClient):
 
     def update_after_step(self, step: int, current_round: int | None = None) -> None:
         """
-        Hook method called after local train step on client. step is an integer that represents
-        the local training step that was most recently completed. For example, used by the APFL
-        method to update the alpha value after a training a step. Also used by the MOON, FENDA
-        and Ditto to update optimized beta value for MK-MMD loss after n steps.
+        Hook method called after local train step on client.
+
+        NOTE: step is an integer that represents the local training step that
+        was most recently completed.  For example, used by the APFL method to
+        update the alpha value after a training a step. Also used by the MOON,
+        FENDA and Ditto to update optimized beta value for MK-MMD loss after n
+        steps.
 
         Args:
             step (int): The step number in local training that was most recently
@@ -1387,8 +1393,10 @@ class FlexibleClient(BasicClient):
 
     def update_before_epoch(self, epoch: int) -> None:
         """
-        Hook method called before local epoch on client. Only called if client is being trained by epochs
-        (i.e. using ``local_epochs`` key instead of local steps in the server config file)
+        Hook method called before local epoch on client.
+
+        NOTE: Only called if client is being trained by epochs (i.e. using
+        ``local_epochs`` key instead of local steps in the server config file)
 
         Args:
             epoch (int): Integer representing the epoch about to begin
@@ -1396,7 +1404,8 @@ class FlexibleClient(BasicClient):
         pass
 
     def _transform_gradients_with_model(self, model: torch.nn.Module, losses: TrainingLosses) -> None:
-        """Helper transform gradients method that allows for injection of model.
+        """
+        Helper transform gradients method that allows for injection of model.
 
         NOTE: Subclasses should implement this helper should there be a need to specialize the logic
         for transforming gradients.
@@ -1405,7 +1414,6 @@ class FlexibleClient(BasicClient):
             model (torch.nn.Module): the model used to generate predictions to compute losses
             losses (TrainingLosses): The losses object from the train step
         """
-
         pass
 
     def transform_gradients(self, losses: TrainingLosses) -> None:

@@ -143,7 +143,6 @@ class AdaptiveDriftConstrainedMixin:
     def train_step(
         self: AdaptiveDriftConstrainedProtocol, input: TorchInputType, target: TorchTargetType
     ) -> tuple[TrainingLosses, TorchPredType]:
-
         losses, preds = self._compute_preds_and_losses(self.model, self.optimizers["global"], input, target)
         loss_clone = losses.backward["backward"].clone()
 
@@ -207,7 +206,8 @@ class AdaptiveDriftConstrainedMixin:
 
 
 def apply_adaptive_drift_to_client(client_base_type: type[FlexibleClient]) -> type[FlexibleClient]:
-    """Dynamically create an adapted client class.
+    """
+    Dynamically create an adapted client class.
 
     Args:
         client_base_type (type[FlexibleClient]): The class to be mixed.
