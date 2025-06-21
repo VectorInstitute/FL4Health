@@ -139,7 +139,7 @@ def test_get_parameters() -> None:
 @patch.object(_TestDittoedClient, "compute_penalty_loss")
 @patch.object(_TestDittoedClient, "_apply_backwards_on_losses_and_take_step")
 @patch.object(_TestDittoedClient, "_compute_preds_and_losses")
-def test_predict(
+def test_train_step(
     mock_private_compute_preds_and_losses: MagicMock,
     mock_private_apply_backwards_on_losses_and_take_step: MagicMock,
     mock_compute_penalty_loss: MagicMock,

@@ -38,6 +38,10 @@ class AdaptiveDriftConstrainedMixin:
         To be used with `~fl4health.BaseClient` in order to add the ability to compute
         losses via a constrained adaptive drift.
 
+        NOTE: Rather than using `AdaptiveDriftConstraintClient`, if a client subclasses
+        `FlexibleClient`, than this mixin could be used on that subclass to implement the
+        adaptive drift constraint.
+
         Raises:
             RuntimeError: when the inheriting class does not satisfy `FlexibleClientProtocolPreSetup`.
         """

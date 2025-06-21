@@ -182,6 +182,8 @@ class FlexibleClient(BasicClient):
         the train_step logic.
 
         Args:
+            model (nn.Module): the model used for making predictions. Passed here in case subclasses need it.
+            optimizer (Optimizer): the optimizer with which we take the step
             input (TorchInputType): The input to be fed into the model.
             target (TorchTargetType): The target corresponding to the input.
 
@@ -220,6 +222,7 @@ class FlexibleClient(BasicClient):
         specialize the val_step logic.
 
         Args:
+            model (nn.Module): the model used for making predictions. Passed here in case subclasses need it.
             input (TorchInputType): The input to be fed into the model.
             target (TorchTargetType): The target corresponding to the input.
 
