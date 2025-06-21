@@ -32,7 +32,7 @@ class NumPyClientMinimalProtocol(Protocol):
 
 
 @runtime_checkable
-class BasicClientProtocolPreSetup(NumPyClientMinimalProtocol, Protocol):
+class FlexibleClientProtocolPreSetup(NumPyClientMinimalProtocol, Protocol):
     """A minimal protocol for BasicClient focused on methods."""
 
     device: torch.device
@@ -61,7 +61,7 @@ class BasicClientProtocolPreSetup(NumPyClientMinimalProtocol, Protocol):
 
 
 @runtime_checkable
-class BasicClientProtocol(BasicClientProtocolPreSetup, Protocol):
+class FlexibleClientProtocol(FlexibleClientProtocolPreSetup, Protocol):
     """A minimal protocol for BasicClient focused on methods."""
 
     model: nn.Module
@@ -77,10 +77,36 @@ class BasicClientProtocol(BasicClientProtocolPreSetup, Protocol):
     def update_before_train(self, current_server_round: int) -> None:
         pass  # pragma: no cover
 
-    def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
+    def _compute_preds_and_losses(
+        self, model: nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[TrainingLosses, TorchPredType]:
+        pass  # pragma: no cover
+
+    def _apply_backwards_on_losses_and_take_step(
+        self, model: nn.Module, optimizer: Optimizer, losses: TrainingLosses
+    ) -> TrainingLosses:
+        pass  # pragma: no cover
+
+    def _train_step_with_model_and_optimizer(
+        self, model: nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[TrainingLosses, TorchPredType]:
+        pass  # pragma: no cover
+
+    def _val_step_with_model(
+        self, model: nn.Module, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[EvaluationLosses, TorchPredType]:
+        pass  # pragma: no cover
+
+    def predict_with_model(self, model: nn.Module, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
         pass  # pragma: no cover
 
     def transform_target(self, target: TorchTargetType) -> TorchTargetType:
+        pass  # pragma: no cover
+
+    def _transform_gradients_with_model(self, model: torch.nn.Module, losses: TrainingLosses) -> None:
+        pass  # pragma: no cover
+
+    def transform_gradients(self, losses: TrainingLosses) -> None:
         pass  # pragma: no cover
 
     def compute_training_loss(
