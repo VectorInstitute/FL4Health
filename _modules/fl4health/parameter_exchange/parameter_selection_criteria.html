@@ -570,12 +570,12 @@
 <span class="sd">    class  via the ``LayerSelectionFunctionConstructor`` class.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        t1 (torch.Tensor): First tensor</span>
-<span class="sd">        t2 (torch.Tensor): Second tensor</span>
+<span class="sd">        t1 (torch.Tensor): First tensor.</span>
+<span class="sd">        t2 (torch.Tensor): Second tensor.</span>
 <span class="sd">        normalize (bool): Whether to divide the difference between the tensors by their number of elements.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        float: _description_</span>
+<span class="sd">        float: Norm of the difference between ``t1`` and ``t2`` based on the specified calculation.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">t_diff</span> <span class="o">=</span> <span class="p">(</span><span class="n">t1</span> <span class="o">-</span> <span class="n">t2</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
     <span class="n">drift_norm</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">t_diff</span><span class="p">)</span>

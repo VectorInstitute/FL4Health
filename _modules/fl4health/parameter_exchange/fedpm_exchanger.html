@@ -511,8 +511,15 @@
 <div class="viewcode-block" id="FedPmExchanger">
 <a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.fedpm_exchanger.html#fl4health.parameter_exchange.fedpm_exchanger.FedPmExchanger">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FedPmExchanger</span><span class="p">(</span><span class="n">DynamicLayerExchanger</span><span class="p">):</span>
+<div class="viewcode-block" id="FedPmExchanger.__init__">
+<a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.fedpm_exchanger.html#fl4health.parameter_exchange.fedpm_exchanger.FedPmExchanger.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">select_scores_and_sample_masks</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Exchanger specifically tailored to exchange parameters and other information between FedPM servers and</span>
+<span class="sd">        clients. FedPM has a special set of information that needs to be exchanged, which is handled by this class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">select_scores_and_sample_masks</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="FedPmExchanger.pull_parameters">
 <a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.fedpm_exchanger.html#fl4health.parameter_exchange.fedpm_exchanger.FedPmExchanger.pull_parameters">[docs]</a>

@@ -634,6 +634,7 @@
 <span class="sd">            parameters (NDArrays): Parameters have information about model state to be added to the relevant client</span>
 <span class="sd">                model and also the server control variates (initial or after aggregation)</span>
 <span class="sd">            config (Config): The config is sent by the FL server to allow for customization in the function if desired.</span>
+<span class="sd">            fitting_round (bool): Which fitting round (i.e. server round of fitting) that we&#39;re on.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
@@ -848,12 +849,8 @@
 <div class="viewcode-block" id="DPScaffoldClient">
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.scaffold_client.html#fl4health.clients.scaffold_client.DPScaffoldClient">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DPScaffoldClient</span><span class="p">(</span><span class="n">ScaffoldClient</span><span class="p">,</span> <span class="n">InstanceLevelDpClient</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Federated Learning client for Instance Level Differentially Private Scaffold strategy.</span>
-
-<span class="sd">    Implemented as specified in https://arxiv.org/abs/2111.09278</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
+<div class="viewcode-block" id="DPScaffoldClient.__init__">
+<a class="viewcode-back" href="../../../reference/api/fl4health.clients.scaffold_client.html#fl4health.clients.scaffold_client.DPScaffoldClient.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">data_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
@@ -865,6 +862,30 @@
         <span class="n">progress_bar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">client_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Federated Learning client for Instance Level Differentially Private Scaffold strategy.</span>
+
+<span class="sd">        Implemented as specified in https://arxiv.org/abs/2111.09278</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data_path (Path): path to the data to be used to load the data for client-side training</span>
+<span class="sd">            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model</span>
+<span class="sd">            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often &quot;cpu&quot; or</span>
+<span class="sd">                &quot;cuda&quot;</span>
+<span class="sd">            loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over</span>
+<span class="sd">                each batch. Defaults to ``LossMeterType.AVERAGE``.</span>
+<span class="sd">            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle</span>
+<span class="sd">                both checkpointing and state saving. The module, and its underlying model and state checkpointing</span>
+<span class="sd">                components will determine when and how to do checkpointing during client-side training.</span>
+<span class="sd">                No checkpointing (state or model) is done if not provided. Defaults to None.</span>
+<span class="sd">            reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client</span>
+<span class="sd">                should send data to. Defaults to None.</span>
+<span class="sd">            progress_bar (bool, optional): Whether or not to display a progress bar during client training and</span>
+<span class="sd">                validation. Uses ``tqdm``. Defaults to False.</span>
+<span class="sd">            client_name (str | None, optional): n optional client name that uniquely identifies a client.</span>
+<span class="sd">                If not passed, a hash is randomly generated. Client state will use this as part of its state file</span>
+<span class="sd">                name. Defaults to None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">ScaffoldClient</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
             <span class="n">data_path</span><span class="o">=</span><span class="n">data_path</span><span class="p">,</span>
@@ -888,6 +909,7 @@
             <span class="n">progress_bar</span><span class="o">=</span><span class="n">progress_bar</span><span class="p">,</span>
             <span class="n">client_name</span><span class="o">=</span><span class="n">client_name</span><span class="p">,</span>
         <span class="p">)</span></div>
+</div>
 
 </pre></div>
         </article>

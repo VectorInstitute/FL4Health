@@ -516,10 +516,15 @@ other converter functions can be added or passed to support other conditions.</p
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>condition</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>torch.Tensor</em><em> | </em><em>None</em>) – Could be a fixed tensor used for all the data samples,
-None for non-conditional models, or a name (str) passed for other custom conversions like “label”.</p></li>
-<li><p><strong>do_one_hot_encoding</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Should converter perform one hot encoding on the condition or not.</p></li>
-<li><p><strong>custom_converter_function</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – User can define a new converter function.</p></li>
+<li><p><strong>condition</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>torch.Tensor</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Could be a fixed tensor used for all the data samples,
+None for non-conditional models, or a name (str) passed for other custom conversions like “label”.
+Defaults to None.</p></li>
+<li><p><strong>do_one_hot_encoding</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Should converter perform one hot encoding on the condition or not.
+Defaults to False.</p></li>
+<li><p><strong>custom_converter_function</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – User can define a new converter function. Defaults
+to None.</p></li>
+<li><p><strong>condition_vector_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Size of the conditioning vector if available. Defaults to
+None.</p></li>
 </ul>
 </dd>
 </dl>
@@ -565,7 +570,12 @@ converter function used to pack them. Unpacking relies on the size of the condit
 data shape which is saved before the packing process.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>packed_data</strong> (<em>torch.Tensor</em>) – Data tensor used in the training loop as the input to the model.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>packed_data</strong> (<em>torch.Tensor</em>) – Data tensor used in the training loop as the input to the model.</p></li>
+<li><p><strong>cond_vec_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Size of the conditional vector that has been packed into the <code class="docutils literal notranslate"><span class="pre">packed_data</span></code> variable.</p></li>
+<li><p><strong>data_shape</strong> (<em>torch.Size</em>) – Expected shape of the original data tensor after unpacking the conditioning
+vector.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Data in its original shape, and the condition vector to be fed into the

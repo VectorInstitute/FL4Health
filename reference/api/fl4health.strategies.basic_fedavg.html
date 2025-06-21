@@ -556,10 +556,11 @@ counts. Defaults to True.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>server_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Current FL server Round.</p></li>
 <li><p><strong>results</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>[</em><em>ClientProxy</em><em>, </em><em>EvaluateRes</em><em>]</em><em>]</em>) – The client identifiers and the results of their local
 evaluation that need to be aggregated on the server-side. These results are loss values and the
 metrics dictionary.</p></li>
-<li><p><strong>failures</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>[</em><em>ClientProxy</em><em>, </em><em>EvaluateRes</em><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#BaseException" title="(in Python v3.10)"><em>BaseException</em></a><em>]</em>) – These are the results and
+<li><p><strong>failures</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>[</em><em>ClientProxy</em><em>, </em><em>EvaluateRes</em><em>]  </em><em>|  </em><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#BaseException" title="(in Python v3.10)"><em>BaseException</em></a><em>]</em>) – These are the results and
 exceptions from clients that experienced an issue during evaluation, such as timeouts or exceptions.</p></li>
 </ul>
 </dd>

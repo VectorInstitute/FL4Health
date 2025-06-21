@@ -516,8 +516,17 @@
 <div class="viewcode-block" id="SamplingStrategy">
 <a class="viewcode-back" href="../../../reference/api/fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.SamplingStrategy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SamplingStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<div class="viewcode-block" id="SamplingStrategy.__init__">
+<a class="viewcode-back" href="../../../reference/api/fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.SamplingStrategy.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neighbor_relation</span><span class="p">:</span> <span class="n">NeighborRel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">neighbor_relation</span> <span class="o">=</span> <span class="n">neighbor_relation</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Abstract base class. It holds information about the privacy accountant NeighborRel applied.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            neighbor_relation (NeighborRel): The kind of neighbor relation that should be used in accounting.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">neighbor_relation</span> <span class="o">=</span> <span class="n">neighbor_relation</span></div>
+
 
 <div class="viewcode-block" id="SamplingStrategy.get_dp_event">
 <a class="viewcode-back" href="../../../reference/api/fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.SamplingStrategy.get_dp_event">[docs]</a>
@@ -531,9 +540,19 @@
 <div class="viewcode-block" id="PoissonSampling">
 <a class="viewcode-back" href="../../../reference/api/fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.PoissonSampling">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PoissonSampling</span><span class="p">(</span><span class="n">SamplingStrategy</span><span class="p">):</span>
+<div class="viewcode-block" id="PoissonSampling.__init__">
+<a class="viewcode-back" href="../../../reference/api/fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.PoissonSampling.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sampling_ratio</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        DP Event type that stores important information about sampling statistics and sets the proper NeighborRel value</span>
+<span class="sd">        This class is specific to Poisson sampling.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sampling_ratio (float): Poisson sampling ratio used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sampling_ratio</span> <span class="o">=</span> <span class="n">sampling_ratio</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">NeighborRel</span><span class="o">.</span><span class="n">ADD_OR_REMOVE_ONE</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">NeighborRel</span><span class="o">.</span><span class="n">ADD_OR_REMOVE_ONE</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="PoissonSampling.get_dp_event">
 <a class="viewcode-back" href="../../../reference/api/fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.PoissonSampling.get_dp_event">[docs]</a>
@@ -546,10 +565,21 @@
 <div class="viewcode-block" id="FixedSamplingWithoutReplacement">
 <a class="viewcode-back" href="../../../reference/api/fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.FixedSamplingWithoutReplacement">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FixedSamplingWithoutReplacement</span><span class="p">(</span><span class="n">SamplingStrategy</span><span class="p">):</span>
+<div class="viewcode-block" id="FixedSamplingWithoutReplacement.__init__">
+<a class="viewcode-back" href="../../../reference/api/fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.FixedSamplingWithoutReplacement.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">population_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">sample_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        DP Event type that stores important information about sampling statistics and sets the proper NeighborRel value</span>
+<span class="sd">        This class is specific to fixed sampling without replacement.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            population_size (int): Size of the total population from which sampling is performed.</span>
+<span class="sd">            sample_size (int): Size of the desired sample.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">population_size</span> <span class="o">=</span> <span class="n">population_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sample_size</span> <span class="o">=</span> <span class="n">sample_size</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">NeighborRel</span><span class="o">.</span><span class="n">REPLACE_ONE</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">NeighborRel</span><span class="o">.</span><span class="n">REPLACE_ONE</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="FixedSamplingWithoutReplacement.get_dp_event">
 <a class="viewcode-back" href="../../../reference/api/fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.FixedSamplingWithoutReplacement.get_dp_event">[docs]</a>

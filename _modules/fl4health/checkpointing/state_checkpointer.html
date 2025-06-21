@@ -1059,13 +1059,13 @@
 <span class="sd">        Load the state of the server from checkpoint.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            server (FlServer): server into which the attributes will be loaded</span>
-<span class="sd">            model nn.Module: The model structure to be loaded as part of the server state.</span>
-<span class="sd">            attributes (list[str] | None): List of attributes to load from the checkpoint. If None, all attributes</span>
-<span class="sd">                specified in ``snapshot_attrs`` are loaded. Defaults to None.</span>
+<span class="sd">            server (FlServer): Server into which the attributes will be loaded.</span>
+<span class="sd">            model (nn.Module): The model structure to be loaded as part of the server state.</span>
+<span class="sd">            attributes (list[str] | None, optional): List of attributes to load from the checkpoint. If None, all</span>
+<span class="sd">                attributes specified in ``snapshot_attrs`` are loaded. Defaults to None.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            nn.Module | None: Returns a model if a checkpoint exists to load from. Otherwise returns None</span>
+<span class="sd">            nn.Module | None: Returns a model if a checkpoint exists to load from. Otherwise returns None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Store server for access in functions</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">server</span> <span class="o">=</span> <span class="n">server</span>

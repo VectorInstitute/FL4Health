@@ -598,12 +598,12 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        self (object): The object to set attribute to dictionary[dictionary_key].</span>
-<span class="sd">        dictionary (dict[str, Any]): A dictionary with string keys.</span>
-<span class="sd">        dictionary_key (str): The key to check dictionary for.</span>
+<span class="sd">        dictionary (dict): A dictionary with string keys.</span>
+<span class="sd">        dictionary_key (str): A dictionary with string keys.</span>
+<span class="sd">        attribute_name (str): The key for which to check in dictionary.</span>
 <span class="sd">        narrow_type_to (type[T]): The expected type of dictionary[key].</span>
-
-<span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If dictionary[key] is not of type ``narrow_type_to`` or if the key is not present in dictionary.</span>
+<span class="sd">        func (Callable[[Any], Any] | None, optional): Function to operate on the extracted value if desired. Defaults</span>
+<span class="sd">            to None.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">val</span> <span class="o">=</span> <span class="n">narrow_dict_type</span><span class="p">(</span><span class="n">dictionary</span><span class="p">,</span> <span class="n">dictionary_key</span><span class="p">,</span> <span class="n">narrow_type_to</span><span class="p">)</span>
     <span class="n">val</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">if</span> <span class="n">func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">val</span>

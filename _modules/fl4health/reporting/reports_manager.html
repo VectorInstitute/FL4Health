@@ -508,8 +508,19 @@
 <div class="viewcode-block" id="ReportsManager">
 <a class="viewcode-back" href="../../../reference/api/fl4health.reporting.reports_manager.html#fl4health.reporting.reports_manager.ReportsManager">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ReportsManager</span><span class="p">:</span>
+<div class="viewcode-block" id="ReportsManager.__init__">
+<a class="viewcode-back" href="../../../reference/api/fl4health.reporting.reports_manager.html#fl4health.reporting.reports_manager.ReportsManager.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reporters</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">BaseReporter</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">reporters</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">reporters</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">reporters</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Basic class for managing sequences of reporters. Generally, this class orchestrates initializing, calling,</span>
+<span class="sd">        and gracefully shutting down all reporters provided to the class.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            reporters (Sequence[BaseReporter] | None, optional): Reporters of ``BaseReporter`` to be managed by</span>
+<span class="sd">                this class. Defaults to None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reporters</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">reporters</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">reporters</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="ReportsManager.initialize">
 <a class="viewcode-back" href="../../../reference/api/fl4health.reporting.reports_manager.html#fl4health.reporting.reports_manager.ReportsManager.initialize">[docs]</a>

@@ -516,6 +516,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.strategies.basic_fedavg</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasicFedAvg</span>
 
 
+<span class="n">EVALUATE_FN_TYPE</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">,</span> <span class="n">NDArrays</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">]],</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+
+
 <div class="viewcode-block" id="Flash">
 <a class="viewcode-back" href="../../../reference/api/fl4health.strategies.flash.html#fl4health.strategies.flash.Flash">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Flash</span><span class="p">(</span><span class="n">BasicFedAvg</span><span class="p">):</span>
@@ -529,9 +532,7 @@
         <span class="n">min_fit_clients</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
         <span class="n">min_evaluate_clients</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
         <span class="n">min_available_clients</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-        <span class="n">evaluate_fn</span><span class="p">:</span> <span class="p">(</span>
-            <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">,</span> <span class="n">NDArrays</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">]],</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
-        <span class="p">)</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">evaluate_fn</span><span class="p">:</span> <span class="n">EVALUATE_FN_TYPE</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">on_fit_config_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">on_evaluate_config_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">accept_failures</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -553,26 +554,25 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            initial_parameters (Parameters): Initial global model parameters.</span>
-<span class="sd">            fraction_fit (float, optional): Fraction of clients used during training.. Defaults to 1.0.</span>
-<span class="sd">            fraction_evaluate (float, optional): Fraction of clients used during validation.. Defaults to 1.0.</span>
-<span class="sd">            min_fit_clients (int, optional): Minimum number of clients used during training.. Defaults to 2.</span>
-<span class="sd">            min_evaluate_clients (int, optional): Minimum number of clients used during validation.. Defaults to 2.</span>
-<span class="sd">            min_available_clients (int, optional): Minimum number of total clients in the system.. Defaults to 2.</span>
-<span class="sd">            evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]]  |</span>
-<span class="sd">                None]  |  None, optional):  Optional function used for validation.. Defaults to None.</span>
+<span class="sd">            fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0.</span>
+<span class="sd">            fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.</span>
+<span class="sd">            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2.</span>
+<span class="sd">            min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.</span>
+<span class="sd">            min_available_clients (int, optional): Minimum number of total clients in the system. Defaults to 2.</span>
+<span class="sd">            evaluate_fn (EVALUATE_FN_TYPE, optional): Optional function used for validation. Defaults to None.</span>
 <span class="sd">            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure</span>
 <span class="sd">                training. Defaults to None.</span>
 <span class="sd">            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure</span>
 <span class="sd">                validation. Defaults to None.</span>
-<span class="sd">            accept_failures (bool, optional): Whether or not accept rounds containing failures.. Defaults to True.</span>
-<span class="sd">            fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.</span>
-<span class="sd">                Defaults to None.</span>
+<span class="sd">            accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.</span>
+<span class="sd">            fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function. Defaults</span>
+<span class="sd">                to None.</span>
 <span class="sd">            evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.</span>
 <span class="sd">                Defaults to None.</span>
-<span class="sd">            eta (float, optional): Server-side learning rate.. Defaults to 1e-1.</span>
-<span class="sd">            eta_l (float, optional): Client-side learning rate.. Defaults to 1e-1.</span>
-<span class="sd">            beta_1 (float, optional): Momentum parameter.. Defaults to 0.9.</span>
-<span class="sd">            beta_2 (float, optional): Second moment parameter.. Defaults to 0.99.</span>
+<span class="sd">            eta (float, optional): Server-side learning rate. Defaults to 1e-1.</span>
+<span class="sd">            eta_l (float, optional): Client-side learning rate. Defaults to 1e-1.</span>
+<span class="sd">            beta_1 (float, optional): Momentum parameter. Defaults to 0.9.</span>
+<span class="sd">            beta_2 (float, optional): Second moment parameter. Defaults to 0.99.</span>
 <span class="sd">            tau (float, optional): Controls the algorithm&#39;s degree of adaptability. Defaults to 1e-9.</span>
 <span class="sd">            weighted_aggregation (bool, optional): Determines whether parameter aggregation is a linearly weighted</span>
 <span class="sd">                average or a uniform average. Flash default is a uniform average by the number of clients.</span>

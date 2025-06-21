@@ -666,6 +666,7 @@
 <span class="sd">        Args:</span>
 <span class="sd">            local_steps (int): Number of steps performed during training</span>
 <span class="sd">            loss_dict (dict[str, float]): Losses computed during training.</span>
+<span class="sd">            config (Config): FL training configuration object.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Save the parameters of the old model</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">FendaModelWithFeatureState</span><span class="p">)</span>

@@ -591,7 +591,7 @@ Defaults to False.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – input data tensor whose rows represent data points.</p></li>
+<li><p><strong>x</strong> (<em>Tensor</em>) – input data tensor whose rows represent data points.</p></li>
 <li><p><strong>k</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em>) – the number of principal components onto which projection is applied.</p></li>
 <li><p><strong>center_data</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Indicates whether to subtract data mean prior to projecting the data into a
 lower-dimensional subspace, and whether to add the data mean after projecting back. Defaults to False.</p></li>
@@ -618,7 +618,7 @@ of X are the data points while the columns of U are the principal components.</p
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – Input data tensor whose rows represent data points.</p></li>
+<li><p><strong>x</strong> (<em>Tensor</em>) – Input data tensor whose rows represent data points.</p></li>
 <li><p><strong>k</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em>) – The number of principal components onto which projection is applied.</p></li>
 <li><p><strong>center_data</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Indicates whether to subtract data mean prior to projecting the data into a
 lower-dimensional subspace, and whether to add the data mean after projecting back. Defaults to False.</p></li>
@@ -636,14 +636,14 @@ lower-dimensional subspace, and whether to add the data mean after projecting ba
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.pca.PcaModule.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.forward" title="Link to this definition">¶</a></dt>
-<dd><p>Perform PCA on the data matrix X by computing its SVD.</p>
+<dd><p>Perform PCA on the data matrix x by computing its SVD.</p>
 <p><strong>NOTE</strong>: the algorithm assumes that the rows of X are the data points (after reshaping as needed).
 Consequently, the principal components, which are the eigenvectors of X.T &#64; X, are the right singular vectors
 in the SVD of X.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – Data matrix.</p></li>
+<li><p><strong>x</strong> (<em>Tensor</em>) – Data matrix.</p></li>
 <li><p><strong>center_data</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a>) – If true, then the data mean will be subtracted from all data points prior to
 performing PCA. If <code class="docutils literal notranslate"><span class="pre">center_data</span></code> is false, it is expected that the data has already been centered
 and an exception will be thrown if it is not.</p></li>
@@ -666,7 +666,7 @@ singular values.</p>
 N-dimensional tensor because PCA requires X to be a 2D data matrix.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – Data matrix</p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – Data matrix</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>tensor flattened to be 2D</p>
@@ -684,7 +684,7 @@ N-dimensional tensor because PCA requires X to be a 2D data matrix.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – Data matrix.</p></li>
+<li><p><strong>x</strong> (<em>Tensor</em>) – Data matrix.</p></li>
 <li><p><strong>center_data</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a>) – If true, then the data mean will be subtracted from all data points prior to
 performing PCA. If center_data is false, it is expected that the data has already been centered and
 an exception will be thrown if it is not.</p></li>
@@ -707,7 +707,7 @@ of data points.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X_lower_dim</strong> (<em>Tensor</em>) – Matrix whose rows are low-dimensional principal representations of the original data.</p></li>
+<li><p><strong>x_lower_dim</strong> (<em>Tensor</em>) – Matrix whose rows are low-dimensional principal representations of the original data.</p></li>
 <li><p><strong>add_mean</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Indicates whether the training data mean should be added to the projection
 result. This can be set to True if the user centered the data prior to dimensionality reduction and
 now wish to add back the data mean. Defaults to False.</p></li>
@@ -731,7 +731,7 @@ are the data points while the columns of U are the principal components.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>Tensor</em>) – Input data matrix whose rows are the data points.</p></li>
+<li><p><strong>x</strong> (<em>Tensor</em>) – Input data matrix whose rows are the data points.</p></li>
 <li><p><strong>k</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The number of principal components onto which projection is done. If k is None,
 then all principal components will be used in the projection. Defaults to None.</p></li>
 <li><p><strong>center_data</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If true, then the <em>training</em> data mean (learned in the forward pass)
@@ -755,7 +755,7 @@ that the data has already been centered in this manner by the user. Defaults to 
 validation/test data later, if needed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>Tensor</em>) – Data matrix</p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – Data matrix</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>

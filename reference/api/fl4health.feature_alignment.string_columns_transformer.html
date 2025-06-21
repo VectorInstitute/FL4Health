@@ -522,11 +522,11 @@ to a single-column pandas dataframe, which is not supported in the first place.<
 <dt class="sig sig-object py" id="fl4health.feature_alignment.string_columns_transformer.TextColumnTransformer.fit">
 <span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/string_columns_transformer.html#TextColumnTransformer.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.string_columns_transformer.TextColumnTransformer.fit" title="Link to this definition">¶</a></dt>
 <dd><p>Fit the transformer to the provided dataframe. The dataframe should have a single string column
-The transformer is fit on the text from the single columns in the <code class="docutils literal notranslate"><span class="pre">X</span></code> dataframe.</p>
+The transformer is fit on the text from the single columns in the <code class="docutils literal notranslate"><span class="pre">x</span></code> dataframe.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>pd.DataFrame</em>) – Column on which to fit the transformer</p></li>
+<li><p><strong>x</strong> (<em>pd.DataFrame</em>) – Column on which to fit the transformer</p></li>
 <li><p><strong>y</strong> (<em>pd.DataFrame</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Not used. Defaults to None.</p></li>
 </ul>
 </dd>
@@ -628,10 +628,10 @@ sub-estimator of a meta-estimator, e.g. used inside a
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.feature_alignment.string_columns_transformer.TextColumnTransformer.transform">
 <span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/string_columns_transformer.html#TextColumnTransformer.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.string_columns_transformer.TextColumnTransformer.transform" title="Link to this definition">¶</a></dt>
-<dd><p>Transforms the concatenation of a single column of text in the <code class="docutils literal notranslate"><span class="pre">X</span></code> dataframe.</p>
+<dd><p>Transforms the concatenation of a single column of text in the <code class="docutils literal notranslate"><span class="pre">x</span></code> dataframe.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>pd.DataFrame</em>) – Dataframe of text-based column to be transformed</p>
+<dd class="field-odd"><p><strong>x</strong> (<em>pd.DataFrame</em>) – Dataframe of text-based column to be transformed</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Transformed dataframe.</p>
@@ -664,11 +664,11 @@ to multiple string columns, which is not supported in the first place.</p>
 <dt class="sig sig-object py" id="fl4health.feature_alignment.string_columns_transformer.TextMulticolumnTransformer.fit">
 <span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/string_columns_transformer.html#TextMulticolumnTransformer.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.string_columns_transformer.TextMulticolumnTransformer.fit" title="Link to this definition">¶</a></dt>
 <dd><p>Fit the transformer to the provided dataframe. The dataframe should have multiple string columns
-The transformer is fit on the appended text from all columns in the <code class="docutils literal notranslate"><span class="pre">X</span></code> dataframe.</p>
+The transformer is fit on the appended text from all columns in the <code class="docutils literal notranslate"><span class="pre">x</span></code> dataframe.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>X</strong> (<em>pd.DataFrame</em>) – Columns on which to fit the transformer</p></li>
+<li><p><strong>x</strong> (<em>pd.DataFrame</em>) – Columns on which to fit the transformer</p></li>
 <li><p><strong>y</strong> (<em>pd.DataFrame</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Not used. Defaults to None.</p></li>
 </ul>
 </dd>
@@ -770,10 +770,10 @@ sub-estimator of a meta-estimator, e.g. used inside a
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.feature_alignment.string_columns_transformer.TextMulticolumnTransformer.transform">
 <span class="sig-name descname"><span class="pre">transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/string_columns_transformer.html#TextMulticolumnTransformer.transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.string_columns_transformer.TextMulticolumnTransformer.transform" title="Link to this definition">¶</a></dt>
-<dd><p>Transforms the concatenation of all columns of text in the <code class="docutils literal notranslate"><span class="pre">X</span></code> dataframe.</p>
+<dd><p>Transforms the concatenation of all columns of text in the <code class="docutils literal notranslate"><span class="pre">x</span></code> dataframe.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>X</strong> (<em>pd.DataFrame</em>) – Dataframe of text-based columns to be transformed</p>
+<dd class="field-odd"><p><strong>x</strong> (<em>pd.DataFrame</em>) – Dataframe of text-based columns to be transformed</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Transformed dataframe.</p>

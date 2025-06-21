@@ -518,6 +518,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TorchFeatureType</span><span class="p">,</span> <span class="n">TorchInputType</span><span class="p">,</span> <span class="n">TorchPredType</span><span class="p">,</span> <span class="n">TorchTargetType</span>
 
 
+<span class="n">EXPECTED_OUTPUT_TUPLE_SIZE</span> <span class="o">=</span> <span class="mi">2</span>
+
+
 <div class="viewcode-block" id="FlexibleClient">
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.flexible_client.html#fl4health.clients.flexible_client.FlexibleClient">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FlexibleClient</span><span class="p">(</span><span class="n">BasicClient</span><span class="p">):</span>
@@ -810,7 +813,7 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;prediction&quot;</span><span class="p">:</span> <span class="n">output</span><span class="p">},</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">output</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">output</span><span class="p">)</span> <span class="o">!=</span> <span class="n">EXPECTED_OUTPUT_TUPLE_SIZE</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Output tuple should have length 2 but has length </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">output</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">preds</span><span class="p">,</span> <span class="n">features</span> <span class="o">=</span> <span class="n">output</span>
             <span class="k">return</span> <span class="n">preds</span><span class="p">,</span> <span class="n">features</span>

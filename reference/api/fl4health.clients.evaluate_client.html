@@ -522,7 +522,8 @@ is provided the client attempts to load a local model from the specified path.</
 “cuda”</p></li>
 <li><p><strong>loss_meter_type</strong> (<a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.LossMeterType" title="fl4health.utils.losses.LossMeterType"><em>LossMeterType</em></a><em>, </em><em>optional</em>) – Type of meter used to track and compute the losses over
 each batch. Defaults to <code class="docutils literal notranslate"><span class="pre">LossMeterType.AVERAGE</span></code>.</p></li>
-<li><p><strong>model_checkpoint_path</strong> (<em>Path</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – _description_. Defaults to None.</p></li>
+<li><p><strong>model_checkpoint_path</strong> (<em>Path</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Path to which the model should be checkpointed. Defaults to
+None.</p></li>
 <li><p><strong>reporters</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.reporting.base_reporter.html#fl4health.reporting.base_reporter.BaseReporter" title="fl4health.reporting.base_reporter.BaseReporter"><em>BaseReporter</em></a><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – A sequence of FL4Health reporters which the client
 should send data to. Defaults to None.</p></li>
 <li><p><strong>client_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – An optional client name that uniquely identifies a client.

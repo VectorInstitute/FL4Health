@@ -559,6 +559,8 @@ components will determine when and how to do checkpointing during client-side tr
 No checkpointing (state or model) is done if not provided. Defaults to None.</p></li>
 <li><p><strong>reporters</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.reporting.base_reporter.html#fl4health.reporting.base_reporter.BaseReporter" title="fl4health.reporting.base_reporter.BaseReporter"><em>BaseReporter</em></a><em>]</em><em>, </em><em>optional</em>) – A sequence of FL4Health reporters which the client should
 send data to.</p></li>
+<li><p><strong>client_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Name of the client. If None the class will set a default and random
+name. Defaults to None.</p></li>
 <li><p><strong>nnunet_trainer_class</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#type" title="(in Python v3.10)"><em>type</em></a><em>[</em><em>nnUNetTrainer</em><em>]</em>) – A <code class="docutils literal notranslate"><span class="pre">nnUNetTrainer</span></code> constructor. Useful for passing custom
 <code class="docutils literal notranslate"><span class="pre">nnUNetTrainer</span></code>. Defaults to the standard nnUNetTrainer class. Must match the
 <code class="docutils literal notranslate"><span class="pre">nnunet_trainer_class</span></code> passed to the <code class="docutils literal notranslate"><span class="pre">NnunetServer</span></code>.</p></li>
@@ -726,13 +728,20 @@ num “epochs”, but they define an “epoch” as exactly 250 steps. Therefore
 this method to set your own LR scheduler.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – The server config. This method will look for the</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>optimizer_key</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Key of the optimizer to which the scheduler will be applied.</p></li>
+<li><p><strong>config</strong> (<em>Config</em>) – The server config. This method will determine the total number of steps that will be
+applied across all server rounds on FL training.</p></li>
+</ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The default nnunet LR Scheduler for nnunetv2 2.5.1</p>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Thrown if the configuration does not contain either a steps or epochs specification.</p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>_LRScheduler</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The default nnunet LR Scheduler for nnunetv2 2.5.1</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>_LRScheduler</p>
 </dd>
 </dl>
 </dd></dl>

@@ -643,13 +643,17 @@ simply ensures that the optimizers setup by the user have the proper keys and th
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>epochs</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The number of epochs for local training.</p></li>
-<li><p><strong>current_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em>) – The current FL round.</p></li>
+<li><p><strong>head_epochs</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The number of epochs for local training of the head module.</p></li>
+<li><p><strong>rep_epochs</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The number of epochs for local training of the representation module</p></li>
+<li><p><strong>current_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The current FL round. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The loss and metrics dictionary from the local training.
-Loss is a dictionary of one or more losses that represent the different components of the loss.</p>
+<dd class="field-even"><p><dl class="simple">
+<dt>The loss and metrics dictionary from the local training.</dt><dd><p>Loss is a dictionary of one or more losses that represent the different components of the loss.</p>
+</dd>
+</dl>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)">float</a>], <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, Scalar]]</p>
@@ -663,11 +667,18 @@ Loss is a dictionary of one or more losses that represent the different componen
 <dd><p>Train locally for the specified number of steps.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>steps</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The number of steps to train locally.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>head_steps</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The number of steps to train locally for the head model.</p></li>
+<li><p><strong>rep_steps</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The number of steps to train locally for the representation model</p></li>
+<li><p><strong>current_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – What round of FL training we’re currently on. Defaults to None.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The loss and metrics dictionary from the local training.
-Loss is a dictionary of one or more losses that represent the different components of the loss.</p>
+<dd class="field-even"><p><dl class="simple">
+<dt>The loss and metrics dictionary from the local training.</dt><dd><p>Loss is a dictionary of one or more losses that represent the different components of the loss.</p>
+</dd>
+</dl>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)">float</a>], <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, Scalar]]</p>

@@ -533,13 +533,29 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
-        <span class="c1"># Overriding this function from BaseDataset allows the converter to be compatible with the data transformers.</span>
-        <span class="c1"># converter_function is applied after the transformers.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Overriding this function from BaseDataset allows the converter to be compatible with the data transformers.</span>
+<span class="sd">        ``converter_function`` is applied after the transformers.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            index (int): The index of the batch of data to be extracted.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple[torch.Tensor, torch.Tensor]: Get the raw batch data (input, target) and apply the</span>
+<span class="sd">                ``converter_function`` before returning.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Error: no dataset is set, use convert_dataset(your_dataset: TensorDataset)&quot;</span>
         <span class="n">data</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">converter_function</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the length of the dataset. Mostly just a wrapper on the standard pytorch dataset length to ensure that</span>
+<span class="sd">        the dataset is not None.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            int: Dataset length.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Error: dataset is should be either converted or initiated.&quot;</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span>
 
@@ -579,10 +595,15 @@
 <span class="sd">        other converter functions can be added or passed to support other conditions.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            condition (str | torch.Tensor | None): Could be a fixed tensor used for all the data samples,</span>
+<span class="sd">            condition (str | torch.Tensor | None, optional): Could be a fixed tensor used for all the data samples,</span>
 <span class="sd">                None for non-conditional models, or a name (str) passed for other custom conversions like &quot;label&quot;.</span>
+<span class="sd">                Defaults to None.</span>
 <span class="sd">            do_one_hot_encoding (bool, optional): Should converter perform one hot encoding on the condition or not.</span>
-<span class="sd">            custom_converter_function (Callable | None, optional): User can define a new converter function.</span>
+<span class="sd">                Defaults to False.</span>
+<span class="sd">            custom_converter_function (Callable | None, optional): User can define a new converter function. Defaults</span>
+<span class="sd">                to None.</span>
+<span class="sd">            condition_vector_size (int | None, optional): Size of the conditioning vector if available. Defaults to</span>
+<span class="sd">                None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">condition</span> <span class="o">=</span> <span class="n">condition</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">condition</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
@@ -716,6 +737,9 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            packed_data (torch.Tensor): Data tensor used in the training loop as the input to the model.</span>
+<span class="sd">            cond_vec_size (int): Size of the conditional vector that has been packed into the ``packed_data`` variable.</span>
+<span class="sd">            data_shape (torch.Size): Expected shape of the original data tensor after unpacking the conditioning</span>
+<span class="sd">                vector.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple[torch.Tensor, torch.Tensor]: Data in its original shape, and the condition vector to be fed into the</span>

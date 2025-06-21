@@ -555,6 +555,8 @@
 <span class="sd">            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1</span>
 <span class="sd">            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1</span>
 <span class="sd">            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``</span>
+<span class="sd">            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.</span>
+<span class="sd">            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Attributes:</span>
         <span class="c1"># weight: weights of the module.</span>
@@ -693,6 +695,8 @@
 <span class="sd">            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1</span>
 <span class="sd">            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1</span>
 <span class="sd">            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``</span>
+<span class="sd">            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.</span>
+<span class="sd">            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Attributes:</span>
         <span class="c1"># weight: weights of the module.</span>
@@ -829,6 +833,8 @@
 <span class="sd">            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1</span>
 <span class="sd">            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1</span>
 <span class="sd">            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``</span>
+<span class="sd">            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.</span>
+<span class="sd">            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Attributes:</span>
         <span class="c1"># weight: weights of the module.</span>
@@ -969,6 +975,10 @@
 <span class="sd">            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1</span>
 <span class="sd">            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``</span>
 <span class="sd">            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1</span>
+<span class="sd">            padding_mode (str, optional): Mode to be used in padding the input image for processing. Defaults to</span>
+<span class="sd">                &quot;zeros&quot;</span>
+<span class="sd">            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.</span>
+<span class="sd">            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Attributes:</span>
         <span class="c1"># weight (Tensor): weights of the module.</span>
@@ -1141,6 +1151,10 @@
 <span class="sd">            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1</span>
 <span class="sd">            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``</span>
 <span class="sd">            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1</span>
+<span class="sd">            padding_mode (str, optional): Mode to be used in padding the input image for processing. Defaults to</span>
+<span class="sd">                &quot;zeros&quot;</span>
+<span class="sd">            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.</span>
+<span class="sd">            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Attributes:</span>
         <span class="c1"># weight (Tensor): weights of the module.</span>
@@ -1310,6 +1324,10 @@
 <span class="sd">            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1</span>
 <span class="sd">            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``</span>
 <span class="sd">            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1</span>
+<span class="sd">            padding_mode (str, optional): Mode to be used in padding the input image for processing. Defaults to</span>
+<span class="sd">                &quot;zeros&quot;</span>
+<span class="sd">            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.</span>
+<span class="sd">            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Attributes:</span>
         <span class="c1"># weight (Tensor): weights of the module.</span>

@@ -507,6 +507,21 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">FixedSamplingWithoutReplacement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">population_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/moments_accountant.html#FixedSamplingWithoutReplacement"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.moments_accountant.FixedSamplingWithoutReplacement" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#fl4health.privacy.moments_accountant.SamplingStrategy" title="fl4health.privacy.moments_accountant.SamplingStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">SamplingStrategy</span></code></a></p>
 <dl class="py method">
+<dt class="sig sig-object py" id="fl4health.privacy.moments_accountant.FixedSamplingWithoutReplacement.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">population_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/moments_accountant.html#FixedSamplingWithoutReplacement.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.moments_accountant.FixedSamplingWithoutReplacement.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>DP Event type that stores important information about sampling statistics and sets the proper NeighborRel value
+This class is specific to fixed sampling without replacement.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>population_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Size of the total population from which sampling is performed.</p></li>
+<li><p><strong>sample_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Size of the desired sample.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="fl4health.privacy.moments_accountant.FixedSamplingWithoutReplacement.get_dp_event">
 <span class="sig-name descname"><span class="pre">get_dp_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_event</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/moments_accountant.html#FixedSamplingWithoutReplacement.get_dp_event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.moments_accountant.FixedSamplingWithoutReplacement.get_dp_event" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -641,6 +656,18 @@ server updates.</p></li>
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PoissonSampling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sampling_ratio</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/moments_accountant.html#PoissonSampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.moments_accountant.PoissonSampling" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#fl4health.privacy.moments_accountant.SamplingStrategy" title="fl4health.privacy.moments_accountant.SamplingStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">SamplingStrategy</span></code></a></p>
 <dl class="py method">
+<dt class="sig sig-object py" id="fl4health.privacy.moments_accountant.PoissonSampling.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sampling_ratio</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/moments_accountant.html#PoissonSampling.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.moments_accountant.PoissonSampling.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>DP Event type that stores important information about sampling statistics and sets the proper NeighborRel value
+This class is specific to Poisson sampling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>sampling_ratio</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – Poisson sampling ratio used.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="fl4health.privacy.moments_accountant.PoissonSampling.get_dp_event">
 <span class="sig-name descname"><span class="pre">get_dp_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_event</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/moments_accountant.html#PoissonSampling.get_dp_event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.moments_accountant.PoissonSampling.get_dp_event" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -656,6 +683,17 @@ server updates.</p></li>
 <dt class="sig sig-object py" id="fl4health.privacy.moments_accountant.SamplingStrategy">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SamplingStrategy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">neighbor_relation</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/moments_accountant.html#SamplingStrategy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.moments_accountant.SamplingStrategy" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.10/library/abc.html#abc.ABC" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.privacy.moments_accountant.SamplingStrategy.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">neighbor_relation</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/moments_accountant.html#SamplingStrategy.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.moments_accountant.SamplingStrategy.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract base class. It holds information about the privacy accountant NeighborRel applied.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>neighbor_relation</strong> (<em>NeighborRel</em>) – The kind of neighbor relation that should be used in accounting.</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.privacy.moments_accountant.SamplingStrategy.get_dp_event">
 <em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_dp_event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_event</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/moments_accountant.html#SamplingStrategy.get_dp_event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.moments_accountant.SamplingStrategy.get_dp_event" title="Link to this definition">¶</a></dt>
@@ -744,6 +782,7 @@ server updates.</p></li>
             <ul>
 <li><a class="reference internal" href="#">fl4health.privacy.moments_accountant module</a><ul>
 <li><a class="reference internal" href="#fl4health.privacy.moments_accountant.FixedSamplingWithoutReplacement"><code class="docutils literal notranslate"><span class="pre">FixedSamplingWithoutReplacement</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.privacy.moments_accountant.FixedSamplingWithoutReplacement.__init__"><code class="docutils literal notranslate"><span class="pre">FixedSamplingWithoutReplacement.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.privacy.moments_accountant.FixedSamplingWithoutReplacement.get_dp_event"><code class="docutils literal notranslate"><span class="pre">FixedSamplingWithoutReplacement.get_dp_event()</span></code></a></li>
 </ul>
 </li>
@@ -754,10 +793,12 @@ server updates.</p></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#fl4health.privacy.moments_accountant.PoissonSampling"><code class="docutils literal notranslate"><span class="pre">PoissonSampling</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.privacy.moments_accountant.PoissonSampling.__init__"><code class="docutils literal notranslate"><span class="pre">PoissonSampling.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.privacy.moments_accountant.PoissonSampling.get_dp_event"><code class="docutils literal notranslate"><span class="pre">PoissonSampling.get_dp_event()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#fl4health.privacy.moments_accountant.SamplingStrategy"><code class="docutils literal notranslate"><span class="pre">SamplingStrategy</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.privacy.moments_accountant.SamplingStrategy.__init__"><code class="docutils literal notranslate"><span class="pre">SamplingStrategy.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.privacy.moments_accountant.SamplingStrategy.get_dp_event"><code class="docutils literal notranslate"><span class="pre">SamplingStrategy.get_dp_event()</span></code></a></li>
 </ul>
 </li>

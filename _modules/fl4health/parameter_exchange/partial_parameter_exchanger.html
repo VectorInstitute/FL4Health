@@ -515,9 +515,22 @@
 <div class="viewcode-block" id="PartialParameterExchanger">
 <a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.partial_parameter_exchanger.html#fl4health.parameter_exchange.partial_parameter_exchanger.PartialParameterExchanger">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PartialParameterExchanger</span><span class="p">(</span><span class="n">ParameterExchanger</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+<div class="viewcode-block" id="PartialParameterExchanger.__init__">
+<a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.partial_parameter_exchanger.html#fl4health.parameter_exchange.partial_parameter_exchanger.PartialParameterExchanger.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter_packer</span><span class="p">:</span> <span class="n">ParameterPacker</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Base class meant to properly facilitate partial parameter exchange through a selection criterion. This</span>
+<span class="sd">        mechanism is more complicated than, for example, that used by the ``FixedLayerExchanger`` where the subset</span>
+<span class="sd">        parameters to exchange do not change dynamically from round to round.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            parameter_packer (ParameterPacker[T]): Parameter packer that can be used to pack in more information</span>
+<span class="sd">                than just the parameters being exchange. This is important, for example, when exchanging different</span>
+<span class="sd">                sets of layers in each round.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">parameter_packer</span> <span class="o">=</span> <span class="n">parameter_packer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameter_packer</span> <span class="o">=</span> <span class="n">parameter_packer</span></div>
+
 
 <div class="viewcode-block" id="PartialParameterExchanger.pack_parameters">
 <a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.partial_parameter_exchanger.html#fl4health.parameter_exchange.partial_parameter_exchanger.PartialParameterExchanger.pack_parameters">[docs]</a>

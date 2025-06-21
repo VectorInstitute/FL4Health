@@ -511,9 +511,23 @@
 <div class="viewcode-block" id="BaseDataset">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.dataset.html#fl4health.utils.dataset.BaseDataset">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseDataset</span><span class="p">(</span><span class="n">ABC</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">):</span>
+<div class="viewcode-block" id="BaseDataset.__init__">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.dataset.html#fl4health.utils.dataset.BaseDataset.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">target_transform</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Abstract base class for datasets used in this library. This class inherits from the torch Dataset base class.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            transform (Callable | None, optional): Optional transformation to be applied to the input data.</span>
+<span class="sd">                NOTE: This transformation is applied at load time within ``__get_item__``</span>
+<span class="sd">                Defaults to None.</span>
+<span class="sd">            target_transform (Callable | None, optional): Optional transformation to be applied to the target data.</span>
+<span class="sd">                NOTE: This transformation is applied at load time within ``__get_item__``</span>
+<span class="sd">                Defaults to None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">transform</span> <span class="o">=</span> <span class="n">transform</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">target_transform</span> <span class="o">=</span> <span class="n">target_transform</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_transform</span> <span class="o">=</span> <span class="n">target_transform</span></div>
+
 
 <div class="viewcode-block" id="BaseDataset.update_transform">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.dataset.html#fl4health.utils.dataset.BaseDataset.update_transform">[docs]</a>
@@ -537,10 +551,32 @@
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Abstract method to be implemented by any inheriting dataset to produce a data value at provided index from</span>
+<span class="sd">        the underlying data.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            index (int): Index at which to extract the data from the dataset.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            NotImplementedError: Throws if one attempts to use this function.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple[torch.Tensor, torch.Tensor]: Input and target tensors extracted at the provided index.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Abstract method to be implemented by any inheriting dataset to produce a length value for the underlying data.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            NotImplementedError: Throws if one attempts to use this function.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            int: Length of the underlying data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
 
@@ -548,6 +584,8 @@
 <div class="viewcode-block" id="TensorDataset">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.dataset.html#fl4health.utils.dataset.TensorDataset">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">TensorDataset</span><span class="p">(</span><span class="n">BaseDataset</span><span class="p">):</span>
+<div class="viewcode-block" id="TensorDataset.__init__">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.dataset.html#fl4health.utils.dataset.TensorDataset.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
@@ -555,11 +593,39 @@
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">target_transform</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Basic dataset where the data and targets are assumed to be torch tensors. Optionally, this class allows the</span>
+<span class="sd">        user to perform transformations on both the data and the targets. This is useful, for example, in performing</span>
+<span class="sd">        data augmentation, label blurring, etc.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data (torch.Tensor): Input data for training.</span>
+<span class="sd">            targets (torch.Tensor | None, optional): Target data for training. Defaults to None.</span>
+<span class="sd">            transform (Callable | None, optional): Optional transformation to be applied to the input data.</span>
+<span class="sd">                NOTE: This transformation is applied at load time within ``__get_item__``</span>
+<span class="sd">                Defaults to None.</span>
+<span class="sd">            target_transform (Callable | None, optional): Optional transformation to be applied to the target data.</span>
+<span class="sd">                NOTE: This transformation is applied at load time within ``__get_item__``</span>
+<span class="sd">                Defaults to None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">transform</span><span class="p">,</span> <span class="n">target_transform</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">targets</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">targets</span></div>
+
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extracts the data and targets from the dataset at the provided index. Transformations are performed, as</span>
+<span class="sd">        specified in this datasets ``transform`` and ``target_transform`` functions. These are independently</span>
+<span class="sd">        applied to the data and targets, respectively.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            index (int): Index in the dataset to extract.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple[torch.Tensor, torch.Tensor]: Input data at the index after applying ``transform`` if any, targets</span>
+<span class="sd">               after applying ``target_transform`` if any.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
         <span class="n">data</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
@@ -573,6 +639,12 @@
         <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">target</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Length of the dataset as determined by len() applied to torch dataset.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            int: Length of dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span></div>
 
 
@@ -580,6 +652,8 @@
 <div class="viewcode-block" id="SslTensorDataset">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.dataset.html#fl4health.utils.dataset.SslTensorDataset">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SslTensorDataset</span><span class="p">(</span><span class="n">TensorDataset</span><span class="p">):</span>
+<div class="viewcode-block" id="SslTensorDataset.__init__">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.dataset.html#fl4health.utils.dataset.SslTensorDataset.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
@@ -587,11 +661,43 @@
         <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">target_transform</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Dataset specifically designed to perform self-supervised learning, where we don&#39;t have a specific set of</span>
+<span class="sd">        targets, because targets are derived from the data tensors.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data (torch.Tensor): Tensor representing the input data for the dataset.</span>
+<span class="sd">            targets (torch.Tensor | None, optional): REQUIRED TO BE NONE. The type and argument here is simply to</span>
+<span class="sd">                maintain compatibility with our TensorDataset base. Defaults to None.</span>
+<span class="sd">            transform (Callable | None, optional): Any transform to be applied to the data tensors. This transform is</span>
+<span class="sd">                performed BEFORE and target transforms that produce the self-supervised targets from the data.</span>
+<span class="sd">                NOTE: These transformations and the ``target_transform`` functions are applied AT LOAD TIME</span>
+<span class="sd">                Defaults to None.</span>
+<span class="sd">            target_transform (Callable | None, optional): Any transform to be applied to the data tensors to produce</span>
+<span class="sd">                target tensors for training. This transform is performed after and transforms for the data tensors</span>
+<span class="sd">                themselves to produce the self-supervised targets from the data.</span>
+<span class="sd">                NOTE: These transformation functions are applied AT LOAD TIME.</span>
+<span class="sd">                Defaults to None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="n">targets</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;SslTensorDataset targets must be None&quot;</span>
 
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">target_transform</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">transform</span><span class="p">,</span> <span class="n">target_transform</span><span class="p">)</span></div>
+
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extracts the data and targets from the dataset at the provided index. Because this is an self-supervised</span>
+<span class="sd">        learning dataset. The input data also serves as the target (subject to transformations). Transformations</span>
+<span class="sd">        are performed, as specified in this datasets ``transform`` and ``target_transform`` functions. These are</span>
+<span class="sd">        applied first to the data, then targets are created by applying ``target_transform`` to the result.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            index (int): Index in the dataset to extract.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple[torch.Tensor, torch.Tensor]: Input data at the index after applying ``transform`` if any, targets</span>
+<span class="sd">                derived from data after applying ``transform`` and ``target_transform`` in sequence.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
 
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Target transform cannot be None.&quot;</span>
@@ -629,9 +735,30 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extracts data from the ``DictionaryDataset`` at the provided index. The targets are simply extracted directly</span>
+<span class="sd">        using index. The input data dictionary is iterated through and each piece of data in the dictionary values</span>
+<span class="sd">        is extracted at the provided index and &quot;re-wrapped&quot; as a dictionary.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            index (int): Index of the data to be extracted from the dataset.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple[dict[str, torch.Tensor], torch.Tensor]: Dictionary with the same keys as the dataset data dictionary</span>
+<span class="sd">                with data extracted at the provided index, target data extracted from the targets tensor at index.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">val</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets the length of the dataset as extracted from the first piece of data in the data dictionary.</span>
+
+<span class="sd">        NOTE: This implicitly assumes that the length of the data in each entry of the dictionary of data is</span>
+<span class="sd">        uniform.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            int: Dataset length.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">first_key</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">first_key</span><span class="p">])</span></div>
 
@@ -661,12 +788,27 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extracts the data at the provided index.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            index (int): Index of the data in the dataset to be returned</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            tuple[torch.Tensor, torch.Tensor]: Input and targets at the provided index.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
 
         <span class="n">data</span><span class="p">,</span> <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">target</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the length of the dataset. Identical to the pytorch dataset length function.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            int: Length of the data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span></div>
 
 

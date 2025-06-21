@@ -512,6 +512,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.metrics.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">align_pred_and_target_shapes</span>
 
 
+<span class="n">N_DIM_2D_TENSOR</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">EXPECTED_BINARY_LABEL_DIM_SIZE</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">BINARY_COUNT_TENSOR_MAX_SIZE</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">BINARY_COUNT_TENSOR_N_DIMS</span> <span class="o">=</span> <span class="mi">2</span>
+
+
 <div class="viewcode-block" id="MetricOutcome">
 <a class="viewcode-back" href="../../../reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.MetricOutcome">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MetricOutcome</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
@@ -1003,7 +1009,7 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># Both a batch and label dim have been specified. So tensor should be 2D and either have 1 or 2 columns</span>
-            <span class="k">assert</span> <span class="n">count_ndims</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="p">(</span>
+            <span class="k">assert</span> <span class="n">count_ndims</span> <span class="o">==</span> <span class="n">BINARY_COUNT_TENSOR_N_DIMS</span><span class="p">,</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Batch and label dims have been specified, tensor should be 2D, but got </span><span class="si">{</span><span class="n">count_ndims</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
 
@@ -1011,7 +1017,7 @@
                 <span class="c1"># reshape so that batch dimension comes first</span>
                 <span class="n">count_tensor</span> <span class="o">=</span> <span class="n">count_tensor</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">count_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">count_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">BINARY_COUNT_TENSOR_MAX_SIZE</span><span class="p">:</span>
                 <span class="c1"># Always return the class with label 1 (pos_label 0 will be handled by rearranging counts if necessary)</span>
                 <span class="k">return</span> <span class="n">count_tensor</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">count_tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -1028,7 +1034,7 @@
         <span class="c1"># there is a dimension for an &quot;implied&quot; label (i.e. 0.8 representing vector predictions [0.2, 0.8]). If</span>
         <span class="c1"># there is no label dimension specified, there should only be a single element as well.</span>
         <span class="k">assert</span> <span class="n">count_ndims</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Batch dim has not been specified, tensor should be 0 or 1D but got </span><span class="si">{</span><span class="n">count_ndims</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="k">if</span> <span class="n">count_tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">count_tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="n">BINARY_COUNT_TENSOR_MAX_SIZE</span><span class="p">:</span>
             <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;self.label_dim is None but got two elements in the count_tensor&quot;</span>
             <span class="c1"># Always return the class with label 1</span>
             <span class="k">return</span> <span class="n">count_tensor</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -1075,11 +1081,11 @@
 
         <span class="c1"># Assert that the label dimension for these tensors is of size 2 at most.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">label_dim</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">assert</span> <span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">label_dim</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">,</span> <span class="p">(</span>
+            <span class="k">assert</span> <span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">label_dim</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">EXPECTED_BINARY_LABEL_DIM_SIZE</span><span class="p">,</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Label dimension for preds tensor is greater than 2 </span><span class="si">{</span><span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">label_dim</span><span class="p">]</span><span class="si">}</span><span class="s2">. This class is &quot;</span>
                 <span class="s2">&quot;meant for binary metric computation only&quot;</span>
             <span class="p">)</span>
-            <span class="k">assert</span> <span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">label_dim</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">2</span><span class="p">,</span> <span class="p">(</span>
+            <span class="k">assert</span> <span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">label_dim</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">EXPECTED_BINARY_LABEL_DIM_SIZE</span><span class="p">,</span> <span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Label dimension for targets tensor is greater than 2 </span><span class="si">{</span><span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">label_dim</span><span class="p">]</span><span class="si">}</span><span class="s2">. This class is &quot;</span>
                 <span class="s2">&quot;meant for binary metric computation only&quot;</span>
             <span class="p">)</span>
@@ -1290,7 +1296,7 @@
 <span class="sd">            torch.Tensor: transposed tensor if 2D, unchanged tensor if empty, and throw error if shape differs from</span>
 <span class="sd">                those two expected settings</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="n">N_DIM_2D_TENSOR</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">matrix</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">matrix</span>

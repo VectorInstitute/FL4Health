@@ -586,16 +586,16 @@ dictionary[dictionary_key] has the wrong type, a <code class="docutils literal n
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>self</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#object" title="(in Python v3.10)"><em>object</em></a>) – The object to set attribute to dictionary[dictionary_key].</p></li>
-<li><p><strong>dictionary</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – A dictionary with string keys.</p></li>
-<li><p><strong>dictionary_key</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – The key to check dictionary for.</p></li>
+<li><p><strong>dictionary</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a>) – A dictionary with string keys.</p></li>
+<li><p><strong>dictionary_key</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – A dictionary with string keys.</p></li>
+<li><p><strong>attribute_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – The key for which to check in dictionary.</p></li>
 <li><p><strong>narrow_type_to</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#type" title="(in Python v3.10)"><em>type</em></a><em>[</em><em>T</em><em>]</em>) – The expected type of dictionary[key].</p></li>
+<li><p><strong>func</strong> (<em>Callable</em><em>[</em><em>[</em><em>Any</em><em>]</em><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – Function to operate on the extracted value if desired. Defaults
+to None.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – If dictionary[key] is not of type <code class="docutils literal notranslate"><span class="pre">narrow_type_to</span></code> or if the key is not present in dictionary.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>

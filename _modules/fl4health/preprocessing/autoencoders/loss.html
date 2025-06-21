@@ -503,6 +503,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.nn.modules.loss</span><span class="w"> </span><span class="kn">import</span> <span class="n">_Loss</span>
 
 
+<span class="n">REQUIRED_PREDS_DIMENSIONS</span> <span class="o">=</span> <span class="mi">2</span>
+
+
 <div class="viewcode-block" id="VaeLoss">
 <a class="viewcode-back" href="../../../../reference/api/fl4health.preprocessing.autoencoders.loss.html#fl4health.preprocessing.autoencoders.loss.VaeLoss">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">VaeLoss</span><span class="p">(</span><span class="n">_Loss</span><span class="p">):</span>
@@ -560,7 +563,7 @@
 <span class="sd">            tuple[torch.Tensor, torch.Tensor, torch.Tensor]: Unpacked output containing predictions, mu, and logvar.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># This methods assumes &quot;preds&quot; are batch first, and preds are 2D dimensional (already flattened).</span>
-        <span class="k">assert</span> <span class="n">preds</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="p">(</span>
+        <span class="k">assert</span> <span class="n">preds</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="n">REQUIRED_PREDS_DIMENSIONS</span><span class="p">,</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Expected a 2D tensor for VaeLoss, but got </span><span class="si">{</span><span class="n">preds</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span><span class="si">}</span><span class="s2">D tensor with shape </span><span class="si">{</span><span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">.&quot;</span>
         <span class="p">)</span>
         <span class="c1"># The order of logvar and mu in the output tensor is important.</span>

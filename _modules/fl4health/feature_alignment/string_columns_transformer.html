@@ -528,10 +528,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TextMulticolumnTransformer</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Fit the transformer to the provided dataframe. The dataframe should have multiple string columns</span>
-<span class="sd">        The transformer is fit on the appended text from all columns in the ``X`` dataframe.</span>
+<span class="sd">        The transformer is fit on the appended text from all columns in the ``x`` dataframe.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X (pd.DataFrame): Columns on which to fit the transformer</span>
+<span class="sd">            x (pd.DataFrame): Columns on which to fit the transformer</span>
 <span class="sd">            y (pd.DataFrame | None, optional): Not used. Defaults to None.</span>
 
 <span class="sd">        Returns:</span>
@@ -546,10 +546,10 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextMulticolumnTransformer.transform">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Transforms the concatenation of all columns of text in the ``X`` dataframe.</span>
+<span class="sd">        Transforms the concatenation of all columns of text in the ``x`` dataframe.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X (pd.DataFrame): Dataframe of text-based columns to be transformed</span>
+<span class="sd">            x (pd.DataFrame): Dataframe of text-based columns to be transformed</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.DataFrame: Transformed dataframe.</span>
@@ -581,10 +581,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TextColumnTransformer</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Fit the transformer to the provided dataframe. The dataframe should have a single string column</span>
-<span class="sd">        The transformer is fit on the text from the single columns in the ``X`` dataframe.</span>
+<span class="sd">        The transformer is fit on the text from the single columns in the ``x`` dataframe.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X (pd.DataFrame): Column on which to fit the transformer</span>
+<span class="sd">            x (pd.DataFrame): Column on which to fit the transformer</span>
 <span class="sd">            y (pd.DataFrame | None, optional): Not used. Defaults to None.</span>
 
 <span class="sd">        Returns:</span>
@@ -599,10 +599,10 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextColumnTransformer.transform">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Transforms the concatenation of a single column of text in the ``X`` dataframe.</span>
+<span class="sd">        Transforms the concatenation of a single column of text in the ``x`` dataframe.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X (pd.DataFrame): Dataframe of text-based column to be transformed</span>
+<span class="sd">            x (pd.DataFrame): Dataframe of text-based column to be transformed</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.DataFrame: Transformed dataframe.</span>

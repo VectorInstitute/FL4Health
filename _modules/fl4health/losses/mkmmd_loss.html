@@ -506,6 +506,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">qpth.qp</span><span class="w"> </span><span class="kn">import</span> <span class="n">QPFunction</span><span class="p">,</span> <span class="n">QPSolvers</span>
 
 
+<span class="n">BETA_CONSTRAINT_EPSILON</span> <span class="o">=</span> <span class="mf">0.00001</span>
+
+
 <div class="viewcode-block" id="MkMmdLoss">
 <a class="viewcode-back" href="../../../reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MkMmdLoss</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
@@ -560,7 +563,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">assert</span> <span class="n">betas</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_num</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">betas</span> <span class="o">=</span> <span class="n">betas</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">betas</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.00001</span>
+        <span class="k">assert</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">betas</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">BETA_CONSTRAINT_EPSILON</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">minimize_type_two_error</span> <span class="o">=</span> <span class="n">minimize_type_two_error</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">normalize_features</span> <span class="o">=</span> <span class="n">normalize_features</span>
@@ -589,8 +592,8 @@
 <span class="sd">        **NOTE**: that if ``n_samples`` is not divisible by 2, we leave off the modulus</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X (torch.Tensor): First set of feature tensors</span>
-<span class="sd">            Y (torch.Tensor): Second set of feature tensors</span>
+<span class="sd">            x (torch.Tensor): First set of feature tensors</span>
+<span class="sd">            y (torch.Tensor): Second set of feature tensors</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: Quadruples of the form described above.</span>
@@ -1011,8 +1014,8 @@
 <span class="sd">        Compute the multi-kernel maximum mean discrepancy (MK-MMD) between the source and target domains.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            Xs (torch.Tensor): Source domain data, shape (n_samples, n_features)</span>
-<span class="sd">            Xt (torch.Tensor): Target domain data, shape (n_samples, n_features)</span>
+<span class="sd">            x_s (torch.Tensor): Source domain data, shape (n_samples, n_features)</span>
+<span class="sd">            x_t (torch.Tensor): Target domain data, shape (n_samples, n_features)</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: MK-MMD value</span>

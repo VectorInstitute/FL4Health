@@ -507,6 +507,19 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ReportsManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reporters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/reporting/reports_manager.html#ReportsManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.reporting.reports_manager.ReportsManager" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <dl class="py method">
+<dt class="sig sig-object py" id="fl4health.reporting.reports_manager.ReportsManager.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reporters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/reporting/reports_manager.html#ReportsManager.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.reporting.reports_manager.ReportsManager.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Basic class for managing sequences of reporters. Generally, this class orchestrates initializing, calling,
+and gracefully shutting down all reporters provided to the class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>reporters</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.reporting.base_reporter.html#fl4health.reporting.base_reporter.BaseReporter" title="fl4health.reporting.base_reporter.BaseReporter"><em>BaseReporter</em></a><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – Reporters of <code class="docutils literal notranslate"><span class="pre">BaseReporter</span></code> to be managed by
+this class. Defaults to None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="fl4health.reporting.reports_manager.ReportsManager.initialize">
 <span class="sig-name descname"><span class="pre">initialize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/reporting/reports_manager.html#ReportsManager.initialize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.reporting.reports_manager.ReportsManager.initialize" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -614,6 +627,7 @@
             <ul>
 <li><a class="reference internal" href="#">fl4health.reporting.reports_manager module</a><ul>
 <li><a class="reference internal" href="#fl4health.reporting.reports_manager.ReportsManager"><code class="docutils literal notranslate"><span class="pre">ReportsManager</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.reporting.reports_manager.ReportsManager.__init__"><code class="docutils literal notranslate"><span class="pre">ReportsManager.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.reporting.reports_manager.ReportsManager.initialize"><code class="docutils literal notranslate"><span class="pre">ReportsManager.initialize()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.reporting.reports_manager.ReportsManager.report"><code class="docutils literal notranslate"><span class="pre">ReportsManager.report()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.reporting.reports_manager.ReportsManager.shutdown"><code class="docutils literal notranslate"><span class="pre">ReportsManager.shutdown()</span></code></a></li>

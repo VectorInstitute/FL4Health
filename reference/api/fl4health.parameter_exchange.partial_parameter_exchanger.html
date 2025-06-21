@@ -507,6 +507,21 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PartialParameterExchanger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameter_packer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/parameter_exchange/partial_parameter_exchanger.html#PartialParameterExchanger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.parameter_exchange.partial_parameter_exchanger.PartialParameterExchanger" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="fl4health.parameter_exchange.parameter_exchanger_base.html#fl4health.parameter_exchange.parameter_exchanger_base.ParameterExchanger" title="fl4health.parameter_exchange.parameter_exchanger_base.ParameterExchanger"><code class="xref py py-class docutils literal notranslate"><span class="pre">ParameterExchanger</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Generic" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code></a>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">T</span></code>]</p>
 <dl class="py method">
+<dt class="sig sig-object py" id="fl4health.parameter_exchange.partial_parameter_exchanger.PartialParameterExchanger.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameter_packer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/parameter_exchange/partial_parameter_exchanger.html#PartialParameterExchanger.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.parameter_exchange.partial_parameter_exchanger.PartialParameterExchanger.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Base class meant to properly facilitate partial parameter exchange through a selection criterion. This
+mechanism is more complicated than, for example, that used by the <code class="docutils literal notranslate"><span class="pre">FixedLayerExchanger</span></code> where the subset
+parameters to exchange do not change dynamically from round to round.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parameter_packer</strong> (<a class="reference internal" href="fl4health.parameter_exchange.parameter_packer.html#fl4health.parameter_exchange.parameter_packer.ParameterPacker" title="fl4health.parameter_exchange.parameter_packer.ParameterPacker"><em>ParameterPacker</em></a><em>[</em><em>T</em><em>]</em>) – Parameter packer that can be used to pack in more information
+than just the parameters being exchange. This is important, for example, when exchanging different
+sets of layers in each round.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="fl4health.parameter_exchange.partial_parameter_exchanger.PartialParameterExchanger.pack_parameters">
 <span class="sig-name descname"><span class="pre">pack_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">additional_parameters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/parameter_exchange/partial_parameter_exchanger.html#PartialParameterExchanger.pack_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.parameter_exchange.partial_parameter_exchanger.PartialParameterExchanger.pack_parameters" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -614,6 +629,7 @@
             <ul>
 <li><a class="reference internal" href="#">fl4health.parameter_exchange.partial_parameter_exchanger module</a><ul>
 <li><a class="reference internal" href="#fl4health.parameter_exchange.partial_parameter_exchanger.PartialParameterExchanger"><code class="docutils literal notranslate"><span class="pre">PartialParameterExchanger</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.parameter_exchange.partial_parameter_exchanger.PartialParameterExchanger.__init__"><code class="docutils literal notranslate"><span class="pre">PartialParameterExchanger.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.parameter_exchange.partial_parameter_exchanger.PartialParameterExchanger.pack_parameters"><code class="docutils literal notranslate"><span class="pre">PartialParameterExchanger.pack_parameters()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.parameter_exchange.partial_parameter_exchanger.PartialParameterExchanger.select_parameters"><code class="docutils literal notranslate"><span class="pre">PartialParameterExchanger.select_parameters()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.parameter_exchange.partial_parameter_exchanger.PartialParameterExchanger.unpack_parameters"><code class="docutils literal notranslate"><span class="pre">PartialParameterExchanger.unpack_parameters()</span></code></a></li>

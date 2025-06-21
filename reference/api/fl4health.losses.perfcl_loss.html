@@ -508,6 +508,24 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PerFclLoss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_feature_loss_temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">local_feature_loss_temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/perfcl_loss.html#PerFclLoss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.perfcl_loss.PerFclLoss" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></p>
 <dl class="py method">
+<dt class="sig sig-object py" id="fl4health.losses.perfcl_loss.PerFclLoss.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_feature_loss_temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">local_feature_loss_temperature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/perfcl_loss.html#PerFclLoss.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.perfcl_loss.PerFclLoss.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Loss function for local model training with the PerFCL Method: <a class="reference external" href="https://ieeexplore.ieee.org/document/10020518/">https://ieeexplore.ieee.org/document/10020518/</a>
+It is essentially a combination of two separate MOON contrastive losses.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>device</strong> (<em>torch.device</em>) – Device onto which this loss should be transferred.</p></li>
+<li><p><strong>global_feature_loss_temperature</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Temperature for the contrastive loss associated with
+the global features. Defaults to 0.5.</p></li>
+<li><p><strong>local_feature_loss_temperature</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Temperature for the contrastive loss associated with
+the local features. Defaults to 0.5.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="fl4health.losses.perfcl_loss.PerFclLoss.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_local_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">old_global_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_global_features</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/perfcl_loss.html#PerFclLoss.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.perfcl_loss.PerFclLoss.forward" title="Link to this definition">¶</a></dt>
 <dd><p>PerFCL loss implemented based on <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0031320323002078">https://www.sciencedirect.com/science/article/pii/S0031320323002078</a>.</p>
@@ -631,6 +649,7 @@ associated with the local feature loss.</p>
             <ul>
 <li><a class="reference internal" href="#">fl4health.losses.perfcl_loss module</a><ul>
 <li><a class="reference internal" href="#fl4health.losses.perfcl_loss.PerFclLoss"><code class="docutils literal notranslate"><span class="pre">PerFclLoss</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.losses.perfcl_loss.PerFclLoss.__init__"><code class="docutils literal notranslate"><span class="pre">PerFclLoss.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.losses.perfcl_loss.PerFclLoss.forward"><code class="docutils literal notranslate"><span class="pre">PerFclLoss.forward()</span></code></a></li>
 </ul>
 </li>

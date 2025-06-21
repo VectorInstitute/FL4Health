@@ -513,9 +513,20 @@
 <div class="viewcode-block" id="FullParameterExchangerWithPacking">
 <a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.packing_exchanger.html#fl4health.parameter_exchange.packing_exchanger.FullParameterExchangerWithPacking">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FullParameterExchangerWithPacking</span><span class="p">(</span><span class="n">FullParameterExchanger</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+<div class="viewcode-block" id="FullParameterExchangerWithPacking.__init__">
+<a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.packing_exchanger.html#fl4health.parameter_exchange.packing_exchanger.FullParameterExchangerWithPacking.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameter_packer</span><span class="p">:</span> <span class="n">ParameterPacker</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameter exchanger for when sending the entire set of model weights between the client and server with</span>
+<span class="sd">        potential side information packed in as well.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            parameter_packer (ParameterPacker[T]): Parameter packer used to pack and unpack auxiliary information</span>
+<span class="sd">                alongside the model weights.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">parameter_packer</span> <span class="o">=</span> <span class="n">parameter_packer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameter_packer</span> <span class="o">=</span> <span class="n">parameter_packer</span></div>
+
 
 <div class="viewcode-block" id="FullParameterExchangerWithPacking.pack_parameters">
 <a class="viewcode-back" href="../../../reference/api/fl4health.parameter_exchange.packing_exchanger.html#fl4health.parameter_exchange.packing_exchanger.FullParameterExchangerWithPacking.pack_parameters">[docs]</a>

@@ -738,11 +738,12 @@
 <span class="sd">        assumes only metrics will be computed on client and loss is set to None.</span>
 
 <span class="sd">        Args:</span>
+<span class="sd">            server_round (int): Which server round we&#39;re currently on.</span>
 <span class="sd">            results (list[tuple[ClientProxy, EvaluateRes]]): The client identifiers and the results of their local</span>
 <span class="sd">                evaluation that need to be aggregated on the server-side. These results are loss values</span>
 <span class="sd">                (None in this case) and the metrics dictionary.</span>
-<span class="sd">            failures (list[tuple[ClientProxy, EvaluateRes] | BaseException]): These are the results and</span>
-<span class="sd">                exceptions from clients that experienced an issue during evaluation, such as timeouts or exceptions.</span>
+<span class="sd">            failures (list[tuple[ClientProxy, EvaluateRes]  |  BaseException]): These are the results and exceptions</span>
+<span class="sd">                from clients that experienced an issue during evaluation, such as timeouts or exceptions.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple[float | None, dict[str, Scalar]]: Aggregated loss values and the aggregated metrics. The metrics</span>

@@ -643,6 +643,8 @@
 <span class="sd">                No checkpointing (state or model) is done if not provided. Defaults to None.</span>
 <span class="sd">            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the client should</span>
 <span class="sd">                send data to.</span>
+<span class="sd">            client_name (str | None, optional): Name of the client. If None the class will set a default and random</span>
+<span class="sd">                name. Defaults to None.</span>
 <span class="sd">            nnunet_trainer_class (type[nnUNetTrainer]): A ``nnUNetTrainer`` constructor. Useful for passing custom</span>
 <span class="sd">                ``nnUNetTrainer``. Defaults to the standard nnUNetTrainer class. Must match the</span>
 <span class="sd">                ``nnunet_trainer_class`` passed to the ``NnunetServer``.</span>
@@ -860,7 +862,13 @@
 <span class="sd">        this method to set your own LR scheduler.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            config (Config): The server config. This method will look for the</span>
+<span class="sd">            optimizer_key (str): Key of the optimizer to which the scheduler will be applied.</span>
+<span class="sd">            config (Config): The server config. This method will determine the total number of steps that will be</span>
+<span class="sd">                applied across all server rounds on FL training.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: Thrown if the configuration does not contain either a steps or epochs specification.</span>
+
 <span class="sd">        Returns:</span>
 <span class="sd">            _LRScheduler: The default nnunet LR Scheduler for nnunetv2 2.5.1</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1457,7 +1465,7 @@
         <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>  <span class="c1"># Cleans up unused variables</span>
         <span class="c1"># As the linked issue above points out, calling gc.freeze() greatly reduces the</span>
         <span class="c1"># overhead of garbage collection. (from 1.5s to 0.005s)</span>
-        <span class="k">if</span> <span class="n">current_server_round</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">current_server_round</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># noqa: PLR2004</span>
             <span class="c1"># Collect runs even faster if we freeze after the end of the first iteration</span>
             <span class="c1"># Likely because a lot of variables are created in the first pass. If we</span>
             <span class="c1"># freeze before the first pass, gc.collect has to check all those variables</span>

@@ -631,7 +631,7 @@
 <span class="sd">        Args:</span>
 <span class="sd">            prefix (str): Prefix to be attached to all keys of the provided dictionaries.</span>
 <span class="sd">            loss_dict (dict[str, float]): Dictionary of loss values obtained during training.</span>
-<span class="sd">            metrics (dict[str, Scalar]): Dictionary of metrics values measured during training</span>
+<span class="sd">            metrics_dict (dict[str, Scalar]): Dictionary of metrics values measured during training.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">loss_key</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">loss_dict</span><span class="p">):</span>
             <span class="n">loss_dict</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">loss_key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">loss_dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">loss_key</span><span class="p">)</span>
@@ -843,12 +843,13 @@
 <span class="sd">        Train locally for the specified number of epochs.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            epochs (int): The number of epochs for local training.</span>
-<span class="sd">            current_round (int | None): The current FL round.</span>
+<span class="sd">            head_epochs (int): The number of epochs for local training of the head module.</span>
+<span class="sd">            rep_epochs (int): The number of epochs for local training of the representation module</span>
+<span class="sd">            current_round (int | None, optional): The current FL round. Defaults to None.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.</span>
-<span class="sd">            Loss is a dictionary of one or more losses that represent the different components of the loss.</span>
+<span class="sd">                Loss is a dictionary of one or more losses that represent the different components of the loss.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># First we train the head module for head_epochs with the representations frozen in place</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_train_head</span><span class="p">()</span>
@@ -885,11 +886,13 @@
 <span class="sd">        Train locally for the specified number of steps.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            steps (int): The number of steps to train locally.</span>
+<span class="sd">            head_steps (int): The number of steps to train locally for the head model.</span>
+<span class="sd">            rep_steps (int): The number of steps to train locally for the representation model</span>
+<span class="sd">            current_round (int | None, optional): What round of FL training we&#39;re currently on. Defaults to None.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.</span>
-<span class="sd">            Loss is a dictionary of one or more losses that represent the different components of the loss.</span>
+<span class="sd">                Loss is a dictionary of one or more losses that represent the different components of the loss.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">FedRepModel</span><span class="p">)</span>
         <span class="c1"># First we train the head module for head_steps with the representations frozen in place</span>

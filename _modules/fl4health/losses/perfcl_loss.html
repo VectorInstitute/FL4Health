@@ -508,15 +508,29 @@
 <div class="viewcode-block" id="PerFclLoss">
 <a class="viewcode-back" href="../../../reference/api/fl4health.losses.perfcl_loss.html#fl4health.losses.perfcl_loss.PerFclLoss">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PerFclLoss</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<div class="viewcode-block" id="PerFclLoss.__init__">
+<a class="viewcode-back" href="../../../reference/api/fl4health.losses.perfcl_loss.html#fl4health.losses.perfcl_loss.PerFclLoss.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
         <span class="n">global_feature_loss_temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
         <span class="n">local_feature_loss_temperature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loss function for local model training with the PerFCL Method: https://ieeexplore.ieee.org/document/10020518/</span>
+<span class="sd">        It is essentially a combination of two separate MOON contrastive losses.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            device (torch.device): Device onto which this loss should be transferred.</span>
+<span class="sd">            global_feature_loss_temperature (float, optional): Temperature for the contrastive loss associated with</span>
+<span class="sd">                the global features. Defaults to 0.5.</span>
+<span class="sd">            local_feature_loss_temperature (float, optional): Temperature for the contrastive loss associated with</span>
+<span class="sd">                the local features. Defaults to 0.5.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">global_feature_contrastive_loss</span> <span class="o">=</span> <span class="n">MoonContrastiveLoss</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="n">global_feature_loss_temperature</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">local_feature_contrastive_loss</span> <span class="o">=</span> <span class="n">MoonContrastiveLoss</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="n">local_feature_loss_temperature</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">local_feature_contrastive_loss</span> <span class="o">=</span> <span class="n">MoonContrastiveLoss</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="n">local_feature_loss_temperature</span><span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="PerFclLoss.forward">
 <a class="viewcode-back" href="../../../reference/api/fl4health.losses.perfcl_loss.html#fl4health.losses.perfcl_loss.PerFclLoss.forward">[docs]</a>

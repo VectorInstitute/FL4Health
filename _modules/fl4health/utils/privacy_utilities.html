@@ -562,6 +562,8 @@
 <span class="sd">        grad_sample_mode (str, optional): This determines how Opacus performs the conversion under the hood. The</span>
 <span class="sd">            standard mechanism is indicated by &quot;hooks&quot; but other approaches may be necessary depending on how the</span>
 <span class="sd">            pytorch module is defined. Defaults to &quot;hooks&quot;.</span>
+<span class="sd">        *args (Any): Any other args that need to go to the wrap function.</span>
+<span class="sd">        **kwargs (Any): Another other kwargs that need to go to the wrap function.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        GradSampleModule: The Opacus wrapped ``GradSampleModule``</span>
@@ -588,9 +590,11 @@
 <span class="sd">        grad_sample_mode (str, optional): This determines how Opacus performs the conversion under the hood. The</span>
 <span class="sd">            standard mechanism is indicated by &quot;hooks&quot; but other approaches may be necessary depending on how the</span>
 <span class="sd">            pytorch module is defined. Defaults to &quot;hooks&quot;.</span>
+<span class="sd">        *args (Any): Any other args that need to go to the conversion function.</span>
+<span class="sd">        **kwargs (Any): Another other kwargs that need to go to the conversion function.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        GradSampleModule: The Opacus-compliant, wrapped ``GradSampleModule``</span>
+<span class="sd">        GradSampleModule: The Opacus-compliant, wrapped ``GradSampleModule``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">model</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">privacy_validate_and_fix_modules</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">convert_model_to_opacus_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">grad_sample_mode</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>

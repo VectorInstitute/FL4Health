@@ -507,6 +507,22 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ClientLevelAccountant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_multiplier</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">moment_orders</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/fl_accountants.html#ClientLevelAccountant"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.fl_accountants.ClientLevelAccountant" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.10/library/abc.html#abc.ABC" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a></p>
 <dl class="py method">
+<dt class="sig sig-object py" id="fl4health.privacy.fl_accountants.ClientLevelAccountant.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">noise_multiplier</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">moment_orders</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/fl_accountants.html#ClientLevelAccountant.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.fl_accountants.ClientLevelAccountant.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Accountant to be used when measuring Client Level DP in FL training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>]</em>) – The noise multiplier being applied to weights before transfer to
+the server.</p></li>
+<li><p><strong>moment_orders</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – Basis orders to be used by the accountant for approximation.
+of the RDP values. Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="fl4health.privacy.fl_accountants.ClientLevelAccountant.get_delta">
 <em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_delta</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server_updates</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epsilon</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/privacy/fl_accountants.html#ClientLevelAccountant.get_delta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.privacy.fl_accountants.ClientLevelAccountant.get_delta" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -804,6 +820,7 @@ epsilon value. Defaults to None.</p></li>
             <ul>
 <li><a class="reference internal" href="#">fl4health.privacy.fl_accountants module</a><ul>
 <li><a class="reference internal" href="#fl4health.privacy.fl_accountants.ClientLevelAccountant"><code class="docutils literal notranslate"><span class="pre">ClientLevelAccountant</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.privacy.fl_accountants.ClientLevelAccountant.__init__"><code class="docutils literal notranslate"><span class="pre">ClientLevelAccountant.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.privacy.fl_accountants.ClientLevelAccountant.get_delta"><code class="docutils literal notranslate"><span class="pre">ClientLevelAccountant.get_delta()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.privacy.fl_accountants.ClientLevelAccountant.get_epsilon"><code class="docutils literal notranslate"><span class="pre">ClientLevelAccountant.get_epsilon()</span></code></a></li>
 </ul>

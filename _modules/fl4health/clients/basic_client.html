@@ -538,6 +538,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogLevel</span><span class="p">,</span> <span class="n">TorchFeatureType</span><span class="p">,</span> <span class="n">TorchInputType</span><span class="p">,</span> <span class="n">TorchPredType</span><span class="p">,</span> <span class="n">TorchTargetType</span>
 
 
+<span class="n">EXPECTED_OUTPUT_TUPLE_SIZE</span> <span class="o">=</span> <span class="mi">2</span>
+
+
 <div class="viewcode-block" id="BasicClient">
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BasicClient</span><span class="p">(</span><span class="n">NumPyClient</span><span class="p">):</span>
@@ -646,8 +649,10 @@
 <span class="sd">        If checkpointer exists, maybe checkpoint model based on the provided metric values.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            loss (float): validation loss to potentially be used for checkpointing</span>
-<span class="sd">            metrics (dict[str, float]): validation metrics to potentially be used for checkpointing</span>
+<span class="sd">            loss (float): Validation loss to potentially be used for checkpointing.</span>
+<span class="sd">            metrics (dict[str, Scalar]): Validation metrics to potentially be used for checkpointing</span>
+<span class="sd">            checkpoint_mode (CheckpointMode): Whether we&#39;re doing checkpointing pre- or post-aggregation on the server</span>
+<span class="sd">                side.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">maybe_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">loss</span><span class="p">,</span> <span class="n">metrics</span><span class="p">,</span> <span class="n">checkpoint_mode</span><span class="p">)</span>
 
@@ -966,10 +971,10 @@
 <span class="sd">        the round if training by steps.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            current_round (int | None, optional): The current FL round. (Ie current</span>
-<span class="sd">                server round). Defaults to None.</span>
-<span class="sd">            current_epoch (int | None, optional): The current epoch of local</span>
-<span class="sd">                training. Defaults to None.</span>
+<span class="sd">            current_round (int | None, optional): The current FL round. (Ie current server round). Defaults to None.</span>
+<span class="sd">            current_epoch (int | None, optional): The current epoch of local training. Defaults to None.</span>
+<span class="sd">            logging_mode (LoggingMode, optional): The logging mode to be used in logging. This mainly changes the</span>
+<span class="sd">                way in which logging is decorated. Defaults to LoggingMode.TRAIN.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">log_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Current FL Round: </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">current_round</span><span class="p">)</span><span class="si">}</span><span class="s2"> &quot;</span> <span class="k">if</span> <span class="n">current_round</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
         <span class="n">log_str</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Current Epoch: </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">current_epoch</span><span class="p">)</span><span class="si">}</span><span class="s2"> &quot;</span> <span class="k">if</span> <span class="n">current_epoch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
@@ -1564,7 +1569,7 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;prediction&quot;</span><span class="p">:</span> <span class="n">output</span><span class="p">},</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">output</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">output</span><span class="p">)</span> <span class="o">!=</span> <span class="n">EXPECTED_OUTPUT_TUPLE_SIZE</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Output tuple should have length 2 but has length </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">output</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="n">preds</span><span class="p">,</span> <span class="n">features</span> <span class="o">=</span> <span class="n">output</span>
             <span class="k">return</span> <span class="n">preds</span><span class="p">,</span> <span class="n">features</span>

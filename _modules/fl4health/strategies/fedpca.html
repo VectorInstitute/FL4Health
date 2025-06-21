@@ -512,6 +512,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">decode_and_pseudo_sort_results</span>
 
 
+<span class="n">MINIMUM_PCA_ClIENTS</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">EVALUATE_FN_TYPE</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">,</span> <span class="n">NDArrays</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">]],</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+
+
 <div class="viewcode-block" id="FedPCA">
 <a class="viewcode-back" href="../../../reference/api/fl4health.strategies.fedpca.html#fl4health.strategies.fedpca.FedPCA">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FedPCA</span><span class="p">(</span><span class="n">BasicFedAvg</span><span class="p">):</span>
@@ -525,9 +529,7 @@
         <span class="n">min_fit_clients</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
         <span class="n">min_evaluate_clients</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
         <span class="n">min_available_clients</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
-        <span class="n">evaluate_fn</span><span class="p">:</span> <span class="p">(</span>
-            <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">,</span> <span class="n">NDArrays</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">]],</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
-        <span class="p">)</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">evaluate_fn</span><span class="p">:</span> <span class="n">EVALUATE_FN_TYPE</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">on_fit_config_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">on_evaluate_config_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">accept_failures</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -545,27 +547,29 @@
 <span class="sd">        Args:</span>
 <span class="sd">            fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0.</span>
 <span class="sd">            fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.</span>
-<span class="sd">            min_available_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.</span>
-<span class="sd">            evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):</span>
-<span class="sd">                Optional function used for central server-side evaluation. Defaults to None.</span>
+<span class="sd">            min_fit_clients (int, optional): Minimum number of clients used during fit. Defaults to 2.</span>
+<span class="sd">            min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.</span>
+<span class="sd">            min_available_clients (int, optional): Minimum number of clients before starting FL. Defaults to 2.</span>
+<span class="sd">            evaluate_fn (EVALUATE_FN_TYPE, optional): Optional function used for central server-side evaluation.</span>
+<span class="sd">                Defaults to None.</span>
 <span class="sd">            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure</span>
 <span class="sd">                training by providing a configuration dictionary. Defaults to None.</span>
 <span class="sd">            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure</span>
 <span class="sd">                client-side validation by providing a ``Config`` dictionary. Defaults to None.</span>
 <span class="sd">            accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.</span>
 <span class="sd">            initial_parameters (Parameters | None, optional): Initial global model parameters. Defaults to None.</span>
-<span class="sd">            fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.</span>
-<span class="sd">                Defaults to None.</span>
+<span class="sd">            fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function. Defaults</span>
+<span class="sd">                to None.</span>
 <span class="sd">            evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.</span>
 <span class="sd">                Defaults to None.</span>
 <span class="sd">            weighted_aggregation (bool, optional): Determines whether parameter aggregation is a linearly weighted</span>
-<span class="sd">                average or a uniform average. FedAvg default is weighted average by client dataset counts.</span>
-<span class="sd">                Defaults to True.</span>
+<span class="sd">                average or a uniform average. FedAvg default is weighted average by client dataset counts. Defaults to</span>
+<span class="sd">                True.</span>
 <span class="sd">            weighted_eval_losses (bool, optional): Determines whether losses during evaluation are linearly weighted</span>
 <span class="sd">                averages or a uniform average. FedAvg default is weighted average of the losses by client dataset</span>
 <span class="sd">                counts. Defaults to True.</span>
-<span class="sd">            svd_merging (bool): Indicates whether merging of client principal components is done by directly performing</span>
-<span class="sd">                SVD or using a procedure based on QR decomposition. Defaults to True.</span>
+<span class="sd">            svd_merging (bool, optional): Indicates whether merging of client principal components is done by directly</span>
+<span class="sd">                performing SVD or using a procedure based on QR decomposition. Defaults to True.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">fraction_fit</span><span class="o">=</span><span class="n">fraction_fit</span><span class="p">,</span>
@@ -750,8 +754,8 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple[NDArray, NDArray]: merged PCs and corresponding singular values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">client_singular_values</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">client_singular_values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">client_singular_values</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">MINIMUM_PCA_ClIENTS</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">client_singular_values</span><span class="p">)</span> <span class="o">==</span> <span class="n">MINIMUM_PCA_ClIENTS</span><span class="p">:</span>
             <span class="n">u1</span><span class="p">,</span> <span class="n">s1</span> <span class="o">=</span> <span class="n">client_singular_vectors</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">client_singular_values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="n">u2</span><span class="p">,</span> <span class="n">s2</span> <span class="o">=</span> <span class="n">client_singular_vectors</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">client_singular_values</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">merge_two_subspaces_qr</span><span class="p">((</span><span class="n">u1</span><span class="p">,</span> <span class="n">s1</span><span class="p">),</span> <span class="p">(</span><span class="n">u2</span><span class="p">,</span> <span class="n">s2</span><span class="p">))</span>

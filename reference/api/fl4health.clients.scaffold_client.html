@@ -507,8 +507,36 @@
 <dt class="sig sig-object py" id="fl4health.clients.scaffold_client.DPScaffoldClient">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DPScaffoldClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_meter_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">LossMeterType.AVERAGE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_and_state_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reporters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/scaffold_client.html#DPScaffoldClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.scaffold_client.DPScaffoldClient" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#fl4health.clients.scaffold_client.ScaffoldClient" title="fl4health.clients.scaffold_client.ScaffoldClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">ScaffoldClient</span></code></a>, <a class="reference internal" href="fl4health.clients.instance_level_dp_client.html#fl4health.clients.instance_level_dp_client.InstanceLevelDpClient" title="fl4health.clients.instance_level_dp_client.InstanceLevelDpClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstanceLevelDpClient</span></code></a></p>
-<p>Federated Learning client for Instance Level Differentially Private Scaffold strategy.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.scaffold_client.DPScaffoldClient.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_meter_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">LossMeterType.AVERAGE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_and_state_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reporters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/scaffold_client.html#DPScaffoldClient.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.scaffold_client.DPScaffoldClient.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Federated Learning client for Instance Level Differentially Private Scaffold strategy.</p>
 <p>Implemented as specified in <a class="reference external" href="https://arxiv.org/abs/2111.09278">https://arxiv.org/abs/2111.09278</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_path</strong> (<em>Path</em>) – path to the data to be used to load the data for client-side training</p></li>
+<li><p><strong>metrics</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric" title="fl4health.metrics.base_metrics.Metric"><em>Metric</em></a><em>]</em>) – Metrics to be computed based on the labels and predictions of the client model</p></li>
+<li><p><strong>device</strong> (<em>torch.device</em>) – Device indicator for where to send the model, batches, labels etc. Often “cpu” or
+“cuda”</p></li>
+<li><p><strong>loss_meter_type</strong> (<a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.LossMeterType" title="fl4health.utils.losses.LossMeterType"><em>LossMeterType</em></a><em>, </em><em>optional</em>) – Type of meter used to track and compute the losses over
+each batch. Defaults to <code class="docutils literal notranslate"><span class="pre">LossMeterType.AVERAGE</span></code>.</p></li>
+<li><p><strong>checkpoint_and_state_module</strong> (<a class="reference internal" href="fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.ClientCheckpointAndStateModule" title="fl4health.checkpointing.client_module.ClientCheckpointAndStateModule"><em>ClientCheckpointAndStateModule</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A module meant to handle
+both checkpointing and state saving. The module, and its underlying model and state checkpointing
+components will determine when and how to do checkpointing during client-side training.
+No checkpointing (state or model) is done if not provided. Defaults to None.</p></li>
+<li><p><strong>reporters</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.reporting.base_reporter.html#fl4health.reporting.base_reporter.BaseReporter" title="fl4health.reporting.base_reporter.BaseReporter"><em>BaseReporter</em></a><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – A sequence of FL4Health reporters which the client
+should send data to. Defaults to None.</p></li>
+<li><p><strong>progress_bar</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether or not to display a progress bar during client training and
+validation. Uses <code class="docutils literal notranslate"><span class="pre">tqdm</span></code>. Defaults to False.</p></li>
+<li><p><strong>client_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – n optional client name that uniquely identifies a client.
+If not passed, a hash is randomly generated. Client state will use this as part of its state file
+name. Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -659,6 +687,7 @@ weights.</p>
 <li><p><strong>parameters</strong> (<em>NDArrays</em>) – Parameters have information about model state to be added to the relevant client
 model and also the server control variates (initial or after aggregation)</p></li>
 <li><p><strong>config</strong> (<em>Config</em>) – The config is sent by the FL server to allow for customization in the function if desired.</p></li>
+<li><p><strong>fitting_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a>) – Which fitting round (i.e. server round of fitting) that we’re on.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -810,7 +839,10 @@ loss dictionary.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">fl4health.clients.scaffold_client module</a><ul>
-<li><a class="reference internal" href="#fl4health.clients.scaffold_client.DPScaffoldClient"><code class="docutils literal notranslate"><span class="pre">DPScaffoldClient</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.scaffold_client.DPScaffoldClient"><code class="docutils literal notranslate"><span class="pre">DPScaffoldClient</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.clients.scaffold_client.DPScaffoldClient.__init__"><code class="docutils literal notranslate"><span class="pre">DPScaffoldClient.__init__()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#fl4health.clients.scaffold_client.ScaffoldClient"><code class="docutils literal notranslate"><span class="pre">ScaffoldClient</span></code></a><ul>
 <li><a class="reference internal" href="#fl4health.clients.scaffold_client.ScaffoldClient.__init__"><code class="docutils literal notranslate"><span class="pre">ScaffoldClient.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.clients.scaffold_client.ScaffoldClient.compute_parameters_delta"><code class="docutils literal notranslate"><span class="pre">ScaffoldClient.compute_parameters_delta()</span></code></a></li>

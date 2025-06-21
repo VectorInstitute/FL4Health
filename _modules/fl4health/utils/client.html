@@ -642,8 +642,10 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        iterable (Iterable): The iterable to wrap</span>
+<span class="sd">        display_progress_bar (bool): Whether we want to display a progress bar or not.</span>
+
 <span class="sd">    Returns:</span>
-<span class="sd">        Iterable: an iterator which acts exactly like the original iterable, but prints a dynamically updating</span>
+<span class="sd">        Iterable: An iterator which acts exactly like the original iterable, but prints a dynamically updating</span>
 <span class="sd">        progress bar every time a value is requested. Or the original iterable if ``self.progress_bar`` is False</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">display_progress_bar</span><span class="p">:</span>

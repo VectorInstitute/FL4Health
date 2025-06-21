@@ -514,6 +514,8 @@ efficient DP-SGD operations. It uses the wrap_model functionality and mimics its
 <li><p><strong>grad_sample_mode</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – This determines how Opacus performs the conversion under the hood. The
 standard mechanism is indicated by “hooks” but other approaches may be necessary depending on how the
 pytorch module is defined. Defaults to “hooks”.</p></li>
+<li><p><strong>*args</strong> (<em>Any</em>) – Any other args that need to go to the wrap function.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Another other kwargs that need to go to the wrap function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -538,10 +540,12 @@ call to <code class="docutils literal notranslate"><span class="pre">privacy_val
 <li><p><strong>grad_sample_mode</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – This determines how Opacus performs the conversion under the hood. The
 standard mechanism is indicated by “hooks” but other approaches may be necessary depending on how the
 pytorch module is defined. Defaults to “hooks”.</p></li>
+<li><p><strong>*args</strong> (<em>Any</em>) – Any other args that need to go to the conversion function.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Another other kwargs that need to go to the conversion function.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The Opacus-compliant, wrapped <code class="docutils literal notranslate"><span class="pre">GradSampleModule</span></code></p>
+<dd class="field-even"><p>The Opacus-compliant, wrapped <code class="docutils literal notranslate"><span class="pre">GradSampleModule</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>GradSampleModule</p>

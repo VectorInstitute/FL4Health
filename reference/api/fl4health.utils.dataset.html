@@ -507,6 +507,24 @@
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">BaseDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transform</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_transform</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/dataset.html#BaseDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.dataset.BaseDataset" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.10/library/abc.html#abc.ABC" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></p>
 <dl class="py method">
+<dt class="sig sig-object py" id="fl4health.utils.dataset.BaseDataset.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transform</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_transform</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/dataset.html#BaseDataset.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.dataset.BaseDataset.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract base class for datasets used in this library. This class inherits from the torch Dataset base class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>transform</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Optional transformation to be applied to the input data.
+NOTE: This transformation is applied at load time within <code class="docutils literal notranslate"><span class="pre">__get_item__</span></code>
+Defaults to None.</p></li>
+<li><p><strong>target_transform</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Optional transformation to be applied to the target data.
+NOTE: This transformation is applied at load time within <code class="docutils literal notranslate"><span class="pre">__get_item__</span></code>
+Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.dataset.BaseDataset.update_target_transform">
 <span class="sig-name descname"><span class="pre">update_target_transform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/dataset.html#BaseDataset.update_target_transform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.dataset.BaseDataset.update_target_transform" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -555,6 +573,31 @@ of tensors.</p></li>
 <dt class="sig sig-object py" id="fl4health.utils.dataset.SslTensorDataset">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SslTensorDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/dataset.html#SslTensorDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.dataset.SslTensorDataset" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#fl4health.utils.dataset.TensorDataset" title="fl4health.utils.dataset.TensorDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">TensorDataset</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.utils.dataset.SslTensorDataset.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/dataset.html#SslTensorDataset.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.dataset.SslTensorDataset.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Dataset specifically designed to perform self-supervised learning, where we don’t have a specific set of
+targets, because targets are derived from the data tensors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>torch.Tensor</em>) – Tensor representing the input data for the dataset.</p></li>
+<li><p><strong>targets</strong> (<em>torch.Tensor</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – REQUIRED TO BE NONE. The type and argument here is simply to
+maintain compatibility with our TensorDataset base. Defaults to None.</p></li>
+<li><p><strong>transform</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Any transform to be applied to the data tensors. This transform is
+performed BEFORE and target transforms that produce the self-supervised targets from the data.
+NOTE: These transformations and the <code class="docutils literal notranslate"><span class="pre">target_transform</span></code> functions are applied AT LOAD TIME
+Defaults to None.</p></li>
+<li><p><strong>target_transform</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Any transform to be applied to the data tensors to produce
+target tensors for training. This transform is performed after and transforms for the data tensors
+themselves to produce the self-supervised targets from the data.
+NOTE: These transformation functions are applied AT LOAD TIME.
+Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
@@ -582,6 +625,28 @@ is just used for tests.</p>
 <dt class="sig sig-object py" id="fl4health.utils.dataset.TensorDataset">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TensorDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/dataset.html#TensorDataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.dataset.TensorDataset" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#fl4health.utils.dataset.BaseDataset" title="fl4health.utils.dataset.BaseDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseDataset</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.utils.dataset.TensorDataset.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/dataset.html#TensorDataset.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.dataset.TensorDataset.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Basic dataset where the data and targets are assumed to be torch tensors. Optionally, this class allows the
+user to perform transformations on both the data and the targets. This is useful, for example, in performing
+data augmentation, label blurring, etc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>torch.Tensor</em>) – Input data for training.</p></li>
+<li><p><strong>targets</strong> (<em>torch.Tensor</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Target data for training. Defaults to None.</p></li>
+<li><p><strong>transform</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Optional transformation to be applied to the input data.
+NOTE: This transformation is applied at load time within <code class="docutils literal notranslate"><span class="pre">__get_item__</span></code>
+Defaults to None.</p></li>
+<li><p><strong>target_transform</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Optional transformation to be applied to the target data.
+NOTE: This transformation is applied at load time within <code class="docutils literal notranslate"><span class="pre">__get_item__</span></code>
+Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="py function">
@@ -684,6 +749,7 @@ The dataset returned should be of the same type as the input but with only data 
             <ul>
 <li><a class="reference internal" href="#">fl4health.utils.dataset module</a><ul>
 <li><a class="reference internal" href="#fl4health.utils.dataset.BaseDataset"><code class="docutils literal notranslate"><span class="pre">BaseDataset</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.utils.dataset.BaseDataset.__init__"><code class="docutils literal notranslate"><span class="pre">BaseDataset.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.utils.dataset.BaseDataset.update_target_transform"><code class="docutils literal notranslate"><span class="pre">BaseDataset.update_target_transform()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.utils.dataset.BaseDataset.update_transform"><code class="docutils literal notranslate"><span class="pre">BaseDataset.update_transform()</span></code></a></li>
 </ul>
@@ -692,12 +758,18 @@ The dataset returned should be of the same type as the input but with only data 
 <li><a class="reference internal" href="#fl4health.utils.dataset.DictionaryDataset.__init__"><code class="docutils literal notranslate"><span class="pre">DictionaryDataset.__init__()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#fl4health.utils.dataset.SslTensorDataset"><code class="docutils literal notranslate"><span class="pre">SslTensorDataset</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.utils.dataset.SslTensorDataset"><code class="docutils literal notranslate"><span class="pre">SslTensorDataset</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.utils.dataset.SslTensorDataset.__init__"><code class="docutils literal notranslate"><span class="pre">SslTensorDataset.__init__()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#fl4health.utils.dataset.SyntheticDataset"><code class="docutils literal notranslate"><span class="pre">SyntheticDataset</span></code></a><ul>
 <li><a class="reference internal" href="#fl4health.utils.dataset.SyntheticDataset.__init__"><code class="docutils literal notranslate"><span class="pre">SyntheticDataset.__init__()</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#fl4health.utils.dataset.TensorDataset"><code class="docutils literal notranslate"><span class="pre">TensorDataset</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.utils.dataset.TensorDataset"><code class="docutils literal notranslate"><span class="pre">TensorDataset</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.utils.dataset.TensorDataset.__init__"><code class="docutils literal notranslate"><span class="pre">TensorDataset.__init__()</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#fl4health.utils.dataset.select_by_indices"><code class="docutils literal notranslate"><span class="pre">select_by_indices()</span></code></a></li>
 </ul>
 </li>

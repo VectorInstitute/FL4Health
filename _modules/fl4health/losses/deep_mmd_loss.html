@@ -621,8 +621,8 @@
 <span class="sd">        Compute the paired distance between x and y.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X (torch.Tensor): The input tensor X.</span>
-<span class="sd">            Y (torch.Tensor): The input tensor Y.</span>
+<span class="sd">            x (torch.Tensor): The input tensor x.</span>
+<span class="sd">            y (torch.Tensor): The input tensor y.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: The paired distance between X and Y.</span>
@@ -751,8 +751,8 @@
 <span class="sd">        Train the Deep MMD kernel.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X (torch.Tensor): The input tensor X.</span>
-<span class="sd">            Y (torch.Tensor): The input tensor Y.</span>
+<span class="sd">            x (torch.Tensor): The input tensor x.</span>
+<span class="sd">            y (torch.Tensor): The input tensor y.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">featurizer</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sigma_q_opt</span><span class="o">.</span><span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">True</span>
@@ -805,8 +805,8 @@
 <span class="sd">        Compute the Deep MMD Loss.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            X (torch.Tensor): The input tensor X.</span>
-<span class="sd">            Y (torch.Tensor): The input tensor Y.</span>
+<span class="sd">            x (torch.Tensor): The input tensor x.</span>
+<span class="sd">            y (torch.Tensor): The input tensor y.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: The value of Deep MMD Loss.</span>
@@ -846,8 +846,8 @@
 <span class="sd">        steps and then computes the MMD loss.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            Xs (torch.Tensor): The source input tensor.</span>
-<span class="sd">            Xt (torch.Tensor): The target input tensor.</span>
+<span class="sd">            x_s (torch.Tensor): The source input tensor.</span>
+<span class="sd">            x_t (torch.Tensor): The target input tensor.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: The value of Deep MMD Loss.</span>
