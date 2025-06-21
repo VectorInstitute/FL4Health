@@ -17,6 +17,9 @@ from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLoss
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
+EXPECTED_OUTPUT_TUPLE_SIZE = 2
+
+
 class FlexibleClient(BasicClient):
     def __init__(
         self,
@@ -296,7 +299,7 @@ class FlexibleClient(BasicClient):
         if isinstance(output, torch.Tensor):
             return {"prediction": output}, {}
         if isinstance(output, tuple):
-            if len(output) != 2:
+            if len(output) != EXPECTED_OUTPUT_TUPLE_SIZE:
                 raise ValueError(f"Output tuple should have length 2 but has length {len(output)}")
             preds, features = output
             return preds, features
