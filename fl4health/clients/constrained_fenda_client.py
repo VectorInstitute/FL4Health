@@ -152,6 +152,7 @@ class ConstrainedFendaClient(FendaClient):
         Args:
             local_steps (int): Number of steps performed during training
             loss_dict (dict[str, float]): Losses computed during training.
+            config (Config): FL training configuration object.
         """
         # Save the parameters of the old model
         assert isinstance(self.model, FendaModelWithFeatureState)

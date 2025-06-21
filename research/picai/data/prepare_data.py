@@ -167,21 +167,21 @@ def prepare_data(
         annotation_read_dir (Path): The path to read the annotations from. Should be a flat directory with all
             annotation files.
         scans_write_dir (Path): The path to write the scans to. All scans are written into same directory.
-        annotation_write_dir (Path): The path to write the annotations to.
-            All annotations are written into same directory.
-        overviews_write_dir (Path): The path where the dataset json files are located. For each split 1-5,
+        annotation_write_dir (Path): The path to write the annotations to. All annotations are written into same
+            directory.
+        overview_write_dir (Path): The path where the dataset json files are located. For each split 1-5,
             there is a train and validation file with scan paths, label paths and case labels.
-        size (tuple[int, int, int] | None): Desired dimensions of preprocessed scans in voxels.
-            Triplet of the form: Depth x Height x Width.
-        physical_size (tuple[float, float, float] | None): Desired dimensions of preprocessed scans in mm.
-            Simply the product of the number of voxels by the spacing along a particular
-            dimension: Triplet of the form: Depth x Height x Width.
-        spacing (tuple[float, float, float] | None): Desired spacing of preprocessed scans in in mm/voxel.
-            Triplet of the form: Depth x Height x Width.
-        scan_extension (str): The expected extension of scan file paths.
-        annotation_extension (str): The expected extension of annotation file paths.
-        num_threads (str): The number of threads to use during preprocessing.
-        splits_path (Path | None): The path to the file containing the splits.
+        size (tuple[int, int, int] | None, optional): Desired dimensions of preprocessed scans in voxels.
+            Triplet of the form: Depth x Height x Width. Defaults to None.
+        physical_size (tuple[float, float, float] | None, optional): Desired dimensions of preprocessed scans in mm.
+            Simply the product of the number of voxels by the spacing along a particular dimension: Triplet of the
+            form: Depth x Height x Width. Defaults to None.
+        spacing (tuple[float, float, float] | None, optional): Desired spacing of preprocessed scans in in mm/voxel.
+            Triplet of the form: Depth x Height x Width. Defaults to None.
+        scan_extension (str, optional): The expected extension of scan file paths. Defaults to "mha".
+        annotation_extension (str, optional): The expected extension of annotation file paths. Defaults to ".nii.gz".
+        num_threads (int, optional): The number of threads to use during preprocessing. Defaults to 4.
+        splits_path (Path | None, optional): The path to the file containing the splits. Defaults to None.
     """
     settings = PreprocessingSettings(
         scans_write_dir,

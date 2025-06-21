@@ -141,10 +141,11 @@ def crop_or_pad(
 
     Args:
         image (sitk.Image): Image to be resized.
-        size (tuple[int, int, int]): Target size in voxels.
-            Expected to be in Depth x Height x Width format.
-        physical_size (tuple[float, float, float]): Target size in mm. (Number of Voxels x Spacing)
-            Expected to be in Depth x Height x Width format.
+        size (tuple[int, int, int]): Target size in voxels. Expected to be in Depth x Height x Width format.
+        physical_size (tuple[float, float, float] | None, optional): Target size in mm. (Number of Voxels x Spacing)
+            Expected to be in  Depth x Height x Width format. Defaults to None.
+        crop_only (bool, optional): Whether to only crop the image (True) or also perform padding (False). Defaults
+            to False.
 
     Returns:
         sitk.Image: Cropped or padded image.

@@ -24,7 +24,7 @@ class WarmedUpModule:
                 ``pretrained_model_path``.
             pretrained_model_path (Path | None): Path of the pretrained model. This is mutually exclusive with
                 ``pretrained_model``.
-            weights_mapping_dir (str | None, optional): Path of to json file of the weights mapping dict. If models
+            weights_mapping_path (str | None, optional): Path of to json file of the weights mapping dict. If models
                 are not exactly the same, a weights mapping dict is needed to map the weights of the pretrained
                 model to the target model.
         """

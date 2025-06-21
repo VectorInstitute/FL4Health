@@ -321,19 +321,17 @@ def get_picai_metrics(
     annotations. Extends picai_eval to allow multiclass evaluation.
 
     Args:
-        detection_maps_folder (str | Path): Path to the folder
-            containing the detection maps
-        ground_truth_annotations_folder (NDArray): The ground truth
-            annotations. Must have shape (num_samples, num_classes or
-            num_lesion_classes, ...). If num_classes is provided, the function
-            will attempt to remove the background class from index 0 for you
-        case_identifiers (list[str] | None, optional): A list of case
-            identifiers. If not provided the subjects will be identified by
-            their index Defaults to None.
-        verbose (bool): Whether or not to print a log statement summarizing
-            results. Defaults to True
-        **kwargs: Keyword arguments for the picai_eval.eval.evaluate_case
-            function
+        detection_map_folder (str | Path): Path to the folder containing the detection maps
+        ground_truth_annotations_folder (NDArray): The ground truth annotations. Must have shape
+            (num_samples, num_classes or num_lesion_classes, ...). If num_classes is provided, the function will
+            attempt to remove the background class from index 0 for you
+        num_threads (int | None): Number of threads to be used in the computations. Defaults to None.
+        sample_weights: (list[float] | None): Weights on each sample to be used in metrics calculations. Defaults to
+            None.
+        case_identifiers (list[str] | None, optional): A list of case identifiers. If not provided the subjects will
+            be identified by their index Defaults to None.
+        verbose (bool): Whether or not to print a log statement summarizing results. Defaults to True
+        **kwargs: Keyword arguments for the picai_eval.eval.evaluate_case function
 
     Raises:
         KeyError: If you try to use the y_det, y_true, or subject_list keyword

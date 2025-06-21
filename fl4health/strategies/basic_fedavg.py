@@ -273,10 +273,11 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         Aggregate the metrics and losses returned from the clients as a result of the evaluation round.
 
         Args:
+            server_round (int): Current FL server Round.
             results (list[tuple[ClientProxy, EvaluateRes]]): The client identifiers and the results of their local
                 evaluation that need to be aggregated on the server-side. These results are loss values and the
                 metrics dictionary.
-            failures (list[tuple[ClientProxy, EvaluateRes] | BaseException]): These are the results and
+            failures (list[tuple[ClientProxy, EvaluateRes]  |  BaseException]): These are the results and
                 exceptions from clients that experienced an issue during evaluation, such as timeouts or exceptions.
 
         Returns:

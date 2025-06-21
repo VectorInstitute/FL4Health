@@ -14,6 +14,12 @@ from dp_accounting.rdp.rdp_privacy_accountant import NeighborRel, RdpAccountant
 
 class SamplingStrategy(ABC):
     def __init__(self, neighbor_relation: NeighborRel) -> None:
+        """
+        Abstract base class. It holds information about the privacy accountant NeighborRel applied.
+
+        Args:
+            neighbor_relation (NeighborRel): The kind of neighbor relation that should be used in accounting.
+        """
         self.neighbor_relation = neighbor_relation
 
     @abstractmethod
@@ -23,6 +29,13 @@ class SamplingStrategy(ABC):
 
 class PoissonSampling(SamplingStrategy):
     def __init__(self, sampling_ratio: float) -> None:
+        """
+        DP Event type that stores important information about sampling statistics and sets the proper NeighborRel value
+        This class is specific to Poisson sampling.
+
+        Args:
+            sampling_ratio (float): Poisson sampling ratio used.
+        """
         self.sampling_ratio = sampling_ratio
         super().__init__(NeighborRel.ADD_OR_REMOVE_ONE)
 
@@ -32,6 +45,14 @@ class PoissonSampling(SamplingStrategy):
 
 class FixedSamplingWithoutReplacement(SamplingStrategy):
     def __init__(self, population_size: int, sample_size: int) -> None:
+        """
+        DP Event type that stores important information about sampling statistics and sets the proper NeighborRel value
+        This class is specific to fixed sampling without replacement.
+
+        Args:
+            population_size (int): Size of the total population from which sampling is performed.
+            sample_size (int): Size of the desired sample.
+        """
         self.population_size = population_size
         self.sample_size = sample_size
         super().__init__(NeighborRel.REPLACE_ONE)

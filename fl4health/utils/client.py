@@ -124,8 +124,10 @@ def maybe_progress_bar(iterable: Iterable, display_progress_bar: bool) -> Iterab
 
     Args:
         iterable (Iterable): The iterable to wrap
+        display_progress_bar (bool): Whether we want to display a progress bar or not.
+
     Returns:
-        Iterable: an iterator which acts exactly like the original iterable, but prints a dynamically updating
+        Iterable: An iterator which acts exactly like the original iterable, but prints a dynamically updating
         progress bar every time a value is requested. Or the original iterable if ``self.progress_bar`` is False
     """
     if not display_progress_bar:

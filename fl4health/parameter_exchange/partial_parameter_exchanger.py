@@ -13,6 +13,16 @@ T = TypeVar("T")
 
 class PartialParameterExchanger(ParameterExchanger, Generic[T]):
     def __init__(self, parameter_packer: ParameterPacker[T]) -> None:
+        """
+        Base class meant to properly facilitate partial parameter exchange through a selection criterion. This
+        mechanism is more complicated than, for example, that used by the ``FixedLayerExchanger`` where the subset
+        parameters to exchange do not change dynamically from round to round.
+
+        Args:
+            parameter_packer (ParameterPacker[T]): Parameter packer that can be used to pack in more information
+                than just the parameters being exchange. This is important, for example, when exchanging different
+                sets of layers in each round.
+        """
         super().__init__()
         self.parameter_packer = parameter_packer
 

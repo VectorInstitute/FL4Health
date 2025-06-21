@@ -122,7 +122,7 @@ class FedRepClient(BasicClient):
         Args:
             prefix (str): Prefix to be attached to all keys of the provided dictionaries.
             loss_dict (dict[str, float]): Dictionary of loss values obtained during training.
-            metrics (dict[str, Scalar]): Dictionary of metrics values measured during training
+            metrics_dict (dict[str, Scalar]): Dictionary of metrics values measured during training.
         """
         for loss_key in list(loss_dict):
             loss_dict[f"{prefix}_{loss_key}"] = loss_dict.pop(loss_key)
@@ -317,12 +317,13 @@ class FedRepClient(BasicClient):
         Train locally for the specified number of epochs.
 
         Args:
-            epochs (int): The number of epochs for local training.
-            current_round (int | None): The current FL round.
+            head_epochs (int): The number of epochs for local training of the head module.
+            rep_epochs (int): The number of epochs for local training of the representation module
+            current_round (int | None, optional): The current FL round. Defaults to None.
 
         Returns:
             tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
-            Loss is a dictionary of one or more losses that represent the different components of the loss.
+                Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         # First we train the head module for head_epochs with the representations frozen in place
         self._prepare_train_head()
@@ -356,11 +357,13 @@ class FedRepClient(BasicClient):
         Train locally for the specified number of steps.
 
         Args:
-            steps (int): The number of steps to train locally.
+            head_steps (int): The number of steps to train locally for the head model.
+            rep_steps (int): The number of steps to train locally for the representation model
+            current_round (int | None, optional): What round of FL training we're currently on. Defaults to None.
 
         Returns:
             tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
-            Loss is a dictionary of one or more losses that represent the different components of the loss.
+                Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         assert isinstance(self.model, FedRepModel)
         # First we train the head module for head_steps with the representations frozen in place

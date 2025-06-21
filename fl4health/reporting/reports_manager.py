@@ -6,6 +6,14 @@ from fl4health.reporting.base_reporter import BaseReporter
 
 class ReportsManager:
     def __init__(self, reporters: Sequence[BaseReporter] | None = None) -> None:
+        """
+        Basic class for managing sequences of reporters. Generally, this class orchestrates initializing, calling,
+        and gracefully shutting down all reporters provided to the class.
+
+        Args:
+            reporters (Sequence[BaseReporter] | None, optional): Reporters of ``BaseReporter`` to be managed by
+                this class. Defaults to None.
+        """
         self.reporters = [] if reporters is None else list(reporters)
 
     def initialize(self, **kwargs: Any) -> None:

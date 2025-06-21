@@ -83,12 +83,12 @@ def narrow_dict_type_and_set_attribute(
 
     Args:
         self (object): The object to set attribute to dictionary[dictionary_key].
-        dictionary (dict[str, Any]): A dictionary with string keys.
-        dictionary_key (str): The key to check dictionary for.
+        dictionary (dict): A dictionary with string keys.
+        dictionary_key (str): A dictionary with string keys.
+        attribute_name (str): The key for which to check in dictionary.
         narrow_type_to (type[T]): The expected type of dictionary[key].
-
-    Raises:
-        ValueError: If dictionary[key] is not of type ``narrow_type_to`` or if the key is not present in dictionary.
+        func (Callable[[Any], Any] | None, optional): Function to operate on the extracted value if desired. Defaults
+            to None.
     """
     val = narrow_dict_type(dictionary, dictionary_key, narrow_type_to)
     val = func(val) if func is not None else val

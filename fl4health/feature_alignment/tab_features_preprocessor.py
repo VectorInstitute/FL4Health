@@ -119,6 +119,10 @@ class TabularFeaturesPreprocessor:
 
         Args:
             tabular_features (list[TabularFeature]): list of tabular features in the data columns.
+            one_hot (bool): Whether or not to apply a default one-hot pipeline.
+
+        Returns:
+            dict[str, Pipeline]: Default feature processing pipeline per feature in the list.
         """
         columns_to_pipelines = {}
         for tab_feature in tabular_features:

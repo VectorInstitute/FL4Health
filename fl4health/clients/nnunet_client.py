@@ -138,6 +138,8 @@ class NnunetClient(BasicClient):
                 No checkpointing (state or model) is done if not provided. Defaults to None.
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the client should
                 send data to.
+            client_name (str | None, optional): Name of the client. If None the class will set a default and random
+                name. Defaults to None.
             nnunet_trainer_class (type[nnUNetTrainer]): A ``nnUNetTrainer`` constructor. Useful for passing custom
                 ``nnUNetTrainer``. Defaults to the standard nnUNetTrainer class. Must match the
                 ``nnunet_trainer_class`` passed to the ``NnunetServer``.
@@ -340,7 +342,13 @@ class NnunetClient(BasicClient):
         this method to set your own LR scheduler.
 
         Args:
-            config (Config): The server config. This method will look for the
+            optimizer_key (str): Key of the optimizer to which the scheduler will be applied.
+            config (Config): The server config. This method will determine the total number of steps that will be
+                applied across all server rounds on FL training.
+
+        Raises:
+            ValueError: Thrown if the configuration does not contain either a steps or epochs specification.
+
         Returns:
             _LRScheduler: The default nnunet LR Scheduler for nnunetv2 2.5.1
         """
@@ -904,7 +912,7 @@ class NnunetClient(BasicClient):
         gc.collect()  # Cleans up unused variables
         # As the linked issue above points out, calling gc.freeze() greatly reduces the
         # overhead of garbage collection. (from 1.5s to 0.005s)
-        if current_server_round == 2:
+        if current_server_round == 2:  # noqa: PLR2004
             # Collect runs even faster if we freeze after the end of the first iteration
             # Likely because a lot of variables are created in the first pass. If we
             # freeze before the first pass, gc.collect has to check all those variables

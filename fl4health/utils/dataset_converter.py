@@ -27,13 +27,29 @@ class DatasetConverter(TensorDataset):
         self.dataset = dataset
 
     def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
-        # Overriding this function from BaseDataset allows the converter to be compatible with the data transformers.
-        # converter_function is applied after the transformers.
+        """
+        Overriding this function from BaseDataset allows the converter to be compatible with the data transformers.
+        ``converter_function`` is applied after the transformers.
+
+        Args:
+            index (int): The index of the batch of data to be extracted.
+
+        Returns:
+            tuple[torch.Tensor, torch.Tensor]: Get the raw batch data (input, target) and apply the
+                ``converter_function`` before returning.
+        """
         assert self.dataset is not None, "Error: no dataset is set, use convert_dataset(your_dataset: TensorDataset)"
         data, target = self.dataset.__getitem__(index)
         return self.converter_function(data, target)
 
     def __len__(self) -> int:
+        """
+        Returns the length of the dataset. Mostly just a wrapper on the standard pytorch dataset length to ensure that
+        the dataset is not None.
+
+        Returns:
+            int: Dataset length.
+        """
         assert self.dataset is not None, "Error: dataset is should be either converted or initiated."
         return len(self.dataset)
 
@@ -65,10 +81,15 @@ class AutoEncoderDatasetConverter(DatasetConverter):
         other converter functions can be added or passed to support other conditions.
 
         Args:
-            condition (str | torch.Tensor | None): Could be a fixed tensor used for all the data samples,
+            condition (str | torch.Tensor | None, optional): Could be a fixed tensor used for all the data samples,
                 None for non-conditional models, or a name (str) passed for other custom conversions like "label".
+                Defaults to None.
             do_one_hot_encoding (bool, optional): Should converter perform one hot encoding on the condition or not.
-            custom_converter_function (Callable | None, optional): User can define a new converter function.
+                Defaults to False.
+            custom_converter_function (Callable | None, optional): User can define a new converter function. Defaults
+                to None.
+            condition_vector_size (int | None, optional): Size of the conditioning vector if available. Defaults to
+                None.
         """
         self.condition = condition
         if isinstance(self.condition, torch.Tensor):
@@ -190,6 +211,9 @@ class AutoEncoderDatasetConverter(DatasetConverter):
 
         Args:
             packed_data (torch.Tensor): Data tensor used in the training loop as the input to the model.
+            cond_vec_size (int): Size of the conditional vector that has been packed into the ``packed_data`` variable.
+            data_shape (torch.Size): Expected shape of the original data tensor after unpacking the conditioning
+                vector.
 
         Returns:
             tuple[torch.Tensor, torch.Tensor]: Data in its original shape, and the condition vector to be fed into the

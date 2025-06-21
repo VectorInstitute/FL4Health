@@ -2,6 +2,9 @@ import torch
 from torch.nn.modules.loss import _Loss
 
 
+REQUIRED_PREDS_DIMENSIONS = 2
+
+
 class VaeLoss(_Loss):
     def __init__(
         self,
@@ -49,7 +52,7 @@ class VaeLoss(_Loss):
             tuple[torch.Tensor, torch.Tensor, torch.Tensor]: Unpacked output containing predictions, mu, and logvar.
         """
         # This methods assumes "preds" are batch first, and preds are 2D dimensional (already flattened).
-        assert preds.dim() == 2, (
+        assert preds.dim() == REQUIRED_PREDS_DIMENSIONS, (
             f"Expected a 2D tensor for VaeLoss, but got {preds.dim()}D tensor with shape {preds.shape}."
         )
         # The order of logvar and mu in the output tensor is important.

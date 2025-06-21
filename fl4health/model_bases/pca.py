@@ -6,6 +6,9 @@ from torch import Tensor, nn
 from torch.nn.parameter import Parameter
 
 
+TWO_D_TENSOR_SHAPE_LENGTH = 2
+
+
 class PcaModule(nn.Module):
     def __init__(self, low_rank: bool = False, full_svd: bool = False, rank_estimation: int = 6) -> None:
         """
@@ -57,14 +60,14 @@ class PcaModule(nn.Module):
 
     def forward(self, x: Tensor, center_data: bool) -> tuple[Tensor, Tensor]:
         """
-        Perform PCA on the data matrix X by computing its SVD.
+        Perform PCA on the data matrix x by computing its SVD.
 
         **NOTE**: the algorithm assumes that the rows of X are the data points (after reshaping as needed).
         Consequently, the principal components, which are the eigenvectors of X.T @ X, are the right singular vectors
         in the SVD of X.
 
         Args:
-            X (Tensor): Data matrix.
+            x (Tensor): Data matrix.
             center_data (bool): If true, then the data mean will be subtracted from all data points prior to
                 performing PCA. If ``center_data`` is false, it is expected that the data has already been centered
                 and an exception will be thrown if it is not.
@@ -96,12 +99,12 @@ class PcaModule(nn.Module):
         N-dimensional tensor because PCA requires X to be a 2D data matrix.
 
         Args:
-            X (Tensor): Data matrix
+            x (Tensor): Data matrix
 
         Returns:
             Tensor: tensor flattened to be 2D
         """
-        if len(x.size()) == 2:
+        if len(x.size()) == TWO_D_TENSOR_SHAPE_LENGTH:
             return torch.squeeze(x.float())
         dim0 = x.size(0)
         return torch.squeeze(x.view(dim0, -1).float())
@@ -112,7 +115,7 @@ class PcaModule(nn.Module):
         validation/test data later, if needed.
 
         Args:
-            X (Tensor): Data matrix
+            x (Tensor): Data matrix
         """
         self.data_mean = torch.mean(x, dim=0)
 
@@ -125,7 +128,7 @@ class PcaModule(nn.Module):
         Prepare input data X for PCA by reshaping and centering it as needed.
 
         Args:
-            X (Tensor): Data matrix.
+            x (Tensor): Data matrix.
             center_data (bool): If true, then the data mean will be subtracted from all data points prior to
                 performing PCA. If center_data is false, it is expected that the data has already been centered and
                 an exception will be thrown if it is not.
@@ -151,7 +154,7 @@ class PcaModule(nn.Module):
         are the data points while the columns of U are the principal components.
 
         Args:
-            X (Tensor): Input data matrix whose rows are the data points.
+            x (Tensor): Input data matrix whose rows are the data points.
             k (int | None, optional): The number of principal components onto which projection is done. If k is None,
                 then all principal components will be used in the projection. Defaults to None.
             center_data (bool, optional): If true, then the *training* data mean (learned in the forward pass)
@@ -174,7 +177,7 @@ class PcaModule(nn.Module):
         of data points.
 
         Args:
-            X_lower_dim (Tensor): Matrix whose rows are low-dimensional principal representations of the original data.
+            x_lower_dim (Tensor): Matrix whose rows are low-dimensional principal representations of the original data.
             add_mean (bool, optional): Indicates whether the training data mean should be added to the projection
                 result. This can be set to True if the user centered the data prior to dimensionality reduction and
                 now wish to add back the data mean. Defaults to False.
@@ -201,7 +204,7 @@ class PcaModule(nn.Module):
         of X are the data points while the columns of U are the principal components.
 
         Args:
-            X (Tensor): Input data tensor whose rows represent data points.
+            x (Tensor): Input data tensor whose rows represent data points.
             k (int | None): The number of principal components onto which projection is applied.
             center_data (bool, optional): Indicates whether to subtract data mean prior to projecting the data into a
                 lower-dimensional subspace, and whether to add the data mean after projecting back. Defaults to False.
@@ -221,7 +224,7 @@ class PcaModule(nn.Module):
         The variance is defined as ``| X @ U |_F ** 2``
 
         Args:
-            X (Tensor): input data tensor whose rows represent data points.
+            x (Tensor): input data tensor whose rows represent data points.
             k (int | None): the number of principal components onto which projection is applied.
             center_data (bool, optional): Indicates whether to subtract data mean prior to projecting the data into a
                 lower-dimensional subspace, and whether to add the data mean after projecting back. Defaults to False.

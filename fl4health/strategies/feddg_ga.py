@@ -86,6 +86,12 @@ class FairnessMetric:
                 self.signal = FairnessMetricType.signal_for_type(metric_type)
 
     def __str__(self) -> str:
+        """
+        String produced when calling str(...) on a Fairness metric object.
+
+        Returns:
+            str: Custom string describing the object attributes.
+        """
         return f"Metric Type: {self.metric_type}, Metric Name: '{self.metric_name}', Signal: {self.signal}"
 
 

@@ -134,45 +134,34 @@ def predict(
     verbose: bool = True,
 ) -> None:
     """
-    Uses multiprocessing to quickly do model inference for a single model, a
-    group of models with the same nnunet config or an ensemble of different
-    nnunet configs each with one or more models.
+    Uses multiprocessing to quickly do model inference for a single model, a group of models with the same nnunet
+    config or an ensemble of different nnunet configs each with one or more models.
 
     Args:
-        config_path (str): Path to a yaml config file. The three required keys
-            are plans, dataset_json and one or more nnunet_configs (e.g. 2d,
-            3d_fullres etc.). The nnunet config keys should contain a list of
-            paths. If the path points to a file it should be a model
-            checkpoint. The model checkpoints can be dicts with the
-            'network_weights' key or nn.Modules. If the path points to a
-            directory it should be an nnunet results folder for a particular
-            dataset-config-trainer combo. The plans key should be the path to
-            the nnunet model plans json file. The dataset_json key should be
-            the path to the dataset json of one of the training datasets. Or
-            create a new json yourself with the 'label' and 'file_ending' keys
-            and their corresponding values as specified by nnunet. A !join
-            constructor that maps to os.path.join has been defined when
-            loading the config to allow the user to make their configs more
-            readable. Eg.
-                    base_path: &base_path /home/user/data
-                    dataset_json: !join [*base_path, 'PICAI', 'dataset.json']
-        input_folder (str): Path to the folder containing the raw input data
-            that has not been processed by nnunet yet. File names must follow the
-            nnunet convention where each channel modality is stored as a
-            separate file.File names should be case-identifier_0000 where 0000
-            is a 4 digit integer representing the channel/modality of the
-            image. All cases must have the same number of channels N numbered
-            from 0 to N.
-        output_folder (str): Path to save the predicted probabilities and
-            predicted annotations. Each will be stored in a separate
-            subdirectory. Probabilities will be stored as .npz files.
-            The NPZ file object will have the key 'probabilities'. The
-            predicted annotations will be saved as the original input image
-            file format
-        probs_folder_name (str): What to name the folder within the
-            output folder that the probabilities will be stored in
-        annotations_folder_name (str): What to name the folder within the
-            output folder that the predicted annotations will be stored in
+        config_path (str): Path to a yaml config file. The three required keys are plans, dataset_json and one or
+            more nnunet_configs (e.g. 2d, 3d_fullres etc.). The nnunet config keys should contain a list of paths. If
+            the path points to a file it should be a model checkpoint. The model checkpoints can be dicts with the
+            'network_weights' key or nn.Modules. If the path points to a directory it should be an nnunet results
+            folder for a particular dataset-config-trainer combo. The plans key should be the path to the nnunet
+            model plans json file. The dataset_json key should be the path to the dataset json of one of the training
+            datasets. Or create a new json yourself with the 'label' and 'file_ending' keys and their corresponding
+            values as specified by nnunet. A !join constructor that maps to os.path.join has been defined when loading
+            the config to allow the user to make their configs more readable. Eg.
+                base_path: &base_path /home/user/data
+                dataset_json: !join [*base_path, 'PICAI', 'dataset.json']
+        input_folder (str): Path to the folder containing the raw input data that has not been processed by nnunet
+            yet. File names must follow the nnunet convention where each channel modality is stored as a separate file.
+            File names should be case-identifier_0000 where 0000 is a 4 digit integer representing the
+            channel/modality of the image. All cases must have the same number of channels N numbered from 0 to N.
+        output_folder (str): Path to save the predicted probabilities and predicted annotations. Each will be stored
+            in a separate subdirectory. Probabilities will be stored as .npz files. The NPZ file object will have the
+            key 'probabilities'. The predicted annotations will be saved as the original input image file format
+        probs_folder_name (str, optional): What to name the folder within the output folder that the probabilities
+            will be stored in. Defaults to "predicted_probability_maps".
+        annotations_folder_name (str, optional): What to name the folder within the output folder that the predicted
+            annotations will be stored in. Defaults to "predicted_annotations".
+        verbose (bool, optional): Setting this to false will limit the amount of logging produced by this function.
+            Defaults to True.
     """
     # Note: I should split output folder into two separate paths for model outputs
     t_start = time.time()

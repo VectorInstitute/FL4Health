@@ -227,44 +227,34 @@ def predict(
     verbose: bool = True,
 ) -> tuple[NDArray, NDArray, list[str]]:
     """
-    Uses multiprocessing to quickly do model inference for a single model, a
-    group of models with the same nnunet config or an ensemble of different
-    nnunet configs each with one or more models.
+    Uses multiprocessing to quickly do model inference for a single model, a group of models with the same nnunet
+    config or an ensemble of different nnunet configs each with one or more models.
 
     Args:
-        config_path (str): Path to a yaml config file. The three required keys
-            are plans, dataset_json and one or more nnunet_configs (e.g. 2d,
-            3d_fullres etc.). The nnunet config keys should contain a list of
-            paths. If the path points to a file it should be a model
-            checkpoint. The model checkpoints can be dicts with the
-            'network_weights' key or nn.Modules. If the path points to a
-            directory it should be an nnunet results folder for a particular
-            dataset-config-trainer combo. The plans key should be the path to
-            the nnunet model plans json file. The dataset_json key should be
-            the path to the dataset json of one of the training datasets. Or
-            create a new json yourself with the 'label' and 'file_ending' keys
-            and their corresponding values as specified by nnunet
-        input_folder (str): Path to the folder containing the raw input data
-            that has not been processed by nnunet yet. File names must follow the
-            nnunet convention where each channel modality is stored as a
-            separate file.File names should be case-identifier_0000 where 0000
-            is a 4 digit integer representing the channel/modality of the
-            image. All cases must have the same number of channels N numbered
-            from 0 to N.
-        preds_folder (str | None): [OPTIONAL] Path to the output folder to
-            save the model predicted probabilities. If not provided the
-            probabilities are not saved
-        annotations_folder (str | None): [OPTIONAL] Path to the output
-            folder to save the model predicted annotations. If not provided the
-            annotations are not saved
+        config_path (str): Path to a yaml config file. The three required keys are plans, dataset_json and one or more
+            nnunet_configs (e.g. 2d, 3d_fullres etc.). The nnunet config keys should contain a list of paths. If the
+            path points to a file it should be a model checkpoint. The model checkpoints can be dicts with the
+            'network_weights' key or nn.Modules. If the path points to a directory it should be an nnunet results
+            folder for a particular dataset-config-trainer combo. The plans key should be the path to the nnunet model
+            plans json file. The dataset_json key should be the path to the dataset json of one of the training
+            datasets. Or create a new json yourself with the 'label' and 'file_ending' keys and their
+            corresponding values as specified by nnunet
+        input_folder (str): Path to the folder containing the raw input data that has not been processed by nnunet
+            yet. File names must follow the nnunet convention where each channel modality is stored as a separate
+            file. File names should be case-identifier_0000 where 0000 is a 4 digit integer representing the
+            channel/modality of the image. All cases must have the same number of channels N numbered from 0 to N.
+        probs_folder (str | None, optional): Path to the output folder to save the model predicted probabilities. If
+            not provided the probabilities are not saved. Defaults to None.
+        annotations_folder (str | None, optional):Path to the output folder to save the model predicted annotations.
+            Defaults to None.
+        verbose (bool, optional): Setting this to false will limit the amount of logging produced by this function.
+            Defaults to True.
+
     Returns:
-        NDArray[float]: a numpy array with a single predicted probability map
-            for each input image. Shape: (num_samples, num_classes, ...).
-        NDArray[int]: a numpy array with a single predicted annotation map for
-            each input image. Unlike the predicted probabilities these are NOT
-            one hot encoded. Shape: (num_samples, spatial_dims...)
-        list[str]: A list containing the unique case identifier for
-            each prediction
+        tuple[NDArray, NDArray, list[str]]: A numpy array with a single predicted probability map for each input
+            image. Shape:  (num_samples, num_classes, ...). A numpy array with a single predicted annotation map for
+            each input image. Unlike the predicted  probabilities these are NOT one hot encoded.
+            Shape: (num_samples, spatial_dims...). A list containing the unique case identifier for each prediction.
     """
     t_start = time.time()
     # Load config and nnunet required dicts

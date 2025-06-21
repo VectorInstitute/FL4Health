@@ -96,6 +96,15 @@ class FlInstanceLevelAccountant:
 
 class ClientLevelAccountant(ABC):
     def __init__(self, noise_multiplier: float | list[float], moment_orders: list[float] | None = None) -> None:
+        """
+        Accountant to be used when measuring Client Level DP in FL training.
+
+        Args:
+            noise_multiplier (float | list[float]): The noise multiplier being applied to weights before transfer to
+                the server.
+            moment_orders (list[float] | None, optional): Basis orders to be used by the accountant for approximation.
+                of the RDP values. Defaults to None.
+        """
         self.noise_multiplier = noise_multiplier
         self.accountant = MomentsAccountant(moment_orders)
 

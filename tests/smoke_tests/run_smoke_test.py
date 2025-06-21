@@ -190,32 +190,51 @@ async def run_smoke_test(
         loop.close()
 
     Args:
-        server_python_path (str): the path for the executable server module
-        client_python_path (str): the path for the executable client module
-        config_path (str): the path for the config yaml file. The following attributes are required
-            by this function:
-            `n_clients`: the number of clients to be started
-            `n_server_rounds`:  the number of rounds to be ran by the server
-            `batch_size`: the size of the batch, to be used by the dataset preloader
-        dataset_path (str): the path of the dataset. Depending on which dataset is being used, it will ty to preload it
+        server_python_path (str): The path for the executable server module.
+        client_python_path (str): The path for the executable client module.
+        config_path (str): The path for the config yaml file. The following attributes are required by this function:
+
+            - `n_clients`: the number of clients to be started
+            - `n_server_rounds`:  the number of rounds to be ran by the server
+            - `batch_size`: the size of the batch, to be used by the dataset preloader
+
+        partial_config_path (str): The path for the partial config yaml file. Used to pass to server and client to
+            partially execute an FL run to validate checkpointing. The following attributes are required by this
+            function and should be the same as those at config_path except n_server_rounds which should be 1:
+
+            - `n_clients`: the number of clients to be started
+            - `n_server_rounds`:  the number of rounds to be ran by the server
+            - `batch_size`: the size of the batch, to be used by the dataset preloader
+
+        dataset_path (str): The path of the dataset. Depending on which dataset is being used, it will ty to preload it
             to avoid problems when running on different runtimes.
-        checkpoint_path (str | None): Optional, default None. If set, it will send that path as a checkpoint model
-            to the client.
-        assert_evaluation_logs (bool | None): Optional, default `False`. Set this to `True` if testing an
-            evaluation model, which produces different log outputs.
-        skip_assert_client_fl_rounds (str | None): Optional, default `False`. If set to `True`, will skip the
-            assertion of the "Current FL Round" message on the clients' logs. This is necessary because some clients
-            (namely client_level_dp, client_level_dp_weighted, instance_level_dp) do not reliably print that message.
-        seed (int | None): The random seed to be passed in to both the client and the server.
-        server_metrics (dict[str, Any] | None): A dictionary of metrics to be checked against the metrics file
-            saved by the server. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
-            Default is None.
-        client_metrics (dict[str, Any] | None): A dictionary of metrics to be checked against the metrics file
-            saved by the clients. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
-            Default is None.
+        checkpoint_path (str | None, optional): If set, it will send that path as a model checkpoint path
+            to the client. Defaults to None.
+        assert_evaluation_logs (bool | None, optional): Set this to `True` if testing an evaluation model, which
+            produces different log outputs. Defaults to False.
+        skip_assert_client_fl_rounds (bool | None, optional): If set to `True`, will skip the assertion of the
+            "Current FL Round" message on the clients' logs. This is necessary because some clients (namely
+            ``client_level_dp``, ``client_level_dp_weighted``, ``instance_level_dp``) do not reliably print that
+            message. Defaults to False.
+        seed (int | None, optional): The random seed to be passed in to both the client and the server.
+            Defaults to None.
+        server_metrics (dict[str, Any] | None, optional): A dictionary of metrics to be checked against the metrics
+            file saved by the server. Should be in the same format as ``fl4health.reporting.metrics.MetricsReporter``.
+            Defaults to None.
+        client_metrics (dict[str, Any] | None, optional): A dictionary of metrics to be checked against the metrics
+            file saved by the clients. Should be in the same format as ``fl4health.reporting.metrics.MetricsReporter.``
+            Defaults to None.
+        tolerance (float, optional): Tolerance associated with natural metrics fluctuations. Defaults to
+            DEFAULT_TOLERANCE.
+        read_logs_timeout (int, optional):Timeout in seconds associated with reading the logs of the clients and
+            servers. Defaults to DEFAULT_READ_LOGS_TIMEOUT
+
+    Raises:
+        SmokeTestAssertError: Various assertions are raised when metrics do not match or the clients/server processes
+            do not finish correctly
 
     Returns:
-        (server_errors, client_errors): (list[str], list[str]): list of errors from server and client processes,
+        tuple[list[str], list[str]]: (server_errors, client_errors) list of errors from server and client processes,
             respectively.
     """
     try:
@@ -373,32 +392,41 @@ async def run_fault_tolerance_smoke_test(
     Runs a smoke test for a given server, client, and dataset configuration.
 
     Args:
-        server_python_path (str): the path for the executable server module
-        client_python_path (str): the path for the executable client module
-        config_path (str): the path for the config yaml file. The following attributes are required
-            by this function:
-            `n_clients`: the number of clients to be started
-            `n_server_rounds`:  the number of rounds to be ran by the server
-            `batch_size`: the size of the batch, to be used by the dataset preloader
-        partial_config_path (str): the path for the partial config yaml file.
-            Used to pass to server and client to partially execute an FL run to validate checkpointing.
+        server_python_path (str): The path for the executable server module.
+        client_python_path (str): The path for the executable client module.
+        config_path (str): The path for the config yaml file. The following attributes are required by this function:
 
-            The following attributes are required
-            by this function and should be the same as those at config_path except n_server_rounds which should be 1:
-            `n_clients`: the number of clients to be started
-            `n_server_rounds`:  the number of rounds to be ran by the server
-            `batch_size`: the size of the batch, to be used by the dataset preloader
-        dataset_path (str): the path of the dataset. Depending on which dataset is being used, it will ty to preload it
+            - `n_clients`: the number of clients to be started
+            - `n_server_rounds`:  the number of rounds to be ran by the server
+            - `batch_size`: the size of the batch, to be used by the dataset preloader
+
+        partial_config_path (str): The path for the partial config yaml file. Used to pass to server and client to
+            partially execute an FL run to validate checkpointing. The following attributes are required by this
+            function and should be the same as those at config_path except n_server_rounds which should be 1:
+
+            - `n_clients`: the number of clients to be started
+            - `n_server_rounds`:  the number of rounds to be ran by the server
+            - `batch_size`: the size of the batch, to be used by the dataset preloader
+
+        dataset_path (str): The path of the dataset. Depending on which dataset is being used, it will ty to preload it
             to avoid problems when running on different runtimes.
-        intermediate_checkpoint_dir (str): Path to store intermediate checkpoints for server and client.
-        seed (int | None): The random seed to be passed in to both the client and the server.
         server_metrics (dict[str, Any]): A dictionary of metrics to be checked against the metrics file
-            saved by the server. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
+            saved by the server. Should be in the same format as ``fl4health.reporting.metrics.MetricsReporter``.
         client_metrics (dict[str, Any]): A dictionary of metrics to be checked against the metrics file
-            saved by the clients. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
+            saved by the clients. Should be in the same format as ``fl4health.reporting.metrics.MetricsReporter.``
+        seed (int | None, optional): The random seed to be passed in to both the client and the server.
+            Defaults to None.
+        intermediate_checkpoint_dir (str, optional): Path to store intermediate checkpoints for server and client.
+            Defaults to "./".
+        server_name (str, optional): Name of the server class. This is often used for naming checkpoints and other
+            artifacts. Defaults to "server".
+        tolerance (float, optional): Tolerance associated with natural metrics fluctuations. Defaults to
+            DEFAULT_TOLERANCE.
+        read_logs_timeout (int, optional): Timeout in seconds associated with reading the logs of the clients and
+            servers. Defaults to DEFAULT_READ_LOGS_TIMEOUT.
 
     Returns:
-        (server_errors, client_errors): (list[str], list[str]): list of errors from server and client processes,
+        tuple[list[str], list[str]]: (server_errors, client_errors) list of errors from server and client processes,
             respectively.
     """
     try:

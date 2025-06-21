@@ -163,11 +163,13 @@ class Accuracy(SimpleMetric):
         """
         super().__init__(name)
 
-    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
+    def __call__(self, logits: torch.Tensor, target: torch.Tensor, threshold: float = 0.5) -> Scalar:
         # assuming batch first
         assert logits.shape[0] == target.shape[0]
         # Single value output, assume binary logits
-        preds = (logits > 0.5).int() if len(logits.shape) == 1 or logits.shape[1] == 1 else torch.argmax(logits, 1)
+        preds = (
+            (logits > threshold).int() if len(logits.shape) == 1 or logits.shape[1] == 1 else torch.argmax(logits, 1)
+        )
         target = target.cpu().detach()
         preds = preds.cpu().detach()
         return sklearn_metrics.accuracy_score(target, preds)

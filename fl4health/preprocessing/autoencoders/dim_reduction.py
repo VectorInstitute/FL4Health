@@ -30,6 +30,12 @@ class AutoEncoderProcessing:
         self.autoencoder = autoencoder.to(self.device)
 
     def __repr__(self) -> str:
+        """
+        Printable representation of the object.
+
+        Returns:
+            str: Printable representation of the object.
+        """
         return f"{self.__class__.__name__}"
 
 

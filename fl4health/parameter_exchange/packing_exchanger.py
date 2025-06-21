@@ -11,6 +11,14 @@ T = TypeVar("T")
 
 class FullParameterExchangerWithPacking(FullParameterExchanger, Generic[T]):
     def __init__(self, parameter_packer: ParameterPacker[T]) -> None:
+        """
+        Parameter exchanger for when sending the entire set of model weights between the client and server with
+        potential side information packed in as well.
+
+        Args:
+            parameter_packer (ParameterPacker[T]): Parameter packer used to pack and unpack auxiliary information
+                alongside the model weights.
+        """
         super().__init__()
         self.parameter_packer = parameter_packer
 

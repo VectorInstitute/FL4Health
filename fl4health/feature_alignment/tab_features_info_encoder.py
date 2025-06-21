@@ -12,17 +12,16 @@ from fl4health.feature_alignment.tabular_type import TabularType
 
 
 class TabularFeaturesInfoEncoder:
-    """
-    This class encodes all the information required to perform feature alignment on tabular datasets.
-
-    **NOTE:** targets are not included in tabular_features
-
-    Args:
-        tabular_features (list[TabularFeature]): List of all tabular features.
-        tabular_targets (list[TabularFeature]): List of all targets.
-    """
-
     def __init__(self, tabular_features: list[TabularFeature], tabular_targets: list[TabularFeature]) -> None:
+        """
+        This class encodes all the information required to perform feature alignment on tabular datasets.
+
+        **NOTE:** targets are not included in tabular_features
+
+        Args:
+            tabular_features (list[TabularFeature]): List of all tabular features.
+            tabular_targets (list[TabularFeature]): List of all targets.
+        """
         self.tabular_features = sorted(tabular_features, key=TabularFeature.get_feature_name)
         self.tabular_targets = sorted(tabular_targets, key=TabularFeature.get_feature_name)
 

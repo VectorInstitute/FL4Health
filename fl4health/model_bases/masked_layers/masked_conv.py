@@ -50,6 +50,8 @@ class MaskedConv1d(nn.Conv1d):
             dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
             groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1
             bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
+            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.
+            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.
         """
         # Attributes:
         # weight: weights of the module.
@@ -176,6 +178,8 @@ class MaskedConv2d(nn.Conv2d):
             dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
             groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1
             bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
+            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.
+            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.
         """
         # Attributes:
         # weight: weights of the module.
@@ -300,6 +304,8 @@ class MaskedConv3d(nn.Conv3d):
             dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
             groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1
             bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
+            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.
+            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.
         """
         # Attributes:
         # weight: weights of the module.
@@ -428,6 +434,10 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
             groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1
             bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
             dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
+            padding_mode (str, optional): Mode to be used in padding the input image for processing. Defaults to
+                "zeros"
+            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.
+            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.
         """
         # Attributes:
         # weight (Tensor): weights of the module.
@@ -588,6 +598,10 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
             groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1
             bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
             dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
+            padding_mode (str, optional): Mode to be used in padding the input image for processing. Defaults to
+                "zeros"
+            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.
+            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.
         """
         # Attributes:
         # weight (Tensor): weights of the module.
@@ -745,6 +759,10 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
             groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1
             bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
             dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
+            padding_mode (str, optional): Mode to be used in padding the input image for processing. Defaults to
+                "zeros"
+            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.
+            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.
         """
         # Attributes:
         # weight (Tensor): weights of the module.

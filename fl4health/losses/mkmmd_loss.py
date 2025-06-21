@@ -5,6 +5,9 @@ from flwr.common.logger import log
 from qpth.qp import QPFunction, QPSolvers
 
 
+BETA_CONSTRAINT_EPSILON = 0.00001
+
+
 class MkMmdLoss(torch.nn.Module):
     def __init__(
         self,
@@ -55,7 +58,7 @@ class MkMmdLoss(torch.nn.Module):
         else:
             assert betas.shape == (self.kernel_num, 1)
             self.betas = betas.to(self.device)
-        assert torch.abs(torch.sum(self.betas) - 1) < 0.00001
+        assert torch.abs(torch.sum(self.betas) - 1) < BETA_CONSTRAINT_EPSILON
 
         self.minimize_type_two_error = minimize_type_two_error
         self.normalize_features = normalize_features
@@ -78,8 +81,8 @@ class MkMmdLoss(torch.nn.Module):
         **NOTE**: that if ``n_samples`` is not divisible by 2, we leave off the modulus
 
         Args:
-            X (torch.Tensor): First set of feature tensors
-            Y (torch.Tensor): Second set of feature tensors
+            x (torch.Tensor): First set of feature tensors
+            y (torch.Tensor): Second set of feature tensors
 
         Returns:
             torch.Tensor: Quadruples of the form described above.
@@ -440,8 +443,8 @@ class MkMmdLoss(torch.nn.Module):
         Compute the multi-kernel maximum mean discrepancy (MK-MMD) between the source and target domains.
 
         Args:
-            Xs (torch.Tensor): Source domain data, shape (n_samples, n_features)
-            Xt (torch.Tensor): Target domain data, shape (n_samples, n_features)
+            x_s (torch.Tensor): Source domain data, shape (n_samples, n_features)
+            x_t (torch.Tensor): Target domain data, shape (n_samples, n_features)
 
         Returns:
             torch.Tensor: MK-MMD value
