@@ -40,6 +40,7 @@ class FlexibleClient(BasicClient):
         personalized methods: ~fl4health.mixins.personalized.
 
         As with `BasicClient`, users are responsible for implementing methods:
+
             - ``get_model``
             - ``get_optimizer``
             - ``get_data_loaders``,
@@ -47,6 +48,7 @@ class FlexibleClient(BasicClient):
 
         However, unlike `BasicClient`, users looking to specialize logic for making predictions,
         and performing train and validation steps, should instead override:
+
             - ``predict_with_model``
             - ``_train_step_with_model_and_optimizer`` (and its delegated helpers)
             - ``_val_step_with_model``
