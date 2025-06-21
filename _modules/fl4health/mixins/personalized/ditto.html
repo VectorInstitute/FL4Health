@@ -277,6 +277,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/fl4health.clients.fenda_client.html">fl4health.clients.fenda_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/fl4health.clients.fenda_ditto_client.html">fl4health.clients.fenda_ditto_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/fl4health.clients.flash_client.html">fl4health.clients.flash_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/fl4health.clients.flexible_client.html">fl4health.clients.flexible_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/fl4health.clients.instance_level_dp_client.html">fl4health.clients.instance_level_dp_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/fl4health.clients.model_merge_client.html">fl4health.clients.model_merge_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../reference/api/fl4health.clients.moon_client.html">fl4health.clients.moon_client module</a></li>
@@ -500,8 +501,9 @@
           <h1>Source code for fl4health.mixins.personalized.ditto</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;Ditto Personalized Mixin.&quot;&quot;&quot;</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEBUG</span><span class="p">,</span> <span class="n">ERROR</span><span class="p">,</span> <span class="n">INFO</span><span class="p">,</span> <span class="n">WARN</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">ERROR</span><span class="p">,</span> <span class="n">INFO</span><span class="p">,</span> <span class="n">WARN</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">runtime_checkable</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
@@ -510,9 +512,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.clients.basic_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasicClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.clients.flexible_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexibleClient</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.mixins.adaptive_drift_constrained</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveDriftConstrainedMixin</span><span class="p">,</span> <span class="n">AdaptiveDriftConstrainedProtocol</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.mixins.core_protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasicClientProtocolPreSetup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.mixins.core_protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexibleClientProtocolPreSetup</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.mixins.personalized.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ensure_protocol_compliance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.parameter_exchange.full_exchanger</span><span class="w"> </span><span class="kn">import</span> <span class="n">FullParameterExchanger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">narrow_dict_type</span>
@@ -542,9 +544,6 @@
         <span class="k">pass</span>  <span class="c1"># pragma: no cover</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_pred</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">preds</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
-        <span class="k">pass</span>  <span class="c1"># pragma: no cover</span>
-
 <div class="viewcode-block" id="DittoPersonalizedProtocol.safe_global_model">
 <a class="viewcode-back" href="../../../../reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.DittoPersonalizedProtocol.safe_global_model">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">safe_global_model</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
@@ -562,7 +561,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This mixin implements the Ditto algorithm from Ditto: Fair and Robust Federated Learning Through</span>
 <span class="sd">        Personalization. This mixin inherits from the `AdaptiveDriftConstrainedMixin`, and like that mixin,</span>
-<span class="sd">        this should be mixed with a `BasicClient` type in order to apply the Ditto personalization method</span>
+<span class="sd">        this should be mixed with a `FlexibleClient` type in order to apply the Ditto personalization method</span>
 <span class="sd">        to that client.</span>
 
 <span class="sd">        Background Context:</span>
@@ -572,7 +571,7 @@
 
 
 <span class="sd">        Raises:</span>
-<span class="sd">            RuntimeError: If the object does not satisfy the `BasicClientProtocolPreSetup`</span>
+<span class="sd">            RuntimeError: If the object does not satisfy the `FlexibleClientProtocolPreSetup`</span>
 <span class="sd">            then it will raise an error. This is additional validation to ensure that the mixin was</span>
 <span class="sd">            applied to an appropriate base class.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -586,8 +585,8 @@
             <span class="c1"># if a parent class doesn&#39;t take args/kwargs</span>
             <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">BasicClientProtocolPreSetup</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;This object needs to satisfy `BasicClientProtocolPreSetup`.&quot;</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">FlexibleClientProtocolPreSetup</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;This object needs to satisfy `FlexibleClientProtocolPreSetup`.&quot;</span><span class="p">)</span>  <span class="c1"># pragma: no cover</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -602,15 +601,15 @@
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;_dynamically_created&quot;</span><span class="p">):</span>
             <span class="k">return</span>
 
-        <span class="c1"># Check at class definition time if the parent class satisfies BasicClientProtocol</span>
+        <span class="c1"># Check at class definition time if the parent class satisfies FlexibleClientProtocol</span>
         <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__bases__</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">base</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">DittoPersonalizedMixin</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">BasicClient</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">base</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">DittoPersonalizedMixin</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">FlexibleClient</span><span class="p">):</span>
                 <span class="k">return</span>
 
         <span class="c1"># If we get here, no compatible base was found</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Class </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> inherits from DittoPersonalizedMixin but none of its other &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;base classes implement BasicClient. This may cause runtime errors.&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;base classes implement FlexibleClient. This may cause runtime errors.&quot;</span>
         <span class="p">)</span>
         <span class="n">log</span><span class="p">(</span><span class="n">WARN</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
@@ -648,7 +647,7 @@
 <span class="sd">        Helper method to make a copy of the original optimizer for the global model.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            original_optimizer (Optimizer): original optimizer of the underlying `BasicClient`.</span>
+<span class="sd">            original_optimizer (Optimizer): original optimizer of the underyling `FlexibleClient`.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Optimizer: a copy of the original optimizer to be used by the global model.</span>
@@ -695,7 +694,8 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            nn.Module: The PyTorch model serving as the global model for Ditto</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="n">config</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></div>
+        <span class="n">model_copy</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">model_copy</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="DittoPersonalizedMixin.get_optimizer">
@@ -915,188 +915,63 @@
 <span class="sd">            model optimization steps. The prediction dictionary contains predictions indexed a &quot;global&quot; and &quot;local&quot;</span>
 <span class="sd">            corresponding to predictions from the global and local Ditto models for metric evaluations.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Clear gradients from optimizers if they exist</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="p">[</span><span class="s2">&quot;global&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="p">[</span><span class="s2">&quot;local&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="c1"># global</span>
+        <span class="n">global_losses</span><span class="p">,</span> <span class="n">global_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_preds_and_losses</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">safe_global_model</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="p">[</span><span class="s2">&quot;global&quot;</span><span class="p">],</span> <span class="nb">input</span><span class="p">,</span> <span class="n">target</span>
+        <span class="p">)</span>
+        <span class="c1"># local</span>
+        <span class="n">local_losses</span><span class="p">,</span> <span class="n">local_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_preds_and_losses</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="p">[</span><span class="s2">&quot;local&quot;</span><span class="p">],</span> <span class="nb">input</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+        <span class="n">local_loss_clone</span> <span class="o">=</span> <span class="n">local_losses</span><span class="o">.</span><span class="n">backward</span><span class="p">[</span><span class="s2">&quot;backward&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>  <span class="c1"># need a clone for later</span>
 
-        <span class="c1"># Forward pass on both the global and local models</span>
-        <span class="n">preds</span><span class="p">,</span> <span class="n">features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
-        <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transform_target</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>  <span class="c1"># Apply transformation (Defaults to identity)</span>
-
-        <span class="c1"># Compute all relevant losses</span>
-        <span class="n">losses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_training_loss</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-
-        <span class="c1"># Take a step with the global model vanilla loss</span>
-        <span class="n">losses</span><span class="o">.</span><span class="n">additional_losses</span><span class="p">[</span><span class="s2">&quot;global_loss&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="p">[</span><span class="s2">&quot;global&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
-
-        <span class="c1"># Take a step with the local model using the local loss and Ditto constraint</span>
-        <span class="n">losses</span><span class="o">.</span><span class="n">backward</span><span class="p">[</span><span class="s2">&quot;backward&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="p">[</span><span class="s2">&quot;local&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
-
-        <span class="c1"># Return dictionary of predictions where key is used to name respective MetricMeters</span>
-        <span class="k">return</span> <span class="n">losses</span><span class="p">,</span> <span class="n">preds</span></div>
-
-
-<div class="viewcode-block" id="DittoPersonalizedMixin.predict">
-<a class="viewcode-back" href="../../../../reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.DittoPersonalizedMixin.predict">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">:</span> <span class="n">DittoPersonalizedProtocol</span><span class="p">,</span>
-        <span class="nb">input</span><span class="p">:</span> <span class="n">TorchInputType</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TorchPredType</span><span class="p">,</span> <span class="n">TorchFeatureType</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Computes the predictions for both the **GLOBAL** and **LOCAL** models and pack them into the prediction</span>
-<span class="sd">        dictionary.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            input (TorchInputType): Inputs to be fed into both models.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains predictions indexed by</span>
-<span class="sd">            name and the second element contains intermediate activations index by name. For Ditto, we only need the</span>
-<span class="sd">            predictions, so the second dictionary is simply empty.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model</span>
-<span class="sd">                forward.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_predict&quot;</span><span class="p">):</span>
-            <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Using &#39;_predict&#39; to make predictions&quot;</span><span class="p">)</span>
-            <span class="n">global_preds</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_predict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">safe_global_model</span><span class="p">(),</span> <span class="nb">input</span><span class="p">)</span>
-            <span class="n">local_preds</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_predict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="nb">input</span><span class="p">)</span>
-            <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Successfully predicted for global and local models&quot;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
-            <span class="n">global_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">safe_global_model</span><span class="p">()(</span><span class="nb">input</span><span class="p">)</span>
-            <span class="n">local_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="c1"># If input is a dictionary, then we unpack it before computing the forward pass.</span>
-            <span class="c1"># Note that this assumes the keys of the input match (exactly) the keyword args</span>
-            <span class="c1"># of the forward method.</span>
-            <span class="n">global_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">safe_global_model</span><span class="p">()(</span><span class="o">**</span><span class="nb">input</span><span class="p">)</span>
-            <span class="n">local_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="nb">input</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">global_preds</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">local_preds</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
-            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;global&quot;</span><span class="p">:</span> <span class="n">global_preds</span><span class="p">,</span> <span class="s2">&quot;local&quot;</span><span class="p">:</span> <span class="n">local_preds</span><span class="p">},</span> <span class="p">{}</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">global_preds</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">local_preds</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-            <span class="n">retval</span> <span class="o">=</span> <span class="p">{</span><span class="sa">f</span><span class="s2">&quot;global-</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">global_preds</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-            <span class="n">retval</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="sa">f</span><span class="s2">&quot;local-</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">local_preds</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
-            <span class="k">return</span> <span class="n">retval</span><span class="p">,</span> <span class="p">{}</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported pred types. Global: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">global_preds</span><span class="p">)</span><span class="si">}</span><span class="s2">, local: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">local_preds</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
-
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_extract_pred</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">preds</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Helper method to extract predictions from global and local models.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            kind (str): the kind of predictions to be extracted i.e., for &#39;local&#39; or for &#39;global&#39;</span>
-<span class="sd">            preds (dict[str, torch.Tensor]): the full preds result from `self.predict()`</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If supplied `kind` is not of &#39;global&#39; or &#39;local&#39;</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            dict[str, torch.Tensor]: the predictions associated with the specified kind</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">kind</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;global&quot;</span><span class="p">,</span> <span class="s2">&quot;local&quot;</span><span class="p">]:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unsupported kind of prediction. Must be &#39;global&#39; or &#39;local&#39;.&quot;</span><span class="p">)</span>
-
-        <span class="c1"># filter</span>
-        <span class="n">retval</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">preds</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">k</span><span class="p">}</span>
-        <span class="c1"># remove prefix</span>
-        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">-&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">):</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">retval</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-
-<div class="viewcode-block" id="DittoPersonalizedMixin.compute_loss_and_additional_losses">
-<a class="viewcode-back" href="../../../../reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.DittoPersonalizedMixin.compute_loss_and_additional_losses">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute_loss_and_additional_losses</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">:</span> <span class="n">DittoPersonalizedProtocol</span><span class="p">,</span>
-        <span class="n">preds</span><span class="p">:</span> <span class="n">TorchPredType</span><span class="p">,</span>
-        <span class="n">features</span><span class="p">:</span> <span class="n">TorchFeatureType</span><span class="p">,</span>
-        <span class="n">target</span><span class="p">:</span> <span class="n">TorchTargetType</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Computes the local model loss and the global Ditto model loss (stored in additional losses) for reporting and</span>
-<span class="sd">        training of the global model.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            preds (TorchPredType): Prediction(s) of the model(s) indexed by name.</span>
-<span class="sd">            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.</span>
-<span class="sd">            target (TorchTargetType): Ground truth data to evaluate predictions against.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:</span>
-
-<span class="sd">            - The tensor for the model loss</span>
-<span class="sd">            - A dictionary with ``local_loss``, ``global_loss`` as additionally reported loss values.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">global_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_pred</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s2">&quot;global&quot;</span><span class="p">,</span> <span class="n">preds</span><span class="o">=</span><span class="n">preds</span><span class="p">)</span>
-        <span class="n">local_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_pred</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s2">&quot;local&quot;</span><span class="p">,</span> <span class="n">preds</span><span class="o">=</span><span class="n">preds</span><span class="p">)</span>
-
-        <span class="n">log</span><span class="p">(</span><span class="n">DEBUG</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;global_preds has keys </span><span class="si">{</span><span class="n">global_preds</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">log</span><span class="p">(</span><span class="n">DEBUG</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;local_preds has keys </span><span class="si">{</span><span class="n">local_preds</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-        <span class="c1"># Compute global model vanilla loss</span>
-
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_special_compute_loss_and_additional_losses&quot;</span><span class="p">):</span>
-            <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Using &#39;_special_compute_loss_and_additional_losses&#39; to compute loss&quot;</span><span class="p">)</span>
-            <span class="n">global_loss</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_special_compute_loss_and_additional_losses</span><span class="p">(</span><span class="n">global_preds</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-
-            <span class="c1"># Compute local model loss</span>
-            <span class="n">local_loss</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_special_compute_loss_and_additional_losses</span><span class="p">(</span><span class="n">local_preds</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">global_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">criterion</span><span class="p">(</span><span class="n">global_preds</span><span class="p">[</span><span class="s2">&quot;global&quot;</span><span class="p">],</span> <span class="n">target</span><span class="p">)</span>
-
-            <span class="c1"># Compute local model loss</span>
-            <span class="n">local_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">criterion</span><span class="p">(</span><span class="n">local_preds</span><span class="p">[</span><span class="s2">&quot;local&quot;</span><span class="p">],</span> <span class="n">target</span><span class="p">)</span>
-
-        <span class="n">additional_losses</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;local_loss&quot;</span><span class="p">:</span> <span class="n">local_loss</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span> <span class="s2">&quot;global_loss&quot;</span><span class="p">:</span> <span class="n">global_loss</span><span class="p">}</span>
-
-        <span class="k">return</span> <span class="n">local_loss</span><span class="p">,</span> <span class="n">additional_losses</span></div>
-
-
-<div class="viewcode-block" id="DittoPersonalizedMixin.compute_training_loss">
-<a class="viewcode-back" href="../../../../reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.DittoPersonalizedMixin.compute_training_loss">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute_training_loss</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">:</span> <span class="n">DittoPersonalizedProtocol</span><span class="p">,</span>
-        <span class="n">preds</span><span class="p">:</span> <span class="n">TorchPredType</span><span class="p">,</span>
-        <span class="n">features</span><span class="p">:</span> <span class="n">TorchFeatureType</span><span class="p">,</span>
-        <span class="n">target</span><span class="p">:</span> <span class="n">TorchTargetType</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrainingLosses</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Computes training losses given predictions of the global and local models and ground truth data.</span>
-<span class="sd">        For the local model we add to the vanilla loss function by including Ditto penalty loss which is the l2 inner</span>
-<span class="sd">        product between the initial global model weights and weights of the local model. This is stored in backward</span>
-<span class="sd">        The loss to optimize the global model is stored in the additional losses dictionary under &quot;global_loss&quot;.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in</span>
-<span class="sd">                dictionary will be used to compute metrics.</span>
-<span class="sd">            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.</span>
-<span class="sd">            target: (TorchTargetType): Ground truth data to evaluate predictions against.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed by</span>
-<span class="sd">            name. Additional losses includes each loss component and the global model</span>
-<span class="sd">            loss tensor.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Check that both models are in training mode</span>
-        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">safe_global_model</span><span class="p">()</span><span class="o">.</span><span class="n">training</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">training</span>
-
-        <span class="c1"># local loss is stored in loss, global model loss is stored in additional losses.</span>
-        <span class="n">loss</span><span class="p">,</span> <span class="n">additional_losses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_loss_and_additional_losses</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-        <span class="n">additional_losses</span> <span class="o">=</span> <span class="n">additional_losses</span> <span class="ow">or</span> <span class="p">{}</span>  <span class="c1"># make mypy happy</span>
-
-        <span class="c1"># Setting the adaptation loss to that of the local model, as its performance should dictate whether more or</span>
-        <span class="c1"># less weight is used to constrain it to the global model (as in FedProx)</span>
-        <span class="n">additional_losses</span><span class="p">[</span><span class="s2">&quot;loss_for_adaptation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">additional_losses</span><span class="p">[</span><span class="s2">&quot;local_loss&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-
-        <span class="c1"># This is the Ditto penalty loss of the local model compared with the original Global model weights, scaled</span>
-        <span class="c1"># by drift_penalty_weight (or lambda in the original paper)</span>
+        <span class="c1"># take step global</span>
+        <span class="n">global_losses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_backwards_on_losses_and_take_step</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">safe_global_model</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="p">[</span><span class="s2">&quot;global&quot;</span><span class="p">],</span> <span class="n">global_losses</span>
+        <span class="p">)</span>
+        <span class="c1"># take step local</span>
         <span class="n">penalty_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_penalty_loss</span><span class="p">()</span>
-        <span class="n">additional_losses</span><span class="p">[</span><span class="s2">&quot;penalty_loss&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">penalty_loss</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="n">local_losses</span><span class="o">.</span><span class="n">backward</span><span class="p">[</span><span class="s2">&quot;backward&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">local_losses</span><span class="o">.</span><span class="n">backward</span><span class="p">[</span><span class="s2">&quot;backward&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">penalty_loss</span>
+        <span class="n">local_losses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_backwards_on_losses_and_take_step</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="p">[</span><span class="s2">&quot;local&quot;</span><span class="p">],</span> <span class="n">local_losses</span>
+        <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">TrainingLosses</span><span class="p">(</span><span class="n">backward</span><span class="o">=</span><span class="n">loss</span> <span class="o">+</span> <span class="n">penalty_loss</span><span class="p">,</span> <span class="n">additional_losses</span><span class="o">=</span><span class="n">additional_losses</span><span class="p">)</span></div>
+        <span class="c1"># prepare return values</span>
+        <span class="n">additional_losses</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;penalty_loss&quot;</span><span class="p">:</span> <span class="n">penalty_loss</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
+            <span class="s2">&quot;local_loss&quot;</span><span class="p">:</span> <span class="n">local_loss_clone</span><span class="p">,</span>
+            <span class="s2">&quot;global_loss&quot;</span><span class="p">:</span> <span class="n">global_losses</span><span class="o">.</span><span class="n">backward</span><span class="p">[</span><span class="s2">&quot;backward&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;loss_for_adaptation&quot;</span><span class="p">:</span> <span class="n">local_loss_clone</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
+        <span class="p">}</span>
+        <span class="n">local_losses</span><span class="o">.</span><span class="n">additional_losses</span> <span class="o">=</span> <span class="n">additional_losses</span>
+
+        <span class="c1"># combined preds</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">global_preds</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">local_preds</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+            <span class="n">combined_preds</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;global&quot;</span><span class="p">:</span> <span class="n">global_preds</span><span class="p">,</span> <span class="s2">&quot;local&quot;</span><span class="p">:</span> <span class="n">local_preds</span><span class="p">}</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">global_preds</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">local_preds</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">combined_preds</span> <span class="o">=</span> <span class="p">{</span><span class="sa">f</span><span class="s2">&quot;global-</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">global_preds</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="n">combined_preds</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="sa">f</span><span class="s2">&quot;local-</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">local_preds</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+
+        <span class="k">return</span> <span class="n">local_losses</span><span class="p">,</span> <span class="n">combined_preds</span></div>
+
+
+<div class="viewcode-block" id="DittoPersonalizedMixin.val_step">
+<a class="viewcode-back" href="../../../../reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.DittoPersonalizedMixin.val_step">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">val_step</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">DittoPersonalizedProtocol</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">TorchInputType</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">TorchTargetType</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">EvaluationLosses</span><span class="p">,</span> <span class="n">TorchPredType</span><span class="p">]:</span>
+        <span class="c1"># global</span>
+        <span class="n">global_losses</span><span class="p">,</span> <span class="n">global_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val_step_with_model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">safe_global_model</span><span class="p">(),</span> <span class="nb">input</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+        <span class="c1"># local</span>
+        <span class="n">local_losses</span><span class="p">,</span> <span class="n">local_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val_step_with_model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+
+        <span class="c1"># combine</span>
+        <span class="n">losses</span> <span class="o">=</span> <span class="n">EvaluationLosses</span><span class="p">(</span>
+            <span class="n">local_losses</span><span class="o">.</span><span class="n">checkpoint</span><span class="p">,</span>
+            <span class="n">additional_losses</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;global_loss&quot;</span><span class="p">:</span> <span class="n">global_losses</span><span class="o">.</span><span class="n">checkpoint</span><span class="p">,</span> <span class="s2">&quot;local_loss&quot;</span><span class="p">:</span> <span class="n">local_losses</span><span class="o">.</span><span class="n">checkpoint</span><span class="p">},</span>
+        <span class="p">)</span>
+        <span class="n">preds</span><span class="p">:</span> <span class="n">TorchPredType</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">preds</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="sa">f</span><span class="s2">&quot;global-</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">global_preds</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+        <span class="n">preds</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="sa">f</span><span class="s2">&quot;local-</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">local_preds</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>
+        <span class="k">return</span> <span class="n">losses</span><span class="p">,</span> <span class="n">preds</span></div>
 
 
 <div class="viewcode-block" id="DittoPersonalizedMixin.validate">

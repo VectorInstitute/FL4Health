@@ -277,6 +277,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.fenda_client.html">fl4health.clients.fenda_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.fenda_ditto_client.html">fl4health.clients.fenda_ditto_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.flash_client.html">fl4health.clients.flash_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible_client.html">fl4health.clients.flexible_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.instance_level_dp_client.html">fl4health.clients.instance_level_dp_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.model_merge_client.html">fl4health.clients.model_merge_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.moon_client.html">fl4health.clients.moon_client module</a></li>
@@ -500,7 +501,7 @@
           <h1>Source code for fl4health.mixins.personalized</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.clients.basic_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasicClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.clients.flexible_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexibleClient</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.mixins.personalized.ditto</span><span class="w"> </span><span class="kn">import</span> <span class="n">DittoPersonalizedMixin</span><span class="p">,</span> <span class="n">DittoPersonalizedProtocol</span>
 
 
@@ -516,7 +517,7 @@
 
 <div class="viewcode-block" id="make_it_personal">
 <a class="viewcode-back" href="../../../reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.make_it_personal">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">make_it_personal</span><span class="p">(</span><span class="n">client_base_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BasicClient</span><span class="p">],</span> <span class="n">mode</span><span class="p">:</span> <span class="n">PersonalizedMode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BasicClient</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_it_personal</span><span class="p">(</span><span class="n">client_base_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">FlexibleClient</span><span class="p">],</span> <span class="n">mode</span><span class="p">:</span> <span class="n">PersonalizedMode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">FlexibleClient</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;A mixed class factory for converting basic clients to personalized versions.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="n">PersonalizedMode</span><span class="o">.</span><span class="n">DITTO</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">type</span><span class="p">(</span>

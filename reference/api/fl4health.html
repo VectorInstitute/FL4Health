@@ -279,6 +279,7 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.fenda_client.html">fl4health.clients.fenda_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.fenda_ditto_client.html">fl4health.clients.fenda_ditto_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.flash_client.html">fl4health.clients.flash_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.flexible_client.html">fl4health.clients.flexible_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.instance_level_dp_client.html">fl4health.clients.instance_level_dp_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.model_merge_client.html">fl4health.clients.model_merge_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.moon_client.html">fl4health.clients.moon_client module</a></li>
@@ -655,6 +656,10 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.flash_client.html#fl4health.clients.flash_client.FlashClient"><code class="docutils literal notranslate"><span class="pre">FlashClient</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.clients.flexible_client.html">fl4health.clients.flexible_client module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.flexible_client.html#fl4health.clients.flexible_client.FlexibleClient"><code class="docutils literal notranslate"><span class="pre">FlexibleClient</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.clients.instance_level_dp_client.html">fl4health.clients.instance_level_dp_client module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.instance_level_dp_client.html#fl4health.clients.instance_level_dp_client.InstanceLevelDpClient"><code class="docutils literal notranslate"><span class="pre">InstanceLevelDpClient</span></code></a></li>
 </ul>
@@ -869,10 +874,10 @@
 <li class="toctree-l2"><a class="reference internal" href="fl4health.mixins.html#fl4health.mixins.AdaptiveDriftConstrainedMixin"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.__init__"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.compute_penalty_loss"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.compute_penalty_loss()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.compute_training_loss"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.compute_training_loss()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.get_parameter_exchanger"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.get_parameter_exchanger()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.get_parameters"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.get_parameters()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.set_parameters"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.set_parameters()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.train_step"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.train_step()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.update_after_train"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.update_after_train()</span></code></a></li>
 </ul>
 </li>
@@ -895,8 +900,8 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html">fl4health.mixins.core_protocols module</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocol</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocolPreSetup</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocol</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocolPreSetup</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.NumPyClientMinimalProtocol"><code class="docutils literal notranslate"><span class="pre">NumPyClientMinimalProtocol</span></code></a></li>
 </ul>
 </li>

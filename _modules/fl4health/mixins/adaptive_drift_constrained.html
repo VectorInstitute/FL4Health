@@ -277,6 +277,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.fenda_client.html">fl4health.clients.fenda_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.fenda_ditto_client.html">fl4health.clients.fenda_ditto_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.flash_client.html">fl4health.clients.flash_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible_client.html">fl4health.clients.flexible_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.instance_level_dp_client.html">fl4health.clients.instance_level_dp_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.model_merge_client.html">fl4health.clients.model_merge_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.moon_client.html">fl4health.clients.moon_client module</a></li>
@@ -508,21 +509,21 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.common.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Config</span><span class="p">,</span> <span class="n">NDArrays</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.clients.basic_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasicClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.clients.flexible_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexibleClient</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.losses.weight_drift_loss</span><span class="w"> </span><span class="kn">import</span> <span class="n">WeightDriftLoss</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.mixins.core_protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasicClientProtocol</span><span class="p">,</span> <span class="n">BasicClientProtocolPreSetup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.mixins.core_protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexibleClientProtocol</span><span class="p">,</span> <span class="n">FlexibleClientProtocolPreSetup</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.parameter_exchange.full_exchanger</span><span class="w"> </span><span class="kn">import</span> <span class="n">FullParameterExchanger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.parameter_exchange.packing_exchanger</span><span class="w"> </span><span class="kn">import</span> <span class="n">FullParameterExchangerWithPacking</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.parameter_exchange.parameter_exchanger_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParameterExchanger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.parameter_exchange.parameter_packer</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParameterPackerAdaptiveConstraint</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.losses</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrainingLosses</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TorchFeatureType</span><span class="p">,</span> <span class="n">TorchPredType</span><span class="p">,</span> <span class="n">TorchTargetType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TorchInputType</span><span class="p">,</span> <span class="n">TorchPredType</span><span class="p">,</span> <span class="n">TorchTargetType</span>
 
 
 <div class="viewcode-block" id="AdaptiveDriftConstrainedProtocol">
 <a class="viewcode-back" href="../../../reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.AdaptiveDriftConstrainedProtocol">[docs]</a>
 <span class="nd">@runtime_checkable</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">AdaptiveDriftConstrainedProtocol</span><span class="p">(</span><span class="n">BasicClientProtocol</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AdaptiveDriftConstrainedProtocol</span><span class="p">(</span><span class="n">FlexibleClientProtocol</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">):</span>
     <span class="n">loss_for_adaptation</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">drift_penalty_tensors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
     <span class="n">drift_penalty_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
@@ -548,8 +549,12 @@
 <span class="sd">        To be used with `~fl4health.BaseClient` in order to add the ability to compute</span>
 <span class="sd">        losses via a constrained adaptive drift.</span>
 
+<span class="sd">        NOTE: Rather than using `AdaptiveDriftConstraintClient`, if a client subclasses</span>
+<span class="sd">        `FlexibleClient`, than this mixin could be used on that subclass to implement the</span>
+<span class="sd">        adaptive drift constraint.</span>
+
 <span class="sd">        Raises:</span>
-<span class="sd">            RuntimeError: when the inheriting class does not satisfy `BasicClientProtocolPreSetup`.</span>
+<span class="sd">            RuntimeError: when the inheriting class does not satisfy `FlexibleClientProtocolPreSetup`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Initialize mixin-specific attributes with default values</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">loss_for_adaptation</span> <span class="o">=</span> <span class="mf">0.1</span>
@@ -564,8 +569,8 @@
             <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
 
         <span class="c1"># set penalty_loss_function</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">BasicClientProtocolPreSetup</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;This object needs to satisfy `BasicClientProtocolPreSetup`.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">FlexibleClientProtocolPreSetup</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;This object needs to satisfy `FlexibleClientProtocolPreSetup`.&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">penalty_loss_function</span> <span class="o">=</span> <span class="n">WeightDriftLoss</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></div>
 
 
@@ -581,15 +586,15 @@
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;_dynamically_created&quot;</span><span class="p">):</span>
             <span class="k">return</span>
 
-        <span class="c1"># Check at class definition time if the parent class satisfies BasicClientProtocol</span>
+        <span class="c1"># Check at class definition time if the parent class satisfies FlexibleClientProtocol</span>
         <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__bases__</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">base</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">AdaptiveDriftConstrainedMixin</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">BasicClient</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">base</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">AdaptiveDriftConstrainedMixin</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">FlexibleClient</span><span class="p">):</span>
                 <span class="k">return</span>
 
         <span class="c1"># If we get here, no compatible base was found</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Class </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> inherits from AdaptiveDriftConstrainedMixin but none of its other &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;base classes is a BasicClient. This may cause runtime errors.&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;base classes is a FlexibleClient. This may cause runtime errors.&quot;</span>
         <span class="p">)</span>
         <span class="n">log</span><span class="p">(</span><span class="n">WARN</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
@@ -657,41 +662,28 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_parameters</span><span class="p">(</span><span class="n">server_model_state</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">fitting_round</span><span class="p">)</span>  <span class="c1"># type: ignore[safe-super]</span></div>
 
 
-<div class="viewcode-block" id="AdaptiveDriftConstrainedMixin.compute_training_loss">
-<a class="viewcode-back" href="../../../reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.compute_training_loss">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">compute_training_loss</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">:</span> <span class="n">AdaptiveDriftConstrainedProtocol</span><span class="p">,</span>
-        <span class="n">preds</span><span class="p">:</span> <span class="n">TorchPredType</span><span class="p">,</span>
-        <span class="n">features</span><span class="p">:</span> <span class="n">TorchFeatureType</span><span class="p">,</span>
-        <span class="n">target</span><span class="p">:</span> <span class="n">TorchTargetType</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrainingLosses</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Computes training loss given predictions of the model and ground truth data. Adds to objective by including</span>
-<span class="sd">        penalty loss.</span>
+<div class="viewcode-block" id="AdaptiveDriftConstrainedMixin.train_step">
+<a class="viewcode-back" href="../../../reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.train_step">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_step</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">AdaptiveDriftConstrainedProtocol</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">TorchInputType</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">TorchTargetType</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TrainingLosses</span><span class="p">,</span> <span class="n">TorchPredType</span><span class="p">]:</span>
+        <span class="n">losses</span><span class="p">,</span> <span class="n">preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_preds_and_losses</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="p">[</span><span class="s2">&quot;global&quot;</span><span class="p">],</span> <span class="nb">input</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+        <span class="n">loss_clone</span> <span class="o">=</span> <span class="n">losses</span><span class="o">.</span><span class="n">backward</span><span class="p">[</span><span class="s2">&quot;backward&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
 
-<span class="sd">        Args:</span>
-<span class="sd">            preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in</span>
-<span class="sd">                dictionary will be used to compute metrics.</span>
-<span class="sd">            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.</span>
-<span class="sd">            target: (TorchTargetType): Ground truth data to evaluate predictions against.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed</span>
-<span class="sd">            by name. Additional losses includes penalty loss.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">loss</span><span class="p">,</span> <span class="n">additional_losses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_loss_and_additional_losses</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">additional_losses</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">additional_losses</span> <span class="o">=</span> <span class="p">{}</span>
-
-        <span class="n">additional_losses</span><span class="p">[</span><span class="s2">&quot;loss&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-        <span class="c1"># adding the vanilla loss to the additional losses to be used by update_after_train for potential adaptation</span>
-        <span class="n">additional_losses</span><span class="p">[</span><span class="s2">&quot;loss_for_adaptation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-
-        <span class="c1"># Compute the drift penalty loss and store it in the additional losses dictionary.</span>
+        <span class="c1"># apply penalty</span>
         <span class="n">penalty_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_penalty_loss</span><span class="p">()</span>
-        <span class="n">additional_losses</span><span class="p">[</span><span class="s2">&quot;penalty_loss&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">penalty_loss</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="n">losses</span><span class="o">.</span><span class="n">backward</span><span class="p">[</span><span class="s2">&quot;backward&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">losses</span><span class="o">.</span><span class="n">backward</span><span class="p">[</span><span class="s2">&quot;backward&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">penalty_loss</span>
+        <span class="n">losses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_backwards_on_losses_and_take_step</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizers</span><span class="p">[</span><span class="s2">&quot;global&quot;</span><span class="p">],</span> <span class="n">losses</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">TrainingLosses</span><span class="p">(</span><span class="n">backward</span><span class="o">=</span><span class="n">loss</span> <span class="o">+</span> <span class="n">penalty_loss</span><span class="p">,</span> <span class="n">additional_losses</span><span class="o">=</span><span class="n">additional_losses</span><span class="p">)</span></div>
+        <span class="c1"># prepare return values</span>
+        <span class="n">additional_losses</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;penalty_loss&quot;</span><span class="p">:</span> <span class="n">penalty_loss</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
+            <span class="s2">&quot;local_loss&quot;</span><span class="p">:</span> <span class="n">loss_clone</span><span class="p">,</span>
+            <span class="s2">&quot;loss_for_adaptation&quot;</span><span class="p">:</span> <span class="n">loss_clone</span><span class="o">.</span><span class="n">clone</span><span class="p">(),</span>
+        <span class="p">}</span>
+        <span class="n">losses</span><span class="o">.</span><span class="n">additional_losses</span> <span class="o">=</span> <span class="n">additional_losses</span>
+
+        <span class="k">return</span> <span class="n">losses</span><span class="p">,</span> <span class="n">preds</span></div>
 
 
 <div class="viewcode-block" id="AdaptiveDriftConstrainedMixin.get_parameter_exchanger">
@@ -750,15 +742,15 @@
 
 <div class="viewcode-block" id="apply_adaptive_drift_to_client">
 <a class="viewcode-back" href="../../../reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.apply_adaptive_drift_to_client">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">apply_adaptive_drift_to_client</span><span class="p">(</span><span class="n">client_base_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">BasicClient</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">BasicClient</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">apply_adaptive_drift_to_client</span><span class="p">(</span><span class="n">client_base_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">FlexibleClient</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">FlexibleClient</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Dynamically create an adapted client class.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        client_base_type (type[BasicClient]): The class to be mixed.</span>
+<span class="sd">        client_base_type (type[FlexibleClient]): The class to be mixed.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        type[BasicClient]: A basic client that has been mixed with `AdaptiveDriftConstrainedMixin`.</span>
+<span class="sd">        type[FlexibleClient]: A basic client that has been mixed with `AdaptiveDriftConstrainedMixin`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">type</span><span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;AdaptiveDrift</span><span class="si">{</span><span class="n">client_base_type</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>

@@ -278,6 +278,7 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.fenda_client.html">fl4health.clients.fenda_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.fenda_ditto_client.html">fl4health.clients.fenda_ditto_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.flash_client.html">fl4health.clients.flash_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.flexible_client.html">fl4health.clients.flexible_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.instance_level_dp_client.html">fl4health.clients.instance_level_dp_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.model_merge_client.html">fl4health.clients.model_merge_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.moon_client.html">fl4health.clients.moon_client module</a></li>
@@ -512,9 +513,12 @@
 <dd><p>Adaptive Drift Constrained Mixin.</p>
 <p>To be used with <cite>~fl4health.BaseClient</cite> in order to add the ability to compute
 losses via a constrained adaptive drift.</p>
+<p>NOTE: Rather than using <cite>AdaptiveDriftConstraintClient</cite>, if a client subclasses
+<cite>FlexibleClient</cite>, than this mixin could be used on that subclass to implement the
+adaptive drift constraint.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#RuntimeError" title="(in Python v3.10)"><strong>RuntimeError</strong></a> – when the inheriting class does not satisfy <cite>BasicClientProtocolPreSetup</cite>.</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#RuntimeError" title="(in Python v3.10)"><strong>RuntimeError</strong></a> – when the inheriting class does not satisfy <cite>FlexibleClientProtocolPreSetup</cite>.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -529,30 +533,6 @@ losses via a constrained adaptive drift.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>torch.Tensor</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.compute_training_loss">
-<span class="sig-name descname"><span class="pre">compute_training_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/adaptive_drift_constrained.html#AdaptiveDriftConstrainedMixin.compute_training_loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.compute_training_loss" title="Link to this definition">¶</a></dt>
-<dd><p>Computes training loss given predictions of the model and ground truth data. Adds to objective by including
-penalty loss.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>preds</strong> (<em>TorchPredType</em>) – Prediction(s) of the model(s) indexed by name. All predictions included in
-dictionary will be used to compute metrics.</p></li>
-<li><p><strong>features</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</span>) – (TorchFeatureType): Feature(s) of the model(s) indexed by name.</p></li>
-<li><p><strong>target</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code> | <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</span>) – (TorchTargetType): Ground truth data to evaluate predictions against.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>An instance of <code class="docutils literal notranslate"><span class="pre">TrainingLosses</span></code> containing backward loss and additional losses indexed
-by name. Additional losses includes penalty loss.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.TrainingLosses" title="fl4health.utils.losses.TrainingLosses">TrainingLosses</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -621,6 +601,16 @@ round is the very first fitting round.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.train_step">
+<span class="sig-name descname"><span class="pre">train_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/adaptive_drift_constrained.html#AdaptiveDriftConstrainedMixin.train_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.train_step" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.TrainingLosses" title="fl4health.utils.losses.TrainingLosses"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrainingLosses</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.update_after_train">
 <span class="sig-name descname"><span class="pre">update_after_train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/adaptive_drift_constrained.html#AdaptiveDriftConstrainedMixin.update_after_train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.update_after_train" title="Link to this definition">¶</a></dt>
 <dd><p>Called after training with the number of <code class="docutils literal notranslate"><span class="pre">local_steps</span></code> performed over the FL round and the corresponding loss
@@ -645,7 +635,7 @@ on the server side.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedProtocol">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">AdaptiveDriftConstrainedProtocol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/adaptive_drift_constrained.html#AdaptiveDriftConstrainedProtocol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedProtocol" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol" title="fl4health.mixins.core_protocols.BasicClientProtocol"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicClientProtocol</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Protocol" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol" title="fl4health.mixins.core_protocols.FlexibleClientProtocol"><code class="xref py py-class docutils literal notranslate"><span class="pre">FlexibleClientProtocol</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Protocol" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></a></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedProtocol.compute_penalty_loss">
 <span class="sig-name descname"><span class="pre">compute_penalty_loss</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/adaptive_drift_constrained.html#AdaptiveDriftConstrainedProtocol.compute_penalty_loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedProtocol.compute_penalty_loss" title="Link to this definition">¶</a></dt>
@@ -689,13 +679,13 @@ on the server side.</p>
 <dd><p>Dynamically create an adapted client class.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>client_base_type</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#type" title="(in Python v3.10)"><em>type</em></a><em>[</em><a class="reference internal" href="fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient" title="fl4health.clients.basic_client.BasicClient"><em>BasicClient</em></a><em>]</em>) – The class to be mixed.</p>
+<dd class="field-odd"><p><strong>client_base_type</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#type" title="(in Python v3.10)"><em>type</em></a><em>[</em><a class="reference internal" href="fl4health.clients.flexible_client.html#fl4health.clients.flexible_client.FlexibleClient" title="fl4health.clients.flexible_client.FlexibleClient"><em>FlexibleClient</em></a><em>]</em>) – The class to be mixed.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A basic client that has been mixed with <cite>AdaptiveDriftConstrainedMixin</cite>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#type" title="(in Python v3.10)">type</a>[<a class="reference internal" href="fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient" title="fl4health.clients.basic_client.BasicClient">BasicClient</a>]</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#type" title="(in Python v3.10)">type</a>[<a class="reference internal" href="fl4health.clients.flexible_client.html#fl4health.clients.flexible_client.FlexibleClient" title="fl4health.clients.flexible_client.FlexibleClient">FlexibleClient</a>]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -778,10 +768,10 @@ on the server side.</p>
 <li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin</span></code></a><ul>
 <li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.__init__"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.compute_penalty_loss"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.compute_penalty_loss()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.compute_training_loss"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.compute_training_loss()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.get_parameter_exchanger"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.get_parameter_exchanger()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.get_parameters"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.get_parameters()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.set_parameters"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.set_parameters()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.train_step"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.train_step()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.update_after_train"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.update_after_train()</span></code></a></li>
 </ul>
 </li>

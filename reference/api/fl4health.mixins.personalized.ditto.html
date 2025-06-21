@@ -278,6 +278,7 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.fenda_client.html">fl4health.clients.fenda_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.fenda_ditto_client.html">fl4health.clients.fenda_ditto_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.flash_client.html">fl4health.clients.flash_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.flexible_client.html">fl4health.clients.flexible_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.instance_level_dp_client.html">fl4health.clients.instance_level_dp_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.model_merge_client.html">fl4health.clients.model_merge_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.moon_client.html">fl4health.clients.moon_client module</a></li>
@@ -511,7 +512,7 @@
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/personalized/ditto.html#DittoPersonalizedMixin.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>This mixin implements the Ditto algorithm from Ditto: Fair and Robust Federated Learning Through
 Personalization. This mixin inherits from the <cite>AdaptiveDriftConstrainedMixin</cite>, and like that mixin,
-this should be mixed with a <cite>BasicClient</cite> type in order to apply the Ditto personalization method
+this should be mixed with a <cite>FlexibleClient</cite> type in order to apply the Ditto personalization method
 to that client.</p>
 <p>Background Context:
 The idea is that we want to train personalized versions of the global model for each client.
@@ -520,7 +521,7 @@ constrain the training of a local model. The constraint for this local model is 
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#RuntimeError" title="(in Python v3.10)"><strong>RuntimeError</strong></a> – If the object does not satisfy the <cite>BasicClientProtocolPreSetup</cite></p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#RuntimeError" title="(in Python v3.10)"><strong>RuntimeError</strong></a> – If the object does not satisfy the <cite>FlexibleClientProtocolPreSetup</cite></p></li>
 <li><p><strong>then it will raise an error. This is additional validation to ensure that the mixin was</strong> – </p></li>
 <li><p><strong>applied to an appropriate base class.</strong> – </p></li>
 </ul>
@@ -549,60 +550,6 @@ indexed by name.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.EvaluationLosses" title="fl4health.utils.losses.EvaluationLosses">EvaluationLosses</a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.compute_loss_and_additional_losses">
-<span class="sig-name descname"><span class="pre">compute_loss_and_additional_losses</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/personalized/ditto.html#DittoPersonalizedMixin.compute_loss_and_additional_losses"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.compute_loss_and_additional_losses" title="Link to this definition">¶</a></dt>
-<dd><p>Computes the local model loss and the global Ditto model loss (stored in additional losses) for reporting and
-training of the global model.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>preds</strong> (<em>TorchPredType</em>) – Prediction(s) of the model(s) indexed by name.</p></li>
-<li><p><strong>features</strong> (<em>TorchFeatureType</em>) – Feature(s) of the model(s) indexed by name.</p></li>
-<li><p><strong>target</strong> (<em>TorchTargetType</em>) – Ground truth data to evaluate predictions against.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><p>A tuple with:</p>
-<ul class="simple">
-<li><p>The tensor for the model loss</p></li>
-<li><p>A dictionary with <code class="docutils literal notranslate"><span class="pre">local_loss</span></code>, <code class="docutils literal notranslate"><span class="pre">global_loss</span></code> as additionally reported loss values.</p></li>
-</ul>
-</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[torch.Tensor, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, torch.Tensor]]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.compute_training_loss">
-<span class="sig-name descname"><span class="pre">compute_training_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/personalized/ditto.html#DittoPersonalizedMixin.compute_training_loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.compute_training_loss" title="Link to this definition">¶</a></dt>
-<dd><p>Computes training losses given predictions of the global and local models and ground truth data.
-For the local model we add to the vanilla loss function by including Ditto penalty loss which is the l2 inner
-product between the initial global model weights and weights of the local model. This is stored in backward
-The loss to optimize the global model is stored in the additional losses dictionary under “global_loss”.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>preds</strong> (<em>TorchPredType</em>) – Prediction(s) of the model(s) indexed by name. All predictions included in
-dictionary will be used to compute metrics.</p></li>
-<li><p><strong>features</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</span>) – (TorchFeatureType): Feature(s) of the model(s) indexed by name.</p></li>
-<li><p><strong>target</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code> | <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</span>) – (TorchTargetType): Ground truth data to evaluate predictions against.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>An instance of <code class="docutils literal notranslate"><span class="pre">TrainingLosses</span></code> containing backward loss and additional losses indexed by
-name. Additional losses includes each loss component and the global model
-loss tensor.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.TrainingLosses" title="fl4health.utils.losses.TrainingLosses">TrainingLosses</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -686,30 +633,6 @@ weights together.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)">list</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>]</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.predict">
-<span class="sig-name descname"><span class="pre">predict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/personalized/ditto.html#DittoPersonalizedMixin.predict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.predict" title="Link to this definition">¶</a></dt>
-<dd><p>Computes the predictions for both the <strong>GLOBAL</strong> and <strong>LOCAL</strong> models and pack them into the prediction
-dictionary.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>input</strong> (<em>TorchInputType</em>) – Inputs to be fed into both models.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A tuple in which the first element contains predictions indexed by
-name and the second element contains intermediate activations index by name. For Ditto, we only need the
-predictions, so the second dictionary is simply empty.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[TorchPredType, TorchFeatureType]</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Occurs when something other than a tensor or dict of tensors is returned by the model
-forward.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -841,6 +764,16 @@ save the global models parameters to be used in constraining training of the loc
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.val_step">
+<span class="sig-name descname"><span class="pre">val_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/personalized/ditto.html#DittoPersonalizedMixin.val_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.val_step" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.EvaluationLosses" title="fl4health.utils.losses.EvaluationLosses"><code class="xref py py-class docutils literal notranslate"><span class="pre">EvaluationLosses</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]</span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -1050,14 +983,11 @@ save the global models parameters to be used in constraining training of the loc
 <li><a class="reference internal" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin</span></code></a><ul>
 <li><a class="reference internal" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.__init__"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.compute_evaluation_loss"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.compute_evaluation_loss()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.compute_loss_and_additional_losses"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.compute_loss_and_additional_losses()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.compute_training_loss"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.compute_training_loss()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.get_global_model"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.get_global_model()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.get_optimizer"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.get_optimizer()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.get_parameters"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.get_parameters()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.initialize_all_model_weights"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.initialize_all_model_weights()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.optimizer_keys"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.optimizer_keys</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.predict"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.predict()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.safe_global_model"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.safe_global_model()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.set_initial_global_tensors"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.set_initial_global_tensors()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.set_optimizer"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.set_optimizer()</span></code></a></li>
@@ -1065,6 +995,7 @@ save the global models parameters to be used in constraining training of the loc
 <li><a class="reference internal" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.setup_client"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.setup_client()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.train_step"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.train_step()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.update_before_train"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.update_before_train()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.val_step"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.val_step()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.validate"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.validate()</span></code></a></li>
 </ul>
 </li>

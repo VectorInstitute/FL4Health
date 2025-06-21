@@ -278,6 +278,7 @@
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.fenda_client.html">fl4health.clients.fenda_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.fenda_ditto_client.html">fl4health.clients.fenda_ditto_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.flash_client.html">fl4health.clients.flash_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.clients.flexible_client.html">fl4health.clients.flexible_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.instance_level_dp_client.html">fl4health.clients.instance_level_dp_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.model_merge_client.html">fl4health.clients.model_merge_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.clients.moon_client.html">fl4health.clients.moon_client module</a></li>
@@ -511,9 +512,12 @@
 <dd><p>Adaptive Drift Constrained Mixin.</p>
 <p>To be used with <cite>~fl4health.BaseClient</cite> in order to add the ability to compute
 losses via a constrained adaptive drift.</p>
+<p>NOTE: Rather than using <cite>AdaptiveDriftConstraintClient</cite>, if a client subclasses
+<cite>FlexibleClient</cite>, than this mixin could be used on that subclass to implement the
+adaptive drift constraint.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#RuntimeError" title="(in Python v3.10)"><strong>RuntimeError</strong></a> – when the inheriting class does not satisfy <cite>BasicClientProtocolPreSetup</cite>.</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#RuntimeError" title="(in Python v3.10)"><strong>RuntimeError</strong></a> – when the inheriting class does not satisfy <cite>FlexibleClientProtocolPreSetup</cite>.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -528,30 +532,6 @@ losses via a constrained adaptive drift.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>torch.Tensor</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="fl4health.mixins.AdaptiveDriftConstrainedMixin.compute_training_loss">
-<span class="sig-name descname"><span class="pre">compute_training_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/adaptive_drift_constrained.html#AdaptiveDriftConstrainedMixin.compute_training_loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.AdaptiveDriftConstrainedMixin.compute_training_loss" title="Link to this definition">¶</a></dt>
-<dd><p>Computes training loss given predictions of the model and ground truth data. Adds to objective by including
-penalty loss.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>preds</strong> (<em>TorchPredType</em>) – Prediction(s) of the model(s) indexed by name. All predictions included in
-dictionary will be used to compute metrics.</p></li>
-<li><p><strong>features</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</span>) – (TorchFeatureType): Feature(s) of the model(s) indexed by name.</p></li>
-<li><p><strong>target</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code> | <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</span>) – (TorchTargetType): Ground truth data to evaluate predictions against.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>An instance of <code class="docutils literal notranslate"><span class="pre">TrainingLosses</span></code> containing backward loss and additional losses indexed
-by name. Additional losses includes penalty loss.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.TrainingLosses" title="fl4health.utils.losses.TrainingLosses">TrainingLosses</a></p>
 </dd>
 </dl>
 </dd></dl>
@@ -620,6 +600,16 @@ round is the very first fitting round.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="fl4health.mixins.AdaptiveDriftConstrainedMixin.train_step">
+<span class="sig-name descname"><span class="pre">train_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/adaptive_drift_constrained.html#AdaptiveDriftConstrainedMixin.train_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.AdaptiveDriftConstrainedMixin.train_step" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.TrainingLosses" title="fl4health.utils.losses.TrainingLosses"><code class="xref py py-class docutils literal notranslate"><span class="pre">TrainingLosses</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="fl4health.mixins.AdaptiveDriftConstrainedMixin.update_after_train">
 <span class="sig-name descname"><span class="pre">update_after_train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/adaptive_drift_constrained.html#AdaptiveDriftConstrainedMixin.update_after_train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.AdaptiveDriftConstrainedMixin.update_after_train" title="Link to this definition">¶</a></dt>
 <dd><p>Called after training with the number of <code class="docutils literal notranslate"><span class="pre">local_steps</span></code> performed over the FL round and the corresponding loss
@@ -649,14 +639,11 @@ on the server side.</p>
 <li class="toctree-l2"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.__init__"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.compute_evaluation_loss"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.compute_evaluation_loss()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.compute_loss_and_additional_losses"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.compute_loss_and_additional_losses()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.compute_training_loss"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.compute_training_loss()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.get_global_model"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.get_global_model()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.get_optimizer"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.get_optimizer()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.get_parameters"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.get_parameters()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.initialize_all_model_weights"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.initialize_all_model_weights()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.optimizer_keys"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.optimizer_keys</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.predict"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.predict()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.safe_global_model"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.safe_global_model()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.set_initial_global_tensors"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.set_initial_global_tensors()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.set_optimizer"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.set_optimizer()</span></code></a></li>
@@ -664,6 +651,7 @@ on the server side.</p>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.setup_client"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.setup_client()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.train_step"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.train_step()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.update_before_train"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.update_before_train()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.val_step"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.val_step()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.validate"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedMixin.validate()</span></code></a></li>
 </ul>
 </li>
@@ -705,10 +693,10 @@ on the server side.</p>
 <li class="toctree-l2"><a class="reference internal" href="fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.__init__"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.__init__()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.compute_penalty_loss"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.compute_penalty_loss()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.compute_training_loss"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.compute_training_loss()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.get_parameter_exchanger"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.get_parameter_exchanger()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.get_parameters"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.get_parameters()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.set_parameters"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.set_parameters()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.train_step"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.train_step()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.update_after_train"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.update_after_train()</span></code></a></li>
 </ul>
 </li>
@@ -725,31 +713,32 @@ on the server side.</p>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="fl4health.mixins.core_protocols.html">fl4health.mixins.core_protocols module</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocol</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.compute_evaluation_loss"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocol.compute_evaluation_loss()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.compute_training_loss"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocol.compute_training_loss()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.criterion"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocol.criterion</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.initialize_all_model_weights"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocol.initialize_all_model_weights()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.model"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocol.model</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.optimizers"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocol.optimizers</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.predict"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocol.predict()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.test_loader"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocol.test_loader</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.train_loader"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocol.train_loader</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.transform_target"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocol.transform_target()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.update_before_train"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocol.update_before_train()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.val_loader"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocol.val_loader</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.validate"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocol.validate()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocol</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.compute_evaluation_loss"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocol.compute_evaluation_loss()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.compute_training_loss"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocol.compute_training_loss()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.criterion"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocol.criterion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.initialize_all_model_weights"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocol.initialize_all_model_weights()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.model"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocol.model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.optimizers"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocol.optimizers</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.predict_with_model"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocol.predict_with_model()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.test_loader"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocol.test_loader</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.train_loader"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocol.train_loader</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.transform_gradients"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocol.transform_gradients()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.transform_target"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocol.transform_target()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.update_before_train"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocol.update_before_train()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.val_loader"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocol.val_loader</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.validate"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocol.validate()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocolPreSetup</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup.compute_loss_and_additional_losses"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocolPreSetup.compute_loss_and_additional_losses()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup.device"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocolPreSetup.device</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup.get_criterion"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocolPreSetup.get_criterion()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup.get_data_loaders"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocolPreSetup.get_data_loaders()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup.get_model"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocolPreSetup.get_model()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup.get_optimizer"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocolPreSetup.get_optimizer()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup.initialized"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocolPreSetup.initialized</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup.setup_client"><code class="docutils literal notranslate"><span class="pre">BasicClientProtocolPreSetup.setup_client()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocolPreSetup</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.compute_loss_and_additional_losses"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocolPreSetup.compute_loss_and_additional_losses()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.device"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocolPreSetup.device</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.get_criterion"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocolPreSetup.get_criterion()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.get_data_loaders"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocolPreSetup.get_data_loaders()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.get_model"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocolPreSetup.get_model()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.get_optimizer"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocolPreSetup.get_optimizer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.initialized"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocolPreSetup.initialized</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.setup_client"><code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocolPreSetup.setup_client()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.NumPyClientMinimalProtocol"><code class="docutils literal notranslate"><span class="pre">NumPyClientMinimalProtocol</span></code></a><ul>
@@ -843,10 +832,10 @@ on the server side.</p>
 <li><a class="reference internal" href="#fl4health.mixins.AdaptiveDriftConstrainedMixin"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin</span></code></a><ul>
 <li><a class="reference internal" href="#fl4health.mixins.AdaptiveDriftConstrainedMixin.__init__"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.__init__()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.AdaptiveDriftConstrainedMixin.compute_penalty_loss"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.compute_penalty_loss()</span></code></a></li>
-<li><a class="reference internal" href="#fl4health.mixins.AdaptiveDriftConstrainedMixin.compute_training_loss"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.compute_training_loss()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.AdaptiveDriftConstrainedMixin.get_parameter_exchanger"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.get_parameter_exchanger()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.AdaptiveDriftConstrainedMixin.get_parameters"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.get_parameters()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.AdaptiveDriftConstrainedMixin.set_parameters"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.set_parameters()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.mixins.AdaptiveDriftConstrainedMixin.train_step"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.train_step()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.AdaptiveDriftConstrainedMixin.update_after_train"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.update_after_train()</span></code></a></li>
 </ul>
 </li>

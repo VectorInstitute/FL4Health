@@ -275,6 +275,7 @@
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.clients.fenda_client.html">fl4health.clients.fenda_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.clients.fenda_ditto_client.html">fl4health.clients.fenda_ditto_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.clients.flash_client.html">fl4health.clients.flash_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.clients.flexible_client.html">fl4health.clients.flexible_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.clients.instance_level_dp_client.html">fl4health.clients.instance_level_dp_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.clients.model_merge_client.html">fl4health.clients.model_merge_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.clients.moon_client.html">fl4health.clients.moon_client module</a></li>
@@ -665,6 +666,8 @@
 </li>
           <li><a href="reference/api/fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlClientLevelAccountantPoissonSampling.__init__">(FlClientLevelAccountantPoissonSampling method)</a>
 </li>
+          <li><a href="reference/api/fl4health.clients.flexible_client.html#fl4health.clients.flexible_client.FlexibleClient.__init__">(FlexibleClient method)</a>
+</li>
           <li><a href="reference/api/fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlInstanceLevelAccountant.__init__">(FlInstanceLevelAccountant method)</a>
 </li>
           <li><a href="reference/api/fl4health.servers.base_server.html#fl4health.servers.base_server.FlServer.__init__">(FlServer method)</a>
@@ -1008,14 +1011,10 @@
 </li>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient">BasicClient (class in fl4health.clients.basic_client)</a>
 </li>
-        <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol">BasicClientProtocol (class in fl4health.mixins.core_protocols)</a>
-</li>
-        <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup">BasicClientProtocolPreSetup (class in fl4health.mixins.core_protocols)</a>
+        <li><a href="reference/api/fl4health.strategies.basic_fedavg.html#fl4health.strategies.basic_fedavg.BasicFedAvg">BasicFedAvg (class in fl4health.strategies.basic_fedavg)</a>
 </li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
-        <li><a href="reference/api/fl4health.strategies.basic_fedavg.html#fl4health.strategies.basic_fedavg.BasicFedAvg">BasicFedAvg (class in fl4health.strategies.basic_fedavg)</a>
-</li>
         <li><a href="reference/api/fl4health.utils.functions.html#fl4health.utils.functions.BernoulliSample">BernoulliSample (class in fl4health.utils.functions)</a>
 </li>
         <li><a href="reference/api/fl4health.checkpointing.opacus_checkpointer.html#fl4health.checkpointing.opacus_checkpointer.BestLossOpacusCheckpointer">BestLossOpacusCheckpointer (class in fl4health.checkpointing.opacus_checkpointer)</a>
@@ -1147,8 +1146,6 @@
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.compute_evaluation_loss">compute_evaluation_loss() (BasicClient method)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.compute_evaluation_loss">(BasicClientProtocol method)</a>
-</li>
           <li><a href="reference/api/fl4health.clients.constrained_fenda_client.html#fl4health.clients.constrained_fenda_client.ConstrainedFendaClient.compute_evaluation_loss">(ConstrainedFendaClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.ditto_client.html#fl4health.clients.ditto_client.DittoClient.compute_evaluation_loss">(DittoClient method)</a>
@@ -1158,6 +1155,8 @@
           <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.compute_evaluation_loss">(DittoPersonalizedMixin method)</a>, <a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.compute_evaluation_loss">[1]</a>
 </li>
           <li><a href="reference/api/fl4health.clients.ensemble_client.html#fl4health.clients.ensemble_client.EnsembleClient.compute_evaluation_loss">(EnsembleClient method)</a>
+</li>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.compute_evaluation_loss">(FlexibleClientProtocol method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.moon_client.html#fl4health.clients.moon_client.MoonClient.compute_evaluation_loss">(MoonClient method)</a>
 </li>
@@ -1195,8 +1194,6 @@
         <ul>
           <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.compute_loss_and_additional_losses">(BasicClient method)</a>
 </li>
-          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup.compute_loss_and_additional_losses">(BasicClientProtocolPreSetup method)</a>
-</li>
           <li><a href="reference/api/fl4health.clients.constrained_fenda_client.html#fl4health.clients.constrained_fenda_client.ConstrainedFendaClient.compute_loss_and_additional_losses">(ConstrainedFendaClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.ditto_client.html#fl4health.clients.ditto_client.DittoClient.compute_loss_and_additional_losses">(DittoClient method)</a>
@@ -1205,7 +1202,7 @@
 </li>
           <li><a href="reference/api/fl4health.clients.mkmmd_clients.ditto_mkmmd_client.html#fl4health.clients.mkmmd_clients.ditto_mkmmd_client.DittoMkMmdClient.compute_loss_and_additional_losses">(DittoMkMmdClient method)</a>
 </li>
-          <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.compute_loss_and_additional_losses">(DittoPersonalizedMixin method)</a>, <a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.compute_loss_and_additional_losses">[1]</a>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.compute_loss_and_additional_losses">(FlexibleClientProtocolPreSetup method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.moon_client.html#fl4health.clients.moon_client.MoonClient.compute_loss_and_additional_losses">(MoonClient method)</a>
 </li>
@@ -1240,14 +1237,10 @@
 </li>
         <li><a href="reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.compute_reconstruction_error">compute_reconstruction_error() (PcaModule method)</a>
 </li>
-        <li><a href="reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.compute_training_loss">compute_training_loss() (AdaptiveDriftConstrainedMixin method)</a>, <a href="reference/api/fl4health.mixins.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.compute_training_loss">[1]</a>
+        <li><a href="reference/api/fl4health.clients.adaptive_drift_constraint_client.html#fl4health.clients.adaptive_drift_constraint_client.AdaptiveDriftConstraintClient.compute_training_loss">compute_training_loss() (AdaptiveDriftConstraintClient method)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.clients.adaptive_drift_constraint_client.html#fl4health.clients.adaptive_drift_constraint_client.AdaptiveDriftConstraintClient.compute_training_loss">(AdaptiveDriftConstraintClient method)</a>
-</li>
           <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.compute_training_loss">(BasicClient method)</a>
-</li>
-          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.compute_training_loss">(BasicClientProtocol method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.ditto_client.html#fl4health.clients.ditto_client.DittoClient.compute_training_loss">(DittoClient method)</a>
 </li>
@@ -1255,11 +1248,11 @@
 </li>
           <li><a href="reference/api/fl4health.clients.mkmmd_clients.ditto_mkmmd_client.html#fl4health.clients.mkmmd_clients.ditto_mkmmd_client.DittoMkMmdClient.compute_training_loss">(DittoMkMmdClient method)</a>
 </li>
-          <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.compute_training_loss">(DittoPersonalizedMixin method)</a>, <a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.compute_training_loss">[1]</a>
-</li>
           <li><a href="reference/api/fl4health.clients.ensemble_client.html#fl4health.clients.ensemble_client.EnsembleClient.compute_training_loss">(EnsembleClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.fenda_ditto_client.html#fl4health.clients.fenda_ditto_client.FendaDittoClient.compute_training_loss">(FendaDittoClient method)</a>
+</li>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.compute_training_loss">(FlexibleClientProtocol method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.moon_client.html#fl4health.clients.moon_client.MoonClient.compute_training_loss">(MoonClient method)</a>
 </li>
@@ -1358,10 +1351,10 @@
 </li>
         <li><a href="reference/api/fl4health.datasets.rxrx1.load_data.html#fl4health.datasets.rxrx1.load_data.create_splits">create_splits() (in module fl4health.datasets.rxrx1.load_data)</a>
 </li>
-        <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.criterion">criterion (BasicClientProtocol attribute)</a>
+        <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.criterion">criterion (DittoPersonalizedProtocol attribute)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.criterion">(DittoPersonalizedProtocol attribute)</a>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.criterion">(FlexibleClientProtocol attribute)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.utils.typing.html#fl4health.utils.typing.LogLevel.CRITICAL">CRITICAL (LogLevel attribute)</a>
@@ -1404,10 +1397,10 @@
 </li>
         <li><a href="reference/api/fl4health.datasets.skin_cancer.preprocess_skin.html#fl4health.datasets.skin_cancer.preprocess_skin.derm7pt_label_map_func">derm7pt_label_map_func() (in module fl4health.datasets.skin_cancer.preprocess_skin)</a>
 </li>
-        <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup.device">device (BasicClientProtocolPreSetup attribute)</a>
+        <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.device">device (DittoPersonalizedProtocol attribute)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.device">(DittoPersonalizedProtocol attribute)</a>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.device">(FlexibleClientProtocolPreSetup attribute)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.utils.dataset.html#fl4health.utils.dataset.DictionaryDataset">DictionaryDataset (class in fl4health.utils.dataset)</a>
@@ -1890,6 +1883,13 @@
 
         <ul>
           <li><a href="reference/api/fl4health.clients.flash_client.html#module-fl4health.clients.flash_client">module</a>
+</li>
+        </ul></li>
+        <li>
+    fl4health.clients.flexible_client
+
+        <ul>
+          <li><a href="reference/api/fl4health.clients.flexible_client.html#module-fl4health.clients.flexible_client">module</a>
 </li>
         </ul></li>
         <li>
@@ -2898,6 +2898,12 @@
 </li>
         <li><a href="reference/api/fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlClientLevelAccountantPoissonSampling">FlClientLevelAccountantPoissonSampling (class in fl4health.privacy.fl_accountants)</a>
 </li>
+        <li><a href="reference/api/fl4health.clients.flexible_client.html#fl4health.clients.flexible_client.FlexibleClient">FlexibleClient (class in fl4health.clients.flexible_client)</a>
+</li>
+        <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol">FlexibleClientProtocol (class in fl4health.mixins.core_protocols)</a>
+</li>
+        <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup">FlexibleClientProtocolPreSetup (class in fl4health.mixins.core_protocols)</a>
+</li>
         <li><a href="reference/api/fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlInstanceLevelAccountant">FlInstanceLevelAccountant (class in fl4health.privacy.fl_accountants)</a>
 </li>
         <li><a href="reference/api/fl4health.servers.base_server.html#fl4health.servers.base_server.FlServer">FlServer (class in fl4health.servers.base_server)</a>
@@ -3075,7 +3081,7 @@
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.get_criterion">get_criterion() (BasicClient method)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup.get_criterion">(BasicClientProtocolPreSetup method)</a>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.get_criterion">(FlexibleClientProtocolPreSetup method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.get_criterion">(NnunetClient method)</a>
 </li>
@@ -3087,9 +3093,9 @@
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.get_data_loaders">get_data_loaders() (BasicClient method)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup.get_data_loaders">(BasicClientProtocolPreSetup method)</a>
-</li>
           <li><a href="reference/api/fl4health.clients.fed_pca_client.html#fl4health.clients.fed_pca_client.FedPCAClient.get_data_loaders">(FedPCAClient method)</a>
+</li>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.get_data_loaders">(FlexibleClientProtocolPreSetup method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.get_data_loaders">(NnunetClient method)</a>
 </li>
@@ -3183,11 +3189,11 @@
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.get_model">get_model() (BasicClient method)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup.get_model">(BasicClientProtocolPreSetup method)</a>
-</li>
           <li><a href="reference/api/fl4health.clients.fed_pca_client.html#fl4health.clients.fed_pca_client.FedPCAClient.get_model">(FedPCAClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.fenda_ditto_client.html#fl4health.clients.fenda_ditto_client.FendaDittoClient.get_model">(FendaDittoClient method)</a>
+</li>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.get_model">(FlexibleClientProtocolPreSetup method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.model_merge_client.html#fl4health.clients.model_merge_client.ModelMergeClient.get_model">(ModelMergeClient method)</a>
 </li>
@@ -3201,8 +3207,6 @@
         <ul>
           <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.get_optimizer">(BasicClient method)</a>
 </li>
-          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup.get_optimizer">(BasicClientProtocolPreSetup method)</a>
-</li>
           <li><a href="reference/api/fl4health.clients.ditto_client.html#fl4health.clients.ditto_client.DittoClient.get_optimizer">(DittoClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.get_optimizer">(DittoPersonalizedMixin method)</a>, <a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.get_optimizer">[1]</a>
@@ -3210,6 +3214,8 @@
           <li><a href="reference/api/fl4health.clients.ensemble_client.html#fl4health.clients.ensemble_client.EnsembleClient.get_optimizer">(EnsembleClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.fedrep_client.html#fl4health.clients.fedrep_client.FedRepClient.get_optimizer">(FedRepClient method)</a>
+</li>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.get_optimizer">(FlexibleClientProtocolPreSetup method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.get_optimizer">(NnunetClient method)</a>
 </li>
@@ -3351,11 +3357,11 @@
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.initialize_all_model_weights">initialize_all_model_weights() (BasicClient method)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.initialize_all_model_weights">(BasicClientProtocol method)</a>
-</li>
           <li><a href="reference/api/fl4health.clients.ditto_client.html#fl4health.clients.ditto_client.DittoClient.initialize_all_model_weights">(DittoClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.initialize_all_model_weights">(DittoPersonalizedMixin method)</a>, <a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.initialize_all_model_weights">[1]</a>
+</li>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.initialize_all_model_weights">(FlexibleClientProtocol method)</a>
 </li>
         </ul></li>
     </ul></td>
@@ -3368,10 +3374,10 @@
 </li>
         <li><a href="reference/api/fl4health.servers.nnunet_server.html#fl4health.servers.nnunet_server.NnunetServer.initialize_server_model">initialize_server_model() (NnunetServer method)</a>
 </li>
-        <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup.initialized">initialized (BasicClientProtocolPreSetup attribute)</a>
+        <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.initialized">initialized (DittoPersonalizedProtocol attribute)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.initialized">(DittoPersonalizedProtocol attribute)</a>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.initialized">(FlexibleClientProtocolPreSetup attribute)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.clients.instance_level_dp_client.html#fl4health.clients.instance_level_dp_client.InstanceLevelDpClient">InstanceLevelDpClient (class in fl4health.clients.instance_level_dp_client)</a>
@@ -3642,10 +3648,10 @@
 </li>
         <li><a href="reference/api/fl4health.losses.deep_mmd_loss.html#fl4health.losses.deep_mmd_loss.DeepMmdLoss.mmdu">mmdu() (DeepMmdLoss method)</a>
 </li>
-        <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.model">model (BasicClientProtocol attribute)</a>
+        <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.model">model (DittoPersonalizedProtocol attribute)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.model">(DittoPersonalizedProtocol attribute)</a>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.model">(FlexibleClientProtocol attribute)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.losses.deep_mmd_loss.html#fl4health.losses.deep_mmd_loss.ModelLatentF">ModelLatentF (class in fl4health.losses.deep_mmd_loss)</a>
@@ -3727,6 +3733,8 @@
           <li><a href="reference/api/fl4health.clients.fenda_ditto_client.html#module-fl4health.clients.fenda_ditto_client">fl4health.clients.fenda_ditto_client</a>
 </li>
           <li><a href="reference/api/fl4health.clients.flash_client.html#module-fl4health.clients.flash_client">fl4health.clients.flash_client</a>
+</li>
+          <li><a href="reference/api/fl4health.clients.flexible_client.html#module-fl4health.clients.flexible_client">fl4health.clients.flexible_client</a>
 </li>
           <li><a href="reference/api/fl4health.clients.instance_level_dp_client.html#module-fl4health.clients.instance_level_dp_client">fl4health.clients.instance_level_dp_client</a>
 </li>
@@ -4109,10 +4117,10 @@
           <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.optimizer_keys">(DittoPersonalizedProtocol attribute)</a>, <a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedProtocol.optimizer_keys">[1]</a>
 </li>
         </ul></li>
-        <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.optimizers">optimizers (BasicClientProtocol attribute)</a>
+        <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.optimizers">optimizers (DittoPersonalizedProtocol attribute)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.optimizers">(DittoPersonalizedProtocol attribute)</a>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.optimizers">(FlexibleClientProtocol attribute)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.OptimizerSnapshotter">OptimizerSnapshotter (class in fl4health.utils.snapshotter)</a>
@@ -4230,8 +4238,6 @@
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.predict">predict() (BasicClient method)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.predict">(BasicClientProtocol method)</a>
-</li>
           <li><a href="reference/api/fl4health.clients.constrained_fenda_client.html#fl4health.clients.constrained_fenda_client.ConstrainedFendaClient.predict">(ConstrainedFendaClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.ditto_client.html#fl4health.clients.ditto_client.DittoClient.predict">(DittoClient method)</a>
@@ -4239,8 +4245,6 @@
           <li><a href="reference/api/fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client.html#fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client.DittoDeepMmdClient.predict">(DittoDeepMmdClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.mkmmd_clients.ditto_mkmmd_client.html#fl4health.clients.mkmmd_clients.ditto_mkmmd_client.DittoMkMmdClient.predict">(DittoMkMmdClient method)</a>
-</li>
-          <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.predict">(DittoPersonalizedMixin method)</a>, <a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.predict">[1]</a>
 </li>
           <li><a href="reference/api/fl4health.clients.fenda_ditto_client.html#fl4health.clients.fenda_ditto_client.FendaDittoClient.predict">(FendaDittoClient method)</a>
 </li>
@@ -4251,6 +4255,12 @@
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.predict">(NnunetClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.perfcl_client.html#fl4health.clients.perfcl_client.PerFclClient.predict">(PerFclClient method)</a>
+</li>
+        </ul></li>
+        <li><a href="reference/api/fl4health.clients.flexible_client.html#fl4health.clients.flexible_client.FlexibleClient.predict_with_model">predict_with_model() (FlexibleClient method)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.predict_with_model">(FlexibleClientProtocol method)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.prepare_data_forward">prepare_data_forward() (PcaModule method)</a>
@@ -4586,8 +4596,6 @@
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.setup_client">setup_client() (BasicClient method)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocolPreSetup.setup_client">(BasicClientProtocolPreSetup method)</a>
-</li>
           <li><a href="reference/api/fl4health.clients.ditto_client.html#fl4health.clients.ditto_client.DittoClient.setup_client">(DittoClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client.html#fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client.DittoDeepMmdClient.setup_client">(DittoDeepMmdClient method)</a>
@@ -4609,6 +4617,8 @@
           <li><a href="reference/api/fl4health.clients.fenda_ditto_client.html#fl4health.clients.fenda_ditto_client.FendaDittoClient.setup_client">(FendaDittoClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.flash_client.html#fl4health.clients.flash_client.FlashClient.setup_client">(FlashClient method)</a>
+</li>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.setup_client">(FlexibleClientProtocolPreSetup method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.instance_level_dp_client.html#fl4health.clients.instance_level_dp_client.InstanceLevelDpClient.setup_client">(InstanceLevelDpClient method)</a>
 </li>
@@ -4765,10 +4775,10 @@
 </li>
         <li><a href="reference/api/fl4health.utils.logging.html#fl4health.utils.logging.LoggingMode.TEST">TEST (LoggingMode attribute)</a>
 </li>
-        <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.test_loader">test_loader (BasicClientProtocol attribute)</a>
+        <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.test_loader">test_loader (DittoPersonalizedProtocol attribute)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.test_loader">(DittoPersonalizedProtocol attribute)</a>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.test_loader">(FlexibleClientProtocol attribute)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.MetricPrefix.TEST_PREFIX">TEST_PREFIX (MetricPrefix attribute)</a>
@@ -4795,14 +4805,14 @@
 </li>
         <li><a href="reference/api/fl4health.utils.logging.html#fl4health.utils.logging.LoggingMode.TRAIN">TRAIN (LoggingMode attribute)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.train_by_epochs">train_by_epochs() (BasicClient method)</a>
 
         <ul>
           <li><a href="reference/api/fl4health.clients.flash_client.html#fl4health.clients.flash_client.FlashClient.train_by_epochs">(FlashClient method)</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.train_by_steps">train_by_steps() (BasicClient method)</a>
 </li>
         <li><a href="reference/api/fl4health.clients.fedrep_client.html#fl4health.clients.fedrep_client.FedRepClient.train_fedrep_by_epochs">train_fedrep_by_epochs() (FedRepClient method)</a>
@@ -4811,15 +4821,17 @@
 </li>
         <li><a href="reference/api/fl4health.losses.deep_mmd_loss.html#fl4health.losses.deep_mmd_loss.DeepMmdLoss.train_kernel">train_kernel() (DeepMmdLoss method)</a>
 </li>
-        <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.train_loader">train_loader (BasicClientProtocol attribute)</a>
+        <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.train_loader">train_loader (DittoPersonalizedProtocol attribute)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.train_loader">(DittoPersonalizedProtocol attribute)</a>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.train_loader">(FlexibleClientProtocol attribute)</a>
 </li>
         </ul></li>
-        <li><a href="reference/api/fl4health.clients.apfl_client.html#fl4health.clients.apfl_client.ApflClient.train_step">train_step() (ApflClient method)</a>
+        <li><a href="reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.train_step">train_step() (AdaptiveDriftConstrainedMixin method)</a>, <a href="reference/api/fl4health.mixins.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.train_step">[1]</a>
 
         <ul>
+          <li><a href="reference/api/fl4health.clients.apfl_client.html#fl4health.clients.apfl_client.ApflClient.train_step">(ApflClient method)</a>
+</li>
           <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.train_step">(BasicClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.ditto_client.html#fl4health.clients.ditto_client.DittoClient.train_step">(DittoClient method)</a>
@@ -4829,6 +4841,8 @@
           <li><a href="reference/api/fl4health.clients.ensemble_client.html#fl4health.clients.ensemble_client.EnsembleClient.train_step">(EnsembleClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.fedrep_client.html#fl4health.clients.fedrep_client.FedRepClient.train_step">(FedRepClient method)</a>
+</li>
+          <li><a href="reference/api/fl4health.clients.flexible_client.html#fl4health.clients.flexible_client.FlexibleClient.train_step">(FlexibleClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.train_step">(NnunetClient method)</a>
 </li>
@@ -4844,6 +4858,10 @@
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.transform_gradients">transform_gradients() (BasicClient method)</a>
 
         <ul>
+          <li><a href="reference/api/fl4health.clients.flexible_client.html#fl4health.clients.flexible_client.FlexibleClient.transform_gradients">(FlexibleClient method)</a>
+</li>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.transform_gradients">(FlexibleClientProtocol method)</a>
+</li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.transform_gradients">(NnunetClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.scaffold_client.html#fl4health.clients.scaffold_client.ScaffoldClient.transform_gradients">(ScaffoldClient method)</a>
@@ -4852,7 +4870,7 @@
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.transform_target">transform_target() (BasicClient method)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.transform_target">(BasicClientProtocol method)</a>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.transform_target">(FlexibleClientProtocol method)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.TransformsMetric">TransformsMetric (class in fl4health.metrics.compound_metrics)</a>
@@ -4976,8 +4994,6 @@
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.update_before_train">update_before_train() (BasicClient method)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.update_before_train">(BasicClientProtocol method)</a>
-</li>
           <li><a href="reference/api/fl4health.clients.constrained_fenda_client.html#fl4health.clients.constrained_fenda_client.ConstrainedFendaClient.update_before_train">(ConstrainedFendaClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.ditto_client.html#fl4health.clients.ditto_client.DittoClient.update_before_train">(DittoClient method)</a>
@@ -4991,6 +5007,8 @@
           <li><a href="reference/api/fl4health.clients.fed_prox_client.html#fl4health.clients.fed_prox_client.FedProxClient.update_before_train">(FedProxClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.fenda_ditto_client.html#fl4health.clients.fenda_ditto_client.FendaDittoClient.update_before_train">(FendaDittoClient method)</a>
+</li>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.update_before_train">(FlexibleClientProtocol method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.moon_client.html#fl4health.clients.moon_client.MoonClient.update_before_train">(MoonClient method)</a>
 </li>
@@ -5045,21 +5063,25 @@
 </li>
         <li><a href="reference/api/fl4health.preprocessing.autoencoders.dim_reduction.html#fl4health.preprocessing.autoencoders.dim_reduction.VaeProcessor">VaeProcessor (class in fl4health.preprocessing.autoencoders.dim_reduction)</a>
 </li>
-        <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.val_loader">val_loader (BasicClientProtocol attribute)</a>
+        <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.val_loader">val_loader (DittoPersonalizedProtocol attribute)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.val_loader">(DittoPersonalizedProtocol attribute)</a>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.val_loader">(FlexibleClientProtocol attribute)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.MetricPrefix.VAL_PREFIX">VAL_PREFIX (MetricPrefix attribute)</a>
 </li>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.val_step">val_step() (BasicClient method)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.val_step">(DittoPersonalizedMixin method)</a>, <a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.val_step">[1]</a>
 </li>
+          <li><a href="reference/api/fl4health.clients.flexible_client.html#fl4health.clients.flexible_client.FlexibleClient.val_step">(FlexibleClient method)</a>
+</li>
+        </ul></li>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.validate">validate() (BasicClient method)</a>
 
         <ul>
-          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.BasicClientProtocol.validate">(BasicClientProtocol method)</a>
-</li>
           <li><a href="reference/api/fl4health.clients.ditto_client.html#fl4health.clients.ditto_client.DittoClient.validate">(DittoClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client.html#fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client.DittoDeepMmdClient.validate">(DittoDeepMmdClient method)</a>
@@ -5067,6 +5089,8 @@
           <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.validate">(DittoPersonalizedMixin method)</a>, <a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.validate">[1]</a>
 </li>
           <li><a href="reference/api/fl4health.clients.evaluate_client.html#fl4health.clients.evaluate_client.EvaluateClient.validate">(EvaluateClient method)</a>
+</li>
+          <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.validate">(FlexibleClientProtocol method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.model_merge_client.html#fl4health.clients.model_merge_client.ModelMergeClient.validate">(ModelMergeClient method)</a>
 </li>
