@@ -243,3 +243,15 @@ def test_train_step(
         client.model, client.optimizers["global"], dummy_training_losses
     )
     assert result[1] == dummy_pred_type
+
+
+def test_adaptive_client_protocol_attr() -> None:
+    """Test interface for AdaptiveDriftConstrainedProtocol."""
+    annotations = AdaptiveDriftConstrainedProtocol.__annotations__
+    assert "loss_for_adaptation" in annotations
+    assert "drift_penalty_tensors" in annotations
+    assert "drift_penalty_weight" in annotations
+    assert "penalty_loss_function" in annotations
+    assert "parameter_exchanger" in annotations
+
+    assert hasattr(AdaptiveDriftConstrainedProtocol, "compute_penalty_loss")
