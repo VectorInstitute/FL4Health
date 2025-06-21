@@ -6,11 +6,11 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.flexible_client import FlexibleClient
 from fl4health.mixins.personalized import DittoPersonalizedMixin, PersonalizedMode, make_it_personal
 
 
-class MyClient(BasicClient):
+class MyClient(FlexibleClient):
     def get_model(self, config: Config) -> nn.Module:
         return self.model
 
@@ -27,7 +27,7 @@ class MyClient(BasicClient):
 def test_make_it_personal_factory_method() -> None:
     ditto_my_client_cls = make_it_personal(MyClient, mode=PersonalizedMode.DITTO)
 
-    assert issubclass(ditto_my_client_cls, (BasicClient, DittoPersonalizedMixin))
+    assert issubclass(ditto_my_client_cls, (FlexibleClient, DittoPersonalizedMixin))
 
 
 def test_make_it_personal_raises_value_error() -> None:

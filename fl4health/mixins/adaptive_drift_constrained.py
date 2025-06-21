@@ -8,19 +8,19 @@ import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.flexible_client import FlexibleClient
 from fl4health.losses.weight_drift_loss import WeightDriftLoss
-from fl4health.mixins.core_protocols import BasicClientProtocol, BasicClientProtocolPreSetup
+from fl4health.mixins.core_protocols import FlexibleClientProtocol, FlexibleClientProtocolPreSetup
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 from fl4health.utils.losses import TrainingLosses
-from fl4health.utils.typing import TorchFeatureType, TorchPredType, TorchTargetType
+from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
 
 
 @runtime_checkable
-class AdaptiveDriftConstrainedProtocol(BasicClientProtocol, Protocol):
+class AdaptiveDriftConstrainedProtocol(FlexibleClientProtocol, Protocol):
     loss_for_adaptation: float
     drift_penalty_tensors: list[torch.Tensor] | None
     drift_penalty_weight: float | None
@@ -38,8 +38,12 @@ class AdaptiveDriftConstrainedMixin:
         To be used with `~fl4health.BaseClient` in order to add the ability to compute
         losses via a constrained adaptive drift.
 
+        NOTE: Rather than using `AdaptiveDriftConstraintClient`, if a client subclasses
+        `FlexibleClient`, than this mixin could be used on that subclass to implement the
+        adaptive drift constraint.
+
         Raises:
-            RuntimeError: when the inheriting class does not satisfy `BasicClientProtocolPreSetup`.
+            RuntimeError: when the inheriting class does not satisfy `FlexibleClientProtocolPreSetup`.
         """
         # Initialize mixin-specific attributes with default values
         self.loss_for_adaptation = 0.1
@@ -54,8 +58,8 @@ class AdaptiveDriftConstrainedMixin:
             super().__init__()
 
         # set penalty_loss_function
-        if not isinstance(self, BasicClientProtocolPreSetup):
-            raise RuntimeError("This object needs to satisfy `BasicClientProtocolPreSetup`.")
+        if not isinstance(self, FlexibleClientProtocolPreSetup):
+            raise RuntimeError("This object needs to satisfy `FlexibleClientProtocolPreSetup`.")
         self.penalty_loss_function = WeightDriftLoss(self.device)
 
     def __init_subclass__(cls, **kwargs: Any):
@@ -70,15 +74,15 @@ class AdaptiveDriftConstrainedMixin:
         if hasattr(cls, "_dynamically_created"):
             return
 
-        # Check at class definition time if the parent class satisfies BasicClientProtocol
+        # Check at class definition time if the parent class satisfies FlexibleClientProtocol
         for base in cls.__bases__:
-            if base is not AdaptiveDriftConstrainedMixin and issubclass(base, BasicClient):
+            if base is not AdaptiveDriftConstrainedMixin and issubclass(base, FlexibleClient):
                 return
 
         # If we get here, no compatible base was found
         msg = (
             f"Class {cls.__name__} inherits from AdaptiveDriftConstrainedMixin but none of its other "
-            f"base classes is a BasicClient. This may cause runtime errors."
+            f"base classes is a FlexibleClient. This may cause runtime errors."
         )
         log(WARN, msg)
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
@@ -140,39 +144,26 @@ class AdaptiveDriftConstrainedMixin:
 
         super().set_parameters(server_model_state, config, fitting_round)  # type: ignore[safe-super]
 
-    def compute_training_loss(
-        self: AdaptiveDriftConstrainedProtocol,
-        preds: TorchPredType,
-        features: TorchFeatureType,
-        target: TorchTargetType,
-    ) -> TrainingLosses:
-        """
-        Computes training loss given predictions of the model and ground truth data. Adds to objective by including
-        penalty loss.
+    def train_step(
+        self: AdaptiveDriftConstrainedProtocol, input: TorchInputType, target: TorchTargetType
+    ) -> tuple[TrainingLosses, TorchPredType]:
+        losses, preds = self._compute_preds_and_losses(self.model, self.optimizers["global"], input, target)
+        loss_clone = losses.backward["backward"].clone()
 
-        Args:
-            preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in
-                dictionary will be used to compute metrics.
-            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
-            target: (TorchTargetType): Ground truth data to evaluate predictions against.
-
-        Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed
-            by name. Additional losses includes penalty loss.
-        """
-        loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
-        if additional_losses is None:
-            additional_losses = {}
-
-        additional_losses["loss"] = loss.clone()
-        # adding the vanilla loss to the additional losses to be used by update_after_train for potential adaptation
-        additional_losses["loss_for_adaptation"] = loss.clone()
-
-        # Compute the drift penalty loss and store it in the additional losses dictionary.
+        # apply penalty
         penalty_loss = self.compute_penalty_loss()
-        additional_losses["penalty_loss"] = penalty_loss.clone()
+        losses.backward["backward"] = losses.backward["backward"] + penalty_loss
+        losses = self._apply_backwards_on_losses_and_take_step(self.model, self.optimizers["global"], losses)
 
-        return TrainingLosses(backward=loss + penalty_loss, additional_losses=additional_losses)
+        # prepare return values
+        additional_losses = {
+            "penalty_loss": penalty_loss.clone(),
+            "local_loss": loss_clone,
+            "loss_for_adaptation": loss_clone.clone(),
+        }
+        losses.additional_losses = additional_losses
+
+        return losses, preds
 
     def get_parameter_exchanger(self: AdaptiveDriftConstrainedProtocol, config: Config) -> ParameterExchanger:
         """
@@ -218,15 +209,15 @@ class AdaptiveDriftConstrainedMixin:
         return self.penalty_loss_function(self.model, self.drift_penalty_tensors, self.drift_penalty_weight)
 
 
-def apply_adaptive_drift_to_client(client_base_type: type[BasicClient]) -> type[BasicClient]:
+def apply_adaptive_drift_to_client(client_base_type: type[FlexibleClient]) -> type[FlexibleClient]:
     """
     Dynamically create an adapted client class.
 
     Args:
-        client_base_type (type[BasicClient]): The class to be mixed.
+        client_base_type (type[FlexibleClient]): The class to be mixed.
 
     Returns:
-        type[BasicClient]: A basic client that has been mixed with `AdaptiveDriftConstrainedMixin`.
+        type[FlexibleClient]: A basic client that has been mixed with `AdaptiveDriftConstrainedMixin`.
     """
     return type(
         f"AdaptiveDrift{client_base_type.__name__}",

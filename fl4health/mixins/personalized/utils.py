@@ -3,15 +3,15 @@ from typing import Any
 
 import wrapt
 
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.flexible_client import FlexibleClient
 
 
 @wrapt.decorator
 def ensure_protocol_compliance(func: Callable, instance: Any | None, args: Any, kwargs: Any) -> Any:
     """
-    Wrapper to ensure that a the instance is of `BasicClient` type.
+    Wrapper to ensure that a the instance is of `FlexibleClient` type.
 
-    NOTE: This should only be used within a `BasicClient`. Params specified and supplied by the `wrapt` decorator
+    NOTE: This should only be used within a `FlexibleClient`.
 
     Args:
         func (Callable): The function to be wrapped
@@ -20,13 +20,13 @@ def ensure_protocol_compliance(func: Callable, instance: Any | None, args: Any, 
         kwargs (Any): kwargs passed to func
 
     Raises:
-        TypeError: Thrown if the protocol requirements are not met
+        TypeError: We raise this error if the instance is not a `FlexibleClient`.
 
     Returns:
         Any: Application of the function to the args and kwargs.
     """
-    # validate self is a BasicClient
-    if not isinstance(instance, BasicClient):
+    # validate self is a FlexibleClient
+    if not isinstance(instance, FlexibleClient):
         raise TypeError("Protocol requirements not met.")
 
     return func(*args, **kwargs)
