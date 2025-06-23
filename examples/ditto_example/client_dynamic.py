@@ -12,7 +12,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
-from fl4health.clients.flexible_client import FlexibleClient
+from fl4health.clients.flexible.base import FlexibleClient
 from fl4health.mixins.personalized import PersonalizedMode, make_it_personal
 from fl4health.reporting import JsonReporter
 from fl4health.utils.config import narrow_dict_type

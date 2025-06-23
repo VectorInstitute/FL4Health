@@ -8,7 +8,7 @@ import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 
-from fl4health.clients.flexible_client import FlexibleClient
+from fl4health.clients.flexible.base import FlexibleClient
 from fl4health.losses.weight_drift_loss import WeightDriftLoss
 from fl4health.mixins.core_protocols import FlexibleClientProtocol, FlexibleClientProtocolPreSetup
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger

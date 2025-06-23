@@ -6,7 +6,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.clients.flexible_client import FlexibleClient
+from fl4health.clients.flexible.base import FlexibleClient
 from fl4health.mixins.personalized import DittoPersonalizedMixin, PersonalizedMode, make_it_personal
 
 

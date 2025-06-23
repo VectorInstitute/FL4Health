@@ -9,7 +9,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, TensorDataset
 
-from fl4health.clients.flexible_client import FlexibleClient
+from fl4health.clients.flexible.base import FlexibleClient
 from fl4health.metrics import Accuracy
 from fl4health.mixins.personalized.utils import ensure_protocol_compliance
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking

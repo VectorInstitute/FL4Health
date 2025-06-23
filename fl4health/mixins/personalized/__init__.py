@@ -1,6 +1,6 @@
 from enum import Enum
 
-from fl4health.clients.flexible_client import FlexibleClient
+from fl4health.clients.flexible.base import FlexibleClient
 from fl4health.mixins.personalized.ditto import DittoPersonalizedMixin, DittoPersonalizedProtocol
 
 
