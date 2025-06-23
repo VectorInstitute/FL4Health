@@ -1,6 +1,7 @@
 """Automates simple transfer learning for nnUNetv2."""
 
 import argparse
+import multiprocessing
 import os
 import shutil
 from multiprocessing import Process
@@ -31,8 +32,6 @@ def setup_device(device: str) -> torch.device:
     ], f"-device must be either cpu, mps or cuda. Other devices are not tested/supported. Got: {device}."
     if device == "cpu":
         # let's allow torch to use hella threads
-        import multiprocessing
-
         torch.set_num_threads(multiprocessing.cpu_count())
         return torch.device("cpu")
     if device == "cuda":
