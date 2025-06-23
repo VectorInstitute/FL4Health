@@ -12,7 +12,7 @@ from flwr.common.typing import Config
 from freezegun import freeze_time
 from torch.utils.data import DataLoader
 
-from fl4health.clients.flexible_client import FlexibleClient
+from fl4health.clients.flexible.base import FlexibleClient
 from fl4health.reporting import JsonReporter
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.client import fold_loss_dict_into_metrics

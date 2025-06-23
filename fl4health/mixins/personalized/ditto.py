@@ -11,7 +11,7 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch import nn
 from torch.optim import Optimizer
 
-from fl4health.clients.flexible_client import FlexibleClient
+from fl4health.clients.flexible.base import FlexibleClient
 from fl4health.mixins.adaptive_drift_constrained import AdaptiveDriftConstrainedMixin, AdaptiveDriftConstrainedProtocol
 from fl4health.mixins.core_protocols import FlexibleClientProtocolPreSetup
 from fl4health.mixins.personalized.utils import ensure_protocol_compliance

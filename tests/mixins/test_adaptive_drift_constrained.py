@@ -13,7 +13,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, TensorDataset
 
-from fl4health.clients.flexible_client import FlexibleClient
+from fl4health.clients.flexible.base import FlexibleClient
 from fl4health.metrics import Accuracy
 from fl4health.mixins.adaptive_drift_constrained import (
     AdaptiveDriftConstrainedMixin,

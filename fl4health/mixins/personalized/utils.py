@@ -3,7 +3,7 @@ from typing import Any
 
 import wrapt
 
-from fl4health.clients.flexible_client import FlexibleClient
+from fl4health.clients.flexible.base import FlexibleClient
 
 
 @wrapt.decorator

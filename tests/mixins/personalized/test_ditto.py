@@ -16,7 +16,7 @@ from torch.optim import Optimizer
 # from torch.testing import assert_close
 from torch.utils.data import DataLoader, TensorDataset
 
-from fl4health.clients.flexible_client import FlexibleClient
+from fl4health.clients.flexible.base import FlexibleClient
 from fl4health.metrics import Accuracy
 from fl4health.mixins.core_protocols import FlexibleClientProtocol
 from fl4health.mixins.personalized import (
