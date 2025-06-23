@@ -13,6 +13,7 @@ Subpackages
    :maxdepth: 4
 
    fl4health.clients.deep_mmd_clients
+   fl4health.clients.flexible
    fl4health.clients.mkmmd_clients
 
 Submodules
@@ -38,7 +39,6 @@ Submodules
    fl4health.clients.fenda_client
    fl4health.clients.fenda_ditto_client
    fl4health.clients.flash_client
-   fl4health.clients.flexible_client
    fl4health.clients.instance_level_dp_client
    fl4health.clients.model_merge_client
    fl4health.clients.moon_client
