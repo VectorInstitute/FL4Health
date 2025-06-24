@@ -106,7 +106,7 @@ def reload_modules(packages: Sequence[str]) -> None:
                     log(DEBUG, f"Failed to reload module {m_name}: {e}")
 
 
-def set_nnunet_env(verbose: bool = False, **kwargs: str) -> None:
+def set_nnunet_env_and_reload_modules(verbose: bool = False, **kwargs: str) -> None:
     """
     For each keyword argument name and value sets the current environment variable with the same name to that value
     and then reloads nnunet. Values must be strings. This is necessary because nnunet checks some environment
@@ -123,7 +123,11 @@ def set_nnunet_env(verbose: bool = False, **kwargs: str) -> None:
     reload_modules(["nnunetv2.default_n_proc_DA", "nnunetv2.configuration"])
     # Reload whatever depends on nnunetv2 environment variables
     # Be careful. If you reload something with an enum in it, things get messed up.
-    reload_modules(["nnunetv2", "fl4health.clients.nnunet_client"])
+    reload_modules(["nnunetv2", "fl4health.clients.nnunet_client", "fl4health.clients.flexible.nnunet"])
+
+
+# for backwards compatability
+set_nnunet_env = set_nnunet_env_and_reload_modules
 
 
 # The two convert deepsupervision methods are necessary because fl4health requires
