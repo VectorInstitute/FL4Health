@@ -87,7 +87,7 @@ mypy = "^1.9.0"
 simpleitk = "^2.3.1"
 openpyxl = "^3.1.2"
 picai_eval = "^1.4.6"
-mlflow = "^2.12.2"
+mlflow = ">=2.12.2,<4.0.0"
 fire = "^0.6.0"
 einops = "0.8.0"
 
