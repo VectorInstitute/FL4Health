@@ -68,7 +68,7 @@ with warnings.catch_warnings():
 os.environ["GRPC_VERBOSITY"] = "NONE"
 
 
-class NnunetClient(FlexibleClient):
+class FlexibleNnunetClient(FlexibleClient):
     def __init__(
         self,
         device: torch.device,
@@ -173,6 +173,7 @@ class NnunetClient(FlexibleClient):
         self.grad_scaler = GradScaler()
         self.max_grad_norm = max_grad_norm
         self.n_dataload_proc = n_dataload_processes
+
         try:
             self.dataset_json = load_json(join(nnUNet_raw, self.dataset_name, "dataset.json"))
         except Exception:
