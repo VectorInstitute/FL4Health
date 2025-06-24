@@ -1,4 +1,3 @@
-# type: ignore
 import gc
 import logging
 import os
@@ -37,11 +36,11 @@ from fl4health.utils.nnunet_utils import (
     NNUNET_N_SPATIAL_DIMS,
     Module2LossWrapper,
     NnunetConfig,
+    NnUNetDataLoaderWrapper,
     PolyLRSchedulerWrapper,
     StreamToLogger,
     convert_deep_supervision_dict_to_list,
     convert_deep_supervision_list_to_dict,
-    nnUNetDataLoaderWrapper,
     prepare_loss_arg,
     use_default_signal_handlers,
 )
@@ -238,7 +237,7 @@ class NnunetClient(FlexibleClient):
         optimizer.zero_grad()
 
         # Call user defined methods to get predictions and compute loss
-        preds, features = self._predict_with_model(model, input)
+        preds, features = self.predict_with_model(model, input)
         target = self.transform_target(target)
         losses = self.compute_training_loss(preds, features, target)
 
@@ -326,10 +325,10 @@ class NnunetClient(FlexibleClient):
         shape = self.plans["configurations"][fullres_cfg]["median_image_size_in_voxels"]
 
         # Wrap nnunet dataloaders to make them compatible with fl4health
-        train_loader = nnUNetDataLoaderWrapper(
+        train_loader = NnUNetDataLoaderWrapper(
             nnunet_augmenter=train_loader, nnunet_config=self.nnunet_config, ref_image_shape=shape
         )
-        val_loader = nnUNetDataLoaderWrapper(
+        val_loader = NnUNetDataLoaderWrapper(
             nnunet_augmenter=val_loader, nnunet_config=self.nnunet_config, ref_image_shape=shape
         )
         log(INFO, f"{len(val_loader)}, {len(val_loader.dataset)}, {val_loader.nnunet_dataloader.batch_size}")
@@ -636,7 +635,7 @@ class NnunetClient(FlexibleClient):
         super().setup_client(config)
 
     @override
-    def _predict_with_model(
+    def predict_with_model(
         self, model: torch.nn.Module, input: TorchInputType
     ) -> tuple[TorchPredType, dict[str, torch.Tensor]]:
         """
@@ -918,7 +917,7 @@ class NnunetClient(FlexibleClient):
             dl_name (str | None): A string that identifies the dataloader to shutdown. Used for logging purposes.
                 Defaults to None
         """
-        if dataloader is not None and isinstance(dataloader, nnUNetDataLoaderWrapper):
+        if dataloader is not None and isinstance(dataloader, NnUNetDataLoaderWrapper):
             if self.verbose:
                 log(INFO, f"\tShutting down nnunet dataloader: {dl_name}")
             dataloader.shutdown()
