@@ -21,12 +21,13 @@ from flwr.common.logger import log, update_console_handler
 from nnunetv2.dataset_conversion.convert_MSD_dataset import convert_msd_dataset
 from torchmetrics.segmentation import GeneralizedDiceScore
 
-from fl4health.clients.nnunet_client import NnunetClient
+from fl4health.clients.nnunet_client import NnunetClient, nnUNet_raw
 from fl4health.metrics import TorchMetric
 from fl4health.metrics.compound_metrics import TransformsMetric
 from fl4health.utils.load_data import load_msd_dataset
 from fl4health.utils.msd_dataset_sources import get_msd_dataset_enum, msd_num_labels
-from fl4health.utils.nnunet_utils import get_segs_from_probs, set_nnunet_env
+from fl4health.utils.nnunet_utils import get_segs_from_probs, set_nnunet_env_and_reload_modules
+from fl4health.utils.random import set_all_random_seeds
 
 
 def main(
@@ -44,6 +45,7 @@ def main(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log(INFO, f"Using device: {device}")
     log(INFO, f"Using server address: {server_address}")
+    log(INFO, f"nnUNet_raw: {nnUNet_raw}")
 
     # Load the dataset if necessary
     msd_dataset_enum = get_msd_dataset_enum(msd_dataset_name)
@@ -191,8 +193,18 @@ if __name__ == "__main__":
         help="[OPTIONAL] Name of the client used to name client state checkpoint. \
         Defaults to None, in which case a random name is generated for the client",
     )
+    parser.add_argument(
+        "--seed",
+        action="store",
+        type=int,
+        help="Seed for the random number generators across python, torch, and numpy",
+        required=False,
+    )
 
     args = parser.parse_args()
+
+    # Set the random seed for reproducibility
+    set_all_random_seeds(args.seed, disable_torch_benchmarking=True, use_deterministic_torch_algos=True)
 
     # Set the log level
     update_console_handler(level=args.logLevel)
@@ -202,7 +214,7 @@ if __name__ == "__main__":
     nn_unet_preprocessed = join(args.dataset_path, "nnunet_preprocessed")
     os.makedirs(nn_unet_raw, exist_ok=True)
     os.makedirs(nn_unet_preprocessed, exist_ok=True)
-    set_nnunet_env(
+    set_nnunet_env_and_reload_modules(
         nnUNet_raw=nn_unet_raw,
         nnUNet_preprocessed=nn_unet_preprocessed,
         nnUNet_results=join(args.dataset_path, "nnUNet_results"),

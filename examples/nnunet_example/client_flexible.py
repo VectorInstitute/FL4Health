@@ -27,6 +27,7 @@ from fl4health.metrics.compound_metrics import TransformsMetric
 from fl4health.utils.load_data import load_msd_dataset
 from fl4health.utils.msd_dataset_sources import get_msd_dataset_enum, msd_num_labels
 from fl4health.utils.nnunet_utils import get_segs_from_probs, set_nnunet_env_and_reload_modules
+from fl4health.utils.random import set_all_random_seeds
 
 
 def main(
@@ -192,8 +193,18 @@ if __name__ == "__main__":
         help="[OPTIONAL] Name of the client used to name client state checkpoint. \
         Defaults to None, in which case a random name is generated for the client",
     )
+    parser.add_argument(
+        "--seed",
+        action="store",
+        type=int,
+        help="Seed for the random number generators across python, torch, and numpy",
+        required=False,
+    )
 
     args = parser.parse_args()
+
+    # Set the random seed for reproducibility
+    set_all_random_seeds(args.seed)
 
     # Set the log level
     update_console_handler(level=args.logLevel)
