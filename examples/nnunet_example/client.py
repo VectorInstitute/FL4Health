@@ -26,7 +26,8 @@ from fl4health.metrics.compound_metrics import EmaMetric
 from fl4health.metrics.efficient_metrics import BinaryDice, MultiClassDice
 from fl4health.utils.load_data import load_msd_dataset
 from fl4health.utils.msd_dataset_sources import get_msd_dataset_enum, msd_num_labels
-from fl4health.utils.nnunet_utils import set_nnunet_env
+from fl4health.utils.nnunet_utils import set_nnunet_env_and_reload_modules
+from fl4health.utils.random import set_all_random_seeds
 
 
 N_CLASSES_2D = 2
@@ -47,6 +48,7 @@ def main(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log(INFO, f"Using device: {device}")
     log(INFO, f"Using server address: {server_address}")
+    log(INFO, f"nnUNet_raw: {nnUNet_raw}")
 
     # Load the dataset if necessary
     msd_dataset_enum = get_msd_dataset_enum(msd_dataset_name)
@@ -57,7 +59,9 @@ def main(
 
     # The dataset ID will be the same as the MSD Task number
     dataset_id = int(msd_dataset_enum.value[4:6])
-    nnunet_dataset_name = f"Dataset{dataset_id:03d}_{msd_dataset_enum.value.split('_')[1]}"
+    nnunet_dataset_name = (
+        f"Dataset{dataset_id:03d}_{msd_dataset_enum.value.split('_')[1]}"
+    )
 
     # Convert the msd dataset if necessary
     if not exists(join(nn_unet_raw, nnunet_dataset_name)):
@@ -83,7 +87,9 @@ def main(
     # State checkpointer (being overhauled soon)
     if intermediate_client_state_dir is not None:
         checkpoint_and_state_module = ClientCheckpointAndStateModule(
-            state_checkpointer=ClientStateCheckpointer(Path(intermediate_client_state_dir))
+            state_checkpointer=ClientStateCheckpointer(
+                Path(intermediate_client_state_dir)
+            )
         )
     else:
         checkpoint_and_state_module = None
@@ -200,8 +206,20 @@ if __name__ == "__main__":
         help="[OPTIONAL] Name of the client used to name client state checkpoint. \
         Defaults to None, in which case a random name is generated for the client",
     )
+    parser.add_argument(
+        "--seed",
+        action="store",
+        type=int,
+        help="Seed for the random number generators across python, torch, and numpy",
+        required=False,
+    )
 
     args = parser.parse_args()
+
+    # Set the random seed for reproducibility
+    set_all_random_seeds(
+        args.seed, disable_torch_benchmarking=True, use_deterministic_torch_algos=True
+    )
 
     # Set the log level
     update_console_handler(level=args.logLevel)
@@ -211,7 +229,7 @@ if __name__ == "__main__":
     nn_unet_preprocessed = join(args.dataset_path, "nnunet_preprocessed")
     os.makedirs(nn_unet_raw, exist_ok=True)
     os.makedirs(nn_unet_preprocessed, exist_ok=True)
-    set_nnunet_env(
+    set_nnunet_env_and_reload_modules(
         nnUNet_raw=nn_unet_raw,
         nnUNet_preprocessed=nn_unet_preprocessed,
         nnUNet_results=join(args.dataset_path, "nnUNet_results"),
