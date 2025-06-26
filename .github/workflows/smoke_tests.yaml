@@ -55,7 +55,7 @@ jobs:
       - name: Run Script
         run: |
           source .venv/bin/activate
-          pytest --group-count=4 --group=${{ matrix.group }} tests/smoke_tests/test_smoke_tests.py -v --cov fl4health --cov-report=xml tests
+          pytest --group-count=4 --group=${{ matrix.group }} -v --cov fl4health --cov-report=xml tests/smoke_tests/test_smoke_tests.py
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
