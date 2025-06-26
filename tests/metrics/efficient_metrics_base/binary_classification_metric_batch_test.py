@@ -3,7 +3,7 @@ import re
 import pytest
 import torch
 
-from fl4health.metrics.efficient_metrics_base import BinaryClassificationMetric, MetricOutcome
+from fl4health.metrics.efficient_metrics_base import BinaryClassificationMetric, ClassificationOutcome
 from fl4health.utils.random import set_all_random_seeds
 
 
@@ -134,7 +134,7 @@ def test_binary_classification_metric_counts() -> None:
         batch_dim=0,
         label_dim=1,
         threshold=1,
-        discard={MetricOutcome.TRUE_POSITIVE, MetricOutcome.TRUE_NEGATIVE},
+        discard={ClassificationOutcome.TRUE_POSITIVE, ClassificationOutcome.TRUE_NEGATIVE},
     )
     classification_metric.update(logits, targets)
 

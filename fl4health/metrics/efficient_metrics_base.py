@@ -17,7 +17,7 @@ BINARY_COUNT_TENSOR_MAX_SIZE = 2
 BINARY_COUNT_TENSOR_N_DIMS = 2
 
 
-class MetricOutcome(Enum):
+class ClassificationOutcome(Enum):
     TRUE_POSITIVE = "true_positive"
     FALSE_POSITIVE = "false_positive"
     TRUE_NEGATIVE = "true_negative"
@@ -32,7 +32,7 @@ class ClassificationMetric(Metric, ABC):
         batch_dim: int | None,
         dtype: torch.dtype,
         threshold: float | int | None,
-        discard: set[MetricOutcome] | None,
+        discard: set[ClassificationOutcome] | None,
     ) -> None:
         """
         A Base class for efficiently computing classification metrics that can be calculated using the true positives
@@ -43,13 +43,14 @@ class ClassificationMetric(Metric, ABC):
         classification metrics: BinaryClassificationMetric and MultiClassificationMetric. These handle implementation
         of the ``count_tp_fp_tn_fn`` method.
 
-        On each update, the true_positives, false_positives, false_negatives and true_negatives counts for the
-        provided predictions and targets are accumulated into ``self.true_positives``, ``self.false_positives``,
-        ``self.false_negatives`` and ``self.true_negatives``, respectively. This reduces the memory footprint
-        required to compute metrics across rounds. The user needs to define the ``compute_from_counts`` method which
-        returns a dictionary of Scalar metrics given the ``true_positives``, ``false_positives``, ``false_negatives``,
-        and  ``true_negatives`` counts. The accumulated counts are reset by the ``clear`` method. If your subclass
-        returns multiple metrics you may need to also override the ``__call__`` method.
+        On each update, the true_positives, false_positives, false_negatives and true_negatives counts for the provided
+        predictions and targets are accumulated into ``self.true_positives``, ``self.false_positives``,
+        ``self.false_negatives`` and ``self.true_negatives``, respectively, and reduced along all unspecified
+        dimensions. This reduces the memory footprint required to compute metrics across rounds. The user needs to
+        define the ``compute_from_counts`` method which returns a dictionary of Scalar metrics given the
+        ``true_positives``, ``false_positives``, ``false_negatives``, and  ``true_negatives`` counts. The accumulated
+        counts are reset by the ``clear`` method. If your subclass returns multiple metrics you may need to also
+        override the ``__call__`` method.
 
         If the predictions provided are continuous in value, then the associated counts will also be continuous
         ("soft"). For example, with a target of 1, a prediction of 0.8 contributes 0.8 to the true_positives count and
@@ -61,13 +62,16 @@ class ClassificationMetric(Metric, ABC):
         Args:
             name (str): The name of the metric.
             label_dim (int | None, optional): Specifies which dimension in the provided tensors corresponds to the
-                label dimension.
-            batch_dim (int | None, optional): If None, then counts are aggregated across the batch dimension. If
-                specified, counts will be computed along the dimension specified. That is, counts are maintained for
-                each training sample INDIVIDUALLY.
-
-                NOTE: The resulting counts will always be presented batch dimension first, then label dimension,
-                regardless of input shape.
+                label dimension. If None, the counts along the specified dimension (ie. for each output label) are
+                aggregated and the label dimension is reduced. If specified, counts will be computed along the
+                specified dimensions. That is, counts are maintained for each output label INDIVIDUALLY.
+                NOTE: If both `label_dim` and `batch_dim` are specified, then counts will be presented batch dimension
+                first, then label dimension. If neither are specified, each count is a global scalar.
+            batch_dim (int | None, optional): If None, the counts along the specified dimension (ie. for each sample)
+                are aggregated and the batch dimension is reduced. If specified, counts will be computed along the
+                dimension specified. That is, counts are maintained for each training sample INDIVIDUALLY.
+                NOTE: If both `label_dim` and `batch_dim` are specified, then counts will be presented batch dimension
+                first, then label dimension. If neither are specified, each count is a global scalar.
             dtype (torch.dtype): The dtype to store the counts as. If preds or targets can be continuous, specify a
                 float type. Otherwise specify an integer type to prevent overflow.
             threshold (float | int | None, optional): A float for thresholding values or an integer specifying the
@@ -75,9 +79,9 @@ class ClassificationMetric(Metric, ABC):
                 to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
                 with the highest prediction where the specified axis is assumed to contain a prediction for each class
                 (where its index along that dimension is the class label). Setting to None leaves preds unchanged.
-            discard (set[MetricOutcome] | None, optional): One or several of MetricOutcome values. Specified outcome
-                counts will not be accumulated. Their associated attribute will remain as an empty pytorch tensor.
-                Useful for reducing the memory footprint of metrics that do not use all of the counts in their
+            discard (set[ClassificationOutcome] | None, optional): One or several of ClassificationOutcome values.
+                Specified counts will not be accumulated. Their associated attribute will remain as an empty pytorch
+                tensor. Useful for reducing the memory footprint of metrics that do not use all of the counts in their
                 computation.
         """
         self.name = name
@@ -99,10 +103,10 @@ class ClassificationMetric(Metric, ABC):
         # Parse discard argument
         discard = set() if discard is None else discard
 
-        self.discard_tp = MetricOutcome.TRUE_POSITIVE in discard
-        self.discard_fp = MetricOutcome.FALSE_POSITIVE in discard
-        self.discard_fn = MetricOutcome.FALSE_NEGATIVE in discard
-        self.discard_tn = MetricOutcome.TRUE_NEGATIVE in discard
+        self.discard_tp = ClassificationOutcome.TRUE_POSITIVE in discard
+        self.discard_fp = ClassificationOutcome.FALSE_POSITIVE in discard
+        self.discard_fn = ClassificationOutcome.FALSE_NEGATIVE in discard
+        self.discard_tn = ClassificationOutcome.TRUE_NEGATIVE in discard
 
         # Create intermediate tensors. Will be initialized with tensors of correct shape on first update.
         self.counts_initialized = False
@@ -224,7 +228,7 @@ class ClassificationMetric(Metric, ABC):
             return
 
         # If batch_dim has been specified, we accumulate counts for EACH INSTANCE seen throughout the updates, such
-        # that each of the counts is a 2D tensor of row length equal to the samples seen.
+        # that each of the counts is a tensor of row length equal to the samples seen.
         # NOTE: This ASSUMES the batch dimension comes FIRST for the counts.
         # Otherwise, the counts are 1D tensors with length equal to the number of classes (or possibly 1 if using the
         # BinaryClassificationMetric)
@@ -279,8 +283,8 @@ class ClassificationMetric(Metric, ABC):
         Given two tensors containing model predictions and targets, returns the number of true positives (tp), false
         positives (fp), true negatives (tn), and false negatives (fn).
 
-        The shape of these counts depends on the values of ``self.batch_dim`` and ``self.label_dim`` are specified
-        and the implementation of the inheriting class.
+        The shape of these counts depends on if ``self.batch_dim`` and ``self.label_dim`` are specified and the
+        implementation of the inheriting class.
 
         NOTE: Inheriting classes must implement additional functionality on top of this class. For example, any
         preprocessing that needs to be done to preds and targets should be done in the inheriting function. Any post
@@ -298,7 +302,12 @@ class ClassificationMetric(Metric, ABC):
         Returns:
             tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
                 specified dimensions for each of true positives, false positives, true negatives, and false negatives
-                respectively.
+                respectively. The output shape of these tensors depends on if `self.batch_dim` and `self.label_dim` are
+                specified. For example, if the batch and label dimensions have sizes 2 and 3 respectively:
+                    - Both `batch_dim` and `label_dim` are specified: Size([2, 3])
+                    - Only `batch_dim` is specified: Size([2])
+                    - Only `label_dim` is specified: Size([3])
+                    - Neither specified: Size([])
         """
         # Compute counts. If we're ignoring a count, set it as an empty tensor to avoid downstream errors.
         true_positives, false_positives, true_negatives, false_negatives = self._prepare_counts_from_preds_and_targets(
@@ -327,11 +336,19 @@ class ClassificationMetric(Metric, ABC):
         false_negatives: torch.Tensor,
     ) -> Metrics:
         """
-        Provided tensors associated with the various outcomes from predictions compared to targets in the form of
-        true positives, false positives, true negatives, and false negatives, returns a dictionary of Scalar metrics.
-        For example, one might compute recall as true_positives/(true_positives + false_negatives). The shape of these
-        tensors is likely specific to the kind of classification being done (multi-class vs. binary) and the way
-        predictions and targets have been provided etc.
+        Provided tensors associated with the various classification outcomes from predictions compared to targets in
+        the form of true positives, false positives, true negatives, and false negatives, returns a dictionary of
+        Scalar metrics. For example, one might compute recall as true_positives/(true_positives + false_negatives).
+
+        The count tensors will all have the same shape. This shape depends on whether `batch_dim` and or `label_dim`
+        were specified. For example, if the batch and label dimensions have sizes 2 and 3 respectively, then:
+                    - Both `batch_dim` and `label_dim` are specified: Size([2, 3])
+                    - Only `batch_dim` is specified: Size([2])
+                    - Only `label_dim` is specified: Size([3])
+                    - Neither specified: Size([])
+
+        Inheriting classes may further modify the shapes of the count tensors that are provided as arguments depending
+        on the kind of classification being done (eg. multi-class vs. binary).
 
         Args:
             true_positives (torch.Tensor): Counts associated with positive predictions of a class and true positives
@@ -361,7 +378,7 @@ class BinaryClassificationMetric(ClassificationMetric):
         dtype: torch.dtype = torch.float32,
         pos_label: int = 1,
         threshold: float | int | None = None,
-        discard: set[MetricOutcome] | None = None,
+        discard: set[ClassificationOutcome] | None = None,
     ) -> None:
         """
         A Base class for BINARY classification metrics that can be computed using the true positives (tp),
@@ -380,34 +397,39 @@ class BinaryClassificationMetric(ClassificationMetric):
         ("soft"). For example, with a target of 1, a prediction of 0.8 contributes 0.8 to the true_positives count and
         0.2 to the false_negatives.
 
-        NOTE: For this class, the predictions and targets passed to the update function MUST have the same shape
+        NOTE: For this class, the predictions and targets passed to the `update` function MUST have the same shape
 
         NOTE: Preds and targets are expected to have elements in the interval [0, 1] or to be thresholded, using
         that argument to be as such.
+
+        NOTE: For this class, only the counts for the positive label are accumulated.
 
         Args:
             name (str): The name of the metric.
             label_dim (int | None, optional): Specifies which dimension in the provided tensors corresponds to the
                 label dimension. During metric computation, this dimension must have size of AT MOST 2. If left as
-                None, this class will assume that each entry in the tensor corresponds to a prediction/target, with
-                the positive class indicated by predictions of 1. Defaults to None.
-            batch_dim (int | None, optional): If None, then counts are aggregated across the batch dimension. If
-                specified, counts will be computed along the dimension specified. That is, counts are maintained for
-                each training sample INDIVIDUALLY. For example, if batch_dim = 1 and label_dim = 0, then
+                None, this class will assume that there is no label dimension and that each entry in the tensor
+                corresponds to a prediction/target, with the positive class label indicated by `pos_label`. In both
+                cases, only the counts for the positive class label are accumulated and any counts/predictions for the
+                negative class label are discarded. Defaults to None.
+            batch_dim (int | None, optional): If None, the counts along the specified dimension (ie. for each sample)
+                are aggregated and the batch dimension is reduced. If specified, counts will be computed along the
+                dimension specified. That is, counts are maintained for each training sample INDIVIDUALLY. For example,
+                if batch_dim = 1 and label_dim = 0, then
 
                 .. code-block:: python
 
-                    p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])
+                    p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])  # Size([1, 2, 4])
 
-                    t = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]])
+                    t = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]])  # Size([1, 2, 4])
 
-                    self.tp = torch.Tensor([[0], [4]])
+                    self.tp = torch.Tensor([[0], [4]])  # Size([2, 1])
 
-                    self.tn = torch.Tensor([[2], [0]])
+                    self.tn = torch.Tensor([[2], [0]])  # Size([2, 1])
 
-                    self.fp = torch.Tensor([[1], [0]])
+                    self.fp = torch.Tensor([[1], [0]])  # Size([2, 1])
 
-                    self.fn = torch.Tensor([[1], [0]])
+                    self.fn = torch.Tensor([[1], [0]])  # Size([2, 1])
 
                 NOTE: The resulting counts will always be presented batch dimension first, then label dimension,
                 regardless of input shape. Defaults to None.
@@ -421,10 +443,10 @@ class BinaryClassificationMetric(ClassificationMetric):
                 with the highest prediction where the specified axis is assumed to contain a prediction for each class
                 (where its index along that dimension is the class label). Value of None leaves preds unchanged.
                 Defaults to None.
-            discard (set[MetricOutcome] | None, optional): One or several of MetricOutcome values. Specified outcome
-                counts will not be accumulated. Their associated attribute will remain as an empty pytorch tensor.
-                Useful for reducing the memory footprint of metrics that do not use all of the counts in their
-                computation. Defaults to None.
+            discard (set[ClassificationOutcome] | None, optional): One or several of ClassificationOutcome values.
+                Specified outcome counts will not be accumulated. Their associated attribute will remain as an empty
+                pytorch tensor. Useful for reducing the memory footprint of metrics that do not use all of the counts
+                in their computation. Defaults to None.
         """
         super().__init__(
             name=name,
@@ -519,7 +541,7 @@ class BinaryClassificationMetric(ClassificationMetric):
         Given two tensors containing model predictions and targets, returns the number of true positives (tp), false
         positives (fp), true negatives (tn), and false negatives (fn).
 
-        The shape of these counts depends on the values of ``self.batch_dim`` and ``self.label_dim`` are specified.
+        The shape of these counts depends on if the values of ``self.batch_dim`` and ``self.label_dim`` are specified.
         They also depend on the shape of the input and target for this class. As binary predictions may be explicit
         (vector encoded) or implicit (single value implying values for the negative and positive classes).
 
@@ -534,7 +556,7 @@ class BinaryClassificationMetric(ClassificationMetric):
         Returns:
              tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
                  specified dimensions for each of true positives, false positives, true negatives, and false negatives,
-                 respectively. If `self.batch_dim` is not None then these tensors will have shape (batch size, 1),
+                 respectively. If `self.batch_dim` is not None then these tensors will have shape (batch_size, 1),
                  Otherwise, it will have shape (1,). The counts will be relative to the index of ``self.pos_label``
         """
         # Transform preds and targets as necessary/specified before computing counts
@@ -585,11 +607,12 @@ class BinaryClassificationMetric(ClassificationMetric):
         tensors are specific to how this object is configured, see class documentation above.
 
         For this class it is assumed that all counts are presented relative to the class indicated by the `pos_label`
-        index. Moreover, they are assumed to either have a single entry or have shape (num_samples, 1). In the former,
-        a single count is presented ACROSS all samples relative to the `pos_label` specified. In the latter, counts
-        are computed WITHIN each sample, but held separate across samples. A concrete setting where this makes sense
-        is binary image segmentation. You can have such counts summed for all pixels within an image, but separate
-        per image. A metric could then be computed for each image and then averaged.
+        index, counts for the negative label are discarded. Moreover, they are assumed to either have a shape (1,) or
+        have shape (num_samples, 1) if `batch_dim` was specified. In the former, a single count is presented ACROSS all
+        samples relative to the `pos_label` specified. In the latter, counts are computed WITHIN each sample, but held
+        separate across samples. A concrete setting where this makes sense is binary image segmentation. You can have
+        such counts summed for all pixels within an image, but separate per image. A metric could then be computed for
+        each image and then averaged.
 
         Args:
             true_positives (torch.Tensor): Counts associated with positive predictions and positive labels
@@ -625,7 +648,7 @@ class MultiClassificationMetric(ClassificationMetric):
         dtype: torch.dtype = torch.float32,
         threshold: float | int | None = None,
         ignore_background: int | None = None,
-        discard: set[MetricOutcome] | None = None,
+        discard: set[ClassificationOutcome] | None = None,
     ) -> None:
         """
         A Base class for multi-class, multi-label classification metrics that can be computed using the true
@@ -656,28 +679,28 @@ class MultiClassificationMetric(ClassificationMetric):
         Args:
             name (str): The name of the metric.
             label_dim (int): Specifies which dimension in the provided tensors corresponds to the label
-                dimension. During metric computation, this dimension must have size of AT LEAST 2.
-            batch_dim (int | None, optional): If None, then counts are aggregated across the batch dimension. If
-                specified, counts will be computed along the dimension specified. That is, counts are maintained for
-                each training sample INDIVIDUALLY. For example, if batch_dim = 1 and label_dim = 0, then
+                dimension. During metric computation, this dimension must have size of AT LEAST 2. Counts are always
+                computed along the label dimension. That is, counts are maintained for each output label
+                INDIVIDUALLY.
+            batch_dim (int | None, optional): If None, the counts along the specified dimension (ie. for each sample)
+                are aggregated and the batch dimension is reduced. If specified, counts will be computed along the
+                dimension specified. That is, counts are maintained for each training sample INDIVIDUALLY.
+                NOTE: If `batch_dim` is specified, then counts will be presented batch dimension
+                first, then label dimension. For example, if batch_dim = 1 and label_dim = 0, then
 
                 .. code-block:: python
 
-                    p = torch.tensor(
-                        [[[1.0, 1.0, 1.0, 0.0], [0.0, 0.0, 0.0, 0.0]], [[0.0, 0.0, 0.0, 1.0], [1.0, 1.0, 1.0, 1.0]]]
-                    )
+                    p = torch.tensor([[[1.0, 1.0, 1.0, 0.0]], [[0.0, 0.0, 0.0, 1.0]]])  # Size([2, 1, 4])
 
-                    t = torch.tensor(
-                        [[[1.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]], [[0.0, 0.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0]]]
-                    )
+                    t = torch.tensor([[[1.0, 1.0, 0.0, 0.0]], [[0.0, 0.0, 1.0, 1.0]]])  # Size([2, 1, 4])
 
-                    self.tp = torch.Tensor([[2, 1], [0, 4]])
+                    self.tp = torch.Tensor([[2, 1]]]) # Size([1, 2])
 
-                    self.tn = torch.Tensor([[1, 2], [4, 0]])
+                    self.tn = torch.Tensor([[1, 2]])  # Size([1, 2])
 
-                    self.fp = torch.Tensor([[1, 0], [0, 0]])
+                    self.fp = torch.Tensor([[1, 0]])  # Size([1, 2])
 
-                    self.fn = torch.Tensor([[0, 1], [0, 0]])
+                    self.fn = torch.Tensor([[0, 1]])  # Size([1, 2])
 
                 NOTE: The resulting counts will always be presented batch dimension first, then label dimension,
                 regardless of input shape. Defaults to None
@@ -691,10 +714,10 @@ class MultiClassificationMetric(ClassificationMetric):
                 Defaults to None.
             ignore_background (int | None): If specified, the FIRST channel of the specified axis is removed prior to
                 computing the counts. Useful for removing background classes. Defaults to None.
-            discard (set[MetricOutcome] | None, optional): One or several of MetricOutcome values. Specified outcome
-                counts will not be accumulated. Their associated attribute will remain as an empty pytorch tensor.
-                Useful for reducing the memory footprint of metrics that do not use all of the counts in their
-                computation.
+            discard (set[ClassificationOutcome] | None, optional): One or several of ClassificationOutcome values.
+                Specified outcome counts will not be accumulated. Their associated attribute will remain as an empty
+                pytorch tensor. Useful for reducing the memory footprint of metrics that do not use all of the counts
+                in their computation.
         """
         super().__init__(
             name=name,
