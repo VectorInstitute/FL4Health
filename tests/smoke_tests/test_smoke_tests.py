@@ -506,3 +506,18 @@ async def test_flexible_nnunet_config_3d(tolerance: float) -> None:
     task = asyncio.create_task(coroutine)
     await try_running_test_task(task)
     assert_on_done_task(task)
+
+
+@pytest.mark.smoketest
+async def test_ditto_flexible_nnunet_config_2d(tolerance: float) -> None:
+    coroutine = run_smoke_test(  # By default will use Task04_Hippocampus Dataset
+        server_python_path="examples.nnunet_pfl_example.server",
+        client_python_path="examples.nnunet_pfl_example.client",
+        config_path="tests/smoke_tests/nnunet_config_2d.yaml",
+        dataset_path="examples/datasets/nnunet",
+        tolerance=tolerance,
+        read_logs_timeout=450,
+    )
+    task = asyncio.create_task(coroutine)
+    await try_running_test_task(task)
+    assert_on_done_task(task)
