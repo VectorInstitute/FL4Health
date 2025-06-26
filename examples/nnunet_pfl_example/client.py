@@ -4,7 +4,7 @@ import warnings
 from logging import DEBUG, INFO
 from os.path import exists, join
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.checkpointing.state_checkpointer import ClientStateCheckpointer
@@ -45,7 +45,7 @@ def main(
     compile: bool = True,
     intermediate_client_state_dir: str | None = None,
     client_name: str | None = None,
-    personalized_strategy: Literal["ditto"] | None = None,
+    personalized_strategy: str = "ditto",
 ) -> None:
     with torch.autograd.set_detect_anomaly(True):
         # Log device and server address
@@ -103,7 +103,7 @@ def main(
             checkpoint_and_state_module=checkpoint_and_state_module,
             client_name=client_name,
         )
-        if personalized_strategy:
+        if personalized_strategy in personalized_client_classes:
             log(INFO, f"Setting up client for personalized strategy: {personalized_strategy}")
             client = personalized_client_classes[personalized_strategy](**client_kwargs)
         else:
@@ -211,9 +211,9 @@ if __name__ == "__main__":
         "--personalized-strategy",
         type=str,
         required=False,
-        default=None,
+        default="ditto",
         help="[OPTIONAL] Personalized strategy to use. For now, can only be 'ditto'. \
-        Defaults to None, in which no personalized strategy is applied.",
+        Defaults to 'ditto', in which no personalized strategy is applied.",
     )
     parser.add_argument(
         "--seed",
