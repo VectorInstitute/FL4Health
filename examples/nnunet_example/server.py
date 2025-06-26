@@ -18,6 +18,7 @@ from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.nnunet_server import NnunetServer
 from fl4health.utils.config import make_dict_with_epochs_or_steps
+from fl4health.utils.random import set_all_random_seeds
 
 
 def get_config(
@@ -149,10 +150,20 @@ if __name__ == "__main__":
             None, in which case the server will generate random name \
             ",
     )
+    parser.add_argument(
+        "--seed",
+        action="store",
+        type=int,
+        help="Seed for the random number generators across python, torch, and numpy",
+        required=False,
+    )
     args = parser.parse_args()
 
     with open(args.config_path, "r") as f:
         config = yaml.safe_load(f)
+
+    # Set the random seed for reproducibility
+    set_all_random_seeds(args.seed)
 
     main(
         config,
