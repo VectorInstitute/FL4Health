@@ -106,7 +106,7 @@ def reload_modules(packages: Sequence[str]) -> None:
                     log(DEBUG, f"Failed to reload module {m_name}: {e}")
 
 
-def set_nnunet_env_and_reload_modules(verbose: bool = False, **kwargs: str) -> None:
+def set_nnunet_env_and_reload_modules(verbose: bool = False, **kwargs: Any) -> None:
     """
     For each keyword argument name and value sets the current environment variable with the same name to that value
     and then reloads nnunet. Values must be strings. This is necessary because nnunet checks some environment
@@ -114,7 +114,7 @@ def set_nnunet_env_and_reload_modules(verbose: bool = False, **kwargs: str) -> N
     """
     # Set environment variables
     for key, val in kwargs.items():
-        os.environ[key] = val
+        os.environ[key] = str(val)
         if verbose:
             log(INFO, f"Resetting env var '{key}' to '{val}'")
 
@@ -126,8 +126,18 @@ def set_nnunet_env_and_reload_modules(verbose: bool = False, **kwargs: str) -> N
     reload_modules(["nnunetv2", "fl4health.clients.nnunet_client", "fl4health.clients.flexible.nnunet"])
 
 
-# for backwards compatability
-set_nnunet_env = set_nnunet_env_and_reload_modules
+def set_nnunet_env(verbose: bool = False, **kwargs: Any) -> None:
+    """Maintain for backwards compatibility."""
+    msg = (
+        "`set_nnunet_env` is deprecated and will be removed in a future version. "
+        "Use `set_nnunet_env_and_reload_modules` instead."
+    )
+    warnings.warn(
+        msg,
+        DeprecationWarning,
+        stacklevel=1,
+    )
+    set_nnunet_env_and_reload_modules(verbose=verbose, **kwargs)
 
 
 # The two convert deepsupervision methods are necessary because fl4health requires
