@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   test:
@@ -14,6 +15,9 @@ jobs:
     permissions:
       contents: read
       actions: write
+    strategy:
+      matrix:
+        group: [1, 2, 3, 4]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,12 +48,14 @@ jobs:
 
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --with "dev, test"
+        run: |
+          poetry install --with "dev, test"
+          poetry add pytest-test-groups
 
       - name: Run Script
         run: |
           source .venv/bin/activate
-          pytest -m "smoketest" -v --cov fl4health --cov-report=xml tests
+          pytest --group-count=4 --group=${{ matrix.group }} -m "smoketest" -v --cov fl4health --cov-report=xml tests
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
