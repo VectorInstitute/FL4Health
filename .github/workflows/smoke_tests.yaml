@@ -50,7 +50,6 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: |
           poetry install --with "dev, test"
-          poetry add pytest-test-groups
 
       - name: Run Script
         run: |
