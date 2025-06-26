@@ -5,7 +5,7 @@ from torch import nn
 from fl4health.model_bases.partial_layer_exchange_model import PartialLayerExchangeModel
 
 
-class GCE(nn.Module):
+class Gce(nn.Module):
     # Taken from the official implementation at : https://github.com/TsingZ0/GPFL/blob/main/system/flcore/servers/servergp.py
     def __init__(self, feature_dim: int, num_classes: int) -> None:
         """
@@ -17,7 +17,7 @@ class GCE(nn.Module):
             feature_dim (int): The dimension of the feature tensor.
             num_classes (int): The number of classes represented in the embedding table.
         """
-        super(GCE, self).__init__()
+        super(Gce, self).__init__()
         self.feature_dim = feature_dim
         self.num_classes = num_classes
         self.embedding = nn.Embedding(num_classes, feature_dim)
@@ -44,7 +44,7 @@ class GCE(nn.Module):
         return -torch.mean(torch.sum(softmax_loss, dim=1))
 
 
-class CoV(nn.Module):
+class Cov(nn.Module):
     # Taken from the official implementation at : https://github.com/TsingZ0/GPFL/blob/main/system/flcore/servers/servergp.py
     def __init__(self, feature_dim: int) -> None:
         """
@@ -56,7 +56,7 @@ class CoV(nn.Module):
         Args:
             feature_dim (int): The dimension of the feature tensor.
         """
-        super(CoV, self).__init__()
+        super(Cov, self).__init__()
         self.conditional_gamma = nn.Sequential(
             nn.Linear(feature_dim, feature_dim),
             nn.ReLU(),
@@ -117,7 +117,7 @@ class GpflModel(PartialLayerExchangeModel):
         GPFL model base as described in the paper "GPFL: Simultaneously Learning Global and Personalized
         Feature Information for Personalized Federated Learning." This base module consists of three main
         sub-modules: the main_module, which consists of a feature extractor and a head module; the GCE
-        (Global Conditional Embedding) module; and the CoV (Conditional Variance) module.
+        (Global Conditional Embedding) module; and the CoV (Conditional Value) module.
 
         Args:
             base_module (nn.Module): Base feature extractor module that generates a feature tensor from the input.
@@ -134,8 +134,8 @@ class GpflModel(PartialLayerExchangeModel):
         self.feature_dim = feature_dim
         self.num_classes = num_classes
         self.main_module = MainModule(base_module, head_module)
-        self.gce = GCE(feature_dim, num_classes)
-        self.cov = CoV(feature_dim)
+        self.gce = Gce(feature_dim, num_classes)
+        self.cov = Cov(feature_dim)
         self.apply_flatten_features: bool = apply_flatten_features
         # These modules are exchanged between the server and clients.
         self.modules_to_exchange = ["main_module.base_module", "gce", "cov"]
