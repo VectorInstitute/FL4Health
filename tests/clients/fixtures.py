@@ -16,6 +16,7 @@ from fl4health.clients.fedpm_client import FedPmClient
 from fl4health.clients.fedrep_client import FedRepClient
 from fl4health.clients.fenda_client import FendaClient
 from fl4health.clients.fenda_ditto_client import FendaDittoClient
+from fl4health.clients.gpfl_client import GpflClient
 from fl4health.clients.instance_level_dp_client import InstanceLevelDpClient
 from fl4health.clients.moon_client import MoonClient
 from fl4health.clients.mr_mtl_client import MrMtlClient
@@ -30,6 +31,7 @@ from fl4health.losses.fenda_loss_config import (
 from fl4health.metrics import Accuracy
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.model_bases.fenda_base import FendaModel, FendaModelWithFeatureState
+from fl4health.model_bases.gpfl_base import GpflModel
 from fl4health.model_bases.masked_layers.masked_layers_utils import convert_to_masked_model
 from fl4health.model_bases.parallel_split_models import ParallelSplitHeadModule
 from fl4health.model_bases.perfcl_base import PerFclModel
@@ -187,5 +189,27 @@ def get_fedpm_client(model: CompositeConvNet) -> FedPmClient:
     )
     client.model = convert_to_masked_model(model)
     client.parameter_exchanger = FedPmExchanger()
+    client.initialized = True
+    return client
+
+
+@pytest.fixture
+def get_gpfl_client(
+    global_module: nn.Module, head_module: nn.Module, feature_dim: int, num_classes: int
+) -> GpflClient:
+    client = GpflClient(
+        data_path=Path(""),
+        metrics=[Accuracy()],
+        device=torch.device("cpu"),
+        lambda_parameter=0.001,
+    )
+    gpfl_model = GpflModel(
+        base_module=global_module,
+        head_module=head_module,
+        feature_dim=feature_dim,
+        num_classes=num_classes,
+    )
+    client.model = gpfl_model
+    client.parameter_exchanger = FixedLayerExchanger(gpfl_model.layers_to_exchange())
     client.initialized = True
     return client
