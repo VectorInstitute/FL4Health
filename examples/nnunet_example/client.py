@@ -217,8 +217,23 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Set the random seed for reproducibility
+<<<<<<< HEAD
     set_all_random_seeds(
         args.seed, disable_torch_benchmarking=True, use_deterministic_torch_algos=True
+=======
+
+    # NOTE: This implementation does not cover all sources of randomness in nnUNet, so complete
+    # determinism cannot be achieved. The nnUNet maintainers have confirmed that full determinism
+    # is not possible (see linked issue below). However, our current approach provides a reasonable
+    # level of deterministic behavior for most practical purposes.
+    # Reference: https://github.com/VectorInstitute/FL4Health/pull/411#:~:text=MIC%2DDKFZ/nnUNet%231906
+    set_all_random_seeds(
+        # NOTE: Setting seed comes at the cost of runtime performance. Benchmarking especially should be enabled
+        # for long-running experiments.
+        args.seed,
+        disable_torch_benchmarking=True,
+        use_deterministic_torch_algos=True,
+>>>>>>> b9256b2d (cr)
     )
 
     # Set the log level
