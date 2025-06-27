@@ -62,12 +62,12 @@ class ClassificationMetric(Metric, ABC):
         Args:
             name (str): The name of the metric.
             label_dim (int | None, optional): Specifies which dimension in the provided tensors corresponds to the
-                label dimension. If None, the counts along the specified dimension (ie. for each output label) are
+                label dimension. If None, the counts along the specified dimension (i.e. for each output label) are
                 aggregated and the label dimension is reduced. If specified, counts will be computed along the
                 specified dimensions. That is, counts are maintained for each output label INDIVIDUALLY.
                 NOTE: If both `label_dim` and `batch_dim` are specified, then counts will be presented batch dimension
                 first, then label dimension. If neither are specified, each count is a global scalar.
-            batch_dim (int | None, optional): If None, the counts along the specified dimension (ie. for each sample)
+            batch_dim (int | None, optional): If None, the counts along the specified dimension (i.e. for each sample)
                 are aggregated and the batch dimension is reduced. If specified, counts will be computed along the
                 dimension specified. That is, counts are maintained for each training sample INDIVIDUALLY.
                 NOTE: If both `label_dim` and `batch_dim` are specified, then counts will be presented batch dimension
@@ -412,7 +412,7 @@ class BinaryClassificationMetric(ClassificationMetric):
                 corresponds to a prediction/target, with the positive class label indicated by `pos_label`. In both
                 cases, only the counts for the positive class label are accumulated and any counts/predictions for the
                 negative class label are discarded. Defaults to None.
-            batch_dim (int | None, optional): If None, the counts along the specified dimension (ie. for each sample)
+            batch_dim (int | None, optional): If None, the counts along the specified dimension (i.e. for each sample)
                 are aggregated and the batch dimension is reduced. If specified, counts will be computed along the
                 dimension specified. That is, counts are maintained for each training sample INDIVIDUALLY. For example,
                 if batch_dim = 1 and label_dim = 0, then

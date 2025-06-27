@@ -43,7 +43,7 @@ class MultiClassDice(MultiClassificationMetric):
         BinaryDice.
 
         Args:
-            batch_dim (int | None, optional): If None, the counts along the specified dimension (ie. for each sample)
+            batch_dim (int | None, optional): If None, the counts along the specified dimension (i.e. for each sample)
                 are aggregated and the batch dimension is reduced. If specified, counts will be computed along the
                 dimension specified. That is, counts are maintained for each training sample INDIVIDUALLY.
                 NOTE: If `batch_dim` is specified, then counts will be presented batch dimension
