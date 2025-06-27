@@ -10,7 +10,7 @@ To run a federated learning experiment with nnunet models, first ensure you are 
 python -m examples.nnunet_pfl_example.server --config_path examples/nnunet_pfl_example/config.yaml
 ```
 
-Once the server has started, start the necessary number of clients specified by the n_clients key in the config file. Each client can be started by running the following command in a separate session. To view a list of optional flags use the --help flag.
+Once the server has started, start the necessary number of clients specified by the `n_clients` key in the config file. Each client can be started by running the following command in a separate session. To view a list of optional flags use the --help flag.
 
 ```bash
 python -m examples.nnunet_pfl_example.client --dataset_path examples/datasets/nnunet --personalized-strategy ditto
