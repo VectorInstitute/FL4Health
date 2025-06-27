@@ -3,10 +3,10 @@ from logging import WARNING
 from pathlib import Path
 from typing import Any
 
-from flwr.common.logger import log
-
 import wandb
 import wandb.wandb_run
+from flwr.common.logger import log
+
 from fl4health.reporting.base_reporter import BaseReporter
 
 
