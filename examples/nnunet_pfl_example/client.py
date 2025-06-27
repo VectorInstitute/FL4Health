@@ -88,21 +88,20 @@ def main(
             checkpoint_and_state_module = None
 
         # Create client
-        client_kwargs: dict[str, Any] = {}
-        client_kwargs.update(
+        client_kwargs: dict[str, Any] = {
             # Args specific to nnUNetClient
-            dataset_id=dataset_id,
-            fold=fold,
-            always_preprocess=always_preprocess,
-            verbose=verbose,
-            compile=compile,
+            "dataset_id": dataset_id,
+            "fold": fold,
+            "always_preprocess": always_preprocess,
+            "verbose": verbose,
+            "compile": compile,
             # BaseClient Args
-            device=device,
-            metrics=[dice],
-            progress_bar=verbose,
-            checkpoint_and_state_module=checkpoint_and_state_module,
-            client_name=client_name,
-        )
+            "device": device,
+            "metrics": [dice],
+            "progress_bar": verbose,
+            "checkpoint_and_state_module": checkpoint_and_state_module,
+            "client_name": client_name,
+        }
         if personalized_strategy in personalized_client_classes:
             log(INFO, f"Setting up client for personalized strategy: {personalized_strategy}")
             client = personalized_client_classes[personalized_strategy](**client_kwargs)
@@ -226,8 +225,18 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Set the random seed for reproducibility
-    set_all_random_seeds(args.seed, disable_torch_benchmarking=True, use_deterministic_torch_algos=True)
-
+    # NOTE: This implementation does not cover all sources of randomness in nnUNet, so complete
+    # determinism cannot be achieved. The nnUNet maintainers have confirmed that full determinism
+    # is not possible (see linked issue below). However, our current approach provides a reasonable
+    # level of deterministic behavior for most practical purposes.
+    # Reference: https://github.com/VectorInstitute/FL4Health/pull/411#:~:text=MIC%2DDKFZ/nnUNet%231906
+    set_all_random_seeds(
+        # NOTE: Setting seed comes at the cost of runtime performance. Benchmarking especially should be enabled
+        # for long-running experiments.
+        args.seed,
+        disable_torch_benchmarking=True,
+        use_deterministic_torch_algos=True,
+    )
     # Set the log level
     update_console_handler(level=args.logLevel)
 
