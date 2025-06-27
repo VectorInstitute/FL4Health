@@ -93,7 +93,7 @@ def main(config: dict[str, Any]) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Server Main")
     parser.add_argument(
-        "--config-path",
+        "--config_path",
         action="store",
         type=str,
         help="Path to configuration file.",

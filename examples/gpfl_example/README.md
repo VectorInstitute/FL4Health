@@ -23,7 +23,7 @@ from the FL4Health directory. The following arguments must be present in the spe
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the two
 clients. This is done by simply running (remembering to activate your environment)
 ```bash
-python -m examples.gpfl_example.client --dataset-path /path/to/data --learning-rate 0.005 --mu 0.01 --lambda-parameter 0.01
+python -m examples.gpfl_example.client --dataset_path /path/to/data --learning_rate 0.005 --mu 0.01 --lambda_parameter 0.01
 ```
 **NOTE**: The argument `dataset_path` has two functions, depending on whether the dataset exists locally or not. If
 the dataset already exists at the path specified, it will be loaded from there. Otherwise, the dataset will be

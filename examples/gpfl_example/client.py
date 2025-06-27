@@ -69,9 +69,9 @@ class MnistGpflClient(GpflClient):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="GPFL Client Main")
-    parser.add_argument("--dataset-path", action="store", type=str, help="Path to the local dataset")
+    parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
     parser.add_argument(
-        "--learning-rate", action="store", type=float, default=0.005, help="Learning rate used for all the optimizers"
+        "--learning_rate", action="store", type=float, default=0.005, help="Learning rate used for all the optimizers"
     )
     parser.add_argument(
         "--mu",
@@ -81,7 +81,7 @@ if __name__ == "__main__":
         help="Mu parameter used as weight decay for GEC and CoV optimizers",
     )
     parser.add_argument(
-        "--lambda-parameter",
+        "--lambda_parameter",
         action="store",
         type=float,
         default=0.01,
