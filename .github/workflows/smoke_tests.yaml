@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   test:
@@ -14,6 +15,9 @@ jobs:
     permissions:
       contents: read
       actions: write
+    strategy:
+      matrix:
+        group: [1, 2, 3, 4]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -40,16 +44,17 @@ jobs:
         id: cached-poetry-dependencies
         with:
           path: .venv
-          key: venv-${{ runner.os }}-${{ steps.full-python-version.outputs.version }}-${{ hashFiles('**/poetry.lock') }}
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --with "dev, test"
+        run: |
+          poetry install --with "dev, test"
 
       - name: Run Script
         run: |
           source .venv/bin/activate
-          pytest -m "smoketest" -v --cov fl4health --cov-report=xml tests
+          pytest --test-group-count=4 --test-group=${{ matrix.group }} -v --cov fl4health --cov-report=xml tests/smoke_tests/test_smoke_tests.py
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
