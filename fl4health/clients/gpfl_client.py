@@ -98,8 +98,8 @@ class GpflClient(BasicClient):
 
     def set_optimizer(self, config: Config) -> None:
         """
-        Ditto requires an optimizer for the global model and one for the local model. This function simply ensures that
-        the optimizers setup by the user have the proper keys and that there are two optimizers.
+        This function simply ensures that the optimizers setup by the user have the proper keys
+        and that there are three optimizers.
 
         Args:
             config (Config): The config from the server.
@@ -158,7 +158,7 @@ class GpflClient(BasicClient):
         self.generic_conditional_input = torch.zeros(self.feature_dim).to(self.device)
         self.personalized_conditional_input = torch.zeros(self.feature_dim).to(self.device)
 
-        embeddings = self.GCE_frozen.embedding(torch.tensor(range(self.num_classes))).to(self.device)
+        embeddings = self.GCE_frozen.embedding(torch.tensor(range(self.num_classes)))
         for i, embedding in enumerate(embeddings):
             self.generic_conditional_input += embedding / self.num_classes
             self.personalized_conditional_input += embedding * self.sample_per_class[i]
@@ -271,9 +271,7 @@ class GpflClient(BasicClient):
         magnitude_level_loss = (
             torch.norm(features["global_features"] - target_embeddings.detach(), 2) * self.lambda_parameter
         )
-        loss = prediction_loss
-        loss += gce_softmax_loss
-        loss += magnitude_level_loss
+        loss = prediction_loss + gce_softmax_loss + magnitude_level_loss
         additional_losses = {
             "prediction_loss": prediction_loss.clone(),
             "gce_softmax_loss": gce_softmax_loss.clone(),

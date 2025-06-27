@@ -1,3 +1,4 @@
+import pytest
 import torch
 
 from fl4health.model_bases.gpfl_base import Cov, Gce, GpflModel
@@ -43,6 +44,17 @@ def test_gpfl_model_forward_steps() -> None:
     assert features == {}
 
 
+def test_apfl_conditional_input_shapes() -> None:
+    gpfl_model = GpflModel(FeatureCnn(), HeadCnn(), feature_dim=16 * 4 * 4, num_classes=32)
+    gpfl_model.train()
+    input = torch.randn(8, 1, 28, 28)
+    # generic_conditional_input has a wrong shape
+    generic_conditional_input = torch.randn(16 * 1 * 1)
+    personalized_conditional_input = torch.randn(16 * 4 * 4)
+    with pytest.raises(AssertionError):
+        pred, features = gpfl_model(input, generic_conditional_input, personalized_conditional_input)
+
+
 def test_cov_module() -> None:
     feature_dim = 16 * 4 * 4
     cov_module = Cov(feature_dim)
@@ -80,7 +92,7 @@ def test_gce_module() -> None:
     gce_module = Gce(feature_dim, num_classes)
     # Check GCE module logic
     assert gce_module.embedding.weight.shape == (num_classes, feature_dim)
-    # set embedding weights to a 1.0 for testing
+    # Set embedding weights to a 1.0 for testing
     gce_module.embedding.weight.data.fill_(1.0)
     # Compute the loss of a test tensor
     feature = torch.randn(batch_size, feature_dim)
@@ -91,7 +103,7 @@ def test_gce_module() -> None:
             cosine_similarity[i, j] = torch.dot(feat, emb) / (torch.norm(feat) * torch.norm(emb))
 
     label = torch.Tensor([[0], [1]]).reshape(-1, 1)
-    one_hot = torch.Tensor([[1, 0], [0, 1]]).reshape(-1, 2)  # One-hot encoding for labels
+    one_hot = torch.Tensor([[1, 0], [0, 1]]).reshape(-1, 2)
     expected_log_softmax_loss = torch.log_softmax(cosine_similarity, dim=1)
     expected_log_softmax_loss = -torch.mean(torch.sum(one_hot * expected_log_softmax_loss, dim=1))
     output = gce_module(feature, label)

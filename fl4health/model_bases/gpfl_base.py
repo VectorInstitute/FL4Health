@@ -173,12 +173,17 @@ class GpflModel(PartialLayerExchangeModel):
         """
         features = self.main_module.base_module.forward(input)
         features = self.flatten_features(features) if self.apply_flatten_features else features
+        assert features.shape[1] == self.feature_dim
+
         local_features = self.cov(features, personalized_conditional_input)
+        assert local_features.shape[1] == self.feature_dim
         predictions = self.main_module.head_module.forward(local_features)
         if not self.training:
             return {"prediction": predictions}, {}
 
+        assert len(generic_conditional_input) == self.feature_dim
         global_features = self.cov(features, generic_conditional_input)
+        assert global_features.shape[1] == self.feature_dim
         return {"prediction": predictions}, {"local_features": local_features, "global_features": global_features}
 
     def flatten_features(self, features: torch.Tensor) -> torch.Tensor:
