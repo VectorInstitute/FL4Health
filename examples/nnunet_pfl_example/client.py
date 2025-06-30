@@ -47,73 +47,72 @@ def main(
     client_name: str | None = None,
     personalized_strategy: str = "ditto",
 ) -> None:
-    with torch.autograd.set_detect_anomaly(True):
-        # Log device and server address
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        log(INFO, f"Using device: {device}")
-        log(INFO, f"Using server address: {server_address}")
+    # Log device and server address
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    log(INFO, f"Using device: {device}")
+    log(INFO, f"Using server address: {server_address}")
 
-        # Load the dataset if necessary
-        msd_dataset_enum = get_msd_dataset_enum(msd_dataset_name)
-        nnUNet_raw = join(dataset_path, "nnunet_raw")  # noqa: N806
-        if not exists(join(nnUNet_raw, msd_dataset_enum.value)):
-            log(INFO, f"Downloading and extracting {msd_dataset_enum.value} dataset")
-            load_msd_dataset(nnUNet_raw, msd_dataset_name)
+    # Load the dataset if necessary
+    msd_dataset_enum = get_msd_dataset_enum(msd_dataset_name)
+    nnUNet_raw = join(dataset_path, "nnunet_raw")  # noqa: N806
+    if not exists(join(nnUNet_raw, msd_dataset_enum.value)):
+        log(INFO, f"Downloading and extracting {msd_dataset_enum.value} dataset")
+        load_msd_dataset(nnUNet_raw, msd_dataset_name)
 
-        # The dataset ID will be the same as the MSD Task number
-        dataset_id = int(msd_dataset_enum.value[4:6])
-        nnunet_dataset_name = f"Dataset{dataset_id:03d}_{msd_dataset_enum.value.split('_')[1]}"
+    # The dataset ID will be the same as the MSD Task number
+    dataset_id = int(msd_dataset_enum.value[4:6])
+    nnunet_dataset_name = f"Dataset{dataset_id:03d}_{msd_dataset_enum.value.split('_')[1]}"
 
-        # Convert the msd dataset if necessary
-        if not exists(join(nnUNet_raw, nnunet_dataset_name)):
-            log(INFO, f"Converting {msd_dataset_enum.value} into nnunet dataset")
-            convert_msd_dataset(source_folder=join(nnUNet_raw, msd_dataset_enum.value))
+    # Convert the msd dataset if necessary
+    if not exists(join(nnUNet_raw, nnunet_dataset_name)):
+        log(INFO, f"Converting {msd_dataset_enum.value} into nnunet dataset")
+        convert_msd_dataset(source_folder=join(nnUNet_raw, msd_dataset_enum.value))
 
-        # Create a metric
-        dice = TransformsMetric(
-            metric=TorchMetric(
-                name="Pseudo DICE",
-                metric=GeneralizedDiceScore(
-                    num_classes=msd_num_labels[msd_dataset_enum], weight_type="square", include_background=False
-                ).to(device),
-            ),
-            pred_transforms=[torch.sigmoid, get_segs_from_probs],
+    # Create a metric
+    dice = TransformsMetric(
+        metric=TorchMetric(
+            name="Pseudo DICE",
+            metric=GeneralizedDiceScore(
+                num_classes=msd_num_labels[msd_dataset_enum], weight_type="square", include_background=False
+            ).to(device),
+        ),
+        pred_transforms=[torch.sigmoid, get_segs_from_probs],
+    )
+
+    if intermediate_client_state_dir is not None:
+        checkpoint_and_state_module = ClientCheckpointAndStateModule(
+            state_checkpointer=ClientStateCheckpointer(Path(intermediate_client_state_dir))
         )
+    else:
+        checkpoint_and_state_module = None
 
-        if intermediate_client_state_dir is not None:
-            checkpoint_and_state_module = ClientCheckpointAndStateModule(
-                state_checkpointer=ClientStateCheckpointer(Path(intermediate_client_state_dir))
-            )
-        else:
-            checkpoint_and_state_module = None
+    # Create client
+    client_kwargs: dict[str, Any] = {
+        # Args specific to nnUNetClient
+        "dataset_id": dataset_id,
+        "fold": fold,
+        "always_preprocess": always_preprocess,
+        "verbose": verbose,
+        "compile": compile,
+        # BaseClient Args
+        "device": device,
+        "metrics": [dice],
+        "progress_bar": verbose,
+        "checkpoint_and_state_module": checkpoint_and_state_module,
+        "client_name": client_name,
+    }
+    if personalized_strategy in personalized_client_classes:
+        log(INFO, f"Setting up client for personalized strategy: {personalized_strategy}")
+        client = personalized_client_classes[personalized_strategy](**client_kwargs)
+    else:
+        log(INFO, "Setting up client without personalization")
+        client = FlexibleNnunetClient(**client_kwargs)
+    log(INFO, f"Using client: {type(client).__name__}")
 
-        # Create client
-        client_kwargs: dict[str, Any] = {
-            # Args specific to nnUNetClient
-            "dataset_id": dataset_id,
-            "fold": fold,
-            "always_preprocess": always_preprocess,
-            "verbose": verbose,
-            "compile": compile,
-            # BaseClient Args
-            "device": device,
-            "metrics": [dice],
-            "progress_bar": verbose,
-            "checkpoint_and_state_module": checkpoint_and_state_module,
-            "client_name": client_name,
-        }
-        if personalized_strategy in personalized_client_classes:
-            log(INFO, f"Setting up client for personalized strategy: {personalized_strategy}")
-            client = personalized_client_classes[personalized_strategy](**client_kwargs)
-        else:
-            log(INFO, "Setting up client without personalization")
-            client = FlexibleNnunetClient(**client_kwargs)
-        log(INFO, f"Using client: {type(client).__name__}")
+    start_client(server_address=server_address, client=client.to_client())
 
-        start_client(server_address=server_address, client=client.to_client())
-
-        # Shutdown the client
-        client.shutdown()
+    # Shutdown the client
+    client.shutdown()
 
 
 if __name__ == "__main__":
