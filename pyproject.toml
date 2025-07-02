@@ -206,7 +206,7 @@ convention = "google"
 max-doc-length = 119
 
 [tool.ruff.lint.flake8-builtins]
-builtins-strict-checking = false
+strict-checking = false
 
 [tool.pytest.ini_options]
 markers = [
