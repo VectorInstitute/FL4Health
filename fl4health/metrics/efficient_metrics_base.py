@@ -22,6 +22,9 @@ class ClassificationOutcome(Enum):
     FALSE_NEGATIVE = "false_negative"
 
 
+MetricOutcome = ClassificationOutcome  # Alias for backwards compatibility
+
+
 class ClassificationMetric(Metric, ABC):
     def __init__(
         self,
@@ -211,11 +214,11 @@ class ClassificationMetric(Metric, ABC):
         dimension, then it is returned unchanged. Otherwise it is transposed.
 
         Args:
-            count_tensor (torch.Tensor): The count tensor after reducing unused dimensions
+            count_tensor (torch.Tensor): The count tensor after reducing dimensions
 
         Returns:
-            torch.Tensor: If count_tensor was 1D then it is returned unchanged. Otherwise this is the count_tensor
-                with shape (batch_size, num_labels)
+            torch.Tensor: If ``count_tensor`` was 1D then it is returned unchanged. Otherwise this is the count_tensor
+                with shape (``batch_size``, ``num_labels``)
         """
         if count_tensor.ndim != MAX_COUNT_TENSOR_DIMS:
             return count_tensor
@@ -235,7 +238,7 @@ class ClassificationMetric(Metric, ABC):
         counts with new counts computed from preds and targets.
 
         NOTE: This function assumes that if `self.batch_dim` is not None, the counts are returned with shapes such that
-        the batch dimension comes FIRST for the counts. If `self.count_tp_fp_tn_fn` is overriden it must ensure that
+        the batch dimension comes FIRST for the counts. If `self.count_tp_fp_tn_fn` is overridden it must ensure that
         this remains the case.
 
         Args:
