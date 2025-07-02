@@ -34,13 +34,18 @@ If you need to update the environment libraries, you should change the requireme
 
 For code style, we recommend the [google style guide](https://google.github.io/styleguide/pyguide.html).
 
-Pre-commit hooks apply [black](https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html) code formatting.
+We use [ruff](https://docs.astral.sh/ruff/) for items such as code formatting and static code analysis. Ruff checks various rules including [flake8](https://docs.astral.sh/ruff faq/#how-does-ruff-compare-to-flake8). The pre-commit hooks (installation described below) show errors which you need to fix before submitting a PR, as these checks will fail and prevent PR merger. This project's configuration details for ruff are found in the `pyproject.toml` under headings prefixed with `tool.ruff.`. In addition to code checks, ruff also has a number of features for imposing documentation formatting that we leverage.
 
-We also use [flake8](https://flake8.pycqa.org/en/latest/) and [pylint](https://pylint.pycqa.org/en/stable/) for further static code analysis. The pre-commit hooks show errors which you need to fix before submitting a PR.
+If you want to run run (independent of the other pre-commit checks), you can run
+```bash
+ruff check .
+ruff format .
+```
+from the top level directory.
 
-Last but not least, we use type hints in our code which are checked using [mypy](https://mypy.readthedocs.io/en/stable/). The mypy checks are strictly enforced. That is, all mypy checks must pass or the associated PR will not be merge-able.
+Throughout the codebase, we use type hints which are checked using [mypy](https://mypy.readthedocs.io/en/stable/). The mypy checks are strictly enforced. That is, all mypy checks must pass or the associated PR will not be merge-able.
 
-The settings for `mypy` are in the `mypy.ini`, settings for `flake8` are contained in the `.flake8` file. Settings for `black` and `isort` come from the `pyproject.toml` and some standard checks are defined directly in the `.pre-commit-config.yaml` settings.
+The settings for `mypy` are in the `mypy.ini`, settings for `ruff` come from the `pyproject.toml`, and some standard checks are defined directly in the `.pre-commit-config.yaml` settings.
 
 All of these checks and formatters are invoked by pre-commit hooks. These hooks are run remotely on GitHub. In order to ensure that your code conforms to these standards, and, therefore, passes the remote checks, you can install the pre-commit hooks to be run locally. This is done by running (with your environment active)
 
