@@ -70,7 +70,7 @@ pytest-asyncio = "^0.25.2"
 py-cpuinfo = "^9.0.0"
 
 [tool.poetry.group.codestyle.dependencies]
-ruff = "^0.9.2"
+ruff = "^0.12.1"
 pre-commit = "^3.0.1"
 toml = "^0.10.2"
 types-requests = "^2.28.11.8"
