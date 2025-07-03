@@ -245,7 +245,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         Returns:
             NDArrays: **GLOBAL** model weights to be sent to the server for aggregation
         """
-        if not self.initialized:
+        if not self.initialized or "for_server_initialization" in config:
             log(
                 INFO,
                 "Setting up client and providing full model parameters to the server for initialization",
