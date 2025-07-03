@@ -6,7 +6,7 @@ from flwr.common.typing import Metrics, Scalar
 
 from fl4health.metrics.efficient_metrics_base import (
     BinaryClassificationMetric,
-    MetricOutcome,
+    ClassificationOutcome,
     MultiClassificationMetric,
 )
 from fl4health.metrics.metrics_utils import compute_dice_on_count_tensors
@@ -43,35 +43,38 @@ class MultiClassDice(MultiClassificationMetric):
         BinaryDice.
 
         Args:
-            batch_dim (int | None, optional): If None, then counts are aggregated across the batch dimension. If
-                specified, counts will be computed along the dimension specified. That is, counts are maintained for
-                each training sample INDIVIDUALLY. For example, if batch_dim = 1 and label_dim = 0, then
+            batch_dim (int | None, optional): If None, the counts along the specified dimension (i.e. for each sample)
+                are aggregated and the batch dimension is reduced. If specified, counts will be computed along the
+                dimension specified. That is, counts are maintained for each training sample INDIVIDUALLY.
+                NOTE: If `batch_dim` is specified, then counts will be presented batch dimension
+                first, then label dimension. For example, if batch_dim = 1 and label_dim = 0, then
 
                 .. code-block:: python
 
                     p = torch.tensor(
                         [[[1.0, 1.0, 1.0, 0.0], [0.0, 0.0, 0.0, 0.0]], [[0.0, 0.0, 0.0, 1.0], [1.0, 1.0, 1.0, 1.0]]]
-                    )
+                    )  # Size([2, 2, 4])
 
                     t = torch.tensor(
                         [[[1.0, 1.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]], [[0.0, 0.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0]]]
-                    )
+                    )  # Size([2, 2, 4])
 
-                    self.tp = torch.Tensor([[2, 1], [0, 4]])
+                    self.tp = torch.Tensor([[2, 1], [0, 4]])  # Size([2, 2])
 
-                    self.tn = torch.Tensor([[1, 2], [4, 0]])
+                    self.tn = torch.Tensor([[1, 2], [4, 0]])  # Size([2, 2])
 
-                    self.fp = torch.Tensor([[1, 0], [0, 0]])
+                    self.fp = torch.Tensor([[1, 0], [0, 0]])  # Size([2, 2])
 
-                    self.fn = torch.Tensor([[0, 1], [0, 0]])
+                    self.fn = torch.Tensor([[0, 1], [0, 0]])  # Size([2, 2])
 
-                In computing the Dice score, we get scores for each sample, label pair as
+                In computing the Dice score (2*tp/(2*tp + fp + fn)), we get scores for each sample/label pair as
                     [[2*2/(2*2+1+0), 2*1/(2*1+0+1)], [0*2/(0*2+0+0), 2*4/(2*4+0+0)]].
                 Assuming zero_division = None, the undefined calculation at (1, 0) is dropped and the remainder of the
                 individual scores are averaged to be (1/3)*(4/5 + 2/3 + 8/8) = 0.8222
             label_dim (int): Specifies which dimension in the provided tensors corresponds to the label
-                dimension. During metric computation, this dimension must have size of AT LEAST 2 and is required for
-                this class.
+                dimension. During metric computation, this dimension must have size of AT LEAST 2. Counts are always
+                computed along the label dimension. That is, counts are maintained for each output label
+                INDIVIDUALLY.
             name (str): Name of the metric. Defaults to 'MultiClassDice'
             dtype (torch.dtype): The dtype to store the counts as. If preds or targets can be continuous, specify a
                 float type. Otherwise specify an integer type to prevent overflow. Defaults to torch.float32
@@ -94,7 +97,7 @@ class MultiClassDice(MultiClassificationMetric):
             dtype=dtype,
             threshold=threshold,
             ignore_background=ignore_background,
-            discard={MetricOutcome.TRUE_NEGATIVE},
+            discard={ClassificationOutcome.TRUE_NEGATIVE},
         )
         self.zero_division = zero_division
 
@@ -224,7 +227,7 @@ class BinaryDice(BinaryClassificationMetric):
         # we're reporting the score. If reporting relative to the positive label, then we need not track
         # True Negatives, as they don't factor into the standard Dice score. On the other hand, if reporting relative
         # to the negative class, we need not keep True Positives around, for the same reason.
-        discard = {MetricOutcome.TRUE_NEGATIVE} if pos_label == 1 else {MetricOutcome.TRUE_POSITIVE}
+        discard = {ClassificationOutcome.TRUE_NEGATIVE} if pos_label == 1 else {ClassificationOutcome.TRUE_POSITIVE}
         super().__init__(
             name=name,
             batch_dim=batch_dim,
