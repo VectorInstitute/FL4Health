@@ -5,7 +5,7 @@ from typing import Any
 
 import flwr as fl
 from flwr.common.logger import log
-from flwr.common.typing import Config
+from flwr.common.typing import Config, Scalar
 from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import MnistNet
@@ -59,6 +59,7 @@ def main(config: dict[str, Any], server_address: str, wandb_entity: str | None) 
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_all_model_parameters(initial_model),
+        # initial_parameters=None,
         adapt_loss_weight=config["adapt_proximal_weight"],
         initial_loss_weight=config["initial_proximal_weight"],
         loss_weight_delta=config["proximal_weight_delta"],
@@ -82,8 +83,16 @@ def main(config: dict[str, Any], server_address: str, wandb_entity: str | None) 
         )
         reporters.append(wandb_reporter)
 
+    def init_fit_config(server_round: int) -> dict[str, Scalar]:
+        return {"batch_size": config["batch_size"], "for_server_initialization": True}
+
     server = FedProxServer(
-        client_manager=client_manager, fl_config=config, strategy=strategy, reporters=reporters, accept_failures=False
+        client_manager=client_manager,
+        fl_config=config,
+        strategy=strategy,
+        reporters=reporters,
+        accept_failures=False,
+        on_init_parameters_config_fn=init_fit_config,
     )
 
     fl.server.start_server(

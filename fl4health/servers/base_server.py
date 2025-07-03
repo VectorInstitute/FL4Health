@@ -2,20 +2,24 @@ import datetime
 from collections.abc import Callable, Sequence
 from logging import DEBUG, ERROR, INFO, WARNING
 
+import numpy as np
 from flwr.common import EvaluateRes, Parameters
 from flwr.common.logger import log
+from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Code, Config, GetParametersIns, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.history import History
 from flwr.server.server import EvaluateResultsAndFailures, FitResultsAndFailures, Server, evaluate_clients
 from flwr.server.strategy import Strategy
+from typing_extensions import override
 
 from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.metrics.base_metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, MetricPrefix
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.servers.polling import poll_clients
+from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 from fl4health.utils.random import generate_hash
 from fl4health.utils.typing import EvaluateFailures, FitFailures
@@ -206,6 +210,7 @@ class FlServer(Server):
         log(INFO, "FL finished in %s", str(elapsed_time))
         return self.history, elapsed_time.total_seconds()
 
+    @override
     def fit(self, num_rounds: int, timeout: float | None) -> tuple[History, float]:
         """
         Run federated learning for a number of rounds. This function also allows the server to perform some operations
@@ -251,6 +256,7 @@ class FlServer(Server):
 
         return history, elapsed_time
 
+    @override
     def fit_round(
         self,
         server_round: int,
@@ -330,6 +336,7 @@ class FlServer(Server):
 
         return sample_counts
 
+    @override
     def evaluate_round(
         self,
         server_round: int,
@@ -463,6 +470,7 @@ class FlServer(Server):
         """
         self.checkpoint_and_state_module.maybe_checkpoint(self.parameters, loss_aggregated, metrics_aggregated)
 
+    @override
     def _get_initial_parameters(self, server_round: int, timeout: float | None) -> Parameters:
         """
         Get initial parameters from one of the available clients. This function is the same as the parent function
@@ -494,6 +502,11 @@ class FlServer(Server):
             log(
                 WARNING,
                 "Failed to receive initial parameters from the client. Empty initial parameters will be used.",
+            )
+        # check if need to pack initial loss weight
+        if isinstance(self.strategy, FedAvgWithAdaptiveConstraint):
+            get_parameters_res.parameters.tensors.extend(
+                ndarrays_to_parameters([np.array(self.strategy.loss_weight)]).tensors
             )
         return get_parameters_res.parameters
 
