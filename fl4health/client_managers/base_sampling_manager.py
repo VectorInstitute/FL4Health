@@ -1,3 +1,5 @@
+import random
+
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.criterion import Criterion
@@ -45,6 +47,26 @@ class BaseFractionSamplingManager(SimpleClientManager):
             available_cids = [cid for cid in available_cids if criterion.select(self.clients[cid])]
 
         return available_cids
+
+    def sample_one(self, min_num_clients: int | None = None, criterion: Criterion | None = None) -> list[ClientProxy]:
+        """
+        Samples exactly one available client randomly. This should only be used for client-side parameter
+        initialization.
+
+        Args:
+            min_num_clients (int | None, optional): minimum number of clients to wait to become available before
+                selecting all available clients. Defaults to None.
+            criterion (Criterion | None, optional): Criterion used to filter returned clients. If none, no filter is
+                applied. Defaults to None.
+
+        Returns:
+            list[ClientProxy]: Selected client represented by a ClientProxy object in list form as expected by server.
+        """
+        available_cids = self.wait_and_filter(min_num_clients, criterion)
+        # Sample exactly on client randomly
+        cids = random.sample(available_cids, 1)
+
+        return [self.clients[cid] for cid in cids]
 
     def sample_all(self, min_num_clients: int | None = None, criterion: Criterion | None = None) -> list[ClientProxy]:
         """
