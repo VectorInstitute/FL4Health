@@ -12,6 +12,7 @@ from flwr.server.server import EvaluateResultsAndFailures, FitResultsAndFailures
 from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
+from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
 from fl4health.metrics.base_metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, MetricPrefix
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.reporting.reports_manager import ReportsManager
@@ -489,7 +490,12 @@ class FlServer(Server):
 
         # Get initial parameters from one of the clients
         log(INFO, "Requesting initial parameters from one random client")
-        random_client = self._client_manager.sample(1)[0]
+        log(INFO, f"SERVER ROUND:::::::::{server_round}")
+        if isinstance(self._client_manager, BaseFractionSamplingManager):
+            random_client = self._client_manager.sample_one()[0]
+        else:
+            random_client = self._client_manager.sample(1)[0]
+
         if self.on_init_parameters_config_fn is None:
             log(
                 WARNING,

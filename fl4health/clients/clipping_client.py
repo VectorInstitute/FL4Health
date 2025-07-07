@@ -135,7 +135,10 @@ class NumpyClippingClient(BasicClient):
         This function performs clipping through ``compute_weight_update_and_clip`` and stores the clipping bit
         as the last entry in the NDArrays.
         """
-        if not self.initialized:
+        current_server_round = narrow_dict_type(config, "current_server_round", int)
+
+        if not self.initialized or current_server_round == 0:
+            # If we haven't initialized the client we are being asked to return model parameters. So we send them all
             return self.setup_client_and_return_all_model_parameters(config)
 
         assert self.model is not None and self.parameter_exchanger is not None

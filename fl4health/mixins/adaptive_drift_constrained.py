@@ -139,7 +139,7 @@ class AdaptiveDriftConstrainedMixin:
                 ),
             )
 
-        # If initialized==False, the server is requesting model parameters from which to initialize all other
+        # If initialized is False, the server is requesting model parameters from which to initialize all other
         # clients. As such get_parameters is being called before fit or evaluate, so we must call
         # setup_client first.
         self.setup_client(config)
