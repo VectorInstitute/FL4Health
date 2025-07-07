@@ -84,7 +84,7 @@ def main(config: dict[str, Any], server_address: str, wandb_entity: str | None) 
         reporters.append(wandb_reporter)
 
     def init_fit_config(server_round: int) -> dict[str, Scalar]:
-        return {"batch_size": config["batch_size"], "for_server_initialization": True}
+        return {"batch_size": config["batch_size"]}
 
     server = FedProxServer(
         client_manager=client_manager,
