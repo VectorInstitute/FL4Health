@@ -10,6 +10,7 @@ from flwr.server.client_proxy import ClientProxy
 from flwr.server.history import History
 from flwr.server.server import EvaluateResultsAndFailures, FitResultsAndFailures, Server, evaluate_clients
 from flwr.server.strategy import Strategy
+from typing_extensions import override
 
 from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
@@ -215,6 +216,7 @@ class FlServer(Server):
         log(INFO, "FL finished in %s", str(elapsed_time))
         return self.history, elapsed_time.total_seconds()
 
+    @override
     def fit(self, num_rounds: int, timeout: float | None) -> tuple[History, float]:
         """
         Run federated learning for a number of rounds. This function also allows the server to perform some operations
@@ -260,6 +262,7 @@ class FlServer(Server):
 
         return history, elapsed_time
 
+    @override
     def fit_round(
         self,
         server_round: int,
@@ -339,6 +342,7 @@ class FlServer(Server):
 
         return sample_counts
 
+    @override
     def evaluate_round(
         self,
         server_round: int,
@@ -472,6 +476,7 @@ class FlServer(Server):
         """
         self.checkpoint_and_state_module.maybe_checkpoint(self.parameters, loss_aggregated, metrics_aggregated)
 
+    @override
     def _get_initial_parameters(self, server_round: int, timeout: float | None) -> Parameters:
         """
         Get initial parameters from one of the available clients. This function is the same as the parent function
