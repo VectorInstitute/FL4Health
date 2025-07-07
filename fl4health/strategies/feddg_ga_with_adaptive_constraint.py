@@ -90,8 +90,8 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
 
         self.previous_loss = float("inf")
 
-        self.server_model_weights = parameters_to_ndarrays(initial_parameters)
-        initial_parameters.tensors.extend(ndarrays_to_parameters([np.array(initial_loss_weight)]).tensors)
+        if initial_parameters:
+            self.add_auxiliary_information(initial_parameters)
 
         super().__init__(
             min_fit_clients=min_fit_clients,
@@ -110,6 +110,18 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
 
         self.parameter_packer = ParameterPackerAdaptiveConstraint()
         self.weighted_train_losses = weighted_train_losses
+
+    def add_auxiliary_information(self, original_parameters: Parameters) -> None:
+        """
+        Function for adding in the ``loss_weight`` to the provided set of parameters. This function is meant to be
+        called after a server requests model weight initialization from a client, allowing the proper information to
+        be included with the model parameters when sent to all clients for model initialization etc.
+
+        Args:
+            original_parameters (Parameters): Original set of parameters provided by a client for model weight
+                initialization
+        """
+        original_parameters.tensors.extend(ndarrays_to_parameters([np.array(self.loss_weight)]).tensors)
 
     def aggregate_fit(
         self,

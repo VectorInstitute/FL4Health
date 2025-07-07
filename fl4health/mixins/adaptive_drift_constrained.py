@@ -1,7 +1,7 @@
 """AdaptiveDriftConstrainedMixin."""
 
 import warnings
-from logging import INFO, WARN
+from logging import INFO, WARNING
 from typing import Any, Protocol, runtime_checkable
 
 import torch
@@ -28,6 +28,8 @@ class AdaptiveDriftConstrainedProtocol(FlexibleClientProtocol, Protocol):
     parameter_exchanger: FullParameterExchangerWithPacking[float]
 
     def compute_penalty_loss(self) -> torch.Tensor: ...
+
+    def setup_client_and_return_all_model_parameters(self, config: Config) -> NDArrays: ...
 
 
 class AdaptiveDriftConstrainedMixin:
@@ -84,7 +86,7 @@ class AdaptiveDriftConstrainedMixin:
             f"Class {cls.__name__} inherits from AdaptiveDriftConstrainedMixin but none of its other "
             f"base classes is a FlexibleClient. This may cause runtime errors."
         )
-        log(WARN, msg)
+        log(WARNING, msg)
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
     def get_parameters(self: AdaptiveDriftConstrainedProtocol, config: Config) -> NDArrays:
@@ -102,15 +104,7 @@ class AdaptiveDriftConstrainedMixin:
             NDArrays: Parameters and training loss packed together into a list of numpy arrays to be sent to the server
         """
         if not self.initialized:
-            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
-
-            # If initialized is False, the server is requesting model parameters from which to initialize all other
-            # clients. As such get_parameters is being called before fit or evaluate, so we must call
-            # setup_client first.
-            self.setup_client(config)
-
-            # Need all parameters even if normally exchanging partial
-            return FullParameterExchanger().push_parameters(self.model, config=config)
+            return self.setup_client_and_return_all_model_parameters(config)
 
         # Make sure the proper components are there
         assert self.model is not None and self.parameter_exchanger is not None and self.loss_for_adaptation is not None
@@ -119,6 +113,39 @@ class AdaptiveDriftConstrainedMixin:
         # Weights and training loss sent to server for aggregation. Training loss is sent because server will
         # decide to increase or decrease the penalty weight, if adaptivity is turned on.
         return self.parameter_exchanger.pack_parameters(model_weights, self.loss_for_adaptation)
+
+    def setup_client_and_return_all_model_parameters(
+        self: AdaptiveDriftConstrainedProtocol, config: Config
+    ) -> NDArrays:
+        """
+        Function used to setup the client using the provided configuration and then exact all model parameters from
+        ``self.model`` and return them. This function is used as a helper for ``get_parameters`` when the client
+        has yet to be initialized.
+
+        Args:
+            config (Config): Configuration to be used  in setting up the client.
+
+        Returns:
+            NDArrays: All parameters associated with the ``self.model`` property of the client.
+        """
+        log(INFO, "Setting up client and providing full model parameters to the server for initialization")
+        if not config:
+            log(
+                WARNING,
+                (
+                    "This client has not yet been initialized and the config is empty. This may cause unexpected "
+                    "failures, as setting up a client typically requires several configuration parameters, "
+                    "including batch_size."
+                ),
+            )
+
+        # If initialized==False, the server is requesting model parameters from which to initialize all other
+        # clients. As such get_parameters is being called before fit or evaluate, so we must call
+        # setup_client first.
+        self.setup_client(config)
+
+        # Need all parameters even if normally exchanging partial
+        return FullParameterExchanger().push_parameters(self.model, config=config)
 
     def set_parameters(
         self: AdaptiveDriftConstrainedProtocol, parameters: NDArrays, config: Config, fitting_round: bool

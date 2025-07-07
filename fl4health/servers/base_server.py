@@ -16,6 +16,7 @@ from fl4health.metrics.base_metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY,
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.servers.polling import poll_clients
+from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 from fl4health.utils.random import generate_hash
 from fl4health.utils.typing import EvaluateFailures, FitFailures
@@ -58,7 +59,14 @@ class FlServer(Server):
             on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to
                 configure how one asks a client to provide parameters from which to initialize all other clients by
                 providing a ``Config`` dictionary. If this is none, then a blank config is sent with the parameter
-                request (which is default behavior for flower servers). Defaults to None.
+                request (which is default behavior for flower servers).
+
+                **NOTE:** If you are using a client defined in this library, passing a blank configuration will ALMOST
+                CERTAINLY fail. This is because asking a client for parameters will almost always require setting up
+                the client, as is done when fitting. In many cases, you can simply pass your ``on_fit_config_fn``
+                function from the strategy to as this argument as well.
+
+                Defaults to None.
             server_name (str | None, optional): An optional string name to uniquely identify server. This name is also
                 used as part of any state checkpointing done by the server. Defaults to None.
             accept_failures (bool, optional): Determines whether the server should accept failures during training or
@@ -483,6 +491,14 @@ class FlServer(Server):
         log(INFO, "Requesting initial parameters from one random client")
         random_client = self._client_manager.sample(1)[0]
         if self.on_init_parameters_config_fn is None:
+            log(
+                WARNING,
+                (
+                    "on_init_parameters_config_fn is None. Please ensure that this is expected behavior. When using "
+                    "clients from the FL4Health library this will generally fail. See class documentation of this "
+                    "parameter for additional details."
+                ),
+            )
             # An empty configuration is the default for Flower servers
             ins = GetParametersIns(config={})
         else:
@@ -495,7 +511,13 @@ class FlServer(Server):
                 WARNING,
                 "Failed to receive initial parameters from the client. Empty initial parameters will be used.",
             )
-        return get_parameters_res.parameters
+
+        initial_parameters = get_parameters_res.parameters
+        if isinstance(self.strategy, BasicFedAvg):
+            # Potentially add auxiliary information if necessary.
+            self.strategy.add_auxiliary_information(initial_parameters)
+
+        return initial_parameters
 
     def _unpack_metrics(
         self, results: list[tuple[ClientProxy, EvaluateRes]]

@@ -11,7 +11,6 @@ from torch.optim import Optimizer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.adaptive_drift_constraint_client import AdaptiveDriftConstraintClient
 from fl4health.metrics.base_metrics import Metric
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
@@ -136,20 +135,8 @@ class DittoClient(AdaptiveDriftConstraintClient):
             NDArrays: **GLOBAL** model weights to be sent to the server for aggregation
         """
         if not self.initialized:
-            log(
-                INFO,
-                "Setting up client and providing full model parameters to the server for initialization",
-            )
+            return self.setup_client_and_return_all_model_parameters(config)
 
-            # If initialized==False, the server is requesting model parameters from which to initialize all other
-            # clients. As such get_parameters is being called before fit or evaluate, so we must call
-            # setup_client first.
-            self.setup_client(config)
-
-            # Need all parameters even if normally exchanging partial. Since the global and local models are the same
-            # architecture, it doesn't matter which we choose as an initializer. The global and local models are set
-            # to the same weights in initialize_all_model_weights
-            return FullParameterExchanger().push_parameters(self.model, config=config)
         assert self.global_model is not None and self.parameter_exchanger is not None
         # NOTE: the global model weights are sent to the server here.
         global_model_weights = self.parameter_exchanger.push_parameters(self.global_model, config=config)

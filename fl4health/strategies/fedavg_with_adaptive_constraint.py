@@ -2,7 +2,7 @@ from collections.abc import Callable
 from logging import INFO, WARNING
 
 import numpy as np
-from flwr.common import MetricsAggregationFn, NDArrays, Parameters, ndarrays_to_parameters, parameters_to_ndarrays
+from flwr.common import MetricsAggregationFn, NDArrays, Parameters, ndarrays_to_parameters
 from flwr.common.logger import log
 from flwr.common.typing import FitRes, Scalar
 from flwr.server.client_proxy import ClientProxy
@@ -102,8 +102,7 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
         self.previous_loss = float("inf")
 
         if initial_parameters:
-            self.server_model_weights = parameters_to_ndarrays(initial_parameters)
-            initial_parameters.tensors.extend(ndarrays_to_parameters([np.array(initial_loss_weight)]).tensors)
+            self.add_auxiliary_information(initial_parameters)
 
         super().__init__(
             fraction_fit=fraction_fit,
@@ -123,6 +122,18 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
         )
         self.parameter_packer = ParameterPackerAdaptiveConstraint()
         self.weighted_train_losses = weighted_train_losses
+
+    def add_auxiliary_information(self, original_parameters: Parameters) -> None:
+        """
+        Function for adding in the ``loss_weight`` to the provided set of parameters. This function is meant to be
+        called after a server requests model weight initialization from a client, allowing the proper information to
+        be included with the model parameters when sent to all clients for model initialization etc.
+
+        Args:
+            original_parameters (Parameters): Original set of parameters provided by a client for model weight
+                initialization
+        """
+        original_parameters.tensors.extend(ndarrays_to_parameters([np.array(self.loss_weight)]).tensors)
 
     def aggregate_fit(
         self,

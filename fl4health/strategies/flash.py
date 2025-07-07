@@ -31,7 +31,7 @@ class Flash(BasicFedAvg):
         on_fit_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         on_evaluate_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
-        initial_parameters: Parameters,
+        initial_parameters: Parameters | None,
         fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         evaluate_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         eta: float = 1e-1,
@@ -48,7 +48,7 @@ class Flash(BasicFedAvg):
         Implementation based on https://proceedings.mlr.press/v202/panchal23a/panchal23a.pdf
 
         Args:
-            initial_parameters (Parameters): Initial global model parameters.
+            initial_parameters (Parameters | None): Initial global model parameters.
             fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0.
             fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.
             min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2.
@@ -76,6 +76,9 @@ class Flash(BasicFedAvg):
                 averages or a uniform average. Flash default is a uniform average of the losses by dividing
                 the total loss by the number of clients. Defaults to False.
         """
+        if initial_parameters:
+            self.current_weights = parameters_to_ndarrays(initial_parameters)
+
         super().__init__(
             fraction_fit=fraction_fit,
             fraction_evaluate=fraction_evaluate,
@@ -92,7 +95,6 @@ class Flash(BasicFedAvg):
             weighted_aggregation=weighted_aggregation,
             weighted_eval_losses=weighted_eval_losses,
         )
-        self.current_weights = parameters_to_ndarrays(initial_parameters)
         self.eta = eta
         self.eta_l = eta_l
         self.tau = tau
@@ -106,6 +108,19 @@ class Flash(BasicFedAvg):
     def __repr__(self) -> str:
         """Compute a string representation of the strategy."""
         return f"Flash(accept_failures={self.accept_failures})"
+
+    def add_auxiliary_information(self, original_parameters: Parameters) -> None:
+        """
+        Function for saving the ``original_parameters`` as the current weights after asking a client for model
+        weight initialization. Unlike other strategies that leverage this function, we don't need to pack in new
+        information, just save the client-side initialized model parameters.
+
+        Args:
+            original_parameters (Parameters): Original set of parameters provided by a client for model weight
+                initialization
+        """
+        # Copy the model parameters into NDArrays for storage
+        self.current_weights = parameters_to_ndarrays(original_parameters)
 
     def _update_parameters(self, delta_t: NDArrays) -> None:
         """Update m_t, v_t, beta_3, and d_t per-element."""
