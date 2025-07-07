@@ -205,7 +205,7 @@ def test_train_step(
 
 
 @patch.object(_TestDittoedClient, "setup_client")
-@patch("fl4health.mixins.personalized.ditto.FullParameterExchanger")
+@patch("fl4health.mixins.adaptive_drift_constrained.FullParameterExchanger")
 def test_get_parameters_uninitialized(mock_param_exchanger: MagicMock, mock_setup_client: MagicMock) -> None:
     # setup client
     client = _TestDittoedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
