@@ -1,5 +1,5 @@
 # GPFL Example
-This is an example implementation of the GPFL: Simultaneously Learning Global and Personalized Feature Information for Personalized Federated Learning (https://arxiv.org/abs/2308.10279) algorithm on the MNIST dataset.
+This is an example implementation of the [GPFL: Simultaneously Learning Global and Personalized Feature Information for Personalized Federated Learning](https://arxiv.org/abs/2308.10279) algorithm on the MNIST dataset.
 The FL server expects two clients to be spun up (i.e. it will wait until two clients report in before starting training). Each client has the same "local" dataset. I.e. they each load the complete MNIST dataset and therefore have the same training and validation sets. The server uses FedAvg to aggregate the model parameters shared by the clients. FedAvg is also the default server aggregation method used in GPFL paper.
 Note that the model structure used by the clients and server should follow the model base defined in `fl4health.model_bases.gpfl_base`. Three optimizers must be defined in the client in a dictionary with the keys "model", "gce", and "cov", corresponding to the optimizers used for different sub-modules.
 

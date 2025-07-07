@@ -29,11 +29,10 @@ class MnistGpflClient(GpflClient):
         metrics: Sequence[Metric],
         device: torch.device,
         mu: float = 0.01,
-        lambda_parameter: float = 0.01,
+        lam: float = 0.01,
         learning_rate: float = 0.005,
     ) -> None:
-        super().__init__(data_path=data_path, metrics=metrics, device=device, lambda_parameter=lambda_parameter)
-        self.mu: float = mu
+        super().__init__(data_path=data_path, metrics=metrics, device=device, lam=lam, mu=mu)
         self.learning_rate: float = learning_rate
 
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
@@ -51,7 +50,7 @@ class MnistGpflClient(GpflClient):
 
     def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
         return {
-            "model": torch.optim.SGD(self.model.main_module.parameters(), lr=self.learning_rate),
+            "model": torch.optim.SGD(self.model.gpfl_main_module.parameters(), lr=self.learning_rate),
             "gce": torch.optim.SGD(self.model.gce.embedding.parameters(), lr=self.learning_rate, weight_decay=self.mu),
             "cov": torch.optim.SGD(self.model.cov.parameters(), lr=self.learning_rate, weight_decay=self.mu),
         }
@@ -62,7 +61,7 @@ class MnistGpflClient(GpflClient):
             head_module=SequentialLocalPredictionHeadMnist(),
             feature_dim=120,  # This should match the output dimension of the global feature extractor
             num_classes=10,  # Number of classes based on the dataset.
-            apply_flatten_features=True,
+            flatten_features=True,
         )
         return model.to(self.device)
 
@@ -78,7 +77,7 @@ if __name__ == "__main__":
         action="store",
         type=float,
         default=0.01,
-        help="Mu parameter used as weight decay for GEC and CoV optimizers",
+        help="Mu parameter used as weight decay for GCE and CoV optimizers",
     )
     parser.add_argument(
         "--lambda_parameter",
@@ -96,7 +95,7 @@ if __name__ == "__main__":
         [Accuracy("accuracy")],
         device,
         mu=args.mu,
-        lambda_parameter=args.lambda_parameter,
+        lam=args.lambda_parameter,
         learning_rate=args.learning_rate,
     )
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())

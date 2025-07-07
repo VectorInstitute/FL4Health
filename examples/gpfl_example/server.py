@@ -49,7 +49,7 @@ def main(config: dict[str, Any]) -> None:
         head_module=SequentialLocalPredictionHeadMnist(),
         feature_dim=120,  # This should match the output dimension of the global feature extractor
         num_classes=10,  # Number of classes based on the dataset.
-        apply_flatten_features=True,
+        flatten_features=True,
     )
     # To facilitate checkpointing
     parameter_exchanger = FixedLayerExchanger(model.layers_to_exchange())

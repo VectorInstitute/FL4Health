@@ -52,6 +52,20 @@ class SequentiallySplitModel(nn.Module):
         predictions = self.head_module.forward(features)
         return predictions, features
 
+    def features_forward(self, input: torch.Tensor) -> torch.Tensor:
+        """
+        Run a forward pass using the ``base_module`` only, returning the features extracted from it.
+
+        Args:
+            input (torch.Tensor): Input to the model forward pass. Expected to be of shape (``batch_size``, \\*)
+
+        Returns:
+            torch.Tensor: Returns the potentially flatten features tensor from the base module.
+        """
+        features = self.base_module.forward(input)
+
+        return self._flatten_features(features) if self.flatten_features else features
+
     def forward(self, input: torch.Tensor) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]:
         """
         Run a forward pass using the sequentially split modules ``base_module`` -> ``head_module``. Features from the

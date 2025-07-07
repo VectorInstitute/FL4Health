@@ -201,7 +201,8 @@ def get_gpfl_client(
         data_path=Path(""),
         metrics=[Accuracy()],
         device=torch.device("cpu"),
-        lambda_parameter=0.001,
+        lam=0.001,
+        mu=0.001,
     )
     gpfl_model = GpflModel(
         base_module=global_module,
