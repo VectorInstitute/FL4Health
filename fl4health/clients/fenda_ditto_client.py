@@ -182,7 +182,7 @@ class FendaDittoClient(DittoClient):
                     (
                         "This client has not yet been initialized and the config is empty. This may cause unexpected "
                         "failures, as setting up a client typically requires several configuration parameters, "
-                        "including batch_size."
+                        "including batch_size and current_server_round."
                     ),
                 )
             self.setup_client(config)
