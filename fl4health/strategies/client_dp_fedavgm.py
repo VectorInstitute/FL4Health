@@ -117,11 +117,12 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             beta (float, optional): Momentum weight for previous weight updates. If it is 0, there is no momentum.
                 Defaults to 0.9.
         """
-        assert initial_parameters is not None
         assert 0.0 <= clipping_quantile <= 1.0
-        self.current_weights = parameters_to_ndarrays(initial_parameters)
-        # Tacking on the initial clipping bound to be sent to the clients
-        initial_parameters.tensors.append(ndarray_to_bytes(np.array([initial_clipping_bound])))
+        self.clipping_bound = initial_clipping_bound
+
+        if initial_parameters:
+            self.add_auxiliary_information(initial_parameters)
+
         super().__init__(
             fraction_fit=fraction_fit,
             fraction_evaluate=fraction_evaluate,
@@ -142,7 +143,6 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         self.server_learning_rate = server_learning_rate
         self.clipping_learning_rate = clipping_learning_rate
         self.clipping_quantile = clipping_quantile
-        self.clipping_bound = initial_clipping_bound
         self.weight_noise_multiplier = weight_noise_multiplier
         self.clipping_noise_multiplier = clipping_noise_multiplier
         self.beta = beta
@@ -163,6 +163,21 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             str: Printable representation of the object.
         """
         return f"ClientLevelDPFedAvgM(accept_failures={self.accept_failures})"
+
+    def add_auxiliary_information(self, original_parameters: Parameters) -> None:
+        """
+        Function for adding in the ``clipping_bound`` to the provided set of parameters. This function is meant to be
+        called after a server requests model weight initialization from a client, allowing the proper information to
+        be included with the model parameters when sent to all clients for model initialization etc.
+
+        Args:
+            original_parameters (Parameters): Original set of parameters provided by a client for model weight
+                initialization
+        """
+        # Copy the model parameters into NDArrays for storage
+        self.current_weights = parameters_to_ndarrays(original_parameters)
+        # Add the clipping bound to the original parameters
+        original_parameters.tensors.append(ndarray_to_bytes(np.array([self.clipping_bound])))
 
     def modify_noise_multiplier(self) -> float:
         """

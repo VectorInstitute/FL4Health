@@ -104,6 +104,20 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         self.weighted_aggregation = weighted_aggregation
         self.weighted_eval_losses = weighted_eval_losses
 
+    def add_auxiliary_information(self, original_parameters: Parameters) -> None:
+        """
+        Identity function for the BasicFedAvg strategy. This function is made available for override in more complex
+        FL strategies to allow for the strategies to add auxiliary information to sets of parameters. This function
+        is specifically designed to allow addition to parameters initialized by the server calling out to a client for
+        weight initialization.
+
+        Here we need not add anything. So no modifications are made.
+
+        Args:
+            original_parameters (Parameters): Original set of parameters
+        """
+        pass
+
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
     ) -> list[tuple[ClientProxy, FitIns]]:

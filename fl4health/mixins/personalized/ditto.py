@@ -246,20 +246,8 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             NDArrays: **GLOBAL** model weights to be sent to the server for aggregation
         """
         if not self.initialized:
-            log(
-                INFO,
-                "Setting up client and providing full model parameters to the server for initialization",
-            )
+            return self.setup_client_and_return_all_model_parameters(config)
 
-            # If initialized==False, the server is requesting model parameters from which to initialize all other
-            # clients. As such get_parameters is being called before fit or evaluate, so we must call
-            # setup_client first.
-            self.setup_client(config)
-
-            # Need all parameters even if normally exchanging partial. Since the global and local models are the same
-            # architecture, it doesn't matter which we choose as an initializer. The global and local models are set
-            # to the same weights in initialize_all_model_weights
-            return FullParameterExchanger().push_parameters(self.model, config=config)
         # NOTE: the global model weights are sent to the server here.
         if self.global_model is None:
             raise ValueError("Unable to get parameters with unset global model.")

@@ -1,17 +1,14 @@
 import copy
 from collections.abc import Sequence
-from logging import INFO
 from pathlib import Path
 
 import torch
-from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 from torch import nn
 
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.metrics.base_metrics import Metric
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.partial_parameter_exchanger import PartialParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
@@ -119,18 +116,8 @@ class PartialWeightExchangeClient(BasicClient):
             NDArrays: The list of weights to be sent to the server from the client
         """
         if not self.initialized:
-            log(
-                INFO,
-                "Setting up client and providing full model parameters to the server for initialization",
-            )
+            return self.setup_client_and_return_all_model_parameters(config)
 
-            # If initialized==False, the server is requesting model parameters from which to initialize all other
-            # clients. As such get_parameters is being called before fit or evaluate, so we must call
-            # setup_client first.
-            self.setup_client(config)
-
-            # Need all parameters even if normally exchanging partial
-            return FullParameterExchanger().push_parameters(self.model, config=config)
         assert self.model is not None and self.parameter_exchanger is not None
         return self.parameter_exchanger.push_parameters(self.model, self.initial_model, config=config)
 
@@ -139,8 +126,8 @@ class PartialWeightExchangeClient(BasicClient):
         Sets the local model parameters transferred from the server using a parameter exchanger to coordinate how
         parameters are set.
 
-        In the first fitting round, we assume the full model is being
-        initialized and use the ``FullParameterExchanger()`` to set all model weights.
+        In the first fitting round, we assume the full model is being initialized and use the
+        ``FullParameterExchanger()`` to set all model weights.
 
         In other times, this approach uses a partial weight exchanger to set model weights.
 

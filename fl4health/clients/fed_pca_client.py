@@ -1,6 +1,6 @@
 import random
 import string
-from logging import INFO
+from logging import INFO, WARNING
 from pathlib import Path
 
 import torch
@@ -67,13 +67,24 @@ class FedPCAClient(NumPyClient):
         """
         if not self.initialized:
             log(INFO, "Setting up client and providing full model parameters to the server for initialization")
+            if not config:
+                log(
+                    WARNING,
+                    (
+                        "This client has not yet been initialized and the config is empty. This may cause unexpected "
+                        "failures, as setting up a client typically requires several configuration parameters, "
+                        "including batch_size."
+                    ),
+                )
 
-            # If initialized==False, the server is requesting model parameters from which to initialize all other
+            # If initialized is False, the server is requesting model parameters from which to initialize all other
             # clients. As such get_parameters is being called before fit or evaluate, so we must call
             # setup_client first.
             self.setup_client(config)
+
             # Need all parameters even if normally exchanging partial
             return FullParameterExchanger().push_parameters(self.model, config=config)
+
         assert self.model is not None and self.parameter_exchanger is not None
         return self.parameter_exchanger.push_parameters(self.model, config=config)
 

@@ -10,7 +10,6 @@ from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.losses.weight_drift_loss import WeightDriftLoss
 from fl4health.metrics.base_metrics import Metric
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
@@ -95,15 +94,7 @@ class AdaptiveDriftConstraintClient(BasicClient):
             NDArrays: Parameters and training loss packed together into a list of numpy arrays to be sent to the server
         """
         if not self.initialized:
-            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
-
-            # If initialized is False, the server is requesting model parameters from which to initialize all other
-            # clients. As such get_parameters is being called before fit or evaluate, so we must call
-            # setup_client first.
-            self.setup_client(config)
-
-            # Need all parameters even if normally exchanging partial
-            return FullParameterExchanger().push_parameters(self.model, config=config)
+            return self.setup_client_and_return_all_model_parameters(config)
 
         # Make sure the proper components are there
         assert self.model is not None and self.parameter_exchanger is not None and self.loss_for_adaptation is not None
