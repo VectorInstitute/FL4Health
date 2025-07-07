@@ -3,7 +3,7 @@ import re
 import pytest
 import torch
 
-from fl4health.metrics.efficient_metrics_base import MetricOutcome, MultiClassificationMetric
+from fl4health.metrics.efficient_metrics_base import ClassificationOutcome, MultiClassificationMetric
 from fl4health.utils.random import set_all_random_seeds
 
 
@@ -165,7 +165,7 @@ def test_classification_metric_counts() -> None:
     targets = torch.Tensor([0, 0, 2, 0, 2])
     # preds are vector encoded and need to be thresholded and targets are label encoded
     classification_metric = MultiClassificationMetric(
-        name="metric", batch_dim=0, label_dim=1, threshold=1, discard={MetricOutcome.FALSE_NEGATIVE}
+        name="metric", batch_dim=0, label_dim=1, threshold=1, discard={ClassificationOutcome.FALSE_NEGATIVE}
     )
     classification_metric.update(logits, targets)
 
