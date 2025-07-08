@@ -41,7 +41,8 @@ class Gce(nn.Module):
         # Invoke the forward of the embedding layer to make sure the computation graph is connected
         # and embedding parameters are updated during the backward pass.
         embeddings = self.embedding(torch.tensor(range(self.num_classes)))
-        cosine = torch.matmul(F.normalize(feature_tensor), F.normalize(embeddings).T)
+        # We are computing the dot product using F.Linear.
+        cosine = F.linear(F.normalize(feature_tensor), F.normalize(embeddings))
         if label.dim() == 1:
             one_hot = torch.zeros(cosine.size())
             one_hot.scatter_(1, label.view(-1, 1).long(), 1)

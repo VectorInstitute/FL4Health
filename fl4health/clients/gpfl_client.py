@@ -170,27 +170,21 @@ class GpflClient(BasicClient):
         self.feature_dim = self.model.feature_dim
         # class_sample_proportion tensor is used to compute personalized conditional input.
         self.class_sample_proportion = torch.zeros(self.num_classes, device=self.device)
-        # target_one_hot_encoded is a tensor that stores all the targets in one-hot encoded format.
-        target_one_hot_encoded = torch.Tensor([]).to(self.device)
-        # Populate ``target_one_hot_encoded`` by one-hot encoded targets.
         one_hot_n_dim = 2  # To avoid having magic numbers
         for _, target in self.train_loader:
             if target.dim() == one_hot_n_dim:  # Target is one-hot encoded
                 assert target.shape[1] == self.num_classes, (
                     "Shape of the one-hot encoded labels should be (batch_size, num_classes)."
                 )
-                target_one_hot_encoded = torch.cat((target_one_hot_encoded, target.to(self.device)), dim=0)
             else:  # Target is not one-hot encoded
-                target_one_hot_encoded = torch.cat(
-                    (
-                        target_one_hot_encoded,
-                        torch.nn.functional.one_hot(target, num_classes=self.num_classes).to(self.device),
-                    ),
-                    dim=0,
-                )
-        # Compute the proportion of samples for each class by summing the one-hot encoded targets along each column
-        # (which gives the count of samples per class), then dividing by the total number of samples (sum of all ones).
-        self.class_sample_proportion = target_one_hot_encoded.sum(0) / target_one_hot_encoded.sum()
+                target = torch.nn.functional.one_hot(target, num_classes=self.num_classes).to(self.device)
+
+            # Compute the proportion of samples for each class by summing the one-hot encoded targets along each column
+            # which gives the count of samples per class.
+            self.class_sample_proportion += target.sum(0)
+
+        # Divide the number of samples per class by the total number of samples (sum of all ones).
+        self.class_sample_proportion /= self.class_sample_proportion.sum()
 
         # Initiate g(global_conditional_input) and p_i(personalized_conditional_input) tensors.
         self.global_conditional_input = torch.zeros(self.feature_dim, device=self.device)
