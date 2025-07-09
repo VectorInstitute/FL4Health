@@ -127,8 +127,17 @@ class GpflClient(BasicClient):
         optimizers = self.get_optimizer(config)
         assert isinstance(optimizers, dict) and {"model", "gce", "cov"} == set(optimizers.keys()), (
             "Three optimizers must be defined with keys 'model', 'gce', and 'cov'. Now, only "
-            f"{optimizers.keys()} optimizers "
+            f"{optimizers.keys()} optimizers are defined."
         )
+        # If user has specified weight decay for the GCE or CoV optimizers,
+        # we will log a warning before overwriting these values with mu.
+        user_gce_weight_decay: float = optimizers["gce"].param_groups[0].get("weight_decay", 0.0)
+        user_cov_weight_decay: float = optimizers["cov"].param_groups[0].get("weight_decay", 0.0)
+        if user_gce_weight_decay != 0.0 or user_cov_weight_decay != 0.0:
+            log(
+                WARNING,
+                "Your gce or cov optimizer weight decay will be overwritten by the mu parameter.",
+            )
         # Set the weight decay for the GCE and CoV optimizers to self.mu to enable
         # L2 regularization in the loss.
         log(INFO, f"Setting the GCE optimizer's weight decay to mu = {self.mu}")
