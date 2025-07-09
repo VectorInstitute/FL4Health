@@ -443,6 +443,9 @@ async def test_gpfl(tolerance: float) -> None:
         client_python_path="examples.gpfl_example.client",
         config_path="tests/smoke_tests/gpfl_config.yaml",
         dataset_path="examples/datasets/mnist_data/",
+        seed=42,
+        server_metrics=load_metrics_from_file("tests/smoke_tests/gpfl_server_metrics.json"),
+        client_metrics=load_metrics_from_file("tests/smoke_tests/gpfl_client_metrics.json"),
         tolerance=tolerance,
     )
     task = asyncio.create_task(coroutine)

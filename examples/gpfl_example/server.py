@@ -15,10 +15,12 @@ from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateMo
 from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.model_bases.gpfl_base import GpflModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
+from fl4health.reporting import JsonReporter
 from fl4health.servers.base_server import FlServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config, make_dict_with_epochs_or_steps
 from fl4health.utils.parameter_extraction import get_all_model_parameters
+from fl4health.utils.random import set_all_random_seeds
 
 
 def fit_config(
@@ -79,6 +81,7 @@ def main(config: dict[str, Any]) -> None:
         client_manager=SimpleClientManager(),
         fl_config=config,
         strategy=strategy,
+        reporters=[JsonReporter()],
         checkpoint_and_state_module=checkpoint_and_state_module,
         accept_failures=False,
     )
@@ -88,6 +91,8 @@ def main(config: dict[str, Any]) -> None:
         server_address="0.0.0.0:8080",
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
+    # Make sure to shutdown the server to save the metrics reports.
+    server.shutdown()
 
 
 if __name__ == "__main__":
@@ -99,8 +104,16 @@ if __name__ == "__main__":
         help="Path to configuration file.",
         default="examples/gpfl_example/config.yaml",
     )
+    parser.add_argument(
+        "--seed",
+        action="store",
+        type=int,
+        help="Seed for the random number generators across python, torch, and numpy",
+        required=False,
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
-
+    # Set the random seed for reproducibility
+    set_all_random_seeds(args.seed)
     main(config)

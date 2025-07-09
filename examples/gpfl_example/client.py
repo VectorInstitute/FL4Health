@@ -18,8 +18,11 @@ from fl4health.clients.gpfl_client import GpflClient
 from fl4health.metrics import Accuracy
 from fl4health.metrics.base_metrics import Metric
 from fl4health.model_bases.gpfl_base import GpflModel
+from fl4health.reporting import JsonReporter
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_mnist_data, load_mnist_test_data
+from fl4health.utils.random import set_all_random_seeds
 
 
 class MnistGpflClient(GpflClient):
@@ -28,11 +31,12 @@ class MnistGpflClient(GpflClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
+        reporters: Sequence[BaseReporter] | None = None,
         mu: float = 0.01,
         lam: float = 0.01,
         learning_rate: float = 0.005,
     ) -> None:
-        super().__init__(data_path=data_path, metrics=metrics, device=device, lam=lam, mu=mu)
+        super().__init__(data_path=data_path, metrics=metrics, device=device, reporters=reporters, lam=lam, mu=mu)
         self.learning_rate: float = learning_rate
 
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
@@ -70,6 +74,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="GPFL Client Main")
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
     parser.add_argument(
+        "--seed",
+        action="store",
+        type=int,
+        help="Seed for the random number generators across python, torch, and numpy",
+        required=False,
+    )
+    parser.add_argument(
         "--learning_rate", action="store", type=float, default=0.005, help="Learning rate used for all the optimizers"
     )
     parser.add_argument(
@@ -87,13 +98,15 @@ if __name__ == "__main__":
         help="Lambda parameter used to weight magnitude level global loss",
     )
     args = parser.parse_args()
-
+    # Set the random seed for reproducibility
+    set_all_random_seeds(args.seed)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
     client = MnistGpflClient(
         data_path,
         [Accuracy("accuracy")],
         device,
+        reporters=[JsonReporter()],
         mu=args.mu,
         lam=args.lambda_parameter,
         learning_rate=args.learning_rate,
