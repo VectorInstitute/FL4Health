@@ -5,7 +5,6 @@ from typing import Any
 import flwr as fl
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
-from flwr.server.strategy import FedAvg
 
 from examples.models.sequential_split_models import (
     SequentialGlobalFeatureExtractorMnist,
@@ -17,6 +16,7 @@ from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn
 from fl4health.model_bases.gpfl_base import GpflModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.servers.base_server import FlServer
+from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config, make_dict_with_epochs_or_steps
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 
@@ -62,7 +62,7 @@ def main(config: dict[str, Any]) -> None:
     )
 
     # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedAvg(
+    strategy = BasicFedAvg(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds

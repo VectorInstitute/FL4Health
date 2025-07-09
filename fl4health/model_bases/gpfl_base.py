@@ -68,7 +68,13 @@ class Gce(nn.Module):
         Returns:
             torch.Tensor: The class embeddings corresponding to the provided targets.
         """
-        self.eval()
+        if self.training:
+            log(
+                WARNING,
+                "Lookup method should not be used for training. "
+                "This method is intended for the purpose of embedding lookup, and "
+                "does not invoke the forward pass.",
+            )
         one_hot_n_dim = 2  # To avoid having magic numbers
         if target.dim() == one_hot_n_dim:
             assert target.shape[1] == self.num_classes, (
@@ -118,7 +124,7 @@ class CoV(nn.Module):
 
         Args:
             feature_tensor (torch.Tensor): Output of the base feature extractor.
-            context (torch.Tensor): The conditional tensor that could be generic or personalized.
+            context (torch.Tensor): The conditional tensor that could be global or personalized.
 
         Returns:
             torch.Tensor: The transformed feature tensor after applying the conditional affine transformation.
@@ -149,7 +155,7 @@ class GpflBaseAndHeadModules(SequentiallySplitExchangeBaseModel):
 
     def forward(self, input: torch.Tensor) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]:
         """
-        A wrapper around the default sequential forward pass of the GPFL model base to warn the user.
+        A wrapper around the default sequential forward pass of the GPFL model base to restrict its usage.
 
         Args:
             input (torch.Tensor): Input to the model forward pass.
@@ -158,12 +164,8 @@ class GpflBaseAndHeadModules(SequentiallySplitExchangeBaseModel):
             tuple[torch.Tensor, torch.Tensor]: Return the prediction dictionary and a features
             dictionaries.
         """
-        log(
-            WARNING,
-            "Using the default sequential forward pass of the GPFL model base."
-            " Consider using the `features_forward` method instead, and pass the feature through the CoV module.",
-        )
-        return super().forward(input)
+        # Throw an error because this function should not directly be called with this class.
+        raise NotImplementedError("Forward pass should not be used for the GpflBaseAndHeadModules class. ")
 
 
 class GpflModel(PartialLayerExchangeModel):
@@ -240,13 +242,12 @@ class GpflModel(PartialLayerExchangeModel):
         # Pass the input through the base feature extractor and potentially flatten the features.
         features = self.gpfl_main_module.features_forward(input)
         assert features.shape[1] == self.feature_dim, (
-            "Feature dimension mismatch between output of the base module\
-         and the expected feature_dim by CoV."
+            "Feature dimension mismatch between output of the base module and the expected feature_dim by CoV."
         )
         local_features = self.cov(features, personalized_conditional_input)
         assert local_features.shape[1] == self.feature_dim, (
-            "Local feature dimension mismatch between output of the CoV module\
-         and the expected feature_dim by the head module."
+            "Local feature dimension mismatch between output of the CoV module "
+            "and the expected feature_dim by the head module."
         )
         predictions = self.gpfl_main_module.head_module.forward(local_features)
         if not self.training:

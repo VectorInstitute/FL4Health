@@ -1,10 +1,11 @@
 from collections.abc import Sequence
-from logging import WARNING
+from logging import INFO, WARNING
 from pathlib import Path
 
 import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config
+from torch.nn.functional import one_hot
 from torch.optim import Optimizer
 
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
@@ -91,6 +92,7 @@ class GpflClient(BasicClient):
                 WARNING,
                 "Lambda parameter is set to 0.0, which means that the magnitude-level global loss will not be used.",
             )
+        # If self.mu is set to 0.0, it means user does not want to use L2 regularization.
         if self.mu == 0.0:
             log(
                 WARNING,
@@ -124,19 +126,18 @@ class GpflClient(BasicClient):
         """
         optimizers = self.get_optimizer(config)
         assert isinstance(optimizers, dict) and {"model", "gce", "cov"} == set(optimizers.keys()), (
-            "Three optimizers must be defined with keys 'model', 'gce', and 'cov'. At least one is missing now."
+            "Three optimizers must be defined with keys 'model', 'gce', and 'cov'. Now, only "
+            f"{optimizers.keys()} optimizers "
         )
-        gce_weight_decay: float = optimizers["gce"].param_groups[0].get("weight_decay", 0.0)
-        cov_weight_decay: float = optimizers["cov"].param_groups[0].get("weight_decay", 0.0)
-        # if self.mu is set to 0.0, it means user does not want to use L2 regularization.
-        if self.mu not in {0.0, gce_weight_decay}:
-            log(WARNING, "GCE optimizer's weight decay is not set to mu. Setting it now.")
-            for param_group in optimizers["gce"].param_groups:
-                param_group["weight_decay"] = self.mu
-        if self.mu not in {0.0, cov_weight_decay}:
-            log(WARNING, "CoV optimizer's weight decay is not set to mu. Setting it now.")
-            for param_group in optimizers["cov"].param_groups:
-                param_group["weight_decay"] = self.mu
+        # Set the weight decay for the GCE and CoV optimizers to self.mu to enable
+        # L2 regularization in the loss.
+        log(INFO, f"Setting the GCE optimizer's weight decay to mu = {self.mu}")
+        for param_group in optimizers["gce"].param_groups:
+            param_group["weight_decay"] = self.mu
+
+        log(INFO, f"Setting the CoV optimizer's weight decay to my = {self.mu}")
+        for param_group in optimizers["cov"].param_groups:
+            param_group["weight_decay"] = self.mu
         self.optimizers = optimizers
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
@@ -153,11 +154,37 @@ class GpflClient(BasicClient):
         assert isinstance(self.model, GpflModel)
         return FixedLayerExchanger(self.model.layers_to_exchange())
 
+    def calculate_class_sample_proportions(self) -> torch.Tensor:
+        """
+        This method is used to compute the class sample proportions based on the training data.
+        It computes the proportion of samples for each class in the training dataset.
+
+        Returns:
+            torch.Tensor: A tensor containing the proportion of samples for each class.
+        """
+        class_sample_proportion = torch.zeros(self.num_classes, device=self.device)
+        one_hot_n_dim = 2  # To avoid having magic numbers
+        for _, target in self.train_loader:
+            if target.dim() == one_hot_n_dim:  # Target is one-hot encoded
+                assert target.shape[1] == self.num_classes, (
+                    "Shape of the one-hot encoded labels should be (batch_size, num_classes)."
+                )
+            else:  # Target is not one-hot encoded
+                target = one_hot(target, num_classes=self.num_classes).to(self.device)
+
+            # Compute the proportion of samples for each class by summing the one-hot encoded targets along each column
+            # which gives the count of samples per class.
+            class_sample_proportion += target.sum(0)
+
+        # Divide the number of samples per class by the total number of samples (sum of all ones).
+        class_sample_proportion /= class_sample_proportion.sum()
+        return class_sample_proportion
+
     def setup_client(self, config: Config) -> None:
         """
         In addition to dataloaders, optimizers, parameter exchangers, a few GPFL specific parameters
         are set up in this method. This includes the number of classes, feature dimension,
-        and the sample per class tensor. The generic and personalized conditional inputs are also initialized.
+        and the sample per class tensor. The global and personalized conditional inputs are also initialized.
 
         Args:
             config (Config): The config from the server.
@@ -169,26 +196,7 @@ class GpflClient(BasicClient):
         self.num_classes = self.model.num_classes
         self.feature_dim = self.model.feature_dim
         # class_sample_proportion tensor is used to compute personalized conditional input.
-        self.class_sample_proportion = torch.zeros(self.num_classes, device=self.device)
-        one_hot_n_dim = 2  # To avoid having magic numbers
-        for _, target in self.train_loader:
-            if target.dim() == one_hot_n_dim:  # Target is one-hot encoded
-                assert target.shape[1] == self.num_classes, (
-                    "Shape of the one-hot encoded labels should be (batch_size, num_classes)."
-                )
-            else:  # Target is not one-hot encoded
-                target = torch.nn.functional.one_hot(target, num_classes=self.num_classes).to(self.device)
-
-            # Compute the proportion of samples for each class by summing the one-hot encoded targets along each column
-            # which gives the count of samples per class.
-            self.class_sample_proportion += target.sum(0)
-
-        # Divide the number of samples per class by the total number of samples (sum of all ones).
-        self.class_sample_proportion /= self.class_sample_proportion.sum()
-
-        # Initiate g(global_conditional_input) and p_i(personalized_conditional_input) tensors.
-        self.global_conditional_input = torch.zeros(self.feature_dim, device=self.device)
-        self.personalized_conditional_input = torch.zeros(self.feature_dim, device=self.device)
+        self.class_sample_proportion = self.calculate_class_sample_proportions()
 
     def compute_conditional_inputs(self) -> None:
         """
@@ -197,6 +205,7 @@ class GpflClient(BasicClient):
         based on a frozen GCE model and the sample per class tensor. These tensors are fixed in each client round,
         and are recomputed when a new GCE module is shared by the server in every client round.
         """
+        # Initiate g(global_conditional_input) and p_i(personalized_conditional_input) tensors to zeros.
         self.global_conditional_input = torch.zeros(self.feature_dim).to(self.device)
         self.personalized_conditional_input = torch.zeros(self.feature_dim).to(self.device)
 
@@ -205,8 +214,10 @@ class GpflClient(BasicClient):
             self.global_conditional_input += embedding
             self.personalized_conditional_input += embedding * self.class_sample_proportion[i]
 
-        self.global_conditional_input /= self.num_classes
-        self.personalized_conditional_input /= self.num_classes
+        self.global_conditional_input = embeddings.sum(0) / self.num_classes
+        self.personalized_conditional_input = (
+            torch.matmul(embeddings.T, self.class_sample_proportion) / self.num_classes
+        )
 
     def update_before_train(self, current_server_round: int) -> None:
         """
@@ -233,7 +244,7 @@ class GpflClient(BasicClient):
         Returns:
             TorchInputType: Transformed input tensor.
         """
-        # Attach the generic and personalized conditional inputs to the input
+        # Attach the global and personalized conditional inputs to the input
         if isinstance(input, torch.Tensor):
             return {
                 "input": input,
@@ -289,7 +300,7 @@ class GpflClient(BasicClient):
         target: TorchTargetType,
     ) -> torch.Tensor:
         """
-        Computes magnitude level loss corresponds to $\\mathcal{L}_i^{\text{mlg}}$ in the paper.
+        Computes magnitude level loss corresponds to :math:`\\mathcal{L}_i^{\text{mlg}}` in the paper.
 
         Args:
             global_features (torch.Tensor): global features computed in this client.
@@ -326,9 +337,9 @@ class GpflClient(BasicClient):
         # The loss used during training is a combination of the prediction loss (CrossEntropy used in the paper),
         # angel-level (GCE loss) and magnitude-level global losses.
         prediction_loss, _ = self.compute_loss_and_additional_losses(preds, features, target)
-        # ``gce_softmax_loss`` corresponds to $\mathcal{L}_i^{\text{alg}}$ in the paper.
+        # ``gce_softmax_loss`` corresponds to \mathcal{L}_i^{\text{alg}} in the paper.
         gce_softmax_loss = self.model.gce(features["global_features"], target)
-        # ``magnitude_level_loss`` corresponds to $\mathcal{L}_i^{\text{mlg}}$ in the paper.
+        # ``magnitude_level_loss`` corresponds to \mathcal{L}_i^{\text{mlg}} in the paper.
         magnitude_level_loss = self.compute_magnitude_level_loss(features["global_features"], target)
         # Note that L2 regularization terms are included in the optimizers.
         loss = prediction_loss + gce_softmax_loss + magnitude_level_loss * self.lam
@@ -341,7 +352,7 @@ class GpflClient(BasicClient):
 
     def val_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[EvaluationLosses, TorchPredType]:
         """
-        Before performing validation, we need to transform the input and attach the generic and personalized
+        Before performing validation, we need to transform the input and attach the global and personalized
         conditional tensors to the input.
 
         Args:

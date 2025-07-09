@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 import pytest
 import torch
+from torch.nn.functional import one_hot
 from torch.utils.data import DataLoader
 
 from fl4health.clients.gpfl_client import GpflClient
@@ -54,16 +55,14 @@ def test_gpfl_setup_client(get_gpfl_client: GpflClient) -> None:  # noqa
 
         assert client.num_classes == 2
         assert client.feature_dim == 256
-        print(client.class_sample_proportion)
         assert torch.equal(client.class_sample_proportion, torch.Tensor([0.5, 0.5]))
 
         # Test with one-hot encoded labels
-        dummy_one_hot_labels = torch.nn.functional.one_hot(dummy_labels, num_classes=2)
+        dummy_one_hot_labels = one_hot(dummy_labels, num_classes=2)
         print(dummy_one_hot_labels)
         one_hot_train_dataset = TensorDataset(dummy_data, dummy_one_hot_labels)
         client.train_loader = DataLoader(one_hot_train_dataset, batch_size=batch_size, shuffle=True)
         client.setup_client({})
-        print(client.class_sample_proportion)
         assert client.num_classes == 2
         assert client.feature_dim == 256
         assert torch.equal(client.class_sample_proportion, torch.Tensor([0.5, 0.5]))
@@ -99,7 +98,7 @@ def test_compute_conditional_inputs(get_gpfl_client: GpflClient) -> None:  # noq
         "Computed personalized condition does not match the manual calculation."
     )
     assert torch.allclose(client.global_conditional_input, manual_g, atol=1e-6), (
-        "Computed generic condition does not match the manual calculation."
+        "Computed global condition does not match the manual calculation."
     )
 
 
@@ -183,3 +182,29 @@ def test_gpfl_set_optimizer_l2(get_gpfl_client: GpflClient) -> None:  # noqa
         assert gce_weight_decay == client.mu
         cov_weight_decay = client.optimizers["cov"].param_groups[0].get("weight_decay", 0.0)
         assert cov_weight_decay == client.mu
+
+
+@pytest.mark.parametrize("global_module,head_module,feature_dim,num_classes", [(FeatureCnn(), HeadCnn(), 256, 32)])
+def test_calculate_class_sample_proportions(get_gpfl_client: GpflClient) -> None:  # noqa
+    """Test the calculation of class sample proportions."""
+    torch.manual_seed(64)
+    client = get_gpfl_client
+    data_samples = 100
+    batch_size = 10
+    num_classes = 3
+    client.num_classes = num_classes
+    dummy_data = torch.randn(data_samples, 1, 28, 28)
+    dummy_labels = torch.randint(0, num_classes, (data_samples,))
+    train_dataset = TensorDataset(dummy_data, dummy_labels)
+    client.train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    # Assert that the class sample proportions are calculated correctly
+    expected_proportions = torch.tensor([0.3100, 0.3600, 0.3300])
+    assert torch.equal(client.calculate_class_sample_proportions(), expected_proportions)
+
+    # Now test with one-hot encoded labels
+    dummy_one_hot_labels = one_hot(dummy_labels, num_classes=num_classes)
+    one_hot_train_dataset = TensorDataset(dummy_data, dummy_one_hot_labels)
+    client.train_loader = DataLoader(one_hot_train_dataset, batch_size=batch_size, shuffle=True)
+    assert torch.equal(client.calculate_class_sample_proportions(), expected_proportions)
+
+    torch.seed()  # resetting the seed at the end, just to be safe
