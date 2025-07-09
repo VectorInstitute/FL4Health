@@ -549,7 +549,6 @@ class FlServer(Server):
 
         # Get initial parameters from one of the clients
         log(INFO, "Requesting initial parameters from one random client")
-        log(INFO, f"SERVER ROUND:::::::::{server_round}")
         if isinstance(self._client_manager, BaseFractionSamplingManager):
             random_client = self._client_manager.sample_one()[0]
         else:
