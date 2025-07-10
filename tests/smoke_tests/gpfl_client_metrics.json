@@ -6,14 +6,14 @@
             },
             "fit_round_losses": {
                 "backward": 2.9377,
-                "prediction_loss": 0.2499,
-                "magnitude_level_loss": 60.6179,
-                "gce_softmax_loss": 2.0816
+                "prediction_loss": 0.24898,
+                "magnitude_level_loss": 60.6323,
+                "gce_softmax_loss": 2.0824
             },
             "eval_round_metrics": {
                 "val - prediction - accuracy": 0.9396
             },
-            "eval_round_loss": 0.1982
+            "eval_round_loss": 0.1954
         },
         "2": {
             "fit_round_metrics": {
@@ -22,7 +22,7 @@
             "fit_round_losses": {
                 "gce_softmax_loss": 1.9233,
                 "prediction_loss": 0.1157,
-                "magnitude_level_loss": 47.6030,
+                "magnitude_level_loss": 47.6012,
                 "backward": 2.5151
             },
             "eval_round_metrics": {
@@ -35,10 +35,10 @@
                 "train - prediction - accuracy": 0.9725
             },
             "fit_round_losses": {
-                "gce_softmax_loss": 1.8793,
+                "gce_softmax_loss": 1.8773,
                 "prediction_loss": 0.0888,
-                "magnitude_level_loss": 40.0257,
-                "backward": 2.3684
+                "magnitude_level_loss": 39.9928,
+                "backward": 2.3661
             },
             "eval_round_metrics": {
                 "val - prediction - accuracy": 0.9694
