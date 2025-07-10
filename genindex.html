@@ -279,6 +279,7 @@
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.clients.fenda_client.html">fl4health.clients.fenda_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.clients.fenda_ditto_client.html">fl4health.clients.fenda_ditto_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.clients.flash_client.html">fl4health.clients.flash_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.clients.gpfl_client.html">fl4health.clients.gpfl_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.clients.instance_level_dp_client.html">fl4health.clients.instance_level_dp_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.clients.model_merge_client.html">fl4health.clients.model_merge_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.clients.moon_client.html">fl4health.clients.moon_client module</a></li>
@@ -359,6 +360,7 @@
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.model_bases.fedrep_base.html">fl4health.model_bases.fedrep_base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.model_bases.fedsimclr_base.html">fl4health.model_bases.fedsimclr_base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.model_bases.fenda_base.html">fl4health.model_bases.fenda_base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.model_bases.gpfl_base.html">fl4health.model_bases.gpfl_base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.model_bases.moon_base.html">fl4health.model_bases.moon_base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.model_bases.parallel_split_models.html">fl4health.model_bases.parallel_split_models module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.model_bases.partial_layer_exchange_model.html">fl4health.model_bases.partial_layer_exchange_model module</a></li>
@@ -575,6 +577,8 @@
 </li>
           <li><a href="reference/api/fl4health.losses.fenda_loss_config.html#fl4health.losses.fenda_loss_config.CosineSimilarityLossContainer.__init__">(CosineSimilarityLossContainer method)</a>
 </li>
+          <li><a href="reference/api/fl4health.model_bases.gpfl_base.html#fl4health.model_bases.gpfl_base.CoV.__init__">(CoV method)</a>
+</li>
           <li><a href="reference/api/fl4health.preprocessing.autoencoders.dim_reduction.html#fl4health.preprocessing.autoencoders.dim_reduction.CvaeFixedConditionProcessor.__init__">(CvaeFixedConditionProcessor method)</a>
 </li>
           <li><a href="reference/api/fl4health.preprocessing.autoencoders.dim_reduction.html#fl4health.preprocessing.autoencoders.dim_reduction.CvaeVariableConditionProcessor.__init__">(CvaeVariableConditionProcessor method)</a>
@@ -688,6 +692,14 @@
           <li><a href="reference/api/fl4health.parameter_exchange.packing_exchanger.html#fl4health.parameter_exchange.packing_exchanger.FullParameterExchangerWithPacking.__init__">(FullParameterExchangerWithPacking method)</a>
 </li>
           <li><a href="reference/api/fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.FunctionTorchModuleCheckpointer.__init__">(FunctionTorchModuleCheckpointer method)</a>
+</li>
+          <li><a href="reference/api/fl4health.model_bases.gpfl_base.html#fl4health.model_bases.gpfl_base.Gce.__init__">(Gce method)</a>
+</li>
+          <li><a href="reference/api/fl4health.model_bases.gpfl_base.html#fl4health.model_bases.gpfl_base.GpflBaseAndHeadModules.__init__">(GpflBaseAndHeadModules method)</a>
+</li>
+          <li><a href="reference/api/fl4health.clients.gpfl_client.html#fl4health.clients.gpfl_client.GpflClient.__init__">(GpflClient method)</a>
+</li>
+          <li><a href="reference/api/fl4health.model_bases.gpfl_base.html#fl4health.model_bases.gpfl_base.GpflModel.__init__">(GpflModel method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.instance_level_dp_client.html#fl4health.clients.instance_level_dp_client.InstanceLevelDpClient.__init__">(InstanceLevelDpClient method)</a>
 </li>
@@ -1078,6 +1090,8 @@
   <h2>C</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/fl4health.clients.gpfl_client.html#fl4health.clients.gpfl_client.GpflClient.calculate_class_sample_proportions">calculate_class_sample_proportions() (GpflClient method)</a>
+</li>
         <li><a href="reference/api/fl4health.clients.clipping_client.html#fl4health.clients.clipping_client.NumpyClippingClient.calculate_parameters_norm">calculate_parameters_norm() (NumpyClippingClient method)</a>
 </li>
         <li><a href="reference/api/fl4health.strategies.client_dp_fedavgm.html#fl4health.strategies.client_dp_fedavgm.ClientLevelDPFedAvgM.calculate_update_with_momentum">calculate_update_with_momentum() (ClientLevelDPFedAvgM method)</a>
@@ -1164,6 +1178,8 @@
 </li>
         <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_all_h_u_linear">compute_all_h_u_linear() (MkMmdLoss method)</a>
 </li>
+        <li><a href="reference/api/fl4health.clients.gpfl_client.html#fl4health.clients.gpfl_client.GpflClient.compute_conditional_inputs">compute_conditional_inputs() (GpflClient method)</a>
+</li>
         <li><a href="reference/api/fl4health.losses.fenda_loss_config.html#fl4health.losses.fenda_loss_config.ConstrainedFendaLossContainer.compute_contrastive_loss">compute_contrastive_loss() (ConstrainedFendaLossContainer method)</a>
 </li>
         <li><a href="reference/api/fl4health.losses.fenda_loss_config.html#fl4health.losses.fenda_loss_config.ConstrainedFendaLossContainer.compute_cosine_similarity_loss">compute_cosine_similarity_loss() (ConstrainedFendaLossContainer method)</a>
@@ -1248,6 +1264,8 @@
         </ul></li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/fl4health.clients.gpfl_client.html#fl4health.clients.gpfl_client.GpflClient.compute_magnitude_level_loss">compute_magnitude_level_loss() (GpflClient method)</a>
+</li>
         <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss.compute_mkmmd">compute_mkmmd() (MkMmdLoss method)</a>
 </li>
         <li><a href="reference/api/fl4health.losses.contrastive_loss.html#fl4health.losses.contrastive_loss.MoonContrastiveLoss.compute_negative_similarities">compute_negative_similarities() (MoonContrastiveLoss method)</a>
@@ -1286,6 +1304,8 @@
           <li><a href="reference/api/fl4health.clients.fenda_ditto_client.html#fl4health.clients.fenda_ditto_client.FendaDittoClient.compute_training_loss">(FendaDittoClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.compute_training_loss">(FlexibleClientProtocol method)</a>
+</li>
+          <li><a href="reference/api/fl4health.clients.gpfl_client.html#fl4health.clients.gpfl_client.GpflClient.compute_training_loss">(GpflClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.moon_client.html#fl4health.clients.moon_client.MoonClient.compute_training_loss">(MoonClient method)</a>
 </li>
@@ -1378,6 +1398,8 @@
           <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.ClassificationMetric.count_tp_fp_tn_fn">(ClassificationMetric method)</a>
 </li>
         </ul></li>
+        <li><a href="reference/api/fl4health.model_bases.gpfl_base.html#fl4health.model_bases.gpfl_base.CoV">CoV (class in fl4health.model_bases.gpfl_base)</a>
+</li>
         <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.create_plans">create_plans() (NnunetClient method)</a>
 </li>
         <li><a href="reference/api/fl4health.datasets.rxrx1.load_data.html#fl4health.datasets.rxrx1.load_data.create_splits">create_splits() (in module fl4health.datasets.rxrx1.load_data)</a>
@@ -1587,6 +1609,8 @@
         <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.ClassificationOutcome.FALSE_POSITIVE">FALSE_POSITIVE (ClassificationOutcome attribute)</a>
 </li>
         <li><a href="reference/api/fl4health.model_bases.feature_extractor_buffer.html#fl4health.model_bases.feature_extractor_buffer.FeatureExtractorBuffer">FeatureExtractorBuffer (class in fl4health.model_bases.feature_extractor_buffer)</a>
+</li>
+        <li><a href="reference/api/fl4health.model_bases.sequential_split_models.html#fl4health.model_bases.sequential_split_models.SequentiallySplitModel.features_forward">features_forward() (SequentiallySplitModel method)</a>
 </li>
         <li><a href="reference/api/fl4health.strategies.fedavg_dynamic_layer.html#fl4health.strategies.fedavg_dynamic_layer.FedAvgDynamicLayer">FedAvgDynamicLayer (class in fl4health.strategies.fedavg_dynamic_layer)</a>
 </li>
@@ -1928,6 +1952,13 @@
 
         <ul>
           <li><a href="reference/api/fl4health.clients.flexible.base.html#module-fl4health.clients.flexible.base">module</a>
+</li>
+        </ul></li>
+        <li>
+    fl4health.clients.gpfl_client
+
+        <ul>
+          <li><a href="reference/api/fl4health.clients.gpfl_client.html#module-fl4health.clients.gpfl_client">module</a>
 </li>
         </ul></li>
         <li>
@@ -2313,6 +2344,13 @@
 
         <ul>
           <li><a href="reference/api/fl4health.model_bases.fenda_base.html#module-fl4health.model_bases.fenda_base">module</a>
+</li>
+        </ul></li>
+        <li>
+    fl4health.model_bases.gpfl_base
+
+        <ul>
+          <li><a href="reference/api/fl4health.model_bases.gpfl_base.html#module-fl4health.model_bases.gpfl_base">module</a>
 </li>
         </ul></li>
     </ul></td>
@@ -2969,6 +3007,8 @@
 </li>
           <li><a href="reference/api/fl4health.losses.cosine_similarity_loss.html#fl4health.losses.cosine_similarity_loss.CosineSimilarityLoss.forward">(CosineSimilarityLoss method)</a>
 </li>
+          <li><a href="reference/api/fl4health.model_bases.gpfl_base.html#fl4health.model_bases.gpfl_base.CoV.forward">(CoV method)</a>
+</li>
           <li><a href="reference/api/fl4health.losses.deep_mmd_loss.html#fl4health.losses.deep_mmd_loss.DeepMmdLoss.forward">(DeepMmdLoss method)</a>
 </li>
           <li><a href="reference/api/fl4health.model_bases.ensemble_base.html#fl4health.model_bases.ensemble_base.EnsembleModel.forward">(EnsembleModel method)</a>
@@ -2976,6 +3016,12 @@
           <li><a href="reference/api/fl4health.model_bases.fedsimclr_base.html#fl4health.model_bases.fedsimclr_base.FedSimClrModel.forward">(FedSimClrModel method)</a>
 </li>
           <li><a href="reference/api/fl4health.model_bases.fenda_base.html#fl4health.model_bases.fenda_base.FendaModelWithFeatureState.forward">(FendaModelWithFeatureState method)</a>
+</li>
+          <li><a href="reference/api/fl4health.model_bases.gpfl_base.html#fl4health.model_bases.gpfl_base.Gce.forward">(Gce method)</a>
+</li>
+          <li><a href="reference/api/fl4health.model_bases.gpfl_base.html#fl4health.model_bases.gpfl_base.GpflBaseAndHeadModules.forward">(GpflBaseAndHeadModules method)</a>
+</li>
+          <li><a href="reference/api/fl4health.model_bases.gpfl_base.html#fl4health.model_bases.gpfl_base.GpflModel.forward">(GpflModel method)</a>
 </li>
           <li><a href="reference/api/fl4health.model_bases.masked_layers.masked_conv.html#fl4health.model_bases.masked_layers.masked_conv.MaskedConv1d.forward">(MaskedConv1d method)</a>
 </li>
@@ -3067,6 +3113,8 @@
         <li><a href="reference/api/fl4health.strategies.noisy_aggregate.html#fl4health.strategies.noisy_aggregate.gaussian_noisy_unweighted_aggregate">gaussian_noisy_unweighted_aggregate() (in module fl4health.strategies.noisy_aggregate)</a>
 </li>
         <li><a href="reference/api/fl4health.strategies.noisy_aggregate.html#fl4health.strategies.noisy_aggregate.gaussian_noisy_weighted_aggregate">gaussian_noisy_weighted_aggregate() (in module fl4health.strategies.noisy_aggregate)</a>
+</li>
+        <li><a href="reference/api/fl4health.model_bases.gpfl_base.html#fl4health.model_bases.gpfl_base.Gce">Gce (class in fl4health.model_bases.gpfl_base)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.data_generation.html#fl4health.utils.data_generation.SyntheticFedProxDataset.generate">generate() (SyntheticFedProxDataset method)</a>
 </li>
@@ -3206,8 +3254,6 @@
 </li>
         <li><a href="reference/api/fl4health.clients.evaluate_client.html#fl4health.clients.evaluate_client.EvaluateClient.get_local_model">get_local_model() (EvaluateClient method)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.PolyLRSchedulerWrapper.get_lr">get_lr() (PolyLRSchedulerWrapper method)</a>
 </li>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.get_lr_scheduler">get_lr_scheduler() (BasicClient method)</a>
@@ -3216,6 +3262,8 @@
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.get_lr_scheduler">(NnunetClient method)</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.preprocessing.warmed_up_module.html#fl4health.preprocessing.warmed_up_module.WarmedUpModule.get_matching_component">get_matching_component() (WarmedUpModule method)</a>
 </li>
         <li><a href="reference/api/fl4health.feature_alignment.tabular_feature.html#fl4health.feature_alignment.tabular_feature.TabularFeature.get_metadata">get_metadata() (TabularFeature method)</a>
@@ -3255,6 +3303,8 @@
 </li>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.get_optimizer">(FlexibleClientProtocolPreSetup method)</a>
 </li>
+          <li><a href="reference/api/fl4health.clients.gpfl_client.html#fl4health.clients.gpfl_client.GpflClient.get_optimizer">(GpflClient method)</a>
+</li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.get_optimizer">(NnunetClient method)</a>
 </li>
         </ul></li>
@@ -3278,6 +3328,8 @@
           <li><a href="reference/api/fl4health.clients.fedrep_client.html#fl4health.clients.fedrep_client.FedRepClient.get_parameter_exchanger">(FedRepClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.fenda_client.html#fl4health.clients.fenda_client.FendaClient.get_parameter_exchanger">(FendaClient method)</a>
+</li>
+          <li><a href="reference/api/fl4health.clients.gpfl_client.html#fl4health.clients.gpfl_client.GpflClient.get_parameter_exchanger">(GpflClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.model_merge_client.html#fl4health.clients.model_merge_client.ModelMergeClient.get_parameter_exchanger">(ModelMergeClient method)</a>
 </li>
@@ -3341,6 +3393,12 @@
         <li><a href="reference/api/fl4health.model_bases.apfl_base.html#fl4health.model_bases.apfl_base.ApflModule.global_forward">global_forward() (ApflModule method)</a>
 </li>
         <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.global_model">global_model (DittoPersonalizedProtocol attribute)</a>, <a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedProtocol.global_model">[1]</a>
+</li>
+        <li><a href="reference/api/fl4health.model_bases.gpfl_base.html#fl4health.model_bases.gpfl_base.GpflBaseAndHeadModules">GpflBaseAndHeadModules (class in fl4health.model_bases.gpfl_base)</a>
+</li>
+        <li><a href="reference/api/fl4health.clients.gpfl_client.html#fl4health.clients.gpfl_client.GpflClient">GpflClient (class in fl4health.clients.gpfl_client)</a>
+</li>
+        <li><a href="reference/api/fl4health.model_bases.gpfl_base.html#fl4health.model_bases.gpfl_base.GpflModel">GpflModel (class in fl4health.model_bases.gpfl_base)</a>
 </li>
     </ul></td>
   </tr></table>
@@ -3473,6 +3531,8 @@
         <ul>
           <li><a href="reference/api/fl4health.model_bases.fenda_base.html#fl4health.model_bases.fenda_base.FendaModel.layers_to_exchange">(FendaModel method)</a>
 </li>
+          <li><a href="reference/api/fl4health.model_bases.gpfl_base.html#fl4health.model_bases.gpfl_base.GpflModel.layers_to_exchange">(GpflModel method)</a>
+</li>
           <li><a href="reference/api/fl4health.model_bases.partial_layer_exchange_model.html#fl4health.model_bases.partial_layer_exchange_model.PartialLayerExchangeModel.layers_to_exchange">(PartialLayerExchangeModel method)</a>
 </li>
           <li><a href="reference/api/fl4health.model_bases.perfcl_base.html#fl4health.model_bases.perfcl_base.PerFclModel.layers_to_exchange">(PerFclModel method)</a>
@@ -3559,6 +3619,8 @@
         <li><a href="reference/api/fl4health.utils.logging.html#fl4health.utils.logging.LoggingMode">LoggingMode (class in fl4health.utils.logging)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.typing.html#fl4health.utils.typing.LogLevel">LogLevel (class in fl4health.utils.typing)</a>
+</li>
+        <li><a href="reference/api/fl4health.model_bases.gpfl_base.html#fl4health.model_bases.gpfl_base.Gce.lookup">lookup() (Gce method)</a>
 </li>
         <li><a href="reference/api/fl4health.strategies.feddg_ga.html#fl4health.strategies.feddg_ga.FairnessMetricType.LOSS">LOSS (FairnessMetricType attribute)</a>
 </li>
@@ -3776,6 +3838,8 @@
 </li>
           <li><a href="reference/api/fl4health.clients.flexible.base.html#module-fl4health.clients.flexible.base">fl4health.clients.flexible.base</a>
 </li>
+          <li><a href="reference/api/fl4health.clients.gpfl_client.html#module-fl4health.clients.gpfl_client">fl4health.clients.gpfl_client</a>
+</li>
           <li><a href="reference/api/fl4health.clients.instance_level_dp_client.html#module-fl4health.clients.instance_level_dp_client">fl4health.clients.instance_level_dp_client</a>
 </li>
           <li><a href="reference/api/fl4health.clients.mkmmd_clients.html#module-fl4health.clients.mkmmd_clients">fl4health.clients.mkmmd_clients</a>
@@ -3885,6 +3949,8 @@
           <li><a href="reference/api/fl4health.model_bases.fedsimclr_base.html#module-fl4health.model_bases.fedsimclr_base">fl4health.model_bases.fedsimclr_base</a>
 </li>
           <li><a href="reference/api/fl4health.model_bases.fenda_base.html#module-fl4health.model_bases.fenda_base">fl4health.model_bases.fenda_base</a>
+</li>
+          <li><a href="reference/api/fl4health.model_bases.gpfl_base.html#module-fl4health.model_bases.gpfl_base">fl4health.model_bases.gpfl_base</a>
 </li>
           <li><a href="reference/api/fl4health.model_bases.masked_layers.html#module-fl4health.model_bases.masked_layers">fl4health.model_bases.masked_layers</a>
 </li>
@@ -4590,6 +4656,8 @@
 </li>
           <li><a href="reference/api/fl4health.clients.fedrep_client.html#fl4health.clients.fedrep_client.FedRepClient.set_optimizer">(FedRepClient method)</a>
 </li>
+          <li><a href="reference/api/fl4health.clients.gpfl_client.html#fl4health.clients.gpfl_client.GpflClient.set_optimizer">(GpflClient method)</a>
+</li>
         </ul></li>
         <li><a href="reference/api/fl4health.utils.client.html#fl4health.utils.client.set_pack_losses_with_val_metrics">set_pack_losses_with_val_metrics() (in module fl4health.utils.client)</a>
 </li>
@@ -4659,6 +4727,8 @@
           <li><a href="reference/api/fl4health.clients.flash_client.html#fl4health.clients.flash_client.FlashClient.setup_client">(FlashClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.setup_client">(FlexibleClientProtocolPreSetup method)</a>
+</li>
+          <li><a href="reference/api/fl4health.clients.gpfl_client.html#fl4health.clients.gpfl_client.GpflClient.setup_client">(GpflClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.instance_level_dp_client.html#fl4health.clients.instance_level_dp_client.InstanceLevelDpClient.setup_client">(InstanceLevelDpClient method)</a>
 </li>
@@ -4851,10 +4921,10 @@
           <li><a href="reference/api/fl4health.clients.flash_client.html#fl4health.clients.flash_client.FlashClient.train_by_epochs">(FlashClient method)</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.train_by_steps">train_by_steps() (BasicClient method)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.clients.fedrep_client.html#fl4health.clients.fedrep_client.FedRepClient.train_fedrep_by_epochs">train_fedrep_by_epochs() (FedRepClient method)</a>
 </li>
         <li><a href="reference/api/fl4health.clients.fedrep_client.html#fl4health.clients.fedrep_client.FedRepClient.train_fedrep_by_steps">train_fedrep_by_steps() (FedRepClient method)</a>
@@ -4884,6 +4954,8 @@
 </li>
           <li><a href="reference/api/fl4health.clients.flexible.base.html#fl4health.clients.flexible.base.FlexibleClient.train_step">(FlexibleClient method)</a>
 </li>
+          <li><a href="reference/api/fl4health.clients.gpfl_client.html#fl4health.clients.gpfl_client.GpflClient.train_step">(GpflClient method)</a>
+</li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.train_step">(NnunetClient method)</a>
 </li>
         </ul></li>
@@ -4907,6 +4979,8 @@
           <li><a href="reference/api/fl4health.clients.scaffold_client.html#fl4health.clients.scaffold_client.ScaffoldClient.transform_gradients">(ScaffoldClient method)</a>
 </li>
         </ul></li>
+        <li><a href="reference/api/fl4health.clients.gpfl_client.html#fl4health.clients.gpfl_client.GpflClient.transform_input">transform_input() (GpflClient method)</a>
+</li>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.transform_target">transform_target() (BasicClient method)</a>
 
         <ul>
@@ -5050,6 +5124,8 @@
 </li>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.update_before_train">(FlexibleClientProtocol method)</a>
 </li>
+          <li><a href="reference/api/fl4health.clients.gpfl_client.html#fl4health.clients.gpfl_client.GpflClient.update_before_train">(GpflClient method)</a>
+</li>
           <li><a href="reference/api/fl4health.clients.moon_client.html#fl4health.clients.moon_client.MoonClient.update_before_train">(MoonClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.mr_mtl_client.html#fl4health.clients.mr_mtl_client.MrMtlClient.update_before_train">(MrMtlClient method)</a>
@@ -5117,6 +5193,8 @@
           <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.val_step">(DittoPersonalizedMixin method)</a>, <a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.val_step">[1]</a>
 </li>
           <li><a href="reference/api/fl4health.clients.flexible.base.html#fl4health.clients.flexible.base.FlexibleClient.val_step">(FlexibleClient method)</a>
+</li>
+          <li><a href="reference/api/fl4health.clients.gpfl_client.html#fl4health.clients.gpfl_client.GpflClient.val_step">(GpflClient method)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.validate">validate() (BasicClient method)</a>

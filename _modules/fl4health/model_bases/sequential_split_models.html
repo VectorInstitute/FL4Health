@@ -281,6 +281,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.fenda_client.html">fl4health.clients.fenda_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.fenda_ditto_client.html">fl4health.clients.fenda_ditto_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.flash_client.html">fl4health.clients.flash_client module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.gpfl_client.html">fl4health.clients.gpfl_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.instance_level_dp_client.html">fl4health.clients.instance_level_dp_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.model_merge_client.html">fl4health.clients.model_merge_client module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.clients.moon_client.html">fl4health.clients.moon_client module</a></li>
@@ -361,6 +362,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.model_bases.fedrep_base.html">fl4health.model_bases.fedrep_base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.model_bases.fedsimclr_base.html">fl4health.model_bases.fedsimclr_base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.model_bases.fenda_base.html">fl4health.model_bases.fenda_base module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.model_bases.gpfl_base.html">fl4health.model_bases.gpfl_base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.model_bases.moon_base.html">fl4health.model_bases.moon_base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.model_bases.parallel_split_models.html">fl4health.model_bases.parallel_split_models module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.model_bases.partial_layer_exchange_model.html">fl4health.model_bases.partial_layer_exchange_model module</a></li>
@@ -562,6 +564,23 @@
         <span class="n">features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_module</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
         <span class="n">predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">head_module</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">features</span></div>
+
+
+<div class="viewcode-block" id="SequentiallySplitModel.features_forward">
+<a class="viewcode-back" href="../../../reference/api/fl4health.model_bases.sequential_split_models.html#fl4health.model_bases.sequential_split_models.SequentiallySplitModel.features_forward">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">features_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run a forward pass using the ``base_module`` only, returning the features extracted from it.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            input (torch.Tensor): Input to the model forward pass. Expected to be of shape (``batch_size``, \\*)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            torch.Tensor: Returns the potentially flatten features tensor from the base module.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_module</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flatten_features</span><span class="p">(</span><span class="n">features</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatten_features</span> <span class="k">else</span> <span class="n">features</span></div>
 
 
 <div class="viewcode-block" id="SequentiallySplitModel.forward">
