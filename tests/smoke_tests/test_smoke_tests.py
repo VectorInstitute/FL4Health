@@ -436,6 +436,7 @@ async def test_flash(tolerance: float) -> None:
     assert_on_done_task(task)
 
 
+@pytest.mark.skipif(not IN_GITHUB_ACTIONS, reason="Test doesn't work locally.")
 @pytest.mark.smoketest
 async def test_gpfl(tolerance: float) -> None:
     coroutine = run_smoke_test(
