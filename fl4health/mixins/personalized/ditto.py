@@ -37,9 +37,7 @@ class DittoPersonalizedProtocol(AdaptiveDriftConstrainedProtocol, Protocol):
     def get_global_model(self, config: Config) -> nn.Module:
         pass  # pragma: no cover
 
-    def _copy_optimizer_with_new_params(
-        self, original_optimizer: Optimizer
-    ) -> Optimizer:
+    def _copy_optimizer_with_new_params(self, original_optimizer: Optimizer) -> Optimizer:
         pass  # pragma: no cover
 
     def set_initial_global_tensors(self) -> None:
@@ -79,9 +77,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             super().__init__()
 
         if not isinstance(self, FlexibleClientProtocolPreSetup):
-            raise RuntimeError(
-                "This object needs to satisfy `FlexibleClientProtocolPreSetup`."
-            )  # pragma: no cover
+            raise RuntimeError("This object needs to satisfy `FlexibleClientProtocolPreSetup`.")  # pragma: no cover
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """This method is called when a class inherits from AdaptiveMixin."""
@@ -132,9 +128,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         """
         return ["local", "global"]
 
-    def _copy_optimizer_with_new_params(
-        self: DittoPersonalizedProtocol, original_optimizer: Optimizer
-    ) -> Optimizer:
+    def _copy_optimizer_with_new_params(self: DittoPersonalizedProtocol, original_optimizer: Optimizer) -> Optimizer:
         """
         Helper method to make a copy of the original optimizer for the global model.
 
@@ -164,13 +158,9 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
                     "Unable to get the original `lr` for the global optimizer, falling back to `1e-3`.",
                 )
 
-        optimizer_kwargs = {
-            k: v for k, v in param_group.items() if k not in ("params", "initial_lr")
-        }
+        optimizer_kwargs = {k: v for k, v in param_group.items() if k not in ("params", "initial_lr")}
         assert self.global_model is not None
-        global_optimizer = optim_class(
-            self.global_model.parameters(), **optimizer_kwargs
-        )
+        global_optimizer = optim_class(self.global_model.parameters(), **optimizer_kwargs)
 
         # maintain initial_lr for schedulers
         for param_group in global_optimizer.param_groups:
@@ -195,9 +185,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         return model_copy.to(self.device)
 
     @ensure_protocol_compliance
-    def get_optimizer(
-        self: DittoPersonalizedProtocol, config: Config
-    ) -> dict[str, Optimizer]:
+    def get_optimizer(self: DittoPersonalizedProtocol, config: Config) -> dict[str, Optimizer]:
         """
         Returns a dictionary with global and local optimizers with string keys "global" and "local" respectively.
 
@@ -206,9 +194,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         """
         if self.global_model is None:
             # try set it here
-            self.global_model = self.get_global_model(
-                config
-            )  # is this the same config?
+            self.global_model = self.get_global_model(config)  # is this the same config?
             log(
                 INFO,
                 f"global model set: {type(self.global_model).__name__} within `get_optimizer`",
@@ -218,9 +204,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         optimizer = super().get_optimizer(config=config)  # type: ignore[safe-super]
         if isinstance(optimizer, dict):
             try:
-                original_optimizer = next(
-                    el for el in optimizer.values() if isinstance(el, Optimizer)
-                )
+                original_optimizer = next(el for el in optimizer.values() if isinstance(el, Optimizer))
             except StopIteration as e:
                 log(ERROR, "Unable to find an ~torch.optim.Optimizer object.")
                 raise e
@@ -241,9 +225,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             config (Config): The config from the server.
         """
         optimizers = self.get_optimizer(config)
-        assert isinstance(optimizers, dict) and set(self.optimizer_keys) == set(
-            optimizers.keys()
-        )
+        assert isinstance(optimizers, dict) and set(self.optimizer_keys) == set(optimizers.keys())
         self.optimizers = optimizers
 
     @ensure_protocol_compliance
@@ -285,16 +267,12 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         # NOTE: the global model weights are sent to the server here.
         if self.global_model is None:
             raise ValueError("Unable to get parameters with unset global model.")
-        global_model_weights = self.parameter_exchanger.push_parameters(
-            self.global_model, config=config
-        )
+        global_model_weights = self.parameter_exchanger.push_parameters(self.global_model, config=config)
 
         # Weights and training loss sent to server for aggregation
         # Training loss sent because server will decide to increase or decrease the penalty weight, if adaptivity
         # is turned on
-        packed_params = self.parameter_exchanger.pack_parameters(
-            global_model_weights, self.loss_for_adaptation
-        )
+        packed_params = self.parameter_exchanger.pack_parameters(global_model_weights, self.loss_for_adaptation)
         log(INFO, "Successfully packed parameters of global model")
         return packed_params
 
@@ -323,17 +301,9 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
                 the server.
         """
         # Make sure that the proper components exist.
-        assert (
-            self.global_model is not None
-            and self.model is not None
-            and self.parameter_exchanger is not None
-        )
-        server_model_state, self.drift_penalty_weight = (
-            self.parameter_exchanger.unpack_parameters(parameters)
-        )
-        log(
-            INFO, f"Lambda weight received from the server: {self.drift_penalty_weight}"
-        )
+        assert self.global_model is not None and self.model is not None and self.parameter_exchanger is not None
+        server_model_state, self.drift_penalty_weight = self.parameter_exchanger.unpack_parameters(parameters)
+        log(INFO, f"Lambda weight received from the server: {self.drift_penalty_weight}")
 
         current_server_round = narrow_dict_type(config, "current_server_round", int)
         if current_server_round == 1 and fitting_round:
@@ -345,13 +315,9 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         else:
             # Route the parameters to the GLOBAL model in Ditto after the initial stage
             log(INFO, "Setting the global model weights")
-            self.parameter_exchanger.pull_parameters(
-                server_model_state, self.global_model, config
-            )
+            self.parameter_exchanger.pull_parameters(server_model_state, self.global_model, config)
 
-    def initialize_all_model_weights(
-        self: DittoPersonalizedProtocol, parameters: NDArrays, config: Config
-    ) -> None:
+    def initialize_all_model_weights(self: DittoPersonalizedProtocol, parameters: NDArrays, config: Config) -> None:
         """
         If this is the first time we're initializing the model weights, we initialize both the global and the local
         weights together.
@@ -362,9 +328,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         """
         parameter_exchanger = cast(FullParameterExchanger, self.parameter_exchanger)
         parameter_exchanger.pull_parameters(parameters, self.model, config)
-        parameter_exchanger.pull_parameters(
-            parameters, self.safe_global_model(), config
-        )
+        parameter_exchanger.pull_parameters(parameters, self.safe_global_model(), config)
 
     def set_initial_global_tensors(self: DittoPersonalizedProtocol) -> None:
         """
@@ -372,14 +336,11 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         respect to the tensors. These are used to form the Ditto local update penalty term.
         """
         self.drift_penalty_tensors = [
-            initial_layer_weights.detach().clone()
-            for initial_layer_weights in self.safe_global_model().parameters()
+            initial_layer_weights.detach().clone() for initial_layer_weights in self.safe_global_model().parameters()
         ]
 
     @ensure_protocol_compliance
-    def update_before_train(
-        self: DittoPersonalizedProtocol, current_server_round: int
-    ) -> None:
+    def update_before_train(self: DittoPersonalizedProtocol, current_server_round: int) -> None:
         """
         Procedures that should occur before proceeding with the training loops for the models. In this case, we
         save the global models parameters to be used in constraining training of the local model.
@@ -419,12 +380,8 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             self.safe_global_model(), self.optimizers["global"], input, target
         )
         # local
-        local_losses, local_preds = self._compute_preds_and_losses(
-            self.model, self.optimizers["local"], input, target
-        )
-        local_loss_clone = local_losses.backward[
-            "backward"
-        ].clone()  # need a clone for later
+        local_losses, local_preds = self._compute_preds_and_losses(self.model, self.optimizers["local"], input, target)
+        local_loss_clone = local_losses.backward["backward"].clone()  # need a clone for later
 
         # take step global
         global_losses = self._apply_backwards_on_losses_and_take_step(
@@ -432,9 +389,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         )
         # take step local
         penalty_loss = self.compute_penalty_loss()
-        local_losses.backward["backward"] = (
-            local_losses.backward["backward"] + penalty_loss
-        )
+        local_losses.backward["backward"] = local_losses.backward["backward"] + penalty_loss
         local_losses = self._apply_backwards_on_losses_and_take_step(
             self.model, self.optimizers["local"], local_losses
         )
@@ -449,9 +404,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         local_losses.additional_losses = additional_losses
 
         # combined preds
-        if isinstance(global_preds, torch.Tensor) and isinstance(
-            local_preds, torch.Tensor
-        ):
+        if isinstance(global_preds, torch.Tensor) and isinstance(local_preds, torch.Tensor):
             combined_preds = {"global": global_preds, "local": local_preds}
         elif isinstance(global_preds, dict) and isinstance(local_preds, dict):
             combined_preds = {f"global-{k}": v for k, v in global_preds.items()}
@@ -463,9 +416,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         self: DittoPersonalizedProtocol, input: TorchInputType, target: TorchTargetType
     ) -> tuple[EvaluationLosses, TorchPredType]:
         # global
-        global_losses, global_preds = self._val_step_with_model(
-            self.safe_global_model(), input, target
-        )
+        global_losses, global_preds = self._val_step_with_model(self.safe_global_model(), input, target)
         # local
         local_losses, local_preds = self._val_step_with_model(self.model, input, target)
 
@@ -519,9 +470,5 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             indexed by name.
         """
         # Check that both models are in eval mode
-        assert (
-            self.global_model is not None
-            and not self.global_model.training
-            and not self.model.training
-        )
+        assert self.global_model is not None and not self.global_model.training and not self.model.training
         return super().compute_evaluation_loss(preds, features, target)  # type: ignore[safe-super]

@@ -138,13 +138,9 @@ class FlServer(Server):
             round_metrics = {}
             for metric, vals in history.metrics_centralized.items():
                 round_metrics.update({metric: vals[round][1]})
-            self.reports_manager.report(
-                {"eval_round_metrics_centralized": round_metrics}, round + 1
-            )
+            self.reports_manager.report({"eval_round_metrics_centralized": round_metrics}, round + 1)
 
-    def fit_with_per_round_checkpointing(
-        self, num_rounds: int, timeout: float | None
-    ) -> tuple[History, float]:
+    def fit_with_per_round_checkpointing(self, num_rounds: int, timeout: float | None) -> tuple[History, float]:
         """
         Runs federated learning for a number of rounds. Heavily based on the fit method from the base
         server provided by flower (``flwr.server.server.Server``) except that it is resilient to preemptions.
@@ -196,14 +192,10 @@ class FlServer(Server):
                 parameters_prime, fit_metrics, _ = res_fit  # fit_metrics_aggregated
                 if parameters_prime:
                     self.parameters = parameters_prime
-                self.history.add_metrics_distributed_fit(
-                    server_round=self.current_round, metrics=fit_metrics
-                )
+                self.history.add_metrics_distributed_fit(server_round=self.current_round, metrics=fit_metrics)
 
             # Evaluate model using strategy implementation
-            res_cen = self.strategy.evaluate(
-                self.current_round, parameters=self.parameters
-            )
+            res_cen = self.strategy.evaluate(self.current_round, parameters=self.parameters)
             if res_cen is not None:
                 loss_cen, metrics_cen = res_cen
                 log(
@@ -214,26 +206,16 @@ class FlServer(Server):
                     metrics_cen,
                     (datetime.datetime.now() - start_time).total_seconds(),
                 )
-                self.history.add_loss_centralized(
-                    server_round=self.current_round, loss=loss_cen
-                )
-                self.history.add_metrics_centralized(
-                    server_round=self.current_round, metrics=metrics_cen
-                )
+                self.history.add_loss_centralized(server_round=self.current_round, loss=loss_cen)
+                self.history.add_metrics_centralized(server_round=self.current_round, metrics=metrics_cen)
 
             # Evaluate model on a sample of available clients
-            res_fed = self.evaluate_round(
-                server_round=self.current_round, timeout=timeout
-            )
+            res_fed = self.evaluate_round(server_round=self.current_round, timeout=timeout)
             if res_fed:
                 loss_fed, evaluate_metrics_fed, _ = res_fed
                 if loss_fed:
-                    self.history.add_loss_distributed(
-                        server_round=self.current_round, loss=loss_fed
-                    )
-                    self.history.add_metrics_distributed(
-                        server_round=self.current_round, metrics=evaluate_metrics_fed
-                    )
+                    self.history.add_loss_distributed(server_round=self.current_round, loss=loss_fed)
+                    self.history.add_metrics_distributed(server_round=self.current_round, metrics=evaluate_metrics_fed)
 
             self.current_round += 1
 
@@ -274,9 +256,7 @@ class FlServer(Server):
         self.update_before_fit(num_rounds, timeout)
 
         if self.checkpoint_and_state_module.state_checkpointer is not None:
-            history, elapsed_time = self.fit_with_per_round_checkpointing(
-                num_rounds, timeout
-            )
+            history, elapsed_time = self.fit_with_per_round_checkpointing(num_rounds, timeout)
         else:
             history, elapsed_time = super().fit(num_rounds, timeout)
         end_time = datetime.datetime.now()
@@ -324,9 +304,7 @@ class FlServer(Server):
             {
                 "fit_round_start": str(round_start),
                 "fit_round_end": str(round_end),
-                "fit_round_time_elapsed": round(
-                    (round_end - round_start).total_seconds()
-                ),
+                "fit_round_time_elapsed": round((round_end - round_start).total_seconds()),
             },
             server_round,
         )
@@ -362,9 +340,7 @@ class FlServer(Server):
         # the StrategyWithPolling ABC and implement a configure_poll function
         log(INFO, "Polling Clients for sample counts")
         assert isinstance(self.strategy, StrategyWithPolling)
-        client_instructions = self.strategy.configure_poll(
-            server_round=1, client_manager=self._client_manager
-        )
+        client_instructions = self.strategy.configure_poll(server_round=1, client_manager=self._client_manager)
         results, _ = poll_clients(
             client_instructions=client_instructions,
             max_workers=self.max_workers,
@@ -372,8 +348,7 @@ class FlServer(Server):
         )
 
         sample_counts: list[int] = [
-            int(get_properties_res.properties["num_train_samples"])
-            for (_, get_properties_res) in results
+            int(get_properties_res.properties["num_train_samples"]) for (_, get_properties_res) in results
         ]
         log(INFO, f"Polling complete: Retrieved {len(sample_counts)} sample counts")
 
@@ -413,28 +388,20 @@ class FlServer(Server):
                 self._terminate_after_unacceptable_failures(timeout)
 
             if loss_aggregated:
-                self._maybe_checkpoint(
-                    loss_aggregated, metrics_aggregated, server_round
-                )
+                self._maybe_checkpoint(loss_aggregated, metrics_aggregated, server_round)
                 # Report evaluation results
                 report_data = {
                     "val - loss - aggregated": loss_aggregated,
                     "round": server_round,
                     "eval_round_start": str(start_time),
                     "eval_round_end": str(end_time),
-                    "eval_round_time_elapsed": round(
-                        (end_time - start_time).total_seconds()
-                    ),
+                    "eval_round_time_elapsed": round((end_time - start_time).total_seconds()),
                 }
 
                 if self.fl_config.get("local_epochs", None) is not None:
-                    report_data["fit_epoch"] = (
-                        server_round * self.fl_config["local_epochs"]
-                    )
+                    report_data["fit_epoch"] = server_round * self.fl_config["local_epochs"]
                 elif self.fl_config.get("local_steps", None) is not None:
-                    report_data["fit_step"] = (
-                        server_round * self.fl_config["local_steps"]
-                    )
+                    report_data["fit_step"] = server_round * self.fl_config["local_steps"]
                 self.reports_manager.report(report_data, server_round)
                 if len(metrics_aggregated) > 0:
                     self.reports_manager.report(
@@ -445,9 +412,7 @@ class FlServer(Server):
         return eval_round_results
 
     def _log_fl_config(self) -> None:
-        log(INFO, "FL Configuration:") if self.fl_config else log(
-            INFO, "FL Config is Empty"
-        )
+        log(INFO, "FL Configuration:") if self.fl_config else log(INFO, "FL Config is Empty")
         for config_key, config_value in self.fl_config.items():
             if not isinstance(config_value, bytes):
                 log(INFO, f"Key: {config_key} Value: {config_value!r}")
@@ -521,14 +486,10 @@ class FlServer(Server):
             metrics_aggregated (dict[str, Scalar]): aggregated metrics from each of the clients for checkpointing
             server_round (int): What round of federated training we're on. This is just for logging purposes.
         """
-        self.checkpoint_and_state_module.maybe_checkpoint(
-            self.parameters, loss_aggregated, metrics_aggregated
-        )
+        self.checkpoint_and_state_module.maybe_checkpoint(self.parameters, loss_aggregated, metrics_aggregated)
 
     @override
-    def _get_initial_parameters(
-        self, server_round: int, timeout: float | None
-    ) -> Parameters:
+    def _get_initial_parameters(self, server_round: int, timeout: float | None) -> Parameters:
         """
         Get initial parameters from one of the available clients. This function is the same as the parent function
         in the flower server class except that we make use of the ``on_parameter_initialization_config_fn`` to provide
@@ -540,9 +501,7 @@ class FlServer(Server):
         flower: https://github.com/adap/flower/issues/3770.
         """
         # Server-side parameter initialization
-        parameters: Parameters | None = self.strategy.initialize_parameters(
-            client_manager=self._client_manager
-        )
+        parameters: Parameters | None = self.strategy.initialize_parameters(client_manager=self._client_manager)
         if parameters is not None:
             log(INFO, "Using initial global parameters provided by strategy")
             return parameters
@@ -566,12 +525,8 @@ class FlServer(Server):
             # An empty configuration is the default for Flower servers
             ins = GetParametersIns(config={})
         else:
-            ins = GetParametersIns(
-                config=self.on_init_parameters_config_fn(server_round)
-            )
-        get_parameters_res = random_client.get_parameters(
-            ins=ins, timeout=timeout, group_id=server_round
-        )
+            ins = GetParametersIns(config=self.on_init_parameters_config_fn(server_round))
+        get_parameters_res = random_client.get_parameters(ins=ins, timeout=timeout, group_id=server_round)
         if get_parameters_res.status.code == Code.OK:
             log(INFO, "Received initial parameters from one random client")
         else:
@@ -589,43 +544,28 @@ class FlServer(Server):
 
     def _unpack_metrics(
         self, results: list[tuple[ClientProxy, EvaluateRes]]
-    ) -> tuple[
-        list[tuple[ClientProxy, EvaluateRes]], list[tuple[ClientProxy, EvaluateRes]]
-    ]:
+    ) -> tuple[list[tuple[ClientProxy, EvaluateRes]], list[tuple[ClientProxy, EvaluateRes]]]:
         val_results = []
         test_results = []
 
         for client_proxy, eval_res in results:
             val_metrics = {
-                k: v
-                for k, v in eval_res.metrics.items()
-                if not k.startswith(MetricPrefix.TEST_PREFIX.value)
+                k: v for k, v in eval_res.metrics.items() if not k.startswith(MetricPrefix.TEST_PREFIX.value)
             }
-            test_metrics = {
-                k: v
-                for k, v in eval_res.metrics.items()
-                if k.startswith(MetricPrefix.TEST_PREFIX.value)
-            }
+            test_metrics = {k: v for k, v in eval_res.metrics.items() if k.startswith(MetricPrefix.TEST_PREFIX.value)}
 
             if len(test_metrics) > 0:
-                assert (
-                    TEST_LOSS_KEY in test_metrics
-                    and TEST_NUM_EXAMPLES_KEY in test_metrics
-                ), (
+                assert TEST_LOSS_KEY in test_metrics and TEST_NUM_EXAMPLES_KEY in test_metrics, (
                     f"'{TEST_NUM_EXAMPLES_KEY}' and '{TEST_LOSS_KEY}' keys must be present in "
                     "test_metrics dictionary for aggregation"
                 )
                 # Remove loss and num_examples from test_metrics if they exist
                 test_loss = float(test_metrics.pop(TEST_LOSS_KEY))
                 test_num_examples = int(test_metrics.pop(TEST_NUM_EXAMPLES_KEY))
-                test_eval_res = EvaluateRes(
-                    eval_res.status, test_loss, test_num_examples, test_metrics
-                )
+                test_eval_res = EvaluateRes(eval_res.status, test_loss, test_num_examples, test_metrics)
                 test_results.append((client_proxy, test_eval_res))
 
-            val_eval_res = EvaluateRes(
-                eval_res.status, eval_res.loss, eval_res.num_examples, val_metrics
-            )
+            val_eval_res = EvaluateRes(eval_res.status, eval_res.loss, eval_res.num_examples, val_metrics)
             val_results.append((client_proxy, val_eval_res))
 
         return val_results, test_results
@@ -656,9 +596,7 @@ class FlServer(Server):
             for key, value in test_metrics_aggregated.items():
                 val_metrics_aggregated[key] = value
             if test_loss_aggregated is not None:
-                val_metrics_aggregated[
-                    f"{MetricPrefix.TEST_PREFIX.value} loss - aggregated"
-                ] = test_loss_aggregated
+                val_metrics_aggregated[f"{MetricPrefix.TEST_PREFIX.value} loss - aggregated"] = test_loss_aggregated
 
         return val_loss_aggregated, val_metrics_aggregated
 
@@ -700,8 +638,6 @@ class FlServer(Server):
             len(failures),
         )
 
-        val_loss_aggregated, val_metrics_aggregated = self._handle_result_aggregation(
-            server_round, results, failures
-        )
+        val_loss_aggregated, val_metrics_aggregated = self._handle_result_aggregation(server_round, results, failures)
 
         return val_loss_aggregated, val_metrics_aggregated, (results, failures)
