@@ -19,15 +19,18 @@ import torch
 from flwr.client import start_client
 from flwr.common.logger import log, update_console_handler
 from nnunetv2.dataset_conversion.convert_MSD_dataset import convert_msd_dataset
-from torchmetrics.segmentation import GeneralizedDiceScore
 
 from fl4health.clients.flexible.nnunet import FlexibleNnunetClient
-from fl4health.metrics import TorchMetric
-from fl4health.metrics.compound_metrics import TransformsMetric
+from fl4health.metrics.base_metrics import Metric
+from fl4health.metrics.compound_metrics import EmaMetric
+from fl4health.metrics.efficient_metrics import BinaryDice, MultiClassDice
 from fl4health.utils.load_data import load_msd_dataset
 from fl4health.utils.msd_dataset_sources import get_msd_dataset_enum, msd_num_labels
-from fl4health.utils.nnunet_utils import get_segs_from_probs, set_nnunet_env_and_reload_modules
+from fl4health.utils.nnunet_utils import set_nnunet_env_and_reload_modules
 from fl4health.utils.random import set_all_random_seeds
+
+
+N_CLASSES_2D = 2
 
 
 def main(
@@ -62,17 +65,23 @@ def main(
         log(INFO, f"Converting {msd_dataset_enum.value} into nnunet dataset")
         convert_msd_dataset(source_folder=join(nn_unet_raw, msd_dataset_enum.value))
 
-    # Create a metric
-    dice = TransformsMetric(
-        metric=TorchMetric(
-            name="Pseudo DICE",
-            metric=GeneralizedDiceScore(
-                num_classes=msd_num_labels[msd_dataset_enum], weight_type="square", include_background=False
-            ).to(device),
-        ),
-        pred_transforms=[torch.sigmoid, get_segs_from_probs],
-    )
+    # Create dice metric
+    dice: Metric
+    if msd_num_labels[msd_dataset_enum] > N_CLASSES_2D:
+        dice = MultiClassDice(
+            batch_dim=None,  # Aggregate across all samples in batch/round
+            label_dim=1,  # Separate dice for each output class
+            name="Dice",
+            threshold=1,  # Use an argmax to binarize output logits (unactivated)
+            ignore_background=1,  # Ignore background class
+        )
+    else:  # Background class is automatically ignored for BinaryDice
+        dice = BinaryDice(batch_dim=None, label_dim=1, name="Dice", threshold=1)
 
+    # Create EMA Dice metric
+    ema_dice = EmaMetric(dice)
+
+    # State checkpointer (being overhauled soon)
     if intermediate_client_state_dir is not None:
         checkpoint_and_state_module = ClientCheckpointAndStateModule(
             state_checkpointer=ClientStateCheckpointer(Path(intermediate_client_state_dir))
@@ -90,7 +99,7 @@ def main(
         compile=compile,
         # BaseClient Args
         device=device,
-        metrics=[dice],
+        metrics=[dice, ema_dice],
         progress_bar=verbose,
         checkpoint_and_state_module=checkpoint_and_state_module,
         client_name=client_name,
