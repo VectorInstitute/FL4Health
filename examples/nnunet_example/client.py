@@ -48,7 +48,6 @@ def main(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log(INFO, f"Using device: {device}")
     log(INFO, f"Using server address: {server_address}")
-    log(INFO, f"nnUNet_raw: {nnUNet_raw}")
 
     # Load the dataset if necessary
     msd_dataset_enum = get_msd_dataset_enum(msd_dataset_name)
@@ -59,9 +58,7 @@ def main(
 
     # The dataset ID will be the same as the MSD Task number
     dataset_id = int(msd_dataset_enum.value[4:6])
-    nnunet_dataset_name = (
-        f"Dataset{dataset_id:03d}_{msd_dataset_enum.value.split('_')[1]}"
-    )
+    nnunet_dataset_name = f"Dataset{dataset_id:03d}_{msd_dataset_enum.value.split('_')[1]}"
 
     # Convert the msd dataset if necessary
     if not exists(join(nn_unet_raw, nnunet_dataset_name)):
@@ -87,9 +84,7 @@ def main(
     # State checkpointer (being overhauled soon)
     if intermediate_client_state_dir is not None:
         checkpoint_and_state_module = ClientCheckpointAndStateModule(
-            state_checkpointer=ClientStateCheckpointer(
-                Path(intermediate_client_state_dir)
-            )
+            state_checkpointer=ClientStateCheckpointer(Path(intermediate_client_state_dir))
         )
     else:
         checkpoint_and_state_module = None
@@ -215,10 +210,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Set the random seed for reproducibility
-<<<<<<< HEAD
-    set_all_random_seeds(
-        args.seed, disable_torch_benchmarking=True, use_deterministic_torch_algos=True
-=======
 
     # NOTE: This implementation does not cover all sources of randomness in nnUNet, so complete
     # determinism cannot be achieved. The nnUNet maintainers have confirmed that full determinism
@@ -231,7 +222,6 @@ if __name__ == "__main__":
         args.seed,
         disable_torch_benchmarking=True,
         use_deterministic_torch_algos=True,
->>>>>>> b9256b2d (cr)
     )
 
     # Set the log level
