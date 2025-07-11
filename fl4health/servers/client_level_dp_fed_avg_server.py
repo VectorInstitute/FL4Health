@@ -46,7 +46,7 @@ class ClientLevelDPFedAvgServer(FlServer):
                 example, the config used to produce the ``on_fit_config_fn`` and ``on_evaluate_config_fn`` for the
                 strategy.
 
-                **NOTE:** This config is **ISTINCT** from the Flwr server config, which is extremely minimal.
+                **NOTE:** This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
             strategy (ClientLevelDPFedAvgM): The aggregation strategy to be used by the server to handle.
                 client updates and other information potentially sent by the participating clients.
             server_noise_multiplier (float): Magnitude of noise added to the weights aggregation process by the server.

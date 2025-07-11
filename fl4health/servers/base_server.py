@@ -344,7 +344,7 @@ class FlServer(Server):
         updated prior to this function being called.
 
         Args:
-            server_round (int): Which server round we're currently on
+            server_round (int): Server round we're currently on.
             timeout (float | None): Time that the server should wait (in seconds) for responses from the clients.
                 Defaults to None, which indicates indefinite timeout.
 

@@ -35,21 +35,21 @@ class FlexibleClient(BasicClient):
         """
         Flexible FL Client with functionality to train, evaluate, log, report and checkpoint.
 
-        `FlexibleClient` is similar to `BasicClient` but provides added flexibility through the
+        ``FlexibleClient`` is similar to ``BasicClient`` but provides added flexibility through the
         ability to inject models and optimizers in the methods responsible for making predictions
         and performing both train and validation steps.
 
-        This added flexibility allows for `FlexibleClient` to be automatically adapted with our
-        personalized methods: ~fl4health.mixins.personalized.
+        This added flexibility allows for ``FlexibleClient`` to be automatically adapted with our
+        personalized methods: ``~fl4health.mixins.personalized``.
 
-        As with `BasicClient`, users are responsible for implementing methods:
+        As with ``BasicClient``, users are responsible for implementing methods:
 
             - ``get_model``
             - ``get_optimizer``
             - ``get_data_loaders``,
             - ``get_criterion``
 
-        However, unlike `BasicClient`, users looking to specialize logic for making predictions,
+        However, unlike ``BasicClient``, users looking to specialize logic for making predictions,
         and performing train and validation steps, should instead override:
 
             - ``predict_with_model``
@@ -59,10 +59,10 @@ class FlexibleClient(BasicClient):
         Other methods can be overridden to achieve custom functionality.
 
         Args:
-            data_path (Path): path to the data to be used to load the data for client-side training
-            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            data_path (Path): path to the data to be used to load the data for client-side training.
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
-                "cuda"
+                "cuda".
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
@@ -183,7 +183,7 @@ class FlexibleClient(BasicClient):
         """
         Helper train step method that allows for injection of model and optimizer.
 
-        NOTE: Subclasses should implement this method if there is a need to specialize
+        **NOTE**: Subclasses should implement this method if there is a need to specialize
         the train_step logic.
 
         Args:
@@ -223,7 +223,7 @@ class FlexibleClient(BasicClient):
         """
         Helper method for val_step that allows for injection of model.
 
-        NOTE: Subclasses should implement this method if there is a need to
+        **NOTE**: Subclasses should implement this method if there is a need to
         specialize the val_step logic.
 
         Args:
@@ -263,14 +263,14 @@ class FlexibleClient(BasicClient):
         """
         Helper predict method that allows for injection of model.
 
-        NOTE: Subclasses should implement this method if there is need to specialize
+        **NOTE**: Subclasses should implement this method if there is need to specialize
         the predict logic of the client.
 
         Args:
             model (torch.nn.Module): the model with which to make predictions
             input (TorchInputType): Inputs to be fed into the model. If input is of type ``dict[str, torch.Tensor]``,
                 it is assumed that the keys of input match the names of the keyword arguments of
-                ``self.model.forward().`
+                ``self.model.forward().``
 
         Returns:
             tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains a dictionary of
@@ -309,7 +309,7 @@ class FlexibleClient(BasicClient):
         """
         Helper transform gradients method that allows for injection of model.
 
-        NOTE: Subclasses should implement this helper should there be a need to specialize the logic
+        **NOTE**: Subclasses should implement this helper should there be a need to specialize the logic
         for transforming gradients.
 
         Args:

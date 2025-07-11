@@ -23,9 +23,9 @@ class FedPCAClient(NumPyClient):
         Client that facilitates the execution of federated PCA.
 
         Args:
-            data_path (Path): path to the data to be used to load the data for client-side training
+            data_path (Path): path to the data to be used to load the data for client-side training.
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
-                "cuda"
+                "cuda".
             model_save_dir (Path): Dir to save the PCA components for use later, perhaps in dimensionality reduction
             client_name (str | None, optional): client name, mainly used for saving components. Defaults to None.
         """
@@ -63,7 +63,7 @@ class FedPCAClient(NumPyClient):
 
         Returns:
             NDArrays: Parameters representing the principal components computed by the client that need to be
-            aggregated in some way
+            aggregated in some way.
         """
         if not self.initialized:
             log(INFO, "Setting up client and providing full model parameters to the server for initialization")
@@ -93,13 +93,13 @@ class FedPCAClient(NumPyClient):
 
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         """
-        User defined method that returns a PyTorch Train DataLoader and a PyTorch Validation DataLoader.
+        User defined method that returns a PyTorch Train ``DataLoader`` and a PyTorch Validation ``DataLoader``.
 
         Args:
             config (Config): Configurations sent by the server to allow for customization of this functions behavior.
 
         Returns:
-            tuple[DataLoader, DataLoader] Tuple of length 2. The client train and validation loader.
+            tuple[DataLoader, DataLoader]: Tuple of length 2. The client train and validation loader.
 
         Raises:
             NotImplementedError: To be defined in child class.

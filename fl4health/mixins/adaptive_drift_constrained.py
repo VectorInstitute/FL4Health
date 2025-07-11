@@ -99,7 +99,8 @@ class AdaptiveDriftConstrainedMixin:
             config (Config): Configurations to allow for customization of this functions behavior
 
         Returns:
-            NDArrays: Parameters and training loss packed together into a list of numpy arrays to be sent to the server
+            NDArrays: Parameters and training loss packed together into a list of numpy arrays to be sent to the
+            server.
         """
         if not self.initialized:
             log(INFO, "Setting up client and providing full model parameters to the server for initialization")
@@ -201,7 +202,7 @@ class AdaptiveDriftConstrainedMixin:
         Computes the drift loss for the client model and drift tensors.
 
         Returns:
-            torch.Tensor: Computed penalty loss tensor
+            torch.Tensor: Computed penalty loss tensor.
         """
         # Penalty tensors must have been set for these clients.
         assert self.drift_penalty_tensors is not None

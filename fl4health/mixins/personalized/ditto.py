@@ -126,7 +126,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         Helper method to make a copy of the original optimizer for the global model.
 
         Args:
-            original_optimizer (Optimizer): original optimizer of the underyling `FlexibleClient`.
+            original_optimizer (Optimizer): original optimizer of the underlying `FlexibleClient`.
 
         Returns:
             Optimizer: a copy of the original optimizer to be used by the global model.
@@ -243,7 +243,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            NDArrays: **GLOBAL** model weights to be sent to the server for aggregation
+            NDArrays: **GLOBAL** model weights to be sent to the server for aggregation.
         """
         if not self.initialized:
             log(
@@ -313,7 +313,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         weights together.
 
         Args:
-            parameters (NDArrays): Model parameters to be injected into the client model
+            parameters (NDArrays): Model parameters to be injected into the client model.
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
         """
         parameter_exchanger = cast(FullParameterExchanger, self.parameter_exchanger)

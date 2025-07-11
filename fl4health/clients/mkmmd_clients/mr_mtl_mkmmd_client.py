@@ -40,10 +40,10 @@ class MrMtlMkMmdClient(MrMtlClient):
         global model.
 
         Args:
-            data_path (Path): path to the data to be used to load the data for client-side training
-            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            data_path (Path): path to the data to be used to load the data for client-side training.
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
-                "cuda"
+                "cuda".
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
@@ -264,9 +264,10 @@ class MrMtlMkMmdClient(MrMtlClient):
     ) -> TrainingLosses:
         """
         Computes training losses given predictions of the global and local models and ground truth data.
-        For the local model we add to the vanilla loss function by including Ditto penalty loss which is the l2 inner
-        product between the initial global model weights and weights of the local model. This is stored in backward
-        The loss to optimize the global model is stored in the additional losses dictionary under "global_loss".
+        For the local model we add to the vanilla loss function by including Ditto penalty loss which is the
+        :math:`\\ell^2` inner product between the initial global model weights and weights of the local model. This is
+        stored in backward The loss to optimize the global model is stored in the additional losses dictionary
+        under “global_loss”.
 
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in
@@ -321,7 +322,7 @@ class MrMtlMkMmdClient(MrMtlClient):
         Returns:
             tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
 
-            - The tensor for the loss
+            - The tensor for the loss.
             - A dictionary of additional losses with their names and values, or None if there are no additional losses.
         """
         assert "prediction" in preds

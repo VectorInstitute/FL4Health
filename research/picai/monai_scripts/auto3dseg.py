@@ -25,7 +25,7 @@ def gen_dataset_list(data_dir: str, output_path: str | None = None, ext: str = "
         data_dir (str): Path to the nnUNet_raw dataset.
         output_path (str | None, optional): Where and what to save the file as. Must be a json. Default is to save as
             datalist.json in the data_dir. Defaults to None.
-        ext (str, optional): Extention to use. Defaults to ".nii.gz".
+        ext (str, optional): Extension to use. Defaults to ".nii.gz".
 
     Returns:
         str: The path to where the datalist file was saved
@@ -44,7 +44,7 @@ def gen_dataset_list(data_dir: str, output_path: str | None = None, ext: str = "
 
     # nnUNet datasets store images as unique-case-identifier_xxxx.ext
     # xxxx is a 4 digit integer representing the channel/modality.
-    # ext is the file extention
+    # ext is the file extension
     # Labels are stored as unique-case-identifier.ext as they do not have multiple channels
 
     if os.path.exists(test_dir):  # nnUNet Datasets do not always have test sets

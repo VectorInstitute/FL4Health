@@ -23,7 +23,7 @@ The easiest way to create and activate a virtual environment is by using the [vi
 python -m venv <ENV_PATH>
 source "ENV_PATH/bin/activate"
 pip install --upgrade pip poetry
-poetry install --with "dev, dev-local, test, codestyle"
+poetry install --with "dev, test, codestyle"
 ```
 
 Note that the with command is installing all libraries required for the full development workflow. See the `pyproject.toml` file for additional details as to what is installed with each of these options.

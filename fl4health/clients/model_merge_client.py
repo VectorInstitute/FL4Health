@@ -35,11 +35,11 @@ class ModelMergeClient(NumPyClient):
         subsequently evaluate.
 
         Args:
-            data_path (Path): path to the data to be used to load the data for client-side training
+            data_path (Path): path to the data to be used to load the data for client-side training.
             model_path (Path): path to the checkpoint of the client model to be used in model merging.
-            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
-                "cuda"
+                "cuda".
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the client should
                 send data to.
             client_name (str): An optional client name that uniquely identifies a client. If not passed, a hash is
@@ -64,8 +64,8 @@ class ModelMergeClient(NumPyClient):
 
     def setup_client(self, config: Config) -> None:
         """
-        Sets up Merge Client by initializing model, dataloader and parameter exchanger
-            with user defined methods. Subsequently, sets initialized attribute to True.
+        Sets up Merge Client by initializing model, dataloader and parameter exchanger with user defined methods.
+        Subsequently, sets initialized attribute to True.
 
         Args:
             config (Config): The configuration from the server.
@@ -83,7 +83,7 @@ class ModelMergeClient(NumPyClient):
         determine parameters sent.
 
         For the ``ModelMergeClient``, we assume that ``self.setup_client`` has already been called as it does not
-        support client polling so get_parameters is called from fit and thus should be initialized by this point.
+        support client polling so ``get_parameters`` is called from fit and thus should be initialized by this point.
 
         Args:
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
@@ -97,12 +97,12 @@ class ModelMergeClient(NumPyClient):
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         """
-        Sets the local model parameters transferred from the server using a parameter exchanger
-            to coordinate how parameters are set.
+        Sets the local model parameters transferred from the server using a parameter exchanger to coordinate how
+        parameters are set.
 
-        For the ModelMergeClient, we assume that initially parameters are being set to the parameters
-            in the nn.Module returned by the user defined get_model method. Thus, set_parameters is
-            only called once after model merging has occurred and before federated evaluation.
+        For the ModelMergeClient, we assume that initially parameters are being set to the parameters in the
+        ``nn.Module`` returned by the user defined ``get_model`` method. Thus, ``set_parameters`` is only called once
+        after model merging has occurred and before federated evaluation.
 
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
@@ -215,7 +215,7 @@ class ModelMergeClient(NumPyClient):
         may be overridden if a different exchanger is needed.
 
         Used in non-standard way for ``ModelMergeClient`` as ``set_parameters`` is only called for evaluate as
-            parameters should initially be set to the parameters in the nn.Module returned by ``get_model``.
+        parameters should initially be set to the parameters in the ``nn.Module`` returned by ``get_model``.
 
         Args:
             config (Config): Configuration object from the server.

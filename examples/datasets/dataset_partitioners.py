@@ -41,9 +41,9 @@ class JsonToPandasDatasetPartitioner(DatasetPartitioner):
         df = pd.read_json(self.dataset_path, lines=self.json_lines)
         # Shuffle the dataframe rows
         df = df.sample(frac=1).reset_index(drop=True)
-        paritioned_dfs = cast(list[pd.DataFrame], np.array_split(df, n_partitions))
+        partitioned_dfs = cast(list[pd.DataFrame], np.array_split(df, n_partitions))
 
-        for chunk, df in enumerate(paritioned_dfs):
+        for chunk, df in enumerate(partitioned_dfs):
             df.to_json(
                 os.path.join(self.partition_dir, f"partition_{str(chunk)}.json"),
                 orient="records",
@@ -60,9 +60,9 @@ class CsvToPandasDatasetPartitioner(DatasetPartitioner):
         df = df.sample(frac=1).reset_index(drop=True)
         if label_column_name and label_map:
             df["category"] = df[label_column_name].map(label_map)
-        paritioned_dfs = cast(list[pd.DataFrame], np.array_split(df, n_partitions))
+        partitioned_dfs = cast(list[pd.DataFrame], np.array_split(df, n_partitions))
 
-        for chunk, df in enumerate(paritioned_dfs):
+        for chunk, df in enumerate(partitioned_dfs):
             df.to_json(
                 os.path.join(self.partition_dir, f"partition_{str(chunk)}.json"),
                 orient="records",

@@ -157,7 +157,7 @@ class NnunetServer(FlServer):
         """
         Hook method to allow the server to do some additional initialization prior to fitting.
 
-        ``NunetServer`` uses this method to sample a client for properties for one of two reasons
+        ``NnunetServer`` uses this method to sample a client for properties for one of two reasons
 
         1. If a global ``nnunet_plans`` file is not provided in the config, this method will request that a random
            client which generate a plans file from it local dataset and return it to the server through the

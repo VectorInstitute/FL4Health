@@ -37,7 +37,7 @@ def main() -> None:
     args = parser.parse_args()
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-    # Initialize dataloaders, model, loss and optimizer to creater trainer
+    # Initialize dataloaders, model, loss and optimizer to create trainer
     train_img_paths, train_seg_paths, train_class_proportions = get_img_and_seg_paths(
         args.overviews_dir, fold_id=args.fold, train=True
     )

@@ -41,10 +41,10 @@ class DittoClient(AdaptiveDriftConstraintClient):
         corresponding strategy used by the server
 
         Args:
-            data_path (Path): path to the data to be used to load the data for client-side training
-            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            data_path (Path): path to the data to be used to load the data for client-side training.
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
-                "cuda"
+                "cuda".
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
@@ -133,7 +133,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            NDArrays: **GLOBAL** model weights to be sent to the server for aggregation
+            NDArrays: **GLOBAL** model weights to be sent to the server for aggregation.
         """
         if not self.initialized:
             log(
@@ -197,7 +197,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
         weights together.
 
         Args:
-            parameters (NDArrays): Model parameters to be injected into the client model
+            parameters (NDArrays): Model parameters to be injected into the client model.
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
         """
         self.parameter_exchanger.pull_parameters(parameters, self.model, config)
@@ -344,9 +344,10 @@ class DittoClient(AdaptiveDriftConstraintClient):
     ) -> TrainingLosses:
         """
         Computes training losses given predictions of the global and local models and ground truth data.
-        For the local model we add to the vanilla loss function by including Ditto penalty loss which is the l2 inner
-        product between the initial global model weights and weights of the local model. This is stored in backward
-        The loss to optimize the global model is stored in the additional losses dictionary under "global_loss".
+        For the local model we add to the vanilla loss function by including Ditto penalty loss which is the
+        :math:`\\ell^2` inner product between the initial global model weights and weights of the local model. This is
+        stored in backward The loss to optimize the global model is stored in the additional losses dictionary under
+        “global_loss”.
 
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in

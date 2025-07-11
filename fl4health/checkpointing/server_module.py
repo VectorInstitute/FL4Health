@@ -60,7 +60,7 @@ class BaseServerCheckpointAndStateModule:
             model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of
                 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.
             state_checkpointer (ServerStateCheckpointer | None, optional): If defined, this checkpointer
-                 will be used to preserve FL training state to facilitate restarting training if interrupted.
+                will be used to preserve FL training state to facilitate restarting training if interrupted.
                 Generally, this checkpointer will save much more than just the model being trained. Defaults to None.
         """
         self.model = model
@@ -163,7 +163,7 @@ class BaseServerCheckpointAndStateModule:
                 ``_hydrate_model_for_checkpointing`` function.
 
         Raises:
-            ValueError: Throws an error if this function is called, but no state checkpointer has been provided
+            ValueError: Throws an error if this function is called, but no state checkpointer has been provided.
         """
         if self.state_checkpointer is not None:
             self._hydrate_model_for_checkpointing(server_parameters)
@@ -174,20 +174,20 @@ class BaseServerCheckpointAndStateModule:
 
     def maybe_load_state(self, server: FlServer) -> Parameters | None:
         """
-        Facilitates loading of any pre-existing state in the directory of the state_checkpointer.
-        If a ``state_checkpointer`` is defined and a checkpoint exists at its checkpoint_path, this method hydrates
-        the model with the saved state and returns the corresponding server Parameters. If no checkpoint exists,
-        it logs this information and returns None.
+        Facilitates loading of any pre-existing state in the directory of the ``state_checkpointer``. If a
+        ``state_checkpointer`` is defined and a checkpoint exists at its ``checkpoint_path``, this method hydrates the
+        model with the saved state and returns the corresponding server Parameters. If no checkpoint exists, it logs
+        this information and returns None.
 
         Args:
             server (FlServer): server into which checkpointed state will be loaded if a checkpoint exists
 
         Raises:
-            ValueError: Throws an error if this function is called, but no state checkpointer has been provided
+            ValueError: Throws an error if this function is called, but no state checkpointer has been provided.
 
         Returns:
-            Parameters | None: If the state checkpoint properly exists and is loaded correctly, server_parameters
-                is returned. Otherwise, we return a None (or throw an exception).
+            Parameters | None: If the state checkpoint properly exists and is loaded correctly, ``server_parameters``
+            is returned. Otherwise, we return a None (or throw an exception).
         """
         if self.state_checkpointer is not None:
             assert self.model is not None, (

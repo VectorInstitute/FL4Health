@@ -95,8 +95,8 @@ class OpacusCheckpointer(FunctionTorchModuleCheckpointer):
 
         Args:
             target_model (nn.Module): Target model for loading state into.
-            target_is_grad_sample_module (bool, optional): Whether the target_model that the ``state_dict`` is being
-                loaded into is an Opacus module or just a vanilla Pytorch module. Defaults to False.
+            target_is_grad_sample_module (bool, optional): Whether the ``target_model`` that the ``state_dict`` is
+                being loaded into is an Opacus module or just a vanilla Pytorch module. Defaults to False.
         """
         with open(self.checkpoint_path, "rb") as handle:
             model_state_dict = pickle.load(handle)
@@ -136,7 +136,7 @@ class LatestOpacusCheckpointer(OpacusCheckpointer):
 class BestLossOpacusCheckpointer(OpacusCheckpointer):
     def __init__(self, checkpoint_dir: str, checkpoint_name: str) -> None:
         """
-        This checkpointer only uses the loss value provided to the maybe_checkpoint function to determine whether a
+        This checkpointer only uses the loss value provided to the ``maybe_checkpoint`` function to determine whether a
         checkpoint should be save. We are always attempting to minimize the loss. So maximize is always set to false.
 
         Args:

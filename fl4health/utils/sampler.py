@@ -164,7 +164,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
 
         num_samples_per_class = [math.ceil(prob * total_num_samples) for prob in self.probabilities]
 
-        # For each class sample the given number of samples from the class specific indices
+        # For each class, sample the given number of samples from the class specific indices
         # torch.multinomial is used to uniformly sample indices the size of given number of samples
         sampled_class_idx_list = [
             class_idx[
