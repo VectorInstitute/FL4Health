@@ -36,7 +36,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
         So we simultaneously train a global model that is aggregated on the server-side and use those weights to also
         constrain the training of a local model. The constraint for this local model is identical to the FedProx loss.
 
-        **NOTE:** lambda, the drift loss weight, is initially set and potentially adapted by the server akin to the
+        **NOTE**: lambda, the drift loss weight, is initially set and potentially adapted by the server akin to the
         heuristic suggested in the original FedProx paper. Adaptation is optional and can be disabled in the
         corresponding strategy used by the server
 
@@ -151,7 +151,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
             # to the same weights in initialize_all_model_weights
             return FullParameterExchanger().push_parameters(self.model, config=config)
         assert self.global_model is not None and self.parameter_exchanger is not None
-        # NOTE: the global model weights are sent to the server here.
+        # **NOTE**: the global model weights are sent to the server here.
         global_model_weights = self.parameter_exchanger.push_parameters(self.global_model, config=config)
 
         # Weights and training loss sent to server for aggregation

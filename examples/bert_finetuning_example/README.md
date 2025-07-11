@@ -35,7 +35,7 @@ clients. This is done by simply running (remembering to activate your environmen
 ```bash
 python -m examples.bert_finetuning_example.client
 ```
-NOTE: The dataset is loaded explicitly from Hugging Face and therefore the `data_path` is not specified.
+**NOTE**: The dataset is loaded explicitly from Hugging Face and therefore the `data_path` is not specified.
 
 After both clients have been started, federated learning should commence.
 

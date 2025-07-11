@@ -40,7 +40,7 @@ def main(config: dict[str, Any], server_address: str) -> None:
         fit_config,
         config["batch_size"],
         config["n_server_rounds"],
-        # NOTE: that name is not included, it will be set in the clients
+        # **NOTE**: that name is not included, it will be set in the clients
         local_epochs=config.get("local_epochs"),
         local_steps=config.get("local_steps"),
     )

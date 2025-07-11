@@ -12,9 +12,9 @@ class SequentiallySplitModel(nn.Module):
         stored for later use, if required.
 
         Args:
-            base_module (nn.Module): Feature extraction module
+            base_module (nn.Module): Feature extraction module.
             head_module (nn.Module): Classification (or other type) of head that acts on the output from the base
-                module
+                module.
             flatten_features (bool, optional): Whether the feature tensor shapes are to be preserved (false) or if
                 they should be flattened to be of shape (``batch_size``, -1). Flattening may be necessary when using
                 certain loss functions, as in MOON, for example. Defaults to False.
@@ -46,7 +46,7 @@ class SequentiallySplitModel(nn.Module):
             input (torch.Tensor): Input to the model forward pass. Expected to be of shape (``batch_size``, \\*)
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Returns the predictions and features tensor from the sequential forward
+            tuple[torch.Tensor, torch.Tensor]: Returns the predictions and features tensor from the sequential forward.
         """
         features = self.base_module.forward(input)
         predictions = self.head_module.forward(features)
@@ -55,7 +55,7 @@ class SequentiallySplitModel(nn.Module):
     def forward(self, input: torch.Tensor) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]:
         """
         Run a forward pass using the sequentially split modules ``base_module`` -> ``head_module``. Features from the
-        base_module are stored either in their original shapes are flattened to be of shape (``batch_size``, -1)
+        ``base_module`` are stored either in their original shapes are flattened to be of shape (``batch_size``, -1)
         depending on ``self.flatten_features``.
 
         Args:

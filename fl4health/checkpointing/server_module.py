@@ -136,7 +136,7 @@ class BaseServerCheckpointAndStateModule:
 
         This function may be overridden in a child class if different behavior is desired.
 
-        **NOTE:** This function stores the weights directly in the self.model attribute
+        **NOTE**: This function stores the weights directly in the self.model attribute
 
         Args:
             server_parameters (Parameters): Parameters to be injected into the torch model architecture and
@@ -214,7 +214,7 @@ class PackingServerCheckpointAndAndStateModule(BaseServerCheckpointAndStateModul
         This module is meant to be a base class for any server-side checkpointing module that relies on unpacking
         of parameters to hydrate models for checkpointing. The specifics of the unpacking will be handled by the
         child classes of the packer within the parameter exchange.
-        **NOTE:** This function ASSUMES full parameter exchange unpacking. If more complex unpacking/parameter exchange
+        **NOTE**: This function ASSUMES full parameter exchange unpacking. If more complex unpacking/parameter exchange
         is used, this is not the right parent class.
 
         Args:
@@ -530,7 +530,7 @@ class NnUnetServerCheckpointAndStateModule(BaseServerCheckpointAndStateModule):
         super().__init__(model, parameter_exchanger, model_checkpointers, state_checkpointer)
 
     def _validate_model_checkpointer_components(self) -> None:
-        # NOTE: We only check if the parameter exchanger is present. Model may be set later.
+        # **NOTE**: We only check if the parameter exchanger is present. Model may be set later.
         assert self.parameter_exchanger is not None, (
             "Checkpointer(s) is (are) defined but no parameter_exchanger is defined to hydrate. The functionality of "
             "this class can be overridden in a child class if checkpointing without a parameter exchanger is "

@@ -58,7 +58,7 @@ def construct_config(
     vocabulary: Vocabulary,
     label_encoder: LabelEncoder,
 ) -> Config:
-    # NOTE: The omitted variable is server_round which allows for dynamically changing the config each round
+    # **NOTE**: The omitted variable is server_round which allows for dynamically changing the config each round
     return {
         "sequence_length": sequence_length,
         "local_epochs": local_epochs,

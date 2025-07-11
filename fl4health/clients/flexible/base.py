@@ -129,7 +129,7 @@ class FlexibleClient(BasicClient):
         """
         Helper method within the train step for computing preds and losses.
 
-        NOTE: Subclasses should implement this helper method if there is a need
+        **NOTE**: Subclasses should implement this helper method if there is a need
         to specialize this part of the overall train step.
 
         Args:
@@ -159,7 +159,7 @@ class FlexibleClient(BasicClient):
         """
         Helper method within the train step for applying backwards on losses and taking step with optimizer.
 
-        NOTE: Subclasses should implement this helper method if there is a need
+        **NOTE**: Subclasses should implement this helper method if there is a need
         to specialize this part of the overall train step.
 
         Args:

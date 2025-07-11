@@ -35,7 +35,7 @@ class MrMtlClient(AdaptiveDriftConstraintClient):
         training of a local model. The constraint for this local model is identical to the FedProx loss. The key
         difference is that the local model is never replaced with aggregated weights. It is always local.
 
-        **NOTE:** lambda, the drift loss weight, is initially set and potentially adapted by the server akin to the
+        **NOTE**: lambda, the drift loss weight, is initially set and potentially adapted by the server akin to the
         heuristic suggested in the original FedProx paper. Adaptation is optional and can be disabled in the
         corresponding strategy used by the server
 
@@ -68,7 +68,7 @@ class MrMtlClient(AdaptiveDriftConstraintClient):
             progress_bar=progress_bar,
             client_name=client_name,
         )
-        # **NOTE:** The initial global model is used to house the aggregate weight updates at the beginning of a round,
+        # **NOTE**: The initial global model is used to house the aggregate weight updates at the beginning of a round,
         # because in MR-MTL, the local models are not updated with these aggregates.
         self.initial_global_model: nn.Module
         self.initial_global_tensors: list[torch.Tensor]

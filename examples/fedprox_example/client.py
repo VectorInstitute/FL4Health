@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
     if wandb_entity:
         log(INFO, f"Weights and Biases Entity Provided: {wandb_entity}")
-        # NOTE: name/id will be set automatically and are not initialized here.
+        # **NOTE**: name/id will be set automatically and are not initialized here.
         wandb_reporter = WandBReporter(
             WandBStepType.ROUND,
             project="FL4Health",  # Name of the project under which everything should be logged

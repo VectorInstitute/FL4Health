@@ -56,7 +56,7 @@ class FendaDittoClient(DittoClient):
         The constraint for the FENDA model feature extractors discussed above uses a weight drift loss on its
         feature extraction modules.
 
-        **NOTE:** Unlike FENDA, the global feature extractor of the FENDA model is NOT exchanged with the server.
+        **NOTE**: Unlike FENDA, the global feature extractor of the FENDA model is NOT exchanged with the server.
         Rather, the global Ditto model is exchanged and injected at each round into the global feature extractor. If
         the global feature extractor is frozen, then only the local components of the FENDA network are trained.
 

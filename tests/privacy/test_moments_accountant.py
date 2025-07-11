@@ -35,7 +35,7 @@ def test_instance_accountant_reproduce_results() -> None:
     # rdp_privacy_accountant get_epsilon function. If you revert to the previous best bound of
     #   epsilon = min( rdp - math.log(delta) / (orders - 1) )
     # from https://arxiv.org/abs/1702.07476 Proposition 3 in v3 the results are reproduced exactly.
-    # NOTE: There is also an ERROR in that thesis where they claim the bounds for Fix sampling without replacement,
+    # **NOTE**: There is also an ERROR in that thesis where they claim the bounds for Fix sampling without replacement,
     # but use Poisson Sampling in there bound calculations.
     n_clients = 100
     clients_sampled_per_round = 10

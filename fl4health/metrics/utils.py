@@ -11,7 +11,7 @@ def infer_label_dim(tensor1: torch.Tensor, tensor2: torch.Tensor) -> int:
 
     Args:
         tensor1 (torch.Tensor): The reference tensor. Must have the same number of dimensions as tensor 2, or have
-            exactly 1 more dimension (the label dim).
+            exactly 1 more dimension (the label dimension).
         tensor2 (torch.Tensor): The non-reference tensor.
 
     Raises:
@@ -84,21 +84,21 @@ def map_label_index_tensor_to_one_hot(
 ) -> torch.Tensor:
     """
     Maps the provided ``label_index_tensor``, which has label indices at the provided ``label_dim``. In the tensor,
-    this dimension should be "empty", i.e. have size 1. This function uses the shape provided by ``target_shape`` to
+    this dimension should be "empty," i.e. have size 1. This function uses the shape provided by ``target_shape`` to
     expand the label indices into one-hot encoded vectors in that dimension according the the size of the target
-    dimension at ``label_dim`` in ``target_shape``. For example, if label_index_tensor has shape (64, 10, 10, 1),
-    label_dim = 3, and target_shape = (64, 10, 10, 4), then the new shape should be (64, 10, 10, 4) with [i, j, k, :]
-    being a one-hot vector of length 4.
+    dimension at ``label_dim`` in ``target_shape``. For example, if ``label_index_tensor`` has shape
+    ``(64, 10, 10, 1)``, ``label_dim = 3``, and ``target_shape = (64, 10, 10, 4)``, then the new shape should be
+    ``(64, 10, 10, 4)`` with ``[i, j, k, :]`` being a one-hot vector of length ``4``.
 
     Args:
         label_index_tensor (torch.Tensor): Tensor to have label_dim dimension one-hot encoded accounting to
-            target_shape and the indices of label_index_tensor in the label_dim
-        target_shape (torch.Size): Shape we want to transform label_index_tensor to. Mainly used to establish the
+            ``target_shape`` and the indices of ``label_index_tensor`` in the ``label_dim``
+        target_shape (torch.Size): Shape we want to transform ``label_index_tensor`` to. Mainly used to establish the
             length of the one-hot encodings
         label_dim (int): Dimension to one-hot encode.
 
     Returns:
-        torch.Tensor: Tensor with one-hot encoded label_dim.
+        torch.Tensor: Tensor with one-hot encoded ``label_dim``.
     """
     label_index_tensor_shape = label_index_tensor.shape
 
@@ -120,16 +120,18 @@ def align_pred_and_target_shapes(
     preds: torch.Tensor, targets: torch.Tensor, label_dim: int | None = None
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """
-    If necessary, attempts to correct shape mismatches between the given tensors by inferring which one
-    to one-hot-encode. Note that if both preds and targets have the same shape then nothing needs to be modified. If
-    there is a mismatch, it is assumed that the labels in one of the predictions or the targets are vector encoded
-    in some way (either one-hot or soft) while the other is label index encoded.
+    If necessary, attempts to correct shape mismatches between the given tensors by inferring which one to
+    one-hot-encode.
+
+    **NOTE**: If both preds and targets have the same shape then nothing needs to be modified. If there is a mismatch,
+    it is assumed that the labels in one of the predictions or the targets are vector encoded in some way
+    (either one-hot or soft) while the other is label index encoded.
 
     If one is vector encoded but not the other, then both are returned as vector encoded tensors.
 
-    NOTE: This function ASSUMES label-index encoding if the shapes are misaligned. This assumption doesn't necessarily
-    hold in binary classification settings where continuous values might be used to indicate the positive label by
-    default. As such, this function should not be used for those types of tensors.
+    **NOTE**: This function **ASSUMES** label-index encoding if the shapes are misaligned. This assumption doesn't
+    necessarily hold in binary classification settings where continuous values might be used to indicate the positive
+    label by default. As such, this function should not be used for those types of tensors.
 
     For example, consider a problem with 3 label classes with the preds vector encoded and the targets label encoded
 
@@ -139,8 +141,8 @@ def align_pred_and_target_shapes(
 
         targets = torch.Tensor([[2], [1]])
 
-    preds has shape (2, 3) and targets has shape (2, 1). This function will convert targets to a one-hot-encode tensor
-    with contents
+    preds has shape ``(2, 3)`` and targets has shape ``(2, 1)``. This function will convert targets to a
+    one-hot-encode tensor with contents
 
     .. code-block:: python
 

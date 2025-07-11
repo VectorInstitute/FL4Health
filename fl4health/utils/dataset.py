@@ -14,10 +14,10 @@ class BaseDataset(ABC, Dataset):
 
         Args:
             transform (Callable | None, optional): Optional transformation to be applied to the input data.
-                NOTE: This transformation is applied at load time within ``__get_item__``
+                **NOTE**: This transformation is applied at load time within ``__get_item__``
                 Defaults to None.
             target_transform (Callable | None, optional): Optional transformation to be applied to the target data.
-                NOTE: This transformation is applied at load time within ``__get_item__``
+                **NOTE**: This transformation is applied at load time within ``__get_item__``
                 Defaults to None.
         """
         self.transform = transform
@@ -85,10 +85,10 @@ class TensorDataset(BaseDataset):
             data (torch.Tensor): Input data for training.
             targets (torch.Tensor | None, optional): Target data for training. Defaults to None.
             transform (Callable | None, optional): Optional transformation to be applied to the input data.
-                NOTE: This transformation is applied at load time within ``__get_item__``
+                **NOTE**: This transformation is applied at load time within ``__get_item__``
                 Defaults to None.
             target_transform (Callable | None, optional): Optional transformation to be applied to the target data.
-                NOTE: This transformation is applied at load time within ``__get_item__``
+                **NOTE**: This transformation is applied at load time within ``__get_item__``
                 Defaults to None.
         """
         super().__init__(transform, target_transform)
@@ -148,12 +148,12 @@ class SslTensorDataset(TensorDataset):
                 maintain compatibility with our TensorDataset base. Defaults to None.
             transform (Callable | None, optional): Any transform to be applied to the data tensors. This transform is
                 performed BEFORE and target transforms that produce the self-supervised targets from the data.
-                NOTE: These transformations and the ``target_transform`` functions are applied AT LOAD TIME
+                **NOTE**: These transformations and the ``target_transform`` functions are applied AT LOAD TIME
                 Defaults to None.
             target_transform (Callable | None, optional): Any transform to be applied to the data tensors to produce
                 target tensors for training. This transform is performed after and transforms for the data tensors
                 themselves to produce the self-supervised targets from the data.
-                NOTE: These transformation functions are applied AT LOAD TIME.
+                **NOTE**: These transformation functions are applied AT LOAD TIME.
                 Defaults to None.
         """
         assert targets is None, "SslTensorDataset targets must be None"
@@ -223,7 +223,7 @@ class DictionaryDataset(Dataset):
         """
         Gets the length of the dataset as extracted from the first piece of data in the data dictionary.
 
-        NOTE: This implicitly assumes that the length of the data in each entry of the dictionary of data is
+        **NOTE**: This implicitly assumes that the length of the data in each entry of the dictionary of data is
         uniform.
 
         Returns:

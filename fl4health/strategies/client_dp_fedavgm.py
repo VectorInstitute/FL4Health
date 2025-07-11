@@ -231,7 +231,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             self.m_t = weights_update
         else:
             self.m_t = [
-                # NOTE: This is not normalized (beta vs. 1-beta) as used in the original implementation
+                # **NOTE**: This is not normalized (beta vs. 1-beta) as used in the original implementation
                 self.beta * prev_layer_update + noised_layer_update
                 for prev_layer_update, noised_layer_update in zip(self.m_t, weights_update)
             ]
@@ -241,7 +241,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         This function updates each of the layer weights using the server learning rate and the :math:`m_t` values
         (computed with or without momentum).
 
-        **NOTE:** It assumes that the values in :math:`m_t` are **UPDATES** rather than raw weights.
+        **NOTE**: It assumes that the values in :math:`m_t` are **UPDATES** rather than raw weights.
         """
         assert self.m_t is not None
         self.current_weights = [
@@ -256,7 +256,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         """
         Update the clipping bound help by the server given the noised aggregated clipping bits returned by the clients.
 
-        **NOTE:** The update formula may be found in the original paper.
+        **NOTE**: The update formula may be found in the original paper.
 
         Args:
             noised_clipping_bits (float): This is the aggregated noised clipping bits derived from the clients.
@@ -289,10 +289,10 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         Aggregate fit using averaging of weights (can be unweighted or weighted) and inject noise and optionally
         perform adaptive clipping updates.
 
-        **NOTE:** This assumes that the model weights sent back by the clients are **UPDATES** rather than raw weights.
+        **NOTE**: This assumes that the model weights sent back by the clients are **UPDATES** rather than raw weights.
         That is they are ``theta_client - theta_server`` rather than just ``theta_client``.
 
-        **NOTE:** this function packs the clipping bound for clients as the last member of the parameters list.
+        **NOTE**: this function packs the clipping bound for clients as the last member of the parameters list.
 
         Args:
             server_round (int): Indicates the server round we're currently on.

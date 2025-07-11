@@ -26,12 +26,12 @@ class FlInstanceLevelAccountant:
         Further it assumes that the sampling ratio of clients and noise multiplier are fixed throughout training
 
         Args:
-            client_sampling_rate (float): probability that each client will be included in a round
-            noise_multiplier (float):  multiplier of noise std. dev. on clipping bound
-            epochs_per_round (int): number of epochs each client will complete per server round
-            client_batch_sizes (list[int]): batch size per client, if a single value it is assumed to be constant
-                across clients
-            client_dataset_sizes (list[int]): size of full dataset on a client, if a single value it is assumed to be
+            client_sampling_rate (float): Probability that each client will be included in a round
+            noise_multiplier (float):  Multiplier of noise std. dev. on clipping bound.
+            epochs_per_round (int): Number of epochs each client will complete per server round.
+            client_batch_sizes (list[int]): Batch size per client, if a single value it is assumed to be constant
+                across clients.
+            client_dataset_sizes (list[int]): Size of full dataset on a client, if a single value it is assumed to be
                 constant across clients.
             moment_orders (list[float] | None, optional): Moments orders to be used in computing the approximate
                 epsilon value. Defaults to None.
@@ -60,11 +60,11 @@ class FlInstanceLevelAccountant:
         Compute the epsilon value for the provided delta and the number of server updates performed.
 
         Args:
-            server_updates (int): number of central server updates performed
-            delta (float): Delta value from which to compute epsilon
+            server_updates (int): Number of central server updates performed.
+            delta (float): Delta value from which to compute epsilon.
 
         Returns:
-            float: Epsilon
+            float: Epsilon.
         """
         epsilons = []
         for num_batch, sampling_strategy in zip(self.num_batches_per_client, self.sampling_strategies_per_client):
@@ -79,11 +79,11 @@ class FlInstanceLevelAccountant:
         Compute the delta value for the provided epsilon and the number of server updates performed.
 
         Args:
-            server_updates (int): number of central server updates performed
-            epsilon (float): Epsilon value from which to compute delta
+            server_updates (int): Number of central server updates performed.
+            epsilon (float): Epsilon value from which to compute delta.
 
         Returns:
-            float: delta
+            float: delta.
         """
         deltas = []
         for num_batch, sampling_strategy in zip(self.num_batches_per_client, self.sampling_strategies_per_client):
@@ -139,8 +139,8 @@ class FlClientLevelAccountantPoissonSampling(ClientLevelAccountant):
         parameters
 
         Args:
-            client_sampling_rate (float | list[float]): probability that each client will be included in a round
-            noise_multiplier (float | list[float]): multiplier of noise std. dev. on clipping bound
+            client_sampling_rate (float | list[float]): Probability that each client will be included in a round.
+            noise_multiplier (float | list[float]): Multiplier of noise std. dev. on clipping bound.
             moment_orders (list[float] | None, optional): Moments orders to be used in computing the approximate
                 epsilon value. Defaults to None. Defaults to None.
         """
@@ -157,11 +157,11 @@ class FlClientLevelAccountantPoissonSampling(ClientLevelAccountant):
         Compute the epsilon value for the provided delta and the number of server updates performed.
 
         Args:
-            server_updates (int | list[int]): number of central server updates performed
-            delta (float): Delta value from which to compute epsilon
+            server_updates (int | list[int]): Number of central server updates performed.
+            delta (float): Delta value from which to compute epsilon.
 
         Returns:
-            float: epsilon
+            float: epsilon.
         """
         self._validate_server_updates(server_updates)
         return self.accountant.get_epsilon(self.sampling_strategy, self.noise_multiplier, server_updates, delta)
@@ -171,11 +171,11 @@ class FlClientLevelAccountantPoissonSampling(ClientLevelAccountant):
         Compute the delta value for the provided epsilon and the number of server updates performed.
 
         Args:
-            server_updates (int | list[int]): number of central server updates performed
-            epsilon (float): Epsilon value from which to compute delta
+            server_updates (int | list[int]): Number of central server updates performed.
+            epsilon (float): Epsilon value from which to compute delta.
 
         Returns:
-            float: delta
+            float: delta.
         """
         self._validate_server_updates(server_updates)
         return self.accountant.get_delta(self.sampling_strategy, self.noise_multiplier, server_updates, epsilon)
@@ -197,9 +197,9 @@ class FlClientLevelAccountantFixedSamplingNoReplacement(ClientLevelAccountant):
         parameters
 
         Args:
-            n_total_clients (int): total number of clients to be sampled from
-            n_clients_sampled (int | list[int]): number of clients sampled in a given round
-            noise_multiplier (float | list[float]): multiplier of noise std. dev. on clipping bound
+            n_total_clients (int): Total number of clients to be sampled from.
+            n_clients_sampled (int | list[int]): Number of clients sampled in a given round.
+            noise_multiplier (float | list[float]): Multiplier of noise std. dev. on clipping bound.
             moment_orders (list[float] | None, optional): Moments orders to be used in computing the approximate
                 epsilon value. Defaults to None. Defaults to None.
         """
@@ -218,11 +218,11 @@ class FlClientLevelAccountantFixedSamplingNoReplacement(ClientLevelAccountant):
         Compute the epsilon value for the provided delta and the number of server updates performed.
 
         Args:
-            server_updates (int | list[int]): number of central server updates performed
-            delta (float): Delta value from which to compute epsilon
+            server_updates (int | list[int]): Number of central server updates performed.
+            delta (float): Delta value from which to compute epsilon.
 
         Returns:
-            float: epsilon
+            float: epsilon.
         """
         self._validate_server_updates(server_updates)
         return self.accountant.get_epsilon(self.sampling_strategy, self.noise_multiplier, server_updates, delta)
@@ -232,11 +232,11 @@ class FlClientLevelAccountantFixedSamplingNoReplacement(ClientLevelAccountant):
         Compute the delta value for the provided epsilon and the number of server updates performed.
 
         Args:
-            server_updates (int | list[int]): number of central server updates performed
-            epsilon (float): Epsilon value from which to compute delta
+            server_updates (int | list[int]): Number of central server updates performed.
+            epsilon (float): Epsilon value from which to compute delta.
 
         Returns:
-            float: delta
+            float: delta.
         """
         self._validate_server_updates(server_updates)
         return self.accountant.get_delta(self.sampling_strategy, self.noise_multiplier, server_updates, epsilon)

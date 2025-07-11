@@ -66,8 +66,8 @@ class NnunetServer(FlServer):
         global_deep_supervision: bool = False,
     ) -> None:
         """
-        A Basic FlServer with added functionality to ask a client to initialize the global nnunet plans if one was not
-        provided in the config. Intended for use with ``NnUNetClient``.
+        A Basic ``FlServer`` with added functionality to ask a client to initialize the global nnunet plans if one was
+        not provided in the config. Intended for use with ``NnUNetClient``.
 
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
@@ -77,7 +77,7 @@ class NnunetServer(FlServer):
                 example, the config used to produce the ``on_fit_config_fn`` and ``on_evaluate_config_fn`` for the
                 strategy.
 
-                **NOTE:** This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
+                **NOTE**: This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
             on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]]): Function used to configure how one
                 asks a client to provide parameters from which to initialize all other clients by providing a
                 ``Config`` dictionary. For ``NnunetServers`` this is a required function to provide the additional
@@ -93,7 +93,7 @@ class NnunetServer(FlServer):
                 (including models) such that if FL training is interrupted, the process may be restarted. If no
                 module is provided, no checkpointing or state preservation will happen. Defaults to None.
 
-                **NOTE:** For NnUnet, this module is allowed to have all components defined other than the model, as it
+                **NOTE**: For NnUnet, this module is allowed to have all components defined other than the model, as it
                 may be set later when the server asks the clients to provide the architecture.
             server_name (str | None, optional): An optional string name to uniquely identify server. This name is also
                 used as part of any state checkpointing done by the server. Defaults to None.
@@ -172,7 +172,7 @@ class NnunetServer(FlServer):
            (which are not specified in nnunet plans for some reason).
 
         Args:
-            num_rounds (int): The number of server rounds of FL to be performed
+            num_rounds (int): The number of server rounds of FL to be performed.
             timeout (float | None, optional): The server's timeout parameter. Useful if one is requesting
                 information from a client. Defaults to None, which indicates indefinite timeout.
         """
@@ -232,7 +232,7 @@ class NnunetServer(FlServer):
 
             # If the state_checkpointer has been specified and a state checkpoint exists, the state
             # will be loaded when executing ``fit_with_per_round_checkpointing`` of the base_server.
-            # NOTE: Inherent assumption that if checkpoint exists for server that it also will exist for client.
+            # **NOTE**: Inherent assumption that if checkpoint exists for server that it also will exist for client.
 
             # Wrap config functions so that we are sure the nnunet_plans are included
             new_fit_cfg_fn = add_items_to_config_fn(

@@ -212,7 +212,7 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         3. Perform weighted averaging on the dense tensors according to the number of training examples each client
            has.
 
-        **NOTE:** This method performs weighted averaging.
+        **NOTE**: This method performs weighted averaging.
 
         Args:
             results (list[tuple[NDArrays, int]]): The weight results from each client's local training that need to be
@@ -272,7 +272,7 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         2. For tensors that have the same name, construct the sparse COO tensors and convert them to dense tensors.
         3. Perform uniform averaging on the dense tensors across all clients.
 
-        **NOTE:** This method performs uniform averaging.
+        **NOTE**: This method performs uniform averaging.
 
         Args:
             results (list[tuple[NDArrays, int]]): The weight results from each client's local training that need to be

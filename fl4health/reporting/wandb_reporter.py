@@ -109,10 +109,10 @@ class WandBReporter(BaseReporter):
 
     def define_metrics(self) -> None:
         """
-        This method defines some of the metrics we expect to see from Basic Client and server.
+        This method defines some of the metrics we expect to see from ``BasicClient`` and server.
 
-        Note that you do not have to define metrics, but it can be useful for determining what should and shouldn't go
-        into the run summary.
+        **NOTE** that you do not have to define metrics, but it can be useful for determining what should and
+        shouldn't go into the run summary.
         """
         # Note that the hidden argument is not working. Raised issue here: https://github.com/wandb/wandb/issues/8890
         # Round, epoch and step
@@ -200,7 +200,7 @@ class WandBReporter(BaseReporter):
         of  that round. You can only update or overwrite the current wandb step, previous steps can not be modified.
 
         Args:
-            data (dict[str, Any]): Dictionary of wandb compatible data to log
+            data (dict[str, Any]): Dictionary of wandb compatible data to log.
             round (int | None, optional): The current FL round. If None, this indicates that the method was called
                 outside of a round (e.g. for summary information). Defaults to None.
             epoch (int | None, optional): The current epoch (In total across all rounds). If None then this method was

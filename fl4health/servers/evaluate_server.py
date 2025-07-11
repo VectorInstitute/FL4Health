@@ -44,7 +44,6 @@ class EvaluateServer(Server):
                  Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             min_available_clients (int, optional): Minimum number of total clients in the system. Defaults to 1.
-                Defaults to 1.
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the client should
                 send data to.
         """

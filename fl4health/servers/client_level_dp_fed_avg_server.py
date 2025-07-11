@@ -46,7 +46,7 @@ class ClientLevelDPFedAvgServer(FlServer):
                 example, the config used to produce the ``on_fit_config_fn`` and ``on_evaluate_config_fn`` for the
                 strategy.
 
-                **NOTE:** This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
+                **NOTE**: This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
             strategy (ClientLevelDPFedAvgM): The aggregation strategy to be used by the server to handle.
                 client updates and other information potentially sent by the participating clients.
             server_noise_multiplier (float): Magnitude of noise added to the weights aggregation process by the server.
@@ -100,7 +100,7 @@ class ClientLevelDPFedAvgServer(FlServer):
                 clients selected to participate in federated training.
 
         Returns:
-            tuple[History, float]: The first element of the tuple is a history object containing the full set of
+            tuple[History, float]: The first element of the tuple is a ``History`` object containing the full set of
             FL training results, including things like aggregated loss and metrics. Tuple also contains the elapsed
             time in seconds for the round.
         """

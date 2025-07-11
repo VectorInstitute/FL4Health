@@ -24,12 +24,12 @@ class MkMmdLoss(torch.nn.Module):
         for optimization of the coefficients, beta.
 
         Args:
-            device (torch.device): Device onto which tensors should be moved
+            device (torch.device): Device onto which tensors should be moved.
             gammas (torch.Tensor | None, optional): These are known as the length-scales of the RBF functions used
-                to compute the Mk-MMD distances. The length of this list defines the number of kernels used in the
+                to compute the MK-MMD distances. The length of this list defines the number of kernels used in the
                 norm measurement. If none, a default of 19 kernels is used. Defaults to None.
             betas (torch.Tensor | None, optional): These are the linear coefficients used on the basis of kernels
-                to compute the Mk-MMD measure. If not provided, a unit-length, random default is constructed. These
+                to compute the MK-MMD measure. If not provided, a unit-length, random default is constructed. These
                 can be optimized using the functions of this class. Defaults to None.
             minimize_type_two_error (bool | None, optional): Whether we're aiming to minimize the type II error in
                 optimizing the betas or maximize it. The first coincides with trying to minimize feature distance. The
@@ -39,7 +39,7 @@ class MkMmdLoss(torch.nn.Module):
             layer_name (str | None, optional): The name of the layer to extract features from. Defaults to None.
             perform_linear_approximation (bool | None, optional): Whether to use linear approximations for the
                 estimates of the mean and covariance of the kernel values. Experimentally, we have found that the
-                linear approximations largely hinder the statistical power of Mk-MMD. Defaults to False
+                linear approximations largely hinder the statistical power of MK-MMD. Defaults to False
         """
         super().__init__()
         self.device = device
@@ -99,7 +99,7 @@ class MkMmdLoss(torch.nn.Module):
         # We want to compute estimates of the expectation for each RBF kernel WITHOUT using a linear approximation.
         # So we need to compute ||x - y||^2 for all pairs (x_j, x_k), (x_j, y_k), (x_k, y_j), and (y_j, y_k) for all
         # j, k in range(n_samples).
-        # NOTE: ||x - y||^2 = <x - y, x - y> = <x, x> + <y, y> - 2<x, y>
+        # **NOTE**: ||x - y||^2 = <x - y, x - y> = <x, x> + <y, y> - 2<x, y>
         x_x_prime = (
             torch.sum((x**2), dim=1).reshape(-1, 1)
             + torch.sum((x**2), dim=1).reshape(1, -1)
@@ -300,7 +300,7 @@ class MkMmdLoss(torch.nn.Module):
                     kernel_samples_minus_kernel_expectation[i, :, :] * kernel_samples_minus_kernel_expectation[j, :, :]
                 )
                 # Compute the expectation to get Cov(h_{k_i}, h_{k_j}).
-                # NOTE: the n^2-1 correction is because we're using expectation estimates
+                # **NOTE**: the n^2-1 correction is because we're using expectation estimates
                 q_k_matrix[i][j] = (1.0 / (n_samples**2 - 1.0)) * torch.sum(product_of_variances)
         return q_k_matrix
 
@@ -443,8 +443,8 @@ class MkMmdLoss(torch.nn.Module):
         Compute the multi-kernel maximum mean discrepancy (MK-MMD) between the source and target domains.
 
         Args:
-            x_s (torch.Tensor): Source domain data, shape (n_samples, n_features)
-            x_t (torch.Tensor): Target domain data, shape (n_samples, n_features)
+            x_s (torch.Tensor): Source domain data, shape (``n_samples``, ``n_features``)
+            x_t (torch.Tensor): Target domain data, shape (``n_samples``, ``n_features``)
 
         Returns:
             torch.Tensor: MK-MMD value

@@ -79,7 +79,7 @@ class ParameterPackerWithLayerNames(ParameterPacker[list[str]]):
 
         Args:
             packed_parameters (NDArrays): packed_parameters is a list containing model parameters followed by an
-                NDArray that contains the corresponding names of those parameters.
+                ``NDArray`` that contains the corresponding names of those parameters.
 
         Returns:
             tuple[NDArrays, list[str]]: tuple of model parameters and the names of the layers to which they correspond

@@ -38,7 +38,7 @@ class MaskedLayerNorm(nn.LayerNorm):
         When ``elementwise_affine`` is False, ``nn.LayerNorm`` does not have weight or bias. Under this condition, both
         score tensors are None and ``MaskedLayerNorm`` acts in the same way as ``nn.LayerNorm``.
 
-        **NOTE:** The scores are not assumed to be bounded between 0 and 1.
+        **NOTE**: The scores are not assumed to be bounded between 0 and 1.
 
         Args:
             normalized_shape (TorchShape): Input shape from an expected input. If a single integer is used, it is
@@ -88,10 +88,10 @@ class MaskedLayerNorm(nn.LayerNorm):
         Mapping function for the ``MaskedLayerNorm``.
 
         Args:
-            input (Tensor): Tensor to be mapped by the layer
+            input (Tensor): Tensor to be mapped by the layer.
 
         Returns:
-            Tensor: Output tensor after mapping of the input tensor
+            Tensor: Output tensor after mapping of the input tensor.
         """
         if not self.elementwise_affine:
             return F.layer_norm(input, self.normalized_shape, self.weight, self.bias, self.eps)
@@ -167,7 +167,7 @@ class _MaskedBatchNorm(_BatchNorm):
         When affine is False, _BatchNorm does not have weight or bias. Under this condition, both score tensors
         are None and ``_MaskedBatchNorm`` acts in the same way as ``_BatchNorm``.
 
-        **NOTE:** The scores are not assumed to be bounded between 0 and 1.
+        **NOTE**: The scores are not assumed to be bounded between 0 and 1.
 
         Args:
             num_features (int): Number of features or channels :math:`C` of the input
@@ -312,8 +312,8 @@ class MaskedBatchNorm2d(_MaskedBatchNorm):
 
 class MaskedBatchNorm3d(_MaskedBatchNorm):
     """
-    Applies (masked) Batch Normalization over a 5D input (a mini-batch of 3D inputs with additional
-    channel dimension).
+    Applies (masked) Batch Normalization over a 5D input (a mini-batch of 3D inputs with additional channel
+    dimension).
     """
 
     def _check_input_dim(self, input: Tensor) -> None:

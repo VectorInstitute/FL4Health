@@ -43,20 +43,20 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """
         This mixin implements the Ditto algorithm from Ditto: Fair and Robust Federated Learning Through
-        Personalization. This mixin inherits from the `AdaptiveDriftConstrainedMixin`, and like that mixin,
-        this should be mixed with a `FlexibleClient` type in order to apply the Ditto personalization method
+        Personalization. This mixin inherits from the ``AdaptiveDriftConstrainedMixin``, and like that mixin,
+        this should be mixed with a ``FlexibleClient`` type in order to apply the Ditto personalization method
         to that client.
 
         Background Context:
-        The idea is that we want to train personalized versions of the global model for each client.
-        So we simultaneously train a global model that is aggregated on the server-side and use those weights to also
+
+        The idea is that we want to train personalized versions of the global model for each client. So we
+        simultaneously train a global model that is aggregated on the server-side and use those weights to also
         constrain the training of a local model. The constraint for this local model is identical to the FedProx loss.
 
 
         Raises:
-            RuntimeError: If the object does not satisfy the `FlexibleClientProtocolPreSetup`
-            then it will raise an error. This is additional validation to ensure that the mixin was
-            applied to an appropriate base class.
+            RuntimeError: If the object does not satisfy the ``FlexibleClientProtocolPreSetup`` then it will raise an
+                error. This is additional validation to ensure that the mixin was applied to an appropriate base class.
         """
         # Initialize mixin-specific attributes
         self.global_model: torch.nn.Module | None = None
@@ -101,8 +101,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         Convenient accessor for the global model.
 
         Raises:
-            ValueError: If the `global_model` attribute has not yet been set, we
-            will raise an error.
+            ValueError: If the ``global_model`` attribute has not yet been set, we will raise an error.
 
         Returns:
             nn.Module: the global model if it has been set.
@@ -260,7 +259,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             # architecture, it doesn't matter which we choose as an initializer. The global and local models are set
             # to the same weights in initialize_all_model_weights
             return FullParameterExchanger().push_parameters(self.model, config=config)
-        # NOTE: the global model weights are sent to the server here.
+        # **NOTE**: the global model weights are sent to the server here.
         if self.global_model is None:
             raise ValueError("Unable to get parameters with unset global model.")
         global_model_weights = self.parameter_exchanger.push_parameters(self.global_model, config=config)

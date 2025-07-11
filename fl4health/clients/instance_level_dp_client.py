@@ -95,13 +95,13 @@ class InstanceLevelDpClient(BasicClient):
         self.model, reinitialize_optimizer = privacy_validate_and_fix_modules(self.model)
 
         # If we have fixed the model by changing out layers (and therefore parameters), we need to update the optimizer
-        # parameters to coincide with this fixed model. **NOTE:** It is not done in make_private!
+        # parameters to coincide with this fixed model. **NOTE**: It is not done in make_private!
         if reinitialize_optimizer:
             self.set_optimizer(config)
 
         # Create DP training objects
         privacy_engine = PrivacyEngine()
-        # NOTE: that Opacus make private is NOT idempotent
+        # **NOTE**: that Opacus make private is NOT idempotent
         self.model, optimizer, self.train_loader = privacy_engine.make_private(
             module=self.model,
             optimizer=self.optimizers["global"],

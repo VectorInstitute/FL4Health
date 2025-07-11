@@ -46,7 +46,7 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
         weights, the server also receives the training loss from the clients. If adaptation is enabled, these losses
         are used to update the loss weight parameter according to the FedProx paper recommendations.
 
-        **NOTE:** Initial parameters are **NOT** optional. They must be passed for this strategy.
+        **NOTE**: Initial parameters are **NOT** optional. They must be passed for this strategy.
 
         The aggregation strategy for weights is the same as in FedAvg.
 
@@ -191,7 +191,7 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
         Update constraint weight parameter if ``adaptive_loss_weight`` is set to True. Regardless of whether adaptivity
         is turned on at this time, the previous loss seen by the server is updated.
 
-        **NOTE:** For adaptive constraint losses, including FedProx, this loss is exchanged (along with the
+        **NOTE**: For adaptive constraint losses, including FedProx, this loss is exchanged (along with the
         weights) by each client and is the **VANILLA** loss that does not include the additional penalty losses.
 
         Args:

@@ -31,7 +31,7 @@ class FedIsic2019CentralizedTrainer(SingleNodeTrainer):
         self.val_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
         self.model: nn.Module = Baseline().to(self.device)
-        # NOTE: The class weights specified by alpha in this baseline loss are precomputed based on the weights of
+        # **NOTE**: The class weights specified by alpha in this baseline loss are precomputed based on the weights of
         # the pool dataset. This is a bit of cheating but FLamby does it in their paper.
         self.criterion = BaselineLoss()
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=LR)

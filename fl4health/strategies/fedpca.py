@@ -181,7 +181,7 @@ class FedPCA(BasicFedAvg):
         For the theoretical justification behind this procedure, see the paper
         "A Distributed and Incremental SVD Algorithm for Agglomerative Data Analysis on Large Networks".
 
-        **NOTE:** This method assumes that the *columns* of ``U_i``'s are the local principal components. Thus, after
+        **NOTE**: This method assumes that the *columns* of ``U_i``'s are the local principal components. Thus, after
         performing SVD on the matrix ``B`` (defined above), the merging result is the **left** singular vectors.
 
         This is in contrast with the client-side implementation of PCA (contained in class PcaModule), which assumes
@@ -230,7 +230,7 @@ class FedPCA(BasicFedAvg):
         For the theoretical justification behind this approach, see the paper "Subspace Tracking for Latent
         Semantic Analysis".
 
-        **NOTE:** Similar to ``merge_subspaces_svd``, this method assumes that the **columns** of ``U_i``'s are the
+        **NOTE**: Similar to ``merge_subspaces_svd``, this method assumes that the **columns** of ``U_i``'s are the
         local principal components.
 
         Args:

@@ -26,7 +26,7 @@ class SyntheticFedProxDataset(ABC):
 
         Reference code: https://github.com/litian96/FedProx/tree/master/data/synthetic_1_1
 
-        **NOTE:** In the implementations here, all clients receive the same number of samples. In the original FedProx
+        **NOTE**: In the implementations here, all clients receive the same number of samples. In the original FedProx
         setup, they are sampled using a power law.
 
         Args:
@@ -167,7 +167,7 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
         Paper link: https://arxiv.org/abs/1812.06127
         Reference code: https://github.com/litian96/FedProx/tree/master/data/synthetic_1_1
 
-        **NOTE:** This generator ends up with fairly skewed labels in generation. That is, many of the clients will not
+        **NOTE**: This generator ends up with fairly skewed labels in generation. That is, many of the clients will not
         have representations of all the labels. This has been verified as also occurring in the reference code above
         and is not a bug.
 
@@ -289,7 +289,7 @@ class SyntheticIidFedProxDataset(SyntheticFedProxDataset):
 
         Paper link: https://arxiv.org/abs/1812.06127
 
-        **NOTE:** This generator ends up with fairly skewed labels in generation. That is, many of the clients will not
+        **NOTE**: This generator ends up with fairly skewed labels in generation. That is, many of the clients will not
         have representations of all the labels. This has been verified as also occurring in the reference code above
         and is not a bug.
 

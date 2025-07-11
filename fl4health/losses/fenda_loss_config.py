@@ -96,8 +96,8 @@ class ConstrainedFendaLossContainer:
         Compute the contrastive loss, if it exists, using the configuration.
 
         Args:
-            features (torch.Tensor): features from the model
-            positive_pairs (torch.Tensor): positive pair features to compare to
+            features (torch.Tensor): features from the model.
+            positive_pairs (torch.Tensor): positive pair features to compare to.
             negative_pairs (torch.Tensor): negative pair features to compare to.
 
         Returns:

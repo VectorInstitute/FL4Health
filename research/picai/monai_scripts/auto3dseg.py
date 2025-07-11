@@ -18,8 +18,8 @@ def gen_dataset_list(data_dir: str, output_path: str | None = None, ext: str = "
     """
     Generates a MONAI dataset list for an nnUNet structured dataset.
 
-    NOTE: Rather than having a single image and label, this checks for multiple channels following the nnunet dataset
-    formatting guidelines, and passes a list of filepaths for each channel as the value for the image key
+    **NOTE**: Rather than having a single image and label, this checks for multiple channels following the nnunet
+    dataset formatting guidelines, and passes a list of filepaths for each channel as the value for the image key
 
     Args:
         data_dir (str): Path to the nnUNet_raw dataset.

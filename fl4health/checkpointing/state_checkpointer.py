@@ -257,7 +257,7 @@ class StateCheckpointer(ABC):
         """
         Load the state of the attribute using the snapshotter's ``load_attribute`` functionality.
 
-        NOTE: This function assumes that ``snapshot_ckpt`` has been populated with the right data loaded from disk.
+        **NOTE**: This function assumes that ``snapshot_ckpt`` has been populated with the right data loaded from disk.
 
         Args:
             snapshotter (dict[str, Any]): Snapshotter object to return the state of the attribute.
@@ -295,9 +295,9 @@ class ClientStateCheckpointer(StateCheckpointer):
         """
         # If snapshot_attrs is None, we set a sensible default set of attributes to be saved. These are a minimal
         # set of attributes that can be used for per round checkpointing or early stopping.
-        # NOTE: These default attributes are useful for state checkpointing a BasicClient. More sophisticated clients
-        # may require more attributes to fully support training restarts and early stopping. For a server example, see
-        # NnUnetServerStateCheckpointer.
+        # **NOTE**: These default attributes are useful for state checkpointing a BasicClient. More sophisticated
+        # clients may require more attributes to fully support training restarts and early stopping. For a server
+        # example, see NnUnetServerStateCheckpointer.
         if snapshot_attrs is None:
             snapshot_attrs = {
                 "model": (TorchModuleSnapshotter(), nn.Module),
@@ -431,7 +431,7 @@ class ServerStateCheckpointer(StateCheckpointer):
         """
         # If snapshot_attrs is None, we set a sensible default set of attributes to be saved. These are a minimal
         # set of attributes that can be used for per round checkpointing or early stopping.
-        # NOTE: These default attributes are useful for state checkpointing a FlServer. More sophisticated servers
+        # **NOTE**: These default attributes are useful for state checkpointing a FlServer. More sophisticated servers
         # may require more attributes to fully support training restarts and early stopping. For an example, see
         # NnUnetServerStateCheckpointer.
         if snapshot_attrs is None:

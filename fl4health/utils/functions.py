@@ -91,7 +91,7 @@ def decode_and_pseudo_sort_results(
     sorting (assuming the clients are deterministically training their weights as well). This allows, for example,
     for weights from the clients to be summed in a deterministic order during aggregation.
 
-    **NOTE:** Client proxies would be nice to use for this task, but the CIDs are set by uuid deep in the flower
+    **NOTE**: Client proxies would be nice to use for this task, but the CIDs are set by uuid deep in the flower
     library and are, therefore, not pinnable without a ton of work.
 
     Args:

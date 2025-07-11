@@ -118,7 +118,7 @@ class ModelMergeClient(NumPyClient):
         length and test metrics. Importantly, parameters from Server, which is empty, is not used to initialized the
         client model.
 
-        **NOTE:** Since we only assume the client provides a ``test_loader``, client evaluation and sample counts are
+        **NOTE**: Since we only assume the client provides a ``test_loader``, client evaluation and sample counts are
         always based off the client ``test_loader``.
 
         Args:

@@ -22,7 +22,7 @@ class PcaModule(nn.Module):
         - If ``low_rank`` is set to True, then a value :math:`q` for ``rank_estimation`` can be chosen according to the
           following criteria:
 
-          - in general, :math:`k \\leq q \\leq \\min(2\\cdot k, m, n)`. For large low-rank matrices, take
+          - In general, :math:`k \\leq q \\leq \\min(2\\cdot k, m, n)`. For large low-rank matrices, take
             :math:`q = k + l`, where :math:`5 \\leq l \\leq 10`.
             If :math:`k` is relatively small compared to :math:`\\min(m, n)`, choosing :math:`l = 0, 1, 2` may be
             sufficient.
@@ -95,14 +95,14 @@ class PcaModule(nn.Module):
 
     def maybe_reshape(self, x: Tensor) -> Tensor:
         """
-        Reshape input tensor X as needed so SVD can be computed. Reshaping is required when each data point is an
-        N-dimensional tensor because PCA requires X to be a 2D data matrix.
+        Reshape input tensor ``X`` as needed so SVD can be computed. Reshaping is required when each data point is an
+        N-dimensional tensor because PCA requires ``X`` to be a 2D data matrix.
 
         Args:
-            x (Tensor): Data matrix
+            x (Tensor): Data matrix.
 
         Returns:
-            Tensor: tensor flattened to be 2D
+            Tensor: Tensor flattened to be 2D.
         """
         if len(x.size()) == TWO_D_TENSOR_SHAPE_LENGTH:
             return torch.squeeze(x.float())
@@ -115,7 +115,7 @@ class PcaModule(nn.Module):
         validation/test data later, if needed.
 
         Args:
-            x (Tensor): Data matrix
+            x (Tensor): Data matrix.
         """
         self.data_mean = torch.mean(x, dim=0)
 
@@ -125,12 +125,12 @@ class PcaModule(nn.Module):
 
     def prepare_data_forward(self, x: Tensor, center_data: bool) -> Tensor:
         """
-        Prepare input data X for PCA by reshaping and centering it as needed.
+        Prepare input data ``X`` for PCA by reshaping and centering it as needed.
 
         Args:
             x (Tensor): Data matrix.
             center_data (bool): If true, then the data mean will be subtracted from all data points prior to
-                performing PCA. If center_data is false, it is expected that the data has already been centered and
+                performing PCA. If ``center_data`` is false, it is expected that the data has already been centered and
                 an exception will be thrown if it is not.
 
         Returns:
@@ -148,18 +148,18 @@ class PcaModule(nn.Module):
 
     def project_lower_dim(self, x: Tensor, k: int | None = None, center_data: bool = False) -> Tensor:
         """
-        Project input data X onto the top k principal components.
+        Project input data ``X`` onto the top k principal components.
 
-        *NOTE**: The result of projection (after centering) is X @ U because this method assumes that the rows of X
-        are the data points while the columns of U are the principal components.
+        *NOTE**: The result of projection (after centering) is ``X @ U`` because this method assumes that the rows of
+        ``X`` are the data points while the columns of ``U`` are the principal components.
 
         Args:
             x (Tensor): Input data matrix whose rows are the data points.
-            k (int | None, optional): The number of principal components onto which projection is done. If k is None,
-                then all principal components will be used in the projection. Defaults to None.
+            k (int | None, optional): The number of principal components onto which projection is done. If ``k`` is
+                None, then all principal components will be used in the projection. Defaults to None.
             center_data (bool, optional): If true, then the *training* data mean (learned in the forward pass)
-                will be subtracted from all data points prior to projection. If center_data is false, it is expected
-                that the data has already been centered in this manner by the user. Defaults to False.
+                will be subtracted from all data points prior to projection. If ``center_data`` is false, it is
+                expected that the data has already been centered in this manner by the user. Defaults to False.
 
         Returns:
             Tensor: Projection result.
@@ -196,12 +196,12 @@ class PcaModule(nn.Module):
         """
         Compute the reconstruction error of X under PCA reconstruction.
 
-        More precisely, if X is an N by d data matrix whose *rows* are the data points,
+        More precisely, if ``X`` is an ``N`` by ``d`` data matrix whose *rows* are the data points,
         and U is the matrix whose *columns* are the principal components of X, then the reconstruction
-        loss is defined as 1 / N * | X @ U @ U.T - X| ** 2.
+        loss is defined as ``1 / N * | X @ U @ U.T - X| ** 2``.
 
-        **NOTE**: The reconstruction (after centering) is X @ U @ U.T because this method assumes that the rows
-        of X are the data points while the columns of U are the principal components.
+        **NOTE**: The reconstruction (after centering) is ``X @ U @ U.T`` because this method assumes that the rows
+        of ``X`` are the data points while the columns of U are the principal components.
 
         Args:
             x (Tensor): Input data tensor whose rows represent data points.
@@ -210,7 +210,7 @@ class PcaModule(nn.Module):
                 lower-dimensional subspace, and whether to add the data mean after projecting back. Defaults to False.
 
         Returns:
-            float: reconstruction loss as defined above.
+            float: Reconstruction loss as defined above.
         """
         n = x.size(0)
         x_lower_dim = self.project_lower_dim(x, k, center_data=center_data)
@@ -230,7 +230,7 @@ class PcaModule(nn.Module):
                 lower-dimensional subspace, and whether to add the data mean after projecting back. Defaults to False.
 
         Returns:
-            float: variance after projection as defined above.
+            float: Variance after projection as defined above.
         """
         return (torch.linalg.norm(self.project_lower_dim(x, k, center_data)) ** 2).item()
 

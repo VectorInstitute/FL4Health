@@ -17,7 +17,7 @@ class AbstractAe(nn.Module, ABC):
         encoder module and decode the output of the encoder using the decoder module.
 
         Args:
-            encoder (nn.Module): Model for encoding the input
+            encoder (nn.Module): Model for encoding the input.
             decoder (nn.Module): Model for encoding the output. This module should be compatible with the output
                 structure of the encoder module.
         """
@@ -27,7 +27,18 @@ class AbstractAe(nn.Module, ABC):
 
     @abstractmethod
     def forward(self, input: torch.Tensor) -> torch.Tensor:
-        # Forward is called in client classes with a single input tensor.
+        """
+        Forward is called in client classes with a single input tensor.
+
+        Args:
+            input (torch.Tensor): Input tensor.
+
+        Raises:
+            NotImplementedError: Should be implemented in inheriting classes
+
+        Returns:
+            torch.Tensor: Tensor after passing through module
+        """
         raise NotImplementedError
 
 
@@ -39,7 +50,7 @@ class BasicAe(AbstractAe):
         and decode the output of the encoder using the decoder module.
 
         Args:
-            encoder (nn.Module): Model for encoding the input
+            encoder (nn.Module): Model for encoding the input.
             decoder (nn.Module): Model for encoding the output. This module should be compatible with the output
                 structure of the encoder module.
         """
@@ -63,7 +74,7 @@ class BasicAe(AbstractAe):
         Defines the forward associated with decoding a latent vector encoded by the encoder from some input.
 
         Args:
-            latent_vector (torch.Tensor): Latent vector to be decoded
+            latent_vector (torch.Tensor): Latent vector to be decoded.
 
         Returns:
             torch.Tensor: Decoded tensor.
@@ -76,7 +87,7 @@ class BasicAe(AbstractAe):
         to reconstruct the input through the encoder-decoder pipeline.
 
         Args:
-            input (torch.Tensor): Input to pass through the encoder
+            input (torch.Tensor): Input to pass through the encoder.
 
         Returns:
             torch.Tensor: Reconstructed input after encoding and decoding with the model.
@@ -107,7 +118,7 @@ class VariationalAe(AbstractAe):
         autoencoders.
 
         Args:
-            input (torch.Tensor): Input to be encoded
+            input (torch.Tensor): Input to be encoded.
 
         Returns:
             tuple[torch.Tensor, torch.Tensor]: Mean and log variance values of the same dimensionality representing
@@ -128,10 +139,10 @@ class VariationalAe(AbstractAe):
                 .. math::
                     \\mu + \\epsilon \\cdot \\exp \\left(0.5 \\cdot \\text{logvar} \\right),
 
-                where :math:`\\epsilon \\sim \\mathcal{N}(\\mathbf{0}, I)`
+                where :math:`\\epsilon \\sim \\mathcal{N}(\\mathbf{0}, I)`.
 
         Returns:
-            torch.Tensor: Decoding from the latent vector
+            torch.Tensor: Decoding from the latent vector.
         """
         return self.decoder(latent_vector)
 
@@ -152,6 +163,15 @@ class VariationalAe(AbstractAe):
         return mu + eps * std
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
+        """
+        Forward through the full encoder and decoder.
+
+        Args:
+            input (torch.Tensor): input tensor.
+
+        Returns:
+            torch.Tensor: reconstruction of the input tensor.
+        """
         mu, logvar = self.encode(input)
         z = self.sampling(mu, logvar)
         output = self.decode(z)
@@ -187,12 +207,12 @@ class ConditionalVae(AbstractAe):
         accordingly. Ex: Using the condition in the middle layers of encoder.
 
         Args:
-            input (torch.Tensor): Input tensor
+            input (torch.Tensor): Input tensor.
             condition (torch.Tensor | None, optional): Conditional information to be used by the encoder. Defaults to
                 None.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: mu and logvar, similar to the variational auto-encoder.
+            tuple[torch.Tensor, torch.Tensor]: ``mu`` and ``logvar``, similar to the variational auto-encoder.
         """
         mu, logvar = self.encoder(input, condition)
         return mu, logvar
@@ -210,7 +230,7 @@ class ConditionalVae(AbstractAe):
                 .. math::
                     \\mu + \\epsilon \\cdot \\exp \\left(0.5 \\cdot \\text{logvar} \\right),
 
-                where :math:`\\epsilon \\sim \\mathcal{N}(\\mathbf{0}, I)`
+                where :math:`\\epsilon \\sim \\mathcal{N}(\\mathbf{0}, I)`.
             condition (torch.Tensor | None, optional): Conditioning information to be used by the decoder during the
                 mapping of the ``latent_vector`` to an output. Defaults to None.
 

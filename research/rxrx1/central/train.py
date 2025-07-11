@@ -64,7 +64,7 @@ class Rxrx1CentralizedTrainer(SingleNodeTrainer):
 
         self.model: nn.Module = get_model()
         self.model.to(self.device)
-        # NOTE: The class weights specified by alpha in this baseline loss are precomputed based on the weights of
+        # **NOTE**: The class weights specified by alpha in this baseline loss are precomputed based on the weights of
         # the pool dataset. This is a bit of cheating but FLamby does it in their paper.
         self.criterion = torch.nn.CrossEntropyLoss()
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=lr)

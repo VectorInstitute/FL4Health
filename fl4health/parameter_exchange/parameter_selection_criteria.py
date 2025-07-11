@@ -19,8 +19,8 @@ class LayerSelectionFunctionConstructor:
         by the ``DynamicLayerExchanger`` class.
 
         Args:
-            norm_threshold (float): A nonnegative real number used to select those layers whose drift in l2 norm
-                exceeds (or falls short of) it.
+            norm_threshold (float): A nonnegative real number used to select those layers whose drift in
+                :math:`\\ell^2` norm exceeds (or falls short of) it.
             exchange_percentage (float): Indicates the percentage of layers that are selected.
             normalize (bool, optional): Indicates whether when calculating the norm of a layer, we also divide by the
                 number of parameters in that layer. Defaults to True.
@@ -79,15 +79,15 @@ def select_layers_by_threshold(
     initial_model: nn.Module,
 ) -> tuple[NDArrays, list[str]]:
     """
-    Return those layers of model that deviate (in l2 norm) away from corresponding layers of ``self.initial_model``
-    by at least (or at most) ``self.threshold``.
+    Return those layers of model that deviate (in :math:`\\ell^2` norm) away from corresponding layers of
+    ``self.initial_model`` by at least (or at most) ``self.threshold``.
 
     Args:
         threshold (float): Drift threshold to be used for selection. It is an fixed value.
         normalize (bool): Whether to divide the difference between the tensors by their number of elements.
         select_drift_more (bool): Whether we are selecting parameters that have drifted further (True) or less far
             from their comparison values
-        model (nn.Module): Model after training/modification
+        model (nn.Module): Model after training/modification.
         initial_model (nn.Module): Model that we started with to which we are comparing parameters.
 
     Returns:
@@ -248,7 +248,7 @@ def select_scores_and_sample_masks(model: nn.Module, initial_model: nn.Module | 
     and then samples binary masks based on those scores to send to the server. This function is meant to be used for
     the FedPM algorithm.
 
-    **NOTE:** in the current implementation, we always exchange the score tensors for all layers. In the future, we
+    **NOTE**: in the current implementation, we always exchange the score tensors for all layers. In the future, we
     might support exchanging a subset of the layers (for example, filtering out the masks that are all zeros).
     """
     model_states = model.state_dict()

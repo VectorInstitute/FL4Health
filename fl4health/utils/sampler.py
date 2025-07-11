@@ -89,7 +89,7 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
         Returns:
             torch.Tensor: New tensor with subsampled rows
         """
-        # NOTE: Assumes subsampling on rows
+        # **NOTE**: Assumes subsampling on rows
         tensor_size = tensor_to_subsample.shape[0]
         assert subsample_size < tensor_size
         permutation = torch.randperm(tensor_size)
@@ -112,7 +112,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
         accomplished by calling the subsample method and passing a ``BaseDataset`` object. This will return the
         resulting  subsampled dataset.
 
-        **NOTE:** The range for beta is (0, :math:`\\infty`). The larger the value of beta, the more evenly the
+        **NOTE**: The range for beta is (0, :math:`\\infty`). The larger the value of beta, the more evenly the
         multinomial probability of the labels will be. The smaller beta is the more heterogeneous it is.
 
         :code:`np.random.dirichlet([1]*5): array([0.23645891, 0.08857052, 0.29519184, 0.2999956 , 0.07978313])`

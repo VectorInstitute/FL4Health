@@ -40,7 +40,7 @@ def main(
 
     client_manager = FixedSamplingByFractionClientManager()
 
-    # NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size
+    # **NOTE**: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size
     # of the baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA
     # and APFL
     model = Baseline(out_channels_first_layer=12)
