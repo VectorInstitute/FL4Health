@@ -9,11 +9,16 @@ from flwr.common.typing import Config, Scalar
 from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import MnistNet
-from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.metrics.metric_aggregation import (
+    evaluate_metrics_aggregation_fn,
+    fit_metrics_aggregation_fn,
+)
 from fl4health.reporting import JsonReporter, WandBReporter, WandBStepType
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.servers.adaptive_constraint_servers.fedprox_server import FedProxServer
-from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
+from fl4health.strategies.fedavg_with_adaptive_constraint import (
+    FedAvgWithAdaptiveConstraint,
+)
 from fl4health.utils.config import load_config, make_dict_with_epochs_or_steps
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import set_all_random_seeds
@@ -59,7 +64,6 @@ def main(config: dict[str, Any], server_address: str, wandb_entity: str | None) 
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_all_model_parameters(initial_model),
-        # initial_parameters=None,
         adapt_loss_weight=config["adapt_proximal_weight"],
         initial_loss_weight=config["initial_proximal_weight"],
         loss_weight_delta=config["proximal_weight_delta"],
