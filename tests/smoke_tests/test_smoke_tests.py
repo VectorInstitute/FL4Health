@@ -4,7 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from tests.smoke_tests.run_smoke_test import load_metrics_from_file, run_fault_tolerance_smoke_test, run_smoke_test
+from tests.smoke_tests.run_smoke_test import (
+    load_metrics_from_file,
+    run_fault_tolerance_smoke_test,
+    run_smoke_test,
+)
 
 
 # skip some tests that currently fail if running locally
@@ -447,7 +451,50 @@ async def test_gpfl(tolerance: float) -> None:
         seed=42,
         server_metrics=load_metrics_from_file("tests/smoke_tests/gpfl_server_metrics.json"),
         client_metrics=load_metrics_from_file("tests/smoke_tests/gpfl_client_metrics.json"),
+    )
+    task = asyncio.create_task(coroutine)
+    await try_running_test_task(task)
+    assert_on_done_task(task)
+
+
+@pytest.mark.smoketest
+async def test_flexible_nnunet_config_2d(tolerance: float) -> None:
+    coroutine = run_smoke_test(  # By default will use Task04_Hippocampus Dataset
+        server_python_path="examples.nnunet_example.server",
+        client_python_path="examples.nnunet_example.client_flexible",
+        config_path="tests/smoke_tests/nnunet_config_2d.yaml",
+        dataset_path="examples/datasets/nnunet",
         tolerance=tolerance,
+        read_logs_timeout=450,
+    )
+    task = asyncio.create_task(coroutine)
+    await try_running_test_task(task)
+    assert_on_done_task(task)
+
+
+@pytest.mark.smoketest
+async def test_flexible_nnunet_config_3d(tolerance: float) -> None:
+    coroutine = run_smoke_test(  # By default will use Task04_Hippocampus Dataset
+        server_python_path="examples.nnunet_example.server",
+        client_python_path="examples.nnunet_example.client_flexible",
+        config_path="tests/smoke_tests/nnunet_config_3d.yaml",
+        dataset_path="examples/datasets/nnunet",
+        tolerance=tolerance,
+    )
+    task = asyncio.create_task(coroutine)
+    await try_running_test_task(task)
+    assert_on_done_task(task)
+
+
+@pytest.mark.smoketest
+async def test_ditto_flexible_nnunet_config_2d(tolerance: float) -> None:
+    coroutine = run_smoke_test(  # By default will use Task04_Hippocampus Dataset
+        server_python_path="examples.nnunet_pfl_example.server",
+        client_python_path="examples.nnunet_pfl_example.client",
+        config_path="tests/smoke_tests/nnunet_config_2d.yaml",
+        dataset_path="examples/datasets/nnunet",
+        tolerance=tolerance,
+        read_logs_timeout=450,
     )
     task = asyncio.create_task(coroutine)
     await try_running_test_task(task)

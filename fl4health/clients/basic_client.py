@@ -1,6 +1,6 @@
 import datetime
 from collections.abc import Iterator, Sequence
-from logging import INFO
+from logging import INFO, WARNING
 from pathlib import Path
 from typing import Any
 
@@ -163,18 +163,8 @@ class BasicClient(NumPyClient):
             parameters to be aggregated, but can contain more information.
         """
         if not self.initialized:
-            log(
-                INFO,
-                "Setting up client and providing full model parameters to the server for initialization",
-            )
+            return self.setup_client_and_return_all_model_parameters(config)
 
-            # If initialized==False, the server is requesting model parameters from which to initialize all other
-            # clients. As such get_parameters is being called before fit or evaluate, so we must call
-            # setup_client first.
-            self.setup_client(config)
-
-            # Need all parameters even if normally exchanging partial
-            return FullParameterExchanger().push_parameters(self.model, config=config)
         assert self.model is not None and self.parameter_exchanger is not None
         # If the client has early stopping module and the patience is None, we load the best saved state
         # to send the best checkpointed local model's parameters to the server
@@ -222,6 +212,37 @@ class BasicClient(NumPyClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
         """
         FullParameterExchanger().pull_parameters(parameters, self.model, config)
+
+    def setup_client_and_return_all_model_parameters(self, config: Config) -> NDArrays:
+        """
+        Function used to setup the client using the provided configuration and then exact all model parameters from
+        ``self.model`` and return them. This function is used as a helper for ``get_parameters`` when the client
+        has yet to be initialized.
+
+        Args:
+            config (Config): Configuration to be used  in setting up the client.
+
+        Returns:
+            NDArrays: All parameters associated with the ``self.model`` property of the client.
+        """
+        log(INFO, "Setting up client and providing full model parameters to the server for initialization")
+        if not config:
+            log(
+                WARNING,
+                (
+                    "This client has not yet been initialized and the config is empty. This may cause unexpected "
+                    "failures, as setting up a client typically requires several configuration parameters, "
+                    "including batch_size and current_server_round."
+                ),
+            )
+
+        # If initialized is False, the server is requesting model parameters from which to initialize all other
+        # clients. As such get_parameters is being called before fit or evaluate, so we must call
+        # setup_client first.
+        self.setup_client(config)
+
+        # Need all parameters even if normally exchanging partial
+        return FullParameterExchanger().push_parameters(self.model, config=config)
 
     def shutdown(self) -> None:
         """Shuts down the client. Involves shutting down W&B reporter if one exists."""

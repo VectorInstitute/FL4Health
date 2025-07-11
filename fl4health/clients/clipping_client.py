@@ -11,7 +11,6 @@ from numpy import linalg
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.metrics.base_metrics import Metric
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithClippingBit
@@ -136,15 +135,12 @@ class NumpyClippingClient(BasicClient):
         This function performs clipping through ``compute_weight_update_and_clip`` and stores the clipping bit
         as the last entry in the NDArrays.
         """
-        if not self.initialized:
-            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
+        current_server_round = narrow_dict_type(config, "current_server_round", int)
 
-            # If initialized==False, the server is requesting model parameters from which to initialize all other
-            # clients. As such get_parameters is being called before fit or evaluate, so we must call
-            # setup_client first.
-            self.setup_client(config)
-            # Need all parameters even if normally exchanging partial
-            return FullParameterExchanger().push_parameters(self.model, config=config)
+        if not self.initialized or current_server_round == 0:
+            # If we haven't initialized the client we are being asked to return model parameters. So we send them all
+            return self.setup_client_and_return_all_model_parameters(config)
+
         assert self.model is not None and self.parameter_exchanger is not None
         model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
         clipped_weight_update, clipping_bit = self.compute_weight_update_and_clip(model_weights)
