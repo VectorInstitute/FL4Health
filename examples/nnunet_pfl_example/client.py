@@ -73,7 +73,9 @@ def main(
         metric=TorchMetric(
             name="Pseudo DICE",
             metric=GeneralizedDiceScore(
-                num_classes=msd_num_labels[msd_dataset_enum], weight_type="square", include_background=False
+                num_classes=msd_num_labels[msd_dataset_enum],
+                weight_type="square",
+                include_background=False,
             ).to(device),
         ),
         pred_transforms=[torch.sigmoid, get_segs_from_probs],
@@ -102,7 +104,10 @@ def main(
         "client_name": client_name,
     }
     if personalized_strategy in personalized_client_classes:
-        log(INFO, f"Setting up client for personalized strategy: {personalized_strategy}")
+        log(
+            INFO,
+            f"Setting up client for personalized strategy: {personalized_strategy}",
+        )
         client = personalized_client_classes[personalized_strategy](**client_kwargs)
     else:
         log(INFO, "Setting up client without personalization")
@@ -123,8 +128,6 @@ if __name__ == "__main__":
             nnunet segmentation model and trains it in a federated setting",
     )
 
-    # I have to use underscores instead of dashes because thats how they
-    # defined it in run_smoke_tests
     parser.add_argument(
         "--dataset_path",
         type=str,
