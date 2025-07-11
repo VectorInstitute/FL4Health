@@ -124,8 +124,6 @@ if __name__ == "__main__":
             nnunet segmentation model and trains it in a federated setting",
     )
 
-    # I have to use underscores instead of dashes because thats how they
-    # defined it in run_smoke_tests
     parser.add_argument(
         "--dataset_path",
         type=str,
