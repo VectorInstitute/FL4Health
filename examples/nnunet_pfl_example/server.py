@@ -13,14 +13,21 @@ from flwr.server.client_manager import SimpleClientManager
 
 from fl4health.checkpointing.server_module import NnUnetServerCheckpointAndStateModule
 from fl4health.checkpointing.state_checkpointer import NnUnetServerStateCheckpointer
-from fl4health.metrics.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.metrics.metric_aggregation import (
+    evaluate_metrics_aggregation_fn,
+    fit_metrics_aggregation_fn,
+)
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
+from fl4health.parameter_exchange.packing_exchanger import (
+    FullParameterExchangerWithPacking,
+)
 from fl4health.parameter_exchange.parameter_packer import (
     ParameterPackerAdaptiveConstraint,
 )
 from fl4health.servers.nnunet_server import NnunetServer
-from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
+from fl4health.strategies.fedavg_with_adaptive_constraint import (
+    FedAvgWithAdaptiveConstraint,
+)
 from fl4health.utils.config import make_dict_with_epochs_or_steps
 from fl4health.utils.random import set_all_random_seeds
 
@@ -100,7 +107,9 @@ def main(
         else None
     )
     checkpoint_and_state_module = NnUnetServerCheckpointAndStateModule(
-        model=None, parameter_exchanger=FullParameterExchanger(), state_checkpointer=state_checkpointer
+        model=None,
+        parameter_exchanger=FullParameterExchanger(),
+        state_checkpointer=state_checkpointer,
     )
 
     checkpoint_and_state_module.parameter_exchanger = FullParameterExchangerWithPacking(  # type:ignore [assignment]
@@ -175,6 +184,11 @@ if __name__ == "__main__":
         config = yaml.safe_load(f)
 
     # Set the random seed for reproducibility
+    # NOTE: This implementation does not cover all sources of randomness in nnUNet, so complete
+    # determinism cannot be achieved. The nnUNet maintainers have confirmed that full determinism
+    # is not possible (see linked issue below). However, our current approach provides a reasonable
+    # level of deterministic behavior for most practical purposes.
+    # Reference: https://github.com/VectorInstitute/FL4Health/pull/411#:~:text=MIC%2DDKFZ/nnUNet%231906
     set_all_random_seeds(args.seed)
 
     main(
