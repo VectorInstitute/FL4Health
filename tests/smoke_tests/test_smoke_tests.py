@@ -28,9 +28,7 @@ async def try_running_test_task(task: asyncio.Task) -> None:
         await task
     except Exception as e:
         task.cancel()
-        await asyncio.gather(
-            task, return_exceptions=True
-        )  # allow time to clean up cancelled task
+        await asyncio.gather(task, return_exceptions=True)  # allow time to clean up cancelled task
         pytest.fail(f"Smoke test failed due to error. {e}")
 
 
@@ -48,12 +46,8 @@ def assert_on_done_task(task: asyncio.Task) -> None:
         pytest.fail(f"Smoke test execution failed: {e}")
     else:
         server_errors, client_errors = task.result()
-        assert len(server_errors) == 0, (
-            f"Server metrics check failed. Errors: {server_errors}"
-        )
-        assert len(client_errors) == 0, (
-            f"Client metrics check failed. Errors: {client_errors}"
-        )
+        assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
+        assert len(client_errors) == 0, f"Client metrics check failed. Errors: {client_errors}"
 
 
 @pytest.mark.smoketest
@@ -118,12 +112,8 @@ async def test_scaffold(tolerance: float) -> None:
         config_path="tests/smoke_tests/scaffold_config.yaml",
         dataset_path="examples/datasets/mnist_data/",
         seed=42,
-        server_metrics=load_metrics_from_file(
-            "tests/smoke_tests/scaffold_server_metrics.json"
-        ),
-        client_metrics=load_metrics_from_file(
-            "tests/smoke_tests/scaffold_client_metrics.json"
-        ),
+        server_metrics=load_metrics_from_file("tests/smoke_tests/scaffold_server_metrics.json"),
+        client_metrics=load_metrics_from_file("tests/smoke_tests/scaffold_client_metrics.json"),
         tolerance=tolerance,
     )
     task = asyncio.create_task(coroutine)
@@ -140,12 +130,8 @@ async def test_apfl(tolerance: float) -> None:
         config_path="tests/smoke_tests/apfl_config.yaml",
         dataset_path="examples/datasets/mnist_data/",
         seed=42,
-        server_metrics=load_metrics_from_file(
-            "tests/smoke_tests/apfl_server_metrics.json"
-        ),
-        client_metrics=load_metrics_from_file(
-            "tests/smoke_tests/apfl_client_metrics.json"
-        ),
+        server_metrics=load_metrics_from_file("tests/smoke_tests/apfl_server_metrics.json"),
+        client_metrics=load_metrics_from_file("tests/smoke_tests/apfl_client_metrics.json"),
         tolerance=tolerance,
     )
     task = asyncio.create_task(coroutine)
@@ -162,12 +148,8 @@ async def test_feddg_ga(tolerance: float) -> None:
         config_path="tests/smoke_tests/feddg_ga_config.yaml",
         dataset_path="examples/datasets/mnist_data/",
         seed=42,
-        server_metrics=load_metrics_from_file(
-            "tests/smoke_tests/feddg_ga_server_metrics.json"
-        ),
-        client_metrics=load_metrics_from_file(
-            "tests/smoke_tests/feddg_ga_client_metrics.json"
-        ),
+        server_metrics=load_metrics_from_file("tests/smoke_tests/feddg_ga_server_metrics.json"),
+        client_metrics=load_metrics_from_file("tests/smoke_tests/feddg_ga_client_metrics.json"),
         tolerance=tolerance,
     )
     task = asyncio.create_task(coroutine)
@@ -467,12 +449,8 @@ async def test_gpfl(tolerance: float) -> None:
         config_path="tests/smoke_tests/gpfl_config.yaml",
         dataset_path="examples/datasets/mnist_data/",
         seed=42,
-        server_metrics=load_metrics_from_file(
-            "tests/smoke_tests/gpfl_server_metrics.json"
-        ),
-        client_metrics=load_metrics_from_file(
-            "tests/smoke_tests/gpfl_client_metrics.json"
-        ),
+        server_metrics=load_metrics_from_file("tests/smoke_tests/gpfl_server_metrics.json"),
+        client_metrics=load_metrics_from_file("tests/smoke_tests/gpfl_client_metrics.json"),
     )
     task = asyncio.create_task(coroutine)
     await try_running_test_task(task)
