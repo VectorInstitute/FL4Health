@@ -60,5 +60,5 @@ class WeightDriftLoss(nn.Module):
         ]
 
         # Network l2 inner product tensor
-        # NOTE:  Scaling by 1/2 is for grad consistency.
+        # NOTE: Scaling by 1/2 is for grad consistency.
         return (weight / 2.0) * torch.stack(layer_inner_products).sum()

@@ -19,6 +19,6 @@ help:
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-# NOTE:  This is not generated from `sphinx-quickstart` and manually added
+# NOTE: This is not generated from `sphinx-quickstart` and manually added
 serve:
 	sphinx-autobuild $(SOURCEDIR) $(BUILDDIR)

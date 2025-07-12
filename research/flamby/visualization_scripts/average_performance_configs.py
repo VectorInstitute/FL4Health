@@ -1,5 +1,5 @@
 # File name mapped to tuples of name appearing on the graph, keys for the mean, and keys for the std dev
-# NOTE:  that only some methods with both server and local models have multiple mean and std dev keys
+# NOTE: that only some methods with both server and local models have multiple mean and std dev keys
 fed_isic_file_names_to_info: list[tuple[str, str, tuple[list[str], list[str]]]] = [
     (
         "central_eval_performance.txt",
@@ -108,7 +108,7 @@ fed_isic_file_names_to_info: list[tuple[str, str, tuple[list[str], list[str]]]] 
 ]
 
 # File name mapped to tuples of name appearing on the graph, keys for the mean, and keys for the std dev
-# NOTE:  that only some methods with both server and local models have multiple mean and std dev keys
+# NOTE: that only some methods with both server and local models have multiple mean and std dev keys
 fed_heart_disease_file_names_to_info: list[tuple[str, str, tuple[list[str], list[str]]]] = [
     (
         "central_eval_performance_small_model.txt",
@@ -273,7 +273,7 @@ fed_heart_disease_file_names_to_info: list[tuple[str, str, tuple[list[str], list
 ]
 
 # File name mapped to tuples of name appearing on the graph, keys for the mean, and keys for the std dev
-# NOTE:  that only some methods with both server and local models have multiple mean and std dev keys
+# NOTE: that only some methods with both server and local models have multiple mean and std dev keys
 fed_ixi_file_names_to_info: list[tuple[str, str, tuple[list[str], list[str]]]] = [
     (
         "central_eval_performance.txt",

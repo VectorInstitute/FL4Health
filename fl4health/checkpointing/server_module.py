@@ -530,7 +530,7 @@ class NnUnetServerCheckpointAndStateModule(BaseServerCheckpointAndStateModule):
         super().__init__(model, parameter_exchanger, model_checkpointers, state_checkpointer)
 
     def _validate_model_checkpointer_components(self) -> None:
-        # NOTE:  We only check if the parameter exchanger is present. Model may be set later.
+        # NOTE: We only check if the parameter exchanger is present. Model may be set later.
         assert self.parameter_exchanger is not None, (
             "Checkpointer(s) is (are) defined but no parameter_exchanger is defined to hydrate. The functionality of "
             "this class can be overridden in a child class if checkpointing without a parameter exchanger is "

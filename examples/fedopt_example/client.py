@@ -38,7 +38,7 @@ class NewsClassifierClient(BasicClient):
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         sequence_length = narrow_dict_type(config, "sequence_length", int)
         self.batch_size = narrow_dict_type(config, "batch_size", int)
-        # NOTE:  self.vocabulary and self.label_encoder are initialized in setup_client before the call to
+        # NOTE: self.vocabulary and self.label_encoder are initialized in setup_client before the call to
         # super().setup_client() to ensure their availability
         train_loader, validation_loader, _, weight_matrix = construct_dataloaders(
             self.data_path, self.vocabulary, self.label_encoder, sequence_length, self.batch_size

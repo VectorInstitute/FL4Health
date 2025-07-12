@@ -137,7 +137,7 @@ def shutoff_batch_norm_tracking(model: nn.Module) -> None:
         if isinstance(module, (nn.BatchNorm3d, nn.BatchNorm2d)):
             log(INFO, f"Modifying Batch Normalization Layer: {name}")
             module.track_running_stats = False
-            # NOTE:  It's apparently not enough to set this boolean to false. We need to set all of the relevant
+            # NOTE: It's apparently not enough to set this boolean to false. We need to set all of the relevant
             # variable to none, otherwise the layer still tries to apply the stale variables during evaluation
             # leading to eventual NaNs again.
             module.running_mean = None

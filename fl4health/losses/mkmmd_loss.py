@@ -99,7 +99,7 @@ class MkMmdLoss(torch.nn.Module):
         # We want to compute estimates of the expectation for each RBF kernel WITHOUT using a linear approximation.
         # So we need to compute ||x - y||^2 for all pairs (x_j, x_k), (x_j, y_k), (x_k, y_j), and (y_j, y_k) for all
         # j, k in range(n_samples).
-        # NOTE:  ||x - y||^2 = <x - y, x - y> = <x, x> + <y, y> - 2<x, y>
+        # NOTE: ||x - y||^2 = <x - y, x - y> = <x, x> + <y, y> - 2<x, y>
         x_x_prime = (
             torch.sum((x**2), dim=1).reshape(-1, 1)
             + torch.sum((x**2), dim=1).reshape(1, -1)
@@ -300,7 +300,7 @@ class MkMmdLoss(torch.nn.Module):
                     kernel_samples_minus_kernel_expectation[i, :, :] * kernel_samples_minus_kernel_expectation[j, :, :]
                 )
                 # Compute the expectation to get Cov(h_{k_i}, h_{k_j}).
-                # NOTE:  the n^2-1 correction is because we're using expectation estimates
+                # NOTE: the n^2-1 correction is because we're using expectation estimates
                 q_k_matrix[i][j] = (1.0 / (n_samples**2 - 1.0)) * torch.sum(product_of_variances)
         return q_k_matrix
 

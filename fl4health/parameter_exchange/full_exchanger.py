@@ -26,7 +26,7 @@ class FullParameterExchanger(ParameterExchanger):
             maintains a specific order.
         """
         # Sending all of parameters ordered by state_dict keys
-        # NOTE:  Order matters, because it is relied upon by pull_parameters below
+        # NOTE: Order matters, because it is relied upon by pull_parameters below
         return [val.cpu().numpy() for _, val in model.state_dict().items()]
 
     def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Config | None = None) -> None:

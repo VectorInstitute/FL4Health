@@ -137,7 +137,7 @@ class GeminiApflClient(ApflClient):
 
         # Make sure gradients are zero prior to forward passes of global and local model
         # to generate personalized predictions
-        # NOTE:  We zero the global optimizer grads because they are used (after the backward calculation below)
+        # NOTE: We zero the global optimizer grads because they are used (after the backward calculation below)
         # to update the scalar alpha (see update_alpha() where .grad is called.)
         self.global_optimizer.zero_grad()
         self.local_optimizer.zero_grad()

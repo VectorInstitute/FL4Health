@@ -270,7 +270,7 @@ class NnunetClient(BasicClient):
         # Set the number of processes for each dataloader.
         if self.n_dataload_proc is None:
             # Nnunet default is 12 or max cpu's. We decrease max by 1 just in case
-            # NOTE:  The type: ignore here is to skip issues where a local operating system is not compatible
+            # NOTE: The type: ignore here is to skip issues where a local operating system is not compatible
             # with sched_getaffinity (older versions of MacOS, for example). The code still won't run but mypy won't
             # complain. Workarounds like using os.cpu_count(), while not exactly the same, are possible.
             try:

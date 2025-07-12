@@ -232,7 +232,7 @@ class NnunetServer(FlServer):
 
             # If the state_checkpointer has been specified and a state checkpoint exists, the state
             # will be loaded when executing ``fit_with_per_round_checkpointing`` of the base_server.
-            # NOTE:  Inherent assumption that if checkpoint exists for server that it also will exist for client.
+            # NOTE: Inherent assumption that if checkpoint exists for server that it also will exist for client.
 
             # Wrap config functions so that we are sure the nnunet_plans are included
             new_fit_cfg_fn = add_items_to_config_fn(

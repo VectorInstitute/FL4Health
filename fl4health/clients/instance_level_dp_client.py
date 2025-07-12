@@ -101,7 +101,7 @@ class InstanceLevelDpClient(BasicClient):
 
         # Create DP training objects
         privacy_engine = PrivacyEngine()
-        # NOTE:  that Opacus make private is NOT idempotent
+        # NOTE: that Opacus make private is NOT idempotent
         self.model, optimizer, self.train_loader = privacy_engine.make_private(
             module=self.model,
             optimizer=self.optimizers["global"],
