@@ -133,7 +133,7 @@ class BasicClient(NumPyClient):
         # By specifying this in the config we cannot guarantee the validation set is the same
         # across rounds for clients.
         self.num_validation_steps: int | None = None
-        # **NOTE**: These iterators are of type _BaseDataLoaderIter, which is not importable...so we're forced to use
+        # NOTE:  These iterators are of type _BaseDataLoaderIter, which is not importable...so we're forced to use
         # Iterator
         self.train_iterator: Iterator | None = None
         self.val_iterator: Iterator | None = None
@@ -389,7 +389,7 @@ class BasicClient(NumPyClient):
         elapsed = end_time - start_time
 
         # Checkpoint based on the loss and metrics produced during validation AFTER server-side aggregation
-        # **NOTE**: This assumes that the loss returned in the checkpointing loss
+        # NOTE:  This assumes that the loss returned in the checkpointing loss
         self._maybe_checkpoint(loss, metrics, CheckpointMode.POST_AGGREGATION)
 
         self.reports_manager.report(

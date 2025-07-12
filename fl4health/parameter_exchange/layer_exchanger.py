@@ -78,7 +78,7 @@ class LayerExchangerWithExclusions(ParameterExchanger):
             if self.should_module_be_excluded(module) and name
         }
         # Needs to be an ordered collection to facilitate exchange consistency between server and client
-        # **NOTE**: Layers here refers to a collection of parameters in the state dictionary
+        # NOTE:  Layers here refers to a collection of parameters in the state dictionary
         self.layers_to_transfer: list[str] = self.get_layers_to_transfer(model)
 
     def should_module_be_excluded(self, module: type[TorchModule]) -> bool:
@@ -97,7 +97,7 @@ class LayerExchangerWithExclusions(ParameterExchanger):
         return [name for name in model.state_dict() if not self.should_layer_be_excluded(name)]
 
     def apply_layer_filter(self, model: nn.Module) -> NDArrays:
-        # **NOTE**: Filtering layers only works if each client exchanges exactly the same layers
+        # NOTE:  Filtering layers only works if each client exchanges exactly the same layers
         model_state_dict = model.state_dict()
         # The order of the parameters is determined by the order of layers to transfer, this ensures that they
         # always have the same order, which can be relied upon in weight reconstruction done by pull_parameters

@@ -151,7 +151,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
             # to the same weights in initialize_all_model_weights
             return FullParameterExchanger().push_parameters(self.model, config=config)
         assert self.global_model is not None and self.parameter_exchanger is not None
-        # **NOTE**: the global model weights are sent to the server here.
+        # NOTE:  the global model weights are sent to the server here.
         global_model_weights = self.parameter_exchanger.push_parameters(self.global_model, config=config)
 
         # Weights and training loss sent to server for aggregation

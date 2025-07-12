@@ -68,7 +68,7 @@ class MrMtlClient(AdaptiveDriftConstraintClient):
             progress_bar=progress_bar,
             client_name=client_name,
         )
-        # **NOTE**: The initial global model is used to house the aggregate weight updates at the beginning of a round,
+        # NOTE:  The initial global model is used to house the aggregate weight updates at the beginning of a round,
         # because in MR-MTL, the local models are not updated with these aggregates.
         self.initial_global_model: nn.Module
         self.initial_global_tensors: list[torch.Tensor]

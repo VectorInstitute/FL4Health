@@ -21,7 +21,7 @@ def construct_config(
     local_epochs: int | None = None,
     local_steps: int | None = None,
 ) -> Config:
-    # **NOTE**: The omitted variable is server_round which allows for dynamically changing the config each round
+    # NOTE:  The omitted variable is server_round which allows for dynamically changing the config each round
     return {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "batch_size": batch_size,

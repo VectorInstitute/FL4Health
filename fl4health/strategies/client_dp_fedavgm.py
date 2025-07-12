@@ -230,7 +230,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             self.m_t = weights_update
         else:
             self.m_t = [
-                # **NOTE**: This is not normalized (beta vs. 1-beta) as used in the original implementation
+                # NOTE:  This is not normalized (beta vs. 1-beta) as used in the original implementation
                 self.beta * prev_layer_update + noised_layer_update
                 for prev_layer_update, noised_layer_update in zip(self.m_t, weights_update)
             ]

@@ -89,7 +89,7 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
         Returns:
             torch.Tensor: New tensor with subsampled rows
         """
-        # **NOTE**: Assumes subsampling on rows
+        # NOTE:  Assumes subsampling on rows
         tensor_size = tensor_to_subsample.shape[0]
         assert subsample_size < tensor_size
         permutation = torch.randperm(tensor_size)

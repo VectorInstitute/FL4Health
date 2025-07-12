@@ -56,6 +56,6 @@ def test_adaptive_clipping_convergence() -> None:
         strategy.update_clipping_bound(clipping_bits)
         clipping_values.append(strategy.clipping_bound)
 
-    # **NOTE**: that this is a much "noisier" estimate because the clipping bound is farther from the initial
+    # NOTE:  that this is a much "noisier" estimate because the clipping bound is farther from the initial
     # guess. Thus the abs of 1.0
     assert pytest.approx(strategy.clipping_bound, abs=1.0) == 17.5

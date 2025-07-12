@@ -295,7 +295,7 @@ class ClientStateCheckpointer(StateCheckpointer):
         """
         # If snapshot_attrs is None, we set a sensible default set of attributes to be saved. These are a minimal
         # set of attributes that can be used for per round checkpointing or early stopping.
-        # **NOTE**: These default attributes are useful for state checkpointing a BasicClient. More sophisticated
+        # NOTE:  These default attributes are useful for state checkpointing a BasicClient. More sophisticated
         # clients may require more attributes to fully support training restarts and early stopping. For a server
         # example, see NnUnetServerStateCheckpointer.
         if snapshot_attrs is None:
@@ -431,7 +431,7 @@ class ServerStateCheckpointer(StateCheckpointer):
         """
         # If snapshot_attrs is None, we set a sensible default set of attributes to be saved. These are a minimal
         # set of attributes that can be used for per round checkpointing or early stopping.
-        # **NOTE**: These default attributes are useful for state checkpointing a FlServer. More sophisticated servers
+        # NOTE:  These default attributes are useful for state checkpointing a FlServer. More sophisticated servers
         # may require more attributes to fully support training restarts and early stopping. For an example, see
         # NnUnetServerStateCheckpointer.
         if snapshot_attrs is None:

@@ -258,7 +258,7 @@ class ClassificationMetric(Metric, ABC):
 
         # If batch_dim has been specified, we accumulate counts for EACH INSTANCE seen throughout the updates, such
         # that each of the counts is a tensor of row length equal to the samples seen.
-        # **NOTE**: This ASSUMES the batch dimension comes FIRST for the counts.
+        # NOTE:  This ASSUMES the batch dimension comes FIRST for the counts.
         # Otherwise, the counts are 1D tensors with length equal to the number of classes (or possibly 1 if using the
         # BinaryClassificationMetric)
         self.true_positives = (

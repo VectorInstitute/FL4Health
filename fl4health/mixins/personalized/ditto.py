@@ -259,7 +259,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             # architecture, it doesn't matter which we choose as an initializer. The global and local models are set
             # to the same weights in initialize_all_model_weights
             return FullParameterExchanger().push_parameters(self.model, config=config)
-        # **NOTE**: the global model weights are sent to the server here.
+        # NOTE:  the global model weights are sent to the server here.
         if self.global_model is None:
             raise ValueError("Unable to get parameters with unset global model.")
         global_model_weights = self.parameter_exchanger.push_parameters(self.global_model, config=config)

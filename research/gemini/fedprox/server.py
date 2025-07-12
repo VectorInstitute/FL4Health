@@ -64,14 +64,14 @@ class GeminiFedProxServer(FlServer):
 
 def fit_metrics_aggregation_fn(all_client_metrics: list[tuple[int, Metrics]]) -> Metrics:
     # This function is run by the server to aggregate metrics returned by each clients fit function
-    # **NOTE**: The first value of the tuple is number of examples for FedAvg
+    # NOTE:  The first value of the tuple is number of examples for FedAvg
     total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
     return normalize_metrics(total_examples, aggregated_metrics)
 
 
 def evaluate_metrics_aggregation_fn(all_client_metrics: list[tuple[int, Metrics]]) -> Metrics:
     # This function is run by the server to aggregate metrics returned by each clients evaluate function
-    # **NOTE**: The first value of the tuple is number of examples for FedAvg
+    # NOTE:  The first value of the tuple is number of examples for FedAvg
     total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
     return normalize_metrics(total_examples, aggregated_metrics)
 

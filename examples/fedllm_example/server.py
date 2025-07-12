@@ -40,7 +40,7 @@ def fit_config(
         "num_gpus_per_client": num_gpus_per_client,
     }
     if reporting_config is not None:
-        # **NOTE**: that name is not included, it will be set in the clients
+        # NOTE:  that name is not included, it will be set in the clients
         base_config["project"] = reporting_config.get("project", "")
         base_config["group"] = reporting_config.get("group", "")
         base_config["entity"] = reporting_config.get("entity", "")
