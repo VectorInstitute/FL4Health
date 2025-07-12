@@ -14,10 +14,14 @@ class BaseDataset(ABC, Dataset):
 
         Args:
             transform (Callable | None, optional): Optional transformation to be applied to the input data.
+
                 **NOTE**: This transformation is applied at load time within ``__get_item__``
+
                 Defaults to None.
             target_transform (Callable | None, optional): Optional transformation to be applied to the target data.
+
                 **NOTE**: This transformation is applied at load time within ``__get_item__``
+
                 Defaults to None.
         """
         self.transform = transform
@@ -85,10 +89,14 @@ class TensorDataset(BaseDataset):
             data (torch.Tensor): Input data for training.
             targets (torch.Tensor | None, optional): Target data for training. Defaults to None.
             transform (Callable | None, optional): Optional transformation to be applied to the input data.
+
                 **NOTE**: This transformation is applied at load time within ``__get_item__``
+
                 Defaults to None.
             target_transform (Callable | None, optional): Optional transformation to be applied to the target data.
+
                 **NOTE**: This transformation is applied at load time within ``__get_item__``
+
                 Defaults to None.
         """
         super().__init__(transform, target_transform)
@@ -144,16 +152,20 @@ class SslTensorDataset(TensorDataset):
 
         Args:
             data (torch.Tensor): Tensor representing the input data for the dataset.
-            targets (torch.Tensor | None, optional): REQUIRED TO BE NONE. The type and argument here is simply to
-                maintain compatibility with our TensorDataset base. Defaults to None.
+            targets (torch.Tensor | None, optional): **REQUIRED TO BE NONE**. The type and argument here is simply to
+                maintain compatibility with our ``TensorDataset`` base. Defaults to None.
             transform (Callable | None, optional): Any transform to be applied to the data tensors. This transform is
                 performed BEFORE and target transforms that produce the self-supervised targets from the data.
-                **NOTE**: These transformations and the ``target_transform`` functions are applied AT LOAD TIME
+
+                **NOTE**: These transformations and the ``target_transform`` functions are applied **AT LOAD TIME**.
+
                 Defaults to None.
             target_transform (Callable | None, optional): Any transform to be applied to the data tensors to produce
                 target tensors for training. This transform is performed after and transforms for the data tensors
                 themselves to produce the self-supervised targets from the data.
-                **NOTE**: These transformation functions are applied AT LOAD TIME.
+
+                **NOTE**: These transformation functions are applied **AT LOAD TIME**.
+
                 Defaults to None.
         """
         assert targets is None, "SslTensorDataset targets must be None"
@@ -286,10 +298,10 @@ def select_by_indices(dataset: D, selected_indices: torch.Tensor) -> D:
 
     Args:
         dataset (D): Dataset to be "subsampled" using the provided indices.
-        selected_indices (torch.Tensor): Indices within the datasets data and targets (if they exist) to select
+        selected_indices (torch.Tensor): Indices within the datasets data and targets (if they exist) to select.
 
     Raises:
-        TypeError: Will throw an error if the dataset provided is not supported
+        TypeError: Will throw an error if the dataset provided is not supported.
 
     Returns:
         D: Dataset with only the data associated with the provided indices. Must be of a supported type.

@@ -94,21 +94,18 @@ def convert_deepsupervision_list_to_dict(
     tensor_list: list[torch.Tensor] | tuple[torch.Tensor], num_spatial_dims: int
 ) -> dict[str, torch.Tensor]:
     """
-    Converts a list of torch.Tensors to a dictionary. Names the keys for
-    each tensor based on the spatial resolution of the tensor and its
-    index in the list. Useful for nnUNet models with deep supervision where
-    model outputs and targets loaded by the dataloader are lists. Assumes the
-    spatial dimensions of the tensors are last.
+    Converts a list of torch.Tensors to a dictionary. Names the keys for each tensor based on the spatial resolution
+    of the tensor and its index in the list. Useful for nnUNet models with deep supervision where model outputs and
+    targets loaded by the dataloader are lists. Assumes the spatial dimensions of the tensors are last.
 
     Args:
-        tensor_list (list[torch.Tensor]): A list of tensors, usually either
-            nnunet model outputs or targets, to be converted into a dictionary
-        num_spatial_dims (int): The number of spatial dimensions. Assumes the
-            spatial dimensions are last
+        tensor_list (list[torch.Tensor]): A list of tensors, usually either nnunet model outputs or targets, to be
+            converted into a dictionary.
+        num_spatial_dims (int): The number of spatial dimensions. Assumes the spatial dimensions are last.
+
     Returns:
-        dict[str, torch.Tensor]: A dictionary containing the tensors as
-            values where the keys are 'i-XxYxZ' where i was the tensor's index
-            in the list and X,Y,Z are the spatial dimensions of the tensor
+        dict[str, torch.Tensor]: A dictionary containing the tensors as values where the keys are 'i-XxYxZ' where i
+        was the tensor's index in the list and X,Y,Z are the spatial dimensions of the tensor.
     """
     # Convert list of targets into a dictionary
     tensors = {}
@@ -126,13 +123,12 @@ def convert_deepsupervision_dict_to_list(tensor_dict: dict[str, torch.Tensor]) -
     Converts a dictionary of tensors back into a list so that it can be used by nnunet deep supervision loss functions.
 
     Args:
-        tensor_dict (dict[str, torch.Tensor]): Dictionary containing
-            torch.Tensors. The key values must start with 'X-' where X is an
-            integer representing the index at which the tensor should be placed
-            in the output list
+        tensor_dict (dict[str, torch.Tensor]): Dictionary containing ``torch.Tensors``. The key values must start
+            with 'X-' where X is an integer representing the index at which the tensor should be placed in the output
+            list.
 
     Returns:
-        list[torch.Tensor]: A list of torch.Tensors
+        list[torch.Tensor]: A list of ``torch.Tensors``.
     """
     sorted_list = sorted(tensor_dict.items(), key=lambda x: int(x[0].split("-")[0]))
     return [tensor for key, tensor in sorted_list]
@@ -152,11 +148,11 @@ class NnUNetDataLoaderWrapper(DataLoader):
 
         Args:
             nnunet_augmenter (SingleThreadedAugmenter | NonDetMultiThreadedAugmenter | MultiThreadedAugmenter): The
-                dataloader used by nnunet
+                dataloader used by nnunet.
             nnunet_config (NnunetConfig | str): The nnunet config. Enum type helps ensure that nnunet config is valid.
             infinite (bool, optional): Whether or not to treat the dataset as infinite. The dataloaders sample data
-                with replacement either way. The only difference is that if set to False, a StopIteration is
-                generated after num_samples/batch_size steps. Defaults to False.
+                with replacement either way. The only difference is that if set to False, a ``StopIteration`` is
+                generated after ``num_samples``/``batch_size`` steps. Defaults to False.
         """
         # The augmenter is a wrapper on the nnunet dataloader
         self.nnunet_augmenter = nnunet_augmenter
@@ -247,8 +243,8 @@ class StreamToLogger(io.StringIO):
         File-like stream object that redirects writes to a logger. Useful for redirecting stdout to a logger.
 
         Args:
-            logger (Logger): The logger to redirect writes to
-            level (LogLevel): The log level at which to redirect the writes
+            logger (Logger): The logger to redirect writes to.
+            level (LogLevel): The log level at which to redirect the writes.
         """
         self.logger = logger
         self.level = level if isinstance(level, int) else level.value

@@ -30,13 +30,13 @@ class SyntheticFedProxDataset(ABC):
         setup, they are sampled using a power law.
 
         Args:
-            num_clients (int): Number of datasets (one per client) to generate
-            temperature (float, optional): temperature used for the softmax mapping to labels. Defaults to 1.0.
-            input_dim (int, optional): dimension of the input features for the synthetic dataset. Default is as in the
+            num_clients (int): Number of datasets (one per client) to generate.
+            temperature (float, optional): Temperature used for the softmax mapping to labels. Defaults to 1.0.
+            input_dim (int, optional): Dimension of the input features for the synthetic dataset. Default is as in the
                 FedProx paper. Defaults to 60.
-            output_dim (int, optional): dimension of the output labels for the synthetic dataset. These are one-hot
+            output_dim (int, optional): Dimension of the output labels for the synthetic dataset. These are one-hot
                 encoding labels. Default is as in the FedProx paper. Defaults to 10.
-            hidden_dim (int | None, optional): dimension of the hidden layer for the two-layer mapping. If None, a
+            hidden_dim (int | None, optional): Dimension of the hidden layer for the two-layer mapping. If None, a
                 one-layer mapping is used. Defaults to None.
             samples_per_client (int, optional): Number of samples to generate in each client's dataset.
                 Defaults to 1000.
@@ -98,22 +98,21 @@ class SyntheticFedProxDataset(ABC):
         affine transformations.
 
         .. math::
-            latent = \\frac{1}{T} \\cdot (W_1 \\cdot x + b_1)
-            \\hat{y} = \\cdot (W_2 \\cdot latent + b_2).
+            \\text{latent} = \\frac{1}{T} \\cdot (W_1 \\cdot x + b_1)
+            \\hat{y} = \\cdot (W_2 \\cdot \\text{latent} + b_2).
 
         Then :math:`y = \\text{softmax}(\\hat{y})`. Getting the argmax from the distribution, we then
         one hot encode the resulting label sample.
 
-
         Args:
-            x (torch.Tensor): The input features to be mapped to output labels. Shape is (dataset size, ``input_dim``)
-            w_1 (torch.Tensor): The first linear transformation matrix. Shape is (``hidden_dim``, ``input_dim``)
-            b_1 (torch.Tensor): The bias in the first linear transformation. Shape is (``hidden_dim``, 1)
-            w_2 (torch.Tensor): The second linear transformation matrix. Shape is (``output_dim``, ``hidden_dim``)
-            b_2 (torch.Tensor): The bias in the second linear transformation. Shape is (``output_dim``, 1)
+            x (torch.Tensor): The input features to be mapped to output labels. Shape is (dataset size, ``input_dim``).
+            w_1 (torch.Tensor): The first linear transformation matrix. Shape is (``hidden_dim``, ``input_dim``).
+            b_1 (torch.Tensor): The bias in the first linear transformation. Shape is (``hidden_dim``, 1).
+            w_2 (torch.Tensor): The second linear transformation matrix. Shape is (``output_dim``, ``hidden_dim``).
+            b_2 (torch.Tensor): The bias in the second linear transformation. Shape is (``output_dim``, 1).
 
         Returns:
-            torch.Tensor: The labels associated with each of the inputs. The shape is (dataset size, ``output_dim``)
+            torch.Tensor: The labels associated with each of the inputs. The shape is (dataset size, ``output_dim``).
         """
         latent = (torch.matmul(x, w_1.T) + b_1.T.repeat(self.samples_per_client, 1)) / self.temperature
         raw_y = torch.matmul(latent, w_2.T) + b_2.T.repeat(self.samples_per_client, 1)
@@ -123,7 +122,7 @@ class SyntheticFedProxDataset(ABC):
 
     def generate(self) -> list[TensorDataset]:
         """
-        Based on the class parameters, generate a list of synthetic TensorDatasets, one for each client.
+        Based on the class parameters, generate a list of synthetic ``TensorDatasets``, one for each client.
 
         Returns:
             list[TensorDataset]: Synthetic datasets for each client.
@@ -142,7 +141,7 @@ class SyntheticFedProxDataset(ABC):
         in this function.
 
         Returns:
-            list[tuple[torch.Tensor, torch.Tensor]]: input and output tensors for each of the clients.
+            list[tuple[torch.Tensor, torch.Tensor]]: Input and output tensors for each of the clients.
         """
         pass
 
@@ -165,6 +164,7 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
         housed in the github link below as well.
 
         Paper link: https://arxiv.org/abs/1812.06127
+
         Reference code: https://github.com/litian96/FedProx/tree/master/data/synthetic_1_1
 
         **NOTE**: This generator ends up with fairly skewed labels in generation. That is, many of the clients will not
@@ -176,19 +176,19 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
         centers of the input features.
 
         Args:
-            num_clients (int): Number of datasets (one per client) to generate
+            num_clients (int): Number of datasets (one per client) to generate.
             alpha (float): This is the standard deviation for the mean (``u_k``), drawn from a centered normal
                 distribution, which is used to generate the elements of the affine transformation components ``W``,
                 ``b``.
             beta (float): This is the standard deviation for each element of the multidimensional mean (``v_k``),
                 drawn from a centered normal distribution, which is used to generate the elements of the input features
-                for :math:`x \\sim \\mathcal{N}(B_k, \\Sigma)`
-            temperature (float, optional): temperature used for the softmax mapping to labels. Defaults to 1.0.
-            input_dim (int, optional): dimension of the input features for the synthetic dataset. Default is as in the
+                for :math:`x \\sim \\mathcal{N}(B_k, \\Sigma)`.
+            temperature (float, optional): Temperature used for the softmax mapping to labels. Defaults to 1.0.
+            input_dim (int, optional): Dimension of the input features for the synthetic dataset. Default is as in the
                 FedProx paper. Defaults to 60.
-            output_dim (int, optional): dimension of the output labels for the synthetic dataset. These are one-hot
+            output_dim (int, optional): Dimension of the output labels for the synthetic dataset. These are one-hot
                 encoding labels. Default is as in the FedProx paper. Defaults to 10.
-            hidden_dim (int | None, optional): dimension of the hidden layer for the two-layer mapping. If None, a
+            hidden_dim (int | None, optional): Dimension of the hidden layer for the two-layer mapping. If None, a
                 one-layer mapping is used. Defaults to None.
             samples_per_client (int, optional): Number of samples to generate in each client's dataset.
                 Defaults to 1000.
@@ -294,11 +294,11 @@ class SyntheticIidFedProxDataset(SyntheticFedProxDataset):
         and is not a bug.
 
         Args:
-            num_clients (int): Number of datasets (one per client) to generate
-            temperature (float, optional): temperature used for the softmax mapping to labels. Defaults to 1.0.
-            input_dim (int, optional): dimension of the input features for the synthetic dataset. Default is as in the
+            num_clients (int): Number of datasets (one per client) to generate.
+            temperature (float, optional): Temperature used for the softmax mapping to labels. Defaults to 1.0.
+            input_dim (int, optional): Dimension of the input features for the synthetic dataset. Default is as in the
                 FedProx paper. Defaults to 60.
-            output_dim (int, optional): dimension of the output labels for the synthetic dataset. These are one-hot
+            output_dim (int, optional): Dimension of the output labels for the synthetic dataset. These are one-hot
                 encoding labels. Default is as in the FedProx paper. Defaults to 10.
             samples_per_client (int, optional): Number of samples to generate in each client's dataset.
                 Defaults to 1000.

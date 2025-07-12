@@ -489,12 +489,12 @@ class NnunetClient(BasicClient):
         preprocessed data is saved in '{nnUNet_preprocessed}/{dataset_name}/{data_identifier} as follows.
 
         - ``nnUNet_preprocessed`` is the directory specified by the ``nnUNet_preprocessed`` environment variable.
-        - ``dataset_name`` is the nnunet dataset name (e.g. Dataset123_MyDataset)
-        - ``data_identifier`` is ``{self.data_identifier}_{self.nnunet_config}``
+        - ``dataset_name`` is the nnunet dataset name (e.g. Dataset123_MyDataset).
+        - ``data_identifier`` is ``{self.data_identifier}_{self.nnunet_config}``.
 
         Args:
             nnunet_config (NnunetConfig): The nnunet config as a ``NnunetConfig`` Enum. Enum type ensures nnunet
-                config is valid
+                config is valid.
         """
         assert self.data_identifier is not None, "Was expecting data identifier to be initialized in self.create_plans"
 

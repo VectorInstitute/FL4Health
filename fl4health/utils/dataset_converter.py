@@ -19,7 +19,7 @@ class DatasetConverter(TensorDataset):
 
         Args:
             converter_function (Callable[[torch.Tensor, torch.Tensor], tuple[torch.Tensor, torch.Tensor]]): Function
-                defining how the dataset should be converted
+                defining how the dataset should be converted.
             dataset (TensorDataset | None): Dataset to be converted.
         """
         assert dataset is None or dataset.targets is not None
@@ -75,10 +75,10 @@ class AutoEncoderDatasetConverter(DatasetConverter):
     ) -> None:
         """
         A dataset converter specific to formatting supervised data such as MNIST for self-supervised training in
-        autoencoder-based models, and potentially handling the existence of additional input i.e. condition.
+        autoencoder-based models, and potentially handling the existence of additional input (i.e. condition).
 
-        This class includes three converter functions that are chosen based on the condition,
-        other converter functions can be added or passed to support other conditions.
+        This class includes three converter functions that are chosen based on the condition, other converter
+        functions can be added or passed to support other conditions.
 
         Args:
             condition (str | torch.Tensor | None, optional): Could be a fixed tensor used for all the data samples,

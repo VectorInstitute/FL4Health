@@ -126,9 +126,9 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
         seen on the clients.
 
         Args:
-            server_round: (int) the current server round.
+            server_round: (int) The current server round.
             results: (list[tuple[ClientProxy, FitRes]]) The clients' fit results.
-            failures: (list[tuple[ClientProxy, FitRes] | BaseException]) the clients' fit failures.
+            failures: (list[tuple[ClientProxy, FitRes] | BaseException]) The clients' fit failures.
 
         Returns:
             (tuple[Parameters | None, dict[str, Scalar]]) A tuple containing the aggregated parameters

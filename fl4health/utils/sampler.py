@@ -42,8 +42,8 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
         Args:
             unique_labels (list[T]): The full set of labels contained in the dataset.
             downsampling_ratio (float): The percentage to which the specified "minority" labels are downsampled. For
-                example, if a label ``L`` has 10 examples and the downsampling_ratio is 0.2, then 8 of the datapoints
-                with label ``L`` are discarded.
+                example, if a label ``L`` has 10 examples and the ``downsampling_ratio`` is 0.2, then 8 of the
+                datapoints with label ``L`` are discarded.
             minority_labels (Set[T]): The labels subject to downsampling.
         """
         super().__init__(unique_labels)
@@ -106,7 +106,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
     ) -> None:
         """
         Class used to subsample a dataset so the classes of samples are distributed in a non-IID way. In particular,
-        the ``DirichletLabelBasedSampler`` uses a dirichlet distribution to determine the number of samples from each
+        the ``DirichletLabelBasedSampler`` uses a Dirichlet distribution to determine the number of samples from each
         class. The sampler is constructed by passing a beta parameter that determines the level of heterogeneity and a
         ``sample_percentage`` that determines the relative size of the modified dataset. Subsampling a dataset is
         accomplished by calling the subsample method and passing a ``BaseDataset`` object. This will return the
@@ -146,7 +146,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
 
     def subsample(self, dataset: D) -> D:
         """
-        Returns a new dataset where samples are selected based on a dirichlet distribution over labels.
+        Returns a new dataset where samples are selected based on a Dirichlet distribution over labels.
 
         Args:
             dataset (D): Dataset to be modified, through downsampling on specified labels.

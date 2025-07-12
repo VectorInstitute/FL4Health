@@ -53,8 +53,8 @@ class DirichletLabelBasedAllocation(Generic[T]):
             partitioned_datasets = heterogeneous_partitioner.partition_dataset(original_dataset, max_retries=5)
 
         Args:
-            number_of_partitions (int): Number of new datasets that we want to break the current dataset into
-            unique_labels (list[T]): This is the set of labels through which we'll iterate to perform allocation
+            number_of_partitions (int): Number of new datasets that we want to break the current dataset into.
+            unique_labels (list[T]): This is the set of labels through which we'll iterate to perform allocation.
             min_label_examples (int | None, optional): This is an optional input if you want to ensure a minimum
                 number of labels is present on each partition. If prior distribution is provided, this is ignored.
 
@@ -100,7 +100,7 @@ class DirichletLabelBasedAllocation(Generic[T]):
         a Dirichlet distribution, to the partitions.
 
         Args:
-            label (T): Label is passed for logging transparency. It must be convertible to a string through ``str()``
+            label (T): Label is passed for logging transparency. It must be convertible to a string through ``str()``.
             label_indices (torch.Tensor): Indices from the dataset corresponding to a particular label. This assumes
                 that the tensor is 1D and it's len constitutes the number of total datapoints with the label.
 
@@ -173,7 +173,7 @@ class DirichletLabelBasedAllocation(Generic[T]):
         is exceeded or the minimum threshold is met.
 
         Args:
-            original_dataset (D): The dataset to be partitioned
+            original_dataset (D): The dataset to be partitioned.
             max_retries (int | None, optional): Number of times to attempt to satisfy a user provided minimum
                 label-associated data points per partition. Set this value to None if you want to retry indefinitely.
                 Defaults to 5.

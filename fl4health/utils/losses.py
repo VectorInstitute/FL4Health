@@ -212,12 +212,12 @@ class LossMeter(Generic[LossesType]):
         Aggregates a list of losses dictionaries into a single dictionary according to the loss meter aggregation type.
 
         Args:
-            loss_list (list[dict[str, torch.Tensor]]): A list of loss dictionaries
-            loss_meter_type (LossMeterType): The type of the loss meter to perform the aggregation
+            loss_list (list[dict[str, torch.Tensor]]): A list of loss dictionaries.
+            loss_meter_type (LossMeterType): The type of the loss meter to perform the aggregation.
 
         Returns:
             dict[str, torch.Tensor]: A single dictionary with the aggregated losses according to the given loss
-            meter type
+            meter type.
         """
         # We don't know the keys of the dict (backward or additional losses) beforehand. We don't obtain them
         # from the first entry because losses can have different keys. We get list of all the keys from

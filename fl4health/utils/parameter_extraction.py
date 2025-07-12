@@ -12,7 +12,7 @@ def get_all_model_parameters(model: nn.Module) -> Parameters:
     values are converted from numpy arrays into a Flower Parameters object.
 
     Args:
-        model (nn.Module): PyTorch model whose parameters are to be extracted
+        model (nn.Module): PyTorch model whose parameters are to be extracted.
 
     Returns:
         Parameters: Flower Parameters object containing all of the target models state.

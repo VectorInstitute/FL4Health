@@ -84,8 +84,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
                 Function used to configure client-side validation by providing a ``Config`` dictionary.
                 Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
-            initial_parameters (Parameters | None, optional): Initial global model parameters. This strategy assumes
-                that the initial parameters is not None. So they need to be set in spite of the optional tag.
+            initial_parameters (Parameters | None, optional): Initial global model parameters.
             fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
             evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
@@ -272,7 +271,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
 
         Args:
             clipping_bits (NDArrays): Bits associated with each of the clients. These are to be noised and aggregated
-            in order to update the clipping bound on the server side.
+                in order to update the clipping bound on the server side.
         """
         noised_clipping_bits_sum = gaussian_noisy_aggregate_clipping_bits(
             clipping_bits, self.clipping_noise_multiplier
@@ -428,7 +427,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
 
         Returns:
             list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
-            to be sent to each client (packaged as ``EvaluateIns``)
+            to be sent to each client (packaged as ``EvaluateIns``).
         """
         # This strategy requires the client manager to be of type at least BaseFractionSamplingManager
         assert isinstance(client_manager, BaseFractionSamplingManager)

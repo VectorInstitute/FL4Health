@@ -75,7 +75,7 @@ def check_if_batch_is_empty_and_verify_input(input: TorchInputType) -> bool:
     **NOTE**: This function assumes the input is **BATCH FIRST**.
 
     Args:
-        input (TorchInputType): Input batch. input can be of type ``torch.Tensor`` or ``dict[str, torch.Tensor]``,
+        input (TorchInputType): Input batch. Input can be of type ``torch.Tensor`` or ``dict[str, torch.Tensor]``,
             and in the latter case, the batch is considered to be empty if all tensors in the dictionary have length
             zero.
 
@@ -105,9 +105,10 @@ def clone_and_freeze_model(model: nn.Module) -> nn.Module:
     preserved in its current state.
 
     Args:
-        model (nn.Module): Model to clone and freeze
+        model (nn.Module): Model to clone and freeze.
+
     Returns:
-        nn.Module: Cloned and frozen model
+        nn.Module: Cloned and frozen model.
     """
     cloned_model = copy.deepcopy(model)
     for param in cloned_model.parameters():

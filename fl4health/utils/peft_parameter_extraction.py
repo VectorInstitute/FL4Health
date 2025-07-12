@@ -10,7 +10,7 @@ def get_all_peft_parameters_from_model(model: nn.Module) -> Parameters:
     from numpy arrays into a Flower Parameters object.
 
     Args:
-        model (nn.Module): PyTorch model whose parameters are to be extracted
+        model (nn.Module): PyTorch model whose parameters are to be extracted.
 
     Returns:
         Parameters: Flower Parameters object containing all of the target models state.
