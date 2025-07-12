@@ -44,7 +44,7 @@ def aggregate_losses(results: list[tuple[int, float]], weighted: bool = True) ->
             provided in the tuple) or a uniform average. Defaults to True.
 
     Returns:
-        float: the weighted or unweighted average of the loss values in the results list.
+        float: The weighted or unweighted average of the loss values in the results list.
     """
     # Sorting the results by the loss values for numerical fluctuation determinism of the sum
     results = sorted(results, key=lambda x: x[1])

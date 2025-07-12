@@ -15,7 +15,7 @@ Install the FL4Health requirements
 ``` bash
 cd <fl4health_repository>
 pip install --upgrade pip poetry
-poetry install --with "dev, dev-local, test, codestyle"
+poetry install --with "dev, test, codestyle"
 cd <FLamby_repository>
 pip install albumentations==1.4.20
 pip install -e ".[cam16, heart, isic2019, ixi, lidc, tcga]"

@@ -19,10 +19,10 @@ class EmaMetric(Metric, Generic[T]):
         """
         Exponential Moving Average (EMA) metric wrapper to apply EMA to the underlying metric.
 
-        NOTE: If the underlying metric accumulates batches during update, then updating this metric without clearing
-        in between will result in previously seen inputs and targets being a part of subsequent computations. For
-        example, if we use Accuracy from fl4health.metrics, which accumulates batches, we get the following behavior
-        in the code block below.
+        **NOTE**: If the underlying metric accumulates batches during update, then updating this metric without
+        clearing in between will result in previously seen inputs and targets being a part of subsequent computations.
+        For example, if we use ``Accuracy`` from ``fl4health.metrics``, which accumulates batches, we get the following
+        behavior in the code block below.
 
         .. code-block:: python
 
@@ -49,10 +49,11 @@ class EmaMetric(Metric, Generic[T]):
             ema.update(preds_2, targets_2 = 0.9(0.667) + 0.1(0.333)
 
         Args:
-            metric (T): An FL4Health compatible metric
+            metric (T): An FL4Health compatible metric.
             smoothing_factor (float, optional): Smoothing factor in range [0, 1] for the EMA. Smaller values increase
                 smoothing by weighting previous scores more heavily. Defaults to 0.1.
-            name (str | None, optional): Name of the EMAMetric. If left as None will default to 'EMA_{metric.name}'.
+            name (str | None, optional): Name of the ``EMAMetric``. If left as None will default to
+                'EMA_{metric.name}'.
 
         """
         # Create a copy of the metrics object so that we do not inadvertently change the provided object elsewhere

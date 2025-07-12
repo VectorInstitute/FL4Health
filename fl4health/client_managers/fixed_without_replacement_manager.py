@@ -9,7 +9,10 @@ from fl4health.client_managers.base_sampling_manager import BaseFractionSampling
 
 
 class FixedSamplingByFractionClientManager(BaseFractionSamplingManager):
-    """Overrides the Simple Client Manager to provide Fixed Sampling without replacement for Clients by fraction."""
+    """
+    Overrides the ``BaseFractionSamplingManager`` to provide Fixed Sampling without replacement for Clients by
+    fraction.
+    """
 
     def sample_fraction(
         self,
@@ -18,7 +21,7 @@ class FixedSamplingByFractionClientManager(BaseFractionSamplingManager):
         criterion: Criterion | None = None,
     ) -> list[ClientProxy]:
         """
-        Sample a number of Flower ClientProxy instances **WITHOUT** replacement.
+        Sample a number of Flower ``ClientProxy`` instances **WITHOUT** replacement.
 
         Args:
             sample_fraction (float): Fraction of clients to sample. Guaranteed to produce this fraction from

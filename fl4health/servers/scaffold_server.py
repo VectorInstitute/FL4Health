@@ -43,7 +43,7 @@ class ScaffoldServer(FlServer):
                 example, the config used to produce the ``on_fit_config_fn`` and ``on_evaluate_config_fn`` for the
                 strategy.
 
-                **NOTE:** This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
+                **NOTE**: This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
             strategy (Scaffold): The aggregation strategy to be used by the server to handle client updates and
                 other information potentially sent by the participating clients. This strategy must be of SCAFFOLD
                 type.
@@ -173,7 +173,7 @@ class ScaffoldServer(FlServer):
                 server waits for the minimum number of clients to be available set in the strategy.
 
         Returns:
-            tuple[History, float]: The first element of the tuple is a history object containing the full set of FL
+            tuple[History, float]: The first element of the tuple is a ``History`` object containing the full set of FL
             training results, including things like aggregated loss and metrics. Tuple also includes elapsed time in
             seconds for round.
         """
@@ -212,7 +212,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
                 example, the config used to produce the ``on_fit_config_fn`` and ``on_evaluate_config_fn`` for the
                 strategy.
 
-                **NOTE:** This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
+                **NOTE**: This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
             noise_multiplier (int): The amount of Gaussian noise to be added to the per sample gradient during
                 DP-SGD.
             batch_size (int): The batch size to be used in training on the client-side. Used in privacy accounting.
@@ -245,7 +245,9 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
                 request (which is default behavior for flower servers). Defaults to None.
             server_name (str | None, optional): An optional string name to uniquely identify server. This name is also
                 used as part of any state checkpointing done by the server. Defaults to None.
-            accept_failures (bool, optional): Determines whether the server should accept
+            accept_failures (bool, optional): Determines whether the server should accept failures during training or
+                evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
+                and throw an exception. Defaults to True.
         """
         # Require the strategy to be an  OpacusStrategy to handle the Opacus model conversion etc.
         assert isinstance(strategy, OpacusScaffold), (

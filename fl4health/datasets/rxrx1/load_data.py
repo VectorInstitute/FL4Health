@@ -129,9 +129,9 @@ def load_rxrx1_data(
     Load and split the data into training and validation dataloaders.
 
     Args:
-        data_path (Path): Path to the full set of data
-        client_num (int): Client number for the data you want to load
-        batch_size (int): batch size for the data loaders
+        data_path (Path): Path to the full set of data.
+        client_num (int): Client number for the data you want to load.
+        batch_size (int): batch size for the data loaders.
         seed (int | None, optional): Seed to fix randomness associated with data splitting. Defaults to None.
         train_val_split (float, optional): Percentage of data to put in the training loader. The remainder flow to the
             validation dataloader. Defaults to 0.8.
@@ -174,13 +174,13 @@ def load_rxrx1_test_data(
     Create a dataloader for the reserved rxrx1 dataset.
 
     Args:
-        data_path (Path): Path to the test data
+        data_path (Path): Path to the test data.
         client_num (int): Client number to be loaded.
-        batch_size (int): Batch size for processing of the test scripts
+        batch_size (int): Batch size for processing of the test scripts.
         num_workers (int, optional): Number of workers associated with the test dataloader. Defaults to 0.
 
     Returns:
-        tuple[DataLoader, dict[str, int]]: Test dataloader, dictionary containing count of the data points in the set
+        tuple[DataLoader, dict[str, int]]: Test dataloader, dictionary containing count of the data points in the set.
     """
     # Read the CSV file
     data = pd.read_csv(f"{data_path}/clients/meta_data_{client_num + 1}.csv")

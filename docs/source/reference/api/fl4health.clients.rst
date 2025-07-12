@@ -13,6 +13,7 @@ Subpackages
    :maxdepth: 4
 
    fl4health.clients.deep_mmd_clients
+   fl4health.clients.flexible
    fl4health.clients.mkmmd_clients
 
 Submodules
@@ -31,6 +32,7 @@ Submodules
    fl4health.clients.evaluate_client
    fl4health.clients.fed_pca_client
    fl4health.clients.fed_prox_client
+   fl4health.clients.fedbn_client
    fl4health.clients.fedper_client
    fl4health.clients.fedpm_client
    fl4health.clients.fedrep_client

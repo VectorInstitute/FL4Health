@@ -82,7 +82,7 @@ class ModelMergeServer(Server):
                 If none, then it will wait for the minimum number to respond indefinitely.
 
         Returns:
-            tuple[History, float]: The first element of the tuple is a History object containing the aggregated
+            tuple[History, float]: The first element of the tuple is a ``History`` object containing the aggregated
             metrics returned from the clients. Tuple also contains elapsed time in seconds for round.
         """
         self.reports_manager.report({"host_type": "server", "fit_start": datetime.datetime.now()})

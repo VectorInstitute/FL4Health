@@ -62,6 +62,6 @@ class Metric(ABC):
         Resets metric.
 
         Raises:
-            NotImplementedError: To be defined in the classes expending this class.
+            NotImplementedError: To be defined in the classes extending this class.
         """
         raise NotImplementedError

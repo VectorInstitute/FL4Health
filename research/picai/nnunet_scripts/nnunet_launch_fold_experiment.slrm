@@ -31,7 +31,7 @@ if [ "${PRETRAINED_WEIGHTS}" -neq '' ] && [ "${SOURCE_DATASET_NAME}" -neq '' ]; 
 
 	nnUNetv2_preprocess -d ${DATASET_NAME} -plans_name ${SOURCE_PLANS_IDENTIFIER}
 else
-	nnUNetv2_plan_and_preprocess -d $DATASET_NAME --verify_dataset_intergrity
+	nnUNetv2_plan_and_preprocess -d $DATASET_NAME --verify_dataset_integrity
 fi
 
 FOLDS = ( "fold_0" "fold_1" "fold_2" "fold_3" "fold_4" )

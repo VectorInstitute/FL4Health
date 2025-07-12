@@ -16,3 +16,4 @@ Submodules
    fl4health.checkpointing.client_module
    fl4health.checkpointing.opacus_checkpointer
    fl4health.checkpointing.server_module
+   fl4health.checkpointing.state_checkpointer

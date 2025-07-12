@@ -11,7 +11,7 @@ from LLaVA-NeXT repository (https://github.com/LLaVA-VL/LLaVA-NeXT/tree/main/scr
 - `zero3.json`: Gradients, optimizer states, and model parameters are sharded across GPUs
 - `zero3_offload.json`: Gradients, optimizer states, and model parameters are sharded across GPUs and offloaded to CPU to reduce
 GPU memory usage
-- `zero3pp.json`: Has an impovement over ZeRO-3 by reducing the memory overhead through hierarchical partitioning and quantization
+- `zero3pp.json`: Has an improvement over ZeRO-3 by reducing the memory overhead through hierarchical partitioning and quantization
 
 **Note**: For more information on DeepSpeed ZeRO configurations, please refer to the DeepSpeed documentation
 (https://www.deepspeed.ai/docs/config-json/).

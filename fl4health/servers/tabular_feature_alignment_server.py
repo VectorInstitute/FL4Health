@@ -47,7 +47,7 @@ class TabularFeatureAlignmentServer(FlServer):
             config (Config): This should be the configuration that was used to setup the federated alignment.
                 In most cases it should be the "source of truth" for how FL alignment should proceed.
 
-                **NOTE:** This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
+                **NOTE**: This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
             initialize_parameters (Callable[[int, int], Parameters]): Function used to initialize the model to be
                 trained and used for the tabular task.
 

@@ -18,7 +18,7 @@ class TabularType(str, Enum):
         imputation to be used.
 
         Args:
-            tabular_type (TabularType | str): Type of tabular feature to be imputed
+            tabular_type (TabularType | str): Type of tabular feature to be imputed.
 
         Raises:
             ValueError: If the tabular type is unknown this will be thrown.

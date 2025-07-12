@@ -9,20 +9,25 @@ def compute_dice_on_count_tensors(
 ) -> torch.Tensor:
     """
     Given a set of count tensors representing true positives (TP), false positives (FP), and false negatives (FN),
-    compute the  Dice score as 2*TP/(2*TP + FP + FN) ELEMENTWISE. The zero division argument determines how to deal
-    with examples with all true negatives, which implies that TP + FP + FN = 0 and an undefined value.
+    compute the  Dice score as...
+
+    .. math ::
+        \\frac{2 \\cdot TP}{2 \\cdot TP + FP + FN}
+
+    **ELEMENTWISE**. The zero division argument determines how to deal with examples with all true negatives, which
+    implies that ``TP + FP + FN = 0`` and an undefined value.
 
     Args:
-        true_positives (torch.Tensor): count of true positives in each entry
-        false_positives (torch.Tensor): count of false positives in each entry
-        false_negatives (torch.Tensor): count of false negatives in each entry
+        true_positives (torch.Tensor): count of true positives in each entry.
+        false_positives (torch.Tensor): count of false positives in each entry.
+        false_negatives (torch.Tensor): count of false negatives in each entry.
         zero_division (float | None): How to deal with zero division. If None, the values with zero division are
             simply dropped. If a float is specified, this value is injected into each Dice score that would have
             been undefined.
 
     Returns:
-        torch.Tensor: Dice scores computed for each element in the TP, FP, FN tensors computed ELEMENTWISE with
-            replacement or dropping of undefined entries. The tensor returned is flattened to be 1D.
+        torch.Tensor: Dice scores computed for each element in the TP, FP, FN tensors computed **ELEMENTWISE** with
+        replacement or dropping of undefined entries. The tensor returned is flattened to be 1D.
     """
     # Compute union and intersection
     numerator = 2 * true_positives  # Equivalent to 2 times the intersection
@@ -52,7 +57,7 @@ def threshold_tensor(input: torch.Tensor, threshold: float | int) -> torch.Tenso
             prediction.
 
     Returns:
-        torch.Tensor: Thresholded tensor
+        torch.Tensor: Thresholded tensor.
     """
     if isinstance(threshold, float):
         thresholded_tensor = torch.zeros_like(input)

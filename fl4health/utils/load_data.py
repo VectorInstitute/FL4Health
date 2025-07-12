@@ -145,7 +145,7 @@ def load_mnist_test_data(
 
     Returns:
         tuple[DataLoader, dict[str, int]]: The test data loader and a dictionary containing the sample count
-            of the test dataset.
+        of the test dataset.
     """
     log(INFO, f"Data directory: {str(data_dir)}")
 

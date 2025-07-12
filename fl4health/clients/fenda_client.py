@@ -36,10 +36,10 @@ class FendaClient(BasicClient):
         related (and is essentially an ablation of) the PerFCL method.
 
         Args:
-            data_path (Path): path to the data to be used to load the data for client-side training
-            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            data_path (Path): path to the data to be used to load the data for client-side training.
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
-                "cuda"
+                "cuda".
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle

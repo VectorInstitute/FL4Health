@@ -35,10 +35,10 @@ class ApflClient(BasicClient):
         models.
 
         Args:
-            data_path (Path): path to the data to be used to load the data for client-side training
-            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            data_path (Path): path to the data to be used to load the data for client-side training.
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
-                "cuda"
+                "cuda".
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
@@ -73,8 +73,8 @@ class ApflClient(BasicClient):
 
     def update_after_step(self, step: int, current_round: int | None = None) -> None:
         """
-        Called after local train step on client. step is an integer that represents
-        the local training step that was most recently completed.
+        Called after local train step on client. Step is an integer that represents the local training step that was
+        most recently completed.
         """
         if self.is_start_of_local_training(step) and self.model.adaptive_alpha:
             self.model.update_alpha()

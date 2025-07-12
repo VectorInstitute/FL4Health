@@ -84,8 +84,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
                 Function used to configure client-side validation by providing a ``Config`` dictionary.
                 Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
-            initial_parameters (Parameters | None, optional): Initial global model parameters. This strategy assumes
-                that the initial parameters is not None. So they need to be set in spite of the optional tag.
+            initial_parameters (Parameters | None, optional): Initial global model parameters.
             fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
             evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
@@ -241,7 +240,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         This function updates each of the layer weights using the server learning rate and the :math:`m_t` values
         (computed with or without momentum).
 
-        **NOTE:** It assumes that the values in :math:`m_t` are **UPDATES** rather than raw weights.
+        **NOTE**: It assumes that the values in :math:`m_t` are **UPDATES** rather than raw weights.
         """
         assert self.m_t is not None
         self.current_weights = [
@@ -256,7 +255,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         """
         Update the clipping bound help by the server given the noised aggregated clipping bits returned by the clients.
 
-        **NOTE:** The update formula may be found in the original paper.
+        **NOTE**: The update formula may be found in the original paper.
 
         Args:
             noised_clipping_bits (float): This is the aggregated noised clipping bits derived from the clients.
@@ -272,7 +271,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
 
         Args:
             clipping_bits (NDArrays): Bits associated with each of the clients. These are to be noised and aggregated
-            in order to update the clipping bound on the server side.
+                in order to update the clipping bound on the server side.
         """
         noised_clipping_bits_sum = gaussian_noisy_aggregate_clipping_bits(
             clipping_bits, self.clipping_noise_multiplier
@@ -289,10 +288,10 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         Aggregate fit using averaging of weights (can be unweighted or weighted) and inject noise and optionally
         perform adaptive clipping updates.
 
-        **NOTE:** This assumes that the model weights sent back by the clients are **UPDATES** rather than raw weights.
+        **NOTE**: This assumes that the model weights sent back by the clients are **UPDATES** rather than raw weights.
         That is they are ``theta_client - theta_server`` rather than just ``theta_client``.
 
-        **NOTE:** this function packs the clipping bound for clients as the last member of the parameters list.
+        **NOTE**: this function packs the clipping bound for clients as the last member of the parameters list.
 
         Args:
             server_round (int): Indicates the server round we're currently on.
@@ -428,7 +427,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
 
         Returns:
             list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
-            to be sent to each client (packaged as ``EvaluateIns``)
+            to be sent to each client (packaged as ``EvaluateIns``).
         """
         # This strategy requires the client manager to be of type at least BaseFractionSamplingManager
         assert isinstance(client_manager, BaseFractionSamplingManager)

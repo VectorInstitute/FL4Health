@@ -12,9 +12,9 @@ class FullParameterExchanger(ParameterExchanger):
         self, model: nn.Module, initial_model: nn.Module | None = None, config: Config | None = None
     ) -> NDArrays:
         """
-        Sending all of parameters ordered by state_dict keys.
+        Sending all of parameters ordered by ``state_dict`` keys.
 
-        **NOTE**: Order matters, because it is relied upon by ``pull_parameters`` below
+        **NOTE**: Order matters, because it is relied upon by ``pull_parameters`` below.
 
         Args:
             model (nn.Module): Model containing the weights to be sent.
@@ -35,12 +35,12 @@ class FullParameterExchanger(ParameterExchanger):
         provided model.
 
         Assumes all model parameters are contained in parameters. The ``state_dict`` is reconstituted because
-        parameters is simply a list of arrays
+        parameters is simply a list of arrays.
 
         Args:
-            parameters (NDArrays): Parameter to inject into the provided model
-            model (nn.Module): Model to inject the parameters into
-            config (Config | None, optional): Not used.. Defaults to None.
+            parameters (NDArrays): Parameter to inject into the provided model.
+            model (nn.Module): Model to inject the parameters into.
+            config (Config | None, optional): Not used. Defaults to None.
         """
         params_dict = zip(model.state_dict().keys(), parameters)
         state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})

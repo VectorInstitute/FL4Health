@@ -1,7 +1,7 @@
-fl4health.utils.metric\_aggregation module
+fl4health.mixins.personalized.utils module
 ==========================================
 
-.. automodule:: fl4health.utils.metric_aggregation
+.. automodule:: fl4health.mixins.personalized.utils
    :members:
    :undoc-members:
    :show-inheritance:

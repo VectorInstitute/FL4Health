@@ -31,14 +31,14 @@ class ParallelSplitHeadModule(nn.Module, ABC):
         are meant to be joined together when the ``self.mode`` is set to ``ParallelFeatureJoinMode.CONCATENATE``.
 
         Args:
-            local_tensor (torch.Tensor): First tensor to be joined
-            global_tensor (torch.Tensor): Second tensor to be joined
+            local_tensor (torch.Tensor): First tensor to be joined.
+            global_tensor (torch.Tensor): Second tensor to be joined.
 
         Raises:
             NotImplementedError: Any implementing child class must produce this method if it is to be used.
 
         Returns:
-            torch.Tensor: A single tensor with the two tensors joined together in some way
+            torch.Tensor: A single tensor with the two tensors joined together in some way.
         """
         raise NotImplementedError
 
@@ -48,10 +48,10 @@ class ParallelSplitHeadModule(nn.Module, ABC):
         Forward function for the head module.
 
         Args:
-            input_tensor (torch.Tensor): Input tensor to be mapped
+            input_tensor (torch.Tensor): Input tensor to be mapped.
 
         Raises:
-            NotImplementedError: Must be implemented by any child class
+            NotImplementedError: Must be implemented by any child class.
 
         Returns:
             torch.Tensor: Output of the head module from the given input.
@@ -66,8 +66,8 @@ class ParallelSplitHeadModule(nn.Module, ABC):
         tensor is then passed through the forward function of the head module.
 
         Args:
-            first_tensor (torch.Tensor): Output from one parallel module
-            second_tensor (torch.Tensor): Output from one parallel module
+            first_tensor (torch.Tensor): Output from one parallel module.
+            second_tensor (torch.Tensor): Output from one parallel module.
 
         Returns:
             torch.Tensor: Output from the head module.
@@ -93,8 +93,8 @@ class ParallelSplitModel(nn.Module):
         feature tensors are stored. Only a prediction tensor is produced.
 
         Args:
-            first_feature_extractor (nn.Module): First parallel feature extractor
-            second_feature_extractor (nn.Module): Second parallel feature extractor
+            first_feature_extractor (nn.Module): First parallel feature extractor.
+            second_feature_extractor (nn.Module): Second parallel feature extractor.
             model_head (ParallelSplitHeadModule): Module responsible for taking the outputs of the two feature
                 extractors and using them to produce a prediction.
         """

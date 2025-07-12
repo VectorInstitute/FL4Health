@@ -24,7 +24,7 @@ def set_all_random_seeds(
 
     https://pytorch.org/docs/stable/notes/randomness.html
 
-    **NOTE:** If the ``use_deterministic_torch_algos`` flag is set to True, you may need to set the environment
+    **NOTE**: If the ``use_deterministic_torch_algos`` flag is set to True, you may need to set the environment
     variable ``CUBLAS_WORKSPACE_CONFIG`` to something like ``:4096:8``, to avoid CUDA errors. Additional documentation
     may be found here:
 
@@ -32,7 +32,7 @@ def set_all_random_seeds(
 
     Args:
         seed (int | None, optional): The seed value to be used for random number generators. Default is 42. Seed
-            setting will no-op if the seed is explicitly set to None
+            setting will no-op if the seed is explicitly set to None.
         use_deterministic_torch_algos (bool, optional): Whether or not to set ``torch.use_deterministic_algorithms`` to
             True. Defaults to False.
         disable_torch_benchmarking (bool, optional): Whether to explicitly disable cuda benchmarking in torch
@@ -91,9 +91,9 @@ def restore_random_state(
     the state of the random number generators to a previously saved state.
 
     Args:
-        random_state (tuple[Any, ...]): The state of the Python random number generator
-        numpy_state (dict[str, Any]): The state of the NumPy random number generator
-        torch_state (torch.Tensor): The state of the PyTorch random number generator
+        random_state (tuple[Any, ...]): The state of the Python random number generator.
+        numpy_state (dict[str, Any]): The state of the NumPy random number generator.
+        torch_state (torch.Tensor): The state of the PyTorch random number generator.
     """
     log(INFO, "Restoring random state.")
     random.setstate(random_state)
@@ -105,10 +105,10 @@ def generate_hash(length: int = 8) -> str:
     """
     Generates unique hash used as id for client.
 
-    **NOTE:** This generation is unaffected by setting of random seeds.
+    **NOTE**: This generation is unaffected by setting of random seeds.
 
     Args:
-       length (int): The length of the hash generated. Maximum length is 32
+       length (int): The length of the hash generated. Maximum length is 32.
 
     Returns:
         str: hash

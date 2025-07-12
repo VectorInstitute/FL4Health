@@ -8,7 +8,7 @@ class CosineSimilarityLoss(nn.Module):
         Cosine similarity loss between two torch Tensors.
 
         Args:
-            device (torch.device): Which device this loss should be computed on
+            device (torch.device): Which device this loss should be computed on.
             dim (int, optional): Dimension where cosine similarity is computed. Defaults to -1.
         """
         super().__init__()

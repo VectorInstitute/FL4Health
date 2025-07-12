@@ -43,11 +43,12 @@ class FendaDittoClient(DittoClient):
 
         There are two distinct modes of operation:
 
-        - If freeze_global_feature_extractor is True. The global Ditto model feature extractor **SETS AND FREEZES**
-          weights of global FENDA feature extractor. The local components of the FENDA model are trained and an
-          additional drift loss is computed between the local and global feature extractors of the FENDA model.
+        - If ``freeze_global_feature_extractor`` is True. The global Ditto model feature extractor
+          **SETS AND FREEZES** weights of global FENDA feature extractor. The local components of the FENDA model are
+          trained and an additional drift loss is computed between the local and global feature extractors of the
+          FENDA model.
 
-        - If freeze_global_feature_extractor is False. The global Ditto model feature extractor **INITIALIZES**
+        - If ``freeze_global_feature_extractor`` is False. The global Ditto model feature extractor **INITIALIZES**
           weights of the FENDA model's global feature extractor, both local and global components of FENDA are
           trained and a drift loss is calculated between Ditto global feature extractor and FENDA global feature
           extractor.
@@ -55,15 +56,15 @@ class FendaDittoClient(DittoClient):
         The constraint for the FENDA model feature extractors discussed above uses a weight drift loss on its
         feature extraction modules.
 
-        **NOTE:** Unlike FENDA, the global feature extractor of the FENDA model is NOT exchanged with the server.
+        **NOTE**: Unlike FENDA, the global feature extractor of the FENDA model is NOT exchanged with the server.
         Rather, the global Ditto model is exchanged and injected at each round into the global feature extractor. If
         the global feature extractor is frozen, then only the local components of the FENDA network are trained.
 
         Args:
-            data_path (Path): path to the data to be used to load the data for client-side training
-            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            data_path (Path): path to the data to be used to load the data for client-side training.
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
-                "cuda"
+                "cuda".
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
@@ -78,11 +79,11 @@ class FendaDittoClient(DittoClient):
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
             freeze_global_feature_extractor (bool, optional): Determines whether we freeze the FENDA global feature
-                extractor during training. If freeze_global_feature_extractor is False, both the global and the local
-                feature extractor in the local FENDA model will be trained. Otherwise, the global feature extractor
-                submodule is frozen. If freeze_global_feature_extractor is True, the Ditto loss will be calculated
-                using the local FENDA feature extractor and the global model. Otherwise, the loss is calculated using
-                the global FENDA feature extractor and the global model. Defaults to False.
+                extractor during training. If ``freeze_global_feature_extractor`` is False, both the global and the
+                local feature extractor in the local FENDA model will be trained. Otherwise, the global feature
+                extractor submodule is frozen. If ``freeze_global_feature_extractor`` is True, the Ditto loss will be
+                calculated using the local FENDA feature extractor and the global model. Otherwise, the loss is
+                calculated using the global FENDA feature extractor and the global model. Defaults to False.
         """
         super().__init__(
             data_path=data_path,
@@ -171,7 +172,7 @@ class FendaDittoClient(DittoClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            NDArrays: **GLOBAL** model weights to be sent to the server for aggregation
+            NDArrays: **GLOBAL** model weights to be sent to the server for aggregation.
         """
         if not self.initialized:
             log(INFO, "Setting up client")
@@ -293,12 +294,12 @@ class FendaDittoClient(DittoClient):
         """
         Computes training losses given predictions of the global and local models and ground truth data.
         For the local model, we add to the vanilla loss function by including a Ditto penalty loss. This penalty
-        is the L2 inner product between the initial global model feature extractor weights and the feature extractor
-        weights of the local model. If the global feature extractor is not frozen, the penalty is computed using the
-        global feature extractor of the local model. If it is frozen, the penalty is computed using the local feature
-        extractor of the local model. This allows for flexibility in training scenarios where the feature extractors
-        may differ between the global and local models. The penalty is stored in "backward". The loss to
-        optimize the global model is stored in the additional losses dictionary under "global_loss".
+        is the :math:`\\ell^2` inner product between the initial global model feature extractor weights and the
+        feature extractor weights of the local model. If the global feature extractor is not frozen, the penalty is
+        computed using the global feature extractor of the local model. If it is frozen, the penalty is computed using
+        the local feature extractor of the local model. This allows for flexibility in training scenarios where the
+        feature extractors may differ between the global and local models. The penalty is stored in "backward". The
+        loss to optimize the global model is stored in the additional losses dictionary under “global_loss”.
 
         Args:
             preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. All predictions included

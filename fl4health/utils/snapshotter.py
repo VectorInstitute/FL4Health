@@ -123,7 +123,7 @@ class TorchModuleSnapshotter(AbstractSnapshotter[nn.Module]):
 
         Args:
             attribute_snapshot (dict[str, Any]): The snapshot containing the state of the ``nn.Modules``.
-            attribute (dict[str, nn.Module]): The ``nn.Modules`` to be loaded
+            attribute (dict[str, nn.Module]): The ``nn.Modules`` to be loaded.
         """
         for key, model in attribute.items():
             model.load_state_dict(attribute_snapshot[key])
@@ -150,7 +150,7 @@ class SerializableObjectSnapshotter(AbstractSnapshotter[MetricManager | LossMete
 
         Args:
             attribute_snapshot (dict[str, Any]): The snapshot containing the state of the serializable objects.
-            attribute (dict[str, MetricManager | LossMeter | ReportsManager]): The serializable objects to be loaded
+            attribute (dict[str, MetricManager | LossMeter | ReportsManager]): The serializable objects to be loaded.
         """
         for key in attribute:
             attribute[key] = attribute_snapshot[key]
@@ -175,7 +175,7 @@ class SingletonSnapshotter(AbstractSnapshotter[int | float | bool]):
 
         Args:
             attribute_snapshot (dict[str, Any]): The snapshot containing the state of the singleton.
-            attribute (dict[str, int | float | bool]): The singletons to be loaded
+            attribute (dict[str, int | float | bool]): The singletons to be loaded.
         """
         for key in attribute:
             attribute[key] = attribute_snapshot[key]
@@ -200,7 +200,7 @@ class HistorySnapshotter(AbstractSnapshotter[History]):
 
         Args:
             attribute_snapshot (dict[str, Any]): The snapshot containing the state of the history.
-            attribute (dict[str, History]): The history to be loaded
+            attribute (dict[str, History]): The history to be loaded.
         """
         for key in attribute:
             attribute[key] = attribute_snapshot[key]
@@ -225,7 +225,7 @@ class StringSnapshotter(AbstractSnapshotter[str]):
 
         Args:
             attribute_snapshot (dict[str, Any]): The snapshot containing the state of the strings.
-            attribute (dict[str, str]): The strings to be loaded
+            attribute (dict[str, str]): The strings to be loaded.
         """
         for key in attribute:
             attribute[key] = attribute_snapshot[key]
@@ -250,7 +250,7 @@ class BytesSnapshotter(AbstractSnapshotter[bytes]):
 
         Args:
             attribute_snapshot (dict[str, Any]): The snapshot containing the state of the bytes.
-            attribute (dict[str, str]): The bytes to be loaded
+            attribute (dict[str, str]): The bytes to be loaded.
         """
         for key in attribute:
             attribute[key] = attribute_snapshot[key]
@@ -275,7 +275,7 @@ class EnumSnapshotter(AbstractSnapshotter[Enum]):
 
         Args:
             attribute_snapshot (dict[str, Any]): The snapshot containing the state of the enum.
-            attribute (dict[str, Enum]): The enum to be loaded
+            attribute (dict[str, Enum]): The enum to be loaded.
         """
         for key in attribute:
             attribute[key] = attribute_snapshot[key]

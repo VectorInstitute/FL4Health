@@ -19,20 +19,17 @@ def get_annotations_from_probs(preds: torch.Tensor, has_regions: bool = False, t
     Converts the model output probabilities to predicted annotations.
 
     Args:
-        preds (torch.Tensor): The one hot encoded model output probabilities
-            with shape (batch, classes, *additional_dims). The background should be a separate class
-        has_regions (bool, optional): If True, predicted annotations can be
-            multiple classes at once. The exception is the background class
-            which is assumed to be the first class (class 0). If False, each
-            value in predicted annotations has only a single class. Defaults to
-            False.
-        threshold (float): When has_regions is True, this is the threshold
-            value used to determine whether or not an output is a part of a
-            class
+        preds (torch.Tensor): The one hot encoded model output probabilities with shape (batch, classes,
+            *additional_dims). The background should be a separate class.
+        has_regions (bool, optional): If True, predicted annotations can be multiple classes at once. The exception
+            is the background class which is assumed to be the first class (class 0). If False, each value in
+            predicted annotations has only a single class. Defaults to False.
+        threshold (float): When has_regions is True, this is the threshold value used to determine whether or not an
+            output is a part of a class.
 
     Returns:
-        torch.Tensor: tensor containing the predicted annotations as a one hot encoded
-            binary tensor of 64-bit integers.
+        torch.Tensor: tensor containing the predicted annotations as a one hot encoded binary tensor of 64-bit
+        integers.
     """
     if has_regions:
         pred_annotations = preds > threshold
@@ -56,10 +53,10 @@ def collapse_one_hot_tensor(input: torch.Tensor, dim: int = 0) -> torch.Tensor:
     Collapses a one hot encoded tensor so that they are no longer one hot encoded.
 
     Args:
-        input (torch.Tensor): The binary one hot encoded tensor
+        input (torch.Tensor): The binary one hot encoded tensor.
         dim (int, optional): Dimension over which to collapse the one-hot tensor. Defaults to 0.
 
     Returns:
-        torch.Tensor: Integer tensor with the specified dim collapsed
+        torch.Tensor: Integer tensor with the specified dim collapsed.
     """
     return torch.argmax(input.long(), dim=dim).to(input.device)

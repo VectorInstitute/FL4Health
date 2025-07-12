@@ -13,9 +13,9 @@ class FendaModel(PartialLayerExchangeModel, ParallelSplitModel):
         exchanged with the server (the ``global_module``) while the other remains local to the client itself.
 
         Args:
-            local_module (nn.Module): Feature extraction module that is NOT exchanged with the server
+            local_module (nn.Module): Feature extraction module that is NOT exchanged with the server.
             global_module (nn.Module): Feature extraction module that is exchanged with the server and aggregated with
-                other client modules
+                other client modules.
             model_head (ParallelSplitHeadModule): The model head that takes the output features from both the local
                 and global modules to produce a prediction.
         """
@@ -40,16 +40,16 @@ class FendaModelWithFeatureState(FendaModel):
         storage of the latent features produced by each of the parallel feature extractors is required/desired. This
         is a FENDA model, but the feature space outputs are guaranteed to be stored with the keys "local_features"
         and "global_features" along with the predictions. The user also has the option to "flatten" these features
-        to be of shape ``batch_size`` x all features.
+        to be of shape ``(batch_size, number of features)``.
 
         Args:
-            local_module (nn.Module): Feature extraction module that is NOT exchanged with the server
+            local_module (nn.Module): Feature extraction module that is **NOT** exchanged with the server.
             global_module (nn.Module): Feature extraction module that is exchanged with the server and aggregated with
-                other client modules
+                other client modules.
             model_head (ParallelSplitHeadModule): The model head that takes the output features from both the local
                 and global modules to produce a prediction.
             flatten_features (bool, optional): Whether the output features should be flattened to have shape
-                ``batch_size`` x all features. Defaults to False.
+                ``(batch_size, number of features)``. Defaults to False.
         """
         super().__init__(local_module=local_module, global_module=global_module, model_head=model_head)
         self.flatten_features = flatten_features

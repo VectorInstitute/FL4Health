@@ -58,7 +58,7 @@ class ModelMergeStrategy(Strategy):
             fraction_evaluate (float, optional): Fraction of clients used during validation. In case
                 ``min_evaluate_clients`` is larger than ``fraction_evaluate * available_clients``,
                 ``min_evaluate_clients`` will still be sampled. Defaults to 1.0.
-            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2
+            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2.
             min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             min_available_clients (int, optional): Minimum number of total clients in the system.
                 Defaults to 2.
@@ -221,7 +221,7 @@ class ModelMergeStrategy(Strategy):
         assumes only metrics will be computed on client and loss is set to None.
 
         Args:
-            server_round (int): Which server round we're currently on.
+            server_round (int): Server round we're currently on..
             results (list[tuple[ClientProxy, EvaluateRes]]): The client identifiers and the results of their local
                 evaluation that need to be aggregated on the server-side. These results are loss values
                 (None in this case) and the metrics dictionary.

@@ -25,10 +25,10 @@ def convert_to_masked_model(original_model: nn.Module) -> nn.Module:
     Given a model, convert every one of its layers to a masked layer of the same kind, if applicable.
 
     Args:
-        original_model (nn.Module): Module to be converted to a masked module
+        original_model (nn.Module): Module to be converted to a masked module.
 
     Returns:
-        nn.Module: New copy of the original model but with masked layers injected to enable FedPM
+        nn.Module: New copy of the original model but with masked layers injected to enable FedPM.
     """
 
     def replace_with_masked(module: nn.Module) -> None:

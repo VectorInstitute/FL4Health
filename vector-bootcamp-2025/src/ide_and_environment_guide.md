@@ -32,7 +32,7 @@ cd path/to/fl4health
 python -m venv ENV_PATH/env_name>
 source ENV_PATH/env_name/bin/activate
 pip install --upgrade pip poetry
-poetry install --with "dev, dev-local, test, codestyle"
+poetry install --with "dev, test, codestyle"
 ```
 
 ```admonish
@@ -119,7 +119,7 @@ cd path/to/fl4health
 python -m venv ENV_PATH
 source ENV_PATH/bin/activate
 pip install --upgrade pip poetry
-poetry install --with "dev, dev-local, test, codestyle"
+poetry install --with "dev, test, codestyle"
 ```
 
 ### Accessing a Cluster GPU through your Local VS Code

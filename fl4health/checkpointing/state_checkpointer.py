@@ -56,9 +56,9 @@ class StateCheckpointer(ABC):
 
         Args:
             checkpoint_dir (Path): Directory to which checkpoints are saved. This can be modified later with
-                `set_checkpoint_path`
+                ``set_checkpoint_path``
             checkpoint_name (str): Name of the checkpoint to be saved. If None at time of state saving, a default name
-                will be given to the checkpoint. This can be changed later with `set_checkpoint_path`
+                will be given to the checkpoint. This can be changed later with ``set_checkpoint_path``
             snapshot_attrs (dict[str, tuple[AbstractSnapshotter, Any]]): Attributes that we need to save in order
                 to allow for restarting of training.
         """
@@ -119,7 +119,8 @@ class StateCheckpointer(ABC):
 
     def checkpoint_exists(self) -> bool:
         """
-        Check if a checkpoint exists at the checkpoint_path constructed as ``checkpoint_dir`` + ``checkpoint_name``.
+        Check if a checkpoint exists at the ``checkpoint_path`` constructed as ``checkpoint_dir`` +
+        ``checkpoint_name``.
 
         Returns:
             bool: True if checkpoint exists, otherwise false.
@@ -256,7 +257,7 @@ class StateCheckpointer(ABC):
         """
         Load the state of the attribute using the snapshotter's ``load_attribute`` functionality.
 
-        NOTE: This function assumes that ``snapshot_ckpt`` has been populated with the right data loaded from disk.
+        **NOTE**: This function assumes that ``snapshot_ckpt`` has been populated with the right data loaded from disk.
 
         Args:
             snapshotter (dict[str, Any]): Snapshotter object to return the state of the attribute.
@@ -283,20 +284,20 @@ class ClientStateCheckpointer(StateCheckpointer):
 
         Args:
             checkpoint_dir (Path): Directory to which checkpoints are saved. This can be modified later with
-                `set_checkpoint_path`
+                ``set_checkpoint_path``
             checkpoint_name (str | None, optional): Name of the checkpoint to be saved. If None, but ``checkpoint_dir``
                 is set then a default ``checkpoint_name`` based on the underlying name of the client to be
                 checkpointed will be set of the form ``f"client_{client.client_name}_state.pt"``. This can be changed
-                later with `set_checkpoint_path`. Defaults to None.
+                later with ``set_checkpoint_path``. Defaults to None.
             snapshot_attrs (dict[str, tuple[AbstractSnapshotter, Any]] | None, optional): Attributes that we need to
                 save in order to allow for restarting of training. If None, a sensible default set of attributes and
                 their associated snapshotters for an FL client are set. Defaults to None.
         """
         # If snapshot_attrs is None, we set a sensible default set of attributes to be saved. These are a minimal
         # set of attributes that can be used for per round checkpointing or early stopping.
-        # NOTE: These default attributes are useful for state checkpointing a BasicClient. More sophisticated clients
-        # may require more attributes to fully support training restarts and early stopping. For a server example, see
-        # NnUnetServerStateCheckpointer.
+        # NOTE: These default attributes are useful for state checkpointing a BasicClient. More sophisticated
+        # clients may require more attributes to fully support training restarts and early stopping. For a server
+        # example, see NnUnetServerStateCheckpointer.
         if snapshot_attrs is None:
             snapshot_attrs = {
                 "model": (TorchModuleSnapshotter(), nn.Module),
@@ -363,7 +364,7 @@ class ClientStateCheckpointer(StateCheckpointer):
                 attributes specified in ``snapshot_attrs`` are loaded. Defaults to None.
 
         Returns:
-            bool: True if a checkpoint is successfully loaded. False otherwise
+            bool: True if a checkpoint is successfully loaded. False otherwise.
         """
         # Store client for access in functions
         self.client = client
@@ -419,11 +420,11 @@ class ServerStateCheckpointer(StateCheckpointer):
 
         Args:
             checkpoint_dir (Path): Directory to which checkpoints are saved. This can be modified later with
-                `set_checkpoint_path`
+                ``set_checkpoint_path``
             checkpoint_name (str | None, optional): Name of the checkpoint to be saved. If None, but ``checkpoint_dir``
                 is set then a default ``checkpoint_name`` based on the underlying name of the client to be
                 checkpointed will be set of the form ``f"f"server_{self.server.server_name}_state.pt""``. This can be
-                updated later  with `set_checkpoint_path`. Defaults to None.
+                updated later  with ``set_checkpoint_path``. Defaults to None.
             snapshot_attrs (dict[str, tuple[AbstractSnapshotter, Any]] | None, optional): Attributes that we need to
                 save in order to allow for restarting of training. If None, a sensible default set of attributes and
                 their associated snapshotters for an FL client are set. Defaults to None.
@@ -558,11 +559,11 @@ class NnUnetServerStateCheckpointer(ServerStateCheckpointer):
 
         Args:
             checkpoint_dir (Path): Directory to which checkpoints are saved. This can be modified later with
-                `set_checkpoint_path`
+                ``set_checkpoint_path``
             checkpoint_name (str | None, optional): Name of the checkpoint to be saved. If None, but ``checkpoint_dir``
                 is set then a default ``checkpoint_name`` based on the underlying name of the client to be
                 checkpointed will be set of the form ``f"f"server_{self.server.server_name}_state.pt""``. This can be
-                updated later  with `set_checkpoint_path`. Defaults to None.
+                updated later  with ``set_checkpoint_path``. Defaults to None.
         """
         # Go beyond default snapshot_attrs with nnUNet-specific attributes.
         nnunet_snapshot_attrs: dict[str, tuple[AbstractSnapshotter, Any]] = {

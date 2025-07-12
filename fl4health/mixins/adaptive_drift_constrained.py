@@ -35,15 +35,15 @@ class AdaptiveDriftConstrainedMixin:
         """
         Adaptive Drift Constrained Mixin.
 
-        To be used with `~fl4health.BaseClient` in order to add the ability to compute
+        To be used with ``~fl4health.BaseClient`` in order to add the ability to compute
         losses via a constrained adaptive drift.
 
-        NOTE: Rather than using `AdaptiveDriftConstraintClient`, if a client subclasses
-        `FlexibleClient`, than this mixin could be used on that subclass to implement the
+        **NOTE**: Rather than using ``AdaptiveDriftConstraintClient``, if a client subclasses
+        ``FlexibleClient``, than this mixin could be used on that subclass to implement the
         adaptive drift constraint.
 
         Raises:
-            RuntimeError: when the inheriting class does not satisfy `FlexibleClientProtocolPreSetup`.
+            RuntimeError: When the inheriting class does not satisfy ``FlexibleClientProtocolPreSetup``.
         """
         # Initialize mixin-specific attributes with default values
         self.loss_for_adaptation = 0.1
@@ -99,7 +99,8 @@ class AdaptiveDriftConstrainedMixin:
             config (Config): Configurations to allow for customization of this functions behavior
 
         Returns:
-            NDArrays: Parameters and training loss packed together into a list of numpy arrays to be sent to the server
+            NDArrays: Parameters and training loss packed together into a list of numpy arrays to be sent to the
+            server.
         """
         if not self.initialized:
             log(INFO, "Setting up client and providing full model parameters to the server for initialization")
@@ -201,7 +202,7 @@ class AdaptiveDriftConstrainedMixin:
         Computes the drift loss for the client model and drift tensors.
 
         Returns:
-            torch.Tensor: Computed penalty loss tensor
+            torch.Tensor: Computed penalty loss tensor.
         """
         # Penalty tensors must have been set for these clients.
         assert self.drift_penalty_tensors is not None

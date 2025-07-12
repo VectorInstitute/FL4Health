@@ -108,7 +108,7 @@ class LlmClient(BasicClient):
         # Set the maximum number of steps to `local_steps`
         self.training_arguments.max_steps = local_steps
 
-        # Set the per_device_train_batch_size and per_device_eval_batch_sizee in training_arguments based on
+        # Set the per_device_train_batch_size and per_device_eval_batch_size in training_arguments based on
         # client's specified `batch_size`. This configuration results in training the model with a total
         # `batch_size` for `local_steps` number of iterations.
         batch_size = config.get("batch_size")
@@ -198,7 +198,7 @@ class LlmClient(BasicClient):
 
     def setup_client(self, config: Config) -> None:
         """
-        Override the setup_client method to set the model, train dataset, and other necessary configurations.
+        Override the ``setup_client`` method to set the model, train dataset, and other necessary configurations.
 
         Args:
             config (Config): The config from the server.

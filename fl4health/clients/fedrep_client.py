@@ -51,10 +51,10 @@ class FedRepClient(BasicClient):
         Next, the classifier is frozen and the feature extractor is trained.
 
         Args:
-            data_path (Path): path to the data to be used to load the data for client-side training
-            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            data_path (Path): path to the data to be used to load the data for client-side training.
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
-                "cuda"
+                "cuda".
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
@@ -323,7 +323,7 @@ class FedRepClient(BasicClient):
 
         Returns:
             tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
-                Loss is a dictionary of one or more losses that represent the different components of the loss.
+            Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         # First we train the head module for head_epochs with the representations frozen in place
         self._prepare_train_head()
@@ -363,7 +363,7 @@ class FedRepClient(BasicClient):
 
         Returns:
             tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
-                Loss is a dictionary of one or more losses that represent the different components of the loss.
+            Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         assert isinstance(self.model, FedRepModel)
         # First we train the head module for head_steps with the representations frozen in place

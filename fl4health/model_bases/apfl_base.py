@@ -52,7 +52,7 @@ class ApflModule(PartialLayerExchangeModel):
         Forward function that runs the input tensor through the **LOCAL** model only.
 
         Args:
-            input (torch.Tensor): tensor to be run through the local model
+            input (torch.Tensor): tensor to be run through the local model.
 
         Returns:
             torch.Tensor: output from the local model only.

@@ -37,7 +37,7 @@ class FedPm(FedAvgDynamicLayer):
         The implementation here allows for simply averaging the probability masks, as well as the more sophisticated
         Bayesian aggregation approach.
 
-        **NOTE:** Since the parameters aggregated by this strategy are supposed to be binary masks, by default
+        **NOTE**: Since the parameters aggregated by this strategy are supposed to be binary masks, by default
         FedPM performs uniformed averaging. The effect of weighted averaging is also not covered in the original work.
 
         Args:

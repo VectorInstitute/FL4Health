@@ -37,10 +37,10 @@ class NumpyClippingClient(BasicClient):
         Differential Privacy in FL setting.
 
         Args:
-            data_path (Path): path to the data to be used to load the data for client-side training
-            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            data_path (Path): path to the data to be used to load the data for client-side training.
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
-                "cuda"
+                "cuda".
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
@@ -114,13 +114,13 @@ class NumpyClippingClient(BasicClient):
 
     def compute_weight_update_and_clip(self, parameters: NDArrays) -> tuple[NDArrays, float]:
         """
-        Compute the weight delta (i.e. new weights - old weights) and clip according to `self.clipping_bound`.
+        Compute the weight delta (i.e. new weights - old weights) and clip according to ``self.clipping_bound``.
 
         Args:
-            parameters (NDArrays): Updated parameters to compute the delta from and clip thereafter
+            parameters (NDArrays): Updated parameters to compute the delta from and clip thereafter.
 
         Returns:
-            tuple[NDArrays, float]: Clipped weighted updates (weight deltas) and the associated clipping bit
+            tuple[NDArrays, float]: Clipped weighted updates (weight deltas) and the associated clipping bit.
         """
         assert self.initial_weights is not None
         assert len(parameters) == len(self.initial_weights)

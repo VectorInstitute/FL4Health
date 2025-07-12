@@ -38,10 +38,10 @@ class TabularDataClient(BasicClient):
         federated training.
 
         Args:
-            data_path (Path): path to the data to be used to load the data for client-side training
-            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            data_path (Path): path to the data to be used to load the data for client-side training.
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
-                "cuda"
+                "cuda".
             id_column (str): ID column. This is required for tabular encoding in cyclops, which we leverage. It should
                 be unique per row, but need not necessarily be a meaningful identifier (i.e. could be row number)
             targets (str | list[str]): The target column or columns name. This allows for multiple targets to

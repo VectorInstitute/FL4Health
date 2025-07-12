@@ -18,7 +18,7 @@ class BaseReporter:
         """
         A method called by clients or servers to send data to the reporter.
 
-        The report method is called by the client/server at frequent intervals (ie step, epoch, round) and sometimes
+        The report method is called by the client/server at frequent intervals (i.e. step, epoch, round) and sometimes
         outside of a FL round (for high level summary data). It is up to the reporter to determine when and what to
         report.
 

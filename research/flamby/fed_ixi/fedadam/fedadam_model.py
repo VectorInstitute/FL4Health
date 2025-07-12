@@ -14,8 +14,8 @@ class FedAdamUNet(nn.Module):
     to get around this issue, we modify all batch normalization layers in the FedIXI U-Net to not carry such state by
     setting track_running_stats to false.
 
-    NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size of the
-    baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA and APFL
+    **NOTE**: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size of
+    the baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA and APFL.
     """
 
     def __init__(self) -> None:

@@ -22,12 +22,12 @@ Submodules
    fl4health.utils.load_data
    fl4health.utils.logging
    fl4health.utils.losses
-   fl4health.utils.metric_aggregation
    fl4health.utils.metrics
    fl4health.utils.msd_dataset_sources
    fl4health.utils.nnunet_utils
    fl4health.utils.parameter_extraction
    fl4health.utils.partitioners
+   fl4health.utils.peft_parameter_extraction
    fl4health.utils.privacy_utilities
    fl4health.utils.random
    fl4health.utils.sampler

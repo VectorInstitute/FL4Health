@@ -53,8 +53,8 @@ def gaussian_noisy_unweighted_aggregate(
     Args:
         results (list[tuple[NDArrays, int]]): List of tuples containing the model updates and the number of samples
             for each client.
-        noise_multiplier (float): The multiplier on the clipping bound to determine the std of noise applied to weight
-            updates.
+        noise_multiplier (float): The multiplier on the clipping bound to determine the std. dev. of noise applied to
+            weight updates.
         clipping_bound (float): The clipping bound applied to client model updates.
 
     Returns:
@@ -84,8 +84,8 @@ def gaussian_noisy_weighted_aggregate(
     Args:
         results (list[tuple[NDArrays, int]]): List of tuples containing the model updates and the number of samples
             for each client.
-        noise_multiplier (float): The multiplier on the clipping bound to determine the std of noise applied to weight
-            updates.
+        noise_multiplier (float): The multiplier on the clipping bound to determine the std. dev. of noise applied to
+            weight updates.
         clipping_bound (float):  The clipping bound applied to client model updates.
         fraction_fit (float): Fraction of clients sampled each round.
         per_client_example_cap (float): The maximum number samples per client.

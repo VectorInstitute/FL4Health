@@ -617,7 +617,7 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
         """
         Reading from the stdout stream.
 
-        **NOTE:** In the initial implementation, we were invoking asyncio.wait_for()
+        **NOTE**: In the initial implementation, we were invoking asyncio.wait_for()
         with the coroutine stream_reader.readline() and with a timeout=timeout.
         Outsourcing to this function now which we wrap this whole helper fn
         with asyncio.wait_for() for improved readability and better error

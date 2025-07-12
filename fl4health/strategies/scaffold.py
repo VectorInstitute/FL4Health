@@ -231,12 +231,12 @@ class Scaffold(BasicFedAvg):
         Args:
             scaling_coefficient (float): Scaling length for the parameter updates (can be thought of as
                 "learning rate").
-            original_params (NDArrays): parameters to be updated.
-            parameter_updates (NDArrays): update direction to update the original_params.
+            original_params (NDArrays): Parameters to be updated.
+            parameter_updates (NDArrays): Update direction to update the ``original_params``.
 
         Returns:
             NDArrays: Updated numpy arrays according to
-            :math:`\\text{original_params} + \\text{scaling_coefficient} \\cdot \\text{parameter_updates}`
+            :math:`\\text{original_params} + \\text{scaling_coefficient} \\cdot \\text{parameter_updates}`.
         """
         return [
             original_param + scaling_coefficient * update
@@ -252,7 +252,7 @@ class Scaffold(BasicFedAvg):
             params (list[NDArrays]): numpy arrays whose entries are to be averaged together.
 
         Returns:
-            NDArrays: element-wise average over the list of numpy arrays.
+            NDArrays: Element-wise average over the list of numpy arrays.
         """
         num_clients = len(params)
 
@@ -307,7 +307,7 @@ class Scaffold(BasicFedAvg):
         raw weights aggregated from the client. Therefore it first needs to be turned into a "delta" with
         ``weights - self.server_model_weights``.
 
-        Then this is used to update with a learning rate scalar (set by self.learning_rate) as
+        Then this is used to update with a learning rate scalar (set by ``self.learning_rate``) as
         ``self.server_model_weights + self.learning_rate * (weights - self.server_model_weights)``.
 
         Args:

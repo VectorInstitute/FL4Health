@@ -15,7 +15,7 @@ class MetricManager:
 
         Args:
             metrics (Sequence[Metric]): List of metric to evaluate predictions on.
-            metric_manager_name (str): Name of the metric manager (ie train, val, test)
+            metric_manager_name (str): Name of the metric manager (i.e. train, val, test)
         """
         self.original_metrics = metrics
         self.metric_manager_name = metric_manager_name
@@ -26,7 +26,7 @@ class MetricManager:
         Updates (or creates then updates) a list of metrics for each prediction type.
 
         Args:
-            preds (TorchPredType): A dictionary of preds from the model
+            preds (TorchPredType): A dictionary of preds from the model.
             target (TorchTargetType): The ground truth labels for the data. If target is a dictionary with more than
                 one item, then each value in the preds dictionary is evaluated with the value that has the same key in
                 the target dictionary. If target has only one item or is a ``torch.Tensor``, then the same target is

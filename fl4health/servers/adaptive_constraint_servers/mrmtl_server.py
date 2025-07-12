@@ -33,7 +33,7 @@ class MrMtlServer(FlServer):
                 example, the config used to produce the ``on_fit_config_fn`` and ``on_evaluate_config_fn`` for the
                 strategy.
 
-                **NOTE:** This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
+                **NOTE**: This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
             strategy (FedAvgWithAdaptiveConstraint): The aggregation strategy to be used by the server to handle.
                 client updates and other information potentially sent by the participating clients. For MR-MTL, the
                 strategy must be a derivative of the ``FedAvgWithAdaptiveConstraint`` class.
@@ -45,7 +45,7 @@ class MrMtlServer(FlServer):
                 state (including models) such that if FL training is interrupted, the process may be restarted. If no
                 module is provided, no checkpointing or state preservation will happen. Defaults to None.
 
-                **NOTE:** For MR-MTL, the server model is an aggregation of the personal models, which isn't the
+                **NOTE**: For MR-MTL, the server model is an aggregation of the personal models, which isn't the
                 target of FL training for this algorithm. However, one may still want to save this model for other
                 purposes.
             on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to

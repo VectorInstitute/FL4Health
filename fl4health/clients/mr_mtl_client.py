@@ -35,15 +35,15 @@ class MrMtlClient(AdaptiveDriftConstraintClient):
         training of a local model. The constraint for this local model is identical to the FedProx loss. The key
         difference is that the local model is never replaced with aggregated weights. It is always local.
 
-        **NOTE:** lambda, the drift loss weight, is initially set and potentially adapted by the server akin to the
+        **NOTE**: lambda, the drift loss weight, is initially set and potentially adapted by the server akin to the
         heuristic suggested in the original FedProx paper. Adaptation is optional and can be disabled in the
         corresponding strategy used by the server
 
         Args:
-            data_path (Path): path to the data to be used to load the data for client-side training
-            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            data_path (Path): path to the data to be used to load the data for client-side training.
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
-                "cuda"
+                "cuda".
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
@@ -68,7 +68,7 @@ class MrMtlClient(AdaptiveDriftConstraintClient):
             progress_bar=progress_bar,
             client_name=client_name,
         )
-        # **NOTE:** The initial global model is used to house the aggregate weight updates at the beginning of a round,
+        # NOTE: The initial global model is used to house the aggregate weight updates at the beginning of a round,
         # because in MR-MTL, the local models are not updated with these aggregates.
         self.initial_global_model: nn.Module
         self.initial_global_tensors: list[torch.Tensor]
@@ -137,7 +137,7 @@ class MrMtlClient(AdaptiveDriftConstraintClient):
     ) -> TrainingLosses:
         """
         Computes training losses given predictions of the modes and ground truth data. We add to vanilla loss
-        function by including Mean Regularized (MR) penalty loss which is the l2 inner product between the
+        function by including Mean Regularized (MR) penalty loss which is the :math:`\\ell^2` inner product between the
         initial global model weights and weights of the current model.
 
         Args:

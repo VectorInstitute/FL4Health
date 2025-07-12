@@ -65,7 +65,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
             fraction_evaluate (float, optional): Fraction of clients used during validation. In case
                 ``min_evaluate_clients`` is larger than ``fraction_evaluate * available_clients``,
                 ``min_evaluate_clients`` will still be sampled. Defaults to 1.0.
-            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2
+            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2.
             min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             min_available_clients (int, optional): Minimum number of total clients in the system. Defaults to 2.
             evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
@@ -345,10 +345,9 @@ class OpacusBasicFedAvg(BasicFedAvg):
             fraction_evaluate (float, optional): Fraction of clients used during validation. In case
                 ``min_evaluate_clients`` is larger than ``fraction_evaluate * available_clients``,
                 ``min_evaluate_clients`` will still be sampled. Defaults to 1.0.
-            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2
+            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2.
             min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
-            min_available_clients (int, optional): Minimum number of total clients in the system.
-                Defaults to 2.
+            min_available_clients (int, optional): Minimum number of total clients in the system. Defaults to 2.
             evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
                 Optional function used for central server-side evaluation. Defaults to None.
             on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure

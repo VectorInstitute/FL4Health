@@ -13,7 +13,7 @@ from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredTy
 
 @runtime_checkable
 class NumPyClientMinimalProtocol(Protocol):
-    """A minimal protocol for NumPyClient with just essential methods."""
+    """A minimal protocol for ``NumPyClient`` with just essential methods."""
 
     def get_parameters(self, config: dict[str, Scalar]) -> NDArrays: ...
 
@@ -28,7 +28,7 @@ class NumPyClientMinimalProtocol(Protocol):
 
 @runtime_checkable
 class FlexibleClientProtocolPreSetup(NumPyClientMinimalProtocol, Protocol):
-    """A minimal protocol for BasicClient focused on methods."""
+    """A minimal protocol for ``BasicClient`` focused on methods."""
 
     device: torch.device
     initialized: bool
@@ -51,7 +51,7 @@ class FlexibleClientProtocolPreSetup(NumPyClientMinimalProtocol, Protocol):
 
 @runtime_checkable
 class FlexibleClientProtocol(FlexibleClientProtocolPreSetup, Protocol):
-    """A minimal protocol for BasicClient focused on methods."""
+    """A minimal protocol for ``BasicClient`` focused on methods."""
 
     model: nn.Module
     optimizers: dict[str, torch.optim.Optimizer]

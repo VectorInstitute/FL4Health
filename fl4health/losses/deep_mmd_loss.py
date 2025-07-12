@@ -57,7 +57,7 @@ class DeepMmdLoss(torch.nn.Module):
         https://github.com/fengliu90/DK-for-TST.
 
         Args:
-            device (torch.device): Device onto which tensors should be moved
+            device (torch.device): Device onto which tensors should be moved.
             input_size (int): The length of the input feature representations of the deep network as the deep
                 kernel used to compute the MMD loss.
             hidden_size (int, optional): The hidden size of the deep network as the deep kernel used to compute

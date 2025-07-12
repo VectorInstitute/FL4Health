@@ -30,8 +30,8 @@ class SamplingStrategy(ABC):
 class PoissonSampling(SamplingStrategy):
     def __init__(self, sampling_ratio: float) -> None:
         """
-        DP Event type that stores important information about sampling statistics and sets the proper NeighborRel value
-        This class is specific to Poisson sampling.
+        DP Event type that stores important information about sampling statistics and sets the proper ``NeighborRel``
+        value This class is specific to Poisson sampling.
 
         Args:
             sampling_ratio (float): Poisson sampling ratio used.
@@ -46,8 +46,8 @@ class PoissonSampling(SamplingStrategy):
 class FixedSamplingWithoutReplacement(SamplingStrategy):
     def __init__(self, population_size: int, sample_size: int) -> None:
         """
-        DP Event type that stores important information about sampling statistics and sets the proper NeighborRel value
-        This class is specific to fixed sampling without replacement.
+        DP Event type that stores important information about sampling statistics and sets the proper ``NeighborRel``
+        value This class is specific to fixed sampling without replacement.
 
         Args:
             population_size (int): Size of the total population from which sampling is performed.
@@ -185,7 +185,7 @@ class MomentsAccountant:
                 level privacy): This is the ratio of client sampling probability to client data point probability
                 ``q*(b_k/n_k)`` For FL with client privacy: This is the sampling of clients from the client population
 
-                **NOTE:** If a sequence of strategies is given, they must be all of the same kind (that is poisson or
+                **NOTE**: If a sequence of strategies is given, they must be all of the same kind (that is poisson or
                 subset, but may have different parameters)
             noise_multiplier (float | list[float]): Ratio of the noise standard deviation to clipping bound (sigma in
                 Deep Learning with Differential Privacy, ``z`` in some other implementations).
@@ -238,7 +238,7 @@ class MomentsAccountant:
                 probability ``q*(b_k/n_k)`` For FL with client privacy: This is the sampling of clients from the client
                 population.
 
-                **NOTE:** If a sequence of strategies is given, they must be all of the same kind (that is poisson or
+                **NOTE**: If a sequence of strategies is given, they must be all of the same kind (that is poisson or
                 subset, but may have different parameters)
             noise_multiplier (float | list[float]): Ratio of the noise standard deviation to clipping bound (sigma in
                 Deep Learning with Differential Privacy, z in some other implementations).

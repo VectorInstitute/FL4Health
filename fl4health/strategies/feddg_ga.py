@@ -194,8 +194,8 @@ class FedDgGa(FedAvg):
         not an integer.
 
         Args:
-            server_round (int): the current server round.
-            parameters (Parameters): the model parameters.
+            server_round (int): The current server round.
+            parameters (Parameters): The model parameters.
             client_manager (ClientManager): The client manager which holds all currently connected clients. It must
                 be an instance of ``FixedSamplingClientManager``.
 
@@ -263,9 +263,9 @@ class FedDgGa(FedAvg):
         Collects the fit metrics that will be used to change the adjustment weights for the next round.
 
         Args:
-            server_round (int): the current server round.
+            server_round (int): The current server round.
             results (list[tuple[ClientProxy, FitRes]]): The clients' fit results.
-            failures (list[tuple[ClientProxy, FitRes] | BaseException]): the clients' fit failures.
+            failures (list[tuple[ClientProxy, FitRes] | BaseException]): The clients' fit failures.
 
         Returns:
             (tuple[Parameters | None, dict[str, Scalar]]): A tuple containing the aggregated parameters and the
@@ -306,7 +306,7 @@ class FedDgGa(FedAvg):
         results for the next round.
 
         Args:
-            server_round (int): the current server round.
+            server_round (int): The current server round.
             results (list[tuple[ClientProxy, FitRes]]): The clients' evaluate results.
             failures (list[tuple[ClientProxy, FitRes] | BaseException]): the clients' evaluate failures.
 
@@ -338,7 +338,7 @@ class FedDgGa(FedAvg):
             results (list[tuple[ClientProxy, FitRes]]): The clients' fit results.
 
         Returns:
-            (NDArrays): the weighted and aggregated results.
+            (NDArrays): The weighted and aggregated results.
         """
         if self.adjustment_weights:
             log(INFO, f"Current adjustment weights by Client ID (CID) are {self.adjustment_weights}")
@@ -385,8 +385,8 @@ class FedDgGa(FedAvg):
         round, fit and evaluation metrics.
 
         Args:
-            server_round (int): the current server round.
-            cids (list[str]): the list of client ids that participated in this round.
+            server_round (int): The current server round.
+            cids (list[str]): The list of client ids that participated in this round.
         """
         generalization_gaps = []
         # calculating local vs global metric difference (generalization gaps)

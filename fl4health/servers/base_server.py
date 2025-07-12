@@ -44,7 +44,7 @@ class FlServer(Server):
                 example, the config used to produce the ``on_fit_config_fn`` and ``on_evaluate_config_fn`` for the
                 strategy.
 
-                **NOTE:** This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
+                **NOTE**: This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
             strategy (Strategy | None, optional): The aggregation strategy to be used by the server to handle.
                 client updates and other information potentially sent by the participating clients. If None the
                 strategy is FedAvg as set by the flwr Server. Defaults to None.
@@ -97,7 +97,7 @@ class FlServer(Server):
         provided in the config. This can only be done after the clients have started up and are ready to train.
 
         Args:
-            num_rounds (int): The number of server rounds of FL to be performed
+            num_rounds (int): The number of server rounds of FL to be performed.
             timeout (float | None, optional): The server's timeout parameter. Useful if one is requesting
                 information from a client. Defaults to None, which indicates indefinite timeout.
         """
@@ -130,7 +130,7 @@ class FlServer(Server):
             timeout (float | None): The timeout for clients to return results in a given FL round.
 
         Returns:
-            tuple[History, float]: The first element of the tuple is a history object containing the losses and
+            tuple[History, float]: The first element of the tuple is a ``History`` object containing the losses and
             metrics computed during training and validation. The second element of the tuple is the elapsed time in
             seconds.
         """
@@ -218,7 +218,7 @@ class FlServer(Server):
                 clients selected to participate in federated training.
 
         Returns:
-            tuple[History, float]: The first element of the tuple is a history object containing the full set of
+            tuple[History, float]: The first element of the tuple is a ``History`` object containing the full set of
             FL training results, including things like aggregated loss and metrics. Tuple also contains the elapsed
             time in seconds for the round.
         """
@@ -262,7 +262,7 @@ class FlServer(Server):
         This function simply adds a bit of logging, post processing of the results.
 
         Args:
-            server_round (int): Current round number of the FL training. Begins at 1
+            server_round (int): Current round number of the FL training. Begins at 1.
             timeout (float | None): Time that the server should wait (in seconds) for responses from the clients.
                 Defaults to None, which indicates indefinite timeout.
 
@@ -344,7 +344,7 @@ class FlServer(Server):
         updated prior to this function being called.
 
         Args:
-            server_round (int): Which server round we're currently on
+            server_round (int): Server round we're currently on.
             timeout (float | None): Time that the server should wait (in seconds) for responses from the clients.
                 Defaults to None, which indicates indefinite timeout.
 
@@ -469,9 +469,10 @@ class FlServer(Server):
         in the flower server class except that we make use of the ``on_parameter_initialization_config_fn`` to provide
         a non-empty config to a client when requesting parameters from which to initialize all other clients.
 
-        NOTE: The default behavior of flower servers is to simply send over a blank config, but this is insufficient
-        for certain uses, where the client requires additional information from the server. This is needed, for example
-        in nnUnet-based Servers. An issue has been logged with flower: https://github.com/adap/flower/issues/3770
+        **NOTE**: The default behavior of flower servers is to simply send over a blank config, but this is
+        insufficient for certain uses, where the client requires additional information from the server. This is
+        needed, for example in nnUnet-based Servers. An issue has been logged with
+        flower: https://github.com/adap/flower/issues/3770.
         """
         # Server-side parameter initialization
         parameters: Parameters | None = self.strategy.initialize_parameters(client_manager=self._client_manager)
