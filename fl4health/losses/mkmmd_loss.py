@@ -443,10 +443,10 @@ class MkMmdLoss(torch.nn.Module):
         Compute the multi-kernel maximum mean discrepancy (MK-MMD) between the source and target domains.
 
         Args:
-            x_s (torch.Tensor): Source domain data, shape (``n_samples``, ``n_features``)
-            x_t (torch.Tensor): Target domain data, shape (``n_samples``, ``n_features``)
+            x_s (torch.Tensor): Source domain data, shape (``n_samples``, ``n_features``).
+            x_t (torch.Tensor): Target domain data, shape (``n_samples``, ``n_features``).
 
         Returns:
-            torch.Tensor: MK-MMD value
+            torch.Tensor: MK-MMD value.
         """
         return self.compute_mkmmd(x_s, x_t, self.betas)

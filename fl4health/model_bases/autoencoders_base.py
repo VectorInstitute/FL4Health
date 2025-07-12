@@ -34,10 +34,10 @@ class AbstractAe(nn.Module, ABC):
             input (torch.Tensor): Input tensor.
 
         Raises:
-            NotImplementedError: Should be implemented in inheriting classes
+            NotImplementedError: Should be implemented in inheriting classes.
 
         Returns:
-            torch.Tensor: Tensor after passing through module
+            torch.Tensor: Tensor after passing through module.
         """
         raise NotImplementedError
 

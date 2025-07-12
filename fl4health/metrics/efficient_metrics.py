@@ -38,8 +38,8 @@ class MultiClassDice(MultiClassificationMetric):
         **NOTE**: If preds and targets passed to the update method have different shapes, this class will attempt to
         align the shapes by one-hot-encoding one (but not both) of the tensors if possible.
 
-        **NOTE**: In the case of **BINARY** predictions/targets with 2 labels, the result will be the AVERAGE of the
-        Dice score for the two labels. If you want a single score associated with one of the binary labels, use
+        **NOTE**: In the case of **BINARY** predictions/targets with 2 labels, the result will be the **AVERAGE** of
+        the Dice score for the two labels. If you want a single score associated with one of the binary labels, use
         ``BinaryDice``.
 
         Args:

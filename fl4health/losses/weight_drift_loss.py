@@ -40,7 +40,7 @@ class WeightDriftLoss(nn.Module):
             target_model (nn.Module): Model being constrained by the ``constraint_tensors``. Weights are
                 differentiable.
             constraint_tensors (list[torch.Tensor]): Tensors corresponding to a previous version of the
-                ``target_model``
+                ``target_model``.
             weight (float): Weight with which to scale the loss.
 
         Returns:
