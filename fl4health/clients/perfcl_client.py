@@ -43,10 +43,10 @@ class PerFclClient(BasicClient):
         local and global feature extractors.
 
         Args:
-            data_path (Path): path to the data to be used to load the data for client-side training
-            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            data_path (Path): path to the data to be used to load the data for client-side training.
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
-                "cuda"
+                "cuda".
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
@@ -173,7 +173,7 @@ class PerFclClient(BasicClient):
         and global feature extraction weights/modules to be used in the next round of client-side training.
 
         Args:
-            local_steps (int): Number of steps performed during training
+            local_steps (int): Number of steps performed during training.
             loss_dict (dict[str, float]): Losses computed during training.
             config (Config): The config from the server
         """

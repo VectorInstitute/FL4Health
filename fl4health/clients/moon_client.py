@@ -37,10 +37,10 @@ class MoonClient(BasicClient):
         loss to constrain the local training of individual parties in the non-IID setting.
 
         Args:
-            data_path (Path): path to the data to be used to load the data for client-side training
-            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            data_path (Path): path to the data to be used to load the data for client-side training.
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
-                "cuda"
+                "cuda".
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
@@ -172,7 +172,7 @@ class MoonClient(BasicClient):
             tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
 
             - The tensor for the total loss
-            - A dictionary with `loss`, `contrastive_loss` and `total_loss` keys and their calculated values.
+            - A dictionary with ``loss``, ``contrastive_loss`` and ``total_loss`` keys and their calculated values.
         """
         loss = self.criterion(preds["prediction"], target)
         total_loss = loss.clone()

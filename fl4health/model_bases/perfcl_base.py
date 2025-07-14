@@ -16,7 +16,7 @@ class PerFclModel(PartialLayerExchangeModel, ParallelSplitModel):
         Args:
             local_module (nn.Module): Feature extraction module that is **NOT** exchanged with the server.
             global_module (nn.Module): Feature extraction module that is exchanged with the server and aggregated with
-                other client modules
+                other client modules.
             model_head (ParallelSplitHeadModule): The model head that takes the output features from both the local
                 and global modules to produce a prediction.
         """

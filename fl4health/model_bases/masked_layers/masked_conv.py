@@ -26,9 +26,9 @@ class MaskedConv1d(nn.Conv1d):
         dtype: torch.dtype | None = None,
     ) -> None:
         """
-        Implementation of masked Conv1d layers.
+        Implementation of masked ``Conv1d`` layers.
 
-        Like regular Conv1d layers (i.e., nn.Conv1d module), a masked convolutional layer has a weight (i.e.,
+        Like regular ``Conv1d`` layers (i.e., ``nn.Conv1d`` module), a masked convolutional layer has a weight (i.e.,
         convolutional filter) and a (optional) bias. However, the weight and the bias do not receive gradient in
         back propagation. Instead, two score tensors - one for the weight and another for the bias - are maintained.
 
@@ -37,19 +37,19 @@ class MaskedConv1d(nn.Conv1d):
         the weight and the bias. During training, gradients with respect to the score tensors are computed and used to
         update the score tensors.
 
-        **NOTE:** The scores are not assumed to be bounded between 0 and 1.
+        **NOTE**: The scores are not assumed to be bounded between 0 and 1.
 
         Args:
-            in_channels (int): Number of channels in the input image
-            out_channels (int): Number of channels produced by the convolution
-            kernel_size (int or tuple): Size of the convolving kernel
-            stride (int or tuple, optional): Stride of the convolution. Default: 1
-            padding (int, tuple or str, optional): Padding added to both sides of the input. Default: 0
+            in_channels (int): Number of channels in the input image.
+            out_channels (int): Number of channels produced by the convolution.
+            kernel_size (int or tuple): Size of the convolving kernel.
+            stride (int or tuple, optional): Stride of the convolution. Default: 1.
+            padding (int, tuple or str, optional): Padding added to both sides of the input. Default: 0.
             padding_mode (str, optional): ``'zeros'``, ``'reflect'``, ``'replicate'`` or ``'circular'``.
-                Default: ``'zeros'``
-            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
-            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1
-            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
+                Default: ``'zeros'``.
+            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1.
+            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1.
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``.
             device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.
             dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.
         """
@@ -107,10 +107,10 @@ class MaskedConv1d(nn.Conv1d):
         Return an instance of ``MaskedConv1d`` whose weight and bias have the same values as those of ``conv_module``.
 
         Args:
-            conv_module (nn.Conv1d): Module to be converted
+            conv_module (nn.Conv1d): Module to be converted.
 
         Returns:
-            MaskedConv1d: Module with masked layers added to enable FedPM training
+            MaskedConv1d: Module with masked layers added to enable FedPM training.
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
@@ -155,9 +155,9 @@ class MaskedConv2d(nn.Conv2d):
         dtype: torch.dtype | None = None,
     ) -> None:
         """
-        Implementation of masked Conv2d layers.
+        Implementation of masked ``Conv2d`` layers.
 
-        Like regular Conv2d layers (i.e., nn.Conv2d module), a masked convolutional layer has a weight (i.e.,
+        Like regular ``Conv2d`` layers (i.e., ``nn.Conv2d`` module), a masked convolutional layer has a weight (i.e.,
         convolutional filter) and a (optional) bias. However, the weight and the bias do not receive gradient in back
         propagation. Instead, two score tensors - one for the weight and another for the bias - are maintained.
         In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores, which
@@ -165,19 +165,19 @@ class MaskedConv2d(nn.Conv2d):
         weight and the bias. During training, gradients with respect to the score tensors are computed and used to
         update the score tensors.
 
-        **NOTE:** The scores are not assumed to be bounded between 0 and 1.
+        **NOTE**: The scores are not assumed to be bounded between 0 and 1.
 
         Args:
-            in_channels (int): Number of channels in the input image
-            out_channels (int): Number of channels produced by the convolution
-            kernel_size (int or tuple): Size of the convolving kernel
-            stride (int or tuple, optional): Stride of the convolution. Default: 1
-            padding (int, tuple or str, optional): Padding added to all four sides of the input. Default: 0
+            in_channels (int): Number of channels in the input image.
+            out_channels (int): Number of channels produced by the convolution.
+            kernel_size (int or tuple): Size of the convolving kernel.
+            stride (int or tuple, optional): Stride of the convolution. Default: 1.
+            padding (int, tuple or str, optional): Padding added to all four sides of the input. Default: 0.
             padding_mode (str, optional): ``'zeros'``, ``'reflect'``, ``'replicate'`` or ``'circular'``.
-                Default: ``'zeros'``
-            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
-            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1
-            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
+                Default: ``'zeros'``.
+            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1.
+            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1.
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``.
             device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.
             dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.
         """
@@ -213,7 +213,7 @@ class MaskedConv2d(nn.Conv2d):
         Forward for the Masked 2D Convolution.
 
         Args:
-            input (Tensor): input tensor for the layer
+            input (Tensor): input tensor for the layer.
 
         Returns:
             Tensor: output tensor for the convolution
@@ -232,13 +232,13 @@ class MaskedConv2d(nn.Conv2d):
     @classmethod
     def from_pretrained(cls, conv_module: nn.Conv2d) -> MaskedConv2d:
         """
-        Return an instance of MaskedConv2d whose weight and bias have the same values as those of conv_module.
+        Return an instance of ``MaskedConv2d`` whose weight and bias have the same values as those of ``conv_module``.
 
         Args:
-            conv_module (nn.Conv2d): Module to be converted
+            conv_module (nn.Conv2d): Module to be converted.
 
         Returns:
-            MaskedConv2d: Module with masked layers to enable FedPM
+            MaskedConv2d: Module with masked layers to enable FedPM.
         """
         has_bias = conv_module.bias is not None
         kernel_size_ = _pair(conv_module.kernel_size)
@@ -281,9 +281,9 @@ class MaskedConv3d(nn.Conv3d):
         dtype: torch.dtype | None = None,
     ) -> None:
         """
-        Implementation of masked Conv2d layers.
+        Implementation of masked ``Conv3d`` layers.
 
-        Like regular Conv3d layers (i.e., nn.Conv3d module), a masked convolutional layer has a weight (i.e.,
+        Like regular ``Conv3d`` layers (i.e., ``nn.Conv3d`` module), a masked convolutional layer has a weight (i.e.,
         convolutional filter) and a (optional) bias. However, the weight and the bias do not receive gradient in back
         propagation. Instead, two score tensors - one for the weight and another for the bias - are maintained. In the
         forward pass, the score tensors are transformed by the Sigmoid function into probability scores, which are
@@ -291,19 +291,19 @@ class MaskedConv3d(nn.Conv3d):
         and the bias. During training, gradients with respect to the score tensors are computed and used to update the
         score tensors.
 
-        **NOTE:** The scores are not assumed to be bounded between 0 and 1.
+        **NOTE**: The scores are not assumed to be bounded between 0 and 1.
 
         Args:
-            in_channels (int): Number of channels in the input image
-            out_channels (int): Number of channels produced by the convolution
-            kernel_size (int or tuple): Size of the convolving kernel
-            stride (int or tuple, optional): Stride of the convolution. Default: 1
-            padding (int, tuple or str, optional): Padding added to all six sides of the input. Default: 0
+            in_channels (int): Number of channels in the input image.
+            out_channels (int): Number of channels produced by the convolution.
+            kernel_size (int or tuple): Size of the convolving kernel.
+            stride (int or tuple, optional): Stride of the convolution. Default: 1.
+            padding (int, tuple or str, optional): Padding added to all six sides of the input. Default: 0.
             padding_mode (str, optional): ``'zeros'``, ``'reflect'``, ``'replicate'`` or ``'circular'``.
-                Default: ``'zeros'``
-            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
-            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1
-            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
+                Default: ``'zeros'``.
+            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1.
+            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1.
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``.
             device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.
             dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.
         """
@@ -339,10 +339,10 @@ class MaskedConv3d(nn.Conv3d):
         Forward for the Masked 3D Convolution.
 
         Args:
-            input (Tensor): input tensor for the layer
+            input (Tensor): input tensor for the layer.
 
         Returns:
-            Tensor: output tensor for the convolution
+            Tensor: output tensor for the convolution.
         """
         weight_prob_scores = torch.sigmoid(self.weight_scores)
         weight_mask = bernoulli_sample(weight_prob_scores)
@@ -358,13 +358,13 @@ class MaskedConv3d(nn.Conv3d):
     @classmethod
     def from_pretrained(cls, conv_module: nn.Conv3d) -> MaskedConv3d:
         """
-        Return an instance of MaskedConv3d whose weight and bias have the same values as those of conv_module.
+        Return an instance of ``MaskedConv3d`` whose weight and bias have the same values as those of ``conv_module``.
 
         Args:
-            conv_module (nn.Conv3d): Module to convert
+            conv_module (nn.Conv3d): Module to convert.
 
         Returns:
-            MaskedConv3d: Module with mask layers added to enable FedPM
+            MaskedConv3d: Module with mask layers added to enable FedPM.
         """
         has_bias = conv_module.bias is not None
         kernel_size_ = _triple(conv_module.kernel_size)
@@ -421,21 +421,21 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
         Finally, the binary masks are applied to the weight and the bias. During training, gradients with respect to
         the score tensors are computed and used to update the score tensors.
 
-        **NOTE:** The scores are not assumed to be bounded between 0 and 1.
+        **NOTE**: The scores are not assumed to be bounded between 0 and 1.
 
         Args:
-            in_channels (int): Number of channels in the input image
-            out_channels (int): Number of channels produced by the transposed convolution
-            kernel_size (int or tuple): Size of the convolving kernel
-            stride (int or tuple, optional): Stride of the convolution. Default: 1
+            in_channels (int): Number of channels in the input image.
+            out_channels (int): Number of channels produced by the transposed convolution.
+            kernel_size (int or tuple): Size of the convolving kernel.
+            stride (int or tuple, optional): Stride of the convolution. Default: 1.
             padding (int or tuple, optional): ``dilation * (kernel_size - 1) - padding`` zero-padding will be added to
-                both sides of the input. Default: 0
-            output_padding (int or tuple, optional): Additional size added to one side of the output shape. Default: 0
-            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1
-            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
-            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
+                both sides of the input. Default: 0.
+            output_padding (int or tuple, optional): Additional size added to one side of the output shape. Default: 0.
+            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1.
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``.
+            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1.
             padding_mode (str, optional): Mode to be used in padding the input image for processing. Defaults to
-                "zeros"
+                "zeros".
             device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.
             dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.
         """
@@ -472,7 +472,7 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
         Forward for the ``MaskedConvTranspose1D``.
 
         Args:
-            input (Tensor): input to be mapped with the module
+            input (Tensor): input to be mapped with the module.
             output_size (list[int] | None, optional): Desired output from the transpose. Defaults to None.
 
         Raises:
@@ -520,10 +520,10 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
         ``conv_module``.
 
         Args:
-            conv_module (nn.ConvTranspose1d): Target module to be converted
+            conv_module (nn.ConvTranspose1d): Target module to be converted.
 
         Returns:
-            MaskedConvTranspose1d: Module with masked layers to enable FedPM
+            MaskedConvTranspose1d: Module with masked layers to enable FedPM.
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
@@ -584,22 +584,22 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
         Finally, the binary masks are applied to the weight and the bias. During training, gradients with respect to
         the score tensors are computed and used to update the score tensors.
 
-        **NOTE:** The scores are not assumed to be bounded between 0 and 1.
+        **NOTE**: The scores are not assumed to be bounded between 0 and 1.
 
         Args:
-            in_channels (int): Number of channels in the input image
-            out_channels (int): Number of channels produced by the transposed convolution
-            kernel_size (int or tuple): Size of the convolving kernel
-            stride (int or tuple, optional): Stride of the convolution. Default: 1
+            in_channels (int): Number of channels in the input image.
+            out_channels (int): Number of channels produced by the transposed convolution.
+            kernel_size (int or tuple): Size of the convolving kernel.
+            stride (int or tuple, optional): Stride of the convolution. Default: 1.
             padding (int or tuple, optional): ``dilation * (kernel_size - 1) - padding`` zero-padding will be added
-                to both sides of each dimension in the input. Default: 0
+                to both sides of each dimension in the input. Default: 0.
             output_padding (int or tuple, optional): Additional size added to one side of each dimension in the
-                output shape. Default: 0
-            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1
-            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
-            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
+                output shape. Default: 0.
+            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1.
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``.
+            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1.
             padding_mode (str, optional): Mode to be used in padding the input image for processing. Defaults to
-                "zeros"
+                "zeros".
             device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.
             dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.
         """
@@ -636,14 +636,14 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
         Maps input tensor through the ``MaskedConvTranspose2D`` module.
 
         Args:
-            input (Tensor): tensor to be mapped
+            input (Tensor): tensor to be mapped.
             output_size (list[int] | None, optional): Desired output size from the module. Defaults to None.
 
         Raises:
-            ValueError: Thrown if anything except "zeros" padding is requested
+            ValueError: Thrown if anything except "zeros" padding is requested.
 
         Returns:
-            Tensor: Mapped tensor
+            Tensor: Mapped tensor.
         """
         # Note: the same check is already present in super().__init__
         if self.padding_mode != "zeros":
@@ -681,10 +681,10 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
         ``conv_module``.
 
         Args:
-            conv_module (nn.ConvTranspose2d): Target module to be converted
+            conv_module (nn.ConvTranspose2d): Target module to be converted.
 
         Returns:
-            MaskedConvTranspose2d: Module with mask layers added to enable FedPM
+            MaskedConvTranspose2d: Module with mask layers added to enable FedPM.
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
@@ -745,22 +745,22 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
         Finally, the binary masks are applied to the weight and the bias. During training, gradients with respect to
         the score tensors are computed and used to update the score tensors.
 
-        **NOTE:** The scores are not assumed to be bounded between 0 and 1.
+        **NOTE**: The scores are not assumed to be bounded between 0 and 1.
 
         Args:
-            in_channels (int): Number of channels in the input image
-            out_channels (int): Number of channels produced by the transposed convolution
-            kernel_size (int or tuple): Size of the convolving kernel
-            stride (int or tuple, optional): Stride of the convolution. Default: 1
+            in_channels (int): Number of channels in the input image.
+            out_channels (int): Number of channels produced by the transposed convolution.
+            kernel_size (int or tuple): Size of the convolving kernel.
+            stride (int or tuple, optional): Stride of the convolution. Default: 1.
             padding (int or tuple, optional): ``dilation * (kernel_size - 1) - padding`` zero-padding will be added to
-                both sides of each dimension in the input. Default: 0
+                both sides of each dimension in the input. Default: 0.
             output_padding (int or tuple, optional): Additional size added to one side of each dimension in the
-                output shape. Default: 0
-            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1
-            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
-            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
+                output shape. Default: 0.
+            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1.
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``.
+            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1.
             padding_mode (str, optional): Mode to be used in padding the input image for processing. Defaults to
-                "zeros"
+                "zeros".
             device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.
             dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.
         """
@@ -797,14 +797,14 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
         Maps the input tensor with ``MaskedConvTranspose3D``.
 
         Args:
-            input (Tensor): Tensor to be mapped
+            input (Tensor): Tensor to be mapped.
             output_size (list[int] | None, optional): Desired output size from the transpose. Defaults to None.
 
         Raises:
-            ValueError: Throws if anything except "zeros" padding is requested
+            ValueError: Throws if anything except "zeros" padding is requested.
 
         Returns:
-            Tensor: Mapped tensor
+            Tensor: Mapped tensor.
         """
         # Note: the same check is already present in super().__init__
         if self.padding_mode != "zeros":
@@ -842,10 +842,10 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
         ``conv_module``.
 
         Args:
-            conv_module (nn.ConvTranspose3d): Target module to be converted
+            conv_module (nn.ConvTranspose3d): Target module to be converted.
 
         Returns:
-            MaskedConvTranspose3d: Module with masked layers added to enable FedPM
+            MaskedConvTranspose3d: Module with masked layers added to enable FedPM.
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has

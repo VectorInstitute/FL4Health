@@ -41,7 +41,7 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         any arbitrary subset of the clients. Weighted average for parameters belonging to each received tensor is
         performed independently.
 
-        Note that this strategy differs from FedAvgDynamicLayer in that it does not require clients to send entire
+        Note that this strategy differs from ``FedAvgDynamicLayer`` in that it does not require clients to send entire
         layers (tensors).
 
         A client can send an arbitrary set of parameters within a certain tensor, and these parameters are packed
@@ -56,7 +56,7 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         Args:
             fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0. Defaults to 1.0.
             fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.
-            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2
+            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2.
             min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             min_available_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
@@ -212,7 +212,7 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         3. Perform weighted averaging on the dense tensors according to the number of training examples each client
            has.
 
-        **NOTE:** This method performs weighted averaging.
+        **NOTE**: This method performs weighted averaging.
 
         Args:
             results (list[tuple[NDArrays, int]]): The weight results from each client's local training that need to be
@@ -272,7 +272,7 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         2. For tensors that have the same name, construct the sparse COO tensors and convert them to dense tensors.
         3. Perform uniform averaging on the dense tensors across all clients.
 
-        **NOTE:** This method performs uniform averaging.
+        **NOTE**: This method performs uniform averaging.
 
         Args:
             results (list[tuple[NDArrays, int]]): The weight results from each client's local training that need to be

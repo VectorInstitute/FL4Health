@@ -43,7 +43,7 @@ class ClientCheckpointAndStateModule:
           before local training **NOTE**: This is the "traditional" mechanism for global models.
 
         As a final note, for some methods, such as Ditto or MR-MTL, these checkpoints will actually be identical.
-        That's because the target model for these methods is never globally aggregated. That is, they remain local
+        That's because the target model for these methods is never globally aggregated. That is, they remain local.
 
         Args:
             pre_aggregation (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of
@@ -136,7 +136,7 @@ class ClientCheckpointAndStateModule:
             client (BasicClient): The client object from which state will be saved.
 
         Raises:
-            ValueError: Throws an error if this function is called, but no state checkpointer has been provided
+            ValueError: Throws an error if this function is called, but no state checkpointer has been provided.
         """
         if self.state_checkpointer is not None:
             self.state_checkpointer.save_client_state(client)
@@ -153,11 +153,11 @@ class ClientCheckpointAndStateModule:
             client (BasicClient): client object into which state will be loaded if a checkpoint exists
 
         Raises:
-            ValueError: Throws an error if this function is called, but no state checkpointer has been provided
+            ValueError: Throws an error if this function is called, but no state checkpointer has been provided.
 
         Returns:
-            bool : If the state checkpoint properly exists and is loaded correctly, client's attributes
-            are set to the loaded values, and True is returned. Otherwise, we return False (or throw an exception).
+            bool: If the state checkpoint properly exists and is loaded correctly, client's attributes are set to
+            the loaded values, and True is returned. Otherwise, we return False (or throw an exception).
         """
         if self.state_checkpointer is not None:
             return self.state_checkpointer.maybe_load_client_state(client)

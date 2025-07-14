@@ -31,9 +31,9 @@ class FedIxiLocalTrainer(SingleNodeTrainer):
         self.train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
         self.val_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-        # NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size
-        # of the baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA
-        # and APFL
+        # NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the
+        # size of the baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with
+        # FENDA and APFL
         self.model: nn.Module = Baseline(out_channels_first_layer=12).to(self.device)
         summarize_model_info(self.model)
 

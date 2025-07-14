@@ -22,7 +22,7 @@ class FedProxServer(FlServer):
         accept_failures: bool = True,
     ) -> None:
         """
-        This is a wrapper class around FlServer for using the FedProx method that enforces that the
+        This is a wrapper class around ``FlServer`` for using the FedProx method that enforces that the
         strategy is of type ``FedAvgWithAdaptiveConstraint`` and that any checkpointing is done with the right
         server-side model and state checkpointers.
 
@@ -34,7 +34,7 @@ class FedProxServer(FlServer):
                 example, the config used to produce the ``on_fit_config_fn`` and ``on_evaluate_config_fn`` for the
                 strategy.
 
-                **NOTE:** This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
+                **NOTE**: This config is **DISTINCT** from the Flwr server config, which is extremely minimal.
             strategy (FedAvgWithAdaptiveConstraint): The aggregation strategy to be used by the server to handle.
                 client updates and other information potentially sent by the participating clients. This is required
                 to be of type ``FedAvgWithAdaptiveConstraint`` to use FedProx

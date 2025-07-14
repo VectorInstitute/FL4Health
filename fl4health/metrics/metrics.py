@@ -12,11 +12,11 @@ from fl4health.metrics.base_metrics import Metric
 class TorchMetric(Metric):
     def __init__(self, name: str, metric: TMetric) -> None:
         """
-        Thin wrapper on TorchMetric to make it compatible with our ``Metric`` interface.
+        Thin wrapper on ``TorchMetric`` to make it compatible with our ``Metric`` interface.
 
         Args:
             name (str): The name of the metric.
-            metric (TMetric): ``TorchMetric`` class based metric
+            metric (TMetric): ``TorchMetric`` class based metric.
         """
         super().__init__(name)
         self.metric = metric
@@ -129,7 +129,7 @@ class BinarySoftDiceCoefficient(SimpleMetric):
             epsilon (float): Small float to add to denominator of DICE calculation to avoid divide by 0.
             spatial_dimensions (tuple[int, ...]): The spatial dimensions of the image within the prediction tensors.
                 The default assumes that the images are 3D and have shape:
-                (``batch_size``, channel, spatial, spatial, spatial)
+                (``batch_size``, ``channel``, ``spatial``, ``spatial``, ``spatial``)
             logits_threshold: This is a threshold value where values above are classified as 1 and those below are
                 mapped to 0. If the threshold is None, then no thresholding is performed and a continuous or "soft"
                 DICE coefficient is computed.
@@ -203,7 +203,7 @@ class RocAuc(SimpleMetric):
 
         For more information:
 
-        https://scikit-learn.org/stable/modules/generated/sklearn.metrics.balanced_accuracy_score.html
+        https://scikit-learn.org/stable/modules/generated/sklearn.metrics.auc.html
         """
         super().__init__(name)
 

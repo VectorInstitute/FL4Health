@@ -28,10 +28,10 @@ class DirichletLabelBasedAllocation(Generic[T]):
         number of partitions. Data associated with the label are then assigned to each partition according to the
         distribution. Another distribution is sampled for the next label, and so on.
 
-        **NOTE:** This differs in kind from label-based Dirichlet sampling. There, an existing dataset is subsampled in
+        **NOTE**: This differs in kind from label-based Dirichlet sampling. There, an existing dataset is subsampled in
         place (rather than partitioned) such that its labels match a Dirichlet distribution.
 
-        **NOTE:** The range for beta is (0, :math:`\\infty`). The larger the value of beta, the more uniform the
+        **NOTE**: The range for beta is (0, :math:`\\infty`). The larger the value of beta, the more uniform the
         multinomial probability of the clients will be. The smaller beta is the more heterogeneous it is.
 
         :code:`np.random.dirichlet([1]*5): array([0.23645891, 0.08857052, 0.29519184, 0.2999956 , 0.07978313])`
@@ -53,12 +53,12 @@ class DirichletLabelBasedAllocation(Generic[T]):
             partitioned_datasets = heterogeneous_partitioner.partition_dataset(original_dataset, max_retries=5)
 
         Args:
-            number_of_partitions (int): Number of new datasets that we want to break the current dataset into
-            unique_labels (list[T]): This is the set of labels through which we'll iterate to perform allocation
+            number_of_partitions (int): Number of new datasets that we want to break the current dataset into.
+            unique_labels (list[T]): This is the set of labels through which we'll iterate to perform allocation.
             min_label_examples (int | None, optional): This is an optional input if you want to ensure a minimum
                 number of labels is present on each partition. If prior distribution is provided, this is ignored.
 
-                **NOTE:** This does not guarantee feasibility. That is, if you have a very small beta and request a
+                **NOTE**: This does not guarantee feasibility. That is, if you have a very small beta and request a
                 large minimum number here, you are unlikely to satisfy this request. In partitioning, if the minimum
                 isn't satisfied, we resample from the Dirichlet distribution. This is repeated some limited number of
                 times. Otherwise the partitioner "gives up".
@@ -100,7 +100,7 @@ class DirichletLabelBasedAllocation(Generic[T]):
         a Dirichlet distribution, to the partitions.
 
         Args:
-            label (T): Label is passed for logging transparency. It must be convertible to a string through ``str()``
+            label (T): Label is passed for logging transparency. It must be convertible to a string through ``str()``.
             label_indices (torch.Tensor): Indices from the dataset corresponding to a particular label. This assumes
                 that the tensor is 1D and it's len constitutes the number of total datapoints with the label.
 
@@ -173,7 +173,7 @@ class DirichletLabelBasedAllocation(Generic[T]):
         is exceeded or the minimum threshold is met.
 
         Args:
-            original_dataset (D): The dataset to be partitioned
+            original_dataset (D): The dataset to be partitioned.
             max_retries (int | None, optional): Number of times to attempt to satisfy a user provided minimum
                 label-associated data points per partition. Set this value to None if you want to retry indefinitely.
                 Defaults to 5.

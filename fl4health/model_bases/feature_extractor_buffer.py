@@ -16,12 +16,12 @@ class FeatureExtractorBuffer:
         features as torch Tensors.
 
         Attributes:
-        - model (nn.Module): The neural network model.
-        - flatten_feature_extraction_layers (dict[str, bool]): A dictionary specifying whether to flatten the feature
-          extraction layers.
-        - fhooks (list[RemovableHandle]): A list to store the handles for removing hooks.
-        - accumulate_features (bool): A flag indicating whether to accumulate features.
-        - extracted_features_buffers (dict[str, list[torch.Tensor]]): A dictionary to store the extracted features
+        - ``model`` (nn.Module): The neural network model.
+        - ``flatten_feature_extraction_layers`` (dict[str, bool]): A dictionary specifying whether to flatten the
+          feature extraction layers.
+        - ``fhooks`` (list[RemovableHandle]): A list to store the handles for removing hooks.
+        - ``accumulate_features`` (bool): A flag indicating whether to accumulate features.
+        - ``extracted_features_buffers`` (dict[str, list[torch.Tensor]]): A dictionary to store the extracted features
           for each layer.
 
         Args:
@@ -65,7 +65,7 @@ class FeatureExtractorBuffer:
     def get_hierarchical_attr(self, module: nn.Module, layer_hierarchy: list[str]) -> nn.Module:
         """
         Traverse the hierarchical attributes of the module to get the desired attribute. Hooks should be
-        registered to specific layers of the model, not to nn.Sequential or ``nn.ModuleList``.
+        registered to specific layers of the model, not to ``nn.Sequential`` or ``nn.ModuleList``.
 
         Args:
             module (nn.Module): The ``nn.Module`` object to traverse.

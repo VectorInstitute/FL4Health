@@ -138,12 +138,12 @@ def convert_deep_supervision_list_to_dict(
 
     Args:
         tensor_list (list[torch.Tensor]): A list of tensors, usually either nnunet model outputs or targets, to be
-            converted into a dictionary
-        num_spatial_dims (int): The number of spatial dimensions. Assumes the spatial dimensions are last
+            converted into a dictionary.
+        num_spatial_dims (int): The number of spatial dimensions. Assumes the spatial dimensions are last.
 
     Returns:
         dict[str, torch.Tensor]: A dictionary containing the tensors as values where the keys are 'i-XxYxZ' where i
-        was the tensor's index in the list and X,Y,Z are the spatial dimensions of the tensor
+        was the tensor's index in the list and X,Y,Z are the spatial dimensions of the tensor.
     """
     # Convert list of targets into a dictionary
     tensors = {}
@@ -163,10 +163,10 @@ def convert_deep_supervision_dict_to_list(tensor_dict: dict[str, torch.Tensor]) 
     Args:
         tensor_dict (dict[str, torch.Tensor]): Dictionary containing ``torch.Tensors``. The key values must start
             with 'X-' where X is an integer representing the index at which the tensor should be placed in the output
-            list
+            list.
 
     Returns:
-        list[torch.Tensor]: A list of ``torch.Tensors``
+        list[torch.Tensor]: A list of ``torch.Tensors``.
     """
     sorted_list = sorted(tensor_dict.items(), key=lambda x: int(x[0].split("-")[0]))
     return [tensor for key, tensor in sorted_list]
@@ -178,12 +178,12 @@ def get_segs_from_probs(preds: torch.Tensor, has_regions: bool = False, threshol
 
     Args:
         preds (torch.Tensor): The one hot encoded model output probabilities with shape (batch, classes,
-            \\*additional_dims). The background should be a separate class
+            \\*additional_dims). The background should be a separate class.
         has_regions (bool, optional): If True, predicted segmentations can be multiple classes at once. The exception
             is the background class which is assumed to be the first class (class 0). If False, each value in
             predicted segmentations has only a single class. Defaults to False.
         threshold (float): When ``has_regions`` is True, this is the threshold value used to determine whether or not
-            an output is a part of a class
+            an output is a part of a class.
 
     Returns:
         torch.Tensor: tensor containing the predicted segmentations as a one hot encoded binary tensor of 64-bit
@@ -211,11 +211,11 @@ def collapse_one_hot_tensor(input: torch.Tensor, dim: int = 0) -> torch.Tensor:
     Collapses a one hot encoded tensor so that they are no longer one hot encoded.
 
     Args:
-        input (torch.Tensor): The binary one hot encoded tensor
+        input (torch.Tensor): The binary one hot encoded tensor.
         dim (int, optional): Dimension over which to collapse the one-hot tensor. Defaults to 0.
 
     Returns:
-        torch.Tensor: Integer tensor with the specified dim collapsed
+        torch.Tensor: Integer tensor with the specified dim collapsed.
     """
     return torch.argmax(input.long(), dim=dim).to(input.device)
 
@@ -225,11 +225,11 @@ def get_dataset_n_voxels(source_plans: dict, n_cases: int) -> float:
     Determines the total number of voxels in the dataset. Used by ``NnunetClient`` to determine the maximum batch size.
 
     Args:
-        source_plans (Dict): The nnunet plans dict that is being modified
-        n_cases (int): The number of cases in the dataset
+        source_plans (Dict): The nnunet plans dict that is being modified.
+        n_cases (int): The number of cases in the dataset.
 
     Returns:
-        float: The total number of voxels in the local client dataset
+        float: The total number of voxels in the local client dataset.
     """
     # Need to determine input dimensionality
     if NnunetConfig._3D_FULLRES.value in source_plans["configurations"]:
@@ -247,7 +247,7 @@ def prepare_loss_arg(tensor: torch.Tensor | dict[str, torch.Tensor]) -> torch.Te
     Converts pred and target tensors into the proper data type to be passed to the nnunet loss functions.
 
     Args:
-        tensor (torch.Tensor | dict[str, torch.Tensor]): The input tensor
+        tensor (torch.Tensor | dict[str, torch.Tensor]): The input tensor.
 
     Returns:
         torch.Tensor | list[torch.Tensor]: The tensor ready to be passed to the loss function. A single tensor if not
@@ -397,17 +397,27 @@ class NnUNetDataLoaderWrapper(DataLoader):
 class Module2LossWrapper(_Loss):
     def __init__(self, loss: nn.Module, **kwargs: Any) -> None:
         """
-        Converts a `` nn.Module`` subclass to a ``_Loss`` subclass. NnUnet defines their loss functions as modules
+        Converts a ``nn.Module`` subclass to a ``_Loss`` subclass. NnUnet defines their loss functions as modules
         rather than true losses. This provides a type conversion.
 
         Args:
             loss (nn.Module): Loss to be wrapped.
-            **kwargs (Any): Any other key word arguments that need to go to the _Loss base class.
+            **kwargs (Any): Any other key word arguments that need to go to the ``_Loss`` base class.
         """
         super().__init__(**kwargs)
         self.loss = loss
 
     def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """
+        Push the pred and target tensors through the wrapped loss.
+
+        Args:
+            pred (torch.Tensor): Predictions tensor.
+            target (torch.Tensor): Target tensor.
+
+        Returns:
+            torch.Tensor: Loss output.
+        """
         return self.loss(pred, target)
 
 
@@ -417,8 +427,8 @@ class StreamToLogger(io.StringIO):
         File-like stream object that redirects writes to a logger. Useful for redirecting stdout to a logger.
 
         Args:
-            logger (Logger): The logger to redirect writes to
-            level (LogLevel): The log level at which to redirect the writes
+            logger (Logger): The logger to redirect writes to.
+            level (LogLevel): The log level at which to redirect the writes.
         """
         self.logger = logger
         self.level = level if isinstance(level, int) else level.value

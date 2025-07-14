@@ -30,10 +30,10 @@ class InstanceLevelDpClient(BasicClient):
         Client for Instance/Record level Differentially Private Federated Averaging.
 
         Args:
-            data_path (Path): path to the data to be used to load the data for client-side training
-            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            data_path (Path): path to the data to be used to load the data for client-side training.
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often "cpu" or
-                "cuda"
+                "cuda".
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to ``LossMeterType.AVERAGE``.
             checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
@@ -63,7 +63,7 @@ class InstanceLevelDpClient(BasicClient):
 
     def setup_client(self, config: Config) -> None:
         """
-        Performs the same flow as BasicClient to setup a client. This functionality straps on a processing of two
+        Performs the same flow as ``BasicClient`` to setup a client. This functionality straps on a processing of two
         configuration variables ``self.clipping_bound`` and ``self.noise_multiplier``. The last step is to do some
         processing of the model and optimizers with Opacus to make them DP compatible and to setup the privacy engine
         used for privacy accounting. This is done with the ``setup_opacus_objects`` function.
@@ -95,7 +95,7 @@ class InstanceLevelDpClient(BasicClient):
         self.model, reinitialize_optimizer = privacy_validate_and_fix_modules(self.model)
 
         # If we have fixed the model by changing out layers (and therefore parameters), we need to update the optimizer
-        # parameters to coincide with this fixed model. **NOTE:** It is not done in make_private!
+        # parameters to coincide with this fixed model. **NOTE**: It is not done in make_private!
         if reinitialize_optimizer:
             self.set_optimizer(config)
 

@@ -35,7 +35,7 @@ class MoonModel(SequentiallySplitModel):
             input (torch.Tensor): Input to the model forward pass. Expected to be of shape (``batch_size``, \\*)
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Returns the predictions and features tensor from the sequential forward
+            tuple[torch.Tensor, torch.Tensor]: Returns the predictions and features tensor from the sequential forward.
         """
         x = self.base_module.forward(input)
         # A projection module is optionally specified for MOON models. If no module is provided, it is simply skipped

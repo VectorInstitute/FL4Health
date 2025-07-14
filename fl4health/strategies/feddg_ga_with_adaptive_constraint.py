@@ -41,7 +41,7 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
         Zhang et al. 2023) combined with the Adaptive Strategy for Auxiliary constraints like FedProx. See
         documentation on ``FedAvgWithAdaptiveConstraint`` for more information.
 
-        **NOTE:** Initial parameters are **NOT** optional. They must be passed for this strategy.
+        **NOTE**: Initial parameters are **NOT** optional. They must be passed for this strategy.
 
         Args:
             min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2.
@@ -126,9 +126,9 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
         seen on the clients.
 
         Args:
-            server_round: (int) the current server round.
+            server_round: (int) The current server round.
             results: (list[tuple[ClientProxy, FitRes]]) The clients' fit results.
-            failures: (list[tuple[ClientProxy, FitRes] | BaseException]) the clients' fit failures.
+            failures: (list[tuple[ClientProxy, FitRes] | BaseException]) The clients' fit failures.
 
         Returns:
             (tuple[Parameters | None, dict[str, Scalar]]) A tuple containing the aggregated parameters
@@ -174,7 +174,7 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
         separate the model weights from the training losses. The model weights are reinserted into the parameters
         of the FitRes objects and the losses (along with sample counts) are placed in a list and returned.
 
-        **NOTE:** The results that are passed to this function are **MODIFIED IN-PLACE**.
+        **NOTE**: The results that are passed to this function are **MODIFIED IN-PLACE**.
 
         Args:
             results (list[tuple[ClientProxy, FitRes]]): The results produced in a fitting round by each of the clients
@@ -200,7 +200,7 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
         Update constraint weight parameter if ``adaptive_loss_weight`` is set to True. Regardless of whether adaptivity
         is turned on at this time, the previous loss seen by the server is updated.
 
-        **NOTE:** For adaptive constraint losses, including FedProx, this loss is exchanged (along with the
+        **NOTE**: For adaptive constraint losses, including FedProx, this loss is exchanged (along with the
         weights) by each client and is the VANILLA loss that does not include the additional penalty losses.
 
         Args:

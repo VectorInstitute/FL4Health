@@ -161,7 +161,7 @@ def uniform_evaluate_metrics_aggregation_fn(
 
     Args:
         all_client_metrics (list[tuple[int, Metrics]]): A list of tuples with the sample counts and metrics for each
-        client.
+            client.
 
     Returns:
         Metrics: The aggregated normalized metrics.

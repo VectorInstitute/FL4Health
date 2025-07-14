@@ -60,8 +60,8 @@ class SimpleDictionaryCheckpointer:
 
     def checkpoint_exists(self) -> bool:
         """
-        Check if a checkpoint exists at the checkpoint_path constructed as
-        ``checkpoint_dir`` + ``checkpoint_name`` during initialization.
+        Check if a checkpoint exists at the ``checkpoint_path`` constructed as ``checkpoint_dir`` +
+        ``checkpoint_name`` during initialization.
 
         Returns:
             bool: True if checkpoint exists, otherwise false.

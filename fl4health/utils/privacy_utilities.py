@@ -21,9 +21,9 @@ def privacy_validate_and_fix_modules(model: nn.Module) -> tuple[nn.Module, bool]
 
     Returns:
         tuple[nn.Module, bool]: Returns a (possibly) modified pytorch model and a boolean indicating whether a
-            reinitialization of any optimizers associated with the model will be required. Reinitialization of the
-            optimizer parameters is required, for example, when the model layers are modified, yielding a mismatch
-            in the optimizer parameters and the new model parameters.
+        reinitialization of any optimizers associated with the model will be required. Reinitialization of the
+        optimizer parameters is required, for example, when the model layers are modified, yielding a mismatch
+        in the optimizer parameters and the new model parameters.
     """
     errors = ModuleValidator.validate(model, strict=False)
     reinitialize_optimizer = len(errors) > 0
@@ -52,7 +52,7 @@ def convert_model_to_opacus_model(
     efficient DP-SGD operations. It uses the wrap_model functionality and mimics its defaults.
 
     Args:
-        model (nn.Module): Pytorch model to be converted to an Opacus ``GradSampleModule``
+        model (nn.Module): Pytorch model to be converted to an Opacus ``GradSampleModule``.
         grad_sample_mode (str, optional): This determines how Opacus performs the conversion under the hood. The
             standard mechanism is indicated by "hooks" but other approaches may be necessary depending on how the
             pytorch module is defined. Defaults to "hooks".
@@ -77,7 +77,7 @@ def map_model_to_opacus_model(
     ``GradSampleModule`` via ``convert_model_to_opacus_model``.
 
     Args:
-        model (nn.Module): Pytorch model to be converted to an Opacus compliant ``GradSampleModule``
+        model (nn.Module): Pytorch model to be converted to an Opacus compliant ``GradSampleModule``.
         grad_sample_mode (str, optional): This determines how Opacus performs the conversion under the hood. The
             standard mechanism is indicated by "hooks" but other approaches may be necessary depending on how the
             pytorch module is defined. Defaults to "hooks".

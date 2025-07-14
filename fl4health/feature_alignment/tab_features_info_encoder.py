@@ -16,7 +16,7 @@ class TabularFeaturesInfoEncoder:
         """
         This class encodes all the information required to perform feature alignment on tabular datasets.
 
-        **NOTE:** targets are not included in tabular_features
+        **NOTE**: targets are not included in tabular_features
 
         Args:
             tabular_features (list[TabularFeature]): List of all tabular features.

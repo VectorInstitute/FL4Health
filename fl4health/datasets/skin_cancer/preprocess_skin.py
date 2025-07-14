@@ -1,5 +1,5 @@
 """
-The following code is adapted from the preprocess_skin.py script
+The following code is adapted from the ``preprocess_skin.py`` script
 from the medical_federated GitHub repository by Seongjun Yang et al.
 
 Paper: https://arxiv.org/abs/2207.03075

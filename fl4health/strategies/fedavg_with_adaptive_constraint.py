@@ -41,12 +41,12 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
     ) -> None:
         """
         A generalization of the fedavg strategy for approaches that use a penalty constraint that we might want to
-        adapt based on the loss trajectory. A quintessential example is FedProx, which uses an l2 penalty on model
-        weight drift and potentially adapts the coefficient based on the aggregated loss. In addition to the model
-        weights, the server also receives the training loss from the clients. If adaptation is enabled, these losses
-        are used to update the loss weight parameter according to the FedProx paper recommendations.
+        adapt based on the loss trajectory. A quintessential example is FedProx, which uses an :math:`\\ell^2`: penalty
+        on model weight drift and potentially adapts the coefficient based on the aggregated loss. In addition to the
+        model weights, the server also receives the training loss from the clients. If adaptation is enabled, these
+        losses are used to update the loss weight parameter according to the FedProx paper recommendations.
 
-        **NOTE:** Initial parameters are **NOT** optional. They must be passed for this strategy.
+        **NOTE**: Initial parameters are **NOT** optional. They must be passed for this strategy.
 
         The aggregation strategy for weights is the same as in FedAvg.
 
@@ -55,7 +55,7 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
         Args:
             fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0.
             fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.
-            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2
+            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2.
             min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             min_available_clients (int, optional): Minimum number of total clients in the system.
                 Defaults to 2.
@@ -191,7 +191,7 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
         Update constraint weight parameter if ``adaptive_loss_weight`` is set to True. Regardless of whether adaptivity
         is turned on at this time, the previous loss seen by the server is updated.
 
-        **NOTE:** For adaptive constraint losses, including FedProx, this loss is exchanged (along with the
+        **NOTE**: For adaptive constraint losses, including FedProx, this loss is exchanged (along with the
         weights) by each client and is the **VANILLA** loss that does not include the additional penalty losses.
 
         Args:

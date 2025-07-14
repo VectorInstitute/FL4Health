@@ -89,7 +89,7 @@ nnUNetv2_move_plans_between_datasets -s SOURCE_DATASET -t TARGET_DATASET -sp SOU
 ### Preprocessing Target Dataset and FineTuning
 Now that the plan has been transferred, the target dataset can be preprocessed:
 ```
-nnUNetv2_preprocess -d TARGET_DATSET -plans_name TARGET_PLANS_IDENTIFIER
+nnUNetv2_preprocess -d TARGET_DATASET -plans_name TARGET_PLANS_IDENTIFIER
 ```
 Then we can proceed with finetuning on the target dataset:
 ```

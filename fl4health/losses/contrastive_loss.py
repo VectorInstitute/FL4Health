@@ -16,8 +16,8 @@ class MoonContrastiveLoss(nn.Module):
         the similarity between the features and their negative pairs.
 
         Args:
-            device (torch.device): device to use for computation
-            temperature (float): temperature to scale the logits
+            device (torch.device): device to use for computation.
+            temperature (float): temperature to scale the logits.
         """
         super().__init__()
         self.device = device
@@ -108,8 +108,8 @@ class NtXentLoss(nn.Module):
         pairs.
 
         Args:
-            device (torch.device): device to use for computation
-            temperature (float): temperature to scale the logits
+            device (torch.device): device to use for computation.
+            temperature (float): temperature to scale the logits.
         """
         super().__init__()
         self.device = device
@@ -128,7 +128,7 @@ class NtXentLoss(nn.Module):
                 Shaped (``batch_size``, ``feature_dimension``).
 
         Returns:
-            torch.Tensor: Contrastive loss value
+            torch.Tensor: Contrastive loss value.
         """
         features.to(self.device)
         transformed_features.to(self.device)

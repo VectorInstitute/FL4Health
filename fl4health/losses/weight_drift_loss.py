@@ -34,12 +34,14 @@ class WeightDriftLoss(nn.Module):
     def forward(self, target_model: nn.Module, constraint_tensors: list[torch.Tensor], weight: float) -> torch.Tensor:
         """
         Compute the :math:`l_2`-inner product between a Torch model and a reference set of weights in a differentiable
-        way. The `constraint_tenors` are frozen.
+        way. The ```constraint_tensors``` are frozen.
 
         Args:
-            target_model (nn.Module): Model being constrained by the `constraint_tensors`. Weights are differentiable.
-            constraint_tensors (list[torch.Tensor]): Tensors corresponding to a previous version of the target_model
-            weight (float): Weight to scale the loss with
+            target_model (nn.Module): Model being constrained by the ``constraint_tensors``. Weights are
+                differentiable.
+            constraint_tensors (list[torch.Tensor]): Tensors corresponding to a previous version of the
+                ``target_model``.
+            weight (float): Weight with which to scale the loss.
 
         Returns:
             torch.Tensor: Loss value.
