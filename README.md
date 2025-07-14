@@ -207,8 +207,6 @@ This is a combination of two state-of-the-art approaches above: FENDA-FL and Dit
 GPFL trains a global feature extractor and a local classifier head. A global mapping model transforms the feature extractor’s output into both global and personalized feature representations. Global feature representations are trained to be close to their respective class embeddings stored in a global lookup table, whereas personalized feature embeddings are learned for prediction.
 </td>
 </tr>
-<tr>
-<td>
 </table>
 
 More approaches are being implemented as they are prioritized. However, the library also provides significant flexibility to implement strategies of your own.
