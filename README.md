@@ -198,7 +198,8 @@ FENDA+Ditto
 This is a combination of two state-of-the-art approaches above: FENDA-FL and Ditto. The idea is to merge the two approaches to yield a "best of both" set of modeling with the flexibility of FENDA-FL for local adaptation and the global-model constrained optimization of Ditto.
 </td>
 </tr>
-</table>
+<tr>
+<td>
 
 [GPFL](https://arxiv.org/pdf/2308.10279)
 </td>
@@ -208,6 +209,7 @@ GPFL trains a global feature extractor and a local classifier head. A global map
 </tr>
 <tr>
 <td>
+</table>
 
 More approaches are being implemented as they are prioritized. However, the library also provides significant flexibility to implement strategies of your own.
 
