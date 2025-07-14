@@ -722,8 +722,8 @@
 <span class="sd">        not an integer.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            server_round (int): the current server round.</span>
-<span class="sd">            parameters (Parameters): the model parameters.</span>
+<span class="sd">            server_round (int): The current server round.</span>
+<span class="sd">            parameters (Parameters): The model parameters.</span>
 <span class="sd">            client_manager (ClientManager): The client manager which holds all currently connected clients. It must</span>
 <span class="sd">                be an instance of ``FixedSamplingClientManager``.</span>
 
@@ -797,9 +797,9 @@
 <span class="sd">        Collects the fit metrics that will be used to change the adjustment weights for the next round.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            server_round (int): the current server round.</span>
+<span class="sd">            server_round (int): The current server round.</span>
 <span class="sd">            results (list[tuple[ClientProxy, FitRes]]): The clients&#39; fit results.</span>
-<span class="sd">            failures (list[tuple[ClientProxy, FitRes] | BaseException]): the clients&#39; fit failures.</span>
+<span class="sd">            failures (list[tuple[ClientProxy, FitRes] | BaseException]): The clients&#39; fit failures.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            (tuple[Parameters | None, dict[str, Scalar]]): A tuple containing the aggregated parameters and the</span>
@@ -843,7 +843,7 @@
 <span class="sd">        results for the next round.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            server_round (int): the current server round.</span>
+<span class="sd">            server_round (int): The current server round.</span>
 <span class="sd">            results (list[tuple[ClientProxy, FitRes]]): The clients&#39; evaluate results.</span>
 <span class="sd">            failures (list[tuple[ClientProxy, FitRes] | BaseException]): the clients&#39; evaluate failures.</span>
 
@@ -878,7 +878,7 @@
 <span class="sd">            results (list[tuple[ClientProxy, FitRes]]): The clients&#39; fit results.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            (NDArrays): the weighted and aggregated results.</span>
+<span class="sd">            (NDArrays): The weighted and aggregated results.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">adjustment_weights</span><span class="p">:</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Current adjustment weights by Client ID (CID) are </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">adjustment_weights</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -928,8 +928,8 @@
 <span class="sd">        round, fit and evaluation metrics.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            server_round (int): the current server round.</span>
-<span class="sd">            cids (list[str]): the list of client ids that participated in this round.</span>
+<span class="sd">            server_round (int): The current server round.</span>
+<span class="sd">            cids (list[str]): The list of client ids that participated in this round.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">generalization_gaps</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c1"># calculating local vs global metric difference (generalization gaps)</span>

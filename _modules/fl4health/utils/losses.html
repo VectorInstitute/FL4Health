@@ -773,12 +773,12 @@
 <span class="sd">        Aggregates a list of losses dictionaries into a single dictionary according to the loss meter aggregation type.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            loss_list (list[dict[str, torch.Tensor]]): A list of loss dictionaries</span>
-<span class="sd">            loss_meter_type (LossMeterType): The type of the loss meter to perform the aggregation</span>
+<span class="sd">            loss_list (list[dict[str, torch.Tensor]]): A list of loss dictionaries.</span>
+<span class="sd">            loss_meter_type (LossMeterType): The type of the loss meter to perform the aggregation.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            dict[str, torch.Tensor]: A single dictionary with the aggregated losses according to the given loss</span>
-<span class="sd">            meter type</span>
+<span class="sd">            meter type.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># We don&#39;t know the keys of the dict (backward or additional losses) beforehand. We don&#39;t obtain them</span>
         <span class="c1"># from the first entry because losses can have different keys. We get list of all the keys from</span>

@@ -574,7 +574,7 @@
 <span class="sd">    Helper function that simply selects the first element of an array (index 0 across all dimensions).</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        array (np.ndarray): Array from which the very first element is selected</span>
+<span class="sd">        array (np.ndarray): Array from which the very first element is selected.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        float: zeroeth element value.</span>
@@ -598,7 +598,7 @@
 <span class="sd">        client_result (tuple[ClientProxy, NDArrays, int]]): Elements to use to determine the score.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        float: Sum of a the zeroeth elements of each array in the ``NDArrays`` and the int of the tuple</span>
+<span class="sd">        float: Sum of a the zeroeth elements of each array in the ``NDArrays`` and the int of the tuple.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">client_arrays</span><span class="p">,</span> <span class="n">sample_count</span> <span class="o">=</span> <span class="n">client_result</span>
     <span class="n">zeroeth_params</span> <span class="o">=</span> <span class="p">[</span>
@@ -620,7 +620,7 @@
 <span class="sd">    sorting (assuming the clients are deterministically training their weights as well). This allows, for example,</span>
 <span class="sd">    for weights from the clients to be summed in a deterministic order during aggregation.</span>
 
-<span class="sd">    **NOTE:** Client proxies would be nice to use for this task, but the CIDs are set by uuid deep in the flower</span>
+<span class="sd">    **NOTE**: Client proxies would be nice to use for this task, but the CIDs are set by uuid deep in the flower</span>
 <span class="sd">    library and are, therefore, not pinnable without a ton of work.</span>
 
 <span class="sd">    Args:</span>
@@ -628,7 +628,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        list[tuple[ClientProxy, NDArrays, int]]: The ordered set of weights as ``NDarrays`` and the corresponding</span>
-<span class="sd">        number of examples</span>
+<span class="sd">        number of examples.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">ndarrays_results</span> <span class="o">=</span> <span class="p">[</span>
         <span class="p">(</span><span class="n">client_proxy</span><span class="p">,</span> <span class="n">parameters_to_ndarrays</span><span class="p">(</span><span class="n">fit_res</span><span class="o">.</span><span class="n">parameters</span><span class="p">),</span> <span class="n">fit_res</span><span class="o">.</span><span class="n">num_examples</span><span class="p">)</span>

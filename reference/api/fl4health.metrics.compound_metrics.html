@@ -516,10 +516,10 @@
 <dt class="sig sig-object py" id="fl4health.metrics.compound_metrics.EmaMetric.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smoothing_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/compound_metrics.html#EmaMetric.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.compound_metrics.EmaMetric.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Exponential Moving Average (EMA) metric wrapper to apply EMA to the underlying metric.</p>
-<p>NOTE: If the underlying metric accumulates batches during update, then updating this metric without clearing
-in between will result in previously seen inputs and targets being a part of subsequent computations. For
-example, if we use Accuracy from fl4health.metrics, which accumulates batches, we get the following behavior
-in the code block below.</p>
+<p><strong>NOTE</strong>: If the underlying metric accumulates batches during update, then updating this metric without
+clearing in between will result in previously seen inputs and targets being a part of subsequent computations.
+For example, if we use <code class="docutils literal notranslate"><span class="pre">Accuracy</span></code> from <code class="docutils literal notranslate"><span class="pre">fl4health.metrics</span></code>, which accumulates batches, we get the following
+behavior in the code block below.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Accuracy</span>
 
 <span class="n">ema</span> <span class="o">=</span> <span class="n">EmaMetric</span><span class="p">(</span><span class="n">Accuracy</span><span class="p">(),</span> <span class="mf">0.1</span><span class="p">)</span>
@@ -546,10 +546,11 @@ in the code block below.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>metric</strong> (<em>T</em>) – An FL4Health compatible metric</p></li>
+<li><p><strong>metric</strong> (<em>T</em>) – An FL4Health compatible metric.</p></li>
 <li><p><strong>smoothing_factor</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Smoothing factor in range [0, 1] for the EMA. Smaller values increase
 smoothing by weighting previous scores more heavily. Defaults to 0.1.</p></li>
-<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Name of the EMAMetric. If left as None will default to ‘EMA_{metric.name}’.</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Name of the <code class="docutils literal notranslate"><span class="pre">EMAMetric</span></code>. If left as None will default to
+‘EMA_{metric.name}’.</p></li>
 </ul>
 </dd>
 </dl>
@@ -561,7 +562,7 @@ smoothing by weighting previous scores more heavily. Defaults to 0.1.</p></li>
 <dd><p>Resets metric.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#NotImplementedError" title="(in Python v3.10)"><strong>NotImplementedError</strong></a> – To be defined in the classes expending this class.</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#NotImplementedError" title="(in Python v3.10)"><strong>NotImplementedError</strong></a> – To be defined in the classes extending this class.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
@@ -647,7 +648,7 @@ apply to the targets before computing the metrics. Each callable must accept and
 <dd><p>Resets metric.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#NotImplementedError" title="(in Python v3.10)"><strong>NotImplementedError</strong></a> – To be defined in the classes expending this class.</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#NotImplementedError" title="(in Python v3.10)"><strong>NotImplementedError</strong></a> – To be defined in the classes extending this class.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>

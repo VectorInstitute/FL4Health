@@ -565,20 +565,20 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This mixin implements the Ditto algorithm from Ditto: Fair and Robust Federated Learning Through</span>
-<span class="sd">        Personalization. This mixin inherits from the `AdaptiveDriftConstrainedMixin`, and like that mixin,</span>
-<span class="sd">        this should be mixed with a `FlexibleClient` type in order to apply the Ditto personalization method</span>
+<span class="sd">        Personalization. This mixin inherits from the ``AdaptiveDriftConstrainedMixin``, and like that mixin,</span>
+<span class="sd">        this should be mixed with a ``FlexibleClient`` type in order to apply the Ditto personalization method</span>
 <span class="sd">        to that client.</span>
 
 <span class="sd">        Background Context:</span>
-<span class="sd">        The idea is that we want to train personalized versions of the global model for each client.</span>
-<span class="sd">        So we simultaneously train a global model that is aggregated on the server-side and use those weights to also</span>
+
+<span class="sd">        The idea is that we want to train personalized versions of the global model for each client. So we</span>
+<span class="sd">        simultaneously train a global model that is aggregated on the server-side and use those weights to also</span>
 <span class="sd">        constrain the training of a local model. The constraint for this local model is identical to the FedProx loss.</span>
 
 
 <span class="sd">        Raises:</span>
-<span class="sd">            RuntimeError: If the object does not satisfy the `FlexibleClientProtocolPreSetup`</span>
-<span class="sd">            then it will raise an error. This is additional validation to ensure that the mixin was</span>
-<span class="sd">            applied to an appropriate base class.</span>
+<span class="sd">            RuntimeError: If the object does not satisfy the ``FlexibleClientProtocolPreSetup`` then it will raise an</span>
+<span class="sd">                error. This is additional validation to ensure that the mixin was applied to an appropriate base class.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Initialize mixin-specific attributes</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
@@ -626,8 +626,7 @@
 <span class="sd">        Convenient accessor for the global model.</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If the `global_model` attribute has not yet been set, we</span>
-<span class="sd">            will raise an error.</span>
+<span class="sd">            ValueError: If the ``global_model`` attribute has not yet been set, we will raise an error.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            nn.Module: the global model if it has been set.</span>
@@ -652,7 +651,7 @@
 <span class="sd">        Helper method to make a copy of the original optimizer for the global model.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            original_optimizer (Optimizer): original optimizer of the underyling `FlexibleClient`.</span>
+<span class="sd">            original_optimizer (Optimizer): original optimizer of the underlying `FlexibleClient`.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Optimizer: a copy of the original optimizer to be used by the global model.</span>
@@ -783,7 +782,7 @@
 <span class="sd">            config (Config): The config is sent by the FL server to allow for customization in the function if desired.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            NDArrays: **GLOBAL** model weights to be sent to the server for aggregation</span>
+<span class="sd">            NDArrays: **GLOBAL** model weights to be sent to the server for aggregation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span><span class="p">:</span>
             <span class="n">log</span><span class="p">(</span>
@@ -859,7 +858,7 @@
 <span class="sd">        weights together.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            parameters (NDArrays): Model parameters to be injected into the client model</span>
+<span class="sd">            parameters (NDArrays): Model parameters to be injected into the client model.</span>
 <span class="sd">            config (Config): The config is sent by the FL server to allow for customization in the function if desired.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">parameter_exchanger</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">FullParameterExchanger</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="p">)</span>

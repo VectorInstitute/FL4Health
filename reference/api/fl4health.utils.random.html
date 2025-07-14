@@ -511,10 +511,10 @@
 <dt class="sig sig-object py" id="fl4health.utils.random.generate_hash">
 <span class="sig-name descname"><span class="pre">generate_hash</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/random.html#generate_hash"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.random.generate_hash" title="Link to this definition">¶</a></dt>
 <dd><p>Generates unique hash used as id for client.</p>
-<p><strong>NOTE:</strong> This generation is unaffected by setting of random seeds.</p>
+<p><strong>NOTE</strong>: This generation is unaffected by setting of random seeds.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>length</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The length of the hash generated. Maximum length is 32</p>
+<dd class="field-odd"><p><strong>length</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The length of the hash generated. Maximum length is 32.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>hash</p>
@@ -533,9 +533,9 @@ the state of the random number generators to a previously saved state.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>random_state</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>[</em><em>Any</em><em>, </em><em>...</em><em>]</em>) – The state of the Python random number generator</p></li>
-<li><p><strong>numpy_state</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – The state of the NumPy random number generator</p></li>
-<li><p><strong>torch_state</strong> (<em>torch.Tensor</em>) – The state of the PyTorch random number generator</p></li>
+<li><p><strong>random_state</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>[</em><em>Any</em><em>, </em><em>...</em><em>]</em>) – The state of the Python random number generator.</p></li>
+<li><p><strong>numpy_state</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – The state of the NumPy random number generator.</p></li>
+<li><p><strong>torch_state</strong> (<em>torch.Tensor</em>) – The state of the PyTorch random number generator.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -570,7 +570,7 @@ deterministic algorithm for certain methods and layers.</p>
 <p>for more details. Finally, it allows one to disable cuda benchmarking, which can also affect the determinism of
 pytorch training outside of random seeding. For more information on reproducibility in pytorch see:</p>
 <p><a class="reference external" href="https://pytorch.org/docs/stable/notes/randomness.html">https://pytorch.org/docs/stable/notes/randomness.html</a></p>
-<p><strong>NOTE:</strong> If the <code class="docutils literal notranslate"><span class="pre">use_deterministic_torch_algos</span></code> flag is set to True, you may need to set the environment
+<p><strong>NOTE</strong>: If the <code class="docutils literal notranslate"><span class="pre">use_deterministic_torch_algos</span></code> flag is set to True, you may need to set the environment
 variable <code class="docutils literal notranslate"><span class="pre">CUBLAS_WORKSPACE_CONFIG</span></code> to something like <code class="docutils literal notranslate"><span class="pre">:4096:8</span></code>, to avoid CUDA errors. Additional documentation
 may be found here:</p>
 <p><a class="reference external" href="https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility">https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility</a></p>
@@ -578,7 +578,7 @@ may be found here:</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The seed value to be used for random number generators. Default is 42. Seed
-setting will no-op if the seed is explicitly set to None</p></li>
+setting will no-op if the seed is explicitly set to None.</p></li>
 <li><p><strong>use_deterministic_torch_algos</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether or not to set <code class="docutils literal notranslate"><span class="pre">torch.use_deterministic_algorithms</span></code> to
 True. Defaults to False.</p></li>
 <li><p><strong>disable_torch_benchmarking</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether to explicitly disable cuda benchmarking in torch

@@ -530,19 +530,19 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Implementation of masked linear layers.</span>
 
-<span class="sd">        Like regular linear layers (i.e., nn.Linear module), a masked linear layer has a weight and a bias. However,</span>
-<span class="sd">        the weight and the bias do not receive gradient in back propagation. Instead, two score tensors - one for the</span>
-<span class="sd">        weight and another for the bias - are maintained. In the forward pass, the score tensors are transformed by</span>
-<span class="sd">        the Sigmoid function into probability scores, which are then used to produce binary masks via bernoulli</span>
-<span class="sd">        sampling. Finally, the binary masks are applied to the weight and the bias. During training, gradients with</span>
-<span class="sd">        respect to the score tensors are computed and used to update the score tensors.</span>
+<span class="sd">        Like regular linear layers (i.e., ``nn.Linear module``), a masked linear layer has a weight and a bias.</span>
+<span class="sd">        However, the weight and the bias do not receive gradient in back propagation. Instead, two score tensors - one</span>
+<span class="sd">        for the weight and another for the bias - are maintained. In the forward pass, the score tensors are</span>
+<span class="sd">        transformed by the Sigmoid function into probability scores, which are then used to produce binary masks via</span>
+<span class="sd">        Bernoulli sampling. Finally, the binary masks are applied to the weight and the bias. During training,</span>
+<span class="sd">        gradients with respect to the score tensors are computed and used to update the score tensors.</span>
 
-<span class="sd">        **NOTE:** The scores are not assumed to be bounded between 0 and 1.</span>
+<span class="sd">        **NOTE**: The scores are not assumed to be bounded between 0 and 1.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            in_features: size of each input sample</span>
-<span class="sd">            out_features: size of each output sample</span>
-<span class="sd">            bias: If set to ``False``, the layer will not learn an additive bias. Default: ``True``</span>
+<span class="sd">            in_features: size of each input sample.</span>
+<span class="sd">            out_features: size of each output sample.</span>
+<span class="sd">            bias: If set to ``False``, the layer will not learn an additive bias. Default: ``True``.</span>
 <span class="sd">            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.</span>
 <span class="sd">            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -571,10 +571,10 @@
 <span class="sd">        Mapping function for the ``MaskedLinear`` layer.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            input (Tensor): input tensor to be transformed</span>
+<span class="sd">            input (Tensor): input tensor to be transformed.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Tensor: output tensor from the layer</span>
+<span class="sd">            Tensor: output tensor from the layer.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Produce probability scores and perform Bernoulli sampling</span>
         <span class="n">weight_prob_scores</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weight_scores</span><span class="p">)</span>
@@ -604,7 +604,7 @@
 <span class="sd">            linear_module (nn.Linear): Target layer to be transformed.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            MaskedLinear: New copy of the provided module with masked layers inserted to enable FedPM</span>
+<span class="sd">            MaskedLinear: New copy of the provided module with masked layers inserted to enable FedPM.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">has_bias</span> <span class="o">=</span> <span class="n">linear_module</span><span class="o">.</span><span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">masked_linear_module</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span>

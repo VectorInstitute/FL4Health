@@ -663,7 +663,7 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            attribute_snapshot (dict[str, Any]): The snapshot containing the state of the ``nn.Modules``.</span>
-<span class="sd">            attribute (dict[str, nn.Module]): The ``nn.Modules`` to be loaded</span>
+<span class="sd">            attribute (dict[str, nn.Module]): The ``nn.Modules`` to be loaded.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">attribute</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">attribute_snapshot</span><span class="p">[</span><span class="n">key</span><span class="p">])</span></div>
@@ -699,7 +699,7 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            attribute_snapshot (dict[str, Any]): The snapshot containing the state of the serializable objects.</span>
-<span class="sd">            attribute (dict[str, MetricManager | LossMeter | ReportsManager]): The serializable objects to be loaded</span>
+<span class="sd">            attribute (dict[str, MetricManager | LossMeter | ReportsManager]): The serializable objects to be loaded.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attribute</span><span class="p">:</span>
             <span class="n">attribute</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">attribute_snapshot</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
@@ -733,7 +733,7 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            attribute_snapshot (dict[str, Any]): The snapshot containing the state of the singleton.</span>
-<span class="sd">            attribute (dict[str, int | float | bool]): The singletons to be loaded</span>
+<span class="sd">            attribute (dict[str, int | float | bool]): The singletons to be loaded.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attribute</span><span class="p">:</span>
             <span class="n">attribute</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">attribute_snapshot</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
@@ -767,7 +767,7 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            attribute_snapshot (dict[str, Any]): The snapshot containing the state of the history.</span>
-<span class="sd">            attribute (dict[str, History]): The history to be loaded</span>
+<span class="sd">            attribute (dict[str, History]): The history to be loaded.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attribute</span><span class="p">:</span>
             <span class="n">attribute</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">attribute_snapshot</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
@@ -801,7 +801,7 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            attribute_snapshot (dict[str, Any]): The snapshot containing the state of the strings.</span>
-<span class="sd">            attribute (dict[str, str]): The strings to be loaded</span>
+<span class="sd">            attribute (dict[str, str]): The strings to be loaded.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attribute</span><span class="p">:</span>
             <span class="n">attribute</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">attribute_snapshot</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
@@ -835,7 +835,7 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            attribute_snapshot (dict[str, Any]): The snapshot containing the state of the bytes.</span>
-<span class="sd">            attribute (dict[str, str]): The bytes to be loaded</span>
+<span class="sd">            attribute (dict[str, str]): The bytes to be loaded.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attribute</span><span class="p">:</span>
             <span class="n">attribute</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">attribute_snapshot</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
@@ -869,7 +869,7 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            attribute_snapshot (dict[str, Any]): The snapshot containing the state of the enum.</span>
-<span class="sd">            attribute (dict[str, Enum]): The enum to be loaded</span>
+<span class="sd">            attribute (dict[str, Enum]): The enum to be loaded.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attribute</span><span class="p">:</span>
             <span class="n">attribute</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">attribute_snapshot</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>

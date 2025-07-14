@@ -57,6 +57,7 @@
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=ccdb6887"></script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../_static/require.min.js?v=53367eec"></script>
     <script src="../../_static/custom.js?v=c3ea0f6c"></script>
     
@@ -516,25 +517,27 @@
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'BinaryDice'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.float32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pos_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zero_division</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics.html#BinaryDice.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics.BinaryDice.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Computes the Dice Coefficient between binary predictions and targets. These can be vector encoded or
 just single elements values with an implicit positive class. That is, predictions might be vectorized
-where a single predictions is a 2D vector [0.2, 0.8] or a float 0.8 (with the complement implied).</p>
+where a single predictions is a 2D vector <code class="docutils literal notranslate"><span class="pre">[0.2,</span> <span class="pre">0.8]</span></code> or a float 0.8 (with the complement implied).</p>
 <p>Regardless of how the input is structured, the provided score will be provided with respect to the value of the
-<code class="docutils literal notranslate"><span class="pre">pos_label''</span> <span class="pre">variable,</span> <span class="pre">which</span> <span class="pre">defaults</span> <span class="pre">to</span> <span class="pre">1</span> <span class="pre">(and</span> <span class="pre">can</span> <span class="pre">only</span> <span class="pre">have</span> <span class="pre">values</span> <span class="pre">{0,</span> <span class="pre">1}).</span> <span class="pre">That</span> <span class="pre">is,</span> <span class="pre">the</span> <span class="pre">reported</span> <span class="pre">score</span>
-<span class="pre">will</span> <span class="pre">correspond</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">score</span> <span class="pre">from</span> <span class="pre">the</span> <span class="pre">perspective</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">specified</span> <span class="pre">label.</span> <span class="pre">For</span> <span class="pre">additional</span> <span class="pre">documentation</span> <span class="pre">see</span>
-<span class="pre">that</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">parent</span> <span class="pre">class</span> <span class="pre">``BinaryClassificationMetric</span></code> and the function <code class="docutils literal notranslate"><span class="pre">_post_process_count_tensor</span></code> therein</p>
-<p>NOTE: For this class, the predictions and targets passed to the update function MUST have the same shape</p>
-<p>NOTE: The default behavior for Dice Scores is to compute the mean over each SAMPLE of the dataset being
+<code class="docutils literal notranslate"><span class="pre">pos_label</span></code> variable, which defaults to 1 (and can only have values {0, 1}). That is, the reported score
+will correspond to the score from the perspective of the specified label. For additional documentation see
+that of the parent class <code class="docutils literal notranslate"><span class="pre">BinaryClassificationMetric</span></code> and the function <code class="docutils literal notranslate"><span class="pre">_post_process_count_tensor</span></code>
+therein.</p>
+<p><strong>NOTE</strong>: For this class, the predictions and targets passed to the update function <strong>MUST</strong> have the same
+shape.</p>
+<p><strong>NOTE</strong>: The default behavior for Dice Scores is to compute the mean over each <strong>SAMPLE</strong> of the dataset being
 measured. In the image domain, for example, this means that the Dice score is computed for each image
 separately and then averaged across images (then classes) to produce a single score. This is accomplished
-by specifying the batch_dim here. If, however, you would like to compute the Dice score over ALL TP, FP, FNs
-across all samples (then classes) as a single count, batch_dim = None is appropriate.</p>
-<p>NOTE: Preds and targets are expected to have elements in the interval [0, 1] or to be thresholded, using
+by specifying the <code class="docutils literal notranslate"><span class="pre">batch_dim</span></code> here. If, however, you would like to compute the Dice score over ALL TP, FP,
+FNs across all samples (then classes) as a single count, <code class="docutils literal notranslate"><span class="pre">batch_dim</span> <span class="pre">=</span> <span class="pre">None</span></code> is appropriate.</p>
+<p><strong>NOTE</strong>: Preds and targets are expected to have elements in the interval [0, 1] or to be thresholded, using
 the argument of this class to be as such.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>batch_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – <p>If None, then counts are aggregated across the batch dimension. If
 specified, counts will be computed along the dimension specified. That is, counts are maintained for
-each training sample INDIVIDUALLY. For example, if batch_dim = 1 and label_dim = 0, then</p>
+each training sample <strong>INDIVIDUALLY</strong>. For example, if <code class="docutils literal notranslate"><span class="pre">batch_dim</span> <span class="pre">=</span> <span class="pre">1</span></code> and <code class="docutils literal notranslate"><span class="pre">label_dim</span> <span class="pre">=</span> <span class="pre">0</span></code>, then</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">predictions</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]])</span>  <span class="c1"># shape (1, 2, 4)</span>
 
 <span class="n">targets</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]])</span>  <span class="c1"># shape (1, 2, 4)</span>
@@ -548,16 +551,16 @@ each training sample INDIVIDUALLY. For example, if batch_dim = 1 and label_dim =
 <span class="bp">self</span><span class="o">.</span><span class="n">false_negatives</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([[</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
 </pre></div>
 </div>
-<p>In computing the Dice score, we get scores for each sample [[2*0/(2*0 +1+1)], [2*4/(2*4+0+0)]]. These
-are then averaged to get 0.5.</p>
+<p>In computing the Dice score, we get scores for each sample <code class="docutils literal notranslate"><span class="pre">[[2*0/(2*0</span> <span class="pre">+1+1)]</span></code>,
+<code class="docutils literal notranslate"><span class="pre">[2*4/(2*4+0+0)]]</span></code>. These are then averaged to get 0.5.</p>
 </p></li>
 <li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Name of the metric. Defaults to ‘BinaryDice’</p></li>
 <li><p><strong>label_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Specifies which dimension in the provided tensors corresponds to the
-label dimension. During metric computation, this dimension must have size of AT MOST 2. If left as
+label dimension. During metric computation, this dimension must have size of <strong>AT MOST 2</strong>. If left as
 None, this class will assume that each entry in the tensor corresponds to a prediction/target, with
 the positive class indicated by predictions of 1. Defaults to None.</p></li>
 <li><p><strong>dtype</strong> (<em>torch.dtype</em>) – The dtype to store the counts as. If preds or targets can be continuous, specify a
-float type. Otherwise specify an integer type to prevent overflow. Defaults to torch.float32</p></li>
+float type. Otherwise specify an integer type to prevent overflow. Defaults to <code class="docutils literal notranslate"><span class="pre">torch.float32</span></code></p></li>
 <li><p><strong>pos_label</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – The label relative to which to report the Dice. Must be either 0 or 1.
 Defaults to 1.</p></li>
 <li><p><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A float for thresholding values or an integer specifying the
@@ -579,23 +582,28 @@ components are only TNs, then NaN will be returned.</p></li>
 <span class="sig-name descname"><span class="pre">compute_from_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">true_positives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_positives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_negatives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">false_negatives</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics.html#BinaryDice.compute_from_counts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics.BinaryDice.compute_from_counts" title="Link to this definition">¶</a></dt>
 <dd><p>Computes a binary Dice score associated with the outcome counts provided in the form of true positives (TP),
 false positives (FP), and false negatives (FN). Because Dice scores don’t factor in true negatives, this
-argument is unused. For a set of counts, the binary Dice score is 2*TP/(2*TP + FP + FN). For this class
-it is assumed that all counts are presented relative to the class indicated by the <cite>pos_label</cite> index.
-Moreover, they are assumed to either have a single entry or have shape (num_samples, 1). In the former, a
-single Dice score is computed relative to the counts. In the latter, a MEAN dice score over the samples is
-computed. The second setting is useful, for example, if you are computing the Dice score per image and then
-averaging. The first setting is useful, for example, if you want to treat all examples as a SINGLE image.</p>
+argument is unused. For a set of counts, the binary Dice score is…</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[\frac{2 \cdot TP}{2 \cdot TP + FP + FN}.\]</div>
+</div>
+<p>For this class it is assumed that all counts are presented relative to the class indicated by the
+<code class="docutils literal notranslate"><span class="pre">pos_label</span></code> index. Moreover, they are assumed to either have a single entry or have shape
+<code class="docutils literal notranslate"><span class="pre">(num_samples,</span> <span class="pre">1)</span></code>. In the former, a single Dice score is computed relative to the counts. In the latter, a
+<strong>MEAN</strong> dice score over the samples is computed. The second setting is useful, for example, if you are
+computing the Dice score per image and then averaging. The first setting is useful, for example, if you want
+to treat all examples as a <strong>SINGLE</strong> image.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>true_positives</strong> (<em>torch.Tensor</em>) – Counts associated with positive predictions and positive labels</p></li>
-<li><p><strong>false_positives</strong> (<em>torch.Tensor</em>) – Counts associated with positive predictions and negative labels</p></li>
-<li><p><strong>true_negatives</strong> (<em>torch.Tensor</em>) – Counts associated with negative predictions and negative labels</p></li>
-<li><p><strong>false_negatives</strong> (<em>torch.Tensor</em>) – Counts associated with negative predictions and positive labels</p></li>
+<li><p><strong>true_positives</strong> (<em>torch.Tensor</em>) – Counts associated with positive predictions and positive labels.</p></li>
+<li><p><strong>false_positives</strong> (<em>torch.Tensor</em>) – Counts associated with positive predictions and negative labels.</p></li>
+<li><p><strong>true_negatives</strong> (<em>torch.Tensor</em>) – Counts associated with negative predictions and negative labels.</p></li>
+<li><p><strong>false_negatives</strong> (<em>torch.Tensor</em>) – Counts associated with negative predictions and positive labels.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A mean dice score associated with the counts</p>
+<dd class="field-even"><p>A mean dice score associated with the counts.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Metrics</p>
@@ -613,26 +621,26 @@ averaging. The first setting is useful, for example, if you want to treat all ex
 <dt class="sig sig-object py" id="fl4health.metrics.efficient_metrics.MultiClassDice.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">batch_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'MultiClassDice'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.float32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_background</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zero_division</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/efficient_metrics.html#MultiClassDice.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.efficient_metrics.MultiClassDice.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Computes the Mean Dice Coefficient between class predictions and targets with multiple classes.</p>
-<p>NOTE: The default behavior for Dice Scores is to compute the mean over each SAMPLE of the dataset being
+<p><strong>NOTE</strong>: The default behavior for Dice Scores is to compute the mean over each <strong>SAMPLE</strong> of the dataset being
 measured. In the image domain, for example, this means that the Dice score is computed for each image
 separately and then averaged across images (then classes) to produce a single score. This is accomplished
-by specifying the batch_dim here. If, however, you would like to compute the Dice score over ALL TP, FP, FNs
-across all samples (then classes) as a single count, batch_dim = None is appropriate.</p>
-<p>NOTE: Preds and targets are expected to have elements in the interval [0, 1] or to be thresholded, using
-that argument to be as such.</p>
-<p>NOTE: If preds and targets passed to the update method have different shapes, this class will attempt to align
-the shapes by one-hot-encoding one (but not both) of the tensors if possible.</p>
-<p>NOTE: In the case of BINARY predictions/targets with 2 labels, the result will be the AVERAGE of the Dice
-score for the two labels. If you want a single score associated with one of the binary labels, use
-BinaryDice.</p>
+by specifying the <code class="docutils literal notranslate"><span class="pre">batch_dim</span></code> here. If, however, you would like to compute the Dice score over ALL TP, FP,
+FNs across all samples (then classes) as a single count, <code class="docutils literal notranslate"><span class="pre">batch_dim</span> <span class="pre">=</span> <span class="pre">None</span></code> is appropriate.</p>
+<p><strong>NOTE</strong>: Preds and targets are expected to have elements in the interval <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code> or to be thresholded,
+using that argument to be as such.</p>
+<p><strong>NOTE</strong>: If preds and targets passed to the update method have different shapes, this class will attempt to
+align the shapes by one-hot-encoding one (but not both) of the tensors if possible.</p>
+<p><strong>NOTE</strong>: In the case of <strong>BINARY</strong> predictions/targets with 2 labels, the result will be the <strong>AVERAGE</strong> of
+the Dice score for the two labels. If you want a single score associated with one of the binary labels, use
+<code class="docutils literal notranslate"><span class="pre">BinaryDice</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>batch_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – <p>If None, the counts along the specified dimension (i.e. for each sample)
 are aggregated and the batch dimension is reduced. If specified, counts will be computed along the
-dimension specified. That is, counts are maintained for each training sample INDIVIDUALLY.
-NOTE: If <cite>batch_dim</cite> is specified, then counts will be presented batch dimension
-first, then label dimension. For example, if batch_dim = 1 and label_dim = 0, then</p>
+dimension specified. That is, counts are maintained for each training sample <strong>INDIVIDUALLY</strong>.
+<strong>NOTE</strong>: If <code class="docutils literal notranslate"><span class="pre">batch_dim</span></code> is specified, then counts will be presented batch dimension
+first, then label dimension. For example, if <code class="docutils literal notranslate"><span class="pre">batch_dim</span> <span class="pre">=</span> <span class="pre">1</span></code> and <code class="docutils literal notranslate"><span class="pre">label_dim</span> <span class="pre">=</span> <span class="pre">0</span></code>, then</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
     <span class="p">[[[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]],</span> <span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]]]</span>
 <span class="p">)</span>  <span class="c1"># Size([2, 2, 4])</span>
@@ -651,26 +659,26 @@ first, then label dimension. For example, if batch_dim = 1 and label_dim = 0, th
 </pre></div>
 </div>
 <dl class="simple">
-<dt>In computing the Dice score (2*tp/(2*tp + fp + fn)), we get scores for each sample/label pair as</dt><dd><p>[[2*2/(2*2+1+0), 2*1/(2*1+0+1)], [0*2/(0*2+0+0), 2*4/(2*4+0+0)]].</p>
+<dt>In computing the Dice score <code class="docutils literal notranslate"><span class="pre">(2*tp/(2*tp</span> <span class="pre">+</span> <span class="pre">fp</span> <span class="pre">+</span> <span class="pre">fn))</span></code>, we get scores for each sample/label pair as</dt><dd><p><code class="docutils literal notranslate"><span class="pre">[[2*2/(2*2+1+0),</span> <span class="pre">2*1/(2*1+0+1)],</span> <span class="pre">[0*2/(0*2+0+0),</span> <span class="pre">2*4/(2*4+0+0)]]</span></code>.</p>
 </dd>
 </dl>
-<p>Assuming zero_division = None, the undefined calculation at (1, 0) is dropped and the remainder of the
-individual scores are averaged to be (1/3)*(4/5 + 2/3 + 8/8) = 0.8222</p>
+<p>Assuming <code class="docutils literal notranslate"><span class="pre">zero_division</span> <span class="pre">=</span> <span class="pre">None</span></code>, the undefined calculation at <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">0)</span></code> is dropped and the
+remainder of the individual scores are averaged to be <code class="docutils literal notranslate"><span class="pre">(1/3)*(4/5</span> <span class="pre">+</span> <span class="pre">2/3</span> <span class="pre">+</span> <span class="pre">8/8)</span> <span class="pre">=</span> <span class="pre">0.8222</span></code>.</p>
 </p></li>
 <li><p><strong>label_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Specifies which dimension in the provided tensors corresponds to the label
-dimension. During metric computation, this dimension must have size of AT LEAST 2. Counts are always
-computed along the label dimension. That is, counts are maintained for each output label
-INDIVIDUALLY.</p></li>
+dimension. During metric computation, this dimension must have size of <strong>AT LEAST 2</strong>. Counts are
+always computed along the label dimension. That is, counts are maintained for each output label
+<strong>INDIVIDUALLY</strong>.</p></li>
 <li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Name of the metric. Defaults to ‘MultiClassDice’</p></li>
 <li><p><strong>dtype</strong> (<em>torch.dtype</em>) – The dtype to store the counts as. If preds or targets can be continuous, specify a
-float type. Otherwise specify an integer type to prevent overflow. Defaults to torch.float32</p></li>
+float type. Otherwise specify an integer type to prevent overflow. Defaults to <code class="docutils literal notranslate"><span class="pre">torch.float32</span></code>.</p></li>
 <li><p><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A float for thresholding values or an integer specifying the
 index of the label dimension. If a float is given, predictions below the threshold are mapped
 to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class
 with the highest prediction where the specified axis is assumed to contain a prediction for each class
 (where its index along that dimension is the class label). Default of None leaves preds unchanged.</p></li>
-<li><p><strong>ignore_background</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em>) – If specified, the FIRST channel of the specified axis is removed prior to
-computing the counts. Useful for removing background classes. Defaults to None.</p></li>
+<li><p><strong>ignore_background</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em>) – If specified, the <strong>FIRST</strong> channel of the specified axis is removed prior
+to computing the counts. Useful for removing background classes. Defaults to None.</p></li>
 <li><p><strong>zero_division</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Set what the individual Dice coefficients should be when there is
 a zero division (only true negatives present). How this argument affects the final Dice score will vary
 depending on the Dice scores for other labels. If left as None, the resultant Dice coefficients will
@@ -686,23 +694,27 @@ be excluded from the average/final Dice score.</p></li>
 <dd><p>Computes a multi-class Dice score, defined to be the mean Dice score across all labels in the multi-class
 problem. This score is computed relative the outcome counts provided in the form of true positives (TP),
 false positives (FP), and false negatives (FN). Because Dice scores don’t factor in true negatives, this
-argument is unused. For a set of counts, the Dice score for a particular label is 2*TP/(2*TP + FP + FN). For
-this class, counts are assumed to have shape (num_labels,) or (num_samples, num_labels). In the former, a
-single Dice score is computed relative to the counts for each label and then AVERAGED. In the latter, an
-AVERAGE dice score over both the samples AND labels computed. The second setting is useful, for example, if
-you are computing the Dice score per image and then averaging. The first setting is useful, for example, if
-you want to treat all examples as a SINGLE image.</p>
+argument is unused. For a set of counts, the Dice score for a particular label is…</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[\frac{2 \cdot TP}{2 \cdot TP + FP + FN}.  2*TP/(2*TP + FP + FN).\]</div>
+</div>
+<p>For this class, counts are assumed to have shape <code class="docutils literal notranslate"><span class="pre">(num_labels,)</span></code> or <code class="docutils literal notranslate"><span class="pre">(num_samples,</span> <span class="pre">num_labels)</span></code>. In the
+former, a single Dice score is computed relative to the counts for each label and then <strong>AVERAGED</strong>. In the
+latter, an <strong>AVERAGE</strong> dice score over both the samples AND labels computed. The second setting is useful, for
+example, if you are computing the Dice score per image and then averaging. The first setting is useful, for
+example, if you want to treat all examples as a <strong>SINGLE</strong> image.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>true_positives</strong> (<em>torch.Tensor</em>) – Counts associated with positive predictions and positive labels</p></li>
-<li><p><strong>false_positives</strong> (<em>torch.Tensor</em>) – Counts associated with positive predictions and negative labels</p></li>
-<li><p><strong>true_negatives</strong> (<em>torch.Tensor</em>) – Counts associated with negative predictions and negative labels</p></li>
-<li><p><strong>false_negatives</strong> (<em>torch.Tensor</em>) – Counts associated with negative predictions and positive labels</p></li>
+<li><p><strong>true_positives</strong> (<em>torch.Tensor</em>) – Counts associated with positive predictions and positive labels.</p></li>
+<li><p><strong>false_positives</strong> (<em>torch.Tensor</em>) – Counts associated with positive predictions and negative labels.</p></li>
+<li><p><strong>true_negatives</strong> (<em>torch.Tensor</em>) – Counts associated with negative predictions and negative labels.</p></li>
+<li><p><strong>false_negatives</strong> (<em>torch.Tensor</em>) – Counts associated with negative predictions and positive labels.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A mean dice score associated with the counts</p>
+<dd class="field-even"><p>A mean dice score associated with the counts.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Metrics</p>

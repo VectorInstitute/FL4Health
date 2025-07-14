@@ -611,8 +611,8 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            target_model (nn.Module): Target model for loading state into.</span>
-<span class="sd">            target_is_grad_sample_module (bool, optional): Whether the target_model that the ``state_dict`` is being</span>
-<span class="sd">                loaded into is an Opacus module or just a vanilla Pytorch module. Defaults to False.</span>
+<span class="sd">            target_is_grad_sample_module (bool, optional): Whether the ``target_model`` that the ``state_dict`` is</span>
+<span class="sd">                being loaded into is an Opacus module or just a vanilla Pytorch module. Defaults to False.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
             <span class="n">model_state_dict</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">handle</span><span class="p">)</span>
@@ -667,7 +667,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.opacus_checkpointer.html#fl4health.checkpointing.opacus_checkpointer.BestLossOpacusCheckpointer.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">checkpoint_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">checkpoint_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        This checkpointer only uses the loss value provided to the maybe_checkpoint function to determine whether a</span>
+<span class="sd">        This checkpointer only uses the loss value provided to the ``maybe_checkpoint`` function to determine whether a</span>
 <span class="sd">        checkpoint should be save. We are always attempting to minimize the loss. So maximize is always set to false.</span>
 
 <span class="sd">        Args:</span>

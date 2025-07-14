@@ -514,8 +514,8 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.servers.nnunet_server.NnunetServer.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client_manager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fl_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_init_parameters_config_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reporters=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_and_state_module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_failures=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nnunet_trainer_class=&lt;class</span> <span class="pre">'nnunetv2.training.nnUNetTrainer.nnUNetTrainer.nnUNetTrainer'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_deep_supervision=False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/servers/nnunet_server.html#NnunetServer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.servers.nnunet_server.NnunetServer.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>A Basic FlServer with added functionality to ask a client to initialize the global nnunet plans if one was not
-provided in the config. Intended for use with <code class="docutils literal notranslate"><span class="pre">NnUNetClient</span></code>.</p>
+<dd><p>A Basic <code class="docutils literal notranslate"><span class="pre">FlServer</span></code> with added functionality to ask a client to initialize the global nnunet plans if one was
+not provided in the config. Intended for use with <code class="docutils literal notranslate"><span class="pre">NnUNetClient</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -525,7 +525,7 @@ they are to be sampled at all.</p></li>
 In most cases it should be the “source of truth” for how FL training/evaluation should proceed. For
 example, the config used to produce the <code class="docutils literal notranslate"><span class="pre">on_fit_config_fn</span></code> and <code class="docutils literal notranslate"><span class="pre">on_evaluate_config_fn</span></code> for the
 strategy.</p>
-<p><strong>NOTE:</strong> This config is <strong>DISTINCT</strong> from the Flwr server config, which is extremely minimal.</p>
+<p><strong>NOTE</strong>: This config is <strong>DISTINCT</strong> from the Flwr server config, which is extremely minimal.</p>
 </p></li>
 <li><p><strong>on_init_parameters_config_fn</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Scalar</em><em>]</em><em>]</em>) – Function used to configure how one
 asks a client to provide parameters from which to initialize all other clients by providing a
@@ -541,7 +541,7 @@ to handle both model checkpointing and state checkpointing. The former is aimed 
 artifacts to be used or evaluated after training. The latter is used to preserve training state
 (including models) such that if FL training is interrupted, the process may be restarted. If no
 module is provided, no checkpointing or state preservation will happen. Defaults to None.</p>
-<p><strong>NOTE:</strong> For NnUnet, this module is allowed to have all components defined other than the model, as it
+<p><strong>NOTE</strong>: For NnUnet, this module is allowed to have all components defined other than the model, as it
 may be set later when the server asks the clients to provide the architecture.</p>
 </p></li>
 <li><p><strong>server_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – An optional string name to uniquely identify server. This name is also
@@ -575,7 +575,7 @@ global model, not local client models. Defaults to False.</p></li>
 <dt class="sig sig-object py" id="fl4health.servers.nnunet_server.NnunetServer.update_before_fit">
 <span class="sig-name descname"><span class="pre">update_before_fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_rounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/servers/nnunet_server.html#NnunetServer.update_before_fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.servers.nnunet_server.NnunetServer.update_before_fit" title="Link to this definition">¶</a></dt>
 <dd><p>Hook method to allow the server to do some additional initialization prior to fitting.</p>
-<p><code class="docutils literal notranslate"><span class="pre">NunetServer</span></code> uses this method to sample a client for properties for one of two reasons</p>
+<p><code class="docutils literal notranslate"><span class="pre">NnunetServer</span></code> uses this method to sample a client for properties for one of two reasons</p>
 <ol class="arabic">
 <li><p>If a global <code class="docutils literal notranslate"><span class="pre">nnunet_plans</span></code> file is not provided in the config, this method will request that a random
 client which generate a plans file from it local dataset and return it to the server through the
@@ -591,7 +591,7 @@ the required properties to instantiate the model architecture on the server side
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_rounds</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The number of server rounds of FL to be performed</p></li>
+<li><p><strong>num_rounds</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The number of server rounds of FL to be performed.</p></li>
 <li><p><strong>timeout</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The server’s timeout parameter. Useful if one is requesting
 information from a client. Defaults to None, which indicates indefinite timeout.</p></li>
 </ul>

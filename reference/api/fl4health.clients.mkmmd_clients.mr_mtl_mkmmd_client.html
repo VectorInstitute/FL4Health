@@ -57,6 +57,7 @@
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=ccdb6887"></script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../_static/require.min.js?v=53367eec"></script>
     <script src="../../_static/custom.js?v=c3ea0f6c"></script>
     
@@ -521,10 +522,10 @@ global model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_path</strong> (<em>Path</em>) – path to the data to be used to load the data for client-side training</p></li>
-<li><p><strong>metrics</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric" title="fl4health.metrics.base_metrics.Metric"><em>Metric</em></a><em>]</em>) – Metrics to be computed based on the labels and predictions of the client model</p></li>
+<li><p><strong>data_path</strong> (<em>Path</em>) – path to the data to be used to load the data for client-side training.</p></li>
+<li><p><strong>metrics</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric" title="fl4health.metrics.base_metrics.Metric"><em>Metric</em></a><em>]</em>) – Metrics to be computed based on the labels and predictions of the client model.</p></li>
 <li><p><strong>device</strong> (<em>torch.device</em>) – Device indicator for where to send the model, batches, labels etc. Often “cpu” or
-“cuda”</p></li>
+“cuda”.</p></li>
 <li><p><strong>loss_meter_type</strong> (<a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.LossMeterType" title="fl4health.utils.losses.LossMeterType"><em>LossMeterType</em></a><em>, </em><em>optional</em>) – Type of meter used to track and compute the losses over
 each batch. Defaults to <code class="docutils literal notranslate"><span class="pre">LossMeterType.AVERAGE</span></code>.</p></li>
 <li><p><strong>checkpoint_and_state_module</strong> (<a class="reference internal" href="fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.ClientCheckpointAndStateModule" title="fl4health.checkpointing.client_module.ClientCheckpointAndStateModule"><em>ClientCheckpointAndStateModule</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A module meant to handle
@@ -570,7 +571,7 @@ if <code class="docutils literal notranslate"><span class="pre">beta_global_upda
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><p>A tuple with:</p>
 <ul class="simple">
-<li><p>The tensor for the loss</p></li>
+<li><p>The tensor for the loss.</p></li>
 <li><p>A dictionary of additional losses with their names and values, or None if there are no additional losses.</p></li>
 </ul>
 </p>
@@ -585,9 +586,10 @@ if <code class="docutils literal notranslate"><span class="pre">beta_global_upda
 <dt class="sig sig-object py" id="fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client.MrMtlMkMmdClient.compute_training_loss">
 <span class="sig-name descname"><span class="pre">compute_training_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/mkmmd_clients/mr_mtl_mkmmd_client.html#MrMtlMkMmdClient.compute_training_loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client.MrMtlMkMmdClient.compute_training_loss" title="Link to this definition">¶</a></dt>
 <dd><p>Computes training losses given predictions of the global and local models and ground truth data.
-For the local model we add to the vanilla loss function by including Ditto penalty loss which is the l2 inner
-product between the initial global model weights and weights of the local model. This is stored in backward
-The loss to optimize the global model is stored in the additional losses dictionary under “global_loss”.</p>
+For the local model we add to the vanilla loss function by including Ditto penalty loss which is the
+<span class="math notranslate nohighlight">\(\ell^2\)</span> inner product between the initial global model weights and weights of the local model. This is
+stored in backward The loss to optimize the global model is stored in the additional losses dictionary
+under “global_loss”.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -655,16 +657,16 @@ Then set initialized attribute to True.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client.MrMtlMkMmdClient.update_after_step">
 <span class="sig-name descname"><span class="pre">update_after_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_round</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/mkmmd_clients/mr_mtl_mkmmd_client.html#MrMtlMkMmdClient.update_after_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client.MrMtlMkMmdClient.update_after_step" title="Link to this definition">¶</a></dt>
-<dd><p>Hook method called after local train step on client. step is an integer that represents
-the local training step that was most recently completed. For example, used by the APFL
-method to update the alpha value after a training a step. Also used by the MOON, FENDA
-and Ditto to update optimized beta value for MK-MMD loss after n steps.</p>
+<dd><p>Hook method called after local train step on client. Step is an integer that represents the local training
+step that was most recently completed. For example, used by the APFL method to update the alpha value after a
+training a step. Also used by the MOON, FENDA and Ditto to update optimized beta value for MK-MMD loss after
+n steps.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>step</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The step number in local training that was most recently
-completed. Resets only at the end of the round.</p></li>
-<li><p><strong>current_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The current FL server round</p></li>
+<li><p><strong>step</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The step number in local training that was most recently completed. Resets only at the end of
+the round.</p></li>
+<li><p><strong>current_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The current FL server round.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -676,8 +678,8 @@ completed. Resets only at the end of the round.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client.MrMtlMkMmdClient.update_before_train">
 <span class="sig-name descname"><span class="pre">update_before_train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current_server_round</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/mkmmd_clients/mr_mtl_mkmmd_client.html#MrMtlMkMmdClient.update_before_train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client.MrMtlMkMmdClient.update_before_train" title="Link to this definition">¶</a></dt>
-<dd><p>Hook method called before training with the number of current server rounds performed.
-<strong>NOTE:</strong> This method is called immediately <strong>AFTER</strong> the aggregated parameters are received from the server.
+<dd><p>Hook method called before training with the number of current server rounds performed.</p>
+<p><strong>NOTE</strong>: This method is called immediately <strong>AFTER</strong> the aggregated parameters are received from the server.
 For example, used by MOON and FENDA to save global modules after aggregation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

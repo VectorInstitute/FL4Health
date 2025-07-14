@@ -551,7 +551,7 @@
 <span class="sd">        any arbitrary subset of the clients. Weighted average for parameters belonging to each received tensor is</span>
 <span class="sd">        performed independently.</span>
 
-<span class="sd">        Note that this strategy differs from FedAvgDynamicLayer in that it does not require clients to send entire</span>
+<span class="sd">        Note that this strategy differs from ``FedAvgDynamicLayer`` in that it does not require clients to send entire</span>
 <span class="sd">        layers (tensors).</span>
 
 <span class="sd">        A client can send an arbitrary set of parameters within a certain tensor, and these parameters are packed</span>
@@ -566,7 +566,7 @@
 <span class="sd">        Args:</span>
 <span class="sd">            fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0. Defaults to 1.0.</span>
 <span class="sd">            fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.</span>
-<span class="sd">            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2</span>
+<span class="sd">            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2.</span>
 <span class="sd">            min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.</span>
 <span class="sd">            min_available_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.</span>
 <span class="sd">            evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):</span>
@@ -731,7 +731,7 @@
 <span class="sd">        3. Perform weighted averaging on the dense tensors according to the number of training examples each client</span>
 <span class="sd">           has.</span>
 
-<span class="sd">        **NOTE:** This method performs weighted averaging.</span>
+<span class="sd">        **NOTE**: This method performs weighted averaging.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            results (list[tuple[NDArrays, int]]): The weight results from each client&#39;s local training that need to be</span>
@@ -794,7 +794,7 @@
 <span class="sd">        2. For tensors that have the same name, construct the sparse COO tensors and convert them to dense tensors.</span>
 <span class="sd">        3. Perform uniform averaging on the dense tensors across all clients.</span>
 
-<span class="sd">        **NOTE:** This method performs uniform averaging.</span>
+<span class="sd">        **NOTE**: This method performs uniform averaging.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            results (list[tuple[NDArrays, int]]): The weight results from each client&#39;s local training that need to be</span>

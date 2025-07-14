@@ -521,7 +521,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.NumPyClientMinimalProtocol">[docs]</a>
 <span class="nd">@runtime_checkable</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">NumPyClientMinimalProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A minimal protocol for NumPyClient with just essential methods.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A minimal protocol for ``NumPyClient`` with just essential methods.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="NumPyClientMinimalProtocol.get_parameters">
 <a class="viewcode-back" href="../../../reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.NumPyClientMinimalProtocol.get_parameters">[docs]</a>
@@ -554,7 +554,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup">[docs]</a>
 <span class="nd">@runtime_checkable</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">FlexibleClientProtocolPreSetup</span><span class="p">(</span><span class="n">NumPyClientMinimalProtocol</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A minimal protocol for BasicClient focused on methods.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A minimal protocol for ``BasicClient`` focused on methods.&quot;&quot;&quot;</span>
 
     <span class="n">device</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span>
     <span class="n">initialized</span><span class="p">:</span> <span class="nb">bool</span>
@@ -598,7 +598,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol">[docs]</a>
 <span class="nd">@runtime_checkable</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">FlexibleClientProtocol</span><span class="p">(</span><span class="n">FlexibleClientProtocolPreSetup</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A minimal protocol for BasicClient focused on methods.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A minimal protocol for ``BasicClient`` focused on methods.&quot;&quot;&quot;</span>
 
     <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
     <span class="n">optimizers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">]</span>

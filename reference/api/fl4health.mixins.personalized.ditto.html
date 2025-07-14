@@ -516,20 +516,17 @@
 <dt class="sig sig-object py" id="fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/personalized/ditto.html#DittoPersonalizedMixin.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>This mixin implements the Ditto algorithm from Ditto: Fair and Robust Federated Learning Through
-Personalization. This mixin inherits from the <cite>AdaptiveDriftConstrainedMixin</cite>, and like that mixin,
-this should be mixed with a <cite>FlexibleClient</cite> type in order to apply the Ditto personalization method
+Personalization. This mixin inherits from the <code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin</span></code>, and like that mixin,
+this should be mixed with a <code class="docutils literal notranslate"><span class="pre">FlexibleClient</span></code> type in order to apply the Ditto personalization method
 to that client.</p>
-<p>Background Context:
-The idea is that we want to train personalized versions of the global model for each client.
-So we simultaneously train a global model that is aggregated on the server-side and use those weights to also
+<p>Background Context:</p>
+<p>The idea is that we want to train personalized versions of the global model for each client. So we
+simultaneously train a global model that is aggregated on the server-side and use those weights to also
 constrain the training of a local model. The constraint for this local model is identical to the FedProx loss.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#RuntimeError" title="(in Python v3.10)"><strong>RuntimeError</strong></a> – If the object does not satisfy the <cite>FlexibleClientProtocolPreSetup</cite></p></li>
-<li><p><strong>then it will raise an error. This is additional validation to ensure that the mixin was</strong> – </p></li>
-<li><p><strong>applied to an appropriate base class.</strong> – </p></li>
-</ul>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#RuntimeError" title="(in Python v3.10)"><strong>RuntimeError</strong></a> – If the object does not satisfy the <code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocolPreSetup</span></code> then it will raise an
+error. This is additional validation to ensure that the mixin was applied to an appropriate base class.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -602,7 +599,7 @@ stay with the client.</p>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – The config is sent by the FL server to allow for customization in the function if desired.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>GLOBAL</strong> model weights to be sent to the server for aggregation</p>
+<dd class="field-even"><p><strong>GLOBAL</strong> model weights to be sent to the server for aggregation.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>NDArrays</p>
@@ -618,7 +615,7 @@ weights together.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>parameters</strong> (<em>NDArrays</em>) – Model parameters to be injected into the client model</p></li>
+<li><p><strong>parameters</strong> (<em>NDArrays</em>) – Model parameters to be injected into the client model.</p></li>
 <li><p><strong>config</strong> (<em>Config</em>) – The config is sent by the FL server to allow for customization in the function if desired.</p></li>
 </ul>
 </dd>
@@ -648,10 +645,7 @@ weights together.</p>
 <dd><p>Convenient accessor for the global model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – If the <cite>global_model</cite> attribute has not yet been set, we</p></li>
-<li><p><strong>will raise an error.</strong> – </p></li>
-</ul>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – If the <code class="docutils literal notranslate"><span class="pre">global_model</span></code> attribute has not yet been set, we will raise an error.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>the global model if it has been set.</p>

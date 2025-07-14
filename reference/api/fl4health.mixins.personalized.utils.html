@@ -510,19 +510,19 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="fl4health.mixins.personalized.utils.ensure_protocol_compliance">
 <span class="sig-name descname"><span class="pre">ensure_protocol_compliance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/personalized/utils.html#ensure_protocol_compliance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.personalized.utils.ensure_protocol_compliance" title="Link to this definition">¶</a></dt>
-<dd><p>Wrapper to ensure that a the instance is of <cite>FlexibleClient</cite> type.</p>
-<p>NOTE: This should only be used within a <cite>FlexibleClient</cite>.</p>
+<dd><p>Wrapper to ensure that the instance is of <code class="docutils literal notranslate"><span class="pre">FlexibleClient</span></code> type.</p>
+<p><strong>NOTE</strong>: This should only be used within a <code class="docutils literal notranslate"><span class="pre">FlexibleClient</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>func</strong> (<em>Callable</em>) – The function to be wrapped</p></li>
+<li><p><strong>func</strong> (<em>Callable</em>) – The function to be wrapped.</p></li>
 <li><p><strong>instance</strong> (<em>Any</em><em> | </em><em>None</em>) – The associated instance if it is a method belonging to a class or a standalone</p></li>
-<li><p><strong>args</strong> (<em>Any</em>) – args passed to func</p></li>
-<li><p><strong>kwargs</strong> (<em>Any</em>) – kwargs passed to func</p></li>
+<li><p><strong>args</strong> (<em>Any</em>) – args passed to func.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – kwargs passed to func.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#TypeError" title="(in Python v3.10)"><strong>TypeError</strong></a> – We raise this error if the instance is not a <cite>FlexibleClient</cite>.</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#TypeError" title="(in Python v3.10)"><strong>TypeError</strong></a> – We raise this error if the instance is not a <code class="docutils literal notranslate"><span class="pre">FlexibleClient</span></code>.</p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Application of the function to the args and kwargs.</p>

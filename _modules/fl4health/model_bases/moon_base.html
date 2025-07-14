@@ -548,7 +548,7 @@
 <span class="sd">            input (torch.Tensor): Input to the model forward pass. Expected to be of shape (``batch_size``, \\*)</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            tuple[torch.Tensor, torch.Tensor]: Returns the predictions and features tensor from the sequential forward</span>
+<span class="sd">            tuple[torch.Tensor, torch.Tensor]: Returns the predictions and features tensor from the sequential forward.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_module</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
         <span class="c1"># A projection module is optionally specified for MOON models. If no module is provided, it is simply skipped</span>

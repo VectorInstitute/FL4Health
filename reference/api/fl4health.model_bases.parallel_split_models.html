@@ -552,8 +552,8 @@ tensor is then passed through the forward function of the head module.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>first_tensor</strong> (<em>torch.Tensor</em>) – Output from one parallel module</p></li>
-<li><p><strong>second_tensor</strong> (<em>torch.Tensor</em>) – Output from one parallel module</p></li>
+<li><p><strong>first_tensor</strong> (<em>torch.Tensor</em>) – Output from one parallel module.</p></li>
+<li><p><strong>second_tensor</strong> (<em>torch.Tensor</em>) – Output from one parallel module.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -571,10 +571,10 @@ tensor is then passed through the forward function of the head module.</p>
 <dd><p>Forward function for the head module.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>input_tensor</strong> (<em>torch.Tensor</em>) – Input tensor to be mapped</p>
+<dd class="field-odd"><p><strong>input_tensor</strong> (<em>torch.Tensor</em>) – Input tensor to be mapped.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#NotImplementedError" title="(in Python v3.10)"><strong>NotImplementedError</strong></a> – Must be implemented by any child class</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#NotImplementedError" title="(in Python v3.10)"><strong>NotImplementedError</strong></a> – Must be implemented by any child class.</p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Output of the head module from the given input.</p>
@@ -593,15 +593,15 @@ are meant to be joined together when the <code class="docutils literal notransla
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>local_tensor</strong> (<em>torch.Tensor</em>) – First tensor to be joined</p></li>
-<li><p><strong>global_tensor</strong> (<em>torch.Tensor</em>) – Second tensor to be joined</p></li>
+<li><p><strong>local_tensor</strong> (<em>torch.Tensor</em>) – First tensor to be joined.</p></li>
+<li><p><strong>global_tensor</strong> (<em>torch.Tensor</em>) – Second tensor to be joined.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#NotImplementedError" title="(in Python v3.10)"><strong>NotImplementedError</strong></a> – Any implementing child class must produce this method if it is to be used.</p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A single tensor with the two tensors joined together in some way</p>
+<dd class="field-odd"><p>A single tensor with the two tensors joined together in some way.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>torch.Tensor</p>
@@ -624,8 +624,8 @@ feature tensors are stored. Only a prediction tensor is produced.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>first_feature_extractor</strong> (<em>nn.Module</em>) – First parallel feature extractor</p></li>
-<li><p><strong>second_feature_extractor</strong> (<em>nn.Module</em>) – Second parallel feature extractor</p></li>
+<li><p><strong>first_feature_extractor</strong> (<em>nn.Module</em>) – First parallel feature extractor.</p></li>
+<li><p><strong>second_feature_extractor</strong> (<em>nn.Module</em>) – Second parallel feature extractor.</p></li>
 <li><p><strong>model_head</strong> (<a class="reference internal" href="#fl4health.model_bases.parallel_split_models.ParallelSplitHeadModule" title="fl4health.model_bases.parallel_split_models.ParallelSplitHeadModule"><em>ParallelSplitHeadModule</em></a>) – Module responsible for taking the outputs of the two feature
 extractors and using them to produce a prediction.</p></li>
 </ul>

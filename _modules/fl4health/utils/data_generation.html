@@ -536,17 +536,17 @@
 
 <span class="sd">        Reference code: https://github.com/litian96/FedProx/tree/master/data/synthetic_1_1</span>
 
-<span class="sd">        **NOTE:** In the implementations here, all clients receive the same number of samples. In the original FedProx</span>
+<span class="sd">        **NOTE**: In the implementations here, all clients receive the same number of samples. In the original FedProx</span>
 <span class="sd">        setup, they are sampled using a power law.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            num_clients (int): Number of datasets (one per client) to generate</span>
-<span class="sd">            temperature (float, optional): temperature used for the softmax mapping to labels. Defaults to 1.0.</span>
-<span class="sd">            input_dim (int, optional): dimension of the input features for the synthetic dataset. Default is as in the</span>
+<span class="sd">            num_clients (int): Number of datasets (one per client) to generate.</span>
+<span class="sd">            temperature (float, optional): Temperature used for the softmax mapping to labels. Defaults to 1.0.</span>
+<span class="sd">            input_dim (int, optional): Dimension of the input features for the synthetic dataset. Default is as in the</span>
 <span class="sd">                FedProx paper. Defaults to 60.</span>
-<span class="sd">            output_dim (int, optional): dimension of the output labels for the synthetic dataset. These are one-hot</span>
+<span class="sd">            output_dim (int, optional): Dimension of the output labels for the synthetic dataset. These are one-hot</span>
 <span class="sd">                encoding labels. Default is as in the FedProx paper. Defaults to 10.</span>
-<span class="sd">            hidden_dim (int | None, optional): dimension of the hidden layer for the two-layer mapping. If None, a</span>
+<span class="sd">            hidden_dim (int | None, optional): Dimension of the hidden layer for the two-layer mapping. If None, a</span>
 <span class="sd">                one-layer mapping is used. Defaults to None.</span>
 <span class="sd">            samples_per_client (int, optional): Number of samples to generate in each client&#39;s dataset.</span>
 <span class="sd">                Defaults to 1000.</span>
@@ -617,22 +617,21 @@
 <span class="sd">        affine transformations.</span>
 
 <span class="sd">        .. math::</span>
-<span class="sd">            latent = \\frac{1}{T} \\cdot (W_1 \\cdot x + b_1)</span>
-<span class="sd">            \\hat{y} = \\cdot (W_2 \\cdot latent + b_2).</span>
+<span class="sd">            \\text{latent} = \\frac{1}{T} \\cdot (W_1 \\cdot x + b_1)</span>
+<span class="sd">            \\hat{y} = \\cdot (W_2 \\cdot \\text{latent} + b_2).</span>
 
 <span class="sd">        Then :math:`y = \\text{softmax}(\\hat{y})`. Getting the argmax from the distribution, we then</span>
 <span class="sd">        one hot encode the resulting label sample.</span>
 
-
 <span class="sd">        Args:</span>
-<span class="sd">            x (torch.Tensor): The input features to be mapped to output labels. Shape is (dataset size, ``input_dim``)</span>
-<span class="sd">            w_1 (torch.Tensor): The first linear transformation matrix. Shape is (``hidden_dim``, ``input_dim``)</span>
-<span class="sd">            b_1 (torch.Tensor): The bias in the first linear transformation. Shape is (``hidden_dim``, 1)</span>
-<span class="sd">            w_2 (torch.Tensor): The second linear transformation matrix. Shape is (``output_dim``, ``hidden_dim``)</span>
-<span class="sd">            b_2 (torch.Tensor): The bias in the second linear transformation. Shape is (``output_dim``, 1)</span>
+<span class="sd">            x (torch.Tensor): The input features to be mapped to output labels. Shape is (dataset size, ``input_dim``).</span>
+<span class="sd">            w_1 (torch.Tensor): The first linear transformation matrix. Shape is (``hidden_dim``, ``input_dim``).</span>
+<span class="sd">            b_1 (torch.Tensor): The bias in the first linear transformation. Shape is (``hidden_dim``, 1).</span>
+<span class="sd">            w_2 (torch.Tensor): The second linear transformation matrix. Shape is (``output_dim``, ``hidden_dim``).</span>
+<span class="sd">            b_2 (torch.Tensor): The bias in the second linear transformation. Shape is (``output_dim``, 1).</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            torch.Tensor: The labels associated with each of the inputs. The shape is (dataset size, ``output_dim``)</span>
+<span class="sd">            torch.Tensor: The labels associated with each of the inputs. The shape is (dataset size, ``output_dim``).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">latent</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">w_1</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">+</span> <span class="n">b_1</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">samples_per_client</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span>
         <span class="n">raw_y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">latent</span><span class="p">,</span> <span class="n">w_2</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">+</span> <span class="n">b_2</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">samples_per_client</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
@@ -645,7 +644,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.data_generation.html#fl4health.utils.data_generation.SyntheticFedProxDataset.generate">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">TensorDataset</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Based on the class parameters, generate a list of synthetic TensorDatasets, one for each client.</span>
+<span class="sd">        Based on the class parameters, generate a list of synthetic ``TensorDatasets``, one for each client.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            list[TensorDataset]: Synthetic datasets for each client.</span>
@@ -667,7 +666,7 @@
 <span class="sd">        in this function.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            list[tuple[torch.Tensor, torch.Tensor]]: input and output tensors for each of the clients.</span>
+<span class="sd">            list[tuple[torch.Tensor, torch.Tensor]]: Input and output tensors for each of the clients.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span></div>
 </div>
@@ -696,9 +695,10 @@
 <span class="sd">        housed in the github link below as well.</span>
 
 <span class="sd">        Paper link: https://arxiv.org/abs/1812.06127</span>
+
 <span class="sd">        Reference code: https://github.com/litian96/FedProx/tree/master/data/synthetic_1_1</span>
 
-<span class="sd">        **NOTE:** This generator ends up with fairly skewed labels in generation. That is, many of the clients will not</span>
+<span class="sd">        **NOTE**: This generator ends up with fairly skewed labels in generation. That is, many of the clients will not</span>
 <span class="sd">        have representations of all the labels. This has been verified as also occurring in the reference code above</span>
 <span class="sd">        and is not a bug.</span>
 
@@ -707,19 +707,19 @@
 <span class="sd">        centers of the input features.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            num_clients (int): Number of datasets (one per client) to generate</span>
+<span class="sd">            num_clients (int): Number of datasets (one per client) to generate.</span>
 <span class="sd">            alpha (float): This is the standard deviation for the mean (``u_k``), drawn from a centered normal</span>
 <span class="sd">                distribution, which is used to generate the elements of the affine transformation components ``W``,</span>
 <span class="sd">                ``b``.</span>
 <span class="sd">            beta (float): This is the standard deviation for each element of the multidimensional mean (``v_k``),</span>
 <span class="sd">                drawn from a centered normal distribution, which is used to generate the elements of the input features</span>
-<span class="sd">                for :math:`x \\sim \\mathcal{N}(B_k, \\Sigma)`</span>
-<span class="sd">            temperature (float, optional): temperature used for the softmax mapping to labels. Defaults to 1.0.</span>
-<span class="sd">            input_dim (int, optional): dimension of the input features for the synthetic dataset. Default is as in the</span>
+<span class="sd">                for :math:`x \\sim \\mathcal{N}(B_k, \\Sigma)`.</span>
+<span class="sd">            temperature (float, optional): Temperature used for the softmax mapping to labels. Defaults to 1.0.</span>
+<span class="sd">            input_dim (int, optional): Dimension of the input features for the synthetic dataset. Default is as in the</span>
 <span class="sd">                FedProx paper. Defaults to 60.</span>
-<span class="sd">            output_dim (int, optional): dimension of the output labels for the synthetic dataset. These are one-hot</span>
+<span class="sd">            output_dim (int, optional): Dimension of the output labels for the synthetic dataset. These are one-hot</span>
 <span class="sd">                encoding labels. Default is as in the FedProx paper. Defaults to 10.</span>
-<span class="sd">            hidden_dim (int | None, optional): dimension of the hidden layer for the two-layer mapping. If None, a</span>
+<span class="sd">            hidden_dim (int | None, optional): Dimension of the hidden layer for the two-layer mapping. If None, a</span>
 <span class="sd">                one-layer mapping is used. Defaults to None.</span>
 <span class="sd">            samples_per_client (int, optional): Number of samples to generate in each client&#39;s dataset.</span>
 <span class="sd">                Defaults to 1000.</span>
@@ -832,16 +832,16 @@
 
 <span class="sd">        Paper link: https://arxiv.org/abs/1812.06127</span>
 
-<span class="sd">        **NOTE:** This generator ends up with fairly skewed labels in generation. That is, many of the clients will not</span>
+<span class="sd">        **NOTE**: This generator ends up with fairly skewed labels in generation. That is, many of the clients will not</span>
 <span class="sd">        have representations of all the labels. This has been verified as also occurring in the reference code above</span>
 <span class="sd">        and is not a bug.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            num_clients (int): Number of datasets (one per client) to generate</span>
-<span class="sd">            temperature (float, optional): temperature used for the softmax mapping to labels. Defaults to 1.0.</span>
-<span class="sd">            input_dim (int, optional): dimension of the input features for the synthetic dataset. Default is as in the</span>
+<span class="sd">            num_clients (int): Number of datasets (one per client) to generate.</span>
+<span class="sd">            temperature (float, optional): Temperature used for the softmax mapping to labels. Defaults to 1.0.</span>
+<span class="sd">            input_dim (int, optional): Dimension of the input features for the synthetic dataset. Default is as in the</span>
 <span class="sd">                FedProx paper. Defaults to 60.</span>
-<span class="sd">            output_dim (int, optional): dimension of the output labels for the synthetic dataset. These are one-hot</span>
+<span class="sd">            output_dim (int, optional): Dimension of the output labels for the synthetic dataset. These are one-hot</span>
 <span class="sd">                encoding labels. Default is as in the FedProx paper. Defaults to 10.</span>
 <span class="sd">            samples_per_client (int, optional): Number of samples to generate in each client&#39;s dataset.</span>
 <span class="sd">                Defaults to 1000.</span>

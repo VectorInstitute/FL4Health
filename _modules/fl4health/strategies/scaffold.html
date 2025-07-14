@@ -753,12 +753,12 @@
 <span class="sd">        Args:</span>
 <span class="sd">            scaling_coefficient (float): Scaling length for the parameter updates (can be thought of as</span>
 <span class="sd">                &quot;learning rate&quot;).</span>
-<span class="sd">            original_params (NDArrays): parameters to be updated.</span>
-<span class="sd">            parameter_updates (NDArrays): update direction to update the original_params.</span>
+<span class="sd">            original_params (NDArrays): Parameters to be updated.</span>
+<span class="sd">            parameter_updates (NDArrays): Update direction to update the ``original_params``.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            NDArrays: Updated numpy arrays according to</span>
-<span class="sd">            :math:`\\text{original_params} + \\text{scaling_coefficient} \\cdot \\text{parameter_updates}`</span>
+<span class="sd">            :math:`\\text{original_params} + \\text{scaling_coefficient} \\cdot \\text{parameter_updates}`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">original_param</span> <span class="o">+</span> <span class="n">scaling_coefficient</span> <span class="o">*</span> <span class="n">update</span>
@@ -777,7 +777,7 @@
 <span class="sd">            params (list[NDArrays]): numpy arrays whose entries are to be averaged together.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            NDArrays: element-wise average over the list of numpy arrays.</span>
+<span class="sd">            NDArrays: Element-wise average over the list of numpy arrays.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">num_clients</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
 
@@ -838,7 +838,7 @@
 <span class="sd">        raw weights aggregated from the client. Therefore it first needs to be turned into a &quot;delta&quot; with</span>
 <span class="sd">        ``weights - self.server_model_weights``.</span>
 
-<span class="sd">        Then this is used to update with a learning rate scalar (set by self.learning_rate) as</span>
+<span class="sd">        Then this is used to update with a learning rate scalar (set by ``self.learning_rate``) as</span>
 <span class="sd">        ``self.server_model_weights + self.learning_rate * (weights - self.server_model_weights)``.</span>
 
 <span class="sd">        Args:</span>

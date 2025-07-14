@@ -620,7 +620,7 @@ based on the zeroeth elements in the weights and the sample counts. As long as t
 server this process should be deterministic when repeatedly running the same server code leading to deterministic
 sorting (assuming the clients are deterministically training their weights as well). This allows, for example,
 for weights from the clients to be summed in a deterministic order during aggregation.</p>
-<p><strong>NOTE:</strong> Client proxies would be nice to use for this task, but the CIDs are set by uuid deep in the flower
+<p><strong>NOTE</strong>: Client proxies would be nice to use for this task, but the CIDs are set by uuid deep in the flower
 library and are, therefore, not pinnable without a ton of work.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -628,7 +628,7 @@ library and are, therefore, not pinnable without a ton of work.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The ordered set of weights as <code class="docutils literal notranslate"><span class="pre">NDarrays</span></code> and the corresponding
-number of examples</p>
+number of examples.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)">list</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[ClientProxy, NDArrays, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)">int</a>]]</p>
@@ -649,7 +649,7 @@ floats.</p>
 <dd class="field-odd"><p><strong>client_result</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>[</em><em>ClientProxy</em><em>, </em><em>NDArrays</em><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>]</em><em>]</em>) – Elements to use to determine the score.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Sum of a the zeroeth elements of each array in the <code class="docutils literal notranslate"><span class="pre">NDArrays</span></code> and the int of the tuple</p>
+<dd class="field-even"><p>Sum of a the zeroeth elements of each array in the <code class="docutils literal notranslate"><span class="pre">NDArrays</span></code> and the int of the tuple.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)">float</a></p>
@@ -663,7 +663,7 @@ floats.</p>
 <dd><p>Helper function that simply selects the first element of an array (index 0 across all dimensions).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>array</strong> (<em>np.ndarray</em>) – Array from which the very first element is selected</p>
+<dd class="field-odd"><p><strong>array</strong> (<em>np.ndarray</em>) – Array from which the very first element is selected.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>zeroeth element value.</p>

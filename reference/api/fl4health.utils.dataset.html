@@ -518,12 +518,14 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>transform</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Optional transformation to be applied to the input data.
-NOTE: This transformation is applied at load time within <code class="docutils literal notranslate"><span class="pre">__get_item__</span></code>
-Defaults to None.</p></li>
-<li><p><strong>target_transform</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Optional transformation to be applied to the target data.
-NOTE: This transformation is applied at load time within <code class="docutils literal notranslate"><span class="pre">__get_item__</span></code>
-Defaults to None.</p></li>
+<li><p><strong>transform</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – <p>Optional transformation to be applied to the input data.</p>
+<p><strong>NOTE</strong>: This transformation is applied at load time within <code class="docutils literal notranslate"><span class="pre">__get_item__</span></code></p>
+<p>Defaults to None.</p>
+</p></li>
+<li><p><strong>target_transform</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – <p>Optional transformation to be applied to the target data.</p>
+<p><strong>NOTE</strong>: This transformation is applied at load time within <code class="docutils literal notranslate"><span class="pre">__get_item__</span></code></p>
+<p>Defaults to None.</p>
+</p></li>
 </ul>
 </dd>
 </dl>
@@ -587,17 +589,19 @@ targets, because targets are derived from the data tensors.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>data</strong> (<em>torch.Tensor</em>) – Tensor representing the input data for the dataset.</p></li>
-<li><p><strong>targets</strong> (<em>torch.Tensor</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – REQUIRED TO BE NONE. The type and argument here is simply to
-maintain compatibility with our TensorDataset base. Defaults to None.</p></li>
-<li><p><strong>transform</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Any transform to be applied to the data tensors. This transform is
-performed BEFORE and target transforms that produce the self-supervised targets from the data.
-NOTE: These transformations and the <code class="docutils literal notranslate"><span class="pre">target_transform</span></code> functions are applied AT LOAD TIME
-Defaults to None.</p></li>
-<li><p><strong>target_transform</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Any transform to be applied to the data tensors to produce
+<li><p><strong>targets</strong> (<em>torch.Tensor</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – <strong>REQUIRED TO BE NONE</strong>. The type and argument here is simply to
+maintain compatibility with our <code class="docutils literal notranslate"><span class="pre">TensorDataset</span></code> base. Defaults to None.</p></li>
+<li><p><strong>transform</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – <p>Any transform to be applied to the data tensors. This transform is
+performed BEFORE and target transforms that produce the self-supervised targets from the data.</p>
+<p><strong>NOTE</strong>: These transformations and the <code class="docutils literal notranslate"><span class="pre">target_transform</span></code> functions are applied <strong>AT LOAD TIME</strong>.</p>
+<p>Defaults to None.</p>
+</p></li>
+<li><p><strong>target_transform</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – <p>Any transform to be applied to the data tensors to produce
 target tensors for training. This transform is performed after and transforms for the data tensors
-themselves to produce the self-supervised targets from the data.
-NOTE: These transformation functions are applied AT LOAD TIME.
-Defaults to None.</p></li>
+themselves to produce the self-supervised targets from the data.</p>
+<p><strong>NOTE</strong>: These transformation functions are applied <strong>AT LOAD TIME</strong>.</p>
+<p>Defaults to None.</p>
+</p></li>
 </ul>
 </dd>
 </dl>
@@ -641,12 +645,14 @@ data augmentation, label blurring, etc.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>data</strong> (<em>torch.Tensor</em>) – Input data for training.</p></li>
 <li><p><strong>targets</strong> (<em>torch.Tensor</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Target data for training. Defaults to None.</p></li>
-<li><p><strong>transform</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Optional transformation to be applied to the input data.
-NOTE: This transformation is applied at load time within <code class="docutils literal notranslate"><span class="pre">__get_item__</span></code>
-Defaults to None.</p></li>
-<li><p><strong>target_transform</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Optional transformation to be applied to the target data.
-NOTE: This transformation is applied at load time within <code class="docutils literal notranslate"><span class="pre">__get_item__</span></code>
-Defaults to None.</p></li>
+<li><p><strong>transform</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – <p>Optional transformation to be applied to the input data.</p>
+<p><strong>NOTE</strong>: This transformation is applied at load time within <code class="docutils literal notranslate"><span class="pre">__get_item__</span></code></p>
+<p>Defaults to None.</p>
+</p></li>
+<li><p><strong>target_transform</strong> (<em>Callable</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – <p>Optional transformation to be applied to the target data.</p>
+<p><strong>NOTE</strong>: This transformation is applied at load time within <code class="docutils literal notranslate"><span class="pre">__get_item__</span></code></p>
+<p>Defaults to None.</p>
+</p></li>
 </ul>
 </dd>
 </dl>
@@ -663,11 +669,11 @@ The dataset returned should be of the same type as the input but with only data 
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>dataset</strong> (<em>D</em>) – Dataset to be “subsampled” using the provided indices.</p></li>
-<li><p><strong>selected_indices</strong> (<em>torch.Tensor</em>) – Indices within the datasets data and targets (if they exist) to select</p></li>
+<li><p><strong>selected_indices</strong> (<em>torch.Tensor</em>) – Indices within the datasets data and targets (if they exist) to select.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#TypeError" title="(in Python v3.10)"><strong>TypeError</strong></a> – Will throw an error if the dataset provided is not supported</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#TypeError" title="(in Python v3.10)"><strong>TypeError</strong></a> – Will throw an error if the dataset provided is not supported.</p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Dataset with only the data associated with the provided indices. Must be of a supported type.</p>

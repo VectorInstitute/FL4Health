@@ -579,8 +579,8 @@
         <span class="n">global_deep_supervision</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        A Basic FlServer with added functionality to ask a client to initialize the global nnunet plans if one was not</span>
-<span class="sd">        provided in the config. Intended for use with ``NnUNetClient``.</span>
+<span class="sd">        A Basic ``FlServer`` with added functionality to ask a client to initialize the global nnunet plans if one was</span>
+<span class="sd">        not provided in the config. Intended for use with ``NnUNetClient``.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if</span>
@@ -590,7 +590,7 @@
 <span class="sd">                example, the config used to produce the ``on_fit_config_fn`` and ``on_evaluate_config_fn`` for the</span>
 <span class="sd">                strategy.</span>
 
-<span class="sd">                **NOTE:** This config is **DISTINCT** from the Flwr server config, which is extremely minimal.</span>
+<span class="sd">                **NOTE**: This config is **DISTINCT** from the Flwr server config, which is extremely minimal.</span>
 <span class="sd">            on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]]): Function used to configure how one</span>
 <span class="sd">                asks a client to provide parameters from which to initialize all other clients by providing a</span>
 <span class="sd">                ``Config`` dictionary. For ``NnunetServers`` this is a required function to provide the additional</span>
@@ -606,7 +606,7 @@
 <span class="sd">                (including models) such that if FL training is interrupted, the process may be restarted. If no</span>
 <span class="sd">                module is provided, no checkpointing or state preservation will happen. Defaults to None.</span>
 
-<span class="sd">                **NOTE:** For NnUnet, this module is allowed to have all components defined other than the model, as it</span>
+<span class="sd">                **NOTE**: For NnUnet, this module is allowed to have all components defined other than the model, as it</span>
 <span class="sd">                may be set later when the server asks the clients to provide the architecture.</span>
 <span class="sd">            server_name (str | None, optional): An optional string name to uniquely identify server. This name is also</span>
 <span class="sd">                used as part of any state checkpointing done by the server. Defaults to None.</span>
@@ -676,7 +676,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Hook method to allow the server to do some additional initialization prior to fitting.</span>
 
-<span class="sd">        ``NunetServer`` uses this method to sample a client for properties for one of two reasons</span>
+<span class="sd">        ``NnunetServer`` uses this method to sample a client for properties for one of two reasons</span>
 
 <span class="sd">        1. If a global ``nnunet_plans`` file is not provided in the config, this method will request that a random</span>
 <span class="sd">           client which generate a plans file from it local dataset and return it to the server through the</span>
@@ -691,7 +691,7 @@
 <span class="sd">           (which are not specified in nnunet plans for some reason).</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            num_rounds (int): The number of server rounds of FL to be performed</span>
+<span class="sd">            num_rounds (int): The number of server rounds of FL to be performed.</span>
 <span class="sd">            timeout (float | None, optional): The server&#39;s timeout parameter. Useful if one is requesting</span>
 <span class="sd">                information from a client. Defaults to None, which indicates indefinite timeout.</span>
 <span class="sd">        &quot;&quot;&quot;</span>

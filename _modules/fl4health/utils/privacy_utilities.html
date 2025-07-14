@@ -529,9 +529,9 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        tuple[nn.Module, bool]: Returns a (possibly) modified pytorch model and a boolean indicating whether a</span>
-<span class="sd">            reinitialization of any optimizers associated with the model will be required. Reinitialization of the</span>
-<span class="sd">            optimizer parameters is required, for example, when the model layers are modified, yielding a mismatch</span>
-<span class="sd">            in the optimizer parameters and the new model parameters.</span>
+<span class="sd">        reinitialization of any optimizers associated with the model will be required. Reinitialization of the</span>
+<span class="sd">        optimizer parameters is required, for example, when the model layers are modified, yielding a mismatch</span>
+<span class="sd">        in the optimizer parameters and the new model parameters.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">errors</span> <span class="o">=</span> <span class="n">ModuleValidator</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">reinitialize_optimizer</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
@@ -563,7 +563,7 @@
 <span class="sd">    efficient DP-SGD operations. It uses the wrap_model functionality and mimics its defaults.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        model (nn.Module): Pytorch model to be converted to an Opacus ``GradSampleModule``</span>
+<span class="sd">        model (nn.Module): Pytorch model to be converted to an Opacus ``GradSampleModule``.</span>
 <span class="sd">        grad_sample_mode (str, optional): This determines how Opacus performs the conversion under the hood. The</span>
 <span class="sd">            standard mechanism is indicated by &quot;hooks&quot; but other approaches may be necessary depending on how the</span>
 <span class="sd">            pytorch module is defined. Defaults to &quot;hooks&quot;.</span>
@@ -591,7 +591,7 @@
 <span class="sd">    ``GradSampleModule`` via ``convert_model_to_opacus_model``.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        model (nn.Module): Pytorch model to be converted to an Opacus compliant ``GradSampleModule``</span>
+<span class="sd">        model (nn.Module): Pytorch model to be converted to an Opacus compliant ``GradSampleModule``.</span>
 <span class="sd">        grad_sample_mode (str, optional): This determines how Opacus performs the conversion under the hood. The</span>
 <span class="sd">            standard mechanism is indicated by &quot;hooks&quot; but other approaches may be necessary depending on how the</span>
 <span class="sd">            pytorch module is defined. Defaults to &quot;hooks&quot;.</span>

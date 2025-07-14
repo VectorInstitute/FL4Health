@@ -536,28 +536,28 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes the Mean Dice Coefficient between class predictions and targets with multiple classes.</span>
 
-<span class="sd">        NOTE: The default behavior for Dice Scores is to compute the mean over each SAMPLE of the dataset being</span>
+<span class="sd">        **NOTE**: The default behavior for Dice Scores is to compute the mean over each **SAMPLE** of the dataset being</span>
 <span class="sd">        measured. In the image domain, for example, this means that the Dice score is computed for each image</span>
 <span class="sd">        separately and then averaged across images (then classes) to produce a single score. This is accomplished</span>
-<span class="sd">        by specifying the batch_dim here. If, however, you would like to compute the Dice score over ALL TP, FP, FNs</span>
-<span class="sd">        across all samples (then classes) as a single count, batch_dim = None is appropriate.</span>
+<span class="sd">        by specifying the ``batch_dim`` here. If, however, you would like to compute the Dice score over ALL TP, FP,</span>
+<span class="sd">        FNs across all samples (then classes) as a single count, ``batch_dim = None`` is appropriate.</span>
 
-<span class="sd">        NOTE: Preds and targets are expected to have elements in the interval [0, 1] or to be thresholded, using</span>
-<span class="sd">        that argument to be as such.</span>
+<span class="sd">        **NOTE**: Preds and targets are expected to have elements in the interval ``[0, 1]`` or to be thresholded,</span>
+<span class="sd">        using that argument to be as such.</span>
 
-<span class="sd">        NOTE: If preds and targets passed to the update method have different shapes, this class will attempt to align</span>
-<span class="sd">        the shapes by one-hot-encoding one (but not both) of the tensors if possible.</span>
+<span class="sd">        **NOTE**: If preds and targets passed to the update method have different shapes, this class will attempt to</span>
+<span class="sd">        align the shapes by one-hot-encoding one (but not both) of the tensors if possible.</span>
 
-<span class="sd">        NOTE: In the case of BINARY predictions/targets with 2 labels, the result will be the AVERAGE of the Dice</span>
-<span class="sd">        score for the two labels. If you want a single score associated with one of the binary labels, use</span>
-<span class="sd">        BinaryDice.</span>
+<span class="sd">        **NOTE**: In the case of **BINARY** predictions/targets with 2 labels, the result will be the **AVERAGE** of</span>
+<span class="sd">        the Dice score for the two labels. If you want a single score associated with one of the binary labels, use</span>
+<span class="sd">        ``BinaryDice``.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            batch_dim (int | None, optional): If None, the counts along the specified dimension (i.e. for each sample)</span>
 <span class="sd">                are aggregated and the batch dimension is reduced. If specified, counts will be computed along the</span>
-<span class="sd">                dimension specified. That is, counts are maintained for each training sample INDIVIDUALLY.</span>
-<span class="sd">                NOTE: If `batch_dim` is specified, then counts will be presented batch dimension</span>
-<span class="sd">                first, then label dimension. For example, if batch_dim = 1 and label_dim = 0, then</span>
+<span class="sd">                dimension specified. That is, counts are maintained for each training sample **INDIVIDUALLY**.</span>
+<span class="sd">                **NOTE**: If ``batch_dim`` is specified, then counts will be presented batch dimension</span>
+<span class="sd">                first, then label dimension. For example, if ``batch_dim = 1`` and ``label_dim = 0``, then</span>
 
 <span class="sd">                .. code-block:: python</span>
 
@@ -577,24 +577,24 @@
 
 <span class="sd">                    self.fn = torch.Tensor([[0, 1], [0, 0]])  # Size([2, 2])</span>
 
-<span class="sd">                In computing the Dice score (2*tp/(2*tp + fp + fn)), we get scores for each sample/label pair as</span>
-<span class="sd">                    [[2*2/(2*2+1+0), 2*1/(2*1+0+1)], [0*2/(0*2+0+0), 2*4/(2*4+0+0)]].</span>
-<span class="sd">                Assuming zero_division = None, the undefined calculation at (1, 0) is dropped and the remainder of the</span>
-<span class="sd">                individual scores are averaged to be (1/3)*(4/5 + 2/3 + 8/8) = 0.8222</span>
+<span class="sd">                In computing the Dice score ``(2*tp/(2*tp + fp + fn))``, we get scores for each sample/label pair as</span>
+<span class="sd">                    ``[[2*2/(2*2+1+0), 2*1/(2*1+0+1)], [0*2/(0*2+0+0), 2*4/(2*4+0+0)]]``.</span>
+<span class="sd">                Assuming ``zero_division = None``, the undefined calculation at ``(1, 0)`` is dropped and the</span>
+<span class="sd">                remainder of the individual scores are averaged to be ``(1/3)*(4/5 + 2/3 + 8/8) = 0.8222``.</span>
 <span class="sd">            label_dim (int): Specifies which dimension in the provided tensors corresponds to the label</span>
-<span class="sd">                dimension. During metric computation, this dimension must have size of AT LEAST 2. Counts are always</span>
-<span class="sd">                computed along the label dimension. That is, counts are maintained for each output label</span>
-<span class="sd">                INDIVIDUALLY.</span>
+<span class="sd">                dimension. During metric computation, this dimension must have size of **AT LEAST 2**. Counts are</span>
+<span class="sd">                always computed along the label dimension. That is, counts are maintained for each output label</span>
+<span class="sd">                **INDIVIDUALLY**.</span>
 <span class="sd">            name (str): Name of the metric. Defaults to &#39;MultiClassDice&#39;</span>
 <span class="sd">            dtype (torch.dtype): The dtype to store the counts as. If preds or targets can be continuous, specify a</span>
-<span class="sd">                float type. Otherwise specify an integer type to prevent overflow. Defaults to torch.float32</span>
+<span class="sd">                float type. Otherwise specify an integer type to prevent overflow. Defaults to ``torch.float32``.</span>
 <span class="sd">            threshold (float | int | None, optional): A float for thresholding values or an integer specifying the</span>
 <span class="sd">                index of the label dimension. If a float is given, predictions below the threshold are mapped</span>
 <span class="sd">                to 0 and above are mapped to 1. If an integer is given, predictions are binarized based on the class</span>
 <span class="sd">                with the highest prediction where the specified axis is assumed to contain a prediction for each class</span>
 <span class="sd">                (where its index along that dimension is the class label). Default of None leaves preds unchanged.</span>
-<span class="sd">            ignore_background (int | None): If specified, the FIRST channel of the specified axis is removed prior to</span>
-<span class="sd">                computing the counts. Useful for removing background classes. Defaults to None.</span>
+<span class="sd">            ignore_background (int | None): If specified, the **FIRST** channel of the specified axis is removed prior</span>
+<span class="sd">                to computing the counts. Useful for removing background classes. Defaults to None.</span>
 <span class="sd">            zero_division (float | None, optional): Set what the individual Dice coefficients should be when there is</span>
 <span class="sd">                a zero division (only true negatives present). How this argument affects the final Dice score will vary</span>
 <span class="sd">                depending on the Dice scores for other labels. If left as None, the resultant Dice coefficients will</span>
@@ -625,21 +625,25 @@
 <span class="sd">        Computes a multi-class Dice score, defined to be the mean Dice score across all labels in the multi-class</span>
 <span class="sd">        problem. This score is computed relative the outcome counts provided in the form of true positives (TP),</span>
 <span class="sd">        false positives (FP), and false negatives (FN). Because Dice scores don&#39;t factor in true negatives, this</span>
-<span class="sd">        argument is unused. For a set of counts, the Dice score for a particular label is 2*TP/(2*TP + FP + FN). For</span>
-<span class="sd">        this class, counts are assumed to have shape (num_labels,) or (num_samples, num_labels). In the former, a</span>
-<span class="sd">        single Dice score is computed relative to the counts for each label and then AVERAGED. In the latter, an</span>
-<span class="sd">        AVERAGE dice score over both the samples AND labels computed. The second setting is useful, for example, if</span>
-<span class="sd">        you are computing the Dice score per image and then averaging. The first setting is useful, for example, if</span>
-<span class="sd">        you want to treat all examples as a SINGLE image.</span>
+<span class="sd">        argument is unused. For a set of counts, the Dice score for a particular label is...</span>
+
+<span class="sd">        .. math ::</span>
+<span class="sd">            \\frac{2 \\cdot TP}{2 \\cdot TP + FP + FN}.  2*TP/(2*TP + FP + FN).</span>
+
+<span class="sd">        For this class, counts are assumed to have shape ``(num_labels,)`` or ``(num_samples, num_labels)``. In the</span>
+<span class="sd">        former, a single Dice score is computed relative to the counts for each label and then **AVERAGED**. In the</span>
+<span class="sd">        latter, an **AVERAGE** dice score over both the samples AND labels computed. The second setting is useful, for</span>
+<span class="sd">        example, if you are computing the Dice score per image and then averaging. The first setting is useful, for</span>
+<span class="sd">        example, if you want to treat all examples as a **SINGLE** image.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            true_positives (torch.Tensor): Counts associated with positive predictions and positive labels</span>
-<span class="sd">            false_positives (torch.Tensor): Counts associated with positive predictions and negative labels</span>
-<span class="sd">            true_negatives (torch.Tensor): Counts associated with negative predictions and negative labels</span>
-<span class="sd">            false_negatives (torch.Tensor): Counts associated with negative predictions and positive labels</span>
+<span class="sd">            true_positives (torch.Tensor): Counts associated with positive predictions and positive labels.</span>
+<span class="sd">            false_positives (torch.Tensor): Counts associated with positive predictions and negative labels.</span>
+<span class="sd">            true_negatives (torch.Tensor): Counts associated with negative predictions and negative labels.</span>
+<span class="sd">            false_negatives (torch.Tensor): Counts associated with negative predictions and positive labels.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Metrics: A mean dice score associated with the counts</span>
+<span class="sd">            Metrics: A mean dice score associated with the counts.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># compute dice coefficients and return mean</span>
         <span class="n">dice</span> <span class="o">=</span> <span class="n">compute_dice_on_count_tensors</span><span class="p">(</span><span class="n">true_positives</span><span class="p">,</span> <span class="n">false_positives</span><span class="p">,</span> <span class="n">false_negatives</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zero_division</span><span class="p">)</span>
@@ -653,11 +657,11 @@
 <span class="sd">        Computes the Dice score relative to the single input and target tensors provided.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            input (torch.Tensor): predictions tensor</span>
-<span class="sd">            target (torch.Tensor): target tensor</span>
+<span class="sd">            input (torch.Tensor): predictions tensor.</span>
+<span class="sd">            target (torch.Tensor): target tensor.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Scalar: Mean dice score for the provided tensors</span>
+<span class="sd">            Scalar: Mean dice score for the provided tensors.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">true_positives</span><span class="p">,</span> <span class="n">false_positives</span><span class="p">,</span> <span class="n">true_negatives</span><span class="p">,</span> <span class="n">false_negatives</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">count_tp_fp_tn_fn</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
         <span class="n">dice_metric</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_from_counts</span><span class="p">(</span><span class="n">true_positives</span><span class="p">,</span> <span class="n">false_positives</span><span class="p">,</span> <span class="n">true_negatives</span><span class="p">,</span> <span class="n">false_negatives</span><span class="p">)</span>
@@ -684,28 +688,30 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes the Dice Coefficient between binary predictions and targets. These can be vector encoded or</span>
 <span class="sd">        just single elements values with an implicit positive class. That is, predictions might be vectorized</span>
-<span class="sd">        where a single predictions is a 2D vector [0.2, 0.8] or a float 0.8 (with the complement implied).</span>
+<span class="sd">        where a single predictions is a 2D vector ``[0.2, 0.8]`` or a float 0.8 (with the complement implied).</span>
 
 <span class="sd">        Regardless of how the input is structured, the provided score will be provided with respect to the value of the</span>
-<span class="sd">        ``pos_label&#39;&#39; variable, which defaults to 1 (and can only have values {0, 1}). That is, the reported score</span>
+<span class="sd">        ``pos_label`` variable, which defaults to 1 (and can only have values {0, 1}). That is, the reported score</span>
 <span class="sd">        will correspond to the score from the perspective of the specified label. For additional documentation see</span>
-<span class="sd">        that of the parent class ``BinaryClassificationMetric`` and the function ``_post_process_count_tensor`` therein</span>
+<span class="sd">        that of the parent class ``BinaryClassificationMetric`` and the function ``_post_process_count_tensor``</span>
+<span class="sd">        therein.</span>
 
-<span class="sd">        NOTE: For this class, the predictions and targets passed to the update function MUST have the same shape</span>
+<span class="sd">        **NOTE**: For this class, the predictions and targets passed to the update function **MUST** have the same</span>
+<span class="sd">        shape.</span>
 
-<span class="sd">        NOTE: The default behavior for Dice Scores is to compute the mean over each SAMPLE of the dataset being</span>
+<span class="sd">        **NOTE**: The default behavior for Dice Scores is to compute the mean over each **SAMPLE** of the dataset being</span>
 <span class="sd">        measured. In the image domain, for example, this means that the Dice score is computed for each image</span>
 <span class="sd">        separately and then averaged across images (then classes) to produce a single score. This is accomplished</span>
-<span class="sd">        by specifying the batch_dim here. If, however, you would like to compute the Dice score over ALL TP, FP, FNs</span>
-<span class="sd">        across all samples (then classes) as a single count, batch_dim = None is appropriate.</span>
+<span class="sd">        by specifying the ``batch_dim`` here. If, however, you would like to compute the Dice score over ALL TP, FP,</span>
+<span class="sd">        FNs across all samples (then classes) as a single count, ``batch_dim = None`` is appropriate.</span>
 
-<span class="sd">        NOTE: Preds and targets are expected to have elements in the interval [0, 1] or to be thresholded, using</span>
+<span class="sd">        **NOTE**: Preds and targets are expected to have elements in the interval [0, 1] or to be thresholded, using</span>
 <span class="sd">        the argument of this class to be as such.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            batch_dim (int | None, optional): If None, then counts are aggregated across the batch dimension. If</span>
 <span class="sd">                specified, counts will be computed along the dimension specified. That is, counts are maintained for</span>
-<span class="sd">                each training sample INDIVIDUALLY. For example, if batch_dim = 1 and label_dim = 0, then</span>
+<span class="sd">                each training sample **INDIVIDUALLY**. For example, if ``batch_dim = 1`` and ``label_dim = 0``, then</span>
 
 <span class="sd">                .. code-block:: python</span>
 
@@ -721,15 +727,15 @@
 
 <span class="sd">                    self.false_negatives = torch.Tensor([[1], [0]])</span>
 
-<span class="sd">                In computing the Dice score, we get scores for each sample [[2*0/(2*0 +1+1)], [2*4/(2*4+0+0)]]. These</span>
-<span class="sd">                are then averaged to get 0.5.</span>
+<span class="sd">                In computing the Dice score, we get scores for each sample ``[[2*0/(2*0 +1+1)]``,</span>
+<span class="sd">                ``[2*4/(2*4+0+0)]]``. These are then averaged to get 0.5.</span>
 <span class="sd">            name (str): Name of the metric. Defaults to &#39;BinaryDice&#39;</span>
 <span class="sd">            label_dim (int | None, optional): Specifies which dimension in the provided tensors corresponds to the</span>
-<span class="sd">                label dimension. During metric computation, this dimension must have size of AT MOST 2. If left as</span>
+<span class="sd">                label dimension. During metric computation, this dimension must have size of **AT MOST 2**. If left as</span>
 <span class="sd">                None, this class will assume that each entry in the tensor corresponds to a prediction/target, with</span>
 <span class="sd">                the positive class indicated by predictions of 1. Defaults to None.</span>
 <span class="sd">            dtype (torch.dtype): The dtype to store the counts as. If preds or targets can be continuous, specify a</span>
-<span class="sd">                float type. Otherwise specify an integer type to prevent overflow. Defaults to torch.float32</span>
+<span class="sd">                float type. Otherwise specify an integer type to prevent overflow. Defaults to ``torch.float32``</span>
 <span class="sd">            pos_label (int, optional): The label relative to which to report the Dice. Must be either 0 or 1.</span>
 <span class="sd">                Defaults to 1.</span>
 <span class="sd">            threshold (float | int | None, optional): A float for thresholding values or an integer specifying the</span>
@@ -771,21 +777,26 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes a binary Dice score associated with the outcome counts provided in the form of true positives (TP),</span>
 <span class="sd">        false positives (FP), and false negatives (FN). Because Dice scores don&#39;t factor in true negatives, this</span>
-<span class="sd">        argument is unused. For a set of counts, the binary Dice score is 2*TP/(2*TP + FP + FN). For this class</span>
-<span class="sd">        it is assumed that all counts are presented relative to the class indicated by the `pos_label` index.</span>
-<span class="sd">        Moreover, they are assumed to either have a single entry or have shape (num_samples, 1). In the former, a</span>
-<span class="sd">        single Dice score is computed relative to the counts. In the latter, a MEAN dice score over the samples is</span>
-<span class="sd">        computed. The second setting is useful, for example, if you are computing the Dice score per image and then</span>
-<span class="sd">        averaging. The first setting is useful, for example, if you want to treat all examples as a SINGLE image.</span>
+<span class="sd">        argument is unused. For a set of counts, the binary Dice score is...</span>
+
+<span class="sd">        .. math ::</span>
+<span class="sd">            \\frac{2 \\cdot TP}{2 \\cdot TP + FP + FN}.</span>
+
+<span class="sd">        For this class it is assumed that all counts are presented relative to the class indicated by the</span>
+<span class="sd">        ``pos_label`` index. Moreover, they are assumed to either have a single entry or have shape</span>
+<span class="sd">        ``(num_samples, 1)``. In the former, a single Dice score is computed relative to the counts. In the latter, a</span>
+<span class="sd">        **MEAN** dice score over the samples is computed. The second setting is useful, for example, if you are</span>
+<span class="sd">        computing the Dice score per image and then averaging. The first setting is useful, for example, if you want</span>
+<span class="sd">        to treat all examples as a **SINGLE** image.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            true_positives (torch.Tensor): Counts associated with positive predictions and positive labels</span>
-<span class="sd">            false_positives (torch.Tensor): Counts associated with positive predictions and negative labels</span>
-<span class="sd">            true_negatives (torch.Tensor): Counts associated with negative predictions and negative labels</span>
-<span class="sd">            false_negatives (torch.Tensor): Counts associated with negative predictions and positive labels</span>
+<span class="sd">            true_positives (torch.Tensor): Counts associated with positive predictions and positive labels.</span>
+<span class="sd">            false_positives (torch.Tensor): Counts associated with positive predictions and negative labels.</span>
+<span class="sd">            true_negatives (torch.Tensor): Counts associated with negative predictions and negative labels.</span>
+<span class="sd">            false_negatives (torch.Tensor): Counts associated with negative predictions and positive labels.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Metrics: A mean dice score associated with the counts</span>
+<span class="sd">            Metrics: A mean dice score associated with the counts.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># compute dice coefficients and return mean</span>
         <span class="n">dice</span> <span class="o">=</span> <span class="n">compute_dice_on_count_tensors</span><span class="p">(</span><span class="n">true_positives</span><span class="p">,</span> <span class="n">false_positives</span><span class="p">,</span> <span class="n">false_negatives</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zero_division</span><span class="p">)</span>
@@ -799,11 +810,11 @@
 <span class="sd">        Computes the Dice score relative to the single input and target tensors provided.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            input (torch.Tensor): predictions tensor</span>
-<span class="sd">            target (torch.Tensor): target tensor</span>
+<span class="sd">            input (torch.Tensor): predictions tensor.</span>
+<span class="sd">            target (torch.Tensor): target tensor.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Scalar: Mean dice score for the provided tensors</span>
+<span class="sd">            Scalar: Mean dice score for the provided tensors.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">true_positives</span><span class="p">,</span> <span class="n">false_positives</span><span class="p">,</span> <span class="n">true_negatives</span><span class="p">,</span> <span class="n">false_negatives</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">count_tp_fp_tn_fn</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
         <span class="n">dice_metric</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_from_counts</span><span class="p">(</span><span class="n">true_positives</span><span class="p">,</span> <span class="n">false_positives</span><span class="p">,</span> <span class="n">true_negatives</span><span class="p">,</span> <span class="n">false_negatives</span><span class="p">)</span>

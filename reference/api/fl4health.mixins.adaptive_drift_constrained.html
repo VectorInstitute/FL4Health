@@ -516,14 +516,14 @@
 <dt class="sig sig-object py" id="fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/adaptive_drift_constrained.html#AdaptiveDriftConstrainedMixin.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Adaptive Drift Constrained Mixin.</p>
-<p>To be used with <cite>~fl4health.BaseClient</cite> in order to add the ability to compute
+<p>To be used with <code class="docutils literal notranslate"><span class="pre">~fl4health.BaseClient</span></code> in order to add the ability to compute
 losses via a constrained adaptive drift.</p>
-<p>NOTE: Rather than using <cite>AdaptiveDriftConstraintClient</cite>, if a client subclasses
-<cite>FlexibleClient</cite>, than this mixin could be used on that subclass to implement the
+<p><strong>NOTE</strong>: Rather than using <code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstraintClient</span></code>, if a client subclasses
+<code class="docutils literal notranslate"><span class="pre">FlexibleClient</span></code>, than this mixin could be used on that subclass to implement the
 adaptive drift constraint.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#RuntimeError" title="(in Python v3.10)"><strong>RuntimeError</strong></a> – when the inheriting class does not satisfy <cite>FlexibleClientProtocolPreSetup</cite>.</p>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#RuntimeError" title="(in Python v3.10)"><strong>RuntimeError</strong></a> – When the inheriting class does not satisfy <code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocolPreSetup</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -534,7 +534,7 @@ adaptive drift constraint.</p>
 <dd><p>Computes the drift loss for the client model and drift tensors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Computed penalty loss tensor</p>
+<dd class="field-odd"><p>Computed penalty loss tensor.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>torch.Tensor</p>
@@ -573,7 +573,8 @@ this case.</p>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – Configurations to allow for customization of this functions behavior</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Parameters and training loss packed together into a list of numpy arrays to be sent to the server</p>
+<dd class="field-even"><p>Parameters and training loss packed together into a list of numpy arrays to be sent to the
+server.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>NDArrays</p>

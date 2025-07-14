@@ -521,10 +521,10 @@ client-side early stopping and server-side drift-aware adaptive optimization.</p
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_path</strong> (<em>Path</em>) – path to the data to be used to load the data for client-side training</p></li>
-<li><p><strong>metrics</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric" title="fl4health.metrics.base_metrics.Metric"><em>Metric</em></a><em>]</em>) – Metrics to be computed based on the labels and predictions of the client model</p></li>
+<li><p><strong>data_path</strong> (<em>Path</em>) – path to the data to be used to load the data for client-side training.</p></li>
+<li><p><strong>metrics</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric" title="fl4health.metrics.base_metrics.Metric"><em>Metric</em></a><em>]</em>) – Metrics to be computed based on the labels and predictions of the client model.</p></li>
 <li><p><strong>device</strong> (<em>torch.device</em>) – Device indicator for where to send the model, batches, labels etc. Often “cpu” or
-“cuda”</p></li>
+“cuda”.</p></li>
 <li><p><strong>loss_meter_type</strong> (<a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.LossMeterType" title="fl4health.utils.losses.LossMeterType"><em>LossMeterType</em></a><em>, </em><em>optional</em>) – Type of meter used to track and compute the losses over
 each batch. Defaults to <code class="docutils literal notranslate"><span class="pre">LossMeterType.AVERAGE</span></code>.</p></li>
 <li><p><strong>checkpoint_and_state_module</strong> (<a class="reference internal" href="fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.ClientCheckpointAndStateModule" title="fl4health.checkpointing.client_module.ClientCheckpointAndStateModule"><em>ClientCheckpointAndStateModule</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A module meant to handle

@@ -566,9 +566,9 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            checkpoint_dir (Path): Directory to which checkpoints are saved. This can be modified later with</span>
-<span class="sd">                `set_checkpoint_path`</span>
+<span class="sd">                ``set_checkpoint_path``</span>
 <span class="sd">            checkpoint_name (str): Name of the checkpoint to be saved. If None at time of state saving, a default name</span>
-<span class="sd">                will be given to the checkpoint. This can be changed later with `set_checkpoint_path`</span>
+<span class="sd">                will be given to the checkpoint. This can be changed later with ``set_checkpoint_path``</span>
 <span class="sd">            snapshot_attrs (dict[str, tuple[AbstractSnapshotter, Any]]): Attributes that we need to save in order</span>
 <span class="sd">                to allow for restarting of training.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -641,7 +641,8 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.StateCheckpointer.checkpoint_exists">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">checkpoint_exists</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Check if a checkpoint exists at the checkpoint_path constructed as ``checkpoint_dir`` + ``checkpoint_name``.</span>
+<span class="sd">        Check if a checkpoint exists at the ``checkpoint_path`` constructed as ``checkpoint_dir`` +</span>
+<span class="sd">        ``checkpoint_name``.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            bool: True if checkpoint exists, otherwise false.</span>
@@ -797,7 +798,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Load the state of the attribute using the snapshotter&#39;s ``load_attribute`` functionality.</span>
 
-<span class="sd">        NOTE: This function assumes that ``snapshot_ckpt`` has been populated with the right data loaded from disk.</span>
+<span class="sd">        **NOTE**: This function assumes that ``snapshot_ckpt`` has been populated with the right data loaded from disk.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            snapshotter (dict[str, Any]): Snapshotter object to return the state of the attribute.</span>
@@ -829,20 +830,20 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            checkpoint_dir (Path): Directory to which checkpoints are saved. This can be modified later with</span>
-<span class="sd">                `set_checkpoint_path`</span>
+<span class="sd">                ``set_checkpoint_path``</span>
 <span class="sd">            checkpoint_name (str | None, optional): Name of the checkpoint to be saved. If None, but ``checkpoint_dir``</span>
 <span class="sd">                is set then a default ``checkpoint_name`` based on the underlying name of the client to be</span>
 <span class="sd">                checkpointed will be set of the form ``f&quot;client_{client.client_name}_state.pt&quot;``. This can be changed</span>
-<span class="sd">                later with `set_checkpoint_path`. Defaults to None.</span>
+<span class="sd">                later with ``set_checkpoint_path``. Defaults to None.</span>
 <span class="sd">            snapshot_attrs (dict[str, tuple[AbstractSnapshotter, Any]] | None, optional): Attributes that we need to</span>
 <span class="sd">                save in order to allow for restarting of training. If None, a sensible default set of attributes and</span>
 <span class="sd">                their associated snapshotters for an FL client are set. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># If snapshot_attrs is None, we set a sensible default set of attributes to be saved. These are a minimal</span>
         <span class="c1"># set of attributes that can be used for per round checkpointing or early stopping.</span>
-        <span class="c1"># NOTE: These default attributes are useful for state checkpointing a BasicClient. More sophisticated clients</span>
-        <span class="c1"># may require more attributes to fully support training restarts and early stopping. For a server example, see</span>
-        <span class="c1"># NnUnetServerStateCheckpointer.</span>
+        <span class="c1"># NOTE: These default attributes are useful for state checkpointing a BasicClient. More sophisticated</span>
+        <span class="c1"># clients may require more attributes to fully support training restarts and early stopping. For a server</span>
+        <span class="c1"># example, see NnUnetServerStateCheckpointer.</span>
         <span class="k">if</span> <span class="n">snapshot_attrs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">snapshot_attrs</span> <span class="o">=</span> <span class="p">{</span>
                 <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">TorchModuleSnapshotter</span><span class="p">(),</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">),</span>
@@ -918,7 +919,7 @@
 <span class="sd">                attributes specified in ``snapshot_attrs`` are loaded. Defaults to None.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            bool: True if a checkpoint is successfully loaded. False otherwise</span>
+<span class="sd">            bool: True if a checkpoint is successfully loaded. False otherwise.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Store client for access in functions</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">client</span>
@@ -986,11 +987,11 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            checkpoint_dir (Path): Directory to which checkpoints are saved. This can be modified later with</span>
-<span class="sd">                `set_checkpoint_path`</span>
+<span class="sd">                ``set_checkpoint_path``</span>
 <span class="sd">            checkpoint_name (str | None, optional): Name of the checkpoint to be saved. If None, but ``checkpoint_dir``</span>
 <span class="sd">                is set then a default ``checkpoint_name`` based on the underlying name of the client to be</span>
 <span class="sd">                checkpointed will be set of the form ``f&quot;f&quot;server_{self.server.server_name}_state.pt&quot;&quot;``. This can be</span>
-<span class="sd">                updated later  with `set_checkpoint_path`. Defaults to None.</span>
+<span class="sd">                updated later  with ``set_checkpoint_path``. Defaults to None.</span>
 <span class="sd">            snapshot_attrs (dict[str, tuple[AbstractSnapshotter, Any]] | None, optional): Attributes that we need to</span>
 <span class="sd">                save in order to allow for restarting of training. If None, a sensible default set of attributes and</span>
 <span class="sd">                their associated snapshotters for an FL client are set. Defaults to None.</span>
@@ -1146,11 +1147,11 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            checkpoint_dir (Path): Directory to which checkpoints are saved. This can be modified later with</span>
-<span class="sd">                `set_checkpoint_path`</span>
+<span class="sd">                ``set_checkpoint_path``</span>
 <span class="sd">            checkpoint_name (str | None, optional): Name of the checkpoint to be saved. If None, but ``checkpoint_dir``</span>
 <span class="sd">                is set then a default ``checkpoint_name`` based on the underlying name of the client to be</span>
 <span class="sd">                checkpointed will be set of the form ``f&quot;f&quot;server_{self.server.server_name}_state.pt&quot;&quot;``. This can be</span>
-<span class="sd">                updated later  with `set_checkpoint_path`. Defaults to None.</span>
+<span class="sd">                updated later  with ``set_checkpoint_path``. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Go beyond default snapshot_attrs with nnUNet-specific attributes.</span>
         <span class="n">nnunet_snapshot_attrs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">AbstractSnapshotter</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>

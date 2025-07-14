@@ -527,7 +527,7 @@ data matrix.</p>
 <li><p>If <code class="docutils literal notranslate"><span class="pre">low_rank</span></code> is set to True, then a value <span class="math notranslate nohighlight">\(q\)</span> for <code class="docutils literal notranslate"><span class="pre">rank_estimation</span></code> can be chosen according to the
 following criteria:</p>
 <ul>
-<li><p>in general, <span class="math notranslate nohighlight">\(k \leq q \leq \min(2\cdot k, m, n)\)</span>. For large low-rank matrices, take
+<li><p>In general, <span class="math notranslate nohighlight">\(k \leq q \leq \min(2\cdot k, m, n)\)</span>. For large low-rank matrices, take
 <span class="math notranslate nohighlight">\(q = k + l\)</span>, where <span class="math notranslate nohighlight">\(5 \leq l \leq 10\)</span>.
 If <span class="math notranslate nohighlight">\(k\)</span> is relatively small compared to <span class="math notranslate nohighlight">\(\min(m, n)\)</span>, choosing <span class="math notranslate nohighlight">\(l = 0, 1, 2\)</span> may be
 sufficient.</p></li>
@@ -603,7 +603,7 @@ lower-dimensional subspace, and whether to add the data mean after projecting ba
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>variance after projection as defined above.</p>
+<dd class="field-even"><p>Variance after projection as defined above.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)">float</a></p>
@@ -615,11 +615,11 @@ lower-dimensional subspace, and whether to add the data mean after projecting ba
 <dt class="sig sig-object py" id="fl4health.model_bases.pca.PcaModule.compute_reconstruction_error">
 <span class="sig-name descname"><span class="pre">compute_reconstruction_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.compute_reconstruction_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.compute_reconstruction_error" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the reconstruction error of X under PCA reconstruction.</p>
-<p>More precisely, if X is an N by d data matrix whose <em>rows</em> are the data points,
+<p>More precisely, if <code class="docutils literal notranslate"><span class="pre">X</span></code> is an <code class="docutils literal notranslate"><span class="pre">N</span></code> by <code class="docutils literal notranslate"><span class="pre">d</span></code> data matrix whose <em>rows</em> are the data points,
 and U is the matrix whose <em>columns</em> are the principal components of X, then the reconstruction
-loss is defined as 1 / N * | X &#64; U &#64; U.T - X| ** 2.</p>
-<p><strong>NOTE</strong>: The reconstruction (after centering) is X &#64; U &#64; U.T because this method assumes that the rows
-of X are the data points while the columns of U are the principal components.</p>
+loss is defined as <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">/</span> <span class="pre">N</span> <span class="pre">*</span> <span class="pre">|</span> <span class="pre">X</span> <span class="pre">&#64;</span> <span class="pre">U</span> <span class="pre">&#64;</span> <span class="pre">U.T</span> <span class="pre">-</span> <span class="pre">X|</span> <span class="pre">**</span> <span class="pre">2</span></code>.</p>
+<p><strong>NOTE</strong>: The reconstruction (after centering) is <code class="docutils literal notranslate"><span class="pre">X</span> <span class="pre">&#64;</span> <span class="pre">U</span> <span class="pre">&#64;</span> <span class="pre">U.T</span></code> because this method assumes that the rows
+of <code class="docutils literal notranslate"><span class="pre">X</span></code> are the data points while the columns of U are the principal components.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -630,7 +630,7 @@ lower-dimensional subspace, and whether to add the data mean after projecting ba
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>reconstruction loss as defined above.</p>
+<dd class="field-even"><p>Reconstruction loss as defined above.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)">float</a></p>
@@ -667,14 +667,14 @@ singular values.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.pca.PcaModule.maybe_reshape">
 <span class="sig-name descname"><span class="pre">maybe_reshape</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.maybe_reshape"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.maybe_reshape" title="Link to this definition">¶</a></dt>
-<dd><p>Reshape input tensor X as needed so SVD can be computed. Reshaping is required when each data point is an
-N-dimensional tensor because PCA requires X to be a 2D data matrix.</p>
+<dd><p>Reshape input tensor <code class="docutils literal notranslate"><span class="pre">X</span></code> as needed so SVD can be computed. Reshaping is required when each data point is an
+N-dimensional tensor because PCA requires <code class="docutils literal notranslate"><span class="pre">X</span></code> to be a 2D data matrix.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – Data matrix</p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – Data matrix.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>tensor flattened to be 2D</p>
+<dd class="field-even"><p>Tensor flattened to be 2D.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Tensor</p>
@@ -685,13 +685,13 @@ N-dimensional tensor because PCA requires X to be a 2D data matrix.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.pca.PcaModule.prepare_data_forward">
 <span class="sig-name descname"><span class="pre">prepare_data_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.prepare_data_forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.prepare_data_forward" title="Link to this definition">¶</a></dt>
-<dd><p>Prepare input data X for PCA by reshaping and centering it as needed.</p>
+<dd><p>Prepare input data <code class="docutils literal notranslate"><span class="pre">X</span></code> for PCA by reshaping and centering it as needed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x</strong> (<em>Tensor</em>) – Data matrix.</p></li>
 <li><p><strong>center_data</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a>) – If true, then the data mean will be subtracted from all data points prior to
-performing PCA. If center_data is false, it is expected that the data has already been centered and
+performing PCA. If <code class="docutils literal notranslate"><span class="pre">center_data</span></code> is false, it is expected that the data has already been centered and
 an exception will be thrown if it is not.</p></li>
 </ul>
 </dd>
@@ -730,18 +730,18 @@ now wish to add back the data mean. Defaults to False.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.pca.PcaModule.project_lower_dim">
 <span class="sig-name descname"><span class="pre">project_lower_dim</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center_data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/pca.html#PcaModule.project_lower_dim"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.pca.PcaModule.project_lower_dim" title="Link to this definition">¶</a></dt>
-<dd><p>Project input data X onto the top k principal components.</p>
-<p><em>NOTE*</em>: The result of projection (after centering) is X &#64; U because this method assumes that the rows of X
-are the data points while the columns of U are the principal components.</p>
+<dd><p>Project input data <code class="docutils literal notranslate"><span class="pre">X</span></code> onto the top k principal components.</p>
+<p><em>NOTE*</em>: The result of projection (after centering) is <code class="docutils literal notranslate"><span class="pre">X</span> <span class="pre">&#64;</span> <span class="pre">U</span></code> because this method assumes that the rows of
+<code class="docutils literal notranslate"><span class="pre">X</span></code> are the data points while the columns of <code class="docutils literal notranslate"><span class="pre">U</span></code> are the principal components.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x</strong> (<em>Tensor</em>) – Input data matrix whose rows are the data points.</p></li>
-<li><p><strong>k</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The number of principal components onto which projection is done. If k is None,
-then all principal components will be used in the projection. Defaults to None.</p></li>
+<li><p><strong>k</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The number of principal components onto which projection is done. If <code class="docutils literal notranslate"><span class="pre">k</span></code> is
+None, then all principal components will be used in the projection. Defaults to None.</p></li>
 <li><p><strong>center_data</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If true, then the <em>training</em> data mean (learned in the forward pass)
-will be subtracted from all data points prior to projection. If center_data is false, it is expected
-that the data has already been centered in this manner by the user. Defaults to False.</p></li>
+will be subtracted from all data points prior to projection. If <code class="docutils literal notranslate"><span class="pre">center_data</span></code> is false, it is
+expected that the data has already been centered in this manner by the user. Defaults to False.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -760,7 +760,7 @@ that the data has already been centered in this manner by the user. Defaults to 
 validation/test data later, if needed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – Data matrix</p>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – Data matrix.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>

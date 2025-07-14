@@ -527,7 +527,7 @@
 <span class="sd">        encoder module and decode the output of the encoder using the decoder module.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            encoder (nn.Module): Model for encoding the input</span>
+<span class="sd">            encoder (nn.Module): Model for encoding the input.</span>
 <span class="sd">            decoder (nn.Module): Model for encoding the output. This module should be compatible with the output</span>
 <span class="sd">                structure of the encoder module.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -540,7 +540,18 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.model_bases.autoencoders_base.html#fl4health.model_bases.autoencoders_base.AbstractAe.forward">[docs]</a>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
-        <span class="c1"># Forward is called in client classes with a single input tensor.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward is called in client classes with a single input tensor.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            input (torch.Tensor): Input tensor.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            NotImplementedError: Should be implemented in inheriting classes.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            torch.Tensor: Tensor after passing through module.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 </div>
 
@@ -558,7 +569,7 @@
 <span class="sd">        and decode the output of the encoder using the decoder module.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            encoder (nn.Module): Model for encoding the input</span>
+<span class="sd">            encoder (nn.Module): Model for encoding the input.</span>
 <span class="sd">            decoder (nn.Module): Model for encoding the output. This module should be compatible with the output</span>
 <span class="sd">                structure of the encoder module.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -588,7 +599,7 @@
 <span class="sd">        Defines the forward associated with decoding a latent vector encoded by the encoder from some input.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            latent_vector (torch.Tensor): Latent vector to be decoded</span>
+<span class="sd">            latent_vector (torch.Tensor): Latent vector to be decoded.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: Decoded tensor.</span>
@@ -604,7 +615,7 @@
 <span class="sd">        to reconstruct the input through the encoder-decoder pipeline.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            input (torch.Tensor): Input to pass through the encoder</span>
+<span class="sd">            input (torch.Tensor): Input to pass through the encoder.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: Reconstructed input after encoding and decoding with the model.</span>
@@ -644,7 +655,7 @@
 <span class="sd">        autoencoders.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            input (torch.Tensor): Input to be encoded</span>
+<span class="sd">            input (torch.Tensor): Input to be encoded.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            tuple[torch.Tensor, torch.Tensor]: Mean and log variance values of the same dimensionality representing</span>
@@ -668,10 +679,10 @@
 <span class="sd">                .. math::</span>
 <span class="sd">                    \\mu + \\epsilon \\cdot \\exp \\left(0.5 \\cdot \\text{logvar} \\right),</span>
 
-<span class="sd">                where :math:`\\epsilon \\sim \\mathcal{N}(\\mathbf{0}, I)`</span>
+<span class="sd">                where :math:`\\epsilon \\sim \\mathcal{N}(\\mathbf{0}, I)`.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            torch.Tensor: Decoding from the latent vector</span>
+<span class="sd">            torch.Tensor: Decoding from the latent vector.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">decoder</span><span class="p">(</span><span class="n">latent_vector</span><span class="p">)</span></div>
 
@@ -698,6 +709,15 @@
 <div class="viewcode-block" id="VariationalAe.forward">
 <a class="viewcode-back" href="../../../reference/api/fl4health.model_bases.autoencoders_base.html#fl4health.model_bases.autoencoders_base.VariationalAe.forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward through the full encoder and decoder.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            input (torch.Tensor): input tensor.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            torch.Tensor: reconstruction of the input tensor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
         <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span><span class="p">)</span>
         <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
@@ -742,12 +762,12 @@
 <span class="sd">        accordingly. Ex: Using the condition in the middle layers of encoder.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            input (torch.Tensor): Input tensor</span>
+<span class="sd">            input (torch.Tensor): Input tensor.</span>
 <span class="sd">            condition (torch.Tensor | None, optional): Conditional information to be used by the encoder. Defaults to</span>
 <span class="sd">                None.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            tuple[torch.Tensor, torch.Tensor]: mu and logvar, similar to the variational auto-encoder.</span>
+<span class="sd">            tuple[torch.Tensor, torch.Tensor]: ``mu`` and ``logvar``, similar to the variational auto-encoder.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">condition</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">mu</span><span class="p">,</span> <span class="n">logvar</span></div>
@@ -768,7 +788,7 @@
 <span class="sd">                .. math::</span>
 <span class="sd">                    \\mu + \\epsilon \\cdot \\exp \\left(0.5 \\cdot \\text{logvar} \\right),</span>
 
-<span class="sd">                where :math:`\\epsilon \\sim \\mathcal{N}(\\mathbf{0}, I)`</span>
+<span class="sd">                where :math:`\\epsilon \\sim \\mathcal{N}(\\mathbf{0}, I)`.</span>
 <span class="sd">            condition (torch.Tensor | None, optional): Conditioning information to be used by the decoder during the</span>
 <span class="sd">                mapping of the ``latent_vector`` to an output. Defaults to None.</span>
 

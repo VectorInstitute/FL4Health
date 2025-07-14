@@ -534,12 +534,12 @@
 <span class="sd">        for optimization of the coefficients, beta.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            device (torch.device): Device onto which tensors should be moved</span>
+<span class="sd">            device (torch.device): Device onto which tensors should be moved.</span>
 <span class="sd">            gammas (torch.Tensor | None, optional): These are known as the length-scales of the RBF functions used</span>
-<span class="sd">                to compute the Mk-MMD distances. The length of this list defines the number of kernels used in the</span>
+<span class="sd">                to compute the MK-MMD distances. The length of this list defines the number of kernels used in the</span>
 <span class="sd">                norm measurement. If none, a default of 19 kernels is used. Defaults to None.</span>
 <span class="sd">            betas (torch.Tensor | None, optional): These are the linear coefficients used on the basis of kernels</span>
-<span class="sd">                to compute the Mk-MMD measure. If not provided, a unit-length, random default is constructed. These</span>
+<span class="sd">                to compute the MK-MMD measure. If not provided, a unit-length, random default is constructed. These</span>
 <span class="sd">                can be optimized using the functions of this class. Defaults to None.</span>
 <span class="sd">            minimize_type_two_error (bool | None, optional): Whether we&#39;re aiming to minimize the type II error in</span>
 <span class="sd">                optimizing the betas or maximize it. The first coincides with trying to minimize feature distance. The</span>
@@ -549,7 +549,7 @@
 <span class="sd">            layer_name (str | None, optional): The name of the layer to extract features from. Defaults to None.</span>
 <span class="sd">            perform_linear_approximation (bool | None, optional): Whether to use linear approximations for the</span>
 <span class="sd">                estimates of the mean and covariance of the kernel values. Experimentally, we have found that the</span>
-<span class="sd">                linear approximations largely hinder the statistical power of Mk-MMD. Defaults to False</span>
+<span class="sd">                linear approximations largely hinder the statistical power of MK-MMD. Defaults to False</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
@@ -1019,11 +1019,11 @@
 <span class="sd">        Compute the multi-kernel maximum mean discrepancy (MK-MMD) between the source and target domains.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            x_s (torch.Tensor): Source domain data, shape (n_samples, n_features)</span>
-<span class="sd">            x_t (torch.Tensor): Target domain data, shape (n_samples, n_features)</span>
+<span class="sd">            x_s (torch.Tensor): Source domain data, shape (``n_samples``, ``n_features``).</span>
+<span class="sd">            x_t (torch.Tensor): Target domain data, shape (``n_samples``, ``n_features``).</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            torch.Tensor: MK-MMD value</span>
+<span class="sd">            torch.Tensor: MK-MMD value.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_mkmmd</span><span class="p">(</span><span class="n">x_s</span><span class="p">,</span> <span class="n">x_t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">betas</span><span class="p">)</span></div>
 </div>

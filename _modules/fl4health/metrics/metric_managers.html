@@ -525,7 +525,7 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            metrics (Sequence[Metric]): List of metric to evaluate predictions on.</span>
-<span class="sd">            metric_manager_name (str): Name of the metric manager (ie train, val, test)</span>
+<span class="sd">            metric_manager_name (str): Name of the metric manager (i.e. train, val, test)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">original_metrics</span> <span class="o">=</span> <span class="n">metrics</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metric_manager_name</span> <span class="o">=</span> <span class="n">metric_manager_name</span>
@@ -539,7 +539,7 @@
 <span class="sd">        Updates (or creates then updates) a list of metrics for each prediction type.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            preds (TorchPredType): A dictionary of preds from the model</span>
+<span class="sd">            preds (TorchPredType): A dictionary of preds from the model.</span>
 <span class="sd">            target (TorchTargetType): The ground truth labels for the data. If target is a dictionary with more than</span>
 <span class="sd">                one item, then each value in the preds dictionary is evaluated with the value that has the same key in</span>
 <span class="sd">                the target dictionary. If target has only one item or is a ``torch.Tensor``, then the same target is</span>

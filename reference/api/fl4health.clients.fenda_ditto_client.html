@@ -57,6 +57,7 @@
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=ccdb6887"></script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../_static/require.min.js?v=53367eec"></script>
     <script src="../../_static/custom.js?v=c3ea0f6c"></script>
     
@@ -524,26 +525,27 @@ FENDA model. At the beginning of each server round, the feature extractor from g
 injected into the global feature extractor of the FENDA model.</p>
 <p>There are two distinct modes of operation:</p>
 <ul class="simple">
-<li><p>If freeze_global_feature_extractor is True. The global Ditto model feature extractor <strong>SETS AND FREEZES</strong>
-weights of global FENDA feature extractor. The local components of the FENDA model are trained and an
-additional drift loss is computed between the local and global feature extractors of the FENDA model.</p></li>
-<li><p>If freeze_global_feature_extractor is False. The global Ditto model feature extractor <strong>INITIALIZES</strong>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">freeze_global_feature_extractor</span></code> is True. The global Ditto model feature extractor
+<strong>SETS AND FREEZES</strong> weights of global FENDA feature extractor. The local components of the FENDA model are
+trained and an additional drift loss is computed between the local and global feature extractors of the
+FENDA model.</p></li>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">freeze_global_feature_extractor</span></code> is False. The global Ditto model feature extractor <strong>INITIALIZES</strong>
 weights of the FENDA model’s global feature extractor, both local and global components of FENDA are
 trained and a drift loss is calculated between Ditto global feature extractor and FENDA global feature
 extractor.</p></li>
 </ul>
 <p>The constraint for the FENDA model feature extractors discussed above uses a weight drift loss on its
 feature extraction modules.</p>
-<p><strong>NOTE:</strong> Unlike FENDA, the global feature extractor of the FENDA model is NOT exchanged with the server.
+<p><strong>NOTE</strong>: Unlike FENDA, the global feature extractor of the FENDA model is NOT exchanged with the server.
 Rather, the global Ditto model is exchanged and injected at each round into the global feature extractor. If
 the global feature extractor is frozen, then only the local components of the FENDA network are trained.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_path</strong> (<em>Path</em>) – path to the data to be used to load the data for client-side training</p></li>
-<li><p><strong>metrics</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric" title="fl4health.metrics.base_metrics.Metric"><em>Metric</em></a><em>]</em>) – Metrics to be computed based on the labels and predictions of the client model</p></li>
+<li><p><strong>data_path</strong> (<em>Path</em>) – path to the data to be used to load the data for client-side training.</p></li>
+<li><p><strong>metrics</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric" title="fl4health.metrics.base_metrics.Metric"><em>Metric</em></a><em>]</em>) – Metrics to be computed based on the labels and predictions of the client model.</p></li>
 <li><p><strong>device</strong> (<em>torch.device</em>) – Device indicator for where to send the model, batches, labels etc. Often “cpu” or
-“cuda”</p></li>
+“cuda”.</p></li>
 <li><p><strong>loss_meter_type</strong> (<a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.LossMeterType" title="fl4health.utils.losses.LossMeterType"><em>LossMeterType</em></a><em>, </em><em>optional</em>) – Type of meter used to track and compute the losses over
 each batch. Defaults to <code class="docutils literal notranslate"><span class="pre">LossMeterType.AVERAGE</span></code>.</p></li>
 <li><p><strong>checkpoint_and_state_module</strong> (<a class="reference internal" href="fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.ClientCheckpointAndStateModule" title="fl4health.checkpointing.client_module.ClientCheckpointAndStateModule"><em>ClientCheckpointAndStateModule</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A module meant to handle
@@ -558,11 +560,11 @@ validation. Uses <code class="docutils literal notranslate"><span class="pre">tq
 If not passed, a hash is randomly generated. Client state will use this as part of its state file
 name. Defaults to None.</p></li>
 <li><p><strong>freeze_global_feature_extractor</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Determines whether we freeze the FENDA global feature
-extractor during training. If freeze_global_feature_extractor is False, both the global and the local
-feature extractor in the local FENDA model will be trained. Otherwise, the global feature extractor
-submodule is frozen. If freeze_global_feature_extractor is True, the Ditto loss will be calculated
-using the local FENDA feature extractor and the global model. Otherwise, the loss is calculated using
-the global FENDA feature extractor and the global model. Defaults to False.</p></li>
+extractor during training. If <code class="docutils literal notranslate"><span class="pre">freeze_global_feature_extractor</span></code> is False, both the global and the
+local feature extractor in the local FENDA model will be trained. Otherwise, the global feature
+extractor submodule is frozen. If <code class="docutils literal notranslate"><span class="pre">freeze_global_feature_extractor</span></code> is True, the Ditto loss will be
+calculated using the local FENDA feature extractor and the global model. Otherwise, the loss is
+calculated using the global FENDA feature extractor and the global model. Defaults to False.</p></li>
 </ul>
 </dd>
 </dl>
@@ -573,12 +575,12 @@ the global FENDA feature extractor and the global model. Defaults to False.</p><
 <span class="sig-name descname"><span class="pre">compute_training_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/fenda_ditto_client.html#FendaDittoClient.compute_training_loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.fenda_ditto_client.FendaDittoClient.compute_training_loss" title="Link to this definition">¶</a></dt>
 <dd><p>Computes training losses given predictions of the global and local models and ground truth data.
 For the local model, we add to the vanilla loss function by including a Ditto penalty loss. This penalty
-is the L2 inner product between the initial global model feature extractor weights and the feature extractor
-weights of the local model. If the global feature extractor is not frozen, the penalty is computed using the
-global feature extractor of the local model. If it is frozen, the penalty is computed using the local feature
-extractor of the local model. This allows for flexibility in training scenarios where the feature extractors
-may differ between the global and local models. The penalty is stored in “backward”. The loss to
-optimize the global model is stored in the additional losses dictionary under “global_loss”.</p>
+is the <span class="math notranslate nohighlight">\(\ell^2\)</span> inner product between the initial global model feature extractor weights and the
+feature extractor weights of the local model. If the global feature extractor is not frozen, the penalty is
+computed using the global feature extractor of the local model. If it is frozen, the penalty is computed using
+the local feature extractor of the local model. This allows for flexibility in training scenarios where the
+feature extractors may differ between the global and local models. The penalty is stored in “backward”. The
+loss to optimize the global model is stored in the additional losses dictionary under “global_loss”.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -650,7 +652,7 @@ all <strong>GLOBAL</strong> models across clients AND the local FENDA model’s 
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – The config is sent by the FL server to allow for customization in the function if desired.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>GLOBAL</strong> model weights to be sent to the server for aggregation</p>
+<dd class="field-even"><p><strong>GLOBAL</strong> model weights to be sent to the server for aggregation.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>NDArrays</p>

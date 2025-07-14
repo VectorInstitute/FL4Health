@@ -515,9 +515,9 @@
 <dt class="sig sig-object py" id="fl4health.utils.dataset_converter.AutoEncoderDatasetConverter.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">condition</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">do_one_hot_encoding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom_converter_function</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition_vector_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/dataset_converter.html#AutoEncoderDatasetConverter.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.dataset_converter.AutoEncoderDatasetConverter.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>A dataset converter specific to formatting supervised data such as MNIST for self-supervised training in
-autoencoder-based models, and potentially handling the existence of additional input i.e. condition.</p>
-<p>This class includes three converter functions that are chosen based on the condition,
-other converter functions can be added or passed to support other conditions.</p>
+autoencoder-based models, and potentially handling the existence of additional input (i.e. condition).</p>
+<p>This class includes three converter functions that are chosen based on the condition, other converter
+functions can be added or passed to support other conditions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -608,7 +608,7 @@ loading step. They can also apply a light pre-processing step on datasets before
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>converter_function</strong> (<em>Callable</em><em>[</em><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>[</em><em>torch.Tensor</em><em>, </em><em>torch.Tensor</em><em>]</em><em>]</em>) – Function
-defining how the dataset should be converted</p></li>
+defining how the dataset should be converted.</p></li>
 <li><p><strong>dataset</strong> (<a class="reference internal" href="fl4health.utils.dataset.html#fl4health.utils.dataset.TensorDataset" title="fl4health.utils.dataset.TensorDataset"><em>TensorDataset</em></a><em> | </em><em>None</em>) – Dataset to be converted.</p></li>
 </ul>
 </dd>

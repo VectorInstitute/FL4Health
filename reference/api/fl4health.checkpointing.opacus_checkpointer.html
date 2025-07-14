@@ -514,7 +514,7 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.checkpointing.opacus_checkpointer.BestLossOpacusCheckpointer.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">checkpoint_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/opacus_checkpointer.html#BestLossOpacusCheckpointer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.opacus_checkpointer.BestLossOpacusCheckpointer.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>This checkpointer only uses the loss value provided to the maybe_checkpoint function to determine whether a
+<dd><p>This checkpointer only uses the loss value provided to the <code class="docutils literal notranslate"><span class="pre">maybe_checkpoint</span></code> function to determine whether a
 checkpoint should be save. We are always attempting to minimize the loss. So maximize is always set to false.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -604,8 +604,8 @@ this function, which requires the user to provide a model into which the state d
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>target_model</strong> (<em>nn.Module</em>) – Target model for loading state into.</p></li>
-<li><p><strong>target_is_grad_sample_module</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether the target_model that the <code class="docutils literal notranslate"><span class="pre">state_dict</span></code> is being
-loaded into is an Opacus module or just a vanilla Pytorch module. Defaults to False.</p></li>
+<li><p><strong>target_is_grad_sample_module</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether the <code class="docutils literal notranslate"><span class="pre">target_model</span></code> that the <code class="docutils literal notranslate"><span class="pre">state_dict</span></code> is
+being loaded into is an Opacus module or just a vanilla Pytorch module. Defaults to False.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>

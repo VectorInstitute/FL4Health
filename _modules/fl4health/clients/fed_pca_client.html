@@ -533,9 +533,9 @@
 <span class="sd">        Client that facilitates the execution of federated PCA.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            data_path (Path): path to the data to be used to load the data for client-side training</span>
+<span class="sd">            data_path (Path): path to the data to be used to load the data for client-side training.</span>
 <span class="sd">            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often &quot;cpu&quot; or</span>
-<span class="sd">                &quot;cuda&quot;</span>
+<span class="sd">                &quot;cuda&quot;.</span>
 <span class="sd">            model_save_dir (Path): Dir to save the PCA components for use later, perhaps in dimensionality reduction</span>
 <span class="sd">            client_name (str | None, optional): client name, mainly used for saving components. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -579,7 +579,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            NDArrays: Parameters representing the principal components computed by the client that need to be</span>
-<span class="sd">            aggregated in some way</span>
+<span class="sd">            aggregated in some way.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span><span class="p">:</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Setting up client and providing full model parameters to the server for initialization&quot;</span><span class="p">)</span>
@@ -615,13 +615,13 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.fed_pca_client.html#fl4health.clients.fed_pca_client.FedPCAClient.get_data_loaders">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_data_loaders</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">DataLoader</span><span class="p">,</span> <span class="n">DataLoader</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        User defined method that returns a PyTorch Train DataLoader and a PyTorch Validation DataLoader.</span>
+<span class="sd">        User defined method that returns a PyTorch Train ``DataLoader`` and a PyTorch Validation ``DataLoader``.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (Config): Configurations sent by the server to allow for customization of this functions behavior.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            tuple[DataLoader, DataLoader] Tuple of length 2. The client train and validation loader.</span>
+<span class="sd">            tuple[DataLoader, DataLoader]: Tuple of length 2. The client train and validation loader.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            NotImplementedError: To be defined in child class.</span>

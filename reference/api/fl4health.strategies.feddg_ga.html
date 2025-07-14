@@ -626,7 +626,7 @@ results for the next round.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>server_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – the current server round.</p></li>
+<li><p><strong>server_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The current server round.</p></li>
 <li><p><strong>results</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>[</em><em>ClientProxy</em><em>, </em><em>FitRes</em><em>]</em><em>]</em>) – The clients’ evaluate results.</p></li>
 <li><p><strong>failures</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>[</em><em>ClientProxy</em><em>, </em><em>FitRes</em><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#BaseException" title="(in Python v3.10)"><em>BaseException</em></a><em>]</em>) – the clients’ evaluate failures.</p></li>
 </ul>
@@ -649,9 +649,9 @@ aggregated evaluation metrics.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>server_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – the current server round.</p></li>
+<li><p><strong>server_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The current server round.</p></li>
 <li><p><strong>results</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>[</em><em>ClientProxy</em><em>, </em><em>FitRes</em><em>]</em><em>]</em>) – The clients’ fit results.</p></li>
-<li><p><strong>failures</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>[</em><em>ClientProxy</em><em>, </em><em>FitRes</em><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#BaseException" title="(in Python v3.10)"><em>BaseException</em></a><em>]</em>) – the clients’ fit failures.</p></li>
+<li><p><strong>failures</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>[</em><em>ClientProxy</em><em>, </em><em>FitRes</em><em>] </em><em>| </em><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#BaseException" title="(in Python v3.10)"><em>BaseException</em></a><em>]</em>) – The clients’ fit failures.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -684,8 +684,8 @@ not an integer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>server_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – the current server round.</p></li>
-<li><p><strong>parameters</strong> (<em>Parameters</em>) – the model parameters.</p></li>
+<li><p><strong>server_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The current server round.</p></li>
+<li><p><strong>parameters</strong> (<em>Parameters</em>) – The model parameters.</p></li>
 <li><p><strong>client_manager</strong> (<em>ClientManager</em>) – The client manager which holds all currently connected clients. It must
 be an instance of <code class="docutils literal notranslate"><span class="pre">FixedSamplingClientManager</span></code>.</p></li>
 </ul>
@@ -726,8 +726,8 @@ round, fit and evaluation metrics.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>server_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – the current server round.</p></li>
-<li><p><strong>cids</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>]</em>) – the list of client ids that participated in this round.</p></li>
+<li><p><strong>server_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The current server round.</p></li>
+<li><p><strong>cids</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>]</em>) – The list of client ids that participated in this round.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -745,7 +745,7 @@ round, fit and evaluation metrics.</p>
 <dd class="field-odd"><p><strong>results</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>[</em><em>ClientProxy</em><em>, </em><em>FitRes</em><em>]</em><em>]</em>) – The clients’ fit results.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>the weighted and aggregated results.</p>
+<dd class="field-even"><p>The weighted and aggregated results.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>(NDArrays)</p>

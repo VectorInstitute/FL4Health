@@ -510,22 +510,23 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="fl4health.metrics.utils.align_pred_and_target_shapes">
 <span class="sig-name descname"><span class="pre">align_pred_and_target_shapes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_dim</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/utils.html#align_pred_and_target_shapes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.utils.align_pred_and_target_shapes" title="Link to this definition">¶</a></dt>
-<dd><p>If necessary, attempts to correct shape mismatches between the given tensors by inferring which one
-to one-hot-encode. Note that if both preds and targets have the same shape then nothing needs to be modified. If
-there is a mismatch, it is assumed that the labels in one of the predictions or the targets are vector encoded
-in some way (either one-hot or soft) while the other is label index encoded.</p>
+<dd><p>If necessary, attempts to correct shape mismatches between the given tensors by inferring which one to
+one-hot-encode.</p>
+<p><strong>NOTE</strong>: If both preds and targets have the same shape then nothing needs to be modified. If there is a mismatch,
+it is assumed that the labels in one of the predictions or the targets are vector encoded in some way
+(either one-hot or soft) while the other is label index encoded.</p>
 <p>If one is vector encoded but not the other, then both are returned as vector encoded tensors.</p>
-<p>NOTE: This function ASSUMES label-index encoding if the shapes are misaligned. This assumption doesn’t necessarily
-hold in binary classification settings where continuous values might be used to indicate the positive label by
-default. As such, this function should not be used for those types of tensors.</p>
+<p><strong>NOTE</strong>: This function <strong>ASSUMES</strong> label-index encoding if the shapes are misaligned. This assumption doesn’t
+necessarily hold in binary classification settings where continuous values might be used to indicate the positive
+label by default. As such, this function should not be used for those types of tensors.</p>
 <p>For example, consider a problem with 3 label classes with the preds vector encoded and the targets label encoded</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">preds</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]])</span>
 
 <span class="n">targets</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([[</span><span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
 </pre></div>
 </div>
-<p>preds has shape (2, 3) and targets has shape (2, 1). This function will convert targets to a one-hot-encode tensor
-with contents</p>
+<p>preds has shape <code class="docutils literal notranslate"><span class="pre">(2,</span> <span class="pre">3)</span></code> and targets has shape <code class="docutils literal notranslate"><span class="pre">(2,</span> <span class="pre">1)</span></code>. This function will convert targets to a
+one-hot-encode tensor with contents</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">targets</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
@@ -558,7 +559,7 @@ tensor 2.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tensor1</strong> (<em>torch.Tensor</em>) – The reference tensor. Must have the same number of dimensions as tensor 2, or have
-exactly 1 more dimension (the label dim).</p></li>
+exactly 1 more dimension (the label dimension).</p></li>
 <li><p><strong>tensor2</strong> (<em>torch.Tensor</em>) – The non-reference tensor.</p></li>
 </ul>
 </dd>
@@ -579,23 +580,23 @@ next to the label dimension has the same size.</p>
 <dt class="sig sig-object py" id="fl4health.metrics.utils.map_label_index_tensor_to_one_hot">
 <span class="sig-name descname"><span class="pre">map_label_index_tensor_to_one_hot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">label_index_tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_dim</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/metrics/utils.html#map_label_index_tensor_to_one_hot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.metrics.utils.map_label_index_tensor_to_one_hot" title="Link to this definition">¶</a></dt>
 <dd><p>Maps the provided <code class="docutils literal notranslate"><span class="pre">label_index_tensor</span></code>, which has label indices at the provided <code class="docutils literal notranslate"><span class="pre">label_dim</span></code>. In the tensor,
-this dimension should be “empty”, i.e. have size 1. This function uses the shape provided by <code class="docutils literal notranslate"><span class="pre">target_shape</span></code> to
+this dimension should be “empty,” i.e. have size 1. This function uses the shape provided by <code class="docutils literal notranslate"><span class="pre">target_shape</span></code> to
 expand the label indices into one-hot encoded vectors in that dimension according the the size of the target
-dimension at <code class="docutils literal notranslate"><span class="pre">label_dim</span></code> in <code class="docutils literal notranslate"><span class="pre">target_shape</span></code>. For example, if label_index_tensor has shape (64, 10, 10, 1),
-label_dim = 3, and target_shape = (64, 10, 10, 4), then the new shape should be (64, 10, 10, 4) with [i, j, k, :]
-being a one-hot vector of length 4.</p>
+dimension at <code class="docutils literal notranslate"><span class="pre">label_dim</span></code> in <code class="docutils literal notranslate"><span class="pre">target_shape</span></code>. For example, if <code class="docutils literal notranslate"><span class="pre">label_index_tensor</span></code> has shape
+<code class="docutils literal notranslate"><span class="pre">(64,</span> <span class="pre">10,</span> <span class="pre">10,</span> <span class="pre">1)</span></code>, <code class="docutils literal notranslate"><span class="pre">label_dim</span> <span class="pre">=</span> <span class="pre">3</span></code>, and <code class="docutils literal notranslate"><span class="pre">target_shape</span> <span class="pre">=</span> <span class="pre">(64,</span> <span class="pre">10,</span> <span class="pre">10,</span> <span class="pre">4)</span></code>, then the new shape should be
+<code class="docutils literal notranslate"><span class="pre">(64,</span> <span class="pre">10,</span> <span class="pre">10,</span> <span class="pre">4)</span></code> with <code class="docutils literal notranslate"><span class="pre">[i,</span> <span class="pre">j,</span> <span class="pre">k,</span> <span class="pre">:]</span></code> being a one-hot vector of length <code class="docutils literal notranslate"><span class="pre">4</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>label_index_tensor</strong> (<em>torch.Tensor</em>) – Tensor to have label_dim dimension one-hot encoded accounting to
-target_shape and the indices of label_index_tensor in the label_dim</p></li>
-<li><p><strong>target_shape</strong> (<em>torch.Size</em>) – Shape we want to transform label_index_tensor to. Mainly used to establish the
+<code class="docutils literal notranslate"><span class="pre">target_shape</span></code> and the indices of <code class="docutils literal notranslate"><span class="pre">label_index_tensor</span></code> in the <code class="docutils literal notranslate"><span class="pre">label_dim</span></code></p></li>
+<li><p><strong>target_shape</strong> (<em>torch.Size</em>) – Shape we want to transform <code class="docutils literal notranslate"><span class="pre">label_index_tensor</span></code> to. Mainly used to establish the
 length of the one-hot encodings</p></li>
 <li><p><strong>label_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Dimension to one-hot encode.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Tensor with one-hot encoded label_dim.</p>
+<dd class="field-even"><p>Tensor with one-hot encoded <code class="docutils literal notranslate"><span class="pre">label_dim</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>torch.Tensor</p>

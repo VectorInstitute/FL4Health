@@ -520,9 +520,9 @@ exchanged with the server (the <code class="docutils literal notranslate"><span 
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>local_module</strong> (<em>nn.Module</em>) – Feature extraction module that is NOT exchanged with the server</p></li>
+<li><p><strong>local_module</strong> (<em>nn.Module</em>) – Feature extraction module that is NOT exchanged with the server.</p></li>
 <li><p><strong>global_module</strong> (<em>nn.Module</em>) – Feature extraction module that is exchanged with the server and aggregated with
-other client modules</p></li>
+other client modules.</p></li>
 <li><p><strong>model_head</strong> (<a class="reference internal" href="fl4health.model_bases.parallel_split_models.html#fl4health.model_bases.parallel_split_models.ParallelSplitHeadModule" title="fl4health.model_bases.parallel_split_models.ParallelSplitHeadModule"><em>ParallelSplitHeadModule</em></a>) – The model head that takes the output features from both the local
 and global modules to produce a prediction.</p></li>
 </ul>
@@ -553,17 +553,17 @@ and global modules to produce a prediction.</p></li>
 storage of the latent features produced by each of the parallel feature extractors is required/desired. This
 is a FENDA model, but the feature space outputs are guaranteed to be stored with the keys “local_features”
 and “global_features” along with the predictions. The user also has the option to “flatten” these features
-to be of shape <code class="docutils literal notranslate"><span class="pre">batch_size</span></code> x all features.</p>
+to be of shape <code class="docutils literal notranslate"><span class="pre">(batch_size,</span> <span class="pre">number</span> <span class="pre">of</span> <span class="pre">features)</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>local_module</strong> (<em>nn.Module</em>) – Feature extraction module that is NOT exchanged with the server</p></li>
+<li><p><strong>local_module</strong> (<em>nn.Module</em>) – Feature extraction module that is <strong>NOT</strong> exchanged with the server.</p></li>
 <li><p><strong>global_module</strong> (<em>nn.Module</em>) – Feature extraction module that is exchanged with the server and aggregated with
-other client modules</p></li>
+other client modules.</p></li>
 <li><p><strong>model_head</strong> (<a class="reference internal" href="fl4health.model_bases.parallel_split_models.html#fl4health.model_bases.parallel_split_models.ParallelSplitHeadModule" title="fl4health.model_bases.parallel_split_models.ParallelSplitHeadModule"><em>ParallelSplitHeadModule</em></a>) – The model head that takes the output features from both the local
 and global modules to produce a prediction.</p></li>
 <li><p><strong>flatten_features</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether the output features should be flattened to have shape
-<code class="docutils literal notranslate"><span class="pre">batch_size</span></code> x all features. Defaults to False.</p></li>
+<code class="docutils literal notranslate"><span class="pre">(batch_size,</span> <span class="pre">number</span> <span class="pre">of</span> <span class="pre">features)</span></code>. Defaults to False.</p></li>
 </ul>
 </dd>
 </dl>

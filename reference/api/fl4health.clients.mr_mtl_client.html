@@ -57,6 +57,7 @@
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=ccdb6887"></script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../_static/require.min.js?v=53367eec"></script>
     <script src="../../_static/custom.js?v=c3ea0f6c"></script>
     
@@ -520,16 +521,16 @@ client. However, instead of using a separate solver for the global model, as in 
 global model with aggregated local models on the server-side and use those weights to also constrain the
 training of a local model. The constraint for this local model is identical to the FedProx loss. The key
 difference is that the local model is never replaced with aggregated weights. It is always local.</p>
-<p><strong>NOTE:</strong> lambda, the drift loss weight, is initially set and potentially adapted by the server akin to the
+<p><strong>NOTE</strong>: lambda, the drift loss weight, is initially set and potentially adapted by the server akin to the
 heuristic suggested in the original FedProx paper. Adaptation is optional and can be disabled in the
 corresponding strategy used by the server</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_path</strong> (<em>Path</em>) – path to the data to be used to load the data for client-side training</p></li>
-<li><p><strong>metrics</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric" title="fl4health.metrics.base_metrics.Metric"><em>Metric</em></a><em>]</em>) – Metrics to be computed based on the labels and predictions of the client model</p></li>
+<li><p><strong>data_path</strong> (<em>Path</em>) – path to the data to be used to load the data for client-side training.</p></li>
+<li><p><strong>metrics</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric" title="fl4health.metrics.base_metrics.Metric"><em>Metric</em></a><em>]</em>) – Metrics to be computed based on the labels and predictions of the client model.</p></li>
 <li><p><strong>device</strong> (<em>torch.device</em>) – Device indicator for where to send the model, batches, labels etc. Often “cpu” or
-“cuda”</p></li>
+“cuda”.</p></li>
 <li><p><strong>loss_meter_type</strong> (<a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.LossMeterType" title="fl4health.utils.losses.LossMeterType"><em>LossMeterType</em></a><em>, </em><em>optional</em>) – Type of meter used to track and compute the losses over
 each batch. Defaults to <code class="docutils literal notranslate"><span class="pre">LossMeterType.AVERAGE</span></code>.</p></li>
 <li><p><strong>checkpoint_and_state_module</strong> (<a class="reference internal" href="fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.ClientCheckpointAndStateModule" title="fl4health.checkpointing.client_module.ClientCheckpointAndStateModule"><em>ClientCheckpointAndStateModule</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A module meant to handle
@@ -552,7 +553,7 @@ name. Defaults to None.</p></li>
 <dt class="sig sig-object py" id="fl4health.clients.mr_mtl_client.MrMtlClient.compute_training_loss">
 <span class="sig-name descname"><span class="pre">compute_training_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/mr_mtl_client.html#MrMtlClient.compute_training_loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.mr_mtl_client.MrMtlClient.compute_training_loss" title="Link to this definition">¶</a></dt>
 <dd><p>Computes training losses given predictions of the modes and ground truth data. We add to vanilla loss
-function by including Mean Regularized (MR) penalty loss which is the l2 inner product between the
+function by including Mean Regularized (MR) penalty loss which is the <span class="math notranslate nohighlight">\(\ell^2\)</span> inner product between the
 initial global model weights and weights of the current model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -615,8 +616,8 @@ Then set initialized attribute to True.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.mr_mtl_client.MrMtlClient.update_before_train">
 <span class="sig-name descname"><span class="pre">update_before_train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current_server_round</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/mr_mtl_client.html#MrMtlClient.update_before_train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.mr_mtl_client.MrMtlClient.update_before_train" title="Link to this definition">¶</a></dt>
-<dd><p>Hook method called before training with the number of current server rounds performed.
-<strong>NOTE:</strong> This method is called immediately <strong>AFTER</strong> the aggregated parameters are received from the server.
+<dd><p>Hook method called before training with the number of current server rounds performed.</p>
+<p><strong>NOTE</strong>: This method is called immediately <strong>AFTER</strong> the aggregated parameters are received from the server.
 For example, used by MOON and FENDA to save global modules after aggregation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

@@ -524,7 +524,7 @@ they are to be sampled at all.</p></li>
 In most cases it should be the “source of truth” for how FL training/evaluation should proceed. For
 example, the config used to produce the <code class="docutils literal notranslate"><span class="pre">on_fit_config_fn</span></code> and <code class="docutils literal notranslate"><span class="pre">on_evaluate_config_fn</span></code> for the
 strategy.</p>
-<p><strong>NOTE:</strong> This config is <strong>DISTINCT</strong> from the Flwr server config, which is extremely minimal.</p>
+<p><strong>NOTE</strong>: This config is <strong>DISTINCT</strong> from the Flwr server config, which is extremely minimal.</p>
 </p></li>
 <li><p><strong>strategy</strong> (<em>Strategy</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – The aggregation strategy to be used by the server to handle.
 client updates and other information potentially sent by the participating clients. If None the
@@ -560,7 +560,7 @@ updated prior to this function being called.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>server_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Which server round we’re currently on</p></li>
+<li><p><strong>server_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Server round we’re currently on.</p></li>
 <li><p><strong>timeout</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em> | </em><em>None</em>) – Time that the server should wait (in seconds) for responses from the clients.
 Defaults to None, which indicates indefinite timeout.</p></li>
 </ul>
@@ -590,7 +590,7 @@ clients selected to participate in federated training.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The first element of the tuple is a history object containing the full set of
+<dd class="field-even"><p>The first element of the tuple is a <code class="docutils literal notranslate"><span class="pre">History</span></code> object containing the full set of
 FL training results, including things like aggregated loss and metrics. Tuple also contains the elapsed
 time in seconds for the round.</p>
 </dd>
@@ -609,7 +609,7 @@ This function simply adds a bit of logging, post processing of the results.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>server_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Current round number of the FL training. Begins at 1</p></li>
+<li><p><strong>server_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Current round number of the FL training. Begins at 1.</p></li>
 <li><p><strong>timeout</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em> | </em><em>None</em>) – Time that the server should wait (in seconds) for responses from the clients.
 Defaults to None, which indicates indefinite timeout.</p></li>
 </ul>
@@ -641,7 +641,7 @@ when the server is restarted it will load from the most recent checkpoint.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The first element of the tuple is a history object containing the losses and
+<dd class="field-even"><p>The first element of the tuple is a <code class="docutils literal notranslate"><span class="pre">History</span></code> object containing the losses and
 metrics computed during training and validation. The second element of the tuple is the elapsed time in
 seconds.</p>
 </dd>
@@ -701,7 +701,7 @@ provided in the config. This can only be done after the clients have started up 
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_rounds</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The number of server rounds of FL to be performed</p></li>
+<li><p><strong>num_rounds</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The number of server rounds of FL to be performed.</p></li>
 <li><p><strong>timeout</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The server’s timeout parameter. Useful if one is requesting
 information from a client. Defaults to None, which indicates indefinite timeout.</p></li>
 </ul>

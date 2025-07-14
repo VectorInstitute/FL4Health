@@ -570,7 +570,7 @@
 <span class="sd">            model_checkpointers (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of</span>
 <span class="sd">                checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</span>
 <span class="sd">            state_checkpointer (ServerStateCheckpointer | None, optional): If defined, this checkpointer</span>
-<span class="sd">                 will be used to preserve FL training state to facilitate restarting training if interrupted.</span>
+<span class="sd">                will be used to preserve FL training state to facilitate restarting training if interrupted.</span>
 <span class="sd">                Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
@@ -650,7 +650,7 @@
 
 <span class="sd">        This function may be overridden in a child class if different behavior is desired.</span>
 
-<span class="sd">        **NOTE:** This function stores the weights directly in the self.model attribute</span>
+<span class="sd">        **NOTE**: This function stores the weights directly in the self.model attribute</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            server_parameters (Parameters): Parameters to be injected into the torch model architecture and</span>
@@ -679,7 +679,7 @@
 <span class="sd">                ``_hydrate_model_for_checkpointing`` function.</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            ValueError: Throws an error if this function is called, but no state checkpointer has been provided</span>
+<span class="sd">            ValueError: Throws an error if this function is called, but no state checkpointer has been provided.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_hydrate_model_for_checkpointing</span><span class="p">(</span><span class="n">server_parameters</span><span class="p">)</span>
@@ -693,20 +693,20 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.BaseServerCheckpointAndStateModule.maybe_load_state">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">maybe_load_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">:</span> <span class="n">FlServer</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parameters</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Facilitates loading of any pre-existing state in the directory of the state_checkpointer.</span>
-<span class="sd">        If a ``state_checkpointer`` is defined and a checkpoint exists at its checkpoint_path, this method hydrates</span>
-<span class="sd">        the model with the saved state and returns the corresponding server Parameters. If no checkpoint exists,</span>
-<span class="sd">        it logs this information and returns None.</span>
+<span class="sd">        Facilitates loading of any pre-existing state in the directory of the ``state_checkpointer``. If a</span>
+<span class="sd">        ``state_checkpointer`` is defined and a checkpoint exists at its ``checkpoint_path``, this method hydrates the</span>
+<span class="sd">        model with the saved state and returns the corresponding server Parameters. If no checkpoint exists, it logs</span>
+<span class="sd">        this information and returns None.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            server (FlServer): server into which checkpointed state will be loaded if a checkpoint exists</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            ValueError: Throws an error if this function is called, but no state checkpointer has been provided</span>
+<span class="sd">            ValueError: Throws an error if this function is called, but no state checkpointer has been provided.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Parameters | None: If the state checkpoint properly exists and is loaded correctly, server_parameters</span>
-<span class="sd">                is returned. Otherwise, we return a None (or throw an exception).</span>
+<span class="sd">            Parameters | None: If the state checkpoint properly exists and is loaded correctly, ``server_parameters``</span>
+<span class="sd">            is returned. Otherwise, we return a None (or throw an exception).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="p">(</span>
@@ -739,7 +739,7 @@
 <span class="sd">        This module is meant to be a base class for any server-side checkpointing module that relies on unpacking</span>
 <span class="sd">        of parameters to hydrate models for checkpointing. The specifics of the unpacking will be handled by the</span>
 <span class="sd">        child classes of the packer within the parameter exchange.</span>
-<span class="sd">        **NOTE:** This function ASSUMES full parameter exchange unpacking. If more complex unpacking/parameter exchange</span>
+<span class="sd">        **NOTE**: This function ASSUMES full parameter exchange unpacking. If more complex unpacking/parameter exchange</span>
 <span class="sd">        is used, this is not the right parent class.</span>
 
 <span class="sd">        Args:</span>

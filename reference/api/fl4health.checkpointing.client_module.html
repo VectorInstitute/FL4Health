@@ -541,7 +541,7 @@ after local training. <strong>NOTE</strong>: This is akin to “further fine-tun
 before local training <strong>NOTE</strong>: This is the “traditional” mechanism for global models.</p></li>
 </ul>
 <p>As a final note, for some methods, such as Ditto or MR-MTL, these checkpoints will actually be identical.
-That’s because the target model for these methods is never globally aggregated. That is, they remain local</p>
+That’s because the target model for these methods is never globally aggregated. That is, they remain local.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -597,11 +597,11 @@ and will be automatically saved into client’s attributes. If it doesn’t exis
 <dd class="field-odd"><p><strong>client</strong> (<a class="reference internal" href="fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient" title="fl4health.clients.basic_client.BasicClient"><em>BasicClient</em></a>) – client object into which state will be loaded if a checkpoint exists</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Throws an error if this function is called, but no state checkpointer has been provided</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Throws an error if this function is called, but no state checkpointer has been provided.</p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>If the state checkpoint properly exists and is loaded correctly, client’s attributes
-are set to the loaded values, and True is returned. Otherwise, we return False (or throw an exception).</p>
+<dd class="field-odd"><p>If the state checkpoint properly exists and is loaded correctly, client’s attributes are set to
+the loaded values, and True is returned. Otherwise, we return False (or throw an exception).</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)">bool</a></p>
@@ -620,7 +620,7 @@ This function should only be called if a <code class="docutils literal notransla
 <dd class="field-odd"><p><strong>client</strong> (<a class="reference internal" href="fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient" title="fl4health.clients.basic_client.BasicClient"><em>BasicClient</em></a>) – The client object from which state will be saved.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Throws an error if this function is called, but no state checkpointer has been provided</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Throws an error if this function is called, but no state checkpointer has been provided.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>

@@ -545,10 +545,10 @@
 <span class="sd">        models.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            data_path (Path): path to the data to be used to load the data for client-side training</span>
-<span class="sd">            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model</span>
+<span class="sd">            data_path (Path): path to the data to be used to load the data for client-side training.</span>
+<span class="sd">            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.</span>
 <span class="sd">            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often &quot;cpu&quot; or</span>
-<span class="sd">                &quot;cuda&quot;</span>
+<span class="sd">                &quot;cuda&quot;.</span>
 <span class="sd">            loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over</span>
 <span class="sd">                each batch. Defaults to ``LossMeterType.AVERAGE``.</span>
 <span class="sd">            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle</span>
@@ -589,8 +589,8 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.apfl_client.html#fl4health.clients.apfl_client.ApflClient.update_after_step">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">update_after_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">current_round</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Called after local train step on client. step is an integer that represents</span>
-<span class="sd">        the local training step that was most recently completed.</span>
+<span class="sd">        Called after local train step on client. Step is an integer that represents the local training step that was</span>
+<span class="sd">        most recently completed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_start_of_local_training</span><span class="p">(</span><span class="n">step</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">adaptive_alpha</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">update_alpha</span><span class="p">()</span></div>

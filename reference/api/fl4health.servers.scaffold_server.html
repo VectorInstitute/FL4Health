@@ -525,7 +525,7 @@ they are to be sampled at all.</p></li>
 In most cases it should be the “source of truth” for how FL training/evaluation should proceed. For
 example, the config used to produce the <code class="docutils literal notranslate"><span class="pre">on_fit_config_fn</span></code> and <code class="docutils literal notranslate"><span class="pre">on_evaluate_config_fn</span></code> for the
 strategy.</p>
-<p><strong>NOTE:</strong> This config is <strong>DISTINCT</strong> from the Flwr server config, which is extremely minimal.</p>
+<p><strong>NOTE</strong>: This config is <strong>DISTINCT</strong> from the Flwr server config, which is extremely minimal.</p>
 </p></li>
 <li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The amount of Gaussian noise to be added to the per sample gradient during
 DP-SGD.</p></li>
@@ -559,7 +559,9 @@ providing a <code class="docutils literal notranslate"><span class="pre">Config<
 request (which is default behavior for flower servers). Defaults to None.</p></li>
 <li><p><strong>server_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – An optional string name to uniquely identify server. This name is also
 used as part of any state checkpointing done by the server. Defaults to None.</p></li>
-<li><p><strong>accept_failures</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Determines whether the server should accept</p></li>
+<li><p><strong>accept_failures</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Determines whether the server should accept failures during training or
+evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
+and throw an exception. Defaults to True.</p></li>
 </ul>
 </dd>
 </dl>
@@ -608,7 +610,7 @@ they are to be sampled at all.</p></li>
 In most cases it should be the “source of truth” for how FL training/evaluation should proceed. For
 example, the config used to produce the <code class="docutils literal notranslate"><span class="pre">on_fit_config_fn</span></code> and <code class="docutils literal notranslate"><span class="pre">on_evaluate_config_fn</span></code> for the
 strategy.</p>
-<p><strong>NOTE:</strong> This config is <strong>DISTINCT</strong> from the Flwr server config, which is extremely minimal.</p>
+<p><strong>NOTE</strong>: This config is <strong>DISTINCT</strong> from the Flwr server config, which is extremely minimal.</p>
 </p></li>
 <li><p><strong>strategy</strong> (<a class="reference internal" href="fl4health.strategies.scaffold.html#fl4health.strategies.scaffold.Scaffold" title="fl4health.strategies.scaffold.Scaffold"><em>Scaffold</em></a>) – The aggregation strategy to be used by the server to handle client updates and
 other information potentially sent by the participating clients. This strategy must be of SCAFFOLD
@@ -653,7 +655,7 @@ server waits for the minimum number of clients to be available set in the strate
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The first element of the tuple is a history object containing the full set of FL
+<dd class="field-even"><p>The first element of the tuple is a <code class="docutils literal notranslate"><span class="pre">History</span></code> object containing the full set of FL
 training results, including things like aggregated loss and metrics. Tuple also includes elapsed time in
 seconds for round.</p>
 </dd>

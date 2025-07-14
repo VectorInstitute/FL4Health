@@ -514,28 +514,28 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.masked_layers.masked_conv.MaskedConv1d.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'zeros'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/masked_layers/masked_conv.html#MaskedConv1d.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.masked_layers.masked_conv.MaskedConv1d.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>Implementation of masked Conv1d layers.</p>
-<p>Like regular Conv1d layers (i.e., nn.Conv1d module), a masked convolutional layer has a weight (i.e.,
+<dd><p>Implementation of masked <code class="docutils literal notranslate"><span class="pre">Conv1d</span></code> layers.</p>
+<p>Like regular <code class="docutils literal notranslate"><span class="pre">Conv1d</span></code> layers (i.e., <code class="docutils literal notranslate"><span class="pre">nn.Conv1d</span></code> module), a masked convolutional layer has a weight (i.e.,
 convolutional filter) and a (optional) bias. However, the weight and the bias do not receive gradient in
 back propagation. Instead, two score tensors - one for the weight and another for the bias - are maintained.</p>
 <p>In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores,
 which are then used to produce binary masks via Bernoulli sampling. Finally, the binary masks are applied to
 the weight and the bias. During training, gradients with respect to the score tensors are computed and used to
 update the score tensors.</p>
-<p><strong>NOTE:</strong> The scores are not assumed to be bounded between 0 and 1.</p>
+<p><strong>NOTE</strong>: The scores are not assumed to be bounded between 0 and 1.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>in_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels in the input image</p></li>
-<li><p><strong>out_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels produced by the convolution</p></li>
-<li><p><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a>) – Size of the convolving kernel</p></li>
-<li><p><strong>stride</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Stride of the convolution. Default: 1</p></li>
-<li><p><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – Padding added to both sides of the input. Default: 0</p></li>
+<li><p><strong>in_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels in the input image.</p></li>
+<li><p><strong>out_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels produced by the convolution.</p></li>
+<li><p><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a>) – Size of the convolving kernel.</p></li>
+<li><p><strong>stride</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Stride of the convolution. Default: 1.</p></li>
+<li><p><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – Padding added to both sides of the input. Default: 0.</p></li>
 <li><p><strong>padding_mode</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – <code class="docutils literal notranslate"><span class="pre">'zeros'</span></code>, <code class="docutils literal notranslate"><span class="pre">'reflect'</span></code>, <code class="docutils literal notranslate"><span class="pre">'replicate'</span></code> or <code class="docutils literal notranslate"><span class="pre">'circular'</span></code>.
-Default: <code class="docutils literal notranslate"><span class="pre">'zeros'</span></code></p></li>
-<li><p><strong>dilation</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Spacing between kernel elements. Default: 1</p></li>
-<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Number of blocked connections from input channels to output channels. Default: 1</p></li>
-<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, adds a learnable bias to the output. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
+Default: <code class="docutils literal notranslate"><span class="pre">'zeros'</span></code>.</p></li>
+<li><p><strong>dilation</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Spacing between kernel elements. Default: 1.</p></li>
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Number of blocked connections from input channels to output channels. Default: 1.</p></li>
+<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, adds a learnable bias to the output. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
 <li><p><strong>device</strong> (<em>torch.device</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Device to which this module should be sent. Defaults to None.</p></li>
 <li><p><strong>dtype</strong> (<em>torch.dtype</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Type of the tensors. Defaults to None.</p></li>
 </ul>
@@ -566,10 +566,10 @@ Default: <code class="docutils literal notranslate"><span class="pre">'zeros'</s
 <dd><p>Return an instance of <code class="docutils literal notranslate"><span class="pre">MaskedConv1d</span></code> whose weight and bias have the same values as those of <code class="docutils literal notranslate"><span class="pre">conv_module</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>conv_module</strong> (<em>nn.Conv1d</em>) – Module to be converted</p>
+<dd class="field-odd"><p><strong>conv_module</strong> (<em>nn.Conv1d</em>) – Module to be converted.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Module with masked layers added to enable FedPM training</p>
+<dd class="field-even"><p>Module with masked layers added to enable FedPM training.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#fl4health.model_bases.masked_layers.masked_conv.MaskedConv1d" title="fl4health.model_bases.masked_layers.masked_conv.MaskedConv1d">MaskedConv1d</a></p>
@@ -586,28 +586,28 @@ Default: <code class="docutils literal notranslate"><span class="pre">'zeros'</s
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.masked_layers.masked_conv.MaskedConv2d.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'zeros'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/masked_layers/masked_conv.html#MaskedConv2d.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.masked_layers.masked_conv.MaskedConv2d.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>Implementation of masked Conv2d layers.</p>
-<p>Like regular Conv2d layers (i.e., nn.Conv2d module), a masked convolutional layer has a weight (i.e.,
+<dd><p>Implementation of masked <code class="docutils literal notranslate"><span class="pre">Conv2d</span></code> layers.</p>
+<p>Like regular <code class="docutils literal notranslate"><span class="pre">Conv2d</span></code> layers (i.e., <code class="docutils literal notranslate"><span class="pre">nn.Conv2d</span></code> module), a masked convolutional layer has a weight (i.e.,
 convolutional filter) and a (optional) bias. However, the weight and the bias do not receive gradient in back
 propagation. Instead, two score tensors - one for the weight and another for the bias - are maintained.
 In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores, which
 are then used to produce binary masks via Bernoulli sampling. Finally, the binary masks are applied to the
 weight and the bias. During training, gradients with respect to the score tensors are computed and used to
 update the score tensors.</p>
-<p><strong>NOTE:</strong> The scores are not assumed to be bounded between 0 and 1.</p>
+<p><strong>NOTE</strong>: The scores are not assumed to be bounded between 0 and 1.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>in_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels in the input image</p></li>
-<li><p><strong>out_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels produced by the convolution</p></li>
-<li><p><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a>) – Size of the convolving kernel</p></li>
-<li><p><strong>stride</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Stride of the convolution. Default: 1</p></li>
-<li><p><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – Padding added to all four sides of the input. Default: 0</p></li>
+<li><p><strong>in_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels in the input image.</p></li>
+<li><p><strong>out_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels produced by the convolution.</p></li>
+<li><p><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a>) – Size of the convolving kernel.</p></li>
+<li><p><strong>stride</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Stride of the convolution. Default: 1.</p></li>
+<li><p><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – Padding added to all four sides of the input. Default: 0.</p></li>
 <li><p><strong>padding_mode</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – <code class="docutils literal notranslate"><span class="pre">'zeros'</span></code>, <code class="docutils literal notranslate"><span class="pre">'reflect'</span></code>, <code class="docutils literal notranslate"><span class="pre">'replicate'</span></code> or <code class="docutils literal notranslate"><span class="pre">'circular'</span></code>.
-Default: <code class="docutils literal notranslate"><span class="pre">'zeros'</span></code></p></li>
-<li><p><strong>dilation</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Spacing between kernel elements. Default: 1</p></li>
-<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Number of blocked connections from input channels to output channels. Default: 1</p></li>
-<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, adds a learnable bias to the output. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
+Default: <code class="docutils literal notranslate"><span class="pre">'zeros'</span></code>.</p></li>
+<li><p><strong>dilation</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Spacing between kernel elements. Default: 1.</p></li>
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Number of blocked connections from input channels to output channels. Default: 1.</p></li>
+<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, adds a learnable bias to the output. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
 <li><p><strong>device</strong> (<em>torch.device</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Device to which this module should be sent. Defaults to None.</p></li>
 <li><p><strong>dtype</strong> (<em>torch.dtype</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Type of the tensors. Defaults to None.</p></li>
 </ul>
@@ -621,7 +621,7 @@ Default: <code class="docutils literal notranslate"><span class="pre">'zeros'</s
 <dd><p>Forward for the Masked 2D Convolution.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>input</strong> (<em>Tensor</em>) – input tensor for the layer</p>
+<dd class="field-odd"><p><strong>input</strong> (<em>Tensor</em>) – input tensor for the layer.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>output tensor for the convolution</p>
@@ -635,13 +635,13 @@ Default: <code class="docutils literal notranslate"><span class="pre">'zeros'</s
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.masked_layers.masked_conv.MaskedConv2d.from_pretrained">
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_pretrained</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conv_module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/masked_layers/masked_conv.html#MaskedConv2d.from_pretrained"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.masked_layers.masked_conv.MaskedConv2d.from_pretrained" title="Link to this definition">¶</a></dt>
-<dd><p>Return an instance of MaskedConv2d whose weight and bias have the same values as those of conv_module.</p>
+<dd><p>Return an instance of <code class="docutils literal notranslate"><span class="pre">MaskedConv2d</span></code> whose weight and bias have the same values as those of <code class="docutils literal notranslate"><span class="pre">conv_module</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>conv_module</strong> (<em>nn.Conv2d</em>) – Module to be converted</p>
+<dd class="field-odd"><p><strong>conv_module</strong> (<em>nn.Conv2d</em>) – Module to be converted.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Module with masked layers to enable FedPM</p>
+<dd class="field-even"><p>Module with masked layers to enable FedPM.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#fl4health.model_bases.masked_layers.masked_conv.MaskedConv2d" title="fl4health.model_bases.masked_layers.masked_conv.MaskedConv2d">MaskedConv2d</a></p>
@@ -658,28 +658,28 @@ Default: <code class="docutils literal notranslate"><span class="pre">'zeros'</s
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.masked_layers.masked_conv.MaskedConv3d.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">padding_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'zeros'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/masked_layers/masked_conv.html#MaskedConv3d.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.masked_layers.masked_conv.MaskedConv3d.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>Implementation of masked Conv2d layers.</p>
-<p>Like regular Conv3d layers (i.e., nn.Conv3d module), a masked convolutional layer has a weight (i.e.,
+<dd><p>Implementation of masked <code class="docutils literal notranslate"><span class="pre">Conv3d</span></code> layers.</p>
+<p>Like regular <code class="docutils literal notranslate"><span class="pre">Conv3d</span></code> layers (i.e., <code class="docutils literal notranslate"><span class="pre">nn.Conv3d</span></code> module), a masked convolutional layer has a weight (i.e.,
 convolutional filter) and a (optional) bias. However, the weight and the bias do not receive gradient in back
 propagation. Instead, two score tensors - one for the weight and another for the bias - are maintained. In the
 forward pass, the score tensors are transformed by the Sigmoid function into probability scores, which are
 then used to produce binary masks via Bernoulli sampling. Finally, the binary masks are applied to the weight
 and the bias. During training, gradients with respect to the score tensors are computed and used to update the
 score tensors.</p>
-<p><strong>NOTE:</strong> The scores are not assumed to be bounded between 0 and 1.</p>
+<p><strong>NOTE</strong>: The scores are not assumed to be bounded between 0 and 1.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>in_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels in the input image</p></li>
-<li><p><strong>out_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels produced by the convolution</p></li>
-<li><p><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a>) – Size of the convolving kernel</p></li>
-<li><p><strong>stride</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Stride of the convolution. Default: 1</p></li>
-<li><p><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – Padding added to all six sides of the input. Default: 0</p></li>
+<li><p><strong>in_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels in the input image.</p></li>
+<li><p><strong>out_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels produced by the convolution.</p></li>
+<li><p><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a>) – Size of the convolving kernel.</p></li>
+<li><p><strong>stride</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Stride of the convolution. Default: 1.</p></li>
+<li><p><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – Padding added to all six sides of the input. Default: 0.</p></li>
 <li><p><strong>padding_mode</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – <code class="docutils literal notranslate"><span class="pre">'zeros'</span></code>, <code class="docutils literal notranslate"><span class="pre">'reflect'</span></code>, <code class="docutils literal notranslate"><span class="pre">'replicate'</span></code> or <code class="docutils literal notranslate"><span class="pre">'circular'</span></code>.
-Default: <code class="docutils literal notranslate"><span class="pre">'zeros'</span></code></p></li>
-<li><p><strong>dilation</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Spacing between kernel elements. Default: 1</p></li>
-<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Number of blocked connections from input channels to output channels. Default: 1</p></li>
-<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, adds a learnable bias to the output. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
+Default: <code class="docutils literal notranslate"><span class="pre">'zeros'</span></code>.</p></li>
+<li><p><strong>dilation</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Spacing between kernel elements. Default: 1.</p></li>
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Number of blocked connections from input channels to output channels. Default: 1.</p></li>
+<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, adds a learnable bias to the output. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
 <li><p><strong>device</strong> (<em>torch.device</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Device to which this module should be sent. Defaults to None.</p></li>
 <li><p><strong>dtype</strong> (<em>torch.dtype</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Type of the tensors. Defaults to None.</p></li>
 </ul>
@@ -693,10 +693,10 @@ Default: <code class="docutils literal notranslate"><span class="pre">'zeros'</s
 <dd><p>Forward for the Masked 3D Convolution.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>input</strong> (<em>Tensor</em>) – input tensor for the layer</p>
+<dd class="field-odd"><p><strong>input</strong> (<em>Tensor</em>) – input tensor for the layer.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>output tensor for the convolution</p>
+<dd class="field-even"><p>output tensor for the convolution.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Tensor</p>
@@ -707,13 +707,13 @@ Default: <code class="docutils literal notranslate"><span class="pre">'zeros'</s
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.masked_layers.masked_conv.MaskedConv3d.from_pretrained">
 <em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_pretrained</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">conv_module</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/masked_layers/masked_conv.html#MaskedConv3d.from_pretrained"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.masked_layers.masked_conv.MaskedConv3d.from_pretrained" title="Link to this definition">¶</a></dt>
-<dd><p>Return an instance of MaskedConv3d whose weight and bias have the same values as those of conv_module.</p>
+<dd><p>Return an instance of <code class="docutils literal notranslate"><span class="pre">MaskedConv3d</span></code> whose weight and bias have the same values as those of <code class="docutils literal notranslate"><span class="pre">conv_module</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>conv_module</strong> (<em>nn.Conv3d</em>) – Module to convert</p>
+<dd class="field-odd"><p><strong>conv_module</strong> (<em>nn.Conv3d</em>) – Module to convert.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Module with mask layers added to enable FedPM</p>
+<dd class="field-even"><p>Module with mask layers added to enable FedPM.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#fl4health.model_bases.masked_layers.masked_conv.MaskedConv3d" title="fl4health.model_bases.masked_layers.masked_conv.MaskedConv3d">MaskedConv3d</a></p>
@@ -740,22 +740,22 @@ another for the bias - are maintained. In the forward pass, the score tensors ar
 function into probability scores, which are then used to produce binary masks via Bernoulli sampling.
 Finally, the binary masks are applied to the weight and the bias. During training, gradients with respect to
 the score tensors are computed and used to update the score tensors.</p>
-<p><strong>NOTE:</strong> The scores are not assumed to be bounded between 0 and 1.</p>
+<p><strong>NOTE</strong>: The scores are not assumed to be bounded between 0 and 1.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>in_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels in the input image</p></li>
-<li><p><strong>out_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels produced by the transposed convolution</p></li>
-<li><p><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a>) – Size of the convolving kernel</p></li>
-<li><p><strong>stride</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Stride of the convolution. Default: 1</p></li>
+<li><p><strong>in_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels in the input image.</p></li>
+<li><p><strong>out_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels produced by the transposed convolution.</p></li>
+<li><p><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a>) – Size of the convolving kernel.</p></li>
+<li><p><strong>stride</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Stride of the convolution. Default: 1.</p></li>
 <li><p><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – <code class="docutils literal notranslate"><span class="pre">dilation</span> <span class="pre">*</span> <span class="pre">(kernel_size</span> <span class="pre">-</span> <span class="pre">1)</span> <span class="pre">-</span> <span class="pre">padding</span></code> zero-padding will be added to
-both sides of the input. Default: 0</p></li>
-<li><p><strong>output_padding</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Additional size added to one side of the output shape. Default: 0</p></li>
-<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Number of blocked connections from input channels to output channels. Default: 1</p></li>
-<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, adds a learnable bias to the output. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
-<li><p><strong>dilation</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Spacing between kernel elements. Default: 1</p></li>
+both sides of the input. Default: 0.</p></li>
+<li><p><strong>output_padding</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Additional size added to one side of the output shape. Default: 0.</p></li>
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Number of blocked connections from input channels to output channels. Default: 1.</p></li>
+<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, adds a learnable bias to the output. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><strong>dilation</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Spacing between kernel elements. Default: 1.</p></li>
 <li><p><strong>padding_mode</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – Mode to be used in padding the input image for processing. Defaults to
-“zeros”</p></li>
+“zeros”.</p></li>
 <li><p><strong>device</strong> (<em>torch.device</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Device to which this module should be sent. Defaults to None.</p></li>
 <li><p><strong>dtype</strong> (<em>torch.dtype</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Type of the tensors. Defaults to None.</p></li>
 </ul>
@@ -770,7 +770,7 @@ both sides of the input. Default: 0</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input</strong> (<em>Tensor</em>) – input to be mapped with the module</p></li>
+<li><p><strong>input</strong> (<em>Tensor</em>) – input to be mapped with the module.</p></li>
 <li><p><strong>output_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – Desired output from the transpose. Defaults to None.</p></li>
 </ul>
 </dd>
@@ -793,10 +793,10 @@ both sides of the input. Default: 0</p></li>
 <code class="docutils literal notranslate"><span class="pre">conv_module</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>conv_module</strong> (<em>nn.ConvTranspose1d</em>) – Target module to be converted</p>
+<dd class="field-odd"><p><strong>conv_module</strong> (<em>nn.ConvTranspose1d</em>) – Target module to be converted.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Module with masked layers to enable FedPM</p>
+<dd class="field-even"><p>Module with masked layers to enable FedPM.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#fl4health.model_bases.masked_layers.masked_conv.MaskedConvTranspose1d" title="fl4health.model_bases.masked_layers.masked_conv.MaskedConvTranspose1d">MaskedConvTranspose1d</a></p>
@@ -823,23 +823,23 @@ another for the bias - are maintained. In the forward pass, the score tensors ar
 Sigmoid function into probability scores, which are then used to produce binary masks via Bernoulli sampling.
 Finally, the binary masks are applied to the weight and the bias. During training, gradients with respect to
 the score tensors are computed and used to update the score tensors.</p>
-<p><strong>NOTE:</strong> The scores are not assumed to be bounded between 0 and 1.</p>
+<p><strong>NOTE</strong>: The scores are not assumed to be bounded between 0 and 1.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>in_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels in the input image</p></li>
-<li><p><strong>out_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels produced by the transposed convolution</p></li>
-<li><p><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a>) – Size of the convolving kernel</p></li>
-<li><p><strong>stride</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Stride of the convolution. Default: 1</p></li>
+<li><p><strong>in_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels in the input image.</p></li>
+<li><p><strong>out_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels produced by the transposed convolution.</p></li>
+<li><p><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a>) – Size of the convolving kernel.</p></li>
+<li><p><strong>stride</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Stride of the convolution. Default: 1.</p></li>
 <li><p><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – <code class="docutils literal notranslate"><span class="pre">dilation</span> <span class="pre">*</span> <span class="pre">(kernel_size</span> <span class="pre">-</span> <span class="pre">1)</span> <span class="pre">-</span> <span class="pre">padding</span></code> zero-padding will be added
-to both sides of each dimension in the input. Default: 0</p></li>
+to both sides of each dimension in the input. Default: 0.</p></li>
 <li><p><strong>output_padding</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Additional size added to one side of each dimension in the
-output shape. Default: 0</p></li>
-<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Number of blocked connections from input channels to output channels. Default: 1</p></li>
-<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, adds a learnable bias to the output. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
-<li><p><strong>dilation</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Spacing between kernel elements. Default: 1</p></li>
+output shape. Default: 0.</p></li>
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Number of blocked connections from input channels to output channels. Default: 1.</p></li>
+<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, adds a learnable bias to the output. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><strong>dilation</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Spacing between kernel elements. Default: 1.</p></li>
 <li><p><strong>padding_mode</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – Mode to be used in padding the input image for processing. Defaults to
-“zeros”</p></li>
+“zeros”.</p></li>
 <li><p><strong>device</strong> (<em>torch.device</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Device to which this module should be sent. Defaults to None.</p></li>
 <li><p><strong>dtype</strong> (<em>torch.dtype</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Type of the tensors. Defaults to None.</p></li>
 </ul>
@@ -854,15 +854,15 @@ output shape. Default: 0</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input</strong> (<em>Tensor</em>) – tensor to be mapped</p></li>
+<li><p><strong>input</strong> (<em>Tensor</em>) – tensor to be mapped.</p></li>
 <li><p><strong>output_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – Desired output size from the module. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Thrown if anything except “zeros” padding is requested</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Thrown if anything except “zeros” padding is requested.</p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Mapped tensor</p>
+<dd class="field-odd"><p>Mapped tensor.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>Tensor</p>
@@ -877,10 +877,10 @@ output shape. Default: 0</p></li>
 <code class="docutils literal notranslate"><span class="pre">conv_module</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>conv_module</strong> (<em>nn.ConvTranspose2d</em>) – Target module to be converted</p>
+<dd class="field-odd"><p><strong>conv_module</strong> (<em>nn.ConvTranspose2d</em>) – Target module to be converted.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Module with mask layers added to enable FedPM</p>
+<dd class="field-even"><p>Module with mask layers added to enable FedPM.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#fl4health.model_bases.masked_layers.masked_conv.MaskedConvTranspose2d" title="fl4health.model_bases.masked_layers.masked_conv.MaskedConvTranspose2d">MaskedConvTranspose2d</a></p>
@@ -907,23 +907,23 @@ another for the bias - are maintained. In the forward pass, the score tensors ar
 function into probability scores, which are then used to produce binary masks via Bernoulli sampling.
 Finally, the binary masks are applied to the weight and the bias. During training, gradients with respect to
 the score tensors are computed and used to update the score tensors.</p>
-<p><strong>NOTE:</strong> The scores are not assumed to be bounded between 0 and 1.</p>
+<p><strong>NOTE</strong>: The scores are not assumed to be bounded between 0 and 1.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>in_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels in the input image</p></li>
-<li><p><strong>out_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels produced by the transposed convolution</p></li>
-<li><p><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a>) – Size of the convolving kernel</p></li>
-<li><p><strong>stride</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Stride of the convolution. Default: 1</p></li>
+<li><p><strong>in_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels in the input image.</p></li>
+<li><p><strong>out_channels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of channels produced by the transposed convolution.</p></li>
+<li><p><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a>) – Size of the convolving kernel.</p></li>
+<li><p><strong>stride</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Stride of the convolution. Default: 1.</p></li>
 <li><p><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – <code class="docutils literal notranslate"><span class="pre">dilation</span> <span class="pre">*</span> <span class="pre">(kernel_size</span> <span class="pre">-</span> <span class="pre">1)</span> <span class="pre">-</span> <span class="pre">padding</span></code> zero-padding will be added to
-both sides of each dimension in the input. Default: 0</p></li>
+both sides of each dimension in the input. Default: 0.</p></li>
 <li><p><strong>output_padding</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Additional size added to one side of each dimension in the
-output shape. Default: 0</p></li>
-<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Number of blocked connections from input channels to output channels. Default: 1</p></li>
-<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, adds a learnable bias to the output. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
-<li><p><strong>dilation</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Spacing between kernel elements. Default: 1</p></li>
+output shape. Default: 0.</p></li>
+<li><p><strong>groups</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Number of blocked connections from input channels to output channels. Default: 1.</p></li>
+<li><p><strong>bias</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, adds a learnable bias to the output. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><strong>dilation</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>, </em><em>optional</em>) – Spacing between kernel elements. Default: 1.</p></li>
 <li><p><strong>padding_mode</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>optional</em>) – Mode to be used in padding the input image for processing. Defaults to
-“zeros”</p></li>
+“zeros”.</p></li>
 <li><p><strong>device</strong> (<em>torch.device</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Device to which this module should be sent. Defaults to None.</p></li>
 <li><p><strong>dtype</strong> (<em>torch.dtype</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Type of the tensors. Defaults to None.</p></li>
 </ul>
@@ -938,15 +938,15 @@ output shape. Default: 0</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input</strong> (<em>Tensor</em>) – Tensor to be mapped</p></li>
+<li><p><strong>input</strong> (<em>Tensor</em>) – Tensor to be mapped.</p></li>
 <li><p><strong>output_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – Desired output size from the transpose. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Throws if anything except “zeros” padding is requested</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Throws if anything except “zeros” padding is requested.</p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Mapped tensor</p>
+<dd class="field-odd"><p>Mapped tensor.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>Tensor</p>
@@ -961,10 +961,10 @@ output shape. Default: 0</p></li>
 <code class="docutils literal notranslate"><span class="pre">conv_module</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>conv_module</strong> (<em>nn.ConvTranspose3d</em>) – Target module to be converted</p>
+<dd class="field-odd"><p><strong>conv_module</strong> (<em>nn.ConvTranspose3d</em>) – Target module to be converted.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Module with masked layers added to enable FedPM</p>
+<dd class="field-even"><p>Module with masked layers added to enable FedPM.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#fl4health.model_bases.masked_layers.masked_conv.MaskedConvTranspose3d" title="fl4health.model_bases.masked_layers.masked_conv.MaskedConvTranspose3d">MaskedConvTranspose3d</a></p>

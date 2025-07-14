@@ -521,7 +521,7 @@ encoder module and decode the output of the encoder using the decoder module.</p
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>encoder</strong> (<em>nn.Module</em>) – Model for encoding the input</p></li>
+<li><p><strong>encoder</strong> (<em>nn.Module</em>) – Model for encoding the input.</p></li>
 <li><p><strong>decoder</strong> (<em>nn.Module</em>) – Model for encoding the output. This module should be compatible with the output
 structure of the encoder module.</p></li>
 </ul>
@@ -532,16 +532,21 @@ structure of the encoder module.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.autoencoders_base.AbstractAe.forward">
 <em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/autoencoders_base.html#AbstractAe.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.autoencoders_base.AbstractAe.forward" title="Link to this definition">¶</a></dt>
-<dd><p>Define the computation performed at every call.</p>
-<p>Should be overridden by all subclasses.
-:rtype: <span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></span></p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Although the recipe for forward pass needs to be defined within
-this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
-instead of this since the former takes care of running the
-registered hooks while the latter silently ignores them.</p>
-</div>
+<dd><p>Forward is called in client classes with a single input tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>input</strong> (<em>torch.Tensor</em>) – Input tensor.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#NotImplementedError" title="(in Python v3.10)"><strong>NotImplementedError</strong></a> – Should be implemented in inheriting classes.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tensor after passing through module.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>torch.Tensor</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -559,7 +564,7 @@ and decode the output of the encoder using the decoder module.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>encoder</strong> (<em>nn.Module</em>) – Model for encoding the input</p></li>
+<li><p><strong>encoder</strong> (<em>nn.Module</em>) – Model for encoding the input.</p></li>
 <li><p><strong>decoder</strong> (<em>nn.Module</em>) – Model for encoding the output. This module should be compatible with the output
 structure of the encoder module.</p></li>
 </ul>
@@ -573,7 +578,7 @@ structure of the encoder module.</p></li>
 <dd><p>Defines the forward associated with decoding a latent vector encoded by the encoder from some input.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>latent_vector</strong> (<em>torch.Tensor</em>) – Latent vector to be decoded</p>
+<dd class="field-odd"><p><strong>latent_vector</strong> (<em>torch.Tensor</em>) – Latent vector to be decoded.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Decoded tensor.</p>
@@ -609,7 +614,7 @@ module.</p>
 to reconstruct the input through the encoder-decoder pipeline.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>input</strong> (<em>torch.Tensor</em>) – Input to pass through the encoder</p>
+<dd class="field-odd"><p><strong>input</strong> (<em>torch.Tensor</em>) – Input to pass through the encoder.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Reconstructed input after encoding and decoding with the model.</p>
@@ -656,7 +661,7 @@ encoder, perhaps using conditional information.</p>
 <div class="math notranslate nohighlight">
 \[\mu + \epsilon \cdot \exp \left(0.5 \cdot \text{logvar} \right),\]</div>
 </div>
-<p>where <span class="math notranslate nohighlight">\(\epsilon \sim \mathcal{N}(\mathbf{0}, I)\)</span></p>
+<p>where <span class="math notranslate nohighlight">\(\epsilon \sim \mathcal{N}(\mathbf{0}, I)\)</span>.</p>
 </p></li>
 <li><p><strong>condition</strong> (<em>torch.Tensor</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Conditioning information to be used by the decoder during the
 mapping of the <code class="docutils literal notranslate"><span class="pre">latent_vector</span></code> to an output. Defaults to None.</p></li>
@@ -679,13 +684,13 @@ accordingly. Ex: Using the condition in the middle layers of encoder.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input</strong> (<em>torch.Tensor</em>) – Input tensor</p></li>
+<li><p><strong>input</strong> (<em>torch.Tensor</em>) – Input tensor.</p></li>
 <li><p><strong>condition</strong> (<em>torch.Tensor</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Conditional information to be used by the encoder. Defaults to
 None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>mu and logvar, similar to the variational auto-encoder.</p>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">mu</span></code> and <code class="docutils literal notranslate"><span class="pre">logvar</span></code>, similar to the variational auto-encoder.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[torch.Tensor, torch.Tensor]</p>
@@ -772,11 +777,11 @@ logvar and <span class="math notranslate nohighlight">\(\mu\)</span> generated b
 <div class="math notranslate nohighlight">
 \[\mu + \epsilon \cdot \exp \left(0.5 \cdot \text{logvar} \right),\]</div>
 </div>
-<p>where <span class="math notranslate nohighlight">\(\epsilon \sim \mathcal{N}(\mathbf{0}, I)\)</span></p>
+<p>where <span class="math notranslate nohighlight">\(\epsilon \sim \mathcal{N}(\mathbf{0}, I)\)</span>.</p>
 </p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Decoding from the latent vector</p>
+<dd class="field-even"><p>Decoding from the latent vector.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>torch.Tensor</p>
@@ -792,7 +797,7 @@ and log variance value each of the same dimension from the input in the standard
 autoencoders.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>input</strong> (<em>torch.Tensor</em>) – Input to be encoded</p>
+<dd class="field-odd"><p><strong>input</strong> (<em>torch.Tensor</em>) – Input to be encoded.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Mean and log variance values of the same dimensionality representing
@@ -807,16 +812,18 @@ the latent vector information to be used in VAE reconstruction.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.model_bases.autoencoders_base.VariationalAe.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/autoencoders_base.html#VariationalAe.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.autoencoders_base.VariationalAe.forward" title="Link to this definition">¶</a></dt>
-<dd><p>Define the computation performed at every call.</p>
-<p>Should be overridden by all subclasses.
-:rtype: <span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></span></p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Although the recipe for forward pass needs to be defined within
-this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
-instead of this since the former takes care of running the
-registered hooks while the latter silently ignores them.</p>
-</div>
+<dd><p>Forward through the full encoder and decoder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>input</strong> (<em>torch.Tensor</em>) – input tensor.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>reconstruction of the input tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">

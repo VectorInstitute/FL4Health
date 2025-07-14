@@ -515,19 +515,19 @@
 <dt class="sig sig-object py" id="fl4health.model_bases.masked_layers.masked_linear.MaskedLinear.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/masked_layers/masked_linear.html#MaskedLinear.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.masked_layers.masked_linear.MaskedLinear.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Implementation of masked linear layers.</p>
-<p>Like regular linear layers (i.e., nn.Linear module), a masked linear layer has a weight and a bias. However,
-the weight and the bias do not receive gradient in back propagation. Instead, two score tensors - one for the
-weight and another for the bias - are maintained. In the forward pass, the score tensors are transformed by
-the Sigmoid function into probability scores, which are then used to produce binary masks via bernoulli
-sampling. Finally, the binary masks are applied to the weight and the bias. During training, gradients with
-respect to the score tensors are computed and used to update the score tensors.</p>
-<p><strong>NOTE:</strong> The scores are not assumed to be bounded between 0 and 1.</p>
+<p>Like regular linear layers (i.e., <code class="docutils literal notranslate"><span class="pre">nn.Linear</span> <span class="pre">module</span></code>), a masked linear layer has a weight and a bias.
+However, the weight and the bias do not receive gradient in back propagation. Instead, two score tensors - one
+for the weight and another for the bias - are maintained. In the forward pass, the score tensors are
+transformed by the Sigmoid function into probability scores, which are then used to produce binary masks via
+Bernoulli sampling. Finally, the binary masks are applied to the weight and the bias. During training,
+gradients with respect to the score tensors are computed and used to update the score tensors.</p>
+<p><strong>NOTE</strong>: The scores are not assumed to be bounded between 0 and 1.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>in_features</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span>) – size of each input sample</p></li>
-<li><p><strong>out_features</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span>) – size of each output sample</p></li>
-<li><p><strong>bias</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – If set to <code class="docutils literal notranslate"><span class="pre">False</span></code>, the layer will not learn an additive bias. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code></p></li>
+<li><p><strong>in_features</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span>) – size of each input sample.</p></li>
+<li><p><strong>out_features</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span>) – size of each output sample.</p></li>
+<li><p><strong>bias</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span>) – If set to <code class="docutils literal notranslate"><span class="pre">False</span></code>, the layer will not learn an additive bias. Default: <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
 <li><p><strong>device</strong> (<em>torch.device</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Device to which this module should be sent. Defaults to None.</p></li>
 <li><p><strong>dtype</strong> (<em>torch.dtype</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Type of the tensors. Defaults to None.</p></li>
 </ul>
@@ -541,10 +541,10 @@ respect to the score tensors are computed and used to update the score tensors.<
 <dd><p>Mapping function for the <code class="docutils literal notranslate"><span class="pre">MaskedLinear</span></code> layer.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>input</strong> (<em>Tensor</em>) – input tensor to be transformed</p>
+<dd class="field-odd"><p><strong>input</strong> (<em>Tensor</em>) – input tensor to be transformed.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>output tensor from the layer</p>
+<dd class="field-even"><p>output tensor from the layer.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Tensor</p>
@@ -562,7 +562,7 @@ respect to the score tensors are computed and used to update the score tensors.<
 <dd class="field-odd"><p><strong>linear_module</strong> (<em>nn.Linear</em>) – Target layer to be transformed.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>New copy of the provided module with masked layers inserted to enable FedPM</p>
+<dd class="field-even"><p>New copy of the provided module with masked layers inserted to enable FedPM.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#fl4health.model_bases.masked_layers.masked_linear.MaskedLinear" title="fl4health.model_bases.masked_layers.masked_linear.MaskedLinear">MaskedLinear</a></p>

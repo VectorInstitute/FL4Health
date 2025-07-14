@@ -519,15 +519,15 @@ a buffer. The features are extracted using additional hooks that are registered 
 features are stored in a dictionary where the keys are the layer names and the values are the extracted
 features as torch Tensors.</p>
 <p>Attributes:
-- model (nn.Module): The neural network model.
-- flatten_feature_extraction_layers (dict[str, bool]): A dictionary specifying whether to flatten the feature</p>
+- <code class="docutils literal notranslate"><span class="pre">model</span></code> (nn.Module): The neural network model.
+- <code class="docutils literal notranslate"><span class="pre">flatten_feature_extraction_layers</span></code> (dict[str, bool]): A dictionary specifying whether to flatten the</p>
 <blockquote>
-<div><p>extraction layers.</p>
+<div><p>feature extraction layers.</p>
 </div></blockquote>
 <ul class="simple">
-<li><p>fhooks (list[RemovableHandle]): A list to store the handles for removing hooks.</p></li>
-<li><p>accumulate_features (bool): A flag indicating whether to accumulate features.</p></li>
-<li><p>extracted_features_buffers (dict[str, list[torch.Tensor]]): A dictionary to store the extracted features
+<li><p><code class="docutils literal notranslate"><span class="pre">fhooks</span></code> (list[RemovableHandle]): A list to store the handles for removing hooks.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">accumulate_features</span></code> (bool): A flag indicating whether to accumulate features.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">extracted_features_buffers</span></code> (dict[str, list[torch.Tensor]]): A dictionary to store the extracted features
 for each layer.</p></li>
 </ul>
 <dl class="field-list simple">
@@ -657,7 +657,7 @@ the extracted features as torch Tensors.</p>
 <dt class="sig sig-object py" id="fl4health.model_bases.feature_extractor_buffer.FeatureExtractorBuffer.get_hierarchical_attr">
 <span class="sig-name descname"><span class="pre">get_hierarchical_attr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_hierarchy</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/feature_extractor_buffer.html#FeatureExtractorBuffer.get_hierarchical_attr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.feature_extractor_buffer.FeatureExtractorBuffer.get_hierarchical_attr" title="Link to this definition">¶</a></dt>
 <dd><p>Traverse the hierarchical attributes of the module to get the desired attribute. Hooks should be
-registered to specific layers of the model, not to nn.Sequential or <code class="docutils literal notranslate"><span class="pre">nn.ModuleList</span></code>.</p>
+registered to specific layers of the model, not to <code class="docutils literal notranslate"><span class="pre">nn.Sequential</span></code> or <code class="docutils literal notranslate"><span class="pre">nn.ModuleList</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

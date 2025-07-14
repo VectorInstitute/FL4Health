@@ -522,11 +522,11 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.metrics.metrics.html#fl4health.metrics.TorchMetric.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">metric</span><span class="p">:</span> <span class="n">TMetric</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Thin wrapper on TorchMetric to make it compatible with our ``Metric`` interface.</span>
+<span class="sd">        Thin wrapper on ``TorchMetric`` to make it compatible with our ``Metric`` interface.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            name (str): The name of the metric.</span>
-<span class="sd">            metric (TMetric): ``TorchMetric`` class based metric</span>
+<span class="sd">            metric (TMetric): ``TorchMetric`` class based metric.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">metric</span> <span class="o">=</span> <span class="n">metric</span></div>
@@ -669,7 +669,7 @@
 <span class="sd">            epsilon (float): Small float to add to denominator of DICE calculation to avoid divide by 0.</span>
 <span class="sd">            spatial_dimensions (tuple[int, ...]): The spatial dimensions of the image within the prediction tensors.</span>
 <span class="sd">                The default assumes that the images are 3D and have shape:</span>
-<span class="sd">                (``batch_size``, channel, spatial, spatial, spatial)</span>
+<span class="sd">                (``batch_size``, ``channel``, ``spatial``, ``spatial``, ``spatial``)</span>
 <span class="sd">            logits_threshold: This is a threshold value where values above are classified as 1 and those below are</span>
 <span class="sd">                mapped to 0. If the threshold is None, then no thresholding is performed and a continuous or &quot;soft&quot;</span>
 <span class="sd">                DICE coefficient is computed.</span>
@@ -761,7 +761,7 @@
 
 <span class="sd">        For more information:</span>
 
-<span class="sd">        https://scikit-learn.org/stable/modules/generated/sklearn.metrics.balanced_accuracy_score.html</span>
+<span class="sd">        https://scikit-learn.org/stable/modules/generated/sklearn.metrics.auc.html</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
 

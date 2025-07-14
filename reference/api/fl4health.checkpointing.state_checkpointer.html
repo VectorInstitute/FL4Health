@@ -519,11 +519,11 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>checkpoint_dir</strong> (<em>Path</em>) – Directory to which checkpoints are saved. This can be modified later with
-<cite>set_checkpoint_path</cite></p></li>
+<code class="docutils literal notranslate"><span class="pre">set_checkpoint_path</span></code></p></li>
 <li><p><strong>checkpoint_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Name of the checkpoint to be saved. If None, but <code class="docutils literal notranslate"><span class="pre">checkpoint_dir</span></code>
 is set then a default <code class="docutils literal notranslate"><span class="pre">checkpoint_name</span></code> based on the underlying name of the client to be
 checkpointed will be set of the form <code class="docutils literal notranslate"><span class="pre">f&quot;client_{client.client_name}_state.pt&quot;</span></code>. This can be changed
-later with <cite>set_checkpoint_path</cite>. Defaults to None.</p></li>
+later with <code class="docutils literal notranslate"><span class="pre">set_checkpoint_path</span></code>. Defaults to None.</p></li>
 <li><p><strong>snapshot_attrs</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>[</em><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter" title="fl4health.utils.snapshotter.AbstractSnapshotter"><em>AbstractSnapshotter</em></a><em>, </em><em>Any</em><em>]</em><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – Attributes that we need to
 save in order to allow for restarting of training. If None, a sensible default set of attributes and
 their associated snapshotters for an FL client are set. Defaults to None.</p></li>
@@ -562,7 +562,7 @@ attributes specified in <code class="docutils literal notranslate"><span class="
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>True if a checkpoint is successfully loaded. False otherwise</p>
+<dd class="field-even"><p>True if a checkpoint is successfully loaded. False otherwise.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)">bool</a></p>
@@ -629,11 +629,11 @@ specifically for the nnUNet server.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>checkpoint_dir</strong> (<em>Path</em>) – Directory to which checkpoints are saved. This can be modified later with
-<cite>set_checkpoint_path</cite></p></li>
+<code class="docutils literal notranslate"><span class="pre">set_checkpoint_path</span></code></p></li>
 <li><p><strong>checkpoint_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Name of the checkpoint to be saved. If None, but <code class="docutils literal notranslate"><span class="pre">checkpoint_dir</span></code>
 is set then a default <code class="docutils literal notranslate"><span class="pre">checkpoint_name</span></code> based on the underlying name of the client to be
 checkpointed will be set of the form <code class="docutils literal notranslate"><span class="pre">f&quot;f&quot;server_{self.server.server_name}_state.pt&quot;&quot;</span></code>. This can be
-updated later  with <cite>set_checkpoint_path</cite>. Defaults to None.</p></li>
+updated later  with <code class="docutils literal notranslate"><span class="pre">set_checkpoint_path</span></code>. Defaults to None.</p></li>
 </ul>
 </dd>
 </dl>
@@ -653,11 +653,11 @@ updated later  with <cite>set_checkpoint_path</cite>. Defaults to None.</p></li>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>checkpoint_dir</strong> (<em>Path</em>) – Directory to which checkpoints are saved. This can be modified later with
-<cite>set_checkpoint_path</cite></p></li>
+<code class="docutils literal notranslate"><span class="pre">set_checkpoint_path</span></code></p></li>
 <li><p><strong>checkpoint_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Name of the checkpoint to be saved. If None, but <code class="docutils literal notranslate"><span class="pre">checkpoint_dir</span></code>
 is set then a default <code class="docutils literal notranslate"><span class="pre">checkpoint_name</span></code> based on the underlying name of the client to be
 checkpointed will be set of the form <code class="docutils literal notranslate"><span class="pre">f&quot;f&quot;server_{self.server.server_name}_state.pt&quot;&quot;</span></code>. This can be
-updated later  with <cite>set_checkpoint_path</cite>. Defaults to None.</p></li>
+updated later  with <code class="docutils literal notranslate"><span class="pre">set_checkpoint_path</span></code>. Defaults to None.</p></li>
 <li><p><strong>snapshot_attrs</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>[</em><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter" title="fl4health.utils.snapshotter.AbstractSnapshotter"><em>AbstractSnapshotter</em></a><em>, </em><em>Any</em><em>]</em><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – Attributes that we need to
 save in order to allow for restarting of training. If None, a sensible default set of attributes and
 their associated snapshotters for an FL client are set. Defaults to None.</p></li>
@@ -771,9 +771,9 @@ state checkpoint will be derived if checkpoint name remains none at the time of 
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>checkpoint_dir</strong> (<em>Path</em>) – Directory to which checkpoints are saved. This can be modified later with
-<cite>set_checkpoint_path</cite></p></li>
+<code class="docutils literal notranslate"><span class="pre">set_checkpoint_path</span></code></p></li>
 <li><p><strong>checkpoint_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Name of the checkpoint to be saved. If None at time of state saving, a default name
-will be given to the checkpoint. This can be changed later with <cite>set_checkpoint_path</cite></p></li>
+will be given to the checkpoint. This can be changed later with <code class="docutils literal notranslate"><span class="pre">set_checkpoint_path</span></code></p></li>
 <li><p><strong>snapshot_attrs</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>[</em><a class="reference internal" href="fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.AbstractSnapshotter" title="fl4health.utils.snapshotter.AbstractSnapshotter"><em>AbstractSnapshotter</em></a><em>, </em><em>Any</em><em>]</em><em>]</em>) – Attributes that we need to save in order
 to allow for restarting of training.</p></li>
 </ul>
@@ -803,7 +803,8 @@ provides functionality for loading and saving the state of the attribute based o
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.checkpointing.state_checkpointer.StateCheckpointer.checkpoint_exists">
 <span class="sig-name descname"><span class="pre">checkpoint_exists</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/state_checkpointer.html#StateCheckpointer.checkpoint_exists"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.state_checkpointer.StateCheckpointer.checkpoint_exists" title="Link to this definition">¶</a></dt>
-<dd><p>Check if a checkpoint exists at the checkpoint_path constructed as <code class="docutils literal notranslate"><span class="pre">checkpoint_dir</span></code> + <code class="docutils literal notranslate"><span class="pre">checkpoint_name</span></code>.</p>
+<dd><p>Check if a checkpoint exists at the <code class="docutils literal notranslate"><span class="pre">checkpoint_path</span></code> constructed as <code class="docutils literal notranslate"><span class="pre">checkpoint_dir</span></code> +
+<code class="docutils literal notranslate"><span class="pre">checkpoint_name</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>True if checkpoint exists, otherwise false.</p>

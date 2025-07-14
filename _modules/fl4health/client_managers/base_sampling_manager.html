@@ -512,7 +512,7 @@
 <div class="viewcode-block" id="BaseFractionSamplingManager">
 <a class="viewcode-back" href="../../../reference/api/fl4health.client_managers.base_sampling_manager.html#fl4health.client_managers.base_sampling_manager.BaseFractionSamplingManager">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">BaseFractionSamplingManager</span><span class="p">(</span><span class="n">SimpleClientManager</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Overrides the Simple Client Manager to Provide Fixed Sampling without replacement for Clients.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Overrides the ``SimpleClientManager`` to Provide Fixed Sampling without replacement for Clients.&quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="BaseFractionSamplingManager.sample">
 <a class="viewcode-back" href="../../../reference/api/fl4health.client_managers.base_sampling_manager.html#fl4health.client_managers.base_sampling_manager.BaseFractionSamplingManager.sample">[docs]</a>
@@ -576,7 +576,7 @@
 <span class="sd">                applied. Defaults to None.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            list[ClientProxy]: List of selected clients represented by ClientProxy objects.</span>
+<span class="sd">            list[ClientProxy]: List of selected clients represented by ``ClientProxy`` objects.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">available_cids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_and_filter</span><span class="p">(</span><span class="n">min_num_clients</span><span class="p">,</span> <span class="n">criterion</span><span class="p">)</span>
 

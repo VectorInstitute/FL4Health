@@ -517,20 +517,25 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given a set of count tensors representing true positives (TP), false positives (FP), and false negatives (FN),</span>
-<span class="sd">    compute the  Dice score as 2*TP/(2*TP + FP + FN) ELEMENTWISE. The zero division argument determines how to deal</span>
-<span class="sd">    with examples with all true negatives, which implies that TP + FP + FN = 0 and an undefined value.</span>
+<span class="sd">    compute the  Dice score as...</span>
+
+<span class="sd">    .. math ::</span>
+<span class="sd">        \\frac{2 \\cdot TP}{2 \\cdot TP + FP + FN}</span>
+
+<span class="sd">    **ELEMENTWISE**. The zero division argument determines how to deal with examples with all true negatives, which</span>
+<span class="sd">    implies that ``TP + FP + FN = 0`` and an undefined value.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        true_positives (torch.Tensor): count of true positives in each entry</span>
-<span class="sd">        false_positives (torch.Tensor): count of false positives in each entry</span>
-<span class="sd">        false_negatives (torch.Tensor): count of false negatives in each entry</span>
+<span class="sd">        true_positives (torch.Tensor): count of true positives in each entry.</span>
+<span class="sd">        false_positives (torch.Tensor): count of false positives in each entry.</span>
+<span class="sd">        false_negatives (torch.Tensor): count of false negatives in each entry.</span>
 <span class="sd">        zero_division (float | None): How to deal with zero division. If None, the values with zero division are</span>
 <span class="sd">            simply dropped. If a float is specified, this value is injected into each Dice score that would have</span>
 <span class="sd">            been undefined.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        torch.Tensor: Dice scores computed for each element in the TP, FP, FN tensors computed ELEMENTWISE with</span>
-<span class="sd">            replacement or dropping of undefined entries. The tensor returned is flattened to be 1D.</span>
+<span class="sd">        torch.Tensor: Dice scores computed for each element in the TP, FP, FN tensors computed **ELEMENTWISE** with</span>
+<span class="sd">        replacement or dropping of undefined entries. The tensor returned is flattened to be 1D.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Compute union and intersection</span>
     <span class="n">numerator</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">true_positives</span>  <span class="c1"># Equivalent to 2 times the intersection</span>
@@ -563,7 +568,7 @@
 <span class="sd">            prediction.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        torch.Tensor: Thresholded tensor</span>
+<span class="sd">        torch.Tensor: Thresholded tensor.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">threshold</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
         <span class="n">thresholded_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>

@@ -561,8 +561,8 @@
 <span class="sd">        Args:</span>
 <span class="sd">            unique_labels (list[T]): The full set of labels contained in the dataset.</span>
 <span class="sd">            downsampling_ratio (float): The percentage to which the specified &quot;minority&quot; labels are downsampled. For</span>
-<span class="sd">                example, if a label ``L`` has 10 examples and the downsampling_ratio is 0.2, then 8 of the datapoints</span>
-<span class="sd">                with label ``L`` are discarded.</span>
+<span class="sd">                example, if a label ``L`` has 10 examples and the ``downsampling_ratio`` is 0.2, then 8 of the</span>
+<span class="sd">                datapoints with label ``L`` are discarded.</span>
 <span class="sd">            minority_labels (Set[T]): The labels subject to downsampling.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">unique_labels</span><span class="p">)</span>
@@ -634,13 +634,13 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Class used to subsample a dataset so the classes of samples are distributed in a non-IID way. In particular,</span>
-<span class="sd">        the ``DirichletLabelBasedSampler`` uses a dirichlet distribution to determine the number of samples from each</span>
+<span class="sd">        the ``DirichletLabelBasedSampler`` uses a Dirichlet distribution to determine the number of samples from each</span>
 <span class="sd">        class. The sampler is constructed by passing a beta parameter that determines the level of heterogeneity and a</span>
 <span class="sd">        ``sample_percentage`` that determines the relative size of the modified dataset. Subsampling a dataset is</span>
 <span class="sd">        accomplished by calling the subsample method and passing a ``BaseDataset`` object. This will return the</span>
 <span class="sd">        resulting  subsampled dataset.</span>
 
-<span class="sd">        **NOTE:** The range for beta is (0, :math:`\\infty`). The larger the value of beta, the more evenly the</span>
+<span class="sd">        **NOTE**: The range for beta is (0, :math:`\\infty`). The larger the value of beta, the more evenly the</span>
 <span class="sd">        multinomial probability of the labels will be. The smaller beta is the more heterogeneous it is.</span>
 
 <span class="sd">        :code:`np.random.dirichlet([1]*5): array([0.23645891, 0.08857052, 0.29519184, 0.2999956 , 0.07978313])`</span>
@@ -677,7 +677,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.sampler.html#fl4health.utils.sampler.DirichletLabelBasedSampler.subsample">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">subsample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">:</span> <span class="n">D</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">D</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Returns a new dataset where samples are selected based on a dirichlet distribution over labels.</span>
+<span class="sd">        Returns a new dataset where samples are selected based on a Dirichlet distribution over labels.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            dataset (D): Dataset to be modified, through downsampling on specified labels.</span>
@@ -695,7 +695,7 @@
 
         <span class="n">num_samples_per_class</span> <span class="o">=</span> <span class="p">[</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">prob</span> <span class="o">*</span> <span class="n">total_num_samples</span><span class="p">)</span> <span class="k">for</span> <span class="n">prob</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">probabilities</span><span class="p">]</span>
 
-        <span class="c1"># For each class sample the given number of samples from the class specific indices</span>
+        <span class="c1"># For each class, sample the given number of samples from the class specific indices</span>
         <span class="c1"># torch.multinomial is used to uniformly sample indices the size of given number of samples</span>
         <span class="n">sampled_class_idx_list</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">class_idx</span><span class="p">[</span>

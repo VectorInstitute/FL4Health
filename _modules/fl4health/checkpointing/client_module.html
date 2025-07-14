@@ -556,7 +556,7 @@
 <span class="sd">          before local training **NOTE**: This is the &quot;traditional&quot; mechanism for global models.</span>
 
 <span class="sd">        As a final note, for some methods, such as Ditto or MR-MTL, these checkpoints will actually be identical.</span>
-<span class="sd">        That&#39;s because the target model for these methods is never globally aggregated. That is, they remain local</span>
+<span class="sd">        That&#39;s because the target model for these methods is never globally aggregated. That is, they remain local.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            pre_aggregation (ModelCheckpointers, optional): If defined, this checkpointer (or sequence of</span>
@@ -655,7 +655,7 @@
 <span class="sd">            client (BasicClient): The client object from which state will be saved.</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            ValueError: Throws an error if this function is called, but no state checkpointer has been provided</span>
+<span class="sd">            ValueError: Throws an error if this function is called, but no state checkpointer has been provided.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span><span class="o">.</span><span class="n">save_client_state</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
@@ -675,11 +675,11 @@
 <span class="sd">            client (BasicClient): client object into which state will be loaded if a checkpoint exists</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            ValueError: Throws an error if this function is called, but no state checkpointer has been provided</span>
+<span class="sd">            ValueError: Throws an error if this function is called, but no state checkpointer has been provided.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            bool : If the state checkpoint properly exists and is loaded correctly, client&#39;s attributes</span>
-<span class="sd">            are set to the loaded values, and True is returned. Otherwise, we return False (or throw an exception).</span>
+<span class="sd">            bool: If the state checkpoint properly exists and is loaded correctly, client&#39;s attributes are set to</span>
+<span class="sd">            the loaded values, and True is returned. Otherwise, we return False (or throw an exception).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state_checkpointer</span><span class="o">.</span><span class="n">maybe_load_client_state</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>

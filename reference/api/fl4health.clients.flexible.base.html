@@ -515,12 +515,12 @@
 <dt class="sig sig-object py" id="fl4health.clients.flexible.base.FlexibleClient.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_meter_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">LossMeterType.AVERAGE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_and_state_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reporters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/flexible/base.html#FlexibleClient.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.flexible.base.FlexibleClient.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Flexible FL Client with functionality to train, evaluate, log, report and checkpoint.</p>
-<p><cite>FlexibleClient</cite> is similar to <cite>BasicClient</cite> but provides added flexibility through the
+<p><code class="docutils literal notranslate"><span class="pre">FlexibleClient</span></code> is similar to <code class="docutils literal notranslate"><span class="pre">BasicClient</span></code> but provides added flexibility through the
 ability to inject models and optimizers in the methods responsible for making predictions
 and performing both train and validation steps.</p>
-<p>This added flexibility allows for <cite>FlexibleClient</cite> to be automatically adapted with our
-personalized methods: ~fl4health.mixins.personalized.</p>
-<p>As with <cite>BasicClient</cite>, users are responsible for implementing methods:</p>
+<p>This added flexibility allows for <code class="docutils literal notranslate"><span class="pre">FlexibleClient</span></code> to be automatically adapted with our
+personalized methods: <code class="docutils literal notranslate"><span class="pre">~fl4health.mixins.personalized</span></code>.</p>
+<p>As with <code class="docutils literal notranslate"><span class="pre">BasicClient</span></code>, users are responsible for implementing methods:</p>
 <blockquote>
 <div><ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">get_model</span></code></p></li>
@@ -529,7 +529,7 @@ personalized methods: ~fl4health.mixins.personalized.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">get_criterion</span></code></p></li>
 </ul>
 </div></blockquote>
-<p>However, unlike <cite>BasicClient</cite>, users looking to specialize logic for making predictions,
+<p>However, unlike <code class="docutils literal notranslate"><span class="pre">BasicClient</span></code>, users looking to specialize logic for making predictions,
 and performing train and validation steps, should instead override:</p>
 <blockquote>
 <div><ul class="simple">
@@ -542,10 +542,10 @@ and performing train and validation steps, should instead override:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_path</strong> (<em>Path</em>) – path to the data to be used to load the data for client-side training</p></li>
-<li><p><strong>metrics</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric" title="fl4health.metrics.base_metrics.Metric"><em>Metric</em></a><em>]</em>) – Metrics to be computed based on the labels and predictions of the client model</p></li>
+<li><p><strong>data_path</strong> (<em>Path</em>) – path to the data to be used to load the data for client-side training.</p></li>
+<li><p><strong>metrics</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric" title="fl4health.metrics.base_metrics.Metric"><em>Metric</em></a><em>]</em>) – Metrics to be computed based on the labels and predictions of the client model.</p></li>
 <li><p><strong>device</strong> (<em>torch.device</em>) – Device indicator for where to send the model, batches, labels etc. Often “cpu” or
-“cuda”</p></li>
+“cuda”.</p></li>
 <li><p><strong>loss_meter_type</strong> (<a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.LossMeterType" title="fl4health.utils.losses.LossMeterType"><em>LossMeterType</em></a><em>, </em><em>optional</em>) – Type of meter used to track and compute the losses over
 each batch. Defaults to <code class="docutils literal notranslate"><span class="pre">LossMeterType.AVERAGE</span></code>.</p></li>
 <li><p><strong>checkpoint_and_state_module</strong> (<a class="reference internal" href="fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.ClientCheckpointAndStateModule" title="fl4health.checkpointing.client_module.ClientCheckpointAndStateModule"><em>ClientCheckpointAndStateModule</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A module meant to handle
@@ -568,7 +568,7 @@ name. Defaults to None.</p></li>
 <dt class="sig sig-object py" id="fl4health.clients.flexible.base.FlexibleClient.predict_with_model">
 <span class="sig-name descname"><span class="pre">predict_with_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/flexible/base.html#FlexibleClient.predict_with_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.flexible.base.FlexibleClient.predict_with_model" title="Link to this definition">¶</a></dt>
 <dd><p>Helper predict method that allows for injection of model.</p>
-<p>NOTE: Subclasses should implement this method if there is need to specialize
+<p><strong>NOTE</strong>: Subclasses should implement this method if there is need to specialize
 the predict logic of the client.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -576,7 +576,7 @@ the predict logic of the client.</p>
 <li><p><strong>model</strong> (<em>torch.nn.Module</em>) – the model with which to make predictions</p></li>
 <li><p><strong>input</strong> (<em>TorchInputType</em>) – Inputs to be fed into the model. If input is of type <code class="docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">torch.Tensor]</span></code>,
 it is assumed that the keys of input match the names of the keyword arguments of
-<a href="#id1"><span class="problematic" id="id2">``</span></a>self.model.forward().`</p></li>
+<code class="docutils literal notranslate"><span class="pre">self.model.forward().</span></code></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

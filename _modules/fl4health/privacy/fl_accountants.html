@@ -536,12 +536,12 @@
 <span class="sd">        Further it assumes that the sampling ratio of clients and noise multiplier are fixed throughout training</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            client_sampling_rate (float): probability that each client will be included in a round</span>
-<span class="sd">            noise_multiplier (float):  multiplier of noise std. dev. on clipping bound</span>
-<span class="sd">            epochs_per_round (int): number of epochs each client will complete per server round</span>
-<span class="sd">            client_batch_sizes (list[int]): batch size per client, if a single value it is assumed to be constant</span>
-<span class="sd">                across clients</span>
-<span class="sd">            client_dataset_sizes (list[int]): size of full dataset on a client, if a single value it is assumed to be</span>
+<span class="sd">            client_sampling_rate (float): Probability that each client will be included in a round</span>
+<span class="sd">            noise_multiplier (float):  Multiplier of noise std. dev. on clipping bound.</span>
+<span class="sd">            epochs_per_round (int): Number of epochs each client will complete per server round.</span>
+<span class="sd">            client_batch_sizes (list[int]): Batch size per client, if a single value it is assumed to be constant</span>
+<span class="sd">                across clients.</span>
+<span class="sd">            client_dataset_sizes (list[int]): Size of full dataset on a client, if a single value it is assumed to be</span>
 <span class="sd">                constant across clients.</span>
 <span class="sd">            moment_orders (list[float] | None, optional): Moments orders to be used in computing the approximate</span>
 <span class="sd">                epsilon value. Defaults to None.</span>
@@ -573,11 +573,11 @@
 <span class="sd">        Compute the epsilon value for the provided delta and the number of server updates performed.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            server_updates (int): number of central server updates performed</span>
-<span class="sd">            delta (float): Delta value from which to compute epsilon</span>
+<span class="sd">            server_updates (int): Number of central server updates performed.</span>
+<span class="sd">            delta (float): Delta value from which to compute epsilon.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            float: Epsilon</span>
+<span class="sd">            float: Epsilon.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">epsilons</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">num_batch</span><span class="p">,</span> <span class="n">sampling_strategy</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_batches_per_client</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling_strategies_per_client</span><span class="p">):</span>
@@ -595,11 +595,11 @@
 <span class="sd">        Compute the delta value for the provided epsilon and the number of server updates performed.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            server_updates (int): number of central server updates performed</span>
-<span class="sd">            epsilon (float): Epsilon value from which to compute delta</span>
+<span class="sd">            server_updates (int): Number of central server updates performed.</span>
+<span class="sd">            epsilon (float): Epsilon value from which to compute delta.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            float: delta</span>
+<span class="sd">            float: delta.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">deltas</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">num_batch</span><span class="p">,</span> <span class="n">sampling_strategy</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_batches_per_client</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling_strategies_per_client</span><span class="p">):</span>
@@ -673,8 +673,8 @@
 <span class="sd">        parameters</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            client_sampling_rate (float | list[float]): probability that each client will be included in a round</span>
-<span class="sd">            noise_multiplier (float | list[float]): multiplier of noise std. dev. on clipping bound</span>
+<span class="sd">            client_sampling_rate (float | list[float]): Probability that each client will be included in a round.</span>
+<span class="sd">            noise_multiplier (float | list[float]): Multiplier of noise std. dev. on clipping bound.</span>
 <span class="sd">            moment_orders (list[float] | None, optional): Moments orders to be used in computing the approximate</span>
 <span class="sd">                epsilon value. Defaults to None. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -694,11 +694,11 @@
 <span class="sd">        Compute the epsilon value for the provided delta and the number of server updates performed.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            server_updates (int | list[int]): number of central server updates performed</span>
-<span class="sd">            delta (float): Delta value from which to compute epsilon</span>
+<span class="sd">            server_updates (int | list[int]): Number of central server updates performed.</span>
+<span class="sd">            delta (float): Delta value from which to compute epsilon.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            float: epsilon</span>
+<span class="sd">            float: epsilon.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_server_updates</span><span class="p">(</span><span class="n">server_updates</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">accountant</span><span class="o">.</span><span class="n">get_epsilon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_strategy</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_multiplier</span><span class="p">,</span> <span class="n">server_updates</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span></div>
@@ -711,11 +711,11 @@
 <span class="sd">        Compute the delta value for the provided epsilon and the number of server updates performed.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            server_updates (int | list[int]): number of central server updates performed</span>
-<span class="sd">            epsilon (float): Epsilon value from which to compute delta</span>
+<span class="sd">            server_updates (int | list[int]): Number of central server updates performed.</span>
+<span class="sd">            epsilon (float): Epsilon value from which to compute delta.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            float: delta</span>
+<span class="sd">            float: delta.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_server_updates</span><span class="p">(</span><span class="n">server_updates</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">accountant</span><span class="o">.</span><span class="n">get_delta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_strategy</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_multiplier</span><span class="p">,</span> <span class="n">server_updates</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">)</span></div>
@@ -743,9 +743,9 @@
 <span class="sd">        parameters</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            n_total_clients (int): total number of clients to be sampled from</span>
-<span class="sd">            n_clients_sampled (int | list[int]): number of clients sampled in a given round</span>
-<span class="sd">            noise_multiplier (float | list[float]): multiplier of noise std. dev. on clipping bound</span>
+<span class="sd">            n_total_clients (int): Total number of clients to be sampled from.</span>
+<span class="sd">            n_clients_sampled (int | list[int]): Number of clients sampled in a given round.</span>
+<span class="sd">            noise_multiplier (float | list[float]): Multiplier of noise std. dev. on clipping bound.</span>
 <span class="sd">            moment_orders (list[float] | None, optional): Moments orders to be used in computing the approximate</span>
 <span class="sd">                epsilon value. Defaults to None. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -767,11 +767,11 @@
 <span class="sd">        Compute the epsilon value for the provided delta and the number of server updates performed.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            server_updates (int | list[int]): number of central server updates performed</span>
-<span class="sd">            delta (float): Delta value from which to compute epsilon</span>
+<span class="sd">            server_updates (int | list[int]): Number of central server updates performed.</span>
+<span class="sd">            delta (float): Delta value from which to compute epsilon.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            float: epsilon</span>
+<span class="sd">            float: epsilon.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_server_updates</span><span class="p">(</span><span class="n">server_updates</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">accountant</span><span class="o">.</span><span class="n">get_epsilon</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_strategy</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_multiplier</span><span class="p">,</span> <span class="n">server_updates</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span></div>
@@ -784,11 +784,11 @@
 <span class="sd">        Compute the delta value for the provided epsilon and the number of server updates performed.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            server_updates (int | list[int]): number of central server updates performed</span>
-<span class="sd">            epsilon (float): Epsilon value from which to compute delta</span>
+<span class="sd">            server_updates (int | list[int]): Number of central server updates performed.</span>
+<span class="sd">            epsilon (float): Epsilon value from which to compute delta.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            float: delta</span>
+<span class="sd">            float: delta.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_server_updates</span><span class="p">(</span><span class="n">server_updates</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">accountant</span><span class="o">.</span><span class="n">get_delta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_strategy</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_multiplier</span><span class="p">,</span> <span class="n">server_updates</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">)</span></div>

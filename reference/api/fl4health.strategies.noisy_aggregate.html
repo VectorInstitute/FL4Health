@@ -585,8 +585,8 @@ centered Gaussian.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>results</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>[</em><em>NDArrays</em><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>]</em><em>]</em>) – List of tuples containing the model updates and the number of samples
 for each client.</p></li>
-<li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – The multiplier on the clipping bound to determine the std of noise applied to weight
-updates.</p></li>
+<li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – The multiplier on the clipping bound to determine the std. dev. of noise applied to
+weight updates.</p></li>
 <li><p><strong>clipping_bound</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – The clipping bound applied to client model updates.</p></li>
 </ul>
 </dd>
@@ -609,8 +609,8 @@ updates.</p></li>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>results</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><em>tuple</em></a><em>[</em><em>NDArrays</em><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>]</em><em>]</em>) – List of tuples containing the model updates and the number of samples
 for each client.</p></li>
-<li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – The multiplier on the clipping bound to determine the std of noise applied to weight
-updates.</p></li>
+<li><p><strong>noise_multiplier</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – The multiplier on the clipping bound to determine the std. dev. of noise applied to
+weight updates.</p></li>
 <li><p><strong>clipping_bound</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – The clipping bound applied to client model updates.</p></li>
 <li><p><strong>fraction_fit</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – Fraction of clients sampled each round.</p></li>
 <li><p><strong>per_client_example_cap</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – The maximum number samples per client.</p></li>

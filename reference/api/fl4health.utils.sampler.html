@@ -516,12 +516,12 @@
 <dt class="sig sig-object py" id="fl4health.utils.sampler.DirichletLabelBasedSampler.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unique_labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hash_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_percentage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/sampler.html#DirichletLabelBasedSampler.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.sampler.DirichletLabelBasedSampler.__init__" title="Link to this definition">¶</a></dt>
 <dd><p>Class used to subsample a dataset so the classes of samples are distributed in a non-IID way. In particular,
-the <code class="docutils literal notranslate"><span class="pre">DirichletLabelBasedSampler</span></code> uses a dirichlet distribution to determine the number of samples from each
+the <code class="docutils literal notranslate"><span class="pre">DirichletLabelBasedSampler</span></code> uses a Dirichlet distribution to determine the number of samples from each
 class. The sampler is constructed by passing a beta parameter that determines the level of heterogeneity and a
 <code class="docutils literal notranslate"><span class="pre">sample_percentage</span></code> that determines the relative size of the modified dataset. Subsampling a dataset is
 accomplished by calling the subsample method and passing a <code class="docutils literal notranslate"><span class="pre">BaseDataset</span></code> object. This will return the
 resulting  subsampled dataset.</p>
-<p><strong>NOTE:</strong> The range for beta is (0, <span class="math notranslate nohighlight">\(\infty\)</span>). The larger the value of beta, the more evenly the
+<p><strong>NOTE</strong>: The range for beta is (0, <span class="math notranslate nohighlight">\(\infty\)</span>). The larger the value of beta, the more evenly the
 multinomial probability of the labels will be. The smaller beta is the more heterogeneous it is.</p>
 <p><code class="code docutils literal notranslate"><span class="pre">np.random.dirichlet([1]*5):</span> <span class="pre">array([0.23645891,</span> <span class="pre">0.08857052,</span> <span class="pre">0.29519184,</span> <span class="pre">0.2999956</span> <span class="pre">,</span> <span class="pre">0.07978313])</span></code></p>
 <p><code class="code docutils literal notranslate"><span class="pre">np.random.dirichlet([1000]*5):</span> <span class="pre">array([0.2066252</span> <span class="pre">,</span> <span class="pre">0.19644968,</span> <span class="pre">0.20080513,</span> <span class="pre">0.19992536,</span> <span class="pre">0.19619462])</span></code></p>
@@ -542,7 +542,7 @@ more skewed the label assignments will be for the dataset. Defaults to 100.</p><
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.sampler.DirichletLabelBasedSampler.subsample">
 <span class="sig-name descname"><span class="pre">subsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/sampler.html#DirichletLabelBasedSampler.subsample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.sampler.DirichletLabelBasedSampler.subsample" title="Link to this definition">¶</a></dt>
-<dd><p>Returns a new dataset where samples are selected based on a dirichlet distribution over labels.</p>
+<dd><p>Returns a new dataset where samples are selected based on a Dirichlet distribution over labels.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>dataset</strong> (<em>D</em>) – Dataset to be modified, through downsampling on specified labels.</p>
@@ -601,8 +601,8 @@ subsample method and passing a <code class="docutils literal notranslate"><span 
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>unique_labels</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><em>T</em><em>]</em>) – The full set of labels contained in the dataset.</p></li>
 <li><p><strong>downsampling_ratio</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – The percentage to which the specified “minority” labels are downsampled. For
-example, if a label <code class="docutils literal notranslate"><span class="pre">L</span></code> has 10 examples and the downsampling_ratio is 0.2, then 8 of the datapoints
-with label <code class="docutils literal notranslate"><span class="pre">L</span></code> are discarded.</p></li>
+example, if a label <code class="docutils literal notranslate"><span class="pre">L</span></code> has 10 examples and the <code class="docutils literal notranslate"><span class="pre">downsampling_ratio</span></code> is 0.2, then 8 of the
+datapoints with label <code class="docutils literal notranslate"><span class="pre">L</span></code> are discarded.</p></li>
 <li><p><strong>minority_labels</strong> (<em>Set</em><em>[</em><em>T</em><em>]</em>) – The labels subject to downsampling.</p></li>
 </ul>
 </dd>

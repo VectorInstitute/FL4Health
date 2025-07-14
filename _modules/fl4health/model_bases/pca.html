@@ -532,7 +532,7 @@
 <span class="sd">        - If ``low_rank`` is set to True, then a value :math:`q` for ``rank_estimation`` can be chosen according to the</span>
 <span class="sd">          following criteria:</span>
 
-<span class="sd">          - in general, :math:`k \\leq q \\leq \\min(2\\cdot k, m, n)`. For large low-rank matrices, take</span>
+<span class="sd">          - In general, :math:`k \\leq q \\leq \\min(2\\cdot k, m, n)`. For large low-rank matrices, take</span>
 <span class="sd">            :math:`q = k + l`, where :math:`5 \\leq l \\leq 10`.</span>
 <span class="sd">            If :math:`k` is relatively small compared to :math:`\\min(m, n)`, choosing :math:`l = 0, 1, 2` may be</span>
 <span class="sd">            sufficient.</span>
@@ -611,14 +611,14 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.maybe_reshape">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">maybe_reshape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Reshape input tensor X as needed so SVD can be computed. Reshaping is required when each data point is an</span>
-<span class="sd">        N-dimensional tensor because PCA requires X to be a 2D data matrix.</span>
+<span class="sd">        Reshape input tensor ``X`` as needed so SVD can be computed. Reshaping is required when each data point is an</span>
+<span class="sd">        N-dimensional tensor because PCA requires ``X`` to be a 2D data matrix.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            x (Tensor): Data matrix</span>
+<span class="sd">            x (Tensor): Data matrix.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Tensor: tensor flattened to be 2D</span>
+<span class="sd">            Tensor: Tensor flattened to be 2D.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">())</span> <span class="o">==</span> <span class="n">TWO_D_TENSOR_SHAPE_LENGTH</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">float</span><span class="p">())</span>
@@ -634,7 +634,7 @@
 <span class="sd">        validation/test data later, if needed.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            x (Tensor): Data matrix</span>
+<span class="sd">            x (Tensor): Data matrix.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data_mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
 
@@ -650,12 +650,12 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.prepare_data_forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">prepare_data_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">center_data</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Prepare input data X for PCA by reshaping and centering it as needed.</span>
+<span class="sd">        Prepare input data ``X`` for PCA by reshaping and centering it as needed.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x (Tensor): Data matrix.</span>
 <span class="sd">            center_data (bool): If true, then the data mean will be subtracted from all data points prior to</span>
-<span class="sd">                performing PCA. If center_data is false, it is expected that the data has already been centered and</span>
+<span class="sd">                performing PCA. If ``center_data`` is false, it is expected that the data has already been centered and</span>
 <span class="sd">                an exception will be thrown if it is not.</span>
 
 <span class="sd">        Returns:</span>
@@ -676,18 +676,18 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.project_lower_dim">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">project_lower_dim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">center_data</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Project input data X onto the top k principal components.</span>
+<span class="sd">        Project input data ``X`` onto the top k principal components.</span>
 
-<span class="sd">        *NOTE**: The result of projection (after centering) is X @ U because this method assumes that the rows of X</span>
-<span class="sd">        are the data points while the columns of U are the principal components.</span>
+<span class="sd">        *NOTE**: The result of projection (after centering) is ``X @ U`` because this method assumes that the rows of</span>
+<span class="sd">        ``X`` are the data points while the columns of ``U`` are the principal components.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x (Tensor): Input data matrix whose rows are the data points.</span>
-<span class="sd">            k (int | None, optional): The number of principal components onto which projection is done. If k is None,</span>
-<span class="sd">                then all principal components will be used in the projection. Defaults to None.</span>
+<span class="sd">            k (int | None, optional): The number of principal components onto which projection is done. If ``k`` is</span>
+<span class="sd">                None, then all principal components will be used in the projection. Defaults to None.</span>
 <span class="sd">            center_data (bool, optional): If true, then the *training* data mean (learned in the forward pass)</span>
-<span class="sd">                will be subtracted from all data points prior to projection. If center_data is false, it is expected</span>
-<span class="sd">                that the data has already been centered in this manner by the user. Defaults to False.</span>
+<span class="sd">                will be subtracted from all data points prior to projection. If ``center_data`` is false, it is</span>
+<span class="sd">                expected that the data has already been centered in this manner by the user. Defaults to False.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Tensor: Projection result.</span>
@@ -730,12 +730,12 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute the reconstruction error of X under PCA reconstruction.</span>
 
-<span class="sd">        More precisely, if X is an N by d data matrix whose *rows* are the data points,</span>
+<span class="sd">        More precisely, if ``X`` is an ``N`` by ``d`` data matrix whose *rows* are the data points,</span>
 <span class="sd">        and U is the matrix whose *columns* are the principal components of X, then the reconstruction</span>
-<span class="sd">        loss is defined as 1 / N * | X @ U @ U.T - X| ** 2.</span>
+<span class="sd">        loss is defined as ``1 / N * | X @ U @ U.T - X| ** 2``.</span>
 
-<span class="sd">        **NOTE**: The reconstruction (after centering) is X @ U @ U.T because this method assumes that the rows</span>
-<span class="sd">        of X are the data points while the columns of U are the principal components.</span>
+<span class="sd">        **NOTE**: The reconstruction (after centering) is ``X @ U @ U.T`` because this method assumes that the rows</span>
+<span class="sd">        of ``X`` are the data points while the columns of U are the principal components.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x (Tensor): Input data tensor whose rows represent data points.</span>
@@ -744,7 +744,7 @@
 <span class="sd">                lower-dimensional subspace, and whether to add the data mean after projecting back. Defaults to False.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            float: reconstruction loss as defined above.</span>
+<span class="sd">            float: Reconstruction loss as defined above.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">n</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">x_lower_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_lower_dim</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">center_data</span><span class="o">=</span><span class="n">center_data</span><span class="p">)</span>
@@ -767,7 +767,7 @@
 <span class="sd">                lower-dimensional subspace, and whether to add the data mean after projecting back. Defaults to False.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            float: variance after projection as defined above.</span>
+<span class="sd">            float: Variance after projection as defined above.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">project_lower_dim</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">center_data</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span></div>
 

@@ -687,30 +687,26 @@
 <span class="sd">        Notes:</span>
 <span class="sd">        1. If ``U_i @ S_i`` is of size ``d`` by ``N_i``, then ``B`` has size ``d`` by ``N``, where</span>
 <span class="sd">           ``N = N_1 + N_2 + ... + N_n.``</span>
-<span class="sd">        2. If</span>
-
-<span class="sd">           ``U @ S @ V.T = B``</span>
-
-<span class="sd">           is the SVD of ``B``, then it turns out that ``U = A @ U&#39;``, where the columns of ``U&#39;`` are the true</span>
-<span class="sd">           principal components of the aggregated data, and ``A`` is some block unitary matrix.</span>
+<span class="sd">        2. If ``U @ S @ V.T = B`` is the SVD of ``B``, then it turns out that ``U = A @ U&#39;``, where the columns</span>
+<span class="sd">           of ``U&#39;`` are the true principal components of the aggregated data, and ``A`` is some block unitary matrix.</span>
 
 <span class="sd">        For the theoretical justification behind this procedure, see the paper</span>
 <span class="sd">        &quot;A Distributed and Incremental SVD Algorithm for Agglomerative Data Analysis on Large Networks&quot;.</span>
 
-<span class="sd">        **NOTE:** This method assumes that the *columns* of ``U_i``&#39;s are the local principal components. Thus, after</span>
+<span class="sd">        **NOTE**: This method assumes that the *columns* of ``U_i``&#39;s are the local principal components. Thus, after</span>
 <span class="sd">        performing SVD on the matrix ``B`` (defined above), the merging result is the **left** singular vectors.</span>
 
-<span class="sd">        This is in contrast with the client-side implementation of PCA (contained in class PcaModule), which assumes</span>
-<span class="sd">        that the **rows** of the input data matrix are the data points. Hence, in PcaModule, the **right** singular</span>
-<span class="sd">        vectors of the SVD of each client&#39;s data matrix are the principal components. (In a nutshell, the input data</span>
-<span class="sd">        matrices in these two cases are &quot;transposes&quot; of each other.)</span>
+<span class="sd">        This is in contrast with the client-side implementation of PCA (contained in class ``PcaModule``), which</span>
+<span class="sd">        assumes that the **rows** of the input data matrix are the data points. Hence, in ``PcaModule``, the **right**</span>
+<span class="sd">        singular vectors of the SVD of each client&#39;s data matrix are the principal components. (In a nutshell, the</span>
+<span class="sd">        input data matrices in these two cases are &quot;transposes&quot; of each other.)</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            client_singular_vectors (NDArrays): Local PCs.</span>
 <span class="sd">            client_singular_values (NDArrays): Singular values corresponding to local PCs.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            tuple[NDArray, NDArray]: merged PCs and corresponding singular values.</span>
+<span class="sd">            tuple[NDArray, NDArray]: Merged PCs and corresponding singular values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="n">u</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">u</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">client_singular_vectors</span><span class="p">,</span> <span class="n">client_singular_values</span><span class="p">)]</span>
         <span class="n">svd_input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -749,7 +745,7 @@
 <span class="sd">        For the theoretical justification behind this approach, see the paper &quot;Subspace Tracking for Latent</span>
 <span class="sd">        Semantic Analysis&quot;.</span>
 
-<span class="sd">        **NOTE:** Similar to ``merge_subspaces_svd``, this method assumes that the **columns** of ``U_i``&#39;s are the</span>
+<span class="sd">        **NOTE**: Similar to ``merge_subspaces_svd``, this method assumes that the **columns** of ``U_i``&#39;s are the</span>
 <span class="sd">        local principal components.</span>
 
 <span class="sd">        Args:</span>
@@ -757,7 +753,7 @@
 <span class="sd">            client_singular_values (NDArrays): Singular values corresponding to local PCs.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            tuple[NDArray, NDArray]: merged PCs and corresponding singular values.</span>
+<span class="sd">            tuple[NDArray, NDArray]: Merged PCs and corresponding singular values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">client_singular_values</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">MINIMUM_PCA_ClIENTS</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">client_singular_values</span><span class="p">)</span> <span class="o">==</span> <span class="n">MINIMUM_PCA_ClIENTS</span><span class="p">:</span>

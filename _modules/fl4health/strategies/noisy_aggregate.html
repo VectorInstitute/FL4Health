@@ -567,8 +567,8 @@
 <span class="sd">    Args:</span>
 <span class="sd">        results (list[tuple[NDArrays, int]]): List of tuples containing the model updates and the number of samples</span>
 <span class="sd">            for each client.</span>
-<span class="sd">        noise_multiplier (float): The multiplier on the clipping bound to determine the std of noise applied to weight</span>
-<span class="sd">            updates.</span>
+<span class="sd">        noise_multiplier (float): The multiplier on the clipping bound to determine the std. dev. of noise applied to</span>
+<span class="sd">            weight updates.</span>
 <span class="sd">        clipping_bound (float): The clipping bound applied to client model updates.</span>
 
 <span class="sd">    Returns:</span>
@@ -601,8 +601,8 @@
 <span class="sd">    Args:</span>
 <span class="sd">        results (list[tuple[NDArrays, int]]): List of tuples containing the model updates and the number of samples</span>
 <span class="sd">            for each client.</span>
-<span class="sd">        noise_multiplier (float): The multiplier on the clipping bound to determine the std of noise applied to weight</span>
-<span class="sd">            updates.</span>
+<span class="sd">        noise_multiplier (float): The multiplier on the clipping bound to determine the std. dev. of noise applied to</span>
+<span class="sd">            weight updates.</span>
 <span class="sd">        clipping_bound (float):  The clipping bound applied to client model updates.</span>
 <span class="sd">        fraction_fit (float): Fraction of clients sampled each round.</span>
 <span class="sd">        per_client_example_cap (float): The maximum number samples per client.</span>

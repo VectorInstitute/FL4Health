@@ -516,12 +516,13 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This class serves as a sparse interface for clients aiming to leverage the FedBN method</span>
 <span class="sd">    (https://arxiv.org/abs/2102.07623) or any other approach that excludes specific types of model layers during</span>
-<span class="sd">    parameter exchange. This class simply ensures that the user has overridden the `get_parameter_exchanger` properly.</span>
+<span class="sd">    parameter exchange. This class simply ensures that the user has overridden the ``get_parameter_exchanger``</span>
+<span class="sd">    properly.</span>
 
 <span class="sd">    For example, in FedBN, batch normalization layers are excluded from exchange with the server</span>
 <span class="sd">    but all other layers flow through and are aggregated via whatever strategy the server is implementing. An example</span>
 <span class="sd">    of this where one wants to exclude 2D batch normalization layers during exchange is</span>
-<span class="sd">    `LayerExchangerWithExclusions(self.model, {nn.BatchNorm2d})`, where the model is provided so that the exchanger</span>
+<span class="sd">    ``LayerExchangerWithExclusions(self.model, {nn.BatchNorm2d})``, where the model is provided so that the exchanger</span>
 <span class="sd">    can identify the appropriate layers to leave out.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 

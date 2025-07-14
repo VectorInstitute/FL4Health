@@ -517,7 +517,10 @@
 <div class="viewcode-block" id="FixedSamplingByFractionClientManager">
 <a class="viewcode-back" href="../../../reference/api/fl4health.client_managers.fixed_without_replacement_manager.html#fl4health.client_managers.fixed_without_replacement_manager.FixedSamplingByFractionClientManager">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FixedSamplingByFractionClientManager</span><span class="p">(</span><span class="n">BaseFractionSamplingManager</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Overrides the Simple Client Manager to provide Fixed Sampling without replacement for Clients by fraction.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Overrides the ``BaseFractionSamplingManager`` to provide Fixed Sampling without replacement for Clients by</span>
+<span class="sd">    fraction.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="FixedSamplingByFractionClientManager.sample_fraction">
 <a class="viewcode-back" href="../../../reference/api/fl4health.client_managers.fixed_without_replacement_manager.html#fl4health.client_managers.fixed_without_replacement_manager.FixedSamplingByFractionClientManager.sample_fraction">[docs]</a>
@@ -528,7 +531,7 @@
         <span class="n">criterion</span><span class="p">:</span> <span class="n">Criterion</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ClientProxy</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Sample a number of Flower ClientProxy instances **WITHOUT** replacement.</span>
+<span class="sd">        Sample a number of Flower ``ClientProxy`` instances **WITHOUT** replacement.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            sample_fraction (float): Fraction of clients to sample. Guaranteed to produce this fraction from</span>

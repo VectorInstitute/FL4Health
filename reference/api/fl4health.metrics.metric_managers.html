@@ -519,7 +519,7 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>metrics</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric" title="fl4health.metrics.base_metrics.Metric"><em>Metric</em></a><em>]</em>) – List of metric to evaluate predictions on.</p></li>
-<li><p><strong>metric_manager_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Name of the metric manager (ie train, val, test)</p></li>
+<li><p><strong>metric_manager_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Name of the metric manager (i.e. train, val, test)</p></li>
 </ul>
 </dd>
 </dl>
@@ -578,7 +578,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>preds</strong> (<em>TorchPredType</em>) – A dictionary of preds from the model</p></li>
+<li><p><strong>preds</strong> (<em>TorchPredType</em>) – A dictionary of preds from the model.</p></li>
 <li><p><strong>target</strong> (<em>TorchTargetType</em>) – The ground truth labels for the data. If target is a dictionary with more than
 one item, then each value in the preds dictionary is evaluated with the value that has the same key in
 the target dictionary. If target has only one item or is a <code class="docutils literal notranslate"><span class="pre">torch.Tensor</span></code>, then the same target is

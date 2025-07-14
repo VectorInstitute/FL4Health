@@ -549,8 +549,8 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.PoissonSampling.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sampling_ratio</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        DP Event type that stores important information about sampling statistics and sets the proper NeighborRel value</span>
-<span class="sd">        This class is specific to Poisson sampling.</span>
+<span class="sd">        DP Event type that stores important information about sampling statistics and sets the proper ``NeighborRel``</span>
+<span class="sd">        value This class is specific to Poisson sampling.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            sampling_ratio (float): Poisson sampling ratio used.</span>
@@ -574,8 +574,8 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.privacy.moments_accountant.html#fl4health.privacy.moments_accountant.FixedSamplingWithoutReplacement.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">population_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">sample_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        DP Event type that stores important information about sampling statistics and sets the proper NeighborRel value</span>
-<span class="sd">        This class is specific to fixed sampling without replacement.</span>
+<span class="sd">        DP Event type that stores important information about sampling statistics and sets the proper ``NeighborRel``</span>
+<span class="sd">        value This class is specific to fixed sampling without replacement.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            population_size (int): Size of the total population from which sampling is performed.</span>
@@ -725,7 +725,7 @@
 <span class="sd">                level privacy): This is the ratio of client sampling probability to client data point probability</span>
 <span class="sd">                ``q*(b_k/n_k)`` For FL with client privacy: This is the sampling of clients from the client population</span>
 
-<span class="sd">                **NOTE:** If a sequence of strategies is given, they must be all of the same kind (that is poisson or</span>
+<span class="sd">                **NOTE**: If a sequence of strategies is given, they must be all of the same kind (that is poisson or</span>
 <span class="sd">                subset, but may have different parameters)</span>
 <span class="sd">            noise_multiplier (float | list[float]): Ratio of the noise standard deviation to clipping bound (sigma in</span>
 <span class="sd">                Deep Learning with Differential Privacy, ``z`` in some other implementations).</span>
@@ -781,7 +781,7 @@
 <span class="sd">                probability ``q*(b_k/n_k)`` For FL with client privacy: This is the sampling of clients from the client</span>
 <span class="sd">                population.</span>
 
-<span class="sd">                **NOTE:** If a sequence of strategies is given, they must be all of the same kind (that is poisson or</span>
+<span class="sd">                **NOTE**: If a sequence of strategies is given, they must be all of the same kind (that is poisson or</span>
 <span class="sd">                subset, but may have different parameters)</span>
 <span class="sd">            noise_multiplier (float | list[float]): Ratio of the noise standard deviation to clipping bound (sigma in</span>
 <span class="sd">                Deep Learning with Differential Privacy, z in some other implementations).</span>

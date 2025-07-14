@@ -535,8 +535,7 @@ training by providing a configuration dictionary. Defaults to None.</p></li>
 <li><p><strong>on_evaluate_config_fn</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Scalar</em><em>]</em><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – Function used to configure client-side validation by providing a <code class="docutils literal notranslate"><span class="pre">Config</span></code> dictionary.
 Defaults to None.</p></li>
 <li><p><strong>accept_failures</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether or not accept rounds containing failures. Defaults to True.</p></li>
-<li><p><strong>initial_parameters</strong> (<em>Parameters</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Initial global model parameters. This strategy assumes
-that the initial parameters is not None. So they need to be set in spite of the optional tag.</p></li>
+<li><p><strong>initial_parameters</strong> (<em>Parameters</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Initial global model parameters.</p></li>
 <li><p><strong>fit_metrics_aggregation_fn</strong> (<em>MetricsAggregationFn</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Metrics aggregation function.
 Defaults to None.</p></li>
 <li><p><strong>evaluate_metrics_aggregation_fn</strong> (<em>MetricsAggregationFn</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Metrics aggregation function.
@@ -576,9 +575,9 @@ Defaults to 0.9.</p></li>
 <span class="sig-name descname"><span class="pre">aggregate_fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server_round</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">failures</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/strategies/client_dp_fedavgm.html#ClientLevelDPFedAvgM.aggregate_fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.strategies.client_dp_fedavgm.ClientLevelDPFedAvgM.aggregate_fit" title="Link to this definition">¶</a></dt>
 <dd><p>Aggregate fit using averaging of weights (can be unweighted or weighted) and inject noise and optionally
 perform adaptive clipping updates.</p>
-<p><strong>NOTE:</strong> This assumes that the model weights sent back by the clients are <strong>UPDATES</strong> rather than raw weights.
+<p><strong>NOTE</strong>: This assumes that the model weights sent back by the clients are <strong>UPDATES</strong> rather than raw weights.
 That is they are <code class="docutils literal notranslate"><span class="pre">theta_client</span> <span class="pre">-</span> <span class="pre">theta_server</span></code> rather than just <code class="docutils literal notranslate"><span class="pre">theta_client</span></code>.</p>
-<p><strong>NOTE:</strong> this function packs the clipping bound for clients as the last member of the parameters list.</p>
+<p><strong>NOTE</strong>: this function packs the clipping bound for clients as the last member of the parameters list.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -636,7 +635,7 @@ be <code class="docutils literal notranslate"><span class="pre">BaseFractionSamp
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>List of sampled client identifiers and the configuration/parameters
-to be sent to each client (packaged as <code class="docutils literal notranslate"><span class="pre">EvaluateIns</span></code>)</p>
+to be sent to each client (packaged as <code class="docutils literal notranslate"><span class="pre">EvaluateIns</span></code>).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)">list</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[ClientProxy, EvaluateIns]]</p>
@@ -719,10 +718,8 @@ client. The second is a set of clipping bits, one for each client.</p>
 using this information.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>clipping_bits</strong> (<em>NDArrays</em>) – Bits associated with each of the clients. These are to be noised and aggregated</p></li>
-<li><p><strong>side.</strong> (<em>in order to update the clipping bound on the server</em>)</p></li>
-</ul>
+<dd class="field-odd"><p><strong>clipping_bits</strong> (<em>NDArrays</em>) – Bits associated with each of the clients. These are to be noised and aggregated
+in order to update the clipping bound on the server side.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
@@ -735,7 +732,7 @@ using this information.</p>
 <span class="sig-name descname"><span class="pre">update_current_weights</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/strategies/client_dp_fedavgm.html#ClientLevelDPFedAvgM.update_current_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.strategies.client_dp_fedavgm.ClientLevelDPFedAvgM.update_current_weights" title="Link to this definition">¶</a></dt>
 <dd><p>This function updates each of the layer weights using the server learning rate and the <span class="math notranslate nohighlight">\(m_t\)</span> values
 (computed with or without momentum).</p>
-<p><strong>NOTE:</strong> It assumes that the values in <span class="math notranslate nohighlight">\(m_t\)</span> are <strong>UPDATES</strong> rather than raw weights.</p>
+<p><strong>NOTE</strong>: It assumes that the values in <span class="math notranslate nohighlight">\(m_t\)</span> are <strong>UPDATES</strong> rather than raw weights.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>

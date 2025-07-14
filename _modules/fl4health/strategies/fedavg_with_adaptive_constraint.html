@@ -551,12 +551,12 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        A generalization of the fedavg strategy for approaches that use a penalty constraint that we might want to</span>
-<span class="sd">        adapt based on the loss trajectory. A quintessential example is FedProx, which uses an l2 penalty on model</span>
-<span class="sd">        weight drift and potentially adapts the coefficient based on the aggregated loss. In addition to the model</span>
-<span class="sd">        weights, the server also receives the training loss from the clients. If adaptation is enabled, these losses</span>
-<span class="sd">        are used to update the loss weight parameter according to the FedProx paper recommendations.</span>
+<span class="sd">        adapt based on the loss trajectory. A quintessential example is FedProx, which uses an :math:`\\ell^2`: penalty</span>
+<span class="sd">        on model weight drift and potentially adapts the coefficient based on the aggregated loss. In addition to the</span>
+<span class="sd">        model weights, the server also receives the training loss from the clients. If adaptation is enabled, these</span>
+<span class="sd">        losses are used to update the loss weight parameter according to the FedProx paper recommendations.</span>
 
-<span class="sd">        **NOTE:** Initial parameters are **NOT** optional. They must be passed for this strategy.</span>
+<span class="sd">        **NOTE**: Initial parameters are **NOT** optional. They must be passed for this strategy.</span>
 
 <span class="sd">        The aggregation strategy for weights is the same as in FedAvg.</span>
 
@@ -565,7 +565,7 @@
 <span class="sd">        Args:</span>
 <span class="sd">            fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0.</span>
 <span class="sd">            fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.</span>
-<span class="sd">            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2</span>
+<span class="sd">            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2.</span>
 <span class="sd">            min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.</span>
 <span class="sd">            min_available_clients (int, optional): Minimum number of total clients in the system.</span>
 <span class="sd">                Defaults to 2.</span>
@@ -705,7 +705,7 @@
 <span class="sd">        Update constraint weight parameter if ``adaptive_loss_weight`` is set to True. Regardless of whether adaptivity</span>
 <span class="sd">        is turned on at this time, the previous loss seen by the server is updated.</span>
 
-<span class="sd">        **NOTE:** For adaptive constraint losses, including FedProx, this loss is exchanged (along with the</span>
+<span class="sd">        **NOTE**: For adaptive constraint losses, including FedProx, this loss is exchanged (along with the</span>
 <span class="sd">        weights) by each client and is the **VANILLA** loss that does not include the additional penalty losses.</span>
 
 <span class="sd">        Args:</span>

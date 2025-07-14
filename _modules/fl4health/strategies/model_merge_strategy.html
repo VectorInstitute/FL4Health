@@ -568,7 +568,7 @@
 <span class="sd">            fraction_evaluate (float, optional): Fraction of clients used during validation. In case</span>
 <span class="sd">                ``min_evaluate_clients`` is larger than ``fraction_evaluate * available_clients``,</span>
 <span class="sd">                ``min_evaluate_clients`` will still be sampled. Defaults to 1.0.</span>
-<span class="sd">            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2</span>
+<span class="sd">            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2.</span>
 <span class="sd">            min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.</span>
 <span class="sd">            min_available_clients (int, optional): Minimum number of total clients in the system.</span>
 <span class="sd">                Defaults to 2.</span>
@@ -743,7 +743,7 @@
 <span class="sd">        assumes only metrics will be computed on client and loss is set to None.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            server_round (int): Which server round we&#39;re currently on.</span>
+<span class="sd">            server_round (int): Server round we&#39;re currently on..</span>
 <span class="sd">            results (list[tuple[ClientProxy, EvaluateRes]]): The client identifiers and the results of their local</span>
 <span class="sd">                evaluation that need to be aggregated on the server-side. These results are loss values</span>
 <span class="sd">                (None in this case) and the metrics dictionary.</span>

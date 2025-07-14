@@ -553,7 +553,7 @@
 <span class="sd">                example, the config used to produce the ``on_fit_config_fn`` and ``on_evaluate_config_fn`` for the</span>
 <span class="sd">                strategy.</span>
 
-<span class="sd">                **NOTE:** This config is **DISTINCT** from the Flwr server config, which is extremely minimal.</span>
+<span class="sd">                **NOTE**: This config is **DISTINCT** from the Flwr server config, which is extremely minimal.</span>
 <span class="sd">            strategy (Scaffold): The aggregation strategy to be used by the server to handle client updates and</span>
 <span class="sd">                other information potentially sent by the participating clients. This strategy must be of SCAFFOLD</span>
 <span class="sd">                type.</span>
@@ -686,7 +686,7 @@
 <span class="sd">                server waits for the minimum number of clients to be available set in the strategy.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            tuple[History, float]: The first element of the tuple is a history object containing the full set of FL</span>
+<span class="sd">            tuple[History, float]: The first element of the tuple is a ``History`` object containing the full set of FL</span>
 <span class="sd">            training results, including things like aggregated loss and metrics. Tuple also includes elapsed time in</span>
 <span class="sd">            seconds for round.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -731,7 +731,7 @@
 <span class="sd">                example, the config used to produce the ``on_fit_config_fn`` and ``on_evaluate_config_fn`` for the</span>
 <span class="sd">                strategy.</span>
 
-<span class="sd">                **NOTE:** This config is **DISTINCT** from the Flwr server config, which is extremely minimal.</span>
+<span class="sd">                **NOTE**: This config is **DISTINCT** from the Flwr server config, which is extremely minimal.</span>
 <span class="sd">            noise_multiplier (int): The amount of Gaussian noise to be added to the per sample gradient during</span>
 <span class="sd">                DP-SGD.</span>
 <span class="sd">            batch_size (int): The batch size to be used in training on the client-side. Used in privacy accounting.</span>
@@ -764,7 +764,9 @@
 <span class="sd">                request (which is default behavior for flower servers). Defaults to None.</span>
 <span class="sd">            server_name (str | None, optional): An optional string name to uniquely identify server. This name is also</span>
 <span class="sd">                used as part of any state checkpointing done by the server. Defaults to None.</span>
-<span class="sd">            accept_failures (bool, optional): Determines whether the server should accept</span>
+<span class="sd">            accept_failures (bool, optional): Determines whether the server should accept failures during training or</span>
+<span class="sd">                evaluation from clients or not. If set to False, this will cause the server to shutdown all clients</span>
+<span class="sd">                and throw an exception. Defaults to True.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Require the strategy to be an  OpacusStrategy to handle the Opacus model conversion etc.</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="n">OpacusScaffold</span><span class="p">),</span> <span class="p">(</span>

@@ -534,7 +534,7 @@ should work even if no keyword arguments are passed.</p>
 <dt class="sig sig-object py" id="fl4health.reporting.base_reporter.BaseReporter.report">
 <span class="sig-name descname"><span class="pre">report</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">round</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/reporting/base_reporter.html#BaseReporter.report"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.reporting.base_reporter.BaseReporter.report" title="Link to this definition">¶</a></dt>
 <dd><p>A method called by clients or servers to send data to the reporter.</p>
-<p>The report method is called by the client/server at frequent intervals (ie step, epoch, round) and sometimes
+<p>The report method is called by the client/server at frequent intervals (i.e. step, epoch, round) and sometimes
 outside of a FL round (for high level summary data). It is up to the reporter to determine when and what to
 report.</p>
 <dl class="field-list simple">

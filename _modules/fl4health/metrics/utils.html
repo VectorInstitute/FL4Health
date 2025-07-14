@@ -519,7 +519,7 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        tensor1 (torch.Tensor): The reference tensor. Must have the same number of dimensions as tensor 2, or have</span>
-<span class="sd">            exactly 1 more dimension (the label dim).</span>
+<span class="sd">            exactly 1 more dimension (the label dimension).</span>
 <span class="sd">        tensor2 (torch.Tensor): The non-reference tensor.</span>
 
 <span class="sd">    Raises:</span>
@@ -595,21 +595,21 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Maps the provided ``label_index_tensor``, which has label indices at the provided ``label_dim``. In the tensor,</span>
-<span class="sd">    this dimension should be &quot;empty&quot;, i.e. have size 1. This function uses the shape provided by ``target_shape`` to</span>
+<span class="sd">    this dimension should be &quot;empty,&quot; i.e. have size 1. This function uses the shape provided by ``target_shape`` to</span>
 <span class="sd">    expand the label indices into one-hot encoded vectors in that dimension according the the size of the target</span>
-<span class="sd">    dimension at ``label_dim`` in ``target_shape``. For example, if label_index_tensor has shape (64, 10, 10, 1),</span>
-<span class="sd">    label_dim = 3, and target_shape = (64, 10, 10, 4), then the new shape should be (64, 10, 10, 4) with [i, j, k, :]</span>
-<span class="sd">    being a one-hot vector of length 4.</span>
+<span class="sd">    dimension at ``label_dim`` in ``target_shape``. For example, if ``label_index_tensor`` has shape</span>
+<span class="sd">    ``(64, 10, 10, 1)``, ``label_dim = 3``, and ``target_shape = (64, 10, 10, 4)``, then the new shape should be</span>
+<span class="sd">    ``(64, 10, 10, 4)`` with ``[i, j, k, :]`` being a one-hot vector of length ``4``.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        label_index_tensor (torch.Tensor): Tensor to have label_dim dimension one-hot encoded accounting to</span>
-<span class="sd">            target_shape and the indices of label_index_tensor in the label_dim</span>
-<span class="sd">        target_shape (torch.Size): Shape we want to transform label_index_tensor to. Mainly used to establish the</span>
+<span class="sd">            ``target_shape`` and the indices of ``label_index_tensor`` in the ``label_dim``</span>
+<span class="sd">        target_shape (torch.Size): Shape we want to transform ``label_index_tensor`` to. Mainly used to establish the</span>
 <span class="sd">            length of the one-hot encodings</span>
 <span class="sd">        label_dim (int): Dimension to one-hot encode.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        torch.Tensor: Tensor with one-hot encoded label_dim.</span>
+<span class="sd">        torch.Tensor: Tensor with one-hot encoded ``label_dim``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">label_index_tensor_shape</span> <span class="o">=</span> <span class="n">label_index_tensor</span><span class="o">.</span><span class="n">shape</span>
 
@@ -634,16 +634,18 @@
     <span class="n">preds</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">targets</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">label_dim</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    If necessary, attempts to correct shape mismatches between the given tensors by inferring which one</span>
-<span class="sd">    to one-hot-encode. Note that if both preds and targets have the same shape then nothing needs to be modified. If</span>
-<span class="sd">    there is a mismatch, it is assumed that the labels in one of the predictions or the targets are vector encoded</span>
-<span class="sd">    in some way (either one-hot or soft) while the other is label index encoded.</span>
+<span class="sd">    If necessary, attempts to correct shape mismatches between the given tensors by inferring which one to</span>
+<span class="sd">    one-hot-encode.</span>
+
+<span class="sd">    **NOTE**: If both preds and targets have the same shape then nothing needs to be modified. If there is a mismatch,</span>
+<span class="sd">    it is assumed that the labels in one of the predictions or the targets are vector encoded in some way</span>
+<span class="sd">    (either one-hot or soft) while the other is label index encoded.</span>
 
 <span class="sd">    If one is vector encoded but not the other, then both are returned as vector encoded tensors.</span>
 
-<span class="sd">    NOTE: This function ASSUMES label-index encoding if the shapes are misaligned. This assumption doesn&#39;t necessarily</span>
-<span class="sd">    hold in binary classification settings where continuous values might be used to indicate the positive label by</span>
-<span class="sd">    default. As such, this function should not be used for those types of tensors.</span>
+<span class="sd">    **NOTE**: This function **ASSUMES** label-index encoding if the shapes are misaligned. This assumption doesn&#39;t</span>
+<span class="sd">    necessarily hold in binary classification settings where continuous values might be used to indicate the positive</span>
+<span class="sd">    label by default. As such, this function should not be used for those types of tensors.</span>
 
 <span class="sd">    For example, consider a problem with 3 label classes with the preds vector encoded and the targets label encoded</span>
 
@@ -653,8 +655,8 @@
 
 <span class="sd">        targets = torch.Tensor([[2], [1]])</span>
 
-<span class="sd">    preds has shape (2, 3) and targets has shape (2, 1). This function will convert targets to a one-hot-encode tensor</span>
-<span class="sd">    with contents</span>
+<span class="sd">    preds has shape ``(2, 3)`` and targets has shape ``(2, 1)``. This function will convert targets to a</span>
+<span class="sd">    one-hot-encode tensor with contents</span>
 
 <span class="sd">    .. code-block:: python</span>
 

@@ -529,7 +529,7 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            converter_function (Callable[[torch.Tensor, torch.Tensor], tuple[torch.Tensor, torch.Tensor]]): Function</span>
-<span class="sd">                defining how the dataset should be converted</span>
+<span class="sd">                defining how the dataset should be converted.</span>
 <span class="sd">            dataset (TensorDataset | None): Dataset to be converted.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="n">dataset</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">dataset</span><span class="o">.</span><span class="n">targets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -594,10 +594,10 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        A dataset converter specific to formatting supervised data such as MNIST for self-supervised training in</span>
-<span class="sd">        autoencoder-based models, and potentially handling the existence of additional input i.e. condition.</span>
+<span class="sd">        autoencoder-based models, and potentially handling the existence of additional input (i.e. condition).</span>
 
-<span class="sd">        This class includes three converter functions that are chosen based on the condition,</span>
-<span class="sd">        other converter functions can be added or passed to support other conditions.</span>
+<span class="sd">        This class includes three converter functions that are chosen based on the condition, other converter</span>
+<span class="sd">        functions can be added or passed to support other conditions.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            condition (str | torch.Tensor | None, optional): Could be a fixed tensor used for all the data samples,</span>

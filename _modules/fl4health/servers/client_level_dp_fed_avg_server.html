@@ -556,7 +556,7 @@
 <span class="sd">                example, the config used to produce the ``on_fit_config_fn`` and ``on_evaluate_config_fn`` for the</span>
 <span class="sd">                strategy.</span>
 
-<span class="sd">                **NOTE:** This config is **ISTINCT** from the Flwr server config, which is extremely minimal.</span>
+<span class="sd">                **NOTE**: This config is **DISTINCT** from the Flwr server config, which is extremely minimal.</span>
 <span class="sd">            strategy (ClientLevelDPFedAvgM): The aggregation strategy to be used by the server to handle.</span>
 <span class="sd">                client updates and other information potentially sent by the participating clients.</span>
 <span class="sd">            server_noise_multiplier (float): Magnitude of noise added to the weights aggregation process by the server.</span>
@@ -613,7 +613,7 @@
 <span class="sd">                clients selected to participate in federated training.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            tuple[History, float]: The first element of the tuple is a history object containing the full set of</span>
+<span class="sd">            tuple[History, float]: The first element of the tuple is a ``History`` object containing the full set of</span>
 <span class="sd">            FL training results, including things like aggregated loss and metrics. Tuple also contains the elapsed</span>
 <span class="sd">            time in seconds for the round.</span>
 <span class="sd">        &quot;&quot;&quot;</span>

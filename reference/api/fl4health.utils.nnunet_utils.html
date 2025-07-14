@@ -514,13 +514,13 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.nnunet_utils.Module2LossWrapper.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loss</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/nnunet_utils.html#Module2LossWrapper.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.nnunet_utils.Module2LossWrapper.__init__" title="Link to this definition">¶</a></dt>
-<dd><p>Converts a `` nn.Module`` subclass to a <code class="docutils literal notranslate"><span class="pre">_Loss</span></code> subclass. NnUnet defines their loss functions as modules
+<dd><p>Converts a <code class="docutils literal notranslate"><span class="pre">nn.Module</span></code> subclass to a <code class="docutils literal notranslate"><span class="pre">_Loss</span></code> subclass. NnUnet defines their loss functions as modules
 rather than true losses. This provides a type conversion.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>loss</strong> (<em>nn.Module</em>) – Loss to be wrapped.</p></li>
-<li><p><strong>**kwargs</strong> (<em>Any</em>) – Any other key word arguments that need to go to the _Loss base class.</p></li>
+<li><p><strong>**kwargs</strong> (<em>Any</em>) – Any other key word arguments that need to go to the <code class="docutils literal notranslate"><span class="pre">_Loss</span></code> base class.</p></li>
 </ul>
 </dd>
 </dl>
@@ -529,16 +529,21 @@ rather than true losses. This provides a type conversion.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.nnunet_utils.Module2LossWrapper.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pred</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/nnunet_utils.html#Module2LossWrapper.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.nnunet_utils.Module2LossWrapper.forward" title="Link to this definition">¶</a></dt>
-<dd><p>Define the computation performed at every call.</p>
-<p>Should be overridden by all subclasses.
-:rtype: <span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code></span></p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Although the recipe for forward pass needs to be defined within
-this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
-instead of this since the former takes care of running the
-registered hooks while the latter silently ignores them.</p>
-</div>
+<dd><p>Push the pred and target tensors through the wrapped loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pred</strong> (<em>torch.Tensor</em>) – Predictions tensor.</p></li>
+<li><p><strong>target</strong> (<em>torch.Tensor</em>) – Target tensor.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Loss output.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>torch.Tensor</p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -657,8 +662,8 @@ nnunet (decay LR once an epoch and epoch is 250 steps).</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>logger</strong> (<em>Logger</em>) – The logger to redirect writes to</p></li>
-<li><p><strong>level</strong> (<a class="reference internal" href="fl4health.utils.typing.html#fl4health.utils.typing.LogLevel" title="fl4health.utils.typing.LogLevel"><em>LogLevel</em></a>) – The log level at which to redirect the writes</p></li>
+<li><p><strong>logger</strong> (<em>Logger</em>) – The logger to redirect writes to.</p></li>
+<li><p><strong>level</strong> (<a class="reference internal" href="fl4health.utils.typing.html#fl4health.utils.typing.LogLevel" title="fl4health.utils.typing.LogLevel"><em>LogLevel</em></a>) – The log level at which to redirect the writes.</p></li>
 </ul>
 </dd>
 </dl>
@@ -698,12 +703,12 @@ the length of the string.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>input</strong> (<em>torch.Tensor</em>) – The binary one hot encoded tensor</p></li>
+<li><p><strong>input</strong> (<em>torch.Tensor</em>) – The binary one hot encoded tensor.</p></li>
 <li><p><strong>dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Dimension over which to collapse the one-hot tensor. Defaults to 0.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Integer tensor with the specified dim collapsed</p>
+<dd class="field-even"><p>Integer tensor with the specified dim collapsed.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>torch.Tensor</p>
@@ -719,10 +724,10 @@ the length of the string.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>tensor_dict</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>torch.Tensor</em><em>]</em>) – Dictionary containing <code class="docutils literal notranslate"><span class="pre">torch.Tensors</span></code>. The key values must start
 with ‘X-’ where X is an integer representing the index at which the tensor should be placed in the output
-list</p>
+list.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A list of <code class="docutils literal notranslate"><span class="pre">torch.Tensors</span></code></p>
+<dd class="field-even"><p>A list of <code class="docutils literal notranslate"><span class="pre">torch.Tensors</span></code>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)">list</a>[torch.Tensor]</p>
@@ -740,13 +745,13 @@ outputs and targets loaded by the dataloader are lists. Assumes the spatial dime
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tensor_list</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><em>torch.Tensor</em><em>]</em>) – A list of tensors, usually either nnunet model outputs or targets, to be
-converted into a dictionary</p></li>
-<li><p><strong>num_spatial_dims</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The number of spatial dimensions. Assumes the spatial dimensions are last</p></li>
+converted into a dictionary.</p></li>
+<li><p><strong>num_spatial_dims</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The number of spatial dimensions. Assumes the spatial dimensions are last.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A dictionary containing the tensors as values where the keys are ‘i-XxYxZ’ where i
-was the tensor’s index in the list and X,Y,Z are the spatial dimensions of the tensor</p>
+was the tensor’s index in the list and X,Y,Z are the spatial dimensions of the tensor.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, torch.Tensor]</p>
@@ -761,12 +766,12 @@ was the tensor’s index in the list and X,Y,Z are the spatial dimensions of the
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>source_plans</strong> (<em>Dict</em>) – The nnunet plans dict that is being modified</p></li>
-<li><p><strong>n_cases</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The number of cases in the dataset</p></li>
+<li><p><strong>source_plans</strong> (<em>Dict</em>) – The nnunet plans dict that is being modified.</p></li>
+<li><p><strong>n_cases</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The number of cases in the dataset.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The total number of voxels in the local client dataset</p>
+<dd class="field-even"><p>The total number of voxels in the local client dataset.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)">float</a></p>
@@ -782,12 +787,12 @@ was the tensor’s index in the list and X,Y,Z are the spatial dimensions of the
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>preds</strong> (<em>torch.Tensor</em>) – The one hot encoded model output probabilities with shape (batch, classes,
-*additional_dims). The background should be a separate class</p></li>
+*additional_dims). The background should be a separate class.</p></li>
 <li><p><strong>has_regions</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – If True, predicted segmentations can be multiple classes at once. The exception
 is the background class which is assumed to be the first class (class 0). If False, each value in
 predicted segmentations has only a single class. Defaults to False.</p></li>
 <li><p><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – When <code class="docutils literal notranslate"><span class="pre">has_regions</span></code> is True, this is the threshold value used to determine whether or not
-an output is a part of a class</p></li>
+an output is a part of a class.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -806,7 +811,7 @@ integers.</p>
 <dd><p>Converts pred and target tensors into the proper data type to be passed to the nnunet loss functions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>tensor</strong> (<em>torch.Tensor</em><em> | </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>torch.Tensor</em><em>]</em>) – The input tensor</p>
+<dd class="field-odd"><p><strong>tensor</strong> (<em>torch.Tensor</em><em> | </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>torch.Tensor</em><em>]</em>) – The input tensor.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The tensor ready to be passed to the loss function. A single tensor if not

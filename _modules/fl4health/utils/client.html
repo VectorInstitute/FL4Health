@@ -589,10 +589,10 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This function checks whether the provided batch (input) is empty. If the input is a dictionary of inputs, it</span>
 <span class="sd">    first verifies that the length of all inputs is the same, then checks if they are non-empty.</span>
-<span class="sd">    **NOTE:** This function assumes the input is **BATCH FIRST**.</span>
+<span class="sd">    **NOTE**: This function assumes the input is **BATCH FIRST**.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        input (TorchInputType): Input batch. input can be of type ``torch.Tensor`` or ``dict[str, torch.Tensor]``,</span>
+<span class="sd">        input (TorchInputType): Input batch. Input can be of type ``torch.Tensor`` or ``dict[str, torch.Tensor]``,</span>
 <span class="sd">            and in the latter case, the batch is considered to be empty if all tensors in the dictionary have length</span>
 <span class="sd">            zero.</span>
 
@@ -625,9 +625,10 @@
 <span class="sd">    preserved in its current state.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        model (nn.Module): Model to clone and freeze</span>
+<span class="sd">        model (nn.Module): Model to clone and freeze.</span>
+
 <span class="sd">    Returns:</span>
-<span class="sd">        nn.Module: Cloned and frozen model</span>
+<span class="sd">        nn.Module: Cloned and frozen model.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">cloned_model</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">cloned_model</span><span class="o">.</span><span class="n">parameters</span><span class="p">():</span>

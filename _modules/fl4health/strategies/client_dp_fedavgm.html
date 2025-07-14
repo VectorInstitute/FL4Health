@@ -594,8 +594,7 @@
 <span class="sd">                Function used to configure client-side validation by providing a ``Config`` dictionary.</span>
 <span class="sd">                Defaults to None.</span>
 <span class="sd">            accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.</span>
-<span class="sd">            initial_parameters (Parameters | None, optional): Initial global model parameters. This strategy assumes</span>
-<span class="sd">                that the initial parameters is not None. So they need to be set in spite of the optional tag.</span>
+<span class="sd">            initial_parameters (Parameters | None, optional): Initial global model parameters.</span>
 <span class="sd">            fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.</span>
 <span class="sd">                Defaults to None.</span>
 <span class="sd">            evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.</span>
@@ -763,7 +762,7 @@
 <span class="sd">        This function updates each of the layer weights using the server learning rate and the :math:`m_t` values</span>
 <span class="sd">        (computed with or without momentum).</span>
 
-<span class="sd">        **NOTE:** It assumes that the values in :math:`m_t` are **UPDATES** rather than raw weights.</span>
+<span class="sd">        **NOTE**: It assumes that the values in :math:`m_t` are **UPDATES** rather than raw weights.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">current_weights</span> <span class="o">=</span> <span class="p">[</span>
@@ -779,7 +778,7 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Update the clipping bound help by the server given the noised aggregated clipping bits returned by the clients.</span>
 
-<span class="sd">        **NOTE:** The update formula may be found in the original paper.</span>
+<span class="sd">        **NOTE**: The update formula may be found in the original paper.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            noised_clipping_bits (float): This is the aggregated noised clipping bits derived from the clients.</span>
@@ -797,7 +796,7 @@
 
 <span class="sd">        Args:</span>
 <span class="sd">            clipping_bits (NDArrays): Bits associated with each of the clients. These are to be noised and aggregated</span>
-<span class="sd">            in order to update the clipping bound on the server side.</span>
+<span class="sd">                in order to update the clipping bound on the server side.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">noised_clipping_bits_sum</span> <span class="o">=</span> <span class="n">gaussian_noisy_aggregate_clipping_bits</span><span class="p">(</span>
             <span class="n">clipping_bits</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clipping_noise_multiplier</span>
@@ -817,10 +816,10 @@
 <span class="sd">        Aggregate fit using averaging of weights (can be unweighted or weighted) and inject noise and optionally</span>
 <span class="sd">        perform adaptive clipping updates.</span>
 
-<span class="sd">        **NOTE:** This assumes that the model weights sent back by the clients are **UPDATES** rather than raw weights.</span>
+<span class="sd">        **NOTE**: This assumes that the model weights sent back by the clients are **UPDATES** rather than raw weights.</span>
 <span class="sd">        That is they are ``theta_client - theta_server`` rather than just ``theta_client``.</span>
 
-<span class="sd">        **NOTE:** this function packs the clipping bound for clients as the last member of the parameters list.</span>
+<span class="sd">        **NOTE**: this function packs the clipping bound for clients as the last member of the parameters list.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            server_round (int): Indicates the server round we&#39;re currently on.</span>
@@ -962,7 +961,7 @@
 
 <span class="sd">        Returns:</span>
 <span class="sd">            list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters</span>
-<span class="sd">            to be sent to each client (packaged as ``EvaluateIns``)</span>
+<span class="sd">            to be sent to each client (packaged as ``EvaluateIns``).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># This strategy requires the client manager to be of type at least BaseFractionSamplingManager</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">client_manager</span><span class="p">,</span> <span class="n">BaseFractionSamplingManager</span><span class="p">)</span>

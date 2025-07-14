@@ -518,9 +518,9 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_path</strong> (<em>Path</em>) – path to the data to be used to load the data for client-side training</p></li>
+<li><p><strong>data_path</strong> (<em>Path</em>) – path to the data to be used to load the data for client-side training.</p></li>
 <li><p><strong>device</strong> (<em>torch.device</em>) – Device indicator for where to send the model, batches, labels etc. Often “cpu” or
-“cuda”</p></li>
+“cuda”.</p></li>
 <li><p><strong>model_save_dir</strong> (<em>Path</em>) – Dir to save the PCA components for use later, perhaps in dimensionality reduction</p></li>
 <li><p><strong>client_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – client name, mainly used for saving components. Defaults to None.</p></li>
 </ul>
@@ -591,16 +591,16 @@ with the number of samples in the local training dataset and the computed metric
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.fed_pca_client.FedPCAClient.get_data_loaders">
 <span class="sig-name descname"><span class="pre">get_data_loaders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/fed_pca_client.html#FedPCAClient.get_data_loaders"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.fed_pca_client.FedPCAClient.get_data_loaders" title="Link to this definition">¶</a></dt>
-<dd><p>User defined method that returns a PyTorch Train DataLoader and a PyTorch Validation DataLoader.</p>
+<dd><p>User defined method that returns a PyTorch Train <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> and a PyTorch Validation <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – Configurations sent by the server to allow for customization of this functions behavior.</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code>]</span></p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of length 2. The client train and validation loader.</p>
 </dd>
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>tuple[DataLoader, DataLoader] Tuple of length 2. The client train and validation loader.</p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[DataLoader, DataLoader]</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#NotImplementedError" title="(in Python v3.10)"><strong>NotImplementedError</strong></a> – To be defined in child class.</p>
@@ -657,7 +657,7 @@ components that have been computed.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Parameters representing the principal components computed by the client that need to be
-aggregated in some way</p>
+aggregated in some way.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>NDArrays</p>

@@ -551,15 +551,15 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Adaptive Drift Constrained Mixin.</span>
 
-<span class="sd">        To be used with `~fl4health.BaseClient` in order to add the ability to compute</span>
+<span class="sd">        To be used with ``~fl4health.BaseClient`` in order to add the ability to compute</span>
 <span class="sd">        losses via a constrained adaptive drift.</span>
 
-<span class="sd">        NOTE: Rather than using `AdaptiveDriftConstraintClient`, if a client subclasses</span>
-<span class="sd">        `FlexibleClient`, than this mixin could be used on that subclass to implement the</span>
+<span class="sd">        **NOTE**: Rather than using ``AdaptiveDriftConstraintClient``, if a client subclasses</span>
+<span class="sd">        ``FlexibleClient``, than this mixin could be used on that subclass to implement the</span>
 <span class="sd">        adaptive drift constraint.</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            RuntimeError: when the inheriting class does not satisfy `FlexibleClientProtocolPreSetup`.</span>
+<span class="sd">            RuntimeError: When the inheriting class does not satisfy ``FlexibleClientProtocolPreSetup``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Initialize mixin-specific attributes with default values</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">loss_for_adaptation</span> <span class="o">=</span> <span class="mf">0.1</span>
@@ -618,7 +618,8 @@
 <span class="sd">            config (Config): Configurations to allow for customization of this functions behavior</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            NDArrays: Parameters and training loss packed together into a list of numpy arrays to be sent to the server</span>
+<span class="sd">            NDArrays: Parameters and training loss packed together into a list of numpy arrays to be sent to the</span>
+<span class="sd">            server.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span><span class="p">:</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Setting up client and providing full model parameters to the server for initialization&quot;</span><span class="p">)</span>
@@ -735,7 +736,7 @@
 <span class="sd">        Computes the drift loss for the client model and drift tensors.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            torch.Tensor: Computed penalty loss tensor</span>
+<span class="sd">            torch.Tensor: Computed penalty loss tensor.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Penalty tensors must have been set for these clients.</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">drift_penalty_tensors</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>

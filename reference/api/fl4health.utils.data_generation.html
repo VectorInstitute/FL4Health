@@ -518,18 +518,18 @@
 <dd><p>Abstract base class to support synthetic dataset generation in the style of the original FedProx paper.</p>
 <p>Paper link: <a class="reference external" href="https://arxiv.org/abs/1812.06127">https://arxiv.org/abs/1812.06127</a></p>
 <p>Reference code: <a class="reference external" href="https://github.com/litian96/FedProx/tree/master/data/synthetic_1_1">https://github.com/litian96/FedProx/tree/master/data/synthetic_1_1</a></p>
-<p><strong>NOTE:</strong> In the implementations here, all clients receive the same number of samples. In the original FedProx
+<p><strong>NOTE</strong>: In the implementations here, all clients receive the same number of samples. In the original FedProx
 setup, they are sampled using a power law.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_clients</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of datasets (one per client) to generate</p></li>
-<li><p><strong>temperature</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – temperature used for the softmax mapping to labels. Defaults to 1.0.</p></li>
-<li><p><strong>input_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – dimension of the input features for the synthetic dataset. Default is as in the
+<li><p><strong>num_clients</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of datasets (one per client) to generate.</p></li>
+<li><p><strong>temperature</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Temperature used for the softmax mapping to labels. Defaults to 1.0.</p></li>
+<li><p><strong>input_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Dimension of the input features for the synthetic dataset. Default is as in the
 FedProx paper. Defaults to 60.</p></li>
-<li><p><strong>output_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – dimension of the output labels for the synthetic dataset. These are one-hot
+<li><p><strong>output_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Dimension of the output labels for the synthetic dataset. These are one-hot
 encoding labels. Default is as in the FedProx paper. Defaults to 10.</p></li>
-<li><p><strong>hidden_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – dimension of the hidden layer for the two-layer mapping. If None, a
+<li><p><strong>hidden_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Dimension of the hidden layer for the two-layer mapping. If None, a
 one-layer mapping is used. Defaults to None.</p></li>
 <li><p><strong>samples_per_client</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Number of samples to generate in each client’s dataset.
 Defaults to 1000.</p></li>
@@ -557,7 +557,7 @@ datasets. It is a diagonal matrix with diagonal entries <span class="math notran
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.utils.data_generation.SyntheticFedProxDataset.generate">
 <span class="sig-name descname"><span class="pre">generate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/data_generation.html#SyntheticFedProxDataset.generate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.data_generation.SyntheticFedProxDataset.generate" title="Link to this definition">¶</a></dt>
-<dd><p>Based on the class parameters, generate a list of synthetic TensorDatasets, one for each client.</p>
+<dd><p>Based on the class parameters, generate a list of synthetic <code class="docutils literal notranslate"><span class="pre">TensorDatasets</span></code>, one for each client.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Synthetic datasets for each client.</p>
@@ -576,7 +576,7 @@ uses the affine mapping, but the parameters for how that affine mapping is setup
 in this function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>input and output tensors for each of the clients.</p>
+<dd class="field-odd"><p>Input and output tensors for each of the clients.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)">list</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[torch.Tensor, torch.Tensor]]</p>
@@ -619,23 +619,23 @@ one hot encode the resulting label sample.</p>
 affine transformations.</p>
 <div class="math-wrapper docutils container">
 <div class="math notranslate nohighlight">
-\[latent = \frac{1}{T} \cdot (W_1 \cdot x + b_1)
-\hat{y} = \cdot (W_2 \cdot latent + b_2).\]</div>
+\[\text{latent} = \frac{1}{T} \cdot (W_1 \cdot x + b_1)
+\hat{y} = \cdot (W_2 \cdot \text{latent} + b_2).\]</div>
 </div>
 <p>Then <span class="math notranslate nohighlight">\(y = \text{softmax}(\hat{y})\)</span>. Getting the argmax from the distribution, we then
 one hot encode the resulting label sample.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<em>torch.Tensor</em>) – The input features to be mapped to output labels. Shape is (dataset size, <code class="docutils literal notranslate"><span class="pre">input_dim</span></code>)</p></li>
-<li><p><strong>w_1</strong> (<em>torch.Tensor</em>) – The first linear transformation matrix. Shape is (<code class="docutils literal notranslate"><span class="pre">hidden_dim</span></code>, <code class="docutils literal notranslate"><span class="pre">input_dim</span></code>)</p></li>
-<li><p><strong>b_1</strong> (<em>torch.Tensor</em>) – The bias in the first linear transformation. Shape is (<code class="docutils literal notranslate"><span class="pre">hidden_dim</span></code>, 1)</p></li>
-<li><p><strong>w_2</strong> (<em>torch.Tensor</em>) – The second linear transformation matrix. Shape is (<code class="docutils literal notranslate"><span class="pre">output_dim</span></code>, <code class="docutils literal notranslate"><span class="pre">hidden_dim</span></code>)</p></li>
-<li><p><strong>b_2</strong> (<em>torch.Tensor</em>) – The bias in the second linear transformation. Shape is (<code class="docutils literal notranslate"><span class="pre">output_dim</span></code>, 1)</p></li>
+<li><p><strong>x</strong> (<em>torch.Tensor</em>) – The input features to be mapped to output labels. Shape is (dataset size, <code class="docutils literal notranslate"><span class="pre">input_dim</span></code>).</p></li>
+<li><p><strong>w_1</strong> (<em>torch.Tensor</em>) – The first linear transformation matrix. Shape is (<code class="docutils literal notranslate"><span class="pre">hidden_dim</span></code>, <code class="docutils literal notranslate"><span class="pre">input_dim</span></code>).</p></li>
+<li><p><strong>b_1</strong> (<em>torch.Tensor</em>) – The bias in the first linear transformation. Shape is (<code class="docutils literal notranslate"><span class="pre">hidden_dim</span></code>, 1).</p></li>
+<li><p><strong>w_2</strong> (<em>torch.Tensor</em>) – The second linear transformation matrix. Shape is (<code class="docutils literal notranslate"><span class="pre">output_dim</span></code>, <code class="docutils literal notranslate"><span class="pre">hidden_dim</span></code>).</p></li>
+<li><p><strong>b_2</strong> (<em>torch.Tensor</em>) – The bias in the second linear transformation. Shape is (<code class="docutils literal notranslate"><span class="pre">output_dim</span></code>, 1).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The labels associated with each of the inputs. The shape is (dataset size, <code class="docutils literal notranslate"><span class="pre">output_dim</span></code>)</p>
+<dd class="field-even"><p>The labels associated with each of the inputs. The shape is (dataset size, <code class="docutils literal notranslate"><span class="pre">output_dim</span></code>).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>torch.Tensor</p>
@@ -656,17 +656,17 @@ one hot encode the resulting label sample.</p>
 C.1 in the paper link below for additional details. The IID generation code is based strictly on the
 description in the appendix for IID dataset generation.</p>
 <p>Paper link: <a class="reference external" href="https://arxiv.org/abs/1812.06127">https://arxiv.org/abs/1812.06127</a></p>
-<p><strong>NOTE:</strong> This generator ends up with fairly skewed labels in generation. That is, many of the clients will not
+<p><strong>NOTE</strong>: This generator ends up with fairly skewed labels in generation. That is, many of the clients will not
 have representations of all the labels. This has been verified as also occurring in the reference code above
 and is not a bug.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_clients</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of datasets (one per client) to generate</p></li>
-<li><p><strong>temperature</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – temperature used for the softmax mapping to labels. Defaults to 1.0.</p></li>
-<li><p><strong>input_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – dimension of the input features for the synthetic dataset. Default is as in the
+<li><p><strong>num_clients</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of datasets (one per client) to generate.</p></li>
+<li><p><strong>temperature</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Temperature used for the softmax mapping to labels. Defaults to 1.0.</p></li>
+<li><p><strong>input_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Dimension of the input features for the synthetic dataset. Default is as in the
 FedProx paper. Defaults to 60.</p></li>
-<li><p><strong>output_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – dimension of the output labels for the synthetic dataset. These are one-hot
+<li><p><strong>output_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Dimension of the output labels for the synthetic dataset. These are one-hot
 encoding labels. Default is as in the FedProx paper. Defaults to 10.</p></li>
 <li><p><strong>samples_per_client</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Number of samples to generate in each client’s dataset.
 Defaults to 1000.</p></li>
@@ -718,9 +718,9 @@ multidimensional normal distribution with diagonal covariance matrix shared acro
 <dd><p>NON-IID Synthetic dataset generator modeled after the implementation in the original FedProx paper. See Section
 5.1 in the paper link below for additional details. The non-IID generation code is modeled after the code
 housed in the github link below as well.</p>
-<p>Paper link: <a class="reference external" href="https://arxiv.org/abs/1812.06127">https://arxiv.org/abs/1812.06127</a>
-Reference code: <a class="reference external" href="https://github.com/litian96/FedProx/tree/master/data/synthetic_1_1">https://github.com/litian96/FedProx/tree/master/data/synthetic_1_1</a></p>
-<p><strong>NOTE:</strong> This generator ends up with fairly skewed labels in generation. That is, many of the clients will not
+<p>Paper link: <a class="reference external" href="https://arxiv.org/abs/1812.06127">https://arxiv.org/abs/1812.06127</a></p>
+<p>Reference code: <a class="reference external" href="https://github.com/litian96/FedProx/tree/master/data/synthetic_1_1">https://github.com/litian96/FedProx/tree/master/data/synthetic_1_1</a></p>
+<p><strong>NOTE</strong>: This generator ends up with fairly skewed labels in generation. That is, many of the clients will not
 have representations of all the labels. This has been verified as also occurring in the reference code above
 and is not a bug.</p>
 <p>The larger alpha and beta are, the more heterogeneous the clients data is. The larger alpha is, the more
@@ -729,19 +729,19 @@ centers of the input features.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>num_clients</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of datasets (one per client) to generate</p></li>
+<li><p><strong>num_clients</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Number of datasets (one per client) to generate.</p></li>
 <li><p><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – This is the standard deviation for the mean (<code class="docutils literal notranslate"><span class="pre">u_k</span></code>), drawn from a centered normal
 distribution, which is used to generate the elements of the affine transformation components <code class="docutils literal notranslate"><span class="pre">W</span></code>,
 <code class="docutils literal notranslate"><span class="pre">b</span></code>.</p></li>
 <li><p><strong>beta</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – This is the standard deviation for each element of the multidimensional mean (<code class="docutils literal notranslate"><span class="pre">v_k</span></code>),
 drawn from a centered normal distribution, which is used to generate the elements of the input features
-for <span class="math notranslate nohighlight">\(x \sim \mathcal{N}(B_k, \Sigma)\)</span></p></li>
-<li><p><strong>temperature</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – temperature used for the softmax mapping to labels. Defaults to 1.0.</p></li>
-<li><p><strong>input_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – dimension of the input features for the synthetic dataset. Default is as in the
+for <span class="math notranslate nohighlight">\(x \sim \mathcal{N}(B_k, \Sigma)\)</span>.</p></li>
+<li><p><strong>temperature</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Temperature used for the softmax mapping to labels. Defaults to 1.0.</p></li>
+<li><p><strong>input_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Dimension of the input features for the synthetic dataset. Default is as in the
 FedProx paper. Defaults to 60.</p></li>
-<li><p><strong>output_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – dimension of the output labels for the synthetic dataset. These are one-hot
+<li><p><strong>output_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Dimension of the output labels for the synthetic dataset. These are one-hot
 encoding labels. Default is as in the FedProx paper. Defaults to 10.</p></li>
-<li><p><strong>hidden_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – dimension of the hidden layer for the two-layer mapping. If None, a
+<li><p><strong>hidden_dim</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Dimension of the hidden layer for the two-layer mapping. If None, a
 one-layer mapping is used. Defaults to None.</p></li>
 <li><p><strong>samples_per_client</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Number of samples to generate in each client’s dataset.
 Defaults to 1000.</p></li>

@@ -520,10 +520,10 @@ User is responsible for implementing methods: <code class="docutils literal notr
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_path</strong> (<em>Path</em>) – path to the data to be used to load the data for client-side training</p></li>
-<li><p><strong>metrics</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric" title="fl4health.metrics.base_metrics.Metric"><em>Metric</em></a><em>]</em>) – Metrics to be computed based on the labels and predictions of the client model</p></li>
+<li><p><strong>data_path</strong> (<em>Path</em>) – path to the data to be used to load the data for client-side training.</p></li>
+<li><p><strong>metrics</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric" title="fl4health.metrics.base_metrics.Metric"><em>Metric</em></a><em>]</em>) – Metrics to be computed based on the labels and predictions of the client model.</p></li>
 <li><p><strong>device</strong> (<em>torch.device</em>) – Device indicator for where to send the model, batches, labels etc. Often “cpu” or
-“cuda”</p></li>
+“cuda”.</p></li>
 <li><p><strong>loss_meter_type</strong> (<a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.LossMeterType" title="fl4health.utils.losses.LossMeterType"><em>LossMeterType</em></a><em>, </em><em>optional</em>) – Type of meter used to track and compute the losses over
 each batch. Defaults to <code class="docutils literal notranslate"><span class="pre">LossMeterType.AVERAGE</span></code>.</p></li>
 <li><p><strong>checkpoint_and_state_module</strong> (<a class="reference internal" href="fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.ClientCheckpointAndStateModule" title="fl4health.checkpointing.client_module.ClientCheckpointAndStateModule"><em>ClientCheckpointAndStateModule</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A module meant to handle
@@ -580,7 +580,7 @@ indexed by name.</p>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><p>A tuple with:</p>
 <ul class="simple">
-<li><p>The tensor for the loss</p></li>
+<li><p>The tensor for the loss.</p></li>
 <li><p>A dictionary of additional losses with their names and values, or None if there are no additional losses.</p></li>
 </ul>
 </p>
@@ -679,7 +679,7 @@ beginning and end of each server round or local epoch. Also called at the end of
 <dd class="field-even"><p><ul class="simple">
 <li><p>A string to append to the header log string that typically announces the current server round and
 current epoch at the beginning of each round or local epoch.</p></li>
-<li><p>A list of tuples where the first element is a LogLevel as defined in <code class="docutils literal notranslate"><span class="pre">fl4health.utils.</span></code>
+<li><p>A list of tuples where the first element is a <code class="docutils literal notranslate"><span class="pre">LogLevel</span></code> as defined in <code class="docutils literal notranslate"><span class="pre">fl4health.utils.</span></code>
 typing and the second element is a string message. Each item in the list will be logged at the end of
 each server round or epoch. Elements will also be logged at the end of validation/testing.</p></li>
 </ul>
@@ -698,7 +698,7 @@ each server round or epoch. Elements will also be logged at the end of validatio
 the <code class="docutils literal notranslate"><span class="pre">wandb_reporter</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A dictionary of things to report</p>
+<dd class="field-odd"><p>A dictionary of things to report.</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, Any]</p>
@@ -726,16 +726,16 @@ the <code class="docutils literal notranslate"><span class="pre">wandb_reporter<
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.get_data_loaders">
 <span class="sig-name descname"><span class="pre">get_data_loaders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.get_data_loaders"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.get_data_loaders" title="Link to this definition">¶</a></dt>
-<dd><p>User defined method that returns a PyTorch Train DataLoader and a PyTorch Validation DataLoader.</p>
+<dd><p>User defined method that returns a PyTorch Train <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> and a PyTorch Validation <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – The config from the server.</p>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Tuple of length 2. The client train and validation loader.</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">DataLoader</span></code>]</span></p>
 </dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[DataLoader, …]</p>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[DataLoader, DataLoader Tuple of length 2. The client train and validation loader.</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#NotImplementedError" title="(in Python v3.10)"><strong>NotImplementedError</strong></a> – To be defined in child class.</p>
@@ -891,7 +891,7 @@ initialize all model components. Subclasses that require custom model initializa
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>parameters</strong> (<em>NDArrays</em>) – Model parameters to be injected into the client model</p></li>
+<li><p><strong>parameters</strong> (<em>NDArrays</em>) – Model parameters to be injected into the client model.</p></li>
 <li><p><strong>config</strong> (<em>Config</em>) – The config is sent by the FL server to allow for customization in the function if desired.</p></li>
 </ul>
 </dd>
@@ -957,9 +957,9 @@ forward.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.set_optimizer">
 <span class="sig-name descname"><span class="pre">set_optimizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.set_optimizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.set_optimizer" title="Link to this definition">¶</a></dt>
-<dd><p>Method called in the the setup_client method to set optimizer attribute returned by used-defined
+<dd><p>Method called in the <code class="docutils literal notranslate"><span class="pre">setup_client</span></code> method to set optimizer attribute returned by used-defined
 <code class="docutils literal notranslate"><span class="pre">get_optimizer</span></code>. In the simplest case, <code class="docutils literal notranslate"><span class="pre">get_optimizer</span></code> returns an optimizer. For more advanced use cases
-where a dictionary of string and optimizer are returned (ie APFL), the user must override this method.</p>
+where a dictionary of string and optimizer are returned (i.e. APFL), the user must override this method.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – The config from the server.</p>
@@ -1079,8 +1079,8 @@ Assumes <code class="docutils literal notranslate"><span class="pre">self.model<
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The losses object from the train step along with
-a dictionary of any predictions produced by the model.</p>
+<dd class="field-even"><p>The losses object from the train step along with a dictionary of
+any predictions produced by the model.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[<a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.TrainingLosses" title="fl4health.utils.losses.TrainingLosses">TrainingLosses</a>, TorchPredType]</p>
@@ -1128,16 +1128,16 @@ is a transformed version of the input image itself.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.update_after_step">
 <span class="sig-name descname"><span class="pre">update_after_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_round</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.update_after_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.update_after_step" title="Link to this definition">¶</a></dt>
-<dd><p>Hook method called after local train step on client. step is an integer that represents
-the local training step that was most recently completed. For example, used by the APFL
-method to update the alpha value after a training a step. Also used by the MOON, FENDA
-and Ditto to update optimized beta value for MK-MMD loss after n steps.</p>
+<dd><p>Hook method called after local train step on client. Step is an integer that represents the local training
+step that was most recently completed. For example, used by the APFL method to update the alpha value after a
+training a step. Also used by the MOON, FENDA and Ditto to update optimized beta value for MK-MMD loss after
+n steps.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>step</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The step number in local training that was most recently
-completed. Resets only at the end of the round.</p></li>
-<li><p><strong>current_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The current FL server round</p></li>
+<li><p><strong>step</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The step number in local training that was most recently completed. Resets only at the end of
+the round.</p></li>
+<li><p><strong>current_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The current FL server round.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1190,9 +1190,8 @@ aggregation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>step</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The local training step that was most recently
-completed. Resets only at the end of the round.</p></li>
-<li><p><strong>current_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The current FL server round</p></li>
+<li><p><strong>step</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – The local training step that was most recently completed. Resets only at the end of the round.</p></li>
+<li><p><strong>current_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The current FL server round.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1204,8 +1203,8 @@ completed. Resets only at the end of the round.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.update_before_train">
 <span class="sig-name descname"><span class="pre">update_before_train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current_server_round</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.update_before_train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.update_before_train" title="Link to this definition">¶</a></dt>
-<dd><p>Hook method called before training with the number of current server rounds performed.
-<strong>NOTE:</strong> This method is called immediately <strong>AFTER</strong> the aggregated parameters are received from the server.
+<dd><p>Hook method called before training with the number of current server rounds performed.</p>
+<p><strong>NOTE</strong>: This method is called immediately <strong>AFTER</strong> the aggregated parameters are received from the server.
 For example, used by MOON and FENDA to save global modules after aggregation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1221,7 +1220,7 @@ For example, used by MOON and FENDA to save global modules after aggregation.</p
 <dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.update_lr_schedulers">
 <span class="sig-name descname"><span class="pre">update_lr_schedulers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoch</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.update_lr_schedulers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.update_lr_schedulers" title="Link to this definition">¶</a></dt>
 <dd><p>Updates any schedulers that exist. Can be overridden to customize update logic based on client state
-(i.e self.total_steps).</p>
+(i.e <code class="docutils literal notranslate"><span class="pre">self.total_steps</span></code>).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1238,19 +1237,15 @@ For example, used by MOON and FENDA to save global modules after aggregation.</p
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.update_metric_manager">
 <span class="sig-name descname"><span class="pre">update_metric_manager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric_manager</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.update_metric_manager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.update_metric_manager" title="Link to this definition">¶</a></dt>
-<dd><p>Updates a metric manager with the provided model predictions and
-targets. Can be overridden to modify pred and target inputs to the
-metric manager. This is useful in cases where the preds and targets
-needed to compute the loss are different than what is needed to compute
-metrics.</p>
+<dd><p>Updates a metric manager with the provided model predictions and targets. Can be overridden to modify pred and
+target inputs to the metric manager. This is useful in cases where the preds and targets needed to compute the
+loss are different than what is needed to compute metrics.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>preds</strong> (<em>TorchPredType</em>) – The output predictions from the model
-returned by self.predict</p></li>
-<li><p><strong>target</strong> (<em>TorchTargetType</em>) – The targets generated by the dataloader to
-to evaluate the predictions with</p></li>
-<li><p><strong>metric_manager</strong> (<a class="reference internal" href="fl4health.metrics.metric_managers.html#fl4health.metrics.metric_managers.MetricManager" title="fl4health.metrics.metric_managers.MetricManager"><em>MetricManager</em></a>) – The metric manager to update</p></li>
+<li><p><strong>preds</strong> (<em>TorchPredType</em>) – The output predictions from the model returned by <code class="docutils literal notranslate"><span class="pre">self.predict</span></code>.</p></li>
+<li><p><strong>target</strong> (<em>TorchTargetType</em>) – The targets generated by the dataloader with which to evaluate the predictions.</p></li>
+<li><p><strong>metric_manager</strong> (<a class="reference internal" href="fl4health.metrics.metric_managers.html#fl4health.metrics.metric_managers.MetricManager" title="fl4health.metrics.metric_managers.MetricManager"><em>MetricManager</em></a>) – The metric manager to update.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -1283,8 +1278,8 @@ predictions produced by the model.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.basic_client.BasicClient.validate">
 <span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_losses_in_metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/basic_client.html#BasicClient.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.basic_client.BasicClient.validate" title="Link to this definition">¶</a></dt>
-<dd><p>Validate the current model on the entire validation (or a subset thereof if num_validation_steps is not None)
-and potentially an entire test dataset if it has been defined.</p>
+<dd><p>Validate the current model on the entire validation (or a subset thereof if <code class="docutils literal notranslate"><span class="pre">num_validation_steps</span></code> is not
+None) and potentially an entire test dataset if it has been defined.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>include_losses_in_metrics</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Determines whether to include the calculated losses into the

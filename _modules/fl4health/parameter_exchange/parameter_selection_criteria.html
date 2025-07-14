@@ -529,8 +529,8 @@
 <span class="sd">        by the ``DynamicLayerExchanger`` class.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            norm_threshold (float): A nonnegative real number used to select those layers whose drift in l2 norm</span>
-<span class="sd">                exceeds (or falls short of) it.</span>
+<span class="sd">            norm_threshold (float): A nonnegative real number used to select those layers whose drift in</span>
+<span class="sd">                :math:`\\ell^2` norm exceeds (or falls short of) it.</span>
 <span class="sd">            exchange_percentage (float): Indicates the percentage of layers that are selected.</span>
 <span class="sd">            normalize (bool, optional): Indicates whether when calculating the norm of a layer, we also divide by the</span>
 <span class="sd">                number of parameters in that layer. Defaults to True.</span>
@@ -599,15 +599,15 @@
     <span class="n">initial_model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">NDArrays</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Return those layers of model that deviate (in l2 norm) away from corresponding layers of ``self.initial_model``</span>
-<span class="sd">    by at least (or at most) ``self.threshold``.</span>
+<span class="sd">    Return those layers of model that deviate (in :math:`\\ell^2` norm) away from corresponding layers of</span>
+<span class="sd">    ``self.initial_model`` by at least (or at most) ``self.threshold``.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        threshold (float): Drift threshold to be used for selection. It is an fixed value.</span>
 <span class="sd">        normalize (bool): Whether to divide the difference between the tensors by their number of elements.</span>
 <span class="sd">        select_drift_more (bool): Whether we are selecting parameters that have drifted further (True) or less far</span>
 <span class="sd">            from their comparison values</span>
-<span class="sd">        model (nn.Module): Model after training/modification</span>
+<span class="sd">        model (nn.Module): Model after training/modification.</span>
 <span class="sd">        initial_model (nn.Module): Model that we started with to which we are comparing parameters.</span>
 
 <span class="sd">    Returns:</span>
@@ -792,7 +792,7 @@
 <span class="sd">    and then samples binary masks based on those scores to send to the server. This function is meant to be used for</span>
 <span class="sd">    the FedPM algorithm.</span>
 
-<span class="sd">    **NOTE:** in the current implementation, we always exchange the score tensors for all layers. In the future, we</span>
+<span class="sd">    **NOTE**: in the current implementation, we always exchange the score tensors for all layers. In the future, we</span>
 <span class="sd">    might support exchanging a subset of the layers (for example, filtering out the masks that are all zeros).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">model_states</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>

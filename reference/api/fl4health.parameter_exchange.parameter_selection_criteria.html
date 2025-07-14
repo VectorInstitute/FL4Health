@@ -57,6 +57,7 @@
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=ccdb6887"></script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../_static/require.min.js?v=53367eec"></script>
     <script src="../../_static/custom.js?v=c3ea0f6c"></script>
     
@@ -519,8 +520,8 @@ by the <code class="docutils literal notranslate"><span class="pre">DynamicLayer
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>norm_threshold</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – A nonnegative real number used to select those layers whose drift in l2 norm
-exceeds (or falls short of) it.</p></li>
+<li><p><strong>norm_threshold</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – A nonnegative real number used to select those layers whose drift in
+<span class="math notranslate nohighlight">\(\ell^2\)</span> norm exceeds (or falls short of) it.</p></li>
 <li><p><strong>exchange_percentage</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – Indicates the percentage of layers that are selected.</p></li>
 <li><p><strong>normalize</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Indicates whether when calculating the norm of a layer, we also divide by the
 number of parameters in that layer. Defaults to True.</p></li>
@@ -596,8 +597,8 @@ Defaults to True.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="fl4health.parameter_exchange.parameter_selection_criteria.select_layers_by_threshold">
 <span class="sig-name descname"><span class="pre">select_layers_by_threshold</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">threshold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">select_drift_more</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_model</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/parameter_exchange/parameter_selection_criteria.html#select_layers_by_threshold"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.parameter_exchange.parameter_selection_criteria.select_layers_by_threshold" title="Link to this definition">¶</a></dt>
-<dd><p>Return those layers of model that deviate (in l2 norm) away from corresponding layers of <code class="docutils literal notranslate"><span class="pre">self.initial_model</span></code>
-by at least (or at most) <code class="docutils literal notranslate"><span class="pre">self.threshold</span></code>.</p>
+<dd><p>Return those layers of model that deviate (in <span class="math notranslate nohighlight">\(\ell^2\)</span> norm) away from corresponding layers of
+<code class="docutils literal notranslate"><span class="pre">self.initial_model</span></code> by at least (or at most) <code class="docutils literal notranslate"><span class="pre">self.threshold</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -605,7 +606,7 @@ by at least (or at most) <code class="docutils literal notranslate"><span class=
 <li><p><strong>normalize</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a>) – Whether to divide the difference between the tensors by their number of elements.</p></li>
 <li><p><strong>select_drift_more</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a>) – Whether we are selecting parameters that have drifted further (True) or less far
 from their comparison values</p></li>
-<li><p><strong>model</strong> (<em>nn.Module</em>) – Model after training/modification</p></li>
+<li><p><strong>model</strong> (<em>nn.Module</em>) – Model after training/modification.</p></li>
 <li><p><strong>initial_model</strong> (<em>nn.Module</em>) – Model that we started with to which we are comparing parameters.</p></li>
 </ul>
 </dd>
@@ -625,7 +626,7 @@ from their comparison values</p></li>
 <dd><p>Selection function that first selects the <code class="docutils literal notranslate"><span class="pre">weight_scores</span></code> and <code class="docutils literal notranslate"><span class="pre">bias_scores</span></code> parameters for the masked layers,
 and then samples binary masks based on those scores to send to the server. This function is meant to be used for
 the FedPM algorithm.</p>
-<p><strong>NOTE:</strong> in the current implementation, we always exchange the score tensors for all layers. In the future, we
+<p><strong>NOTE</strong>: in the current implementation, we always exchange the score tensors for all layers. In the future, we
 might support exchanging a subset of the layers (for example, filtering out the masks that are all zeros).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>

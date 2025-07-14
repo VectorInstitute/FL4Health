@@ -554,7 +554,7 @@
 <span class="sd">                example, the config used to produce the ``on_fit_config_fn`` and ``on_evaluate_config_fn`` for the</span>
 <span class="sd">                strategy.</span>
 
-<span class="sd">                **NOTE:** This config is **DISTINCT** from the Flwr server config, which is extremely minimal.</span>
+<span class="sd">                **NOTE**: This config is **DISTINCT** from the Flwr server config, which is extremely minimal.</span>
 <span class="sd">            strategy (Strategy | None, optional): The aggregation strategy to be used by the server to handle.</span>
 <span class="sd">                client updates and other information potentially sent by the participating clients. If None the</span>
 <span class="sd">                strategy is FedAvg as set by the flwr Server. Defaults to None.</span>
@@ -610,7 +610,7 @@
 <span class="sd">        provided in the config. This can only be done after the clients have started up and are ready to train.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            num_rounds (int): The number of server rounds of FL to be performed</span>
+<span class="sd">            num_rounds (int): The number of server rounds of FL to be performed.</span>
 <span class="sd">            timeout (float | None, optional): The server&#39;s timeout parameter. Useful if one is requesting</span>
 <span class="sd">                information from a client. Defaults to None, which indicates indefinite timeout.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -649,7 +649,7 @@
 <span class="sd">            timeout (float | None): The timeout for clients to return results in a given FL round.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            tuple[History, float]: The first element of the tuple is a history object containing the losses and</span>
+<span class="sd">            tuple[History, float]: The first element of the tuple is a ``History`` object containing the losses and</span>
 <span class="sd">            metrics computed during training and validation. The second element of the tuple is the elapsed time in</span>
 <span class="sd">            seconds.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -740,7 +740,7 @@
 <span class="sd">                clients selected to participate in federated training.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            tuple[History, float]: The first element of the tuple is a history object containing the full set of</span>
+<span class="sd">            tuple[History, float]: The first element of the tuple is a ``History`` object containing the full set of</span>
 <span class="sd">            FL training results, including things like aggregated loss and metrics. Tuple also contains the elapsed</span>
 <span class="sd">            time in seconds for the round.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -787,7 +787,7 @@
 <span class="sd">        This function simply adds a bit of logging, post processing of the results.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            server_round (int): Current round number of the FL training. Begins at 1</span>
+<span class="sd">            server_round (int): Current round number of the FL training. Begins at 1.</span>
 <span class="sd">            timeout (float | None): Time that the server should wait (in seconds) for responses from the clients.</span>
 <span class="sd">                Defaults to None, which indicates indefinite timeout.</span>
 
@@ -878,7 +878,7 @@
 <span class="sd">        updated prior to this function being called.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            server_round (int): Which server round we&#39;re currently on</span>
+<span class="sd">            server_round (int): Server round we&#39;re currently on.</span>
 <span class="sd">            timeout (float | None): Time that the server should wait (in seconds) for responses from the clients.</span>
 <span class="sd">                Defaults to None, which indicates indefinite timeout.</span>
 
@@ -1004,9 +1004,10 @@
 <span class="sd">        in the flower server class except that we make use of the ``on_parameter_initialization_config_fn`` to provide</span>
 <span class="sd">        a non-empty config to a client when requesting parameters from which to initialize all other clients.</span>
 
-<span class="sd">        NOTE: The default behavior of flower servers is to simply send over a blank config, but this is insufficient</span>
-<span class="sd">        for certain uses, where the client requires additional information from the server. This is needed, for example</span>
-<span class="sd">        in nnUnet-based Servers. An issue has been logged with flower: https://github.com/adap/flower/issues/3770</span>
+<span class="sd">        **NOTE**: The default behavior of flower servers is to simply send over a blank config, but this is</span>
+<span class="sd">        insufficient for certain uses, where the client requires additional information from the server. This is</span>
+<span class="sd">        needed, for example in nnUnet-based Servers. An issue has been logged with</span>
+<span class="sd">        flower: https://github.com/adap/flower/issues/3770.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Server-side parameter initialization</span>
         <span class="n">parameters</span><span class="p">:</span> <span class="n">Parameters</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">initialize_parameters</span><span class="p">(</span><span class="n">client_manager</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_client_manager</span><span class="p">)</span>

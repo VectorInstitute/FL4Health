@@ -528,13 +528,15 @@ corresponding to a past version of that model.</p>
 <dt class="sig sig-object py" id="fl4health.losses.weight_drift_loss.WeightDriftLoss.forward">
 <span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraint_tensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/losses/weight_drift_loss.html#WeightDriftLoss.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.losses.weight_drift_loss.WeightDriftLoss.forward" title="Link to this definition">¶</a></dt>
 <dd><p>Compute the <span class="math notranslate nohighlight">\(l_2\)</span>-inner product between a Torch model and a reference set of weights in a differentiable
-way. The <cite>constraint_tenors</cite> are frozen.</p>
+way. The <code class="docutils literal notranslate"><span class="pre">`constraint_tensors`</span></code> are frozen.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>target_model</strong> (<em>nn.Module</em>) – Model being constrained by the <cite>constraint_tensors</cite>. Weights are differentiable.</p></li>
-<li><p><strong>constraint_tensors</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><em>torch.Tensor</em><em>]</em>) – Tensors corresponding to a previous version of the target_model</p></li>
-<li><p><strong>weight</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – Weight to scale the loss with</p></li>
+<li><p><strong>target_model</strong> (<em>nn.Module</em>) – Model being constrained by the <code class="docutils literal notranslate"><span class="pre">constraint_tensors</span></code>. Weights are
+differentiable.</p></li>
+<li><p><strong>constraint_tensors</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><em>torch.Tensor</em><em>]</em>) – Tensors corresponding to a previous version of the
+<code class="docutils literal notranslate"><span class="pre">target_model</span></code>.</p></li>
+<li><p><strong>weight</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a>) – Weight with which to scale the loss.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

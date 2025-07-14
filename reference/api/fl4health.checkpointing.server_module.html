@@ -567,12 +567,9 @@ exchanger and the model must match the one used for training and exchange with t
 parameters go to the right places. Defaults to None.</p></li>
 <li><p><strong>model_checkpointers</strong> (<em>ModelCheckpointers</em><em>, </em><em>optional</em>) – If defined, this checkpointer (or sequence of
 checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.</p></li>
-<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer" title="fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer"><em>ServerStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – <dl class="simple">
-<dt>If defined, this checkpointer</dt><dd><p>will be used to preserve FL training state to facilitate restarting training if interrupted.</p>
-</dd>
-</dl>
-<p>Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</p>
-</p></li>
+<li><p><strong>state_checkpointer</strong> (<a class="reference internal" href="fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer" title="fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer"><em>ServerStateCheckpointer</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – If defined, this checkpointer
+will be used to preserve FL training state to facilitate restarting training if interrupted.
+Generally, this checkpointer will save much more than just the model being trained. Defaults to None.</p></li>
 </ul>
 </dd>
 </dl>
@@ -603,23 +600,20 @@ used by checkpointer to decide whether to checkpoint the model.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.checkpointing.server_module.BaseServerCheckpointAndStateModule.maybe_load_state">
 <span class="sig-name descname"><span class="pre">maybe_load_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/checkpointing/server_module.html#BaseServerCheckpointAndStateModule.maybe_load_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.checkpointing.server_module.BaseServerCheckpointAndStateModule.maybe_load_state" title="Link to this definition">¶</a></dt>
-<dd><p>Facilitates loading of any pre-existing state in the directory of the state_checkpointer.
-If a <code class="docutils literal notranslate"><span class="pre">state_checkpointer</span></code> is defined and a checkpoint exists at its checkpoint_path, this method hydrates
-the model with the saved state and returns the corresponding server Parameters. If no checkpoint exists,
-it logs this information and returns None.</p>
+<dd><p>Facilitates loading of any pre-existing state in the directory of the <code class="docutils literal notranslate"><span class="pre">state_checkpointer</span></code>. If a
+<code class="docutils literal notranslate"><span class="pre">state_checkpointer</span></code> is defined and a checkpoint exists at its <code class="docutils literal notranslate"><span class="pre">checkpoint_path</span></code>, this method hydrates the
+model with the saved state and returns the corresponding server Parameters. If no checkpoint exists, it logs
+this information and returns None.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>server</strong> (<a class="reference internal" href="fl4health.servers.base_server.html#fl4health.servers.base_server.FlServer" title="fl4health.servers.base_server.FlServer"><em>FlServer</em></a>) – server into which checkpointed state will be loaded if a checkpoint exists</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Throws an error if this function is called, but no state checkpointer has been provided</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Throws an error if this function is called, but no state checkpointer has been provided.</p>
 </dd>
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p><dl class="simple">
-<dt>If the state checkpoint properly exists and is loaded correctly, server_parameters</dt><dd><p>is returned. Otherwise, we return a None (or throw an exception).</p>
-</dd>
-</dl>
-</p>
+<dd class="field-odd"><p>If the state checkpoint properly exists and is loaded correctly, <code class="docutils literal notranslate"><span class="pre">server_parameters</span></code>
+is returned. Otherwise, we return a None (or throw an exception).</p>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>Parameters | None</p>
@@ -644,7 +638,7 @@ the server representing model state. They are mapped to a torch model architectu
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Throws an error if this function is called, but no state checkpointer has been provided</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#ValueError" title="(in Python v3.10)"><strong>ValueError</strong></a> – Throws an error if this function is called, but no state checkpointer has been provided.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
@@ -845,7 +839,7 @@ Generally, this checkpointer will save much more than just the model being train
 <dd><p>This module is meant to be a base class for any server-side checkpointing module that relies on unpacking
 of parameters to hydrate models for checkpointing. The specifics of the unpacking will be handled by the
 child classes of the packer within the parameter exchange.
-<strong>NOTE:</strong> This function ASSUMES full parameter exchange unpacking. If more complex unpacking/parameter exchange
+<strong>NOTE</strong>: This function ASSUMES full parameter exchange unpacking. If more complex unpacking/parameter exchange
 is used, this is not the right parent class.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

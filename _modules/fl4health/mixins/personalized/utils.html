@@ -517,18 +517,18 @@
 <span class="nd">@wrapt</span><span class="o">.</span><span class="n">decorator</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">ensure_protocol_compliance</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Wrapper to ensure that a the instance is of `FlexibleClient` type.</span>
+<span class="sd">    Wrapper to ensure that the instance is of ``FlexibleClient`` type.</span>
 
-<span class="sd">    NOTE: This should only be used within a `FlexibleClient`.</span>
+<span class="sd">    **NOTE**: This should only be used within a ``FlexibleClient``.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        func (Callable): The function to be wrapped</span>
+<span class="sd">        func (Callable): The function to be wrapped.</span>
 <span class="sd">        instance (Any | None): The associated instance if it is a method belonging to a class or a standalone</span>
-<span class="sd">        args (Any): args passed to func</span>
-<span class="sd">        kwargs (Any): kwargs passed to func</span>
+<span class="sd">        args (Any): args passed to func.</span>
+<span class="sd">        kwargs (Any): kwargs passed to func.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        TypeError: We raise this error if the instance is not a `FlexibleClient`.</span>
+<span class="sd">        TypeError: We raise this error if the instance is not a ``FlexibleClient``.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Any: Application of the function to the args and kwargs.</span>

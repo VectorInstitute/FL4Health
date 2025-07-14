@@ -646,9 +646,9 @@
 <span class="sd">    Load and split the data into training and validation dataloaders.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        data_path (Path): Path to the full set of data</span>
-<span class="sd">        client_num (int): Client number for the data you want to load</span>
-<span class="sd">        batch_size (int): batch size for the data loaders</span>
+<span class="sd">        data_path (Path): Path to the full set of data.</span>
+<span class="sd">        client_num (int): Client number for the data you want to load.</span>
+<span class="sd">        batch_size (int): batch size for the data loaders.</span>
 <span class="sd">        seed (int | None, optional): Seed to fix randomness associated with data splitting. Defaults to None.</span>
 <span class="sd">        train_val_split (float, optional): Percentage of data to put in the training loader. The remainder flow to the</span>
 <span class="sd">            validation dataloader. Defaults to 0.8.</span>
@@ -694,13 +694,13 @@
 <span class="sd">    Create a dataloader for the reserved rxrx1 dataset.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        data_path (Path): Path to the test data</span>
+<span class="sd">        data_path (Path): Path to the test data.</span>
 <span class="sd">        client_num (int): Client number to be loaded.</span>
-<span class="sd">        batch_size (int): Batch size for processing of the test scripts</span>
+<span class="sd">        batch_size (int): Batch size for processing of the test scripts.</span>
 <span class="sd">        num_workers (int, optional): Number of workers associated with the test dataloader. Defaults to 0.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        tuple[DataLoader, dict[str, int]]: Test dataloader, dictionary containing count of the data points in the set</span>
+<span class="sd">        tuple[DataLoader, dict[str, int]]: Test dataloader, dictionary containing count of the data points in the set.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Read the CSV file</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data_path</span><span class="si">}</span><span class="s2">/clients/meta_data_</span><span class="si">{</span><span class="n">client_num</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">.csv&quot;</span><span class="p">)</span>

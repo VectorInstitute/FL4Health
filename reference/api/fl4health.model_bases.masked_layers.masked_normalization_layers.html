@@ -527,8 +527,8 @@ dimension).</p>
 <dt class="sig sig-object py" id="fl4health.model_bases.masked_layers.masked_normalization_layers.MaskedBatchNorm3d">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MaskedBatchNorm3d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">momentum</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">affine</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">track_running_stats</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/model_bases/masked_layers/masked_normalization_layers.html#MaskedBatchNorm3d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.model_bases.masked_layers.masked_normalization_layers.MaskedBatchNorm3d" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_MaskedBatchNorm</span></code></p>
-<p>Applies (masked) Batch Normalization over a 5D input (a mini-batch of 3D inputs with additional
-channel dimension).</p>
+<p>Applies (masked) Batch Normalization over a 5D input (a mini-batch of 3D inputs with additional channel
+dimension).</p>
 </dd></dl>
 
 <dl class="py class">
@@ -547,7 +547,7 @@ applied to the weight and the bias. During training, gradients with respect to t
 and used to update the score tensors.</p>
 <p>When <code class="docutils literal notranslate"><span class="pre">elementwise_affine</span></code> is False, <code class="docutils literal notranslate"><span class="pre">nn.LayerNorm</span></code> does not have weight or bias. Under this condition, both
 score tensors are None and <code class="docutils literal notranslate"><span class="pre">MaskedLayerNorm</span></code> acts in the same way as <code class="docutils literal notranslate"><span class="pre">nn.LayerNorm</span></code>.</p>
-<p><strong>NOTE:</strong> The scores are not assumed to be bounded between 0 and 1.</p>
+<p><strong>NOTE</strong>: The scores are not assumed to be bounded between 0 and 1.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -572,10 +572,10 @@ affine parameters initialized to ones (for weights) and zeros (for biases). Defa
 <dd><p>Mapping function for the <code class="docutils literal notranslate"><span class="pre">MaskedLayerNorm</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>input</strong> (<em>Tensor</em>) – Tensor to be mapped by the layer</p>
+<dd class="field-odd"><p><strong>input</strong> (<em>Tensor</em>) – Tensor to be mapped by the layer.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Output tensor after mapping of the input tensor</p>
+<dd class="field-even"><p>Output tensor after mapping of the input tensor.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Tensor</p>

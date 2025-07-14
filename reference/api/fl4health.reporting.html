@@ -573,9 +573,9 @@ Documentation here: <a class="reference external" href="https://docs.wandb.ai/re
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.reporting.WandBReporter.define_metrics">
 <span class="sig-name descname"><span class="pre">define_metrics</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/reporting/wandb_reporter.html#WandBReporter.define_metrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.reporting.WandBReporter.define_metrics" title="Link to this definition">¶</a></dt>
-<dd><p>This method defines some of the metrics we expect to see from Basic Client and server.</p>
-<p>Note that you do not have to define metrics, but it can be useful for determining what should and shouldn’t go
-into the run summary.</p>
+<dd><p>This method defines some of the metrics we expect to see from <code class="docutils literal notranslate"><span class="pre">BasicClient</span></code> and server.</p>
+<p><strong>NOTE</strong> that you do not have to define metrics, but it can be useful for determining what should and
+shouldn’t go into the run summary.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
@@ -611,7 +611,7 @@ of  that round. You can only update or overwrite the current wandb step, previou
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – Dictionary of wandb compatible data to log</p></li>
+<li><p><strong>data</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – Dictionary of wandb compatible data to log.</p></li>
 <li><p><strong>round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The current FL round. If None, this indicates that the method was called
 outside of a round (e.g. for summary information). Defaults to None.</p></li>
 <li><p><strong>epoch</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The current epoch (In total across all rounds). If None then this method was

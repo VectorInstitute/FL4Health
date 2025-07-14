@@ -547,14 +547,14 @@
 <span class="sd">        are meant to be joined together when the ``self.mode`` is set to ``ParallelFeatureJoinMode.CONCATENATE``.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            local_tensor (torch.Tensor): First tensor to be joined</span>
-<span class="sd">            global_tensor (torch.Tensor): Second tensor to be joined</span>
+<span class="sd">            local_tensor (torch.Tensor): First tensor to be joined.</span>
+<span class="sd">            global_tensor (torch.Tensor): Second tensor to be joined.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            NotImplementedError: Any implementing child class must produce this method if it is to be used.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            torch.Tensor: A single tensor with the two tensors joined together in some way</span>
+<span class="sd">            torch.Tensor: A single tensor with the two tensors joined together in some way.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
@@ -567,10 +567,10 @@
 <span class="sd">        Forward function for the head module.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            input_tensor (torch.Tensor): Input tensor to be mapped</span>
+<span class="sd">            input_tensor (torch.Tensor): Input tensor to be mapped.</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            NotImplementedError: Must be implemented by any child class</span>
+<span class="sd">            NotImplementedError: Must be implemented by any child class.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: Output of the head module from the given input.</span>
@@ -588,8 +588,8 @@
 <span class="sd">        tensor is then passed through the forward function of the head module.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            first_tensor (torch.Tensor): Output from one parallel module</span>
-<span class="sd">            second_tensor (torch.Tensor): Output from one parallel module</span>
+<span class="sd">            first_tensor (torch.Tensor): Output from one parallel module.</span>
+<span class="sd">            second_tensor (torch.Tensor): Output from one parallel module.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: Output from the head module.</span>
@@ -621,8 +621,8 @@
 <span class="sd">        feature tensors are stored. Only a prediction tensor is produced.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            first_feature_extractor (nn.Module): First parallel feature extractor</span>
-<span class="sd">            second_feature_extractor (nn.Module): Second parallel feature extractor</span>
+<span class="sd">            first_feature_extractor (nn.Module): First parallel feature extractor.</span>
+<span class="sd">            second_feature_extractor (nn.Module): Second parallel feature extractor.</span>
 <span class="sd">            model_head (ParallelSplitHeadModule): Module responsible for taking the outputs of the two feature</span>
 <span class="sd">                extractors and using them to produce a prediction.</span>
 <span class="sd">        &quot;&quot;&quot;</span>

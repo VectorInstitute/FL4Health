@@ -551,7 +551,7 @@
 <span class="sd">        Zhang et al. 2023) combined with the Adaptive Strategy for Auxiliary constraints like FedProx. See</span>
 <span class="sd">        documentation on ``FedAvgWithAdaptiveConstraint`` for more information.</span>
 
-<span class="sd">        **NOTE:** Initial parameters are **NOT** optional. They must be passed for this strategy.</span>
+<span class="sd">        **NOTE**: Initial parameters are **NOT** optional. They must be passed for this strategy.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2.</span>
@@ -639,9 +639,9 @@
 <span class="sd">        seen on the clients.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            server_round: (int) the current server round.</span>
+<span class="sd">            server_round: (int) The current server round.</span>
 <span class="sd">            results: (list[tuple[ClientProxy, FitRes]]) The clients&#39; fit results.</span>
-<span class="sd">            failures: (list[tuple[ClientProxy, FitRes] | BaseException]) the clients&#39; fit failures.</span>
+<span class="sd">            failures: (list[tuple[ClientProxy, FitRes] | BaseException]) The clients&#39; fit failures.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            (tuple[Parameters | None, dict[str, Scalar]]) A tuple containing the aggregated parameters</span>
@@ -688,7 +688,7 @@
 <span class="sd">        separate the model weights from the training losses. The model weights are reinserted into the parameters</span>
 <span class="sd">        of the FitRes objects and the losses (along with sample counts) are placed in a list and returned.</span>
 
-<span class="sd">        **NOTE:** The results that are passed to this function are **MODIFIED IN-PLACE**.</span>
+<span class="sd">        **NOTE**: The results that are passed to this function are **MODIFIED IN-PLACE**.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            results (list[tuple[ClientProxy, FitRes]]): The results produced in a fitting round by each of the clients</span>
@@ -714,7 +714,7 @@
 <span class="sd">        Update constraint weight parameter if ``adaptive_loss_weight`` is set to True. Regardless of whether adaptivity</span>
 <span class="sd">        is turned on at this time, the previous loss seen by the server is updated.</span>
 
-<span class="sd">        **NOTE:** For adaptive constraint losses, including FedProx, this loss is exchanged (along with the</span>
+<span class="sd">        **NOTE**: For adaptive constraint losses, including FedProx, this loss is exchanged (along with the</span>
 <span class="sd">        weights) by each client and is the VANILLA loss that does not include the additional penalty losses.</span>
 
 <span class="sd">        Args:</span>

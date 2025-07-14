@@ -532,7 +532,7 @@
         <span class="n">accept_failures</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        This is a wrapper class around FlServer for using the FedProx method that enforces that the</span>
+<span class="sd">        This is a wrapper class around ``FlServer`` for using the FedProx method that enforces that the</span>
 <span class="sd">        strategy is of type ``FedAvgWithAdaptiveConstraint`` and that any checkpointing is done with the right</span>
 <span class="sd">        server-side model and state checkpointers.</span>
 
@@ -544,7 +544,7 @@
 <span class="sd">                example, the config used to produce the ``on_fit_config_fn`` and ``on_evaluate_config_fn`` for the</span>
 <span class="sd">                strategy.</span>
 
-<span class="sd">                **NOTE:** This config is **DISTINCT** from the Flwr server config, which is extremely minimal.</span>
+<span class="sd">                **NOTE**: This config is **DISTINCT** from the Flwr server config, which is extremely minimal.</span>
 <span class="sd">            strategy (FedAvgWithAdaptiveConstraint): The aggregation strategy to be used by the server to handle.</span>
 <span class="sd">                client updates and other information potentially sent by the participating clients. This is required</span>
 <span class="sd">                to be of type ``FedAvgWithAdaptiveConstraint`` to use FedProx</span>

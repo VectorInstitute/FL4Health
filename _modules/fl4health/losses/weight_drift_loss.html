@@ -547,12 +547,14 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">constraint_tensors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">weight</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute the :math:`l_2`-inner product between a Torch model and a reference set of weights in a differentiable</span>
-<span class="sd">        way. The `constraint_tenors` are frozen.</span>
+<span class="sd">        way. The ```constraint_tensors``` are frozen.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            target_model (nn.Module): Model being constrained by the `constraint_tensors`. Weights are differentiable.</span>
-<span class="sd">            constraint_tensors (list[torch.Tensor]): Tensors corresponding to a previous version of the target_model</span>
-<span class="sd">            weight (float): Weight to scale the loss with</span>
+<span class="sd">            target_model (nn.Module): Model being constrained by the ``constraint_tensors``. Weights are</span>
+<span class="sd">                differentiable.</span>
+<span class="sd">            constraint_tensors (list[torch.Tensor]): Tensors corresponding to a previous version of the</span>
+<span class="sd">                ``target_model``.</span>
+<span class="sd">            weight (float): Weight with which to scale the loss.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            torch.Tensor: Loss value.</span>

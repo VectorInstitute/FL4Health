@@ -545,15 +545,15 @@
 <span class="sd">        training of a local model. The constraint for this local model is identical to the FedProx loss. The key</span>
 <span class="sd">        difference is that the local model is never replaced with aggregated weights. It is always local.</span>
 
-<span class="sd">        **NOTE:** lambda, the drift loss weight, is initially set and potentially adapted by the server akin to the</span>
+<span class="sd">        **NOTE**: lambda, the drift loss weight, is initially set and potentially adapted by the server akin to the</span>
 <span class="sd">        heuristic suggested in the original FedProx paper. Adaptation is optional and can be disabled in the</span>
 <span class="sd">        corresponding strategy used by the server</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            data_path (Path): path to the data to be used to load the data for client-side training</span>
-<span class="sd">            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model</span>
+<span class="sd">            data_path (Path): path to the data to be used to load the data for client-side training.</span>
+<span class="sd">            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.</span>
 <span class="sd">            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often &quot;cpu&quot; or</span>
-<span class="sd">                &quot;cuda&quot;</span>
+<span class="sd">                &quot;cuda&quot;.</span>
 <span class="sd">            loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over</span>
 <span class="sd">                each batch. Defaults to ``LossMeterType.AVERAGE``.</span>
 <span class="sd">            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle</span>
@@ -578,7 +578,7 @@
             <span class="n">progress_bar</span><span class="o">=</span><span class="n">progress_bar</span><span class="p">,</span>
             <span class="n">client_name</span><span class="o">=</span><span class="n">client_name</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="c1"># **NOTE:** The initial global model is used to house the aggregate weight updates at the beginning of a round,</span>
+        <span class="c1"># NOTE: The initial global model is used to house the aggregate weight updates at the beginning of a round,</span>
         <span class="c1"># because in MR-MTL, the local models are not updated with these aggregates.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">initial_global_model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">initial_global_tensors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span></div>
@@ -659,7 +659,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TrainingLosses</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes training losses given predictions of the modes and ground truth data. We add to vanilla loss</span>
-<span class="sd">        function by including Mean Regularized (MR) penalty loss which is the l2 inner product between the</span>
+<span class="sd">        function by including Mean Regularized (MR) penalty loss which is the :math:`\\ell^2` inner product between the</span>
 <span class="sd">        initial global model weights and weights of the current model.</span>
 
 <span class="sd">        Args:</span>

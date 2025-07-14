@@ -526,12 +526,12 @@
 <span class="sd">        features as torch Tensors.</span>
 
 <span class="sd">        Attributes:</span>
-<span class="sd">        - model (nn.Module): The neural network model.</span>
-<span class="sd">        - flatten_feature_extraction_layers (dict[str, bool]): A dictionary specifying whether to flatten the feature</span>
-<span class="sd">          extraction layers.</span>
-<span class="sd">        - fhooks (list[RemovableHandle]): A list to store the handles for removing hooks.</span>
-<span class="sd">        - accumulate_features (bool): A flag indicating whether to accumulate features.</span>
-<span class="sd">        - extracted_features_buffers (dict[str, list[torch.Tensor]]): A dictionary to store the extracted features</span>
+<span class="sd">        - ``model`` (nn.Module): The neural network model.</span>
+<span class="sd">        - ``flatten_feature_extraction_layers`` (dict[str, bool]): A dictionary specifying whether to flatten the</span>
+<span class="sd">          feature extraction layers.</span>
+<span class="sd">        - ``fhooks`` (list[RemovableHandle]): A list to store the handles for removing hooks.</span>
+<span class="sd">        - ``accumulate_features`` (bool): A flag indicating whether to accumulate features.</span>
+<span class="sd">        - ``extracted_features_buffers`` (dict[str, list[torch.Tensor]]): A dictionary to store the extracted features</span>
 <span class="sd">          for each layer.</span>
 
 <span class="sd">        Args:</span>
@@ -587,7 +587,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">get_hierarchical_attr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">layer_hierarchy</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Traverse the hierarchical attributes of the module to get the desired attribute. Hooks should be</span>
-<span class="sd">        registered to specific layers of the model, not to nn.Sequential or ``nn.ModuleList``.</span>
+<span class="sd">        registered to specific layers of the model, not to ``nn.Sequential`` or ``nn.ModuleList``.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            module (nn.Module): The ``nn.Module`` object to traverse.</span>

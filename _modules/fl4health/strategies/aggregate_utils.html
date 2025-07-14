@@ -555,7 +555,7 @@
 <span class="sd">            provided in the tuple) or a uniform average. Defaults to True.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        float: the weighted or unweighted average of the loss values in the results list.</span>
+<span class="sd">        float: The weighted or unweighted average of the loss values in the results list.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Sorting the results by the loss values for numerical fluctuation determinism of the sum</span>
     <span class="n">results</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>

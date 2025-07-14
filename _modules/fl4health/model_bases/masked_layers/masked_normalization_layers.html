@@ -548,7 +548,7 @@
 <span class="sd">        When ``elementwise_affine`` is False, ``nn.LayerNorm`` does not have weight or bias. Under this condition, both</span>
 <span class="sd">        score tensors are None and ``MaskedLayerNorm`` acts in the same way as ``nn.LayerNorm``.</span>
 
-<span class="sd">        **NOTE:** The scores are not assumed to be bounded between 0 and 1.</span>
+<span class="sd">        **NOTE**: The scores are not assumed to be bounded between 0 and 1.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            normalized_shape (TorchShape): Input shape from an expected input. If a single integer is used, it is</span>
@@ -601,10 +601,10 @@
 <span class="sd">        Mapping function for the ``MaskedLayerNorm``.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            input (Tensor): Tensor to be mapped by the layer</span>
+<span class="sd">            input (Tensor): Tensor to be mapped by the layer.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Tensor: Output tensor after mapping of the input tensor</span>
+<span class="sd">            Tensor: Output tensor after mapping of the input tensor.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">elementwise_affine</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">layer_norm</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalized_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
@@ -685,7 +685,7 @@
 <span class="sd">        When affine is False, _BatchNorm does not have weight or bias. Under this condition, both score tensors</span>
 <span class="sd">        are None and ``_MaskedBatchNorm`` acts in the same way as ``_BatchNorm``.</span>
 
-<span class="sd">        **NOTE:** The scores are not assumed to be bounded between 0 and 1.</span>
+<span class="sd">        **NOTE**: The scores are not assumed to be bounded between 0 and 1.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            num_features (int): Number of features or channels :math:`C` of the input</span>
@@ -838,8 +838,8 @@
 <a class="viewcode-back" href="../../../../reference/api/fl4health.model_bases.masked_layers.masked_normalization_layers.html#fl4health.model_bases.masked_layers.masked_normalization_layers.MaskedBatchNorm3d">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">MaskedBatchNorm3d</span><span class="p">(</span><span class="n">_MaskedBatchNorm</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Applies (masked) Batch Normalization over a 5D input (a mini-batch of 3D inputs with additional</span>
-<span class="sd">    channel dimension).</span>
+<span class="sd">    Applies (masked) Batch Normalization over a 5D input (a mini-batch of 3D inputs with additional channel</span>
+<span class="sd">    dimension).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_check_input_dim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>

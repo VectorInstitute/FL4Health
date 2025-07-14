@@ -529,10 +529,10 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Exponential Moving Average (EMA) metric wrapper to apply EMA to the underlying metric.</span>
 
-<span class="sd">        NOTE: If the underlying metric accumulates batches during update, then updating this metric without clearing</span>
-<span class="sd">        in between will result in previously seen inputs and targets being a part of subsequent computations. For</span>
-<span class="sd">        example, if we use Accuracy from fl4health.metrics, which accumulates batches, we get the following behavior</span>
-<span class="sd">        in the code block below.</span>
+<span class="sd">        **NOTE**: If the underlying metric accumulates batches during update, then updating this metric without</span>
+<span class="sd">        clearing in between will result in previously seen inputs and targets being a part of subsequent computations.</span>
+<span class="sd">        For example, if we use ``Accuracy`` from ``fl4health.metrics``, which accumulates batches, we get the following</span>
+<span class="sd">        behavior in the code block below.</span>
 
 <span class="sd">        .. code-block:: python</span>
 
@@ -559,10 +559,11 @@
 <span class="sd">            ema.update(preds_2, targets_2 = 0.9(0.667) + 0.1(0.333)</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            metric (T): An FL4Health compatible metric</span>
+<span class="sd">            metric (T): An FL4Health compatible metric.</span>
 <span class="sd">            smoothing_factor (float, optional): Smoothing factor in range [0, 1] for the EMA. Smaller values increase</span>
 <span class="sd">                smoothing by weighting previous scores more heavily. Defaults to 0.1.</span>
-<span class="sd">            name (str | None, optional): Name of the EMAMetric. If left as None will default to &#39;EMA_{metric.name}&#39;.</span>
+<span class="sd">            name (str | None, optional): Name of the ``EMAMetric``. If left as None will default to</span>
+<span class="sd">                &#39;EMA_{metric.name}&#39;.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Create a copy of the metrics object so that we do not inadvertently change the provided object elsewhere</span>

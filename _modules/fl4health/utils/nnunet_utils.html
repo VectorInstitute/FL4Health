@@ -658,12 +658,12 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        tensor_list (list[torch.Tensor]): A list of tensors, usually either nnunet model outputs or targets, to be</span>
-<span class="sd">            converted into a dictionary</span>
-<span class="sd">        num_spatial_dims (int): The number of spatial dimensions. Assumes the spatial dimensions are last</span>
+<span class="sd">            converted into a dictionary.</span>
+<span class="sd">        num_spatial_dims (int): The number of spatial dimensions. Assumes the spatial dimensions are last.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        dict[str, torch.Tensor]: A dictionary containing the tensors as values where the keys are &#39;i-XxYxZ&#39; where i</span>
-<span class="sd">        was the tensor&#39;s index in the list and X,Y,Z are the spatial dimensions of the tensor</span>
+<span class="sd">        was the tensor&#39;s index in the list and X,Y,Z are the spatial dimensions of the tensor.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Convert list of targets into a dictionary</span>
     <span class="n">tensors</span> <span class="o">=</span> <span class="p">{}</span>
@@ -686,10 +686,10 @@
 <span class="sd">    Args:</span>
 <span class="sd">        tensor_dict (dict[str, torch.Tensor]): Dictionary containing ``torch.Tensors``. The key values must start</span>
 <span class="sd">            with &#39;X-&#39; where X is an integer representing the index at which the tensor should be placed in the output</span>
-<span class="sd">            list</span>
+<span class="sd">            list.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        list[torch.Tensor]: A list of ``torch.Tensors``</span>
+<span class="sd">        list[torch.Tensor]: A list of ``torch.Tensors``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">sorted_list</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">tensor_dict</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]))</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">tensor</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">sorted_list</span><span class="p">]</span></div>
@@ -704,12 +704,12 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        preds (torch.Tensor): The one hot encoded model output probabilities with shape (batch, classes,</span>
-<span class="sd">            \\*additional_dims). The background should be a separate class</span>
+<span class="sd">            \\*additional_dims). The background should be a separate class.</span>
 <span class="sd">        has_regions (bool, optional): If True, predicted segmentations can be multiple classes at once. The exception</span>
 <span class="sd">            is the background class which is assumed to be the first class (class 0). If False, each value in</span>
 <span class="sd">            predicted segmentations has only a single class. Defaults to False.</span>
 <span class="sd">        threshold (float): When ``has_regions`` is True, this is the threshold value used to determine whether or not</span>
-<span class="sd">            an output is a part of a class</span>
+<span class="sd">            an output is a part of a class.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        torch.Tensor: tensor containing the predicted segmentations as a one hot encoded binary tensor of 64-bit</span>
@@ -740,11 +740,11 @@
 <span class="sd">    Collapses a one hot encoded tensor so that they are no longer one hot encoded.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        input (torch.Tensor): The binary one hot encoded tensor</span>
+<span class="sd">        input (torch.Tensor): The binary one hot encoded tensor.</span>
 <span class="sd">        dim (int, optional): Dimension over which to collapse the one-hot tensor. Defaults to 0.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        torch.Tensor: Integer tensor with the specified dim collapsed</span>
+<span class="sd">        torch.Tensor: Integer tensor with the specified dim collapsed.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">long</span><span class="p">(),</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="nb">input</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></div>
 
@@ -757,11 +757,11 @@
 <span class="sd">    Determines the total number of voxels in the dataset. Used by ``NnunetClient`` to determine the maximum batch size.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        source_plans (Dict): The nnunet plans dict that is being modified</span>
-<span class="sd">        n_cases (int): The number of cases in the dataset</span>
+<span class="sd">        source_plans (Dict): The nnunet plans dict that is being modified.</span>
+<span class="sd">        n_cases (int): The number of cases in the dataset.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        float: The total number of voxels in the local client dataset</span>
+<span class="sd">        float: The total number of voxels in the local client dataset.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Need to determine input dimensionality</span>
     <span class="k">if</span> <span class="n">NnunetConfig</span><span class="o">.</span><span class="n">_3D_FULLRES</span><span class="o">.</span><span class="n">value</span> <span class="ow">in</span> <span class="n">source_plans</span><span class="p">[</span><span class="s2">&quot;configurations&quot;</span><span class="p">]:</span>
@@ -782,7 +782,7 @@
 <span class="sd">    Converts pred and target tensors into the proper data type to be passed to the nnunet loss functions.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        tensor (torch.Tensor | dict[str, torch.Tensor]): The input tensor</span>
+<span class="sd">        tensor (torch.Tensor | dict[str, torch.Tensor]): The input tensor.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        torch.Tensor | list[torch.Tensor]: The tensor ready to be passed to the loss function. A single tensor if not</span>
@@ -949,12 +949,12 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.Module2LossWrapper.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loss</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Converts a `` nn.Module`` subclass to a ``_Loss`` subclass. NnUnet defines their loss functions as modules</span>
+<span class="sd">        Converts a ``nn.Module`` subclass to a ``_Loss`` subclass. NnUnet defines their loss functions as modules</span>
 <span class="sd">        rather than true losses. This provides a type conversion.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            loss (nn.Module): Loss to be wrapped.</span>
-<span class="sd">            **kwargs (Any): Any other key word arguments that need to go to the _Loss base class.</span>
+<span class="sd">            **kwargs (Any): Any other key word arguments that need to go to the ``_Loss`` base class.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span></div>
@@ -963,6 +963,16 @@
 <div class="viewcode-block" id="Module2LossWrapper.forward">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.Module2LossWrapper.forward">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pred</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Push the pred and target tensors through the wrapped loss.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pred (torch.Tensor): Predictions tensor.</span>
+<span class="sd">            target (torch.Tensor): Target tensor.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            torch.Tensor: Loss output.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span></div>
 </div>
 
@@ -978,8 +988,8 @@
 <span class="sd">        File-like stream object that redirects writes to a logger. Useful for redirecting stdout to a logger.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            logger (Logger): The logger to redirect writes to</span>
-<span class="sd">            level (LogLevel): The log level at which to redirect the writes</span>
+<span class="sd">            logger (Logger): The logger to redirect writes to.</span>
+<span class="sd">            level (LogLevel): The log level at which to redirect the writes.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logger</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">level</span> <span class="o">=</span> <span class="n">level</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="n">level</span><span class="o">.</span><span class="n">value</span>

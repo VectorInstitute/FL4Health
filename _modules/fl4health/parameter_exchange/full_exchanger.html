@@ -522,9 +522,9 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">initial_model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArrays</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Sending all of parameters ordered by state_dict keys.</span>
+<span class="sd">        Sending all of parameters ordered by ``state_dict`` keys.</span>
 
-<span class="sd">        **NOTE**: Order matters, because it is relied upon by ``pull_parameters`` below</span>
+<span class="sd">        **NOTE**: Order matters, because it is relied upon by ``pull_parameters`` below.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            model (nn.Module): Model containing the weights to be sent.</span>
@@ -548,12 +548,12 @@
 <span class="sd">        provided model.</span>
 
 <span class="sd">        Assumes all model parameters are contained in parameters. The ``state_dict`` is reconstituted because</span>
-<span class="sd">        parameters is simply a list of arrays</span>
+<span class="sd">        parameters is simply a list of arrays.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            parameters (NDArrays): Parameter to inject into the provided model</span>
-<span class="sd">            model (nn.Module): Model to inject the parameters into</span>
-<span class="sd">            config (Config | None, optional): Not used.. Defaults to None.</span>
+<span class="sd">            parameters (NDArrays): Parameter to inject into the provided model.</span>
+<span class="sd">            model (nn.Module): Model to inject the parameters into.</span>
+<span class="sd">            config (Config | None, optional): Not used. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">params_dict</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">parameters</span><span class="p">)</span>
         <span class="n">state_dict</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">({</span><span class="n">k</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">params_dict</span><span class="p">})</span>

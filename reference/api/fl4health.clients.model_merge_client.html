@@ -519,11 +519,11 @@ subsequently evaluate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_path</strong> (<em>Path</em>) – path to the data to be used to load the data for client-side training</p></li>
+<li><p><strong>data_path</strong> (<em>Path</em>) – path to the data to be used to load the data for client-side training.</p></li>
 <li><p><strong>model_path</strong> (<em>Path</em>) – path to the checkpoint of the client model to be used in model merging.</p></li>
-<li><p><strong>metrics</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric" title="fl4health.metrics.base_metrics.Metric"><em>Metric</em></a><em>]</em>) – Metrics to be computed based on the labels and predictions of the client model</p></li>
+<li><p><strong>metrics</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric" title="fl4health.metrics.base_metrics.Metric"><em>Metric</em></a><em>]</em>) – Metrics to be computed based on the labels and predictions of the client model.</p></li>
 <li><p><strong>device</strong> (<em>torch.device</em>) – Device indicator for where to send the model, batches, labels etc. Often “cpu” or
-“cuda”</p></li>
+“cuda”.</p></li>
 <li><p><strong>reporters</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.reporting.base_reporter.html#fl4health.reporting.base_reporter.BaseReporter" title="fl4health.reporting.base_reporter.BaseReporter"><em>BaseReporter</em></a><em>]</em><em>, </em><em>optional</em>) – A sequence of FL4Health reporters which the client should
 send data to.</p></li>
 <li><p><strong>client_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – An optional client name that uniquely identifies a client. If not passed, a hash is
@@ -561,7 +561,7 @@ dictionary is the computed metrics on the test set.</p>
 <dd><p>Initializes client, validates local client model on local test data and returns parameters, test dataset
 length and test metrics. Importantly, parameters from Server, which is empty, is not used to initialized the
 client model.</p>
-<p><strong>NOTE:</strong> Since we only assume the client provides a <code class="docutils literal notranslate"><span class="pre">test_loader</span></code>, client evaluation and sample counts are
+<p><strong>NOTE</strong>: Since we only assume the client provides a <code class="docutils literal notranslate"><span class="pre">test_loader</span></code>, client evaluation and sample counts are
 always based off the client <code class="docutils literal notranslate"><span class="pre">test_loader</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -610,10 +610,8 @@ server for merging.</p>
 <span class="sig-name descname"><span class="pre">get_parameter_exchanger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/model_merge_client.html#ModelMergeClient.get_parameter_exchanger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.model_merge_client.ModelMergeClient.get_parameter_exchanger" title="Link to this definition">¶</a></dt>
 <dd><p>Parameter exchange is assumed to always be full for model merging clients. However, this functionality
 may be overridden if a different exchanger is needed.</p>
-<dl class="simple">
-<dt>Used in non-standard way for <code class="docutils literal notranslate"><span class="pre">ModelMergeClient</span></code> as <code class="docutils literal notranslate"><span class="pre">set_parameters</span></code> is only called for evaluate as</dt><dd><p>parameters should initially be set to the parameters in the nn.Module returned by <code class="docutils literal notranslate"><span class="pre">get_model</span></code>.</p>
-</dd>
-</dl>
+<p>Used in non-standard way for <code class="docutils literal notranslate"><span class="pre">ModelMergeClient</span></code> as <code class="docutils literal notranslate"><span class="pre">set_parameters</span></code> is only called for evaluate as
+parameters should initially be set to the parameters in the <code class="docutils literal notranslate"><span class="pre">nn.Module</span></code> returned by <code class="docutils literal notranslate"><span class="pre">get_model</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – Configuration object from the server.</p>
@@ -633,7 +631,7 @@ may be overridden if a different exchanger is needed.</p>
 <dd><p>Determines which parameters are sent back to the server for aggregation. This uses a parameter exchanger to
 determine parameters sent.</p>
 <p>For the <code class="docutils literal notranslate"><span class="pre">ModelMergeClient</span></code>, we assume that <code class="docutils literal notranslate"><span class="pre">self.setup_client</span></code> has already been called as it does not
-support client polling so get_parameters is called from fit and thus should be initialized by this point.</p>
+support client polling so <code class="docutils literal notranslate"><span class="pre">get_parameters</span></code> is called from fit and thus should be initialized by this point.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – The config is sent by the FL server to allow for customization in the function if desired.</p>
@@ -668,13 +666,11 @@ parameters to be aggregated, but can contain more information.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.model_merge_client.ModelMergeClient.set_parameters">
 <span class="sig-name descname"><span class="pre">set_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/model_merge_client.html#ModelMergeClient.set_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.model_merge_client.ModelMergeClient.set_parameters" title="Link to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>Sets the local model parameters transferred from the server using a parameter exchanger</dt><dd><p>to coordinate how parameters are set.</p>
-</dd>
-<dt>For the ModelMergeClient, we assume that initially parameters are being set to the parameters</dt><dd><p>in the nn.Module returned by the user defined get_model method. Thus, set_parameters is
-only called once after model merging has occurred and before federated evaluation.</p>
-</dd>
-</dl>
+<dd><p>Sets the local model parameters transferred from the server using a parameter exchanger to coordinate how
+parameters are set.</p>
+<p>For the ModelMergeClient, we assume that initially parameters are being set to the parameters in the
+<code class="docutils literal notranslate"><span class="pre">nn.Module</span></code> returned by the user defined <code class="docutils literal notranslate"><span class="pre">get_model</span></code> method. Thus, <code class="docutils literal notranslate"><span class="pre">set_parameters</span></code> is only called once
+after model merging has occurred and before federated evaluation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -692,10 +688,8 @@ model but may contain more information than that.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.model_merge_client.ModelMergeClient.setup_client">
 <span class="sig-name descname"><span class="pre">setup_client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/model_merge_client.html#ModelMergeClient.setup_client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.model_merge_client.ModelMergeClient.setup_client" title="Link to this definition">¶</a></dt>
-<dd><dl class="simple">
-<dt>Sets up Merge Client by initializing model, dataloader and parameter exchanger</dt><dd><p>with user defined methods. Subsequently, sets initialized attribute to True.</p>
-</dd>
-</dl>
+<dd><p>Sets up Merge Client by initializing model, dataloader and parameter exchanger with user defined methods.
+Subsequently, sets initialized attribute to True.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – The configuration from the server.</p>

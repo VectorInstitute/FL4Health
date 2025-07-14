@@ -576,9 +576,9 @@ Defaults to None.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_path</strong> (<em>Path</em>) – Path to the full set of data</p></li>
-<li><p><strong>client_num</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Client number for the data you want to load</p></li>
-<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – batch size for the data loaders</p></li>
+<li><p><strong>data_path</strong> (<em>Path</em>) – Path to the full set of data.</p></li>
+<li><p><strong>client_num</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Client number for the data you want to load.</p></li>
+<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – batch size for the data loaders.</p></li>
 <li><p><strong>seed</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – Seed to fix randomness associated with data splitting. Defaults to None.</p></li>
 <li><p><strong>train_val_split</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Percentage of data to put in the training loader. The remainder flow to the
 validation dataloader. Defaults to 0.8.</p></li>
@@ -602,14 +602,14 @@ size of each dataset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_path</strong> (<em>Path</em>) – Path to the test data</p></li>
+<li><p><strong>data_path</strong> (<em>Path</em>) – Path to the test data.</p></li>
 <li><p><strong>client_num</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Client number to be loaded.</p></li>
-<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Batch size for processing of the test scripts</p></li>
+<li><p><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a>) – Batch size for processing of the test scripts.</p></li>
 <li><p><strong>num_workers</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Number of workers associated with the test dataloader. Defaults to 0.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Test dataloader, dictionary containing count of the data points in the set</p>
+<dd class="field-even"><p>Test dataloader, dictionary containing count of the data points in the set.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[DataLoader, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)">int</a>]]</p>

@@ -543,7 +543,7 @@
 <span class="sd">                example, the config used to produce the ``on_fit_config_fn`` and ``on_evaluate_config_fn`` for the</span>
 <span class="sd">                strategy.</span>
 
-<span class="sd">                **NOTE:** This config is **DISTINCT** from the Flwr server config, which is extremely minimal.</span>
+<span class="sd">                **NOTE**: This config is **DISTINCT** from the Flwr server config, which is extremely minimal.</span>
 <span class="sd">            strategy (FedAvgWithAdaptiveConstraint): The aggregation strategy to be used by the server to handle.</span>
 <span class="sd">                client updates and other information potentially sent by the participating clients. For MR-MTL, the</span>
 <span class="sd">                strategy must be a derivative of the ``FedAvgWithAdaptiveConstraint`` class.</span>
@@ -555,7 +555,7 @@
 <span class="sd">                state (including models) such that if FL training is interrupted, the process may be restarted. If no</span>
 <span class="sd">                module is provided, no checkpointing or state preservation will happen. Defaults to None.</span>
 
-<span class="sd">                **NOTE:** For Ditto, the model shared with the server is the **GLOBAL MODEL**, which isn&#39;t the target</span>
+<span class="sd">                **NOTE**: For Ditto, the model shared with the server is the **GLOBAL MODEL**, which isn&#39;t the target</span>
 <span class="sd">                of FL training for this algorithm. However, one may still want to save this model for other purposes.</span>
 <span class="sd">            on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to</span>
 <span class="sd">                configure how one asks a client to provide parameters from which to initialize all other clients by</span>

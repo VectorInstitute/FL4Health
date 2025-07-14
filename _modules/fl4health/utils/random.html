@@ -532,7 +532,7 @@
 
 <span class="sd">    https://pytorch.org/docs/stable/notes/randomness.html</span>
 
-<span class="sd">    **NOTE:** If the ``use_deterministic_torch_algos`` flag is set to True, you may need to set the environment</span>
+<span class="sd">    **NOTE**: If the ``use_deterministic_torch_algos`` flag is set to True, you may need to set the environment</span>
 <span class="sd">    variable ``CUBLAS_WORKSPACE_CONFIG`` to something like ``:4096:8``, to avoid CUDA errors. Additional documentation</span>
 <span class="sd">    may be found here:</span>
 
@@ -540,7 +540,7 @@
 
 <span class="sd">    Args:</span>
 <span class="sd">        seed (int | None, optional): The seed value to be used for random number generators. Default is 42. Seed</span>
-<span class="sd">            setting will no-op if the seed is explicitly set to None</span>
+<span class="sd">            setting will no-op if the seed is explicitly set to None.</span>
 <span class="sd">        use_deterministic_torch_algos (bool, optional): Whether or not to set ``torch.use_deterministic_algorithms`` to</span>
 <span class="sd">            True. Defaults to False.</span>
 <span class="sd">        disable_torch_benchmarking (bool, optional): Whether to explicitly disable cuda benchmarking in torch</span>
@@ -608,9 +608,9 @@
 <span class="sd">    the state of the random number generators to a previously saved state.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        random_state (tuple[Any, ...]): The state of the Python random number generator</span>
-<span class="sd">        numpy_state (dict[str, Any]): The state of the NumPy random number generator</span>
-<span class="sd">        torch_state (torch.Tensor): The state of the PyTorch random number generator</span>
+<span class="sd">        random_state (tuple[Any, ...]): The state of the Python random number generator.</span>
+<span class="sd">        numpy_state (dict[str, Any]): The state of the NumPy random number generator.</span>
+<span class="sd">        torch_state (torch.Tensor): The state of the PyTorch random number generator.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Restoring random state.&quot;</span><span class="p">)</span>
     <span class="n">random</span><span class="o">.</span><span class="n">setstate</span><span class="p">(</span><span class="n">random_state</span><span class="p">)</span>
@@ -625,10 +625,10 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generates unique hash used as id for client.</span>
 
-<span class="sd">    **NOTE:** This generation is unaffected by setting of random seeds.</span>
+<span class="sd">    **NOTE**: This generation is unaffected by setting of random seeds.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">       length (int): The length of the hash generated. Maximum length is 32</span>
+<span class="sd">       length (int): The length of the hash generated. Maximum length is 32.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        str: hash</span>

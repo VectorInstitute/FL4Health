@@ -538,10 +538,10 @@
 <span class="sd">        number of partitions. Data associated with the label are then assigned to each partition according to the</span>
 <span class="sd">        distribution. Another distribution is sampled for the next label, and so on.</span>
 
-<span class="sd">        **NOTE:** This differs in kind from label-based Dirichlet sampling. There, an existing dataset is subsampled in</span>
+<span class="sd">        **NOTE**: This differs in kind from label-based Dirichlet sampling. There, an existing dataset is subsampled in</span>
 <span class="sd">        place (rather than partitioned) such that its labels match a Dirichlet distribution.</span>
 
-<span class="sd">        **NOTE:** The range for beta is (0, :math:`\\infty`). The larger the value of beta, the more uniform the</span>
+<span class="sd">        **NOTE**: The range for beta is (0, :math:`\\infty`). The larger the value of beta, the more uniform the</span>
 <span class="sd">        multinomial probability of the clients will be. The smaller beta is the more heterogeneous it is.</span>
 
 <span class="sd">        :code:`np.random.dirichlet([1]*5): array([0.23645891, 0.08857052, 0.29519184, 0.2999956 , 0.07978313])`</span>
@@ -563,12 +563,12 @@
 <span class="sd">            partitioned_datasets = heterogeneous_partitioner.partition_dataset(original_dataset, max_retries=5)</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            number_of_partitions (int): Number of new datasets that we want to break the current dataset into</span>
-<span class="sd">            unique_labels (list[T]): This is the set of labels through which we&#39;ll iterate to perform allocation</span>
+<span class="sd">            number_of_partitions (int): Number of new datasets that we want to break the current dataset into.</span>
+<span class="sd">            unique_labels (list[T]): This is the set of labels through which we&#39;ll iterate to perform allocation.</span>
 <span class="sd">            min_label_examples (int | None, optional): This is an optional input if you want to ensure a minimum</span>
 <span class="sd">                number of labels is present on each partition. If prior distribution is provided, this is ignored.</span>
 
-<span class="sd">                **NOTE:** This does not guarantee feasibility. That is, if you have a very small beta and request a</span>
+<span class="sd">                **NOTE**: This does not guarantee feasibility. That is, if you have a very small beta and request a</span>
 <span class="sd">                large minimum number here, you are unlikely to satisfy this request. In partitioning, if the minimum</span>
 <span class="sd">                isn&#39;t satisfied, we resample from the Dirichlet distribution. This is repeated some limited number of</span>
 <span class="sd">                times. Otherwise the partitioner &quot;gives up&quot;.</span>
@@ -613,7 +613,7 @@
 <span class="sd">        a Dirichlet distribution, to the partitions.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            label (T): Label is passed for logging transparency. It must be convertible to a string through ``str()``</span>
+<span class="sd">            label (T): Label is passed for logging transparency. It must be convertible to a string through ``str()``.</span>
 <span class="sd">            label_indices (torch.Tensor): Indices from the dataset corresponding to a particular label. This assumes</span>
 <span class="sd">                that the tensor is 1D and it&#39;s len constitutes the number of total datapoints with the label.</span>
 
@@ -689,7 +689,7 @@
 <span class="sd">        is exceeded or the minimum threshold is met.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            original_dataset (D): The dataset to be partitioned</span>
+<span class="sd">            original_dataset (D): The dataset to be partitioned.</span>
 <span class="sd">            max_retries (int | None, optional): Number of times to attempt to satisfy a user provided minimum</span>
 <span class="sd">                label-associated data points per partition. Set this value to None if you want to retry indefinitely.</span>
 <span class="sd">                Defaults to 5.</span>

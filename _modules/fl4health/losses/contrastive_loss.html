@@ -526,8 +526,8 @@
 <span class="sd">        the similarity between the features and their negative pairs.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            device (torch.device): device to use for computation</span>
-<span class="sd">            temperature (float): temperature to scale the logits</span>
+<span class="sd">            device (torch.device): device to use for computation.</span>
+<span class="sd">            temperature (float): temperature to scale the logits.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
@@ -630,8 +630,8 @@
 <span class="sd">        pairs.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            device (torch.device): device to use for computation</span>
-<span class="sd">            temperature (float): temperature to scale the logits</span>
+<span class="sd">            device (torch.device): device to use for computation.</span>
+<span class="sd">            temperature (float): temperature to scale the logits.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
@@ -653,7 +653,7 @@
 <span class="sd">                Shaped (``batch_size``, ``feature_dimension``).</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            torch.Tensor: Contrastive loss value</span>
+<span class="sd">            torch.Tensor: Contrastive loss value.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">features</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
         <span class="n">transformed_features</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>

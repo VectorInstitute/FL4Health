@@ -521,8 +521,8 @@ through parameter exchange. It is stored as the more generally named <code class
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.fed_prox_client.FedProxClient.update_before_train">
 <span class="sig-name descname"><span class="pre">update_before_train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current_server_round</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/fed_prox_client.html#FedProxClient.update_before_train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.fed_prox_client.FedProxClient.update_before_train" title="Link to this definition">¶</a></dt>
-<dd><p>Hook method called before training with the number of current server rounds performed.
-<strong>NOTE:</strong> This method is called immediately <strong>AFTER</strong> the aggregated parameters are received from the server.
+<dd><p>Hook method called before training with the number of current server rounds performed.</p>
+<p><strong>NOTE</strong>: This method is called immediately <strong>AFTER</strong> the aggregated parameters are received from the server.
 For example, used by MOON and FENDA to save global modules after aggregation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>

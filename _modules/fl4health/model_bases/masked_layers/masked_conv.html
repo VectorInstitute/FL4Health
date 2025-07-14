@@ -536,9 +536,9 @@
         <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Implementation of masked Conv1d layers.</span>
+<span class="sd">        Implementation of masked ``Conv1d`` layers.</span>
 
-<span class="sd">        Like regular Conv1d layers (i.e., nn.Conv1d module), a masked convolutional layer has a weight (i.e.,</span>
+<span class="sd">        Like regular ``Conv1d`` layers (i.e., ``nn.Conv1d`` module), a masked convolutional layer has a weight (i.e.,</span>
 <span class="sd">        convolutional filter) and a (optional) bias. However, the weight and the bias do not receive gradient in</span>
 <span class="sd">        back propagation. Instead, two score tensors - one for the weight and another for the bias - are maintained.</span>
 
@@ -547,19 +547,19 @@
 <span class="sd">        the weight and the bias. During training, gradients with respect to the score tensors are computed and used to</span>
 <span class="sd">        update the score tensors.</span>
 
-<span class="sd">        **NOTE:** The scores are not assumed to be bounded between 0 and 1.</span>
+<span class="sd">        **NOTE**: The scores are not assumed to be bounded between 0 and 1.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            in_channels (int): Number of channels in the input image</span>
-<span class="sd">            out_channels (int): Number of channels produced by the convolution</span>
-<span class="sd">            kernel_size (int or tuple): Size of the convolving kernel</span>
-<span class="sd">            stride (int or tuple, optional): Stride of the convolution. Default: 1</span>
-<span class="sd">            padding (int, tuple or str, optional): Padding added to both sides of the input. Default: 0</span>
+<span class="sd">            in_channels (int): Number of channels in the input image.</span>
+<span class="sd">            out_channels (int): Number of channels produced by the convolution.</span>
+<span class="sd">            kernel_size (int or tuple): Size of the convolving kernel.</span>
+<span class="sd">            stride (int or tuple, optional): Stride of the convolution. Default: 1.</span>
+<span class="sd">            padding (int, tuple or str, optional): Padding added to both sides of the input. Default: 0.</span>
 <span class="sd">            padding_mode (str, optional): ``&#39;zeros&#39;``, ``&#39;reflect&#39;``, ``&#39;replicate&#39;`` or ``&#39;circular&#39;``.</span>
-<span class="sd">                Default: ``&#39;zeros&#39;``</span>
-<span class="sd">            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1</span>
-<span class="sd">            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1</span>
-<span class="sd">            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``</span>
+<span class="sd">                Default: ``&#39;zeros&#39;``.</span>
+<span class="sd">            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1.</span>
+<span class="sd">            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1.</span>
+<span class="sd">            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``.</span>
 <span class="sd">            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.</span>
 <span class="sd">            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -623,10 +623,10 @@
 <span class="sd">        Return an instance of ``MaskedConv1d`` whose weight and bias have the same values as those of ``conv_module``.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            conv_module (nn.Conv1d): Module to be converted</span>
+<span class="sd">            conv_module (nn.Conv1d): Module to be converted.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            MaskedConv1d: Module with masked layers added to enable FedPM training</span>
+<span class="sd">            MaskedConv1d: Module with masked layers added to enable FedPM training.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">has_bias</span> <span class="o">=</span> <span class="n">conv_module</span><span class="o">.</span><span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="c1"># we create new variables below to make mypy happy since kernel_size has</span>
@@ -677,9 +677,9 @@
         <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Implementation of masked Conv2d layers.</span>
+<span class="sd">        Implementation of masked ``Conv2d`` layers.</span>
 
-<span class="sd">        Like regular Conv2d layers (i.e., nn.Conv2d module), a masked convolutional layer has a weight (i.e.,</span>
+<span class="sd">        Like regular ``Conv2d`` layers (i.e., ``nn.Conv2d`` module), a masked convolutional layer has a weight (i.e.,</span>
 <span class="sd">        convolutional filter) and a (optional) bias. However, the weight and the bias do not receive gradient in back</span>
 <span class="sd">        propagation. Instead, two score tensors - one for the weight and another for the bias - are maintained.</span>
 <span class="sd">        In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores, which</span>
@@ -687,19 +687,19 @@
 <span class="sd">        weight and the bias. During training, gradients with respect to the score tensors are computed and used to</span>
 <span class="sd">        update the score tensors.</span>
 
-<span class="sd">        **NOTE:** The scores are not assumed to be bounded between 0 and 1.</span>
+<span class="sd">        **NOTE**: The scores are not assumed to be bounded between 0 and 1.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            in_channels (int): Number of channels in the input image</span>
-<span class="sd">            out_channels (int): Number of channels produced by the convolution</span>
-<span class="sd">            kernel_size (int or tuple): Size of the convolving kernel</span>
-<span class="sd">            stride (int or tuple, optional): Stride of the convolution. Default: 1</span>
-<span class="sd">            padding (int, tuple or str, optional): Padding added to all four sides of the input. Default: 0</span>
+<span class="sd">            in_channels (int): Number of channels in the input image.</span>
+<span class="sd">            out_channels (int): Number of channels produced by the convolution.</span>
+<span class="sd">            kernel_size (int or tuple): Size of the convolving kernel.</span>
+<span class="sd">            stride (int or tuple, optional): Stride of the convolution. Default: 1.</span>
+<span class="sd">            padding (int, tuple or str, optional): Padding added to all four sides of the input. Default: 0.</span>
 <span class="sd">            padding_mode (str, optional): ``&#39;zeros&#39;``, ``&#39;reflect&#39;``, ``&#39;replicate&#39;`` or ``&#39;circular&#39;``.</span>
-<span class="sd">                Default: ``&#39;zeros&#39;``</span>
-<span class="sd">            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1</span>
-<span class="sd">            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1</span>
-<span class="sd">            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``</span>
+<span class="sd">                Default: ``&#39;zeros&#39;``.</span>
+<span class="sd">            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1.</span>
+<span class="sd">            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1.</span>
+<span class="sd">            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``.</span>
 <span class="sd">            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.</span>
 <span class="sd">            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -738,7 +738,7 @@
 <span class="sd">        Forward for the Masked 2D Convolution.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            input (Tensor): input tensor for the layer</span>
+<span class="sd">            input (Tensor): input tensor for the layer.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Tensor: output tensor for the convolution</span>
@@ -760,13 +760,13 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_pretrained</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">conv_module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaskedConv2d</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return an instance of MaskedConv2d whose weight and bias have the same values as those of conv_module.</span>
+<span class="sd">        Return an instance of ``MaskedConv2d`` whose weight and bias have the same values as those of ``conv_module``.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            conv_module (nn.Conv2d): Module to be converted</span>
+<span class="sd">            conv_module (nn.Conv2d): Module to be converted.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            MaskedConv2d: Module with masked layers to enable FedPM</span>
+<span class="sd">            MaskedConv2d: Module with masked layers to enable FedPM.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">has_bias</span> <span class="o">=</span> <span class="n">conv_module</span><span class="o">.</span><span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">kernel_size_</span> <span class="o">=</span> <span class="n">_pair</span><span class="p">(</span><span class="n">conv_module</span><span class="o">.</span><span class="n">kernel_size</span><span class="p">)</span>
@@ -815,9 +815,9 @@
         <span class="n">dtype</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">dtype</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Implementation of masked Conv2d layers.</span>
+<span class="sd">        Implementation of masked ``Conv3d`` layers.</span>
 
-<span class="sd">        Like regular Conv3d layers (i.e., nn.Conv3d module), a masked convolutional layer has a weight (i.e.,</span>
+<span class="sd">        Like regular ``Conv3d`` layers (i.e., ``nn.Conv3d`` module), a masked convolutional layer has a weight (i.e.,</span>
 <span class="sd">        convolutional filter) and a (optional) bias. However, the weight and the bias do not receive gradient in back</span>
 <span class="sd">        propagation. Instead, two score tensors - one for the weight and another for the bias - are maintained. In the</span>
 <span class="sd">        forward pass, the score tensors are transformed by the Sigmoid function into probability scores, which are</span>
@@ -825,19 +825,19 @@
 <span class="sd">        and the bias. During training, gradients with respect to the score tensors are computed and used to update the</span>
 <span class="sd">        score tensors.</span>
 
-<span class="sd">        **NOTE:** The scores are not assumed to be bounded between 0 and 1.</span>
+<span class="sd">        **NOTE**: The scores are not assumed to be bounded between 0 and 1.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            in_channels (int): Number of channels in the input image</span>
-<span class="sd">            out_channels (int): Number of channels produced by the convolution</span>
-<span class="sd">            kernel_size (int or tuple): Size of the convolving kernel</span>
-<span class="sd">            stride (int or tuple, optional): Stride of the convolution. Default: 1</span>
-<span class="sd">            padding (int, tuple or str, optional): Padding added to all six sides of the input. Default: 0</span>
+<span class="sd">            in_channels (int): Number of channels in the input image.</span>
+<span class="sd">            out_channels (int): Number of channels produced by the convolution.</span>
+<span class="sd">            kernel_size (int or tuple): Size of the convolving kernel.</span>
+<span class="sd">            stride (int or tuple, optional): Stride of the convolution. Default: 1.</span>
+<span class="sd">            padding (int, tuple or str, optional): Padding added to all six sides of the input. Default: 0.</span>
 <span class="sd">            padding_mode (str, optional): ``&#39;zeros&#39;``, ``&#39;reflect&#39;``, ``&#39;replicate&#39;`` or ``&#39;circular&#39;``.</span>
-<span class="sd">                Default: ``&#39;zeros&#39;``</span>
-<span class="sd">            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1</span>
-<span class="sd">            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1</span>
-<span class="sd">            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``</span>
+<span class="sd">                Default: ``&#39;zeros&#39;``.</span>
+<span class="sd">            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1.</span>
+<span class="sd">            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1.</span>
+<span class="sd">            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``.</span>
 <span class="sd">            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.</span>
 <span class="sd">            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -876,10 +876,10 @@
 <span class="sd">        Forward for the Masked 3D Convolution.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            input (Tensor): input tensor for the layer</span>
+<span class="sd">            input (Tensor): input tensor for the layer.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Tensor: output tensor for the convolution</span>
+<span class="sd">            Tensor: output tensor for the convolution.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">weight_prob_scores</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weight_scores</span><span class="p">)</span>
         <span class="n">weight_mask</span> <span class="o">=</span> <span class="n">bernoulli_sample</span><span class="p">(</span><span class="n">weight_prob_scores</span><span class="p">)</span>
@@ -898,13 +898,13 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">from_pretrained</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">conv_module</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv3d</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MaskedConv3d</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Return an instance of MaskedConv3d whose weight and bias have the same values as those of conv_module.</span>
+<span class="sd">        Return an instance of ``MaskedConv3d`` whose weight and bias have the same values as those of ``conv_module``.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            conv_module (nn.Conv3d): Module to convert</span>
+<span class="sd">            conv_module (nn.Conv3d): Module to convert.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            MaskedConv3d: Module with mask layers added to enable FedPM</span>
+<span class="sd">            MaskedConv3d: Module with mask layers added to enable FedPM.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">has_bias</span> <span class="o">=</span> <span class="n">conv_module</span><span class="o">.</span><span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">kernel_size_</span> <span class="o">=</span> <span class="n">_triple</span><span class="p">(</span><span class="n">conv_module</span><span class="o">.</span><span class="n">kernel_size</span><span class="p">)</span>
@@ -967,21 +967,21 @@
 <span class="sd">        Finally, the binary masks are applied to the weight and the bias. During training, gradients with respect to</span>
 <span class="sd">        the score tensors are computed and used to update the score tensors.</span>
 
-<span class="sd">        **NOTE:** The scores are not assumed to be bounded between 0 and 1.</span>
+<span class="sd">        **NOTE**: The scores are not assumed to be bounded between 0 and 1.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            in_channels (int): Number of channels in the input image</span>
-<span class="sd">            out_channels (int): Number of channels produced by the transposed convolution</span>
-<span class="sd">            kernel_size (int or tuple): Size of the convolving kernel</span>
-<span class="sd">            stride (int or tuple, optional): Stride of the convolution. Default: 1</span>
+<span class="sd">            in_channels (int): Number of channels in the input image.</span>
+<span class="sd">            out_channels (int): Number of channels produced by the transposed convolution.</span>
+<span class="sd">            kernel_size (int or tuple): Size of the convolving kernel.</span>
+<span class="sd">            stride (int or tuple, optional): Stride of the convolution. Default: 1.</span>
 <span class="sd">            padding (int or tuple, optional): ``dilation * (kernel_size - 1) - padding`` zero-padding will be added to</span>
-<span class="sd">                both sides of the input. Default: 0</span>
-<span class="sd">            output_padding (int or tuple, optional): Additional size added to one side of the output shape. Default: 0</span>
-<span class="sd">            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1</span>
-<span class="sd">            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``</span>
-<span class="sd">            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1</span>
+<span class="sd">                both sides of the input. Default: 0.</span>
+<span class="sd">            output_padding (int or tuple, optional): Additional size added to one side of the output shape. Default: 0.</span>
+<span class="sd">            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1.</span>
+<span class="sd">            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``.</span>
+<span class="sd">            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1.</span>
 <span class="sd">            padding_mode (str, optional): Mode to be used in padding the input image for processing. Defaults to</span>
-<span class="sd">                &quot;zeros&quot;</span>
+<span class="sd">                &quot;zeros&quot;.</span>
 <span class="sd">            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.</span>
 <span class="sd">            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1021,7 +1021,7 @@
 <span class="sd">        Forward for the ``MaskedConvTranspose1D``.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            input (Tensor): input to be mapped with the module</span>
+<span class="sd">            input (Tensor): input to be mapped with the module.</span>
 <span class="sd">            output_size (list[int] | None, optional): Desired output from the transpose. Defaults to None.</span>
 
 <span class="sd">        Raises:</span>
@@ -1072,10 +1072,10 @@
 <span class="sd">        ``conv_module``.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            conv_module (nn.ConvTranspose1d): Target module to be converted</span>
+<span class="sd">            conv_module (nn.ConvTranspose1d): Target module to be converted.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            MaskedConvTranspose1d: Module with masked layers to enable FedPM</span>
+<span class="sd">            MaskedConvTranspose1d: Module with masked layers to enable FedPM.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">has_bias</span> <span class="o">=</span> <span class="n">conv_module</span><span class="o">.</span><span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="c1"># we create new variables below to make mypy happy since kernel_size has</span>
@@ -1142,22 +1142,22 @@
 <span class="sd">        Finally, the binary masks are applied to the weight and the bias. During training, gradients with respect to</span>
 <span class="sd">        the score tensors are computed and used to update the score tensors.</span>
 
-<span class="sd">        **NOTE:** The scores are not assumed to be bounded between 0 and 1.</span>
+<span class="sd">        **NOTE**: The scores are not assumed to be bounded between 0 and 1.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            in_channels (int): Number of channels in the input image</span>
-<span class="sd">            out_channels (int): Number of channels produced by the transposed convolution</span>
-<span class="sd">            kernel_size (int or tuple): Size of the convolving kernel</span>
-<span class="sd">            stride (int or tuple, optional): Stride of the convolution. Default: 1</span>
+<span class="sd">            in_channels (int): Number of channels in the input image.</span>
+<span class="sd">            out_channels (int): Number of channels produced by the transposed convolution.</span>
+<span class="sd">            kernel_size (int or tuple): Size of the convolving kernel.</span>
+<span class="sd">            stride (int or tuple, optional): Stride of the convolution. Default: 1.</span>
 <span class="sd">            padding (int or tuple, optional): ``dilation * (kernel_size - 1) - padding`` zero-padding will be added</span>
-<span class="sd">                to both sides of each dimension in the input. Default: 0</span>
+<span class="sd">                to both sides of each dimension in the input. Default: 0.</span>
 <span class="sd">            output_padding (int or tuple, optional): Additional size added to one side of each dimension in the</span>
-<span class="sd">                output shape. Default: 0</span>
-<span class="sd">            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1</span>
-<span class="sd">            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``</span>
-<span class="sd">            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1</span>
+<span class="sd">                output shape. Default: 0.</span>
+<span class="sd">            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1.</span>
+<span class="sd">            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``.</span>
+<span class="sd">            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1.</span>
 <span class="sd">            padding_mode (str, optional): Mode to be used in padding the input image for processing. Defaults to</span>
-<span class="sd">                &quot;zeros&quot;</span>
+<span class="sd">                &quot;zeros&quot;.</span>
 <span class="sd">            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.</span>
 <span class="sd">            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1197,14 +1197,14 @@
 <span class="sd">        Maps input tensor through the ``MaskedConvTranspose2D`` module.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            input (Tensor): tensor to be mapped</span>
+<span class="sd">            input (Tensor): tensor to be mapped.</span>
 <span class="sd">            output_size (list[int] | None, optional): Desired output size from the module. Defaults to None.</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            ValueError: Thrown if anything except &quot;zeros&quot; padding is requested</span>
+<span class="sd">            ValueError: Thrown if anything except &quot;zeros&quot; padding is requested.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Tensor: Mapped tensor</span>
+<span class="sd">            Tensor: Mapped tensor.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Note: the same check is already present in super().__init__</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">padding_mode</span> <span class="o">!=</span> <span class="s2">&quot;zeros&quot;</span><span class="p">:</span>
@@ -1245,10 +1245,10 @@
 <span class="sd">        ``conv_module``.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            conv_module (nn.ConvTranspose2d): Target module to be converted</span>
+<span class="sd">            conv_module (nn.ConvTranspose2d): Target module to be converted.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            MaskedConvTranspose2d: Module with mask layers added to enable FedPM</span>
+<span class="sd">            MaskedConvTranspose2d: Module with mask layers added to enable FedPM.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">has_bias</span> <span class="o">=</span> <span class="n">conv_module</span><span class="o">.</span><span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="c1"># we create new variables below to make mypy happy since kernel_size has</span>
@@ -1315,22 +1315,22 @@
 <span class="sd">        Finally, the binary masks are applied to the weight and the bias. During training, gradients with respect to</span>
 <span class="sd">        the score tensors are computed and used to update the score tensors.</span>
 
-<span class="sd">        **NOTE:** The scores are not assumed to be bounded between 0 and 1.</span>
+<span class="sd">        **NOTE**: The scores are not assumed to be bounded between 0 and 1.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            in_channels (int): Number of channels in the input image</span>
-<span class="sd">            out_channels (int): Number of channels produced by the transposed convolution</span>
-<span class="sd">            kernel_size (int or tuple): Size of the convolving kernel</span>
-<span class="sd">            stride (int or tuple, optional): Stride of the convolution. Default: 1</span>
+<span class="sd">            in_channels (int): Number of channels in the input image.</span>
+<span class="sd">            out_channels (int): Number of channels produced by the transposed convolution.</span>
+<span class="sd">            kernel_size (int or tuple): Size of the convolving kernel.</span>
+<span class="sd">            stride (int or tuple, optional): Stride of the convolution. Default: 1.</span>
 <span class="sd">            padding (int or tuple, optional): ``dilation * (kernel_size - 1) - padding`` zero-padding will be added to</span>
-<span class="sd">                both sides of each dimension in the input. Default: 0</span>
+<span class="sd">                both sides of each dimension in the input. Default: 0.</span>
 <span class="sd">            output_padding (int or tuple, optional): Additional size added to one side of each dimension in the</span>
-<span class="sd">                output shape. Default: 0</span>
-<span class="sd">            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1</span>
-<span class="sd">            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``</span>
-<span class="sd">            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1</span>
+<span class="sd">                output shape. Default: 0.</span>
+<span class="sd">            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1.</span>
+<span class="sd">            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``.</span>
+<span class="sd">            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1.</span>
 <span class="sd">            padding_mode (str, optional): Mode to be used in padding the input image for processing. Defaults to</span>
-<span class="sd">                &quot;zeros&quot;</span>
+<span class="sd">                &quot;zeros&quot;.</span>
 <span class="sd">            device (torch.device | None, optional): Device to which this module should be sent. Defaults to None.</span>
 <span class="sd">            dtype (torch.dtype | None, optional): Type of the tensors. Defaults to None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1370,14 +1370,14 @@
 <span class="sd">        Maps the input tensor with ``MaskedConvTranspose3D``.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            input (Tensor): Tensor to be mapped</span>
+<span class="sd">            input (Tensor): Tensor to be mapped.</span>
 <span class="sd">            output_size (list[int] | None, optional): Desired output size from the transpose. Defaults to None.</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            ValueError: Throws if anything except &quot;zeros&quot; padding is requested</span>
+<span class="sd">            ValueError: Throws if anything except &quot;zeros&quot; padding is requested.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Tensor: Mapped tensor</span>
+<span class="sd">            Tensor: Mapped tensor.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Note: the same check is already present in super().__init__</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">padding_mode</span> <span class="o">!=</span> <span class="s2">&quot;zeros&quot;</span><span class="p">:</span>
@@ -1418,10 +1418,10 @@
 <span class="sd">        ``conv_module``.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            conv_module (nn.ConvTranspose3d): Target module to be converted</span>
+<span class="sd">            conv_module (nn.ConvTranspose3d): Target module to be converted.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            MaskedConvTranspose3d: Module with masked layers added to enable FedPM</span>
+<span class="sd">            MaskedConvTranspose3d: Module with masked layers added to enable FedPM.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">has_bias</span> <span class="o">=</span> <span class="n">conv_module</span><span class="o">.</span><span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="c1"># we create new variables below to make mypy happy since kernel_size has</span>

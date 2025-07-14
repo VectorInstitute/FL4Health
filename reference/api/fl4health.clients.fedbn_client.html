@@ -513,11 +513,12 @@
 <dd><p>Bases: <a class="reference internal" href="fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient" title="fl4health.clients.basic_client.BasicClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicClient</span></code></a></p>
 <p>This class serves as a sparse interface for clients aiming to leverage the FedBN method
 (<a class="reference external" href="https://arxiv.org/abs/2102.07623">https://arxiv.org/abs/2102.07623</a>) or any other approach that excludes specific types of model layers during
-parameter exchange. This class simply ensures that the user has overridden the <cite>get_parameter_exchanger</cite> properly.</p>
+parameter exchange. This class simply ensures that the user has overridden the <code class="docutils literal notranslate"><span class="pre">get_parameter_exchanger</span></code>
+properly.</p>
 <p>For example, in FedBN, batch normalization layers are excluded from exchange with the server
 but all other layers flow through and are aggregated via whatever strategy the server is implementing. An example
 of this where one wants to exclude 2D batch normalization layers during exchange is
-<cite>LayerExchangerWithExclusions(self.model, {nn.BatchNorm2d})</cite>, where the model is provided so that the exchanger
+<code class="docutils literal notranslate"><span class="pre">LayerExchangerWithExclusions(self.model,</span> <span class="pre">{nn.BatchNorm2d})</span></code>, where the model is provided so that the exchanger
 can identify the appropriate layers to leave out.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.clients.fedbn_client.FedBnClient.setup_client">

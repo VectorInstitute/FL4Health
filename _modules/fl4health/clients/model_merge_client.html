@@ -545,11 +545,11 @@
 <span class="sd">        subsequently evaluate.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            data_path (Path): path to the data to be used to load the data for client-side training</span>
+<span class="sd">            data_path (Path): path to the data to be used to load the data for client-side training.</span>
 <span class="sd">            model_path (Path): path to the checkpoint of the client model to be used in model merging.</span>
-<span class="sd">            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model</span>
+<span class="sd">            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.</span>
 <span class="sd">            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often &quot;cpu&quot; or</span>
-<span class="sd">                &quot;cuda&quot;</span>
+<span class="sd">                &quot;cuda&quot;.</span>
 <span class="sd">            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the client should</span>
 <span class="sd">                send data to.</span>
 <span class="sd">            client_name (str): An optional client name that uniquely identifies a client. If not passed, a hash is</span>
@@ -577,8 +577,8 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.model_merge_client.html#fl4health.clients.model_merge_client.ModelMergeClient.setup_client">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">setup_client</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Sets up Merge Client by initializing model, dataloader and parameter exchanger</span>
-<span class="sd">            with user defined methods. Subsequently, sets initialized attribute to True.</span>
+<span class="sd">        Sets up Merge Client by initializing model, dataloader and parameter exchanger with user defined methods.</span>
+<span class="sd">        Subsequently, sets initialized attribute to True.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (Config): The configuration from the server.</span>
@@ -599,7 +599,7 @@
 <span class="sd">        determine parameters sent.</span>
 
 <span class="sd">        For the ``ModelMergeClient``, we assume that ``self.setup_client`` has already been called as it does not</span>
-<span class="sd">        support client polling so get_parameters is called from fit and thus should be initialized by this point.</span>
+<span class="sd">        support client polling so ``get_parameters`` is called from fit and thus should be initialized by this point.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (Config): The config is sent by the FL server to allow for customization in the function if desired.</span>
@@ -616,12 +616,12 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.model_merge_client.html#fl4health.clients.model_merge_client.ModelMergeClient.set_parameters">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="n">NDArrays</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Sets the local model parameters transferred from the server using a parameter exchanger</span>
-<span class="sd">            to coordinate how parameters are set.</span>
+<span class="sd">        Sets the local model parameters transferred from the server using a parameter exchanger to coordinate how</span>
+<span class="sd">        parameters are set.</span>
 
-<span class="sd">        For the ModelMergeClient, we assume that initially parameters are being set to the parameters</span>
-<span class="sd">            in the nn.Module returned by the user defined get_model method. Thus, set_parameters is</span>
-<span class="sd">            only called once after model merging has occurred and before federated evaluation.</span>
+<span class="sd">        For the ModelMergeClient, we assume that initially parameters are being set to the parameters in the</span>
+<span class="sd">        ``nn.Module`` returned by the user defined ``get_model`` method. Thus, ``set_parameters`` is only called once</span>
+<span class="sd">        after model merging has occurred and before federated evaluation.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            parameters (NDArrays): Parameters have information about model state to be added to the relevant client</span>
@@ -640,7 +640,7 @@
 <span class="sd">        length and test metrics. Importantly, parameters from Server, which is empty, is not used to initialized the</span>
 <span class="sd">        client model.</span>
 
-<span class="sd">        **NOTE:** Since we only assume the client provides a ``test_loader``, client evaluation and sample counts are</span>
+<span class="sd">        **NOTE**: Since we only assume the client provides a ``test_loader``, client evaluation and sample counts are</span>
 <span class="sd">        always based off the client ``test_loader``.</span>
 
 <span class="sd">        Args:</span>
@@ -746,7 +746,7 @@
 <span class="sd">        may be overridden if a different exchanger is needed.</span>
 
 <span class="sd">        Used in non-standard way for ``ModelMergeClient`` as ``set_parameters`` is only called for evaluate as</span>
-<span class="sd">            parameters should initially be set to the parameters in the nn.Module returned by ``get_model``.</span>
+<span class="sd">        parameters should initially be set to the parameters in the ``nn.Module`` returned by ``get_model``.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            config (Config): Configuration object from the server.</span>

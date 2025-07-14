@@ -540,10 +540,10 @@
 <span class="sd">        This client enables the training of ensemble models in a federated manner.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            data_path (Path): path to the data to be used to load the data for client-side training</span>
-<span class="sd">            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model</span>
+<span class="sd">            data_path (Path): path to the data to be used to load the data for client-side training.</span>
+<span class="sd">            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.</span>
 <span class="sd">            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often &quot;cpu&quot; or</span>
-<span class="sd">                &quot;cuda&quot;</span>
+<span class="sd">                &quot;cuda&quot;.</span>
 <span class="sd">            loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over</span>
 <span class="sd">                each batch. Defaults to ``LossMeterType.AVERAGE``.</span>
 <span class="sd">            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle</span>
@@ -596,7 +596,7 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.clients.ensemble_client.html#fl4health.clients.ensemble_client.EnsembleClient.set_optimizer">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_optimizer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Method called in the the setup_client method to set optimizer attribute returned by used-defined</span>
+<span class="sd">        Method called in the the ``setup_client`` method to set optimizer attribute returned by used-defined</span>
 <span class="sd">        ``get_optimizer``. Ensures that the return value of ``get_optimizer`` is a dictionary since that is required</span>
 <span class="sd">        for the ensemble client.</span>
 
