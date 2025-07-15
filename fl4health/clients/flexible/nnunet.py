@@ -44,16 +44,29 @@ from fl4health.utils.nnunet_utils import (
     prepare_loss_arg,
     use_default_signal_handlers,
 )
-from fl4health.utils.typing import LogLevel, TorchInputType, TorchPredType, TorchTargetType
+from fl4health.utils.typing import (
+    LogLevel,
+    TorchInputType,
+    TorchPredType,
+    TorchTargetType,
+)
 
 
 with warnings.catch_warnings():
     # silences a bunch of deprecation warnings related to scipy.ndimage
     # Raised an issue with nnunet. https://github.com/MIC-DKFZ/nnUNet/issues/2370
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-    from batchgenerators.utilities.file_and_folder_operations import load_json, save_json
-    from nnunetv2.experiment_planning.experiment_planners.default_experiment_planner import ExperimentPlanner
-    from nnunetv2.experiment_planning.plan_and_preprocess_api import extract_fingerprints, preprocess_dataset
+    from batchgenerators.utilities.file_and_folder_operations import (
+        load_json,
+        save_json,
+    )
+    from nnunetv2.experiment_planning.experiment_planners.default_experiment_planner import (
+        ExperimentPlanner,
+    )
+    from nnunetv2.experiment_planning.plan_and_preprocess_api import (
+        extract_fingerprints,
+        preprocess_dataset,
+    )
     from nnunetv2.paths import nnUNet_preprocessed, nnUNet_raw
     from nnunetv2.preprocessing.resampling.default_resampling import compute_new_shape
     from nnunetv2.training.dataloading.utils import unpack_dataset
@@ -180,7 +193,10 @@ class FlexibleNnunetClient(FlexibleClient):
             try:
                 self.dataset_json = load_json(join(nnUNet_preprocessed, self.dataset_name, "dataset.json"))
             except Exception as e:
-                log(ERROR, "Could not load the nnunet dataset json from nnUNet_raw or nnUNet_preprocessed.")
+                log(
+                    ERROR,
+                    "Could not load the nnunet dataset json from nnUNet_raw or nnUNet_preprocessed.",
+                )
                 raise e  # Raising e will raise both exceptions since it is nested.
 
         # Auto set verbose to True if console handler is on DEBUG mode
@@ -209,47 +225,18 @@ class FlexibleNnunetClient(FlexibleClient):
             torch.backends.cudnn.benchmark = False
             os.environ["nnUNet_compile"] = str("false")  # noqa: SIM112
             if self.verbose:
-                log(INFO, "Disabling model optimizations and JIT compilation. This may impact runtime performance.")
-
-    @override
-    def _compute_preds_and_losses(
-        self, model: nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
-    ) -> tuple[TrainingLosses, TorchPredType]:
-        """
-        Overrides parent to include mixed precision training (autocasting and corresponding gradient scaling) as per
-        the original ``nnUNetTrainer``.
-
-        Args:
-            model (nn.Module): the model used to make predictions
-            optimizer (Optimizer): the associated optimizer
-            input (TorchInputType): The input to be fed into the model.
-            target (TorchTargetType): The target corresponding to the input.
-
-        Returns:
-            Tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with a dictionary of any
-            predictions produced by the model.
-        """
-        # If the device type is not cuda, we don't use mixed precision training and therefore can use parent method.
-        if self.device.type != "cuda":
-            return super()._compute_preds_and_losses(model, optimizer, input, target)
-
-        # As in the nnUNetTrainer, we implement mixed precision using torch.autocast and torch.GradScaler
-        # Clear gradients from optimizer if they exist
-        optimizer.zero_grad()
-
-        # Call user defined methods to get predictions and compute loss
-        preds, features = self.predict_with_model(model, input)
-        target = self.transform_target(target)
-        losses = self.compute_training_loss(preds, features, target)
-
-        return losses, preds
+                log(
+                    INFO,
+                    "Disabling model optimizations and JIT compilation. This may impact runtime performance.",
+                )
 
     @override
     def _apply_backwards_on_losses_and_take_step(
         self, model: nn.Module, optimizer: Optimizer, losses: TrainingLosses
     ) -> TrainingLosses:
         """
-        Overrides parent to make use grad scaler with ``nnUNetTrainer``.
+        Overrides parent to include mixed precision training (autocasting and corresponding gradient scaling) as per
+        the original ``nnUNetTrainer``.
 
         Args:
             model (nn.Module): the model used for making predictions. Passed here in case subclasses need it.
@@ -259,6 +246,10 @@ class FlexibleNnunetClient(FlexibleClient):
         Returns:
             TrainingLosses: The losses object after backwards application
         """
+        # If the device type is not cuda, we don't use mixed precision training and therefore can use parent method.
+        if self.device.type != "cuda":
+            return super()._apply_backwards_on_losses_and_take_step(model, optimizer, losses)
+
         # Compute scaled loss and perform backward pass
         scaled_backward_loss = self.grad_scaler.scale(losses.backward["backward"])
         scaled_backward_loss.backward()
@@ -327,12 +318,19 @@ class FlexibleNnunetClient(FlexibleClient):
 
         # Wrap nnunet dataloaders to make them compatible with fl4health
         train_loader = NnUNetDataLoaderWrapper(
-            nnunet_augmenter=train_loader, nnunet_config=self.nnunet_config, ref_image_shape=shape
+            nnunet_augmenter=train_loader,
+            nnunet_config=self.nnunet_config,
+            ref_image_shape=shape,
         )
         val_loader = NnUNetDataLoaderWrapper(
-            nnunet_augmenter=val_loader, nnunet_config=self.nnunet_config, ref_image_shape=shape
+            nnunet_augmenter=val_loader,
+            nnunet_config=self.nnunet_config,
+            ref_image_shape=shape,
         )
-        log(INFO, f"{len(val_loader)}, {len(val_loader.dataset)}, {val_loader.nnunet_dataloader.batch_size}")
+        log(
+            INFO,
+            f"{len(val_loader)}, {len(val_loader.dataset)}, {val_loader.nnunet_dataloader.batch_size}",
+        )
 
         if self.verbose:
             log(INFO, f"\tDataloaders initialized in {time.time() - start_time:.1f}s")
@@ -487,7 +485,10 @@ class FlexibleNnunetClient(FlexibleClient):
                 new_bs = max(min(old_bs, bs_5percent), 2)
                 plans["configurations"][c]["batch_size"] = new_bs
             else:
-                log(WARNING, f"Did not find a 'batch_size' key in the nnunet plans dict for nnunet config: {c}")
+                log(
+                    WARNING,
+                    f"Did not find a 'batch_size' key in the nnunet plans dict for nnunet config: {c}",
+                )
 
             # Update median shape of resampled input images
             if str(c).startswith("2d"):
@@ -886,7 +887,11 @@ class FlexibleNnunetClient(FlexibleClient):
             plans_bytes = pickle.dumps(plans)
 
             # Remove plans file . A new one will be generated in self.setup_client
-            plans_path = join(nnUNet_preprocessed, self.dataset_name, planner.plans_identifier + ".json")
+            plans_path = join(
+                nnUNet_preprocessed,
+                self.dataset_name,
+                planner.plans_identifier + ".json",
+            )
             if exists(plans_path):
                 os.remove(plans_path)
 
