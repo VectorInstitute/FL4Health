@@ -258,6 +258,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="fl4health.clients.flexible.base.html">fl4health.clients.flexible.base module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.clients.flexible.nnunet.html">fl4health.clients.flexible.nnunet module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -607,6 +608,25 @@ round is the very first fitting round.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.setup_client_and_return_all_model_parameters">
+<span class="sig-name descname"><span class="pre">setup_client_and_return_all_model_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/adaptive_drift_constrained.html#AdaptiveDriftConstrainedMixin.setup_client_and_return_all_model_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.setup_client_and_return_all_model_parameters" title="Link to this definition">¶</a></dt>
+<dd><p>Function used to setup the client using the provided configuration and then exact all model parameters from
+<code class="docutils literal notranslate"><span class="pre">self.model</span></code> and return them. This function is used as a helper for <code class="docutils literal notranslate"><span class="pre">get_parameters</span></code> when the client
+has yet to be initialized.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – Configuration to be used  in setting up the client.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>All parameters associated with the <code class="docutils literal notranslate"><span class="pre">self.model</span></code> property of the client.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>NDArrays</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.train_step">
 <span class="sig-name descname"><span class="pre">train_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/adaptive_drift_constrained.html#AdaptiveDriftConstrainedMixin.train_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.train_step" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
@@ -676,6 +696,16 @@ on the server side.</p>
 <dt class="sig sig-object py" id="fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedProtocol.penalty_loss_function">
 <span class="sig-name descname"><span class="pre">penalty_loss_function</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="fl4health.losses.weight_drift_loss.html#fl4health.losses.weight_drift_loss.WeightDriftLoss" title="fl4health.losses.weight_drift_loss.WeightDriftLoss"><code class="xref py py-class docutils literal notranslate"><span class="pre">WeightDriftLoss</span></code></a></em><a class="headerlink" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedProtocol.penalty_loss_function" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedProtocol.setup_client_and_return_all_model_parameters">
+<span class="sig-name descname"><span class="pre">setup_client_and_return_all_model_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/adaptive_drift_constrained.html#AdaptiveDriftConstrainedProtocol.setup_client_and_return_all_model_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedProtocol.setup_client_and_return_all_model_parameters" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code>[<a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Any" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code>[<a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Any" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]]]</span></p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
@@ -777,6 +807,7 @@ on the server side.</p>
 <li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.get_parameter_exchanger"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.get_parameter_exchanger()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.get_parameters"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.get_parameters()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.set_parameters"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.set_parameters()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.setup_client_and_return_all_model_parameters"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.setup_client_and_return_all_model_parameters()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.train_step"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.train_step()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.update_after_train"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin.update_after_train()</span></code></a></li>
 </ul>
@@ -788,6 +819,7 @@ on the server side.</p>
 <li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedProtocol.loss_for_adaptation"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedProtocol.loss_for_adaptation</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedProtocol.parameter_exchanger"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedProtocol.parameter_exchanger</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedProtocol.penalty_loss_function"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedProtocol.penalty_loss_function</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedProtocol.setup_client_and_return_all_model_parameters"><code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedProtocol.setup_client_and_return_all_model_parameters()</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#fl4health.mixins.adaptive_drift_constrained.apply_adaptive_drift_to_client"><code class="docutils literal notranslate"><span class="pre">apply_adaptive_drift_to_client()</span></code></a></li>

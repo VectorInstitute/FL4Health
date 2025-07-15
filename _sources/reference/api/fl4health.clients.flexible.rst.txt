@@ -13,3 +13,4 @@ Submodules
    :maxdepth: 4
 
    fl4health.clients.flexible.base
+   fl4health.clients.flexible.nnunet

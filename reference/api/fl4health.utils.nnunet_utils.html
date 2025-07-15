@@ -258,6 +258,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="fl4health.clients.flexible.base.html">fl4health.clients.flexible.base module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.clients.flexible.nnunet.html">fl4health.clients.flexible.nnunet module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -843,12 +844,35 @@ just <code class="docutils literal notranslate"><span class="pre">subpackage</sp
 <dl class="py function">
 <dt class="sig sig-object py" id="fl4health.utils.nnunet_utils.set_nnunet_env">
 <span class="sig-name descname"><span class="pre">set_nnunet_env</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/nnunet_utils.html#set_nnunet_env"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.nnunet_utils.set_nnunet_env" title="Link to this definition">¶</a></dt>
+<dd><p>Maintain for backwards compatibility.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – _description_. Whether or not logging is enabled.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – dict containing environment variables.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fl4health.utils.nnunet_utils.set_nnunet_env_and_reload_modules">
+<span class="sig-name descname"><span class="pre">set_nnunet_env_and_reload_modules</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/utils/nnunet_utils.html#set_nnunet_env_and_reload_modules"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.utils.nnunet_utils.set_nnunet_env_and_reload_modules" title="Link to this definition">¶</a></dt>
 <dd><p>For each keyword argument name and value sets the current environment variable with the same name to that value
 and then reloads nnunet. Values must be strings. This is necessary because nnunet checks some environment
 variables on import, and therefore it must be imported or reloaded after they are set.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>verbose</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – _description_. Whether or not logging is enabled.</p></li>
+<li><p><strong>kwargs</strong> (<em>Any</em>) – dict containing environment variables.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -976,6 +1000,7 @@ terminated (which is expected behavior), the flwr signal handlers raise an error
 <li><a class="reference internal" href="#fl4health.utils.nnunet_utils.prepare_loss_arg"><code class="docutils literal notranslate"><span class="pre">prepare_loss_arg()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.utils.nnunet_utils.reload_modules"><code class="docutils literal notranslate"><span class="pre">reload_modules()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.utils.nnunet_utils.set_nnunet_env"><code class="docutils literal notranslate"><span class="pre">set_nnunet_env()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.utils.nnunet_utils.set_nnunet_env_and_reload_modules"><code class="docutils literal notranslate"><span class="pre">set_nnunet_env_and_reload_modules()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.utils.nnunet_utils.use_default_signal_handlers"><code class="docutils literal notranslate"><span class="pre">use_default_signal_handlers()</span></code></a></li>
 </ul>
 </li>

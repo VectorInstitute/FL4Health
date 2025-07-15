@@ -1,0 +1,7 @@
+fl4health.clients.flexible.nnunet module
+========================================
+
+.. automodule:: fl4health.clients.flexible.nnunet
+   :members:
+   :undoc-members:
+   :show-inheritance:

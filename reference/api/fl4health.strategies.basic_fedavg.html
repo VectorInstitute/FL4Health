@@ -258,6 +258,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="fl4health.clients.flexible.base.html">fl4health.clients.flexible.base module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.clients.flexible.nnunet.html">fl4health.clients.flexible.nnunet module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -555,6 +556,24 @@ counts. Defaults to True.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="fl4health.strategies.basic_fedavg.BasicFedAvg.add_auxiliary_information">
+<span class="sig-name descname"><span class="pre">add_auxiliary_information</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_parameters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/strategies/basic_fedavg.html#BasicFedAvg.add_auxiliary_information"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.strategies.basic_fedavg.BasicFedAvg.add_auxiliary_information" title="Link to this definition">¶</a></dt>
+<dd><p>Identity function for the BasicFedAvg strategy. This function is made available for override in more complex
+FL strategies to allow for the strategies to add auxiliary information to sets of parameters. This function
+is specifically designed to allow addition to parameters initialized by the server calling out to a client for
+weight initialization.</p>
+<p>Here we need not add anything. So no modifications are made.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>original_parameters</strong> (<em>Parameters</em>) – Original set of parameters</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="fl4health.strategies.basic_fedavg.BasicFedAvg.aggregate_evaluate">
 <span class="sig-name descname"><span class="pre">aggregate_evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server_round</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">failures</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/strategies/basic_fedavg.html#BasicFedAvg.aggregate_evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.strategies.basic_fedavg.BasicFedAvg.aggregate_evaluate" title="Link to this definition">¶</a></dt>
 <dd><p>Aggregate the metrics and losses returned from the clients as a result of the evaluation round.</p>
@@ -805,6 +824,7 @@ counts. Defaults to True.</p></li>
 <li><a class="reference internal" href="#">fl4health.strategies.basic_fedavg module</a><ul>
 <li><a class="reference internal" href="#fl4health.strategies.basic_fedavg.BasicFedAvg"><code class="docutils literal notranslate"><span class="pre">BasicFedAvg</span></code></a><ul>
 <li><a class="reference internal" href="#fl4health.strategies.basic_fedavg.BasicFedAvg.__init__"><code class="docutils literal notranslate"><span class="pre">BasicFedAvg.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.strategies.basic_fedavg.BasicFedAvg.add_auxiliary_information"><code class="docutils literal notranslate"><span class="pre">BasicFedAvg.add_auxiliary_information()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.strategies.basic_fedavg.BasicFedAvg.aggregate_evaluate"><code class="docutils literal notranslate"><span class="pre">BasicFedAvg.aggregate_evaluate()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.strategies.basic_fedavg.BasicFedAvg.aggregate_fit"><code class="docutils literal notranslate"><span class="pre">BasicFedAvg.aggregate_fit()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.strategies.basic_fedavg.BasicFedAvg.configure_evaluate"><code class="docutils literal notranslate"><span class="pre">BasicFedAvg.configure_evaluate()</span></code></a></li>

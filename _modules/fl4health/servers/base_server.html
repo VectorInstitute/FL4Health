@@ -257,6 +257,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.base.html">fl4health.clients.flexible.base module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.nnunet.html">fl4health.clients.flexible.nnunet module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -514,14 +515,26 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.client_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.client_proxy</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientProxy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.history</span><span class="w"> </span><span class="kn">import</span> <span class="n">History</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.server</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluateResultsAndFailures</span><span class="p">,</span> <span class="n">FitResultsAndFailures</span><span class="p">,</span> <span class="n">Server</span><span class="p">,</span> <span class="n">evaluate_clients</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.server</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EvaluateResultsAndFailures</span><span class="p">,</span>
+    <span class="n">FitResultsAndFailures</span><span class="p">,</span>
+    <span class="n">Server</span><span class="p">,</span>
+    <span class="n">evaluate_clients</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">Strategy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing_extensions</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.server_module</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseServerCheckpointAndStateModule</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.metrics.base_metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">TEST_LOSS_KEY</span><span class="p">,</span> <span class="n">TEST_NUM_EXAMPLES_KEY</span><span class="p">,</span> <span class="n">MetricPrefix</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.client_managers.base_sampling_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseFractionSamplingManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.metrics.base_metrics</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TEST_LOSS_KEY</span><span class="p">,</span>
+    <span class="n">TEST_NUM_EXAMPLES_KEY</span><span class="p">,</span>
+    <span class="n">MetricPrefix</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.reporting.base_reporter</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseReporter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.reporting.reports_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ReportsManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.servers.polling</span><span class="w"> </span><span class="kn">import</span> <span class="n">poll_clients</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.strategies.basic_fedavg</span><span class="w"> </span><span class="kn">import</span> <span class="n">BasicFedAvg</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.strategies.strategy_with_poll</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrategyWithPolling</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.random</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_hash</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluateFailures</span><span class="p">,</span> <span class="n">FitFailures</span>
@@ -568,7 +581,14 @@
 <span class="sd">            on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to</span>
 <span class="sd">                configure how one asks a client to provide parameters from which to initialize all other clients by</span>
 <span class="sd">                providing a ``Config`` dictionary. If this is none, then a blank config is sent with the parameter</span>
-<span class="sd">                request (which is default behavior for flower servers). Defaults to None.</span>
+<span class="sd">                request (which is default behavior for flower servers).</span>
+
+<span class="sd">                **NOTE:** If you are using a client defined in this library, passing a blank configuration will ALMOST</span>
+<span class="sd">                CERTAINLY fail. This is because asking a client for parameters will almost always require setting up</span>
+<span class="sd">                the client, as is done when fitting. In many cases, you can simply pass your ``on_fit_config_fn``</span>
+<span class="sd">                function from the strategy to as this argument as well.</span>
+
+<span class="sd">                Defaults to None.</span>
 <span class="sd">            server_name (str | None, optional): An optional string name to uniquely identify server. This name is also</span>
 <span class="sd">                used as part of any state checkpointing done by the server. Defaults to None.</span>
 <span class="sd">            accept_failures (bool, optional): Determines whether the server should accept failures during training or</span>
@@ -582,7 +602,10 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># Define a default module that does nothing.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span> <span class="o">=</span> <span class="n">BaseServerCheckpointAndStateModule</span><span class="p">(</span>
-                <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">parameter_exchanger</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">model_checkpointers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">state_checkpointer</span><span class="o">=</span><span class="kc">None</span>
+                <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">parameter_exchanger</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">model_checkpointers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">state_checkpointer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">on_init_parameters_config_fn</span> <span class="o">=</span> <span class="n">on_init_parameters_config_fn</span>
 
@@ -728,6 +751,7 @@
 
 <div class="viewcode-block" id="FlServer.fit">
 <a class="viewcode-back" href="../../../reference/api/fl4health.servers.base_server.html#fl4health.servers.base_server.FlServer.fit">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_rounds</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">History</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Run federated learning for a number of rounds. This function also allows the server to perform some operations</span>
@@ -776,6 +800,7 @@
 
 <div class="viewcode-block" id="FlServer.fit_round">
 <a class="viewcode-back" href="../../../reference/api/fl4health.servers.base_server.html#fl4health.servers.base_server.FlServer.fit_round">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">fit_round</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">server_round</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -864,6 +889,7 @@
 
 <div class="viewcode-block" id="FlServer.evaluate_round">
 <a class="viewcode-back" href="../../../reference/api/fl4health.servers.base_server.html#fl4health.servers.base_server.FlServer.evaluate_round">[docs]</a>
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">evaluate_round</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">server_round</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -998,6 +1024,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_and_state_module</span><span class="o">.</span><span class="n">maybe_checkpoint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span> <span class="n">loss_aggregated</span><span class="p">,</span> <span class="n">metrics_aggregated</span><span class="p">)</span>
 
+    <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_initial_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_round</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parameters</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get initial parameters from one of the available clients. This function is the same as the parent function</span>
@@ -1017,8 +1044,20 @@
 
         <span class="c1"># Get initial parameters from one of the clients</span>
         <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Requesting initial parameters from one random client&quot;</span><span class="p">)</span>
-        <span class="n">random_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client_manager</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_client_manager</span><span class="p">,</span> <span class="n">BaseFractionSamplingManager</span><span class="p">):</span>
+            <span class="n">random_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client_manager</span><span class="o">.</span><span class="n">sample_one</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">random_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client_manager</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_init_parameters_config_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">log</span><span class="p">(</span>
+                <span class="n">WARNING</span><span class="p">,</span>
+                <span class="p">(</span>
+                    <span class="s2">&quot;on_init_parameters_config_fn is None. Please ensure that this is expected behavior. When using &quot;</span>
+                    <span class="s2">&quot;clients from the FL4Health library this will generally fail. See class documentation of this &quot;</span>
+                    <span class="s2">&quot;parameter for additional details.&quot;</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
             <span class="c1"># An empty configuration is the default for Flower servers</span>
             <span class="n">ins</span> <span class="o">=</span> <span class="n">GetParametersIns</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="p">{})</span>
         <span class="k">else</span><span class="p">:</span>
@@ -1031,7 +1070,13 @@
                 <span class="n">WARNING</span><span class="p">,</span>
                 <span class="s2">&quot;Failed to receive initial parameters from the client. Empty initial parameters will be used.&quot;</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">get_parameters_res</span><span class="o">.</span><span class="n">parameters</span>
+
+        <span class="n">initial_parameters</span> <span class="o">=</span> <span class="n">get_parameters_res</span><span class="o">.</span><span class="n">parameters</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="p">,</span> <span class="n">BasicFedAvg</span><span class="p">):</span>
+            <span class="c1"># Potentially add auxiliary information if necessary.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">add_auxiliary_information</span><span class="p">(</span><span class="n">initial_parameters</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">initial_parameters</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_unpack_metrics</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">ClientProxy</span><span class="p">,</span> <span class="n">EvaluateRes</span><span class="p">]]</span>

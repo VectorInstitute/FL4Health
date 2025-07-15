@@ -257,6 +257,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.base.html">fl4health.clients.flexible.base module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.nnunet.html">fl4health.clients.flexible.nnunet module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -531,9 +532,15 @@
     <span class="c1"># silences a bunch of deprecation warnings related to scipy.ndimage</span>
     <span class="c1"># Raised an issue with nnunet. https://github.com/MIC-DKFZ/nnUNet/issues/2370</span>
     <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">DeprecationWarning</span><span class="p">)</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">batchgenerators.dataloading.multi_threaded_augmenter</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultiThreadedAugmenter</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">batchgenerators.dataloading.nondet_multi_threaded_augmenter</span><span class="w"> </span><span class="kn">import</span> <span class="n">NonDetMultiThreadedAugmenter</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">batchgenerators.dataloading.single_threaded_augmenter</span><span class="w"> </span><span class="kn">import</span> <span class="n">SingleThreadedAugmenter</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">batchgenerators.dataloading.multi_threaded_augmenter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">MultiThreadedAugmenter</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">batchgenerators.dataloading.nondet_multi_threaded_augmenter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">NonDetMultiThreadedAugmenter</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">batchgenerators.dataloading.single_threaded_augmenter</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">SingleThreadedAugmenter</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">nnunetv2.training.dataloading.nnunet_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">nnUNetDataset</span>
 
 
@@ -621,17 +628,21 @@
 
 
 
-<div class="viewcode-block" id="set_nnunet_env">
-<a class="viewcode-back" href="../../../reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.set_nnunet_env">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">set_nnunet_env</span><span class="p">(</span><span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<div class="viewcode-block" id="set_nnunet_env_and_reload_modules">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.set_nnunet_env_and_reload_modules">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_nnunet_env_and_reload_modules</span><span class="p">(</span><span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    For each keyword argument name and value sets the current environment variable with the same name to that value</span>
 <span class="sd">    and then reloads nnunet. Values must be strings. This is necessary because nnunet checks some environment</span>
 <span class="sd">    variables on import, and therefore it must be imported or reloaded after they are set.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        verbose (bool, optional): _description_. Whether or not logging is enabled.</span>
+<span class="sd">        kwargs (Any): dict containing environment variables.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Set environment variables</span>
     <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Resetting env var &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39; to &#39;</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
 
@@ -640,7 +651,36 @@
     <span class="n">reload_modules</span><span class="p">([</span><span class="s2">&quot;nnunetv2.default_n_proc_DA&quot;</span><span class="p">,</span> <span class="s2">&quot;nnunetv2.configuration&quot;</span><span class="p">])</span>
     <span class="c1"># Reload whatever depends on nnunetv2 environment variables</span>
     <span class="c1"># Be careful. If you reload something with an enum in it, things get messed up.</span>
-    <span class="n">reload_modules</span><span class="p">([</span><span class="s2">&quot;nnunetv2&quot;</span><span class="p">,</span> <span class="s2">&quot;fl4health.clients.nnunet_client&quot;</span><span class="p">])</span></div>
+    <span class="n">reload_modules</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="s2">&quot;nnunetv2&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;fl4health.clients.nnunet_client&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;fl4health.clients.flexible.nnunet&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="set_nnunet_env">
+<a class="viewcode-back" href="../../../reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.set_nnunet_env">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_nnunet_env</span><span class="p">(</span><span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Maintain for backwards compatibility.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        verbose (bool, optional): _description_. Whether or not logging is enabled.</span>
+<span class="sd">        kwargs (Any): dict containing environment variables.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;`set_nnunet_env` is deprecated and will be removed in a future version. &quot;</span>
+        <span class="s2">&quot;Use `set_nnunet_env_and_reload_modules` instead.&quot;</span>
+    <span class="p">)</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+        <span class="n">msg</span><span class="p">,</span>
+        <span class="ne">DeprecationWarning</span><span class="p">,</span>
+        <span class="n">stacklevel</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">set_nnunet_env_and_reload_modules</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
 
@@ -679,7 +719,9 @@
 
 <div class="viewcode-block" id="convert_deep_supervision_dict_to_list">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.convert_deep_supervision_dict_to_list">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">convert_deep_supervision_dict_to_list</span><span class="p">(</span><span class="n">tensor_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_deep_supervision_dict_to_list</span><span class="p">(</span>
+    <span class="n">tensor_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Converts a dictionary of tensors back into a list so that it can be used by nnunet deep supervision loss functions.</span>
 
@@ -777,7 +819,9 @@
 
 <div class="viewcode-block" id="prepare_loss_arg">
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.prepare_loss_arg">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">prepare_loss_arg</span><span class="p">(</span><span class="n">tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">prepare_loss_arg</span><span class="p">(</span>
+    <span class="n">tensor</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Converts pred and target tensors into the proper data type to be passed to the nnunet loss functions.</span>
 
@@ -934,7 +978,10 @@
 <a class="viewcode-back" href="../../../reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.NnUNetDataLoaderWrapper.shutdown">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The multithreaded augmenters used by nnunet need to be shutdown gracefully to avoid errors.&quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nnunet_augmenter</span><span class="p">,</span> <span class="p">(</span><span class="n">NonDetMultiThreadedAugmenter</span><span class="p">,</span> <span class="n">MultiThreadedAugmenter</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_augmenter</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">NonDetMultiThreadedAugmenter</span><span class="p">,</span> <span class="n">MultiThreadedAugmenter</span><span class="p">),</span>
+        <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_augmenter</span><span class="o">.</span><span class="n">_finish</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">nnunet_augmenter</span></div>

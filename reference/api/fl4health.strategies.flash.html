@@ -258,6 +258,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="fl4health.clients.flexible.base.html">fl4health.clients.flexible.base module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.clients.flexible.nnunet.html">fl4health.clients.flexible.nnunet module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -519,7 +520,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>initial_parameters</strong> (<em>Parameters</em>) – Initial global model parameters.</p></li>
+<li><p><strong>initial_parameters</strong> (<em>Parameters</em><em> | </em><em>None</em>) – Initial global model parameters.</p></li>
 <li><p><strong>fraction_fit</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Fraction of clients used during training. Defaults to 1.0.</p></li>
 <li><p><strong>fraction_evaluate</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><em>float</em></a><em>, </em><em>optional</em>) – Fraction of clients used during validation. Defaults to 1.0.</p></li>
 <li><p><strong>min_fit_clients</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><em>optional</em>) – Minimum number of clients used during training. Defaults to 2.</p></li>
@@ -547,6 +548,23 @@ Defaults to False.</p></li>
 averages or a uniform average. Flash default is a uniform average of the losses by dividing
 the total loss by the number of clients. Defaults to False.</p></li>
 </ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.strategies.flash.Flash.add_auxiliary_information">
+<span class="sig-name descname"><span class="pre">add_auxiliary_information</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_parameters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/strategies/flash.html#Flash.add_auxiliary_information"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.strategies.flash.Flash.add_auxiliary_information" title="Link to this definition">¶</a></dt>
+<dd><p>Function for saving the <code class="docutils literal notranslate"><span class="pre">original_parameters</span></code> as the current weights after asking a client for model
+weight initialization. Unlike other strategies that leverage this function, we don’t need to pack in new
+information, just save the client-side initialized model parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>original_parameters</strong> (<em>Parameters</em>) – Original set of parameters provided by a client for model weight
+initialization</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
 </dd>
 </dl>
 </dd></dl>
@@ -641,6 +659,7 @@ the total loss by the number of clients. Defaults to False.</p></li>
 <li><a class="reference internal" href="#">fl4health.strategies.flash module</a><ul>
 <li><a class="reference internal" href="#fl4health.strategies.flash.Flash"><code class="docutils literal notranslate"><span class="pre">Flash</span></code></a><ul>
 <li><a class="reference internal" href="#fl4health.strategies.flash.Flash.__init__"><code class="docutils literal notranslate"><span class="pre">Flash.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.strategies.flash.Flash.add_auxiliary_information"><code class="docutils literal notranslate"><span class="pre">Flash.add_auxiliary_information()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.strategies.flash.Flash.aggregate_fit"><code class="docutils literal notranslate"><span class="pre">Flash.aggregate_fit()</span></code></a></li>
 </ul>
 </li>

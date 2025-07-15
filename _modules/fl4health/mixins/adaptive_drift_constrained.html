@@ -257,6 +257,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.base.html">fl4health.clients.flexible.base module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.nnunet.html">fl4health.clients.flexible.nnunet module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -507,7 +508,7 @@
 <span></span><span class="sd">&quot;&quot;&quot;AdaptiveDriftConstrainedMixin.&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">INFO</span><span class="p">,</span> <span class="n">WARN</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">INFO</span><span class="p">,</span> <span class="n">WARNING</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">runtime_checkable</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
@@ -538,6 +539,11 @@
 <div class="viewcode-block" id="AdaptiveDriftConstrainedProtocol.compute_penalty_loss">
 <a class="viewcode-back" href="../../../reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.AdaptiveDriftConstrainedProtocol.compute_penalty_loss">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_penalty_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span> <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="AdaptiveDriftConstrainedProtocol.setup_client_and_return_all_model_parameters">
+<a class="viewcode-back" href="../../../reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.AdaptiveDriftConstrainedProtocol.setup_client_and_return_all_model_parameters">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup_client_and_return_all_model_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArrays</span><span class="p">:</span> <span class="o">...</span></div>
 </div>
 
 
@@ -601,7 +607,7 @@
             <span class="sa">f</span><span class="s2">&quot;Class </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> inherits from AdaptiveDriftConstrainedMixin but none of its other &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;base classes is a FlexibleClient. This may cause runtime errors.&quot;</span>
         <span class="p">)</span>
-        <span class="n">log</span><span class="p">(</span><span class="n">WARN</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+        <span class="n">log</span><span class="p">(</span><span class="n">WARNING</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
 <div class="viewcode-block" id="AdaptiveDriftConstrainedMixin.get_parameters">
@@ -622,15 +628,7 @@
 <span class="sd">            server.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span><span class="p">:</span>
-            <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Setting up client and providing full model parameters to the server for initialization&quot;</span><span class="p">)</span>
-
-            <span class="c1"># If initialized is False, the server is requesting model parameters from which to initialize all other</span>
-            <span class="c1"># clients. As such get_parameters is being called before fit or evaluate, so we must call</span>
-            <span class="c1"># setup_client first.</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">setup_client</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-
-            <span class="c1"># Need all parameters even if normally exchanging partial</span>
-            <span class="k">return</span> <span class="n">FullParameterExchanger</span><span class="p">()</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_client_and_return_all_model_parameters</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
         <span class="c1"># Make sure the proper components are there</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_for_adaptation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -639,6 +637,42 @@
         <span class="c1"># Weights and training loss sent to server for aggregation. Training loss is sent because server will</span>
         <span class="c1"># decide to increase or decrease the penalty weight, if adaptivity is turned on.</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">pack_parameters</span><span class="p">(</span><span class="n">model_weights</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_for_adaptation</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AdaptiveDriftConstrainedMixin.setup_client_and_return_all_model_parameters">
+<a class="viewcode-back" href="../../../reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.setup_client_and_return_all_model_parameters">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup_client_and_return_all_model_parameters</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">AdaptiveDriftConstrainedProtocol</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NDArrays</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function used to setup the client using the provided configuration and then exact all model parameters from</span>
+<span class="sd">        ``self.model`` and return them. This function is used as a helper for ``get_parameters`` when the client</span>
+<span class="sd">        has yet to be initialized.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            config (Config): Configuration to be used  in setting up the client.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            NDArrays: All parameters associated with the ``self.model`` property of the client.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Setting up client and providing full model parameters to the server for initialization&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="p">:</span>
+            <span class="n">log</span><span class="p">(</span>
+                <span class="n">WARNING</span><span class="p">,</span>
+                <span class="p">(</span>
+                    <span class="s2">&quot;This client has not yet been initialized and the config is empty. This may cause unexpected &quot;</span>
+                    <span class="s2">&quot;failures, as setting up a client typically requires several configuration parameters, &quot;</span>
+                    <span class="s2">&quot;including batch_size and current_server_round.&quot;</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+
+        <span class="c1"># If initialized is False, the server is requesting model parameters from which to initialize all other</span>
+        <span class="c1"># clients. As such get_parameters is being called before fit or evaluate, so we must call</span>
+        <span class="c1"># setup_client first.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_client</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+        <span class="c1"># Need all parameters even if normally exchanging partial</span>
+        <span class="k">return</span> <span class="n">FullParameterExchanger</span><span class="p">()</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="AdaptiveDriftConstrainedMixin.set_parameters">

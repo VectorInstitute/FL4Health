@@ -255,6 +255,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="reference/api/fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="reference/api/fl4health.clients.flexible.base.html">fl4health.clients.flexible.base module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="reference/api/fl4health.clients.flexible.nnunet.html">fl4health.clients.flexible.nnunet module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="reference/api/fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -685,6 +686,8 @@
 </li>
           <li><a href="reference/api/fl4health.clients.flexible.base.html#fl4health.clients.flexible.base.FlexibleClient.__init__">(FlexibleClient method)</a>
 </li>
+          <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.__init__">(FlexibleNnunetClient method)</a>
+</li>
           <li><a href="reference/api/fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlInstanceLevelAccountant.__init__">(FlInstanceLevelAccountant method)</a>
 </li>
           <li><a href="reference/api/fl4health.servers.base_server.html#fl4health.servers.base_server.FlServer.__init__">(FlServer method)</a>
@@ -924,6 +927,18 @@
 </li>
         <li><a href="reference/api/fl4health.clients.adaptive_drift_constraint_client.html#fl4health.clients.adaptive_drift_constraint_client.AdaptiveDriftConstraintClient">AdaptiveDriftConstraintClient (class in fl4health.clients.adaptive_drift_constraint_client)</a>
 </li>
+        <li><a href="reference/api/fl4health.strategies.basic_fedavg.html#fl4health.strategies.basic_fedavg.BasicFedAvg.add_auxiliary_information">add_auxiliary_information() (BasicFedAvg method)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.strategies.client_dp_fedavgm.html#fl4health.strategies.client_dp_fedavgm.ClientLevelDPFedAvgM.add_auxiliary_information">(ClientLevelDPFedAvgM method)</a>
+</li>
+          <li><a href="reference/api/fl4health.strategies.fedavg_with_adaptive_constraint.html#fl4health.strategies.fedavg_with_adaptive_constraint.FedAvgWithAdaptiveConstraint.add_auxiliary_information">(FedAvgWithAdaptiveConstraint method)</a>
+</li>
+          <li><a href="reference/api/fl4health.strategies.feddg_ga_with_adaptive_constraint.html#fl4health.strategies.feddg_ga_with_adaptive_constraint.FedDgGaAdaptiveConstraint.add_auxiliary_information">(FedDgGaAdaptiveConstraint method)</a>
+</li>
+          <li><a href="reference/api/fl4health.strategies.flash.html#fl4health.strategies.flash.Flash.add_auxiliary_information">(Flash method)</a>
+</li>
+        </ul></li>
         <li><a href="reference/api/fl4health.servers.nnunet_server.html#fl4health.servers.nnunet_server.add_items_to_config_fn">add_items_to_config_fn() (in module fl4health.servers.nnunet_server)</a>
 </li>
         <li><a href="reference/api/fl4health.strategies.noisy_aggregate.html#fl4health.strategies.noisy_aggregate.add_noise_to_array">add_noise_to_array() (in module fl4health.strategies.noisy_aggregate)</a>
@@ -1253,6 +1268,8 @@
 </li>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.compute_loss_and_additional_losses">(FlexibleClientProtocolPreSetup method)</a>
 </li>
+          <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.compute_loss_and_additional_losses">(FlexibleNnunetClient method)</a>
+</li>
           <li><a href="reference/api/fl4health.clients.moon_client.html#fl4health.clients.moon_client.MoonClient.compute_loss_and_additional_losses">(MoonClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client.html#fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client.MrMtlMkMmdClient.compute_loss_and_additional_losses">(MrMtlMkMmdClient method)</a>
@@ -1400,8 +1417,12 @@
         </ul></li>
         <li><a href="reference/api/fl4health.model_bases.gpfl_base.html#fl4health.model_bases.gpfl_base.CoV">CoV (class in fl4health.model_bases.gpfl_base)</a>
 </li>
-        <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.create_plans">create_plans() (NnunetClient method)</a>
+        <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.create_plans">create_plans() (FlexibleNnunetClient method)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.create_plans">(NnunetClient method)</a>
 </li>
+        </ul></li>
         <li><a href="reference/api/fl4health.datasets.rxrx1.load_data.html#fl4health.datasets.rxrx1.load_data.create_splits">create_splits() (in module fl4health.datasets.rxrx1.load_data)</a>
 </li>
         <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.criterion">criterion (DittoPersonalizedProtocol attribute)</a>
@@ -1528,8 +1549,12 @@
 </li>
         <li><a href="reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.EmaMetric">EmaMetric (class in fl4health.metrics.compound_metrics)</a>
 </li>
-        <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.empty_cache">empty_cache() (NnunetClient method)</a>
+        <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.empty_cache">empty_cache() (FlexibleNnunetClient method)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.empty_cache">(NnunetClient method)</a>
 </li>
+        </ul></li>
         <li><a href="reference/api/fl4health.model_bases.feature_extractor_buffer.html#fl4health.model_bases.feature_extractor_buffer.FeatureExtractorBuffer.enable_accumulating_features">enable_accumulating_features() (FeatureExtractorBuffer method)</a>
 </li>
         <li><a href="reference/api/fl4health.model_bases.autoencoders_base.html#fl4health.model_bases.autoencoders_base.BasicAe.encode">encode() (BasicAe method)</a>
@@ -1952,6 +1977,13 @@
 
         <ul>
           <li><a href="reference/api/fl4health.clients.flexible.base.html#module-fl4health.clients.flexible.base">module</a>
+</li>
+        </ul></li>
+        <li>
+    fl4health.clients.flexible.nnunet
+
+        <ul>
+          <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#module-fl4health.clients.flexible.nnunet">module</a>
 </li>
         </ul></li>
         <li>
@@ -2980,6 +3012,8 @@
 </li>
         <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup">FlexibleClientProtocolPreSetup (class in fl4health.mixins.core_protocols)</a>
 </li>
+        <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient">FlexibleNnunetClient (class in fl4health.clients.flexible.nnunet)</a>
+</li>
         <li><a href="reference/api/fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.FlInstanceLevelAccountant">FlInstanceLevelAccountant (class in fl4health.privacy.fl_accountants)</a>
 </li>
         <li><a href="reference/api/fl4health.servers.base_server.html#fl4health.servers.base_server.FlServer">FlServer (class in fl4health.servers.base_server)</a>
@@ -3153,12 +3187,16 @@
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.get_client_specific_logs">get_client_specific_logs() (BasicClient method)</a>
 
         <ul>
+          <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.get_client_specific_logs">(FlexibleNnunetClient method)</a>
+</li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.get_client_specific_logs">(NnunetClient method)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.get_client_specific_reports">get_client_specific_reports() (BasicClient method)</a>
 
         <ul>
+          <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.get_client_specific_reports">(FlexibleNnunetClient method)</a>
+</li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.get_client_specific_reports">(NnunetClient method)</a>
 </li>
         </ul></li>
@@ -3168,6 +3206,8 @@
 
         <ul>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.get_criterion">(FlexibleClientProtocolPreSetup method)</a>
+</li>
+          <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.get_criterion">(FlexibleNnunetClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.get_criterion">(NnunetClient method)</a>
 </li>
@@ -3182,6 +3222,8 @@
           <li><a href="reference/api/fl4health.clients.fed_pca_client.html#fl4health.clients.fed_pca_client.FedPCAClient.get_data_loaders">(FedPCAClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.get_data_loaders">(FlexibleClientProtocolPreSetup method)</a>
+</li>
+          <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.get_data_loaders">(FlexibleNnunetClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.get_data_loaders">(NnunetClient method)</a>
 </li>
@@ -3259,6 +3301,8 @@
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.get_lr_scheduler">get_lr_scheduler() (BasicClient method)</a>
 
         <ul>
+          <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.get_lr_scheduler">(FlexibleNnunetClient method)</a>
+</li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.get_lr_scheduler">(NnunetClient method)</a>
 </li>
         </ul></li>
@@ -3281,6 +3325,8 @@
 </li>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.get_model">(FlexibleClientProtocolPreSetup method)</a>
 </li>
+          <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.get_model">(FlexibleNnunetClient method)</a>
+</li>
           <li><a href="reference/api/fl4health.clients.model_merge_client.html#fl4health.clients.model_merge_client.ModelMergeClient.get_model">(ModelMergeClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.get_model">(NnunetClient method)</a>
@@ -3302,6 +3348,8 @@
           <li><a href="reference/api/fl4health.clients.fedrep_client.html#fl4health.clients.fedrep_client.FedRepClient.get_optimizer">(FedRepClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.get_optimizer">(FlexibleClientProtocolPreSetup method)</a>
+</li>
+          <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.get_optimizer">(FlexibleNnunetClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.gpfl_client.html#fl4health.clients.gpfl_client.GpflClient.get_optimizer">(GpflClient method)</a>
 </li>
@@ -3373,6 +3421,8 @@
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.get_properties">get_properties() (BasicClient method)</a>
 
         <ul>
+          <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.get_properties">(FlexibleNnunetClient method)</a>
+</li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.get_properties">(NnunetClient method)</a>
 </li>
         </ul></li>
@@ -3656,8 +3706,12 @@
 </li>
         <li><a href="reference/api/fl4health.utils.privacy_utilities.html#fl4health.utils.privacy_utilities.map_model_to_opacus_model">map_model_to_opacus_model() (in module fl4health.utils.privacy_utilities)</a>
 </li>
-        <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.mask_data">mask_data() (NnunetClient method)</a>
+        <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.mask_data">mask_data() (FlexibleNnunetClient method)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.mask_data">(NnunetClient method)</a>
 </li>
+        </ul></li>
         <li><a href="reference/api/fl4health.model_bases.masked_layers.masked_normalization_layers.html#fl4health.model_bases.masked_layers.masked_normalization_layers.MaskedBatchNorm1d">MaskedBatchNorm1d (class in fl4health.model_bases.masked_layers.masked_normalization_layers)</a>
 </li>
         <li><a href="reference/api/fl4health.model_bases.masked_layers.masked_normalization_layers.html#fl4health.model_bases.masked_layers.masked_normalization_layers.MaskedBatchNorm2d">MaskedBatchNorm2d (class in fl4health.model_bases.masked_layers.masked_normalization_layers)</a>
@@ -3700,8 +3754,12 @@
           <li><a href="reference/api/fl4health.checkpointing.checkpointer.html#fl4health.checkpointing.checkpointer.TorchModuleCheckpointer.maybe_checkpoint">(TorchModuleCheckpointer method)</a>
 </li>
         </ul></li>
-        <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.maybe_extract_fingerprint">maybe_extract_fingerprint() (NnunetClient method)</a>
+        <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.maybe_extract_fingerprint">maybe_extract_fingerprint() (FlexibleNnunetClient method)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.maybe_extract_fingerprint">(NnunetClient method)</a>
 </li>
+        </ul></li>
         <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ClientStateCheckpointer.maybe_load_client_state">maybe_load_client_state() (ClientStateCheckpointer method)</a>
 </li>
         <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.ServerStateCheckpointer.maybe_load_server_state">maybe_load_server_state() (ServerStateCheckpointer method)</a>
@@ -3712,8 +3770,12 @@
           <li><a href="reference/api/fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.ClientCheckpointAndStateModule.maybe_load_state">(ClientCheckpointAndStateModule method)</a>
 </li>
         </ul></li>
-        <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.maybe_preprocess">maybe_preprocess() (NnunetClient method)</a>
+        <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.maybe_preprocess">maybe_preprocess() (FlexibleNnunetClient method)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.maybe_preprocess">(NnunetClient method)</a>
 </li>
+        </ul></li>
         <li><a href="reference/api/fl4health.utils.client.html#fl4health.utils.client.maybe_progress_bar">maybe_progress_bar() (in module fl4health.utils.client)</a>
 </li>
         <li><a href="reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.maybe_reshape">maybe_reshape() (PcaModule method)</a>
@@ -3837,6 +3899,8 @@
           <li><a href="reference/api/fl4health.clients.flexible.html#module-fl4health.clients.flexible">fl4health.clients.flexible</a>
 </li>
           <li><a href="reference/api/fl4health.clients.flexible.base.html#module-fl4health.clients.flexible.base">fl4health.clients.flexible.base</a>
+</li>
+          <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#module-fl4health.clients.flexible.nnunet">fl4health.clients.flexible.nnunet</a>
 </li>
           <li><a href="reference/api/fl4health.clients.gpfl_client.html#module-fl4health.clients.gpfl_client">fl4health.clients.gpfl_client</a>
 </li>
@@ -4333,10 +4397,10 @@
 </li>
         <li><a href="reference/api/fl4health.servers.base_server.html#fl4health.servers.base_server.FlServer.poll_clients_for_sample_counts">poll_clients_for_sample_counts() (FlServer method)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.PolyLRSchedulerWrapper">PolyLRSchedulerWrapper (class in fl4health.utils.nnunet_utils)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.CheckpointMode.POST_AGGREGATION">POST_AGGREGATION (CheckpointMode attribute)</a>
 </li>
         <li><a href="reference/api/fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.CheckpointMode.PRE_AGGREGATION">PRE_AGGREGATION (CheckpointMode attribute)</a>
@@ -4367,6 +4431,8 @@
 
         <ul>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.predict_with_model">(FlexibleClientProtocol method)</a>
+</li>
+          <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.predict_with_model">(FlexibleNnunetClient method)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.prepare_data_forward">prepare_data_forward() (PcaModule method)</a>
@@ -4515,6 +4581,8 @@
           <li><a href="reference/api/fl4health.client_managers.poisson_sampling_manager.html#fl4health.client_managers.poisson_sampling_manager.PoissonSamplingClientManager.sample_fraction">(PoissonSamplingClientManager method)</a>
 </li>
         </ul></li>
+        <li><a href="reference/api/fl4health.client_managers.base_sampling_manager.html#fl4health.client_managers.base_sampling_manager.BaseFractionSamplingManager.sample_one">sample_one() (BaseFractionSamplingManager method)</a>
+</li>
         <li><a href="reference/api/fl4health.model_bases.autoencoders_base.html#fl4health.model_bases.autoencoders_base.ConditionalVae.sampling">sampling() (ConditionalVae method)</a>
 
         <ul>
@@ -4643,6 +4711,8 @@
         </ul></li>
         <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.set_nnunet_env">set_nnunet_env() (in module fl4health.utils.nnunet_utils)</a>
 </li>
+        <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.set_nnunet_env_and_reload_modules">set_nnunet_env_and_reload_modules() (in module fl4health.utils.nnunet_utils)</a>
+</li>
         <li><a href="reference/api/fl4health.clients.apfl_client.html#fl4health.clients.apfl_client.ApflClient.set_optimizer">set_optimizer() (ApflClient method)</a>
 
         <ul>
@@ -4728,6 +4798,8 @@
 </li>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.setup_client">(FlexibleClientProtocolPreSetup method)</a>
 </li>
+          <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.setup_client">(FlexibleNnunetClient method)</a>
+</li>
           <li><a href="reference/api/fl4health.clients.gpfl_client.html#fl4health.clients.gpfl_client.GpflClient.setup_client">(GpflClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.instance_level_dp_client.html#fl4health.clients.instance_level_dp_client.InstanceLevelDpClient.setup_client">(InstanceLevelDpClient method)</a>
@@ -4745,6 +4817,14 @@
           <li><a href="reference/api/fl4health.clients.partial_weight_exchange_client.html#fl4health.clients.partial_weight_exchange_client.PartialWeightExchangeClient.setup_client">(PartialWeightExchangeClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.scaffold_client.html#fl4health.clients.scaffold_client.ScaffoldClient.setup_client">(ScaffoldClient method)</a>
+</li>
+        </ul></li>
+        <li><a href="reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.setup_client_and_return_all_model_parameters">setup_client_and_return_all_model_parameters() (AdaptiveDriftConstrainedMixin method)</a>, <a href="reference/api/fl4health.mixins.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.setup_client_and_return_all_model_parameters">[1]</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedProtocol.setup_client_and_return_all_model_parameters">(AdaptiveDriftConstrainedProtocol method)</a>
+</li>
+          <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.setup_client_and_return_all_model_parameters">(BasicClient method)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.utils.functions.html#fl4health.utils.functions.BernoulliSample.setup_context">setup_context() (BernoulliSample static method)</a>
@@ -4770,6 +4850,8 @@
 </li>
           <li><a href="reference/api/fl4health.reporting.json_reporter.html#fl4health.reporting.json_reporter.FileReporter.shutdown">(FileReporter method)</a>
 </li>
+          <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.shutdown">(FlexibleNnunetClient method)</a>
+</li>
           <li><a href="reference/api/fl4health.servers.base_server.html#fl4health.servers.base_server.FlServer.shutdown">(FlServer method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.shutdown">(NnunetClient method)</a>
@@ -4781,8 +4863,12 @@
           <li><a href="reference/api/fl4health.reporting.html#fl4health.reporting.WandBReporter.shutdown">(WandBReporter method)</a>, <a href="reference/api/fl4health.reporting.wandb_reporter.html#fl4health.reporting.wandb_reporter.WandBReporter.shutdown">[1]</a>
 </li>
         </ul></li>
-        <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.shutdown_dataloader">shutdown_dataloader() (NnunetClient method)</a>
+        <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.shutdown_dataloader">shutdown_dataloader() (FlexibleNnunetClient method)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.shutdown_dataloader">(NnunetClient method)</a>
 </li>
+        </ul></li>
         <li><a href="reference/api/fl4health.utils.functions.html#fl4health.utils.functions.sigmoid_inverse">sigmoid_inverse() (in module fl4health.utils.functions)</a>
 </li>
         <li><a href="reference/api/fl4health.strategies.feddg_ga.html#fl4health.strategies.feddg_ga.FairnessMetricType.signal_for_type">signal_for_type() (FairnessMetricType class method)</a>
@@ -5124,6 +5210,8 @@
 </li>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.update_before_train">(FlexibleClientProtocol method)</a>
 </li>
+          <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.update_before_train">(FlexibleNnunetClient method)</a>
+</li>
           <li><a href="reference/api/fl4health.clients.gpfl_client.html#fl4health.clients.gpfl_client.GpflClient.update_before_train">(GpflClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.moon_client.html#fl4health.clients.moon_client.MoonClient.update_before_train">(MoonClient method)</a>
@@ -5156,6 +5244,8 @@
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.update_metric_manager">update_metric_manager() (BasicClient method)</a>
 
         <ul>
+          <li><a href="reference/api/fl4health.clients.flexible.nnunet.html#fl4health.clients.flexible.nnunet.FlexibleNnunetClient.update_metric_manager">(FlexibleNnunetClient method)</a>
+</li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.update_metric_manager">(NnunetClient method)</a>
 </li>
         </ul></li>

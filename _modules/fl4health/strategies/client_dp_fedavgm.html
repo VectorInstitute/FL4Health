@@ -257,6 +257,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.base.html">fl4health.clients.flexible.base module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.nnunet.html">fl4health.clients.flexible.nnunet module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -626,11 +627,12 @@
 <span class="sd">            beta (float, optional): Momentum weight for previous weight updates. If it is 0, there is no momentum.</span>
 <span class="sd">                Defaults to 0.9.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="n">initial_parameters</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="k">assert</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">clipping_quantile</span> <span class="o">&lt;=</span> <span class="mf">1.0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">current_weights</span> <span class="o">=</span> <span class="n">parameters_to_ndarrays</span><span class="p">(</span><span class="n">initial_parameters</span><span class="p">)</span>
-        <span class="c1"># Tacking on the initial clipping bound to be sent to the clients</span>
-        <span class="n">initial_parameters</span><span class="o">.</span><span class="n">tensors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ndarray_to_bytes</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">initial_clipping_bound</span><span class="p">])))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clipping_bound</span> <span class="o">=</span> <span class="n">initial_clipping_bound</span>
+
+        <span class="k">if</span> <span class="n">initial_parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_auxiliary_information</span><span class="p">(</span><span class="n">initial_parameters</span><span class="p">)</span>
+
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">fraction_fit</span><span class="o">=</span><span class="n">fraction_fit</span><span class="p">,</span>
             <span class="n">fraction_evaluate</span><span class="o">=</span><span class="n">fraction_evaluate</span><span class="p">,</span>
@@ -651,7 +653,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">server_learning_rate</span> <span class="o">=</span> <span class="n">server_learning_rate</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clipping_learning_rate</span> <span class="o">=</span> <span class="n">clipping_learning_rate</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clipping_quantile</span> <span class="o">=</span> <span class="n">clipping_quantile</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">clipping_bound</span> <span class="o">=</span> <span class="n">initial_clipping_bound</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">weight_noise_multiplier</span> <span class="o">=</span> <span class="n">weight_noise_multiplier</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">clipping_noise_multiplier</span> <span class="o">=</span> <span class="n">clipping_noise_multiplier</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">=</span> <span class="n">beta</span>
@@ -673,6 +674,24 @@
 <span class="sd">            str: Printable representation of the object.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;ClientLevelDPFedAvgM(accept_failures=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">accept_failures</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+<div class="viewcode-block" id="ClientLevelDPFedAvgM.add_auxiliary_information">
+<a class="viewcode-back" href="../../../reference/api/fl4health.strategies.client_dp_fedavgm.html#fl4health.strategies.client_dp_fedavgm.ClientLevelDPFedAvgM.add_auxiliary_information">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_auxiliary_information</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">original_parameters</span><span class="p">:</span> <span class="n">Parameters</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function for adding in the ``clipping_bound`` to the provided set of parameters. This function is meant to be</span>
+<span class="sd">        called after a server requests model weight initialization from a client, allowing the proper information to</span>
+<span class="sd">        be included with the model parameters when sent to all clients for model initialization etc.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            original_parameters (Parameters): Original set of parameters provided by a client for model weight</span>
+<span class="sd">                initialization</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Copy the model parameters into NDArrays for storage</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_weights</span> <span class="o">=</span> <span class="n">parameters_to_ndarrays</span><span class="p">(</span><span class="n">original_parameters</span><span class="p">)</span>
+        <span class="c1"># Add the clipping bound to the original parameters</span>
+        <span class="n">original_parameters</span><span class="o">.</span><span class="n">tensors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ndarray_to_bytes</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">clipping_bound</span><span class="p">])))</span></div>
+
 
 <div class="viewcode-block" id="ClientLevelDPFedAvgM.modify_noise_multiplier">
 <a class="viewcode-back" href="../../../reference/api/fl4health.strategies.client_dp_fedavgm.html#fl4health.strategies.client_dp_fedavgm.ClientLevelDPFedAvgM.modify_noise_multiplier">[docs]</a>

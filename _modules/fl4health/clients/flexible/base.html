@@ -257,6 +257,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/fl4health.clients.flexible.base.html">fl4health.clients.flexible.base module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/fl4health.clients.flexible.nnunet.html">fl4health.clients.flexible.nnunet module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -520,7 +521,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.metrics.base_metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Metric</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.reporting.base_reporter</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseReporter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.losses</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluationLosses</span><span class="p">,</span> <span class="n">LossMeterType</span><span class="p">,</span> <span class="n">TrainingLosses</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TorchFeatureType</span><span class="p">,</span> <span class="n">TorchInputType</span><span class="p">,</span> <span class="n">TorchPredType</span><span class="p">,</span> <span class="n">TorchTargetType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TorchFeatureType</span><span class="p">,</span>
+    <span class="n">TorchInputType</span><span class="p">,</span>
+    <span class="n">TorchPredType</span><span class="p">,</span>
+    <span class="n">TorchTargetType</span><span class="p">,</span>
+<span class="p">)</span>
 
 
 <span class="n">EXPECTED_OUTPUT_TUPLE_SIZE</span> <span class="o">=</span> <span class="mi">2</span>
@@ -635,7 +641,11 @@
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_compute_preds_and_losses</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">TorchInputType</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">TorchTargetType</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span>
+        <span class="nb">input</span><span class="p">:</span> <span class="n">TorchInputType</span><span class="p">,</span>
+        <span class="n">target</span><span class="p">:</span> <span class="n">TorchTargetType</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TrainingLosses</span><span class="p">,</span> <span class="n">TorchPredType</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Helper method within the train step for computing preds and losses.</span>
@@ -683,13 +693,17 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Compute backward pass and update parameters with optimizer</span>
         <span class="n">losses</span><span class="o">.</span><span class="n">backward</span><span class="p">[</span><span class="s2">&quot;backward&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">transform_gradients</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_transform_gradients_with_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">losses</span><span class="p">)</span>
         <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
 
         <span class="k">return</span> <span class="n">losses</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_train_step_with_model_and_optimizer</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">TorchInputType</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="n">TorchTargetType</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span>
+        <span class="nb">input</span><span class="p">:</span> <span class="n">TorchInputType</span><span class="p">,</span>
+        <span class="n">target</span><span class="p">:</span> <span class="n">TorchTargetType</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TrainingLosses</span><span class="p">,</span> <span class="n">TorchPredType</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Helper train step method that allows for injection of model and optimizer.</span>

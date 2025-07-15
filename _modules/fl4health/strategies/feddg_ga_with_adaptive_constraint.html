@@ -257,6 +257,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.base.html">fl4health.clients.flexible.base module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.nnunet.html">fl4health.clients.flexible.nnunet module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -600,8 +601,8 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">previous_loss</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">server_model_weights</span> <span class="o">=</span> <span class="n">parameters_to_ndarrays</span><span class="p">(</span><span class="n">initial_parameters</span><span class="p">)</span>
-        <span class="n">initial_parameters</span><span class="o">.</span><span class="n">tensors</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ndarrays_to_parameters</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">initial_loss_weight</span><span class="p">)])</span><span class="o">.</span><span class="n">tensors</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">initial_parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_auxiliary_information</span><span class="p">(</span><span class="n">initial_parameters</span><span class="p">)</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">min_fit_clients</span><span class="o">=</span><span class="n">min_fit_clients</span><span class="p">,</span>
@@ -620,6 +621,21 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">parameter_packer</span> <span class="o">=</span> <span class="n">ParameterPackerAdaptiveConstraint</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">weighted_train_losses</span> <span class="o">=</span> <span class="n">weighted_train_losses</span></div>
+
+
+<div class="viewcode-block" id="FedDgGaAdaptiveConstraint.add_auxiliary_information">
+<a class="viewcode-back" href="../../../reference/api/fl4health.strategies.feddg_ga_with_adaptive_constraint.html#fl4health.strategies.feddg_ga_with_adaptive_constraint.FedDgGaAdaptiveConstraint.add_auxiliary_information">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_auxiliary_information</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">original_parameters</span><span class="p">:</span> <span class="n">Parameters</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function for adding in the ``loss_weight`` to the provided set of parameters. This function is meant to be</span>
+<span class="sd">        called after a server requests model weight initialization from a client, allowing the proper information to</span>
+<span class="sd">        be included with the model parameters when sent to all clients for model initialization etc.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            original_parameters (Parameters): Original set of parameters provided by a client for model weight</span>
+<span class="sd">                initialization</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">original_parameters</span><span class="o">.</span><span class="n">tensors</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">ndarrays_to_parameters</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loss_weight</span><span class="p">)])</span><span class="o">.</span><span class="n">tensors</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="FedDgGaAdaptiveConstraint.aggregate_fit">

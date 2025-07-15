@@ -257,6 +257,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.base.html">fl4health.clients.flexible.base module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.nnunet.html">fl4health.clients.flexible.nnunet module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -517,7 +518,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.checkpointing.client_module</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientCheckpointAndStateModule</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.clients.adaptive_drift_constraint_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveDriftConstraintClient</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.metrics.base_metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">Metric</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.parameter_exchange.full_exchanger</span><span class="w"> </span><span class="kn">import</span> <span class="n">FullParameterExchanger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.reporting.base_reporter</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseReporter</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">narrow_dict_type</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.losses</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluationLosses</span><span class="p">,</span> <span class="n">LossMeterType</span><span class="p">,</span> <span class="n">TrainingLosses</span>
@@ -661,20 +661,8 @@
 <span class="sd">            NDArrays: **GLOBAL** model weights to be sent to the server for aggregation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span><span class="p">:</span>
-            <span class="n">log</span><span class="p">(</span>
-                <span class="n">INFO</span><span class="p">,</span>
-                <span class="s2">&quot;Setting up client and providing full model parameters to the server for initialization&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_client_and_return_all_model_parameters</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
-            <span class="c1"># If initialized==False, the server is requesting model parameters from which to initialize all other</span>
-            <span class="c1"># clients. As such get_parameters is being called before fit or evaluate, so we must call</span>
-            <span class="c1"># setup_client first.</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">setup_client</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-
-            <span class="c1"># Need all parameters even if normally exchanging partial. Since the global and local models are the same</span>
-            <span class="c1"># architecture, it doesn&#39;t matter which we choose as an initializer. The global and local models are set</span>
-            <span class="c1"># to the same weights in initialize_all_model_weights</span>
-            <span class="k">return</span> <span class="n">FullParameterExchanger</span><span class="p">()</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="c1"># NOTE: the global model weights are sent to the server here.</span>
         <span class="n">global_model_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_exchanger</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">global_model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>

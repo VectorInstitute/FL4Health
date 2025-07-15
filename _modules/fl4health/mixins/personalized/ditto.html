@@ -257,6 +257,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/fl4health.clients.flexible.base.html">fl4health.clients.flexible.base module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/fl4health.clients.flexible.nnunet.html">fl4health.clients.flexible.nnunet module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -518,13 +519,21 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch.optim</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optimizer</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.clients.flexible.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexibleClient</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.mixins.adaptive_drift_constrained</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptiveDriftConstrainedMixin</span><span class="p">,</span> <span class="n">AdaptiveDriftConstrainedProtocol</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.mixins.adaptive_drift_constrained</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AdaptiveDriftConstrainedMixin</span><span class="p">,</span>
+    <span class="n">AdaptiveDriftConstrainedProtocol</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.mixins.core_protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexibleClientProtocolPreSetup</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.mixins.personalized.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">ensure_protocol_compliance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.parameter_exchange.full_exchanger</span><span class="w"> </span><span class="kn">import</span> <span class="n">FullParameterExchanger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">narrow_dict_type</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.losses</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluationLosses</span><span class="p">,</span> <span class="n">TrainingLosses</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TorchFeatureType</span><span class="p">,</span> <span class="n">TorchInputType</span><span class="p">,</span> <span class="n">TorchPredType</span><span class="p">,</span> <span class="n">TorchTargetType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TorchFeatureType</span><span class="p">,</span>
+    <span class="n">TorchInputType</span><span class="p">,</span>
+    <span class="n">TorchPredType</span><span class="p">,</span>
+    <span class="n">TorchTargetType</span><span class="p">,</span>
+<span class="p">)</span>
 
 
 <div class="viewcode-block" id="DittoPersonalizedProtocol">
@@ -671,7 +680,10 @@
                 <span class="n">initial_lr</span> <span class="o">=</span> <span class="n">original_optimizer</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="s2">&quot;lr&quot;</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">initial_lr</span> <span class="o">=</span> <span class="mf">1e-3</span>
-                <span class="n">log</span><span class="p">(</span><span class="n">WARN</span><span class="p">,</span> <span class="s2">&quot;Unable to get the original `lr` for the global optimizer, falling back to `1e-3`.&quot;</span><span class="p">)</span>
+                <span class="n">log</span><span class="p">(</span>
+                    <span class="n">WARN</span><span class="p">,</span>
+                    <span class="s2">&quot;Unable to get the original `lr` for the global optimizer, falling back to `1e-3`.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
 
         <span class="n">optimizer_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">param_group</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;params&quot;</span><span class="p">,</span> <span class="s2">&quot;initial_lr&quot;</span><span class="p">)}</span>
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -715,7 +727,10 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="c1"># try set it here</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_global_model</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>  <span class="c1"># is this the same config?</span>
-            <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;global model set: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">global_model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> within `get_optimizer`&quot;</span><span class="p">)</span>
+            <span class="n">log</span><span class="p">(</span>
+                <span class="n">INFO</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;global model set: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">global_model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> within `get_optimizer`&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
 
         <span class="c1"># Note that the global optimizer operates on self.global_model.parameters()</span>
         <span class="n">optimizer</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_optimizer</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>  <span class="c1"># type: ignore[safe-super]</span>
@@ -765,7 +780,10 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_global_model</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
             <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;global model set: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">global_model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
-            <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Couldn&#39;t set global model before super().setup_client(). Will try again within that setup.&quot;</span><span class="p">)</span>
+            <span class="n">log</span><span class="p">(</span>
+                <span class="n">INFO</span><span class="p">,</span>
+                <span class="s2">&quot;Couldn&#39;t set global model before super().setup_client(). Will try again within that setup.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
             <span class="k">pass</span>
         <span class="c1"># The rest of the setup is the same</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">setup_client</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>  <span class="c1"># type:ignore [safe-super]</span></div>
@@ -785,20 +803,8 @@
 <span class="sd">            NDArrays: **GLOBAL** model weights to be sent to the server for aggregation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span><span class="p">:</span>
-            <span class="n">log</span><span class="p">(</span>
-                <span class="n">INFO</span><span class="p">,</span>
-                <span class="s2">&quot;Setting up client and providing full model parameters to the server for initialization&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_client_and_return_all_model_parameters</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
-            <span class="c1"># If initialized==False, the server is requesting model parameters from which to initialize all other</span>
-            <span class="c1"># clients. As such get_parameters is being called before fit or evaluate, so we must call</span>
-            <span class="c1"># setup_client first.</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">setup_client</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
-
-            <span class="c1"># Need all parameters even if normally exchanging partial. Since the global and local models are the same</span>
-            <span class="c1"># architecture, it doesn&#39;t matter which we choose as an initializer. The global and local models are set</span>
-            <span class="c1"># to the same weights in initialize_all_model_weights</span>
-            <span class="k">return</span> <span class="n">FullParameterExchanger</span><span class="p">()</span><span class="o">.</span><span class="n">push_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
         <span class="c1"># NOTE: the global model weights are sent to the server here.</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unable to get parameters with unset global model.&quot;</span><span class="p">)</span>
@@ -816,7 +822,10 @@
 <a class="viewcode-back" href="../../../../reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.DittoPersonalizedMixin.set_parameters">[docs]</a>
     <span class="nd">@ensure_protocol_compliance</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_parameters</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">:</span> <span class="n">DittoPersonalizedProtocol</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="n">NDArrays</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">,</span> <span class="n">fitting_round</span><span class="p">:</span> <span class="nb">bool</span>
+        <span class="bp">self</span><span class="p">:</span> <span class="n">DittoPersonalizedProtocol</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="p">:</span> <span class="n">NDArrays</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">,</span>
+        <span class="n">fitting_round</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Assumes that the parameters being passed contain model parameters concatenated with a penalty weight. They are</span>
@@ -842,7 +851,10 @@
 
         <span class="n">current_server_round</span> <span class="o">=</span> <span class="n">narrow_dict_type</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;current_server_round&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">current_server_round</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">fitting_round</span><span class="p">:</span>
-            <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="s2">&quot;Initializing the global and local models weights for the first time&quot;</span><span class="p">)</span>
+            <span class="n">log</span><span class="p">(</span>
+                <span class="n">INFO</span><span class="p">,</span>
+                <span class="s2">&quot;Initializing the global and local models weights for the first time&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">initialize_all_model_weights</span><span class="p">(</span><span class="n">server_model_state</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># Route the parameters to the GLOBAL model in Ditto after the initial stage</span>
@@ -970,7 +982,10 @@
         <span class="c1"># combine</span>
         <span class="n">losses</span> <span class="o">=</span> <span class="n">EvaluationLosses</span><span class="p">(</span>
             <span class="n">local_losses</span><span class="o">.</span><span class="n">checkpoint</span><span class="p">,</span>
-            <span class="n">additional_losses</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;global_loss&quot;</span><span class="p">:</span> <span class="n">global_losses</span><span class="o">.</span><span class="n">checkpoint</span><span class="p">,</span> <span class="s2">&quot;local_loss&quot;</span><span class="p">:</span> <span class="n">local_losses</span><span class="o">.</span><span class="n">checkpoint</span><span class="p">},</span>
+            <span class="n">additional_losses</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;global_loss&quot;</span><span class="p">:</span> <span class="n">global_losses</span><span class="o">.</span><span class="n">checkpoint</span><span class="p">,</span>
+                <span class="s2">&quot;local_loss&quot;</span><span class="p">:</span> <span class="n">local_losses</span><span class="o">.</span><span class="n">checkpoint</span><span class="p">,</span>
+            <span class="p">},</span>
         <span class="p">)</span>
         <span class="n">preds</span><span class="p">:</span> <span class="n">TorchPredType</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">preds</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="sa">f</span><span class="s2">&quot;global-</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">global_preds</span><span class="o">.</span><span class="n">items</span><span class="p">()})</span>

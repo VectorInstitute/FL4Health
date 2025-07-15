@@ -258,6 +258,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="fl4health.clients.flexible.base.html">fl4health.clients.flexible.base module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.clients.flexible.nnunet.html">fl4health.clients.flexible.nnunet module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -556,6 +557,29 @@ applied. Defaults to None.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="fl4health.client_managers.base_sampling_manager.BaseFractionSamplingManager.sample_one">
+<span class="sig-name descname"><span class="pre">sample_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min_num_clients</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/client_managers/base_sampling_manager.html#BaseFractionSamplingManager.sample_one"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.client_managers.base_sampling_manager.BaseFractionSamplingManager.sample_one" title="Link to this definition">¶</a></dt>
+<dd><p>Samples exactly one available client randomly. This should only be used for client-side parameter
+initialization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>min_num_clients</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – minimum number of clients to wait to become available before
+selecting all available clients. Defaults to None.</p></li>
+<li><p><strong>criterion</strong> (<em>Criterion</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Criterion used to filter returned clients. If none, no filter is
+applied. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Selected client represented by a ClientProxy object in list form as expected by server.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)">list</a>[ClientProxy]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="fl4health.client_managers.base_sampling_manager.BaseFractionSamplingManager.wait_and_filter">
 <span class="sig-name descname"><span class="pre">wait_and_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">min_num_clients</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">criterion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/client_managers/base_sampling_manager.html#BaseFractionSamplingManager.wait_and_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.client_managers.base_sampling_manager.BaseFractionSamplingManager.wait_and_filter" title="Link to this definition">¶</a></dt>
 <dd><p>Waits for <code class="docutils literal notranslate"><span class="pre">min_num_clients</span></code> to become available then select clients from those available and filter them
@@ -658,6 +682,7 @@ available.</p>
 <li><a class="reference internal" href="#fl4health.client_managers.base_sampling_manager.BaseFractionSamplingManager.sample"><code class="docutils literal notranslate"><span class="pre">BaseFractionSamplingManager.sample()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.client_managers.base_sampling_manager.BaseFractionSamplingManager.sample_all"><code class="docutils literal notranslate"><span class="pre">BaseFractionSamplingManager.sample_all()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.client_managers.base_sampling_manager.BaseFractionSamplingManager.sample_fraction"><code class="docutils literal notranslate"><span class="pre">BaseFractionSamplingManager.sample_fraction()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.client_managers.base_sampling_manager.BaseFractionSamplingManager.sample_one"><code class="docutils literal notranslate"><span class="pre">BaseFractionSamplingManager.sample_one()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.client_managers.base_sampling_manager.BaseFractionSamplingManager.wait_and_filter"><code class="docutils literal notranslate"><span class="pre">BaseFractionSamplingManager.wait_and_filter()</span></code></a></li>
 </ul>
 </li>

@@ -257,6 +257,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.base.html">fl4health.clients.flexible.base module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.nnunet.html">fl4health.clients.flexible.nnunet module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -613,6 +614,23 @@
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">weighted_aggregation</span> <span class="o">=</span> <span class="n">weighted_aggregation</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">weighted_eval_losses</span> <span class="o">=</span> <span class="n">weighted_eval_losses</span></div>
+
+
+<div class="viewcode-block" id="BasicFedAvg.add_auxiliary_information">
+<a class="viewcode-back" href="../../../reference/api/fl4health.strategies.basic_fedavg.html#fl4health.strategies.basic_fedavg.BasicFedAvg.add_auxiliary_information">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_auxiliary_information</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">original_parameters</span><span class="p">:</span> <span class="n">Parameters</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Identity function for the BasicFedAvg strategy. This function is made available for override in more complex</span>
+<span class="sd">        FL strategies to allow for the strategies to add auxiliary information to sets of parameters. This function</span>
+<span class="sd">        is specifically designed to allow addition to parameters initialized by the server calling out to a client for</span>
+<span class="sd">        weight initialization.</span>
+
+<span class="sd">        Here we need not add anything. So no modifications are made.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            original_parameters (Parameters): Original set of parameters</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
 
 
 <div class="viewcode-block" id="BasicFedAvg.configure_fit">

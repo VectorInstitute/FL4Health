@@ -257,6 +257,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.base.html">fl4health.clients.flexible.base module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.nnunet.html">fl4health.clients.flexible.nnunet module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -504,7 +505,9 @@
         </div>
         <article role="main">
           <h1>Source code for fl4health.client_managers.base_sampling_manager</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.client_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleClientManager</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.client_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleClientManager</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.client_proxy</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientProxy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flwr.server.criterion</span><span class="w"> </span><span class="kn">import</span> <span class="n">Criterion</span>
 
@@ -561,6 +564,29 @@
             <span class="n">available_cids</span> <span class="o">=</span> <span class="p">[</span><span class="n">cid</span> <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">available_cids</span> <span class="k">if</span> <span class="n">criterion</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clients</span><span class="p">[</span><span class="n">cid</span><span class="p">])]</span>
 
         <span class="k">return</span> <span class="n">available_cids</span></div>
+
+
+<div class="viewcode-block" id="BaseFractionSamplingManager.sample_one">
+<a class="viewcode-back" href="../../../reference/api/fl4health.client_managers.base_sampling_manager.html#fl4health.client_managers.base_sampling_manager.BaseFractionSamplingManager.sample_one">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">min_num_clients</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">criterion</span><span class="p">:</span> <span class="n">Criterion</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ClientProxy</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Samples exactly one available client randomly. This should only be used for client-side parameter</span>
+<span class="sd">        initialization.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            min_num_clients (int | None, optional): minimum number of clients to wait to become available before</span>
+<span class="sd">                selecting all available clients. Defaults to None.</span>
+<span class="sd">            criterion (Criterion | None, optional): Criterion used to filter returned clients. If none, no filter is</span>
+<span class="sd">                applied. Defaults to None.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list[ClientProxy]: Selected client represented by a ClientProxy object in list form as expected by server.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">available_cids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_and_filter</span><span class="p">(</span><span class="n">min_num_clients</span><span class="p">,</span> <span class="n">criterion</span><span class="p">)</span>
+        <span class="c1"># Sample exactly on client randomly</span>
+        <span class="n">cids</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">available_cids</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">clients</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span> <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">cids</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="BaseFractionSamplingManager.sample_all">

@@ -258,6 +258,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="fl4health.clients.flexible.base.html">fl4health.clients.flexible.base module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.clients.flexible.nnunet.html">fl4health.clients.flexible.nnunet module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -536,10 +537,16 @@ to handle both model checkpointing and state checkpointing. The former is aimed 
 artifacts to be used or evaluated after training. The latter is used to preserve training state
 (including models) such that if FL training is interrupted, the process may be restarted. If no
 module is provided, no checkpointing or state preservation will happen. Defaults to None.</p></li>
-<li><p><strong>on_init_parameters_config_fn</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Scalar</em><em>]</em><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – Function used to
+<li><p><strong>on_init_parameters_config_fn</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Scalar</em><em>]</em><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – <p>Function used to
 configure how one asks a client to provide parameters from which to initialize all other clients by
 providing a <code class="docutils literal notranslate"><span class="pre">Config</span></code> dictionary. If this is none, then a blank config is sent with the parameter
-request (which is default behavior for flower servers). Defaults to None.</p></li>
+request (which is default behavior for flower servers).</p>
+<p><strong>NOTE:</strong> If you are using a client defined in this library, passing a blank configuration will ALMOST
+CERTAINLY fail. This is because asking a client for parameters will almost always require setting up
+the client, as is done when fitting. In many cases, you can simply pass your <code class="docutils literal notranslate"><span class="pre">on_fit_config_fn</span></code>
+function from the strategy to as this argument as well.</p>
+<p>Defaults to None.</p>
+</p></li>
 <li><p><strong>server_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – An optional string name to uniquely identify server. This name is also
 used as part of any state checkpointing done by the server. Defaults to None.</p></li>
 <li><p><strong>accept_failures</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Determines whether the server should accept failures during training or

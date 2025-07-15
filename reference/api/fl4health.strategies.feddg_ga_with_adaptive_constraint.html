@@ -258,6 +258,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="fl4health.clients.flexible.base.html">fl4health.clients.flexible.base module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.clients.flexible.nnunet.html">fl4health.clients.flexible.nnunet module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -559,6 +560,23 @@ Optional, default is 0.2.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="fl4health.strategies.feddg_ga_with_adaptive_constraint.FedDgGaAdaptiveConstraint.add_auxiliary_information">
+<span class="sig-name descname"><span class="pre">add_auxiliary_information</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_parameters</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/strategies/feddg_ga_with_adaptive_constraint.html#FedDgGaAdaptiveConstraint.add_auxiliary_information"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.strategies.feddg_ga_with_adaptive_constraint.FedDgGaAdaptiveConstraint.add_auxiliary_information" title="Link to this definition">¶</a></dt>
+<dd><p>Function for adding in the <code class="docutils literal notranslate"><span class="pre">loss_weight</span></code> to the provided set of parameters. This function is meant to be
+called after a server requests model weight initialization from a client, allowing the proper information to
+be included with the model parameters when sent to all clients for model initialization etc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>original_parameters</strong> (<em>Parameters</em>) – Original set of parameters provided by a client for model weight
+initialization</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="fl4health.strategies.feddg_ga_with_adaptive_constraint.FedDgGaAdaptiveConstraint.aggregate_fit">
 <span class="sig-name descname"><span class="pre">aggregate_fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server_round</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">results</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">failures</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/strategies/feddg_ga_with_adaptive_constraint.html#FedDgGaAdaptiveConstraint.aggregate_fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.strategies.feddg_ga_with_adaptive_constraint.FedDgGaAdaptiveConstraint.aggregate_fit" title="Link to this definition">¶</a></dt>
 <dd><p>Aggregate fit results by weighing them against the adjustment weights and then summing them.</p>
@@ -664,6 +682,7 @@ the value simply remains constant.</p>
 <li><a class="reference internal" href="#">fl4health.strategies.feddg_ga_with_adaptive_constraint module</a><ul>
 <li><a class="reference internal" href="#fl4health.strategies.feddg_ga_with_adaptive_constraint.FedDgGaAdaptiveConstraint"><code class="docutils literal notranslate"><span class="pre">FedDgGaAdaptiveConstraint</span></code></a><ul>
 <li><a class="reference internal" href="#fl4health.strategies.feddg_ga_with_adaptive_constraint.FedDgGaAdaptiveConstraint.__init__"><code class="docutils literal notranslate"><span class="pre">FedDgGaAdaptiveConstraint.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.strategies.feddg_ga_with_adaptive_constraint.FedDgGaAdaptiveConstraint.add_auxiliary_information"><code class="docutils literal notranslate"><span class="pre">FedDgGaAdaptiveConstraint.add_auxiliary_information()</span></code></a></li>
 <li><a class="reference internal" href="#fl4health.strategies.feddg_ga_with_adaptive_constraint.FedDgGaAdaptiveConstraint.aggregate_fit"><code class="docutils literal notranslate"><span class="pre">FedDgGaAdaptiveConstraint.aggregate_fit()</span></code></a></li>
 </ul>
 </li>

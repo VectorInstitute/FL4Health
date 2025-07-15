@@ -257,6 +257,7 @@
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.base.html">fl4health.clients.flexible.base module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../reference/api/fl4health.clients.flexible.nnunet.html">fl4health.clients.flexible.nnunet module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../reference/api/fl4health.clients.mkmmd_clients.html">fl4health.clients.mkmmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of fl4health.clients.mkmmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -541,7 +542,7 @@
         <span class="n">on_fit_config_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">on_evaluate_config_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Scalar</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">accept_failures</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">initial_parameters</span><span class="p">:</span> <span class="n">Parameters</span><span class="p">,</span>
+        <span class="n">initial_parameters</span><span class="p">:</span> <span class="n">Parameters</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">fit_metrics_aggregation_fn</span><span class="p">:</span> <span class="n">MetricsAggregationFn</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">evaluate_metrics_aggregation_fn</span><span class="p">:</span> <span class="n">MetricsAggregationFn</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">eta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-1</span><span class="p">,</span>
@@ -558,7 +559,7 @@
 <span class="sd">        Implementation based on https://proceedings.mlr.press/v202/panchal23a/panchal23a.pdf</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            initial_parameters (Parameters): Initial global model parameters.</span>
+<span class="sd">            initial_parameters (Parameters | None): Initial global model parameters.</span>
 <span class="sd">            fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0.</span>
 <span class="sd">            fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.</span>
 <span class="sd">            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2.</span>
@@ -586,6 +587,9 @@
 <span class="sd">                averages or a uniform average. Flash default is a uniform average of the losses by dividing</span>
 <span class="sd">                the total loss by the number of clients. Defaults to False.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">initial_parameters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">current_weights</span> <span class="o">=</span> <span class="n">parameters_to_ndarrays</span><span class="p">(</span><span class="n">initial_parameters</span><span class="p">)</span>
+
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">fraction_fit</span><span class="o">=</span><span class="n">fraction_fit</span><span class="p">,</span>
             <span class="n">fraction_evaluate</span><span class="o">=</span><span class="n">fraction_evaluate</span><span class="p">,</span>
@@ -602,7 +606,6 @@
             <span class="n">weighted_aggregation</span><span class="o">=</span><span class="n">weighted_aggregation</span><span class="p">,</span>
             <span class="n">weighted_eval_losses</span><span class="o">=</span><span class="n">weighted_eval_losses</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">current_weights</span> <span class="o">=</span> <span class="n">parameters_to_ndarrays</span><span class="p">(</span><span class="n">initial_parameters</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eta</span> <span class="o">=</span> <span class="n">eta</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">eta_l</span> <span class="o">=</span> <span class="n">eta_l</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tau</span> <span class="o">=</span> <span class="n">tau</span>
@@ -617,6 +620,22 @@
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute a string representation of the strategy.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Flash(accept_failures=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">accept_failures</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+<div class="viewcode-block" id="Flash.add_auxiliary_information">
+<a class="viewcode-back" href="../../../reference/api/fl4health.strategies.flash.html#fl4health.strategies.flash.Flash.add_auxiliary_information">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_auxiliary_information</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">original_parameters</span><span class="p">:</span> <span class="n">Parameters</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function for saving the ``original_parameters`` as the current weights after asking a client for model</span>
+<span class="sd">        weight initialization. Unlike other strategies that leverage this function, we don&#39;t need to pack in new</span>
+<span class="sd">        information, just save the client-side initialized model parameters.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            original_parameters (Parameters): Original set of parameters provided by a client for model weight</span>
+<span class="sd">                initialization</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Copy the model parameters into NDArrays for storage</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">current_weights</span> <span class="o">=</span> <span class="n">parameters_to_ndarrays</span><span class="p">(</span><span class="n">original_parameters</span><span class="p">)</span></div>
+
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_update_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta_t</span><span class="p">:</span> <span class="n">NDArrays</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Update m_t, v_t, beta_3, and d_t per-element.&quot;&quot;&quot;</span>
