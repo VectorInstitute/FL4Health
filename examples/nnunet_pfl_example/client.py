@@ -220,7 +220,7 @@ if __name__ == "__main__":
         required=False,
         default="ditto",
         help="[OPTIONAL] Personalized strategy to use. For now, can only be 'ditto'. \
-        Defaults to 'ditto', in which no personalized strategy is applied.",
+        Defaults to 'ditto'.",
     )
     parser.add_argument(
         "--seed",
