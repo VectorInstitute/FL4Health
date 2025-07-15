@@ -12,13 +12,21 @@ from torch import nn
 from torch.optim import Optimizer
 
 from fl4health.clients.flexible.base import FlexibleClient
-from fl4health.mixins.adaptive_drift_constrained import AdaptiveDriftConstrainedMixin, AdaptiveDriftConstrainedProtocol
+from fl4health.mixins.adaptive_drift_constrained import (
+    AdaptiveDriftConstrainedMixin,
+    AdaptiveDriftConstrainedProtocol,
+)
 from fl4health.mixins.core_protocols import FlexibleClientProtocolPreSetup
 from fl4health.mixins.personalized.utils import ensure_protocol_compliance
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import EvaluationLosses, TrainingLosses
-from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
+from fl4health.utils.typing import (
+    TorchFeatureType,
+    TorchInputType,
+    TorchPredType,
+    TorchTargetType,
+)
 
 
 @runtime_checkable
@@ -145,7 +153,10 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
                 initial_lr = original_optimizer.defaults["lr"]
             else:
                 initial_lr = 1e-3
-                log(WARN, "Unable to get the original `lr` for the global optimizer, falling back to `1e-3`.")
+                log(
+                    WARN,
+                    "Unable to get the original `lr` for the global optimizer, falling back to `1e-3`.",
+                )
 
         optimizer_kwargs = {k: v for k, v in param_group.items() if k not in ("params", "initial_lr")}
         assert self.global_model is not None
@@ -184,7 +195,10 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         if self.global_model is None:
             # try set it here
             self.global_model = self.get_global_model(config)  # is this the same config?
-            log(INFO, f"global model set: {type(self.global_model).__name__} within `get_optimizer`")
+            log(
+                INFO,
+                f"global model set: {type(self.global_model).__name__} within `get_optimizer`",
+            )
 
         # Note that the global optimizer operates on self.global_model.parameters()
         optimizer = super().get_optimizer(config=config)  # type: ignore[safe-super]
@@ -228,7 +242,10 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             self.global_model = self.get_global_model(config)
             log(INFO, f"global model set: {type(self.global_model).__name__}")
         except AttributeError:
-            log(INFO, "Couldn't set global model before super().setup_client(). Will try again within that setup.")
+            log(
+                INFO,
+                "Couldn't set global model before super().setup_client(). Will try again within that setup.",
+            )
             pass
         # The rest of the setup is the same
         super().setup_client(config)  # type:ignore [safe-super]
@@ -245,20 +262,8 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             NDArrays: **GLOBAL** model weights to be sent to the server for aggregation.
         """
         if not self.initialized:
-            log(
-                INFO,
-                "Setting up client and providing full model parameters to the server for initialization",
-            )
+            return self.setup_client_and_return_all_model_parameters(config)
 
-            # If initialized==False, the server is requesting model parameters from which to initialize all other
-            # clients. As such get_parameters is being called before fit or evaluate, so we must call
-            # setup_client first.
-            self.setup_client(config)
-
-            # Need all parameters even if normally exchanging partial. Since the global and local models are the same
-            # architecture, it doesn't matter which we choose as an initializer. The global and local models are set
-            # to the same weights in initialize_all_model_weights
-            return FullParameterExchanger().push_parameters(self.model, config=config)
         # NOTE: the global model weights are sent to the server here.
         if self.global_model is None:
             raise ValueError("Unable to get parameters with unset global model.")
@@ -273,7 +278,10 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
 
     @ensure_protocol_compliance
     def set_parameters(
-        self: DittoPersonalizedProtocol, parameters: NDArrays, config: Config, fitting_round: bool
+        self: DittoPersonalizedProtocol,
+        parameters: NDArrays,
+        config: Config,
+        fitting_round: bool,
     ) -> None:
         """
         Assumes that the parameters being passed contain model parameters concatenated with a penalty weight. They are
@@ -299,7 +307,10 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
 
         current_server_round = narrow_dict_type(config, "current_server_round", int)
         if current_server_round == 1 and fitting_round:
-            log(INFO, "Initializing the global and local models weights for the first time")
+            log(
+                INFO,
+                "Initializing the global and local models weights for the first time",
+            )
             self.initialize_all_model_weights(server_model_state, config)
         else:
             # Route the parameters to the GLOBAL model in Ditto after the initial stage
@@ -412,7 +423,10 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         # combine
         losses = EvaluationLosses(
             local_losses.checkpoint,
-            additional_losses={"global_loss": global_losses.checkpoint, "local_loss": local_losses.checkpoint},
+            additional_losses={
+                "global_loss": global_losses.checkpoint,
+                "local_loss": local_losses.checkpoint,
+            },
         )
         preds: TorchPredType = {}
         preds.update(**{f"global-{k}": v for k, v in global_preds.items()})

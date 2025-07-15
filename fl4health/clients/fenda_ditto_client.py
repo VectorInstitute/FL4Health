@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from logging import INFO
+from logging import INFO, WARNING
 from pathlib import Path
 
 import torch
@@ -176,6 +176,15 @@ class FendaDittoClient(DittoClient):
         """
         if not self.initialized:
             log(INFO, "Setting up client")
+            if not config:
+                log(
+                    WARNING,
+                    (
+                        "This client has not yet been initialized and the config is empty. This may cause unexpected "
+                        "failures, as setting up a client typically requires several configuration parameters, "
+                        "including batch_size and current_server_round."
+                    ),
+                )
             self.setup_client(config)
 
         assert (

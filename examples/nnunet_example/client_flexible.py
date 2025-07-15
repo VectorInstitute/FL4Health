@@ -20,7 +20,7 @@ from flwr.client import start_client
 from flwr.common.logger import log, update_console_handler
 from nnunetv2.dataset_conversion.convert_MSD_dataset import convert_msd_dataset
 
-from fl4health.clients.nnunet_client import NnunetClient
+from fl4health.clients.flexible.nnunet import FlexibleNnunetClient
 from fl4health.metrics.base_metrics import Metric
 from fl4health.metrics.compound_metrics import EmaMetric
 from fl4health.metrics.efficient_metrics import BinaryDice, MultiClassDice
@@ -90,7 +90,7 @@ def main(
         checkpoint_and_state_module = None
 
     # Create client
-    client = NnunetClient(
+    client = FlexibleNnunetClient(
         # Args specific to nnUNetClient
         dataset_id=dataset_id,
         fold=fold,
@@ -119,6 +119,8 @@ if __name__ == "__main__":
             nnunet segmentation model and trains it in a federated setting",
     )
 
+    # I have to use underscores instead of dashes because thats how they
+    # defined it in run_smoke_tests
     parser.add_argument(
         "--dataset_path",
         type=str,
@@ -210,19 +212,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Set the random seed for reproducibility
-
-    # NOTE: This implementation does not cover all sources of randomness in nnUNet, so complete
-    # determinism cannot be achieved. The nnUNet maintainers have confirmed that full determinism
-    # is not possible (see linked issue below). However, our current approach provides a reasonable
-    # level of deterministic behavior for most practical purposes.
-    # Reference: https://github.com/VectorInstitute/FL4Health/pull/411#:~:text=MIC%2DDKFZ/nnUNet%231906
-    set_all_random_seeds(
-        # NOTE: Setting seed comes at the cost of runtime performance. Benchmarking especially should be enabled
-        # for long-running experiments.
-        args.seed,
-        disable_torch_benchmarking=True,
-        use_deterministic_torch_algos=True,
-    )
+    set_all_random_seeds(args.seed)
 
     # Set the log level
     update_console_handler(level=args.logLevel)

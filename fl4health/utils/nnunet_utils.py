@@ -25,9 +25,15 @@ with warnings.catch_warnings():
     # silences a bunch of deprecation warnings related to scipy.ndimage
     # Raised an issue with nnunet. https://github.com/MIC-DKFZ/nnUNet/issues/2370
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-    from batchgenerators.dataloading.multi_threaded_augmenter import MultiThreadedAugmenter
-    from batchgenerators.dataloading.nondet_multi_threaded_augmenter import NonDetMultiThreadedAugmenter
-    from batchgenerators.dataloading.single_threaded_augmenter import SingleThreadedAugmenter
+    from batchgenerators.dataloading.multi_threaded_augmenter import (
+        MultiThreadedAugmenter,
+    )
+    from batchgenerators.dataloading.nondet_multi_threaded_augmenter import (
+        NonDetMultiThreadedAugmenter,
+    )
+    from batchgenerators.dataloading.single_threaded_augmenter import (
+        SingleThreadedAugmenter,
+    )
     from nnunetv2.training.dataloading.nnunet_dataset import nnUNetDataset
 
 
@@ -106,15 +112,19 @@ def reload_modules(packages: Sequence[str]) -> None:
                     log(DEBUG, f"Failed to reload module {m_name}: {e}")
 
 
-def set_nnunet_env(verbose: bool = False, **kwargs: str) -> None:
+def set_nnunet_env_and_reload_modules(verbose: bool = False, **kwargs: Any) -> None:
     """
     For each keyword argument name and value sets the current environment variable with the same name to that value
     and then reloads nnunet. Values must be strings. This is necessary because nnunet checks some environment
     variables on import, and therefore it must be imported or reloaded after they are set.
+
+    Args:
+        verbose (bool, optional): _description_. Whether or not logging is enabled.
+        kwargs (Any): dict containing environment variables.
     """
     # Set environment variables
     for key, val in kwargs.items():
-        os.environ[key] = val
+        os.environ[key] = str(val)
         if verbose:
             log(INFO, f"Resetting env var '{key}' to '{val}'")
 
@@ -123,7 +133,33 @@ def set_nnunet_env(verbose: bool = False, **kwargs: str) -> None:
     reload_modules(["nnunetv2.default_n_proc_DA", "nnunetv2.configuration"])
     # Reload whatever depends on nnunetv2 environment variables
     # Be careful. If you reload something with an enum in it, things get messed up.
-    reload_modules(["nnunetv2", "fl4health.clients.nnunet_client"])
+    reload_modules(
+        [
+            "nnunetv2",
+            "fl4health.clients.nnunet_client",
+            "fl4health.clients.flexible.nnunet",
+        ]
+    )
+
+
+def set_nnunet_env(verbose: bool = False, **kwargs: Any) -> None:
+    """
+    Maintain for backwards compatibility.
+
+    Args:
+        verbose (bool, optional): _description_. Whether or not logging is enabled.
+        kwargs (Any): dict containing environment variables.
+    """
+    msg = (
+        "`set_nnunet_env` is deprecated and will be removed in a future version. "
+        "Use `set_nnunet_env_and_reload_modules` instead."
+    )
+    warnings.warn(
+        msg,
+        DeprecationWarning,
+        stacklevel=1,
+    )
+    set_nnunet_env_and_reload_modules(verbose=verbose, **kwargs)
 
 
 # The two convert deepsupervision methods are necessary because fl4health requires
@@ -156,7 +192,9 @@ def convert_deep_supervision_list_to_dict(
     return tensors
 
 
-def convert_deep_supervision_dict_to_list(tensor_dict: dict[str, torch.Tensor]) -> list[torch.Tensor]:
+def convert_deep_supervision_dict_to_list(
+    tensor_dict: dict[str, torch.Tensor],
+) -> list[torch.Tensor]:
     """
     Converts a dictionary of tensors back into a list so that it can be used by nnunet deep supervision loss functions.
 
@@ -242,7 +280,9 @@ def get_dataset_n_voxels(source_plans: dict, n_cases: int) -> float:
     return float(np.prod(image_shape, dtype=np.float64) * n_cases)
 
 
-def prepare_loss_arg(tensor: torch.Tensor | dict[str, torch.Tensor]) -> torch.Tensor | list[torch.Tensor]:
+def prepare_loss_arg(
+    tensor: torch.Tensor | dict[str, torch.Tensor],
+) -> torch.Tensor | list[torch.Tensor]:
     """
     Converts pred and target tensors into the proper data type to be passed to the nnunet loss functions.
 
@@ -388,7 +428,10 @@ class NnUNetDataLoaderWrapper(DataLoader):
 
     def shutdown(self) -> None:
         """The multithreaded augmenters used by nnunet need to be shutdown gracefully to avoid errors."""
-        if isinstance(self.nnunet_augmenter, (NonDetMultiThreadedAugmenter, MultiThreadedAugmenter)):
+        if isinstance(
+            self.nnunet_augmenter,
+            (NonDetMultiThreadedAugmenter, MultiThreadedAugmenter),
+        ):
             self.nnunet_augmenter._finish()
         else:
             del self.nnunet_augmenter

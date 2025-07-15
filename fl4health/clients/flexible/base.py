@@ -14,7 +14,12 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.metrics.base_metrics import Metric
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
-from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
+from fl4health.utils.typing import (
+    TorchFeatureType,
+    TorchInputType,
+    TorchPredType,
+    TorchTargetType,
+)
 
 
 EXPECTED_OUTPUT_TUPLE_SIZE = 2
@@ -124,7 +129,11 @@ class FlexibleClient(BasicClient):
                 warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
     def _compute_preds_and_losses(
-        self, model: nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
+        self,
+        model: nn.Module,
+        optimizer: Optimizer,
+        input: TorchInputType,
+        target: TorchTargetType,
     ) -> tuple[TrainingLosses, TorchPredType]:
         """
         Helper method within the train step for computing preds and losses.
@@ -172,13 +181,17 @@ class FlexibleClient(BasicClient):
         """
         # Compute backward pass and update parameters with optimizer
         losses.backward["backward"].backward()
-        self.transform_gradients(losses)
+        self._transform_gradients_with_model(model, losses)
         optimizer.step()
 
         return losses
 
     def _train_step_with_model_and_optimizer(
-        self, model: torch.nn.Module, optimizer: Optimizer, input: TorchInputType, target: TorchTargetType
+        self,
+        model: torch.nn.Module,
+        optimizer: Optimizer,
+        input: TorchInputType,
+        target: TorchTargetType,
     ) -> tuple[TrainingLosses, TorchPredType]:
         """
         Helper train step method that allows for injection of model and optimizer.
