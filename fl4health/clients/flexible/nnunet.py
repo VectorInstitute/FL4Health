@@ -214,14 +214,28 @@ class FlexibleNnunetClient(FlexibleClient):
         self.steps_per_round: int  # N steps per server round
         self.max_steps: int  # N_rounds x steps_per_round
 
-        # Turn on/off model optimizations for decreasing runtime efficiency.
+        # Turn on/off model optimizations for runtime efficiency.
         if compile:
+            log(
+                INFO,
+                (
+                    "Model will be compiled to support training efficiency. NOTE: torch.backends.cudnn.benchmark will "
+                    "be set to True disregarding any previous values."
+                ),
+            )
             # Turning on cudnn.benchmark reduces nnUNet runtimes by 2-3x in our experiments.
             # Limit of 0 tells cudnn to benchmark all available conv algorithms (default is 10)
             torch.backends.cudnn.benchmark = True
             torch.backends.cudnn.benchmark_limit = 0
             os.environ["nnUNet_compile"] = str("true")  # noqa: SIM112
         else:
+            log(
+                INFO,
+                (
+                    "Model will be not be compiled NOTE: torch.backends.cudnn.benchmark will be set to False "
+                    "disregarding any previous values."
+                ),
+            )
             torch.backends.cudnn.benchmark = False
             os.environ["nnUNet_compile"] = str("false")  # noqa: SIM112
             if self.verbose:
@@ -296,8 +310,8 @@ class FlexibleNnunetClient(FlexibleClient):
 
         # The batchgenerators package used under the hood by the dataloaders creates an additional stream handler for
         # the root logger Therefore all logs get printed twice. First stop flwr logger from propagating logs to root.
-        # Issue: https://github.com/MIC-DKFZ/batchgenerators/issues/123 PR:
-        # https://github.com/MIC-DKFZ/batchgenerators/pull/124
+        # Issue: https://github.com/MIC-DKFZ/batchgenerators/issues/123
+        # PR: https://github.com/MIC-DKFZ/batchgenerators/pull/124
         FLOWER_LOGGER.propagate = False
 
         # Redirect nnunet output to flwr logger at DEBUG level.
