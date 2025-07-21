@@ -50,11 +50,13 @@ jobs:
           # PYSEC-2024-109 requires upgrading to DeepSpeed 0.15.1, which is currently blocked by pycyclops
           # PYSEC-2025-61 requires upgrading to Pillow 11.3.0}, which is currently blocked by pycyclops
           # PYSEC-2024-259 has note that this is disputed by multiple parties because this is intended PyTorch behaviour
+          # GHSA-2c2j-9gv5-cj73 is a starlette vulnerability that requires 0.47.2, but FastAPI cannot support moving to this yet.
           ignore-vulns: |
             GHSA-cjgq-5qmw-rcj6
             GHSA-3749-ghw9-m3mg
             GHSA-887c-mr87-cxwp
             GHSA-53q9-r3pm-6pq6
+            GHSA-2c2j-9gv5-cj73
             PYSEC-2024-109
             PYSEC-2025-61
             PYSEC-2024-259
