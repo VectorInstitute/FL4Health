@@ -52,10 +52,11 @@ class MrMtlPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         self.initial_global_tensors: list[torch.Tensor] = []
 
         # Call parent's init
-        super().__init__(*args, **kwargs)
-        # except TypeError:
-        #     # if a parent class doesn't take args/kwargs
-        #     super().__init__()
+        try:
+            super().__init__(*args, **kwargs)
+        except TypeError:
+            # if a parent class doesn't take args/kwargs
+            super().__init__()
 
         if not isinstance(self, FlexibleClientProtocolPreSetup):
             raise RuntimeError("This object needs to satisfy `FlexibleClientProtocolPreSetup`.")  # pragma: no cover

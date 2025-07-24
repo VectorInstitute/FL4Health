@@ -18,7 +18,13 @@ class _TestFlexibleClient(FlexibleClient):
         return self.train_loader, self.val_loader
 
     def get_optimizer(self, config: Config) -> Optimizer | dict[str, Optimizer]:
-        return self.optimizers["local"]
+        if "global" in self.optimizers:
+            return self.optimizers["global"]
+
+        if "local" in self.optimizers:
+            return self.optimizers["local"]
+
+        raise RuntimeError("_TestFlexibleClient must have `global` or `local` key set in its `optimizers` attribute.")
 
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
