@@ -55,9 +55,7 @@ class AdaptiveDriftConstrainedMixin(BaseFlexibleMixin):
 
         super().__init__(*args, **kwargs)
 
-        # set penalty_loss_function
-        if not isinstance(self, FlexibleClientProtocolPreSetup):
-            raise RuntimeError("This object needs to satisfy `FlexibleClientProtocolPreSetup`.")
+        assert isinstance(self, FlexibleClientProtocolPreSetup)
         self.penalty_loss_function = WeightDriftLoss(self.device)
 
     def get_parameters(self: AdaptiveDriftConstrainedProtocol, config: Config) -> NDArrays:

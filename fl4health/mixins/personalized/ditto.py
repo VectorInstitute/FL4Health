@@ -14,7 +14,6 @@ from fl4health.mixins.adaptive_drift_constrained import (
     AdaptiveDriftConstrainedMixin,
     AdaptiveDriftConstrainedProtocol,
 )
-from fl4health.mixins.core_protocols import FlexibleClientProtocolPreSetup
 from fl4health.mixins.personalized.utils import ensure_protocol_compliance
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.config import narrow_dict_type
@@ -68,9 +67,6 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         self.global_model: torch.nn.Module | None = None
 
         super().__init__(*args, **kwargs)
-
-        if not isinstance(self, FlexibleClientProtocolPreSetup):
-            raise RuntimeError("This object needs to satisfy `FlexibleClientProtocolPreSetup`.")  # pragma: no cover
 
     def safe_global_model(self: DittoPersonalizedProtocol) -> nn.Module:
         """
