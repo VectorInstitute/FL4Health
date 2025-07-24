@@ -345,7 +345,7 @@ async def test_mr_mtl_mnist(tolerance: float) -> None:
 async def test_mr_mtl_flexible_mnist(tolerance: float) -> None:
     coroutine = run_smoke_test(
         server_python_path="examples.mr_mtl_example.server",
-        client_python_path="examples.mr_mtl_example.client_dynamic",
+        client_python_path="examples.mr_mtl_example.client_flexible",
         config_path="tests/smoke_tests/mr_mtl_config.yaml",
         dataset_path="examples/datasets/mnist_data/",
         tolerance=tolerance,
