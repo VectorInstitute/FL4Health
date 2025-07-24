@@ -1,4 +1,4 @@
-import re
+from contextlib import nullcontext as no_error_raised
 from pathlib import Path
 
 import pytest
@@ -23,16 +23,22 @@ class _TestMrMtlPersonalizedClient(MrMtlPersonalizedMixin, _TestFlexibleClient):
     pass
 
 
-class _TestInvalidMrMtlClient(MrMtlPersonalizedMixin, _DummyParent):
-    pass
+def test_subclass_checks_raise_no_error() -> None:
+    with no_error_raised():
+
+        class _TestMrMtlPersonalizedClient(MrMtlPersonalizedMixin, _TestFlexibleClient):
+            pass
 
 
-def test_raise_runtime_error_not_flexible_client() -> None:
-    """Test that an invalid parent raises RuntimeError."""
-    with pytest.raises(
-        RuntimeError, match=re.escape("This object needs to satisfy `FlexibleClientProtocolPreSetup`.")
-    ):
-        _TestInvalidMrMtlClient()
+def test_subclass_checks_raise_error() -> None:
+    msg = (
+        "Class _TestInvalidMrMtlClient inherits from BaseFlexibleMixin but none of its other "
+        "base classes implement FlexibleClient."
+    )
+    with pytest.raises(RuntimeError, match=msg):
+
+        class _TestInvalidMrMtlClient(MrMtlPersonalizedMixin, _DummyParent):
+            pass
 
 
 def test_init() -> None:

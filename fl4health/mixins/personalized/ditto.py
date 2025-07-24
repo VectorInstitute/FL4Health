@@ -1,7 +1,6 @@
 """Ditto Personalized Mixin."""
 
 import copy
-import warnings
 from logging import ERROR, INFO, WARN
 from typing import Any, Protocol, cast, runtime_checkable
 
@@ -11,7 +10,6 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch import nn
 from torch.optim import Optimizer
 
-from fl4health.clients.flexible.base import FlexibleClient
 from fl4health.mixins.adaptive_drift_constrained import (
     AdaptiveDriftConstrainedMixin,
     AdaptiveDriftConstrainedProtocol,
@@ -69,40 +67,10 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         # Initialize mixin-specific attributes
         self.global_model: torch.nn.Module | None = None
 
-        # Call parent's init
-        try:
-            super().__init__(*args, **kwargs)
-        except TypeError:
-            # if a parent class doesn't take args/kwargs
-            super().__init__()
+        super().__init__(*args, **kwargs)
 
         if not isinstance(self, FlexibleClientProtocolPreSetup):
             raise RuntimeError("This object needs to satisfy `FlexibleClientProtocolPreSetup`.")  # pragma: no cover
-
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        """This method is called when a class inherits from AdaptiveMixin."""
-        super().__init_subclass__(**kwargs)
-
-        # Skip check for other mixins
-        if cls.__name__.endswith("Mixin"):
-            return
-
-        # Skip validation for dynamically created classes
-        if hasattr(cls, "_dynamically_created"):
-            return
-
-        # Check at class definition time if the parent class satisfies FlexibleClientProtocol
-        for base in cls.__bases__:
-            if base is not DittoPersonalizedMixin and issubclass(base, FlexibleClient):
-                return
-
-        # If we get here, no compatible base was found
-        msg = (
-            f"Class {cls.__name__} inherits from DittoPersonalizedMixin but none of its other "
-            f"base classes implement FlexibleClient. This may cause runtime errors."
-        )
-        log(WARN, msg)
-        warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
     def safe_global_model(self: DittoPersonalizedProtocol) -> nn.Module:
         """

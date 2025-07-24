@@ -1,6 +1,5 @@
 """AdaptiveDriftConstrainedMixin."""
 
-import warnings
 from logging import INFO, WARNING
 from typing import Any, Protocol, runtime_checkable
 
@@ -18,6 +17,8 @@ from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiv
 from fl4health.utils.losses import TrainingLosses
 from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
 
+from .base import BaseFlexibleMixin
+
 
 @runtime_checkable
 class AdaptiveDriftConstrainedProtocol(FlexibleClientProtocol, Protocol):
@@ -32,7 +33,7 @@ class AdaptiveDriftConstrainedProtocol(FlexibleClientProtocol, Protocol):
     def setup_client_and_return_all_model_parameters(self, config: Config) -> NDArrays: ...
 
 
-class AdaptiveDriftConstrainedMixin:
+class AdaptiveDriftConstrainedMixin(BaseFlexibleMixin):
     def __init__(self, *args: Any, **kwargs: Any):
         """
         Adaptive Drift Constrained Mixin.
@@ -52,42 +53,12 @@ class AdaptiveDriftConstrainedMixin:
         self.drift_penalty_tensors = None
         self.drift_penalty_weight = None
 
-        # Call parent's init
-        try:
-            super().__init__(*args, **kwargs)
-        except TypeError:
-            # if a parent class doesn't take args/kwargs
-            super().__init__()
+        super().__init__(*args, **kwargs)
 
         # set penalty_loss_function
         if not isinstance(self, FlexibleClientProtocolPreSetup):
             raise RuntimeError("This object needs to satisfy `FlexibleClientProtocolPreSetup`.")
         self.penalty_loss_function = WeightDriftLoss(self.device)
-
-    def __init_subclass__(cls, **kwargs: Any):
-        """This method is called when a class inherits from AdaptiveDriftConstrainedMixin."""
-        super().__init_subclass__(**kwargs)
-
-        # Skip check for other mixins
-        if cls.__name__.endswith("Mixin"):
-            return
-
-        # Skip validation for dynamically created classes
-        if hasattr(cls, "_dynamically_created"):
-            return
-
-        # Check at class definition time if the parent class satisfies FlexibleClientProtocol
-        for base in cls.__bases__:
-            if base is not AdaptiveDriftConstrainedMixin and issubclass(base, FlexibleClient):
-                return
-
-        # If we get here, no compatible base was found
-        msg = (
-            f"Class {cls.__name__} inherits from AdaptiveDriftConstrainedMixin but none of its other "
-            f"base classes is a FlexibleClient. This may cause runtime errors."
-        )
-        log(WARNING, msg)
-        warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
     def get_parameters(self: AdaptiveDriftConstrainedProtocol, config: Config) -> NDArrays:
         """
