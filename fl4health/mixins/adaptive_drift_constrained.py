@@ -9,6 +9,7 @@ from flwr.common.typing import Config, NDArrays
 
 from fl4health.clients.flexible.base import FlexibleClient
 from fl4health.losses.weight_drift_loss import WeightDriftLoss
+from fl4health.mixins.base import BaseFlexibleMixin
 from fl4health.mixins.core_protocols import FlexibleClientProtocol, FlexibleClientProtocolPreSetup
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
@@ -16,8 +17,6 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 from fl4health.utils.losses import TrainingLosses
 from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
-
-from .base import BaseFlexibleMixin
 
 
 @runtime_checkable
