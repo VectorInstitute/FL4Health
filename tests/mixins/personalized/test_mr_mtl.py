@@ -16,7 +16,7 @@ from fl4health.mixins.personalized import (
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 
-from .conftest import _DummyParent, _TestFlexibleClient
+from ..conftest import _DummyParent, _TestFlexibleClient
 
 
 class _TestMrMtlPersonalizedClient(MrMtlPersonalizedMixin, _TestFlexibleClient):

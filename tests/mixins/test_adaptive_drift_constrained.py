@@ -6,14 +6,10 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 import torch
-from flwr.common.typing import Config, NDArray, Scalar
+from flwr.common.typing import NDArray, Scalar
 from numpy.testing import assert_array_equal
-from torch import nn
-from torch.nn.modules.loss import _Loss
-from torch.optim import Optimizer
 from torch.utils.data import DataLoader, TensorDataset
 
-from fl4health.clients.flexible.base import FlexibleClient
 from fl4health.metrics import Accuracy
 from fl4health.mixins.adaptive_drift_constrained import (
     AdaptiveDriftConstrainedMixin,
@@ -25,19 +21,7 @@ from fl4health.parameter_exchange.packing_exchanger import FullParameterExchange
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 from fl4health.utils.losses import TrainingLosses
 
-
-class _TestFlexibleClient(FlexibleClient):
-    def get_model(self, config: Config) -> nn.Module:
-        return self.model
-
-    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
-        return self.train_loader, self.val_loader
-
-    def get_optimizer(self, config: Config) -> Optimizer | dict[str, Optimizer]:
-        return self.optimizers["global"]
-
-    def get_criterion(self, config: Config) -> _Loss:
-        return torch.nn.CrossEntropyLoss()
+from .conftest import _TestFlexibleClient
 
 
 class _TestAdaptedClient(AdaptiveDriftConstrainedMixin, _TestFlexibleClient):

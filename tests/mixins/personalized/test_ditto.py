@@ -25,7 +25,7 @@ from fl4health.parameter_exchange.packing_exchanger import FullParameterExchange
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 from fl4health.utils.losses import EvaluationLosses, TrainingLosses
 
-from .conftest import _DummyParent, _TestFlexibleClient
+from ..conftest import _DummyParent, _TestFlexibleClient
 
 
 class _TestDittoedClient(DittoPersonalizedMixin, _TestFlexibleClient):
