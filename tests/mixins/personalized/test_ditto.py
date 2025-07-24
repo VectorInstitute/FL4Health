@@ -7,16 +7,12 @@ from unittest.mock import MagicMock, _Call, patch
 import numpy as np
 import pytest
 import torch
-from flwr.common.typing import Config, NDArray, Scalar
+from flwr.common.typing import NDArray, Scalar
 from numpy.testing import assert_array_equal
-from torch import nn
-from torch.nn.modules.loss import _Loss
-from torch.optim import Optimizer
 
 # from torch.testing import assert_close
 from torch.utils.data import DataLoader, TensorDataset
 
-from fl4health.clients.flexible.base import FlexibleClient
 from fl4health.metrics import Accuracy
 from fl4health.mixins.core_protocols import FlexibleClientProtocol
 from fl4health.mixins.personalized import (
@@ -29,28 +25,11 @@ from fl4health.parameter_exchange.packing_exchanger import FullParameterExchange
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 from fl4health.utils.losses import EvaluationLosses, TrainingLosses
 
-
-class _TestFlexibleClient(FlexibleClient):
-    def get_model(self, config: Config) -> nn.Module:
-        return self.model
-
-    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
-        return self.train_loader, self.val_loader
-
-    def get_optimizer(self, config: Config) -> Optimizer | dict[str, Optimizer]:
-        return self.optimizers["local"]
-
-    def get_criterion(self, config: Config) -> _Loss:
-        return torch.nn.CrossEntropyLoss()
+from .conftest import _DummyParent, _TestFlexibleClient
 
 
 class _TestDittoedClient(DittoPersonalizedMixin, _TestFlexibleClient):
     pass
-
-
-class _DummyParent:
-    def __init__(self) -> None:
-        pass
 
 
 class _TestInvalidDittoedClient(DittoPersonalizedMixin, _DummyParent):

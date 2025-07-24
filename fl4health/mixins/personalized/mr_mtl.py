@@ -2,7 +2,7 @@
 
 import copy
 import warnings
-from logging import INFO, WARN
+from logging import INFO, WARNING
 from typing import Any, Protocol, runtime_checkable
 
 import torch
@@ -83,12 +83,12 @@ class MrMtlPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             f"Class {cls.__name__} inherits from MrMtlPersonalizedMixin but none of its other "
             f"base classes implement FlexibleClient. This may cause runtime errors."
         )
-        log(WARN, msg)
+        log(WARNING, msg)
         warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
     def get_global_model(self: MrMtlPersonalizedProtocol, config: Config) -> nn.Module:
         """
-        Returns the global model to be used during Ditto training and as a constraint for the local model.
+        Returns the global model on client setup to be used as a constraint for the local model during training.
 
         The global model should be the same architecture as the local model so we reuse the ``get_model`` call. We
         explicitly send the model to the desired device. This is idempotent.
@@ -133,7 +133,7 @@ class MrMtlPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         training the local model. Despite the usual FL setup, we actually never pass the aggregated model to the
         **LOCAL** model. Instead, we use the aggregated model to form the MR-MTL penalty term.
 
-        NOTE; In MR-MTL, unlike Ditto, the local model weights are not synced across clients to the initial global
+        NOTE: In MR-MTL, unlike Ditto, the local model weights are not synced across clients to the initial global
         model, even in the **FIRST ROUND**.
 
         Args:

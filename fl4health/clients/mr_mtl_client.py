@@ -93,7 +93,7 @@ class MrMtlClient(AdaptiveDriftConstraintClient):
         training the local model. Despite the usual FL setup, we actually never pass the aggregated model to the
         **LOCAL** model. Instead, we use the aggregated model to form the MR-MTL penalty term.
 
-        NOTE; In MR-MTL, unlike Ditto, the local model weights are not synced across clients to the initial global
+        NOTE: In MR-MTL, unlike Ditto, the local model weights are not synced across clients to the initial global
         model, even in the **FIRST ROUND**.
 
         Args:
