@@ -1,0 +1,7 @@
+fl4health.mixins.personalized.mr\_mtl module
+============================================
+
+.. automodule:: fl4health.mixins.personalized.mr_mtl
+   :members:
+   :undoc-members:
+   :show-inheritance:

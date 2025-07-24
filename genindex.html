@@ -339,6 +339,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="reference/api/fl4health.mixins.html">fl4health.mixins package</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" role="switch" type="checkbox"/><label for="toctree-checkbox-17"><div class="visually-hidden">Toggle navigation of fl4health.mixins package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4 has-children"><a class="reference internal" href="reference/api/fl4health.mixins.personalized.html">fl4health.mixins.personalized package</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" role="switch" type="checkbox"/><label for="toctree-checkbox-18"><div class="visually-hidden">Toggle navigation of fl4health.mixins.personalized package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="reference/api/fl4health.mixins.personalized.ditto.html">fl4health.mixins.personalized.ditto module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="reference/api/fl4health.mixins.personalized.mr_mtl.html">fl4health.mixins.personalized.mr_mtl module</a></li>
 <li class="toctree-l5"><a class="reference internal" href="reference/api/fl4health.mixins.personalized.utils.html">fl4health.mixins.personalized.utils module</a></li>
 </ul>
 </li>
@@ -771,6 +772,8 @@
           <li><a href="reference/api/fl4health.clients.mr_mtl_client.html#fl4health.clients.mr_mtl_client.MrMtlClient.__init__">(MrMtlClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client.html#fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client.MrMtlMkMmdClient.__init__">(MrMtlMkMmdClient method)</a>
+</li>
+          <li><a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.MrMtlPersonalizedMixin.__init__">(MrMtlPersonalizedMixin method)</a>, <a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedMixin.__init__">[1]</a>
 </li>
           <li><a href="reference/api/fl4health.servers.adaptive_constraint_servers.mrmtl_server.html#fl4health.servers.adaptive_constraint_servers.mrmtl_server.MrMtlServer.__init__">(MrMtlServer method)</a>
 </li>
@@ -1330,6 +1333,8 @@
 </li>
           <li><a href="reference/api/fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client.html#fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client.MrMtlMkMmdClient.compute_training_loss">(MrMtlMkMmdClient method)</a>
 </li>
+          <li><a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.MrMtlPersonalizedMixin.compute_training_loss">(MrMtlPersonalizedMixin method)</a>, <a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedMixin.compute_training_loss">[1]</a>
+</li>
         </ul></li>
         <li><a href="reference/api/fl4health.strategies.scaffold.html#fl4health.strategies.scaffold.Scaffold.compute_updated_control_variates">compute_updated_control_variates() (Scaffold method)</a>
 
@@ -1430,6 +1435,8 @@
         <ul>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.criterion">(FlexibleClientProtocol attribute)</a>
 </li>
+          <li><a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.criterion">(MrMtlPersonalizedProtocol attribute)</a>
+</li>
         </ul></li>
         <li><a href="reference/api/fl4health.utils.typing.html#fl4health.utils.typing.LogLevel.CRITICAL">CRITICAL (LogLevel attribute)</a>
 </li>
@@ -1476,6 +1483,8 @@
         <ul>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.device">(FlexibleClientProtocolPreSetup attribute)</a>
 </li>
+          <li><a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.device">(MrMtlPersonalizedProtocol attribute)</a>
+</li>
         </ul></li>
         <li><a href="reference/api/fl4health.utils.dataset.html#fl4health.utils.dataset.DictionaryDataset">DictionaryDataset (class in fl4health.utils.dataset)</a>
 </li>
@@ -1520,11 +1529,15 @@
         <ul>
           <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.drift_penalty_tensors">(DittoPersonalizedProtocol attribute)</a>
 </li>
+          <li><a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.drift_penalty_tensors">(MrMtlPersonalizedProtocol attribute)</a>
+</li>
         </ul></li>
         <li><a href="reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedProtocol.drift_penalty_weight">drift_penalty_weight (AdaptiveDriftConstrainedProtocol attribute)</a>
 
         <ul>
           <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.drift_penalty_weight">(DittoPersonalizedProtocol attribute)</a>
+</li>
+          <li><a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.drift_penalty_weight">(MrMtlPersonalizedProtocol attribute)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.reporting.json_reporter.html#fl4health.reporting.json_reporter.FileReporter.dump">dump() (FileReporter method)</a>
@@ -2316,6 +2329,13 @@
 </li>
         </ul></li>
         <li>
+    fl4health.mixins.personalized.mr_mtl
+
+        <ul>
+          <li><a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#module-fl4health.mixins.personalized.mr_mtl">module</a>
+</li>
+        </ul></li>
+        <li>
     fl4health.mixins.personalized.utils
 
         <ul>
@@ -2378,6 +2398,8 @@
           <li><a href="reference/api/fl4health.model_bases.fenda_base.html#module-fl4health.model_bases.fenda_base">module</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     fl4health.model_bases.gpfl_base
 
@@ -2385,8 +2407,6 @@
           <li><a href="reference/api/fl4health.model_bases.gpfl_base.html#module-fl4health.model_bases.gpfl_base">module</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     fl4health.model_bases.masked_layers
 
@@ -3283,6 +3303,10 @@
 </li>
           <li><a href="reference/api/fl4health.clients.fenda_ditto_client.html#fl4health.clients.fenda_ditto_client.FendaDittoClient.get_global_model">(FendaDittoClient method)</a>
 </li>
+          <li><a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.MrMtlPersonalizedMixin.get_global_model">(MrMtlPersonalizedMixin method)</a>, <a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedMixin.get_global_model">[1]</a>
+</li>
+          <li><a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.MrMtlPersonalizedProtocol.get_global_model">(MrMtlPersonalizedProtocol method)</a>, <a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.get_global_model">[1]</a>
+</li>
         </ul></li>
         <li><a href="reference/api/fl4health.model_bases.feature_extractor_buffer.html#fl4health.model_bases.feature_extractor_buffer.FeatureExtractorBuffer.get_hierarchical_attr">get_hierarchical_attr() (FeatureExtractorBuffer method)</a>
 </li>
@@ -3298,6 +3322,8 @@
 </li>
         <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.PolyLRSchedulerWrapper.get_lr">get_lr() (PolyLRSchedulerWrapper method)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.get_lr_scheduler">get_lr_scheduler() (BasicClient method)</a>
 
         <ul>
@@ -3306,8 +3332,6 @@
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.get_lr_scheduler">(NnunetClient method)</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.preprocessing.warmed_up_module.html#fl4health.preprocessing.warmed_up_module.WarmedUpModule.get_matching_component">get_matching_component() (WarmedUpModule method)</a>
 </li>
         <li><a href="reference/api/fl4health.feature_alignment.tabular_feature.html#fl4health.feature_alignment.tabular_feature.TabularFeature.get_metadata">get_metadata() (TabularFeature method)</a>
@@ -3490,6 +3514,8 @@
 </li>
         <li><a href="reference/api/fl4health.utils.typing.html#fl4health.utils.typing.LogLevel.INFO">INFO (LogLevel attribute)</a>
 </li>
+        <li><a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.MrMtlPersonalizedProtocol.initial_global_model">initial_global_model (MrMtlPersonalizedProtocol attribute)</a>, <a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.initial_global_model">[1]</a>
+</li>
         <li><a href="reference/api/fl4health.reporting.base_reporter.html#fl4health.reporting.base_reporter.BaseReporter.initialize">initialize() (BaseReporter method)</a>
 
         <ul>
@@ -3524,6 +3550,8 @@
 
         <ul>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocolPreSetup.initialized">(FlexibleClientProtocolPreSetup attribute)</a>
+</li>
+          <li><a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.initialized">(MrMtlPersonalizedProtocol attribute)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.clients.instance_level_dp_client.html#fl4health.clients.instance_level_dp_client.InstanceLevelDpClient">InstanceLevelDpClient (class in fl4health.clients.instance_level_dp_client)</a>
@@ -3679,6 +3707,8 @@
         <ul>
           <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.loss_for_adaptation">(DittoPersonalizedProtocol attribute)</a>
 </li>
+          <li><a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.loss_for_adaptation">(MrMtlPersonalizedProtocol attribute)</a>
+</li>
         </ul></li>
         <li><a href="reference/api/fl4health.utils.losses.html#fl4health.utils.losses.Losses">Losses (class in fl4health.utils.losses)</a>
 </li>
@@ -3814,6 +3844,8 @@
 
         <ul>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.model">(FlexibleClientProtocol attribute)</a>
+</li>
+          <li><a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.model">(MrMtlPersonalizedProtocol attribute)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.losses.deep_mmd_loss.html#fl4health.losses.deep_mmd_loss.ModelLatentF">ModelLatentF (class in fl4health.losses.deep_mmd_loss)</a>
@@ -3995,6 +4027,8 @@
           <li><a href="reference/api/fl4health.mixins.personalized.html#module-fl4health.mixins.personalized">fl4health.mixins.personalized</a>
 </li>
           <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#module-fl4health.mixins.personalized.ditto">fl4health.mixins.personalized.ditto</a>
+</li>
+          <li><a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#module-fl4health.mixins.personalized.mr_mtl">fl4health.mixins.personalized.mr_mtl</a>
 </li>
           <li><a href="reference/api/fl4health.mixins.personalized.utils.html#module-fl4health.mixins.personalized.utils">fl4health.mixins.personalized.utils</a>
 </li>
@@ -4207,10 +4241,24 @@
 </li>
         <li><a href="reference/api/fl4health.utils.client.html#fl4health.utils.client.move_data_to_device">move_data_to_device() (in module fl4health.utils.client)</a>
 </li>
+        <li><a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.PersonalizedMode.MR_MTL">MR_MTL (PersonalizedMode attribute)</a>
+</li>
         <li><a href="reference/api/fl4health.clients.mr_mtl_client.html#fl4health.clients.mr_mtl_client.MrMtlClient">MrMtlClient (class in fl4health.clients.mr_mtl_client)</a>
 </li>
         <li><a href="reference/api/fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client.html#fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client.MrMtlMkMmdClient">MrMtlMkMmdClient (class in fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client)</a>
 </li>
+        <li><a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.MrMtlPersonalizedMixin">MrMtlPersonalizedMixin (class in fl4health.mixins.personalized)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedMixin">(class in fl4health.mixins.personalized.mr_mtl)</a>
+</li>
+        </ul></li>
+        <li><a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.MrMtlPersonalizedProtocol">MrMtlPersonalizedProtocol (class in fl4health.mixins.personalized)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol">(class in fl4health.mixins.personalized.mr_mtl)</a>
+</li>
+        </ul></li>
         <li><a href="reference/api/fl4health.servers.adaptive_constraint_servers.mrmtl_server.html#fl4health.servers.adaptive_constraint_servers.mrmtl_server.MrMtlServer">MrMtlServer (class in fl4health.servers.adaptive_constraint_servers.mrmtl_server)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.msd_dataset_sources.html#fl4health.utils.msd_dataset_sources.MsdDataset">MsdDataset (class in fl4health.utils.msd_dataset_sources)</a>
@@ -4292,6 +4340,8 @@
         <ul>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.optimizers">(FlexibleClientProtocol attribute)</a>
 </li>
+          <li><a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.optimizers">(MrMtlPersonalizedProtocol attribute)</a>
+</li>
         </ul></li>
         <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.OptimizerSnapshotter">OptimizerSnapshotter (class in fl4health.utils.snapshotter)</a>
 </li>
@@ -4344,6 +4394,8 @@
         <ul>
           <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.parameter_exchanger">(DittoPersonalizedProtocol attribute)</a>
 </li>
+          <li><a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.parameter_exchanger">(MrMtlPersonalizedProtocol attribute)</a>
+</li>
         </ul></li>
         <li><a href="reference/api/fl4health.parameter_exchange.parameter_exchanger_base.html#fl4health.parameter_exchange.parameter_exchanger_base.ParameterExchanger">ParameterExchanger (class in fl4health.parameter_exchange.parameter_exchanger_base)</a>
 </li>
@@ -4376,6 +4428,8 @@
         <ul>
           <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.penalty_loss_function">(DittoPersonalizedProtocol attribute)</a>
 </li>
+          <li><a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.penalty_loss_function">(MrMtlPersonalizedProtocol attribute)</a>
+</li>
         </ul></li>
         <li><a href="reference/api/fl4health.clients.perfcl_client.html#fl4health.clients.perfcl_client.PerFclClient">PerFclClient (class in fl4health.clients.perfcl_client)</a>
 </li>
@@ -4397,10 +4451,10 @@
 </li>
         <li><a href="reference/api/fl4health.servers.base_server.html#fl4health.servers.base_server.FlServer.poll_clients_for_sample_counts">poll_clients_for_sample_counts() (FlServer method)</a>
 </li>
-        <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.PolyLRSchedulerWrapper">PolyLRSchedulerWrapper (class in fl4health.utils.nnunet_utils)</a>
-</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.PolyLRSchedulerWrapper">PolyLRSchedulerWrapper (class in fl4health.utils.nnunet_utils)</a>
+</li>
         <li><a href="reference/api/fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.CheckpointMode.POST_AGGREGATION">POST_AGGREGATION (CheckpointMode attribute)</a>
 </li>
         <li><a href="reference/api/fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.CheckpointMode.PRE_AGGREGATION">PRE_AGGREGATION (CheckpointMode attribute)</a>
@@ -4752,6 +4806,8 @@
 </li>
           <li><a href="reference/api/fl4health.clients.mr_mtl_client.html#fl4health.clients.mr_mtl_client.MrMtlClient.set_parameters">(MrMtlClient method)</a>
 </li>
+          <li><a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.MrMtlPersonalizedMixin.set_parameters">(MrMtlPersonalizedMixin method)</a>, <a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedMixin.set_parameters">[1]</a>
+</li>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.NumPyClientMinimalProtocol.set_parameters">(NumPyClientMinimalProtocol method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.clipping_client.html#fl4health.clients.clipping_client.NumpyClippingClient.set_parameters">(NumpyClippingClient method)</a>
@@ -4809,6 +4865,8 @@
           <li><a href="reference/api/fl4health.clients.mr_mtl_client.html#fl4health.clients.mr_mtl_client.MrMtlClient.setup_client">(MrMtlClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client.html#fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client.MrMtlMkMmdClient.setup_client">(MrMtlMkMmdClient method)</a>
+</li>
+          <li><a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.MrMtlPersonalizedMixin.setup_client">(MrMtlPersonalizedMixin method)</a>, <a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedMixin.setup_client">[1]</a>
 </li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.setup_client">(NnunetClient method)</a>
 </li>
@@ -4976,6 +5034,8 @@
         <ul>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.test_loader">(FlexibleClientProtocol attribute)</a>
 </li>
+          <li><a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.test_loader">(MrMtlPersonalizedProtocol attribute)</a>
+</li>
         </ul></li>
         <li><a href="reference/api/fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.MetricPrefix.TEST_PREFIX">TEST_PREFIX (MetricPrefix attribute)</a>
 </li>
@@ -5021,6 +5081,8 @@
 
         <ul>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.train_loader">(FlexibleClientProtocol attribute)</a>
+</li>
+          <li><a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.train_loader">(MrMtlPersonalizedProtocol attribute)</a>
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.train_step">train_step() (AdaptiveDriftConstrainedMixin method)</a>, <a href="reference/api/fl4health.mixins.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.train_step">[1]</a>
@@ -5220,6 +5282,8 @@
 </li>
           <li><a href="reference/api/fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client.html#fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client.MrMtlMkMmdClient.update_before_train">(MrMtlMkMmdClient method)</a>
 </li>
+          <li><a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.MrMtlPersonalizedMixin.update_before_train">(MrMtlPersonalizedMixin method)</a>, <a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedMixin.update_before_train">[1]</a>
+</li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.update_before_train">(NnunetClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.perfcl_client.html#fl4health.clients.perfcl_client.PerFclClient.update_before_train">(PerFclClient method)</a>
@@ -5274,6 +5338,8 @@
         <ul>
           <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.FlexibleClientProtocol.val_loader">(FlexibleClientProtocol attribute)</a>
 </li>
+          <li><a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.val_loader">(MrMtlPersonalizedProtocol attribute)</a>
+</li>
         </ul></li>
         <li><a href="reference/api/fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.MetricPrefix.VAL_PREFIX">VAL_PREFIX (MetricPrefix attribute)</a>
 </li>
@@ -5303,6 +5369,8 @@
           <li><a href="reference/api/fl4health.clients.model_merge_client.html#fl4health.clients.model_merge_client.ModelMergeClient.validate">(ModelMergeClient method)</a>
 </li>
           <li><a href="reference/api/fl4health.clients.mr_mtl_client.html#fl4health.clients.mr_mtl_client.MrMtlClient.validate">(MrMtlClient method)</a>
+</li>
+          <li><a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.MrMtlPersonalizedMixin.validate">(MrMtlPersonalizedMixin method)</a>, <a href="reference/api/fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedMixin.validate">[1]</a>
 </li>
         </ul></li>
     </ul></td>

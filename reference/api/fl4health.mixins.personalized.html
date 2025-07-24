@@ -57,6 +57,7 @@
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=ccdb6887"></script>
     <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="../../_static/require.min.js?v=53367eec"></script>
     <script src="../../_static/custom.js?v=c3ea0f6c"></script>
     
@@ -342,6 +343,7 @@
 <li class="toctree-l3 current has-children"><a class="reference internal" href="fl4health.mixins.html">fl4health.mixins package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" role="switch" type="checkbox"/><label for="toctree-checkbox-17"><div class="visually-hidden">Toggle navigation of fl4health.mixins package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l4 current has-children current-page"><a class="current reference internal" href="#">fl4health.mixins.personalized package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" role="switch" type="checkbox"/><label for="toctree-checkbox-18"><div class="visually-hidden">Toggle navigation of fl4health.mixins.personalized package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="fl4health.mixins.personalized.ditto.html">fl4health.mixins.personalized.ditto module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html">fl4health.mixins.personalized.mr_mtl module</a></li>
 <li class="toctree-l5"><a class="reference internal" href="fl4health.mixins.personalized.utils.html">fl4health.mixins.personalized.utils module</a></li>
 </ul>
 </li>
@@ -840,6 +842,155 @@ save the global models parameters to be used in constraining training of the loc
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="fl4health.mixins.personalized.MrMtlPersonalizedMixin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MrMtlPersonalizedMixin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/personalized/mr_mtl.html#MrMtlPersonalizedMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.personalized.MrMtlPersonalizedMixin" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin" title="fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedMixin</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.mixins.personalized.MrMtlPersonalizedMixin.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/personalized/mr_mtl.html#MrMtlPersonalizedMixin.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.personalized.MrMtlPersonalizedMixin.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>This client implements the MR-MTL algorithm from MR-MTL: On Privacy and Personalization in Cross-Silo
+Federated Learning. The idea is that we want to train personalized versions of the global model for each
+client. However, instead of using a separate solver for the global model, as in Ditto, we update the initial
+global model with aggregated local models on the server-side and use those weights to also constrain the
+training of a local model. The constraint for this local model is identical to the FedProx loss. The key
+difference is that the local model is never replaced with aggregated weights. It is always local.</p>
+<p><strong>NOTE</strong>: lambda, the drift loss weight, is initially set and potentially adapted by the server akin to the
+heuristic suggested in the original FedProx paper. Adaptation is optional and can be disabled in the
+corresponding strategy used by the server</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.mixins.personalized.MrMtlPersonalizedMixin.compute_training_loss">
+<span class="sig-name descname"><span class="pre">compute_training_loss</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">preds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/personalized/mr_mtl.html#MrMtlPersonalizedMixin.compute_training_loss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.personalized.MrMtlPersonalizedMixin.compute_training_loss" title="Link to this definition">¶</a></dt>
+<dd><p>Computes training losses given predictions of the modes and ground truth data. We add to vanilla loss
+function by including Mean Regularized (MR) penalty loss which is the <span class="math notranslate nohighlight">\(\ell^2\)</span> inner product between the
+initial global model weights and weights of the current model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>preds</strong> (<em>TorchPredType</em>) – Prediction(s) of the model(s) indexed by name.
+All predictions included in dictionary will be used to compute metrics.</p></li>
+<li><p><strong>features</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</span>) – (TorchFeatureType): Feature(s) of the model(s) indexed by name.</p></li>
+<li><p><strong>target</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code> | <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Tensor</span></code>]</span>) – (TorchTargetType): Ground truth data to evaluate predictions against.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An instance of <code class="docutils literal notranslate"><span class="pre">TrainingLosses</span></code> containing backward loss and additional losses indexed by
+name. Additional losses includes each loss component of the total loss.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.TrainingLosses" title="fl4health.utils.losses.TrainingLosses">TrainingLosses</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.mixins.personalized.MrMtlPersonalizedMixin.get_global_model">
+<span class="sig-name descname"><span class="pre">get_global_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/personalized/mr_mtl.html#MrMtlPersonalizedMixin.get_global_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.personalized.MrMtlPersonalizedMixin.get_global_model" title="Link to this definition">¶</a></dt>
+<dd><p>Returns the global model on client setup to be used as a constraint for the local model during training.</p>
+<p>The global model should be the same architecture as the local model so we reuse the <code class="docutils literal notranslate"><span class="pre">get_model</span></code> call. We
+explicitly send the model to the desired device. This is idempotent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – The config from the server.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The PyTorch model serving as the global model for Ditto</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nn.Module</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.mixins.personalized.MrMtlPersonalizedMixin.set_parameters">
+<span class="sig-name descname"><span class="pre">set_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fitting_round</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/personalized/mr_mtl.html#MrMtlPersonalizedMixin.set_parameters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.personalized.MrMtlPersonalizedMixin.set_parameters" title="Link to this definition">¶</a></dt>
+<dd><p>The parameters being passed are to be routed to the initial global model to be used in a penalty term in
+training the local model. Despite the usual FL setup, we actually never pass the aggregated model to the
+<strong>LOCAL</strong> model. Instead, we use the aggregated model to form the MR-MTL penalty term.</p>
+<p>NOTE: In MR-MTL, unlike Ditto, the local model weights are not synced across clients to the initial global
+model, even in the <strong>FIRST ROUND</strong>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameters</strong> (<em>NDArrays</em>) – Parameters have information about model state to be added to the relevant client
+model. It will also contain a penalty weight from the server at each round (possibly adapted)</p></li>
+<li><p><strong>config</strong> (<em>Config</em>) – The config is sent by the FL server to allow for customization in the function if desired.</p></li>
+<li><p><strong>fitting_round</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a>) – Boolean that indicates whether the current federated learning round is a fitting
+round or an evaluation round. Not used here.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.mixins.personalized.MrMtlPersonalizedMixin.setup_client">
+<span class="sig-name descname"><span class="pre">setup_client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/personalized/mr_mtl.html#MrMtlPersonalizedMixin.setup_client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.personalized.MrMtlPersonalizedMixin.setup_client" title="Link to this definition">¶</a></dt>
+<dd><p>Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
+Then set initialized attribute to True. In this class, this function simply adds the additional step of
+setting up the global model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – The config from the server.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.mixins.personalized.MrMtlPersonalizedMixin.update_before_train">
+<span class="sig-name descname"><span class="pre">update_before_train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">current_server_round</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/personalized/mr_mtl.html#MrMtlPersonalizedMixin.update_before_train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.personalized.MrMtlPersonalizedMixin.update_before_train" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.mixins.personalized.MrMtlPersonalizedMixin.validate">
+<span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">include_losses_in_metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/personalized/mr_mtl.html#MrMtlPersonalizedMixin.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.personalized.MrMtlPersonalizedMixin.validate" title="Link to this definition">¶</a></dt>
+<dd><p>Validate the current model on the entire validation dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The validation loss and a dictionary of metrics from validation.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)">float</a>, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, Scalar]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="fl4health.mixins.personalized.MrMtlPersonalizedProtocol">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MrMtlPersonalizedProtocol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/personalized/mr_mtl.html#MrMtlPersonalizedProtocol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.personalized.MrMtlPersonalizedProtocol" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedProtocol" title="fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedProtocol"><code class="xref py py-class docutils literal notranslate"><span class="pre">AdaptiveDriftConstrainedProtocol</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Protocol" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.mixins.personalized.MrMtlPersonalizedProtocol.get_global_model">
+<span class="sig-name descname"><span class="pre">get_global_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/personalized/mr_mtl.html#MrMtlPersonalizedProtocol.get_global_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.personalized.MrMtlPersonalizedProtocol.get_global_model" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fl4health.mixins.personalized.MrMtlPersonalizedProtocol.initial_global_model">
+<span class="sig-name descname"><span class="pre">initial_global_model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> <span class="pre">|</span> <a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></em><a class="headerlink" href="#fl4health.mixins.personalized.MrMtlPersonalizedProtocol.initial_global_model" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="fl4health.mixins.personalized.PersonalizedMode">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PersonalizedMode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/personalized.html#PersonalizedMode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.personalized.PersonalizedMode" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.10/library/enum.html#enum.Enum" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></a></p>
@@ -847,6 +998,11 @@ save the global models parameters to be used in constraining training of the loc
 <dl class="py attribute">
 <dt class="sig sig-object py" id="fl4health.mixins.personalized.PersonalizedMode.DITTO">
 <span class="sig-name descname"><span class="pre">DITTO</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ditto'</span></em><a class="headerlink" href="#fl4health.mixins.personalized.PersonalizedMode.DITTO" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="fl4health.mixins.personalized.PersonalizedMode.MR_MTL">
+<span class="sig-name descname"><span class="pre">MR_MTL</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'mr_mtl'</span></em><a class="headerlink" href="#fl4health.mixins.personalized.PersonalizedMode.MR_MTL" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -905,6 +1061,37 @@ save the global models parameters to be used in constraining training of the loc
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.test_loader"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedProtocol.test_loader</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.train_loader"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedProtocol.train_loader</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.val_loader"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedProtocol.val_loader</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html">fl4health.mixins.personalized.mr_mtl module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedMixin"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedMixin</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedMixin.__init__"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedMixin.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedMixin.compute_training_loss"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedMixin.compute_training_loss()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedMixin.get_global_model"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedMixin.get_global_model()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedMixin.set_parameters"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedMixin.set_parameters()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedMixin.setup_client"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedMixin.setup_client()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedMixin.update_before_train"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedMixin.update_before_train()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedMixin.validate"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedMixin.validate()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.criterion"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.criterion</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.device"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.device</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.drift_penalty_tensors"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.drift_penalty_tensors</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.drift_penalty_weight"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.drift_penalty_weight</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.get_global_model"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.get_global_model()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.initial_global_model"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.initial_global_model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.initialized"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.initialized</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.loss_for_adaptation"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.loss_for_adaptation</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.model"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.optimizers"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.optimizers</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.parameter_exchanger"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.parameter_exchanger</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.penalty_loss_function"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.penalty_loss_function</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.test_loader"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.test_loader</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.train_loader"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.train_loader</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html#fl4health.mixins.personalized.mr_mtl.MrMtlPersonalizedProtocol.val_loader"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.val_loader</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -1018,8 +1205,24 @@ save the global models parameters to be used in constraining training of the loc
 <li><a class="reference internal" href="#fl4health.mixins.personalized.DittoPersonalizedProtocol.set_initial_global_tensors"><code class="docutils literal notranslate"><span class="pre">DittoPersonalizedProtocol.set_initial_global_tensors()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#fl4health.mixins.personalized.MrMtlPersonalizedMixin"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedMixin</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.mixins.personalized.MrMtlPersonalizedMixin.__init__"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedMixin.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.mixins.personalized.MrMtlPersonalizedMixin.compute_training_loss"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedMixin.compute_training_loss()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.mixins.personalized.MrMtlPersonalizedMixin.get_global_model"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedMixin.get_global_model()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.mixins.personalized.MrMtlPersonalizedMixin.set_parameters"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedMixin.set_parameters()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.mixins.personalized.MrMtlPersonalizedMixin.setup_client"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedMixin.setup_client()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.mixins.personalized.MrMtlPersonalizedMixin.update_before_train"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedMixin.update_before_train()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.mixins.personalized.MrMtlPersonalizedMixin.validate"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedMixin.validate()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#fl4health.mixins.personalized.MrMtlPersonalizedProtocol"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.mixins.personalized.MrMtlPersonalizedProtocol.get_global_model"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.get_global_model()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.mixins.personalized.MrMtlPersonalizedProtocol.initial_global_model"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.initial_global_model</span></code></a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#fl4health.mixins.personalized.PersonalizedMode"><code class="docutils literal notranslate"><span class="pre">PersonalizedMode</span></code></a><ul>
 <li><a class="reference internal" href="#fl4health.mixins.personalized.PersonalizedMode.DITTO"><code class="docutils literal notranslate"><span class="pre">PersonalizedMode.DITTO</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.mixins.personalized.PersonalizedMode.MR_MTL"><code class="docutils literal notranslate"><span class="pre">PersonalizedMode.MR_MTL</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#fl4health.mixins.personalized.make_it_personal"><code class="docutils literal notranslate"><span class="pre">make_it_personal()</span></code></a></li>

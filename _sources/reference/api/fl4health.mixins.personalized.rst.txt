@@ -13,4 +13,5 @@ Submodules
    :maxdepth: 4
 
    fl4health.mixins.personalized.ditto
+   fl4health.mixins.personalized.mr_mtl
    fl4health.mixins.personalized.utils

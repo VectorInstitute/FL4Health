@@ -343,6 +343,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.mixins.html">fl4health.mixins package</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" role="switch" type="checkbox"/><label for="toctree-checkbox-17"><div class="visually-hidden">Toggle navigation of fl4health.mixins package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4 has-children"><a class="reference internal" href="fl4health.mixins.personalized.html">fl4health.mixins.personalized package</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" role="switch" type="checkbox"/><label for="toctree-checkbox-18"><div class="visually-hidden">Toggle navigation of fl4health.mixins.personalized package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="fl4health.mixins.personalized.ditto.html">fl4health.mixins.personalized.ditto module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="fl4health.mixins.personalized.mr_mtl.html">fl4health.mixins.personalized.mr_mtl module</a></li>
 <li class="toctree-l5"><a class="reference internal" href="fl4health.mixins.personalized.utils.html">fl4health.mixins.personalized.utils module</a></li>
 </ul>
 </li>
@@ -581,7 +582,7 @@ name. Additional losses includes each loss component of the total loss.</p>
 <dd><p>The parameters being passed are to be routed to the initial global model to be used in a penalty term in
 training the local model. Despite the usual FL setup, we actually never pass the aggregated model to the
 <strong>LOCAL</strong> model. Instead, we use the aggregated model to form the MR-MTL penalty term.</p>
-<p>NOTE; In MR-MTL, unlike Ditto, the local model weights are not synced across clients to the initial global
+<p>NOTE: In MR-MTL, unlike Ditto, the local model weights are not synced across clients to the initial global
 model, even in the <strong>FIRST ROUND</strong>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
