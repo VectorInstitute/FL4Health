@@ -45,7 +45,7 @@ class DittoPersonalizedProtocol(AdaptiveDriftConstrainedProtocol, Protocol):
 
 
 class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self: DittoPersonalizedProtocol, *args: Any, **kwargs: Any) -> None:
         """
         This mixin implements the Ditto algorithm from Ditto: Fair and Robust Federated Learning Through
         Personalization. This mixin inherits from the ``AdaptiveDriftConstrainedMixin``, and like that mixin,
@@ -66,7 +66,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         # Initialize mixin-specific attributes
         self.global_model: torch.nn.Module | None = None
 
-        super().__init__(*args, **kwargs)  # type: ignore[misc]
+        super().__init__(*args, **kwargs)
 
     def safe_global_model(self: DittoPersonalizedProtocol) -> nn.Module:
         """
