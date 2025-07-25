@@ -8,6 +8,7 @@ import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch import nn
+from torch.optim import Optimizer
 
 from fl4health.mixins.adaptive_drift_constrained import (
     AdaptiveDriftConstrainedMixin,
@@ -88,6 +89,24 @@ class MrMtlPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             pass
         # The rest of the setup is the same
         super().setup_client(config)  # type:ignore [safe-super]
+
+    @ensure_protocol_compliance
+    def get_optimizer(self: MrMtlPersonalizedProtocol, config: Config) -> dict[str, Optimizer]:
+        """
+        Implementing get_optimizer as a hook to set initial global model if not already set.
+
+        Args:
+            config (Config): The config from the server.
+        """
+        if self.initial_global_model is None:
+            # try set it here
+            self.initial_global_model = self.get_global_model(config)
+            log(
+                INFO,
+                f"initial_global_model set: {type(self.initial_global_model).__name__} within `get_optimizer`",
+            )
+
+        return super().get_optimizer(config=config)  # type: ignore[safe-super, return-value]
 
     @ensure_protocol_compliance
     def set_parameters(
