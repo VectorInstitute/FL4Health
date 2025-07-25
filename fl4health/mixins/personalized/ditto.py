@@ -66,7 +66,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         # Initialize mixin-specific attributes
         self.global_model: torch.nn.Module | None = None
 
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)  # type: ignore[misc]
 
     def safe_global_model(self: DittoPersonalizedProtocol) -> nn.Module:
         """

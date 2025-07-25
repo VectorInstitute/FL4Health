@@ -10,7 +10,7 @@ from flwr.common.typing import Config, NDArrays
 from fl4health.clients.flexible.base import FlexibleClient
 from fl4health.losses.weight_drift_loss import WeightDriftLoss
 from fl4health.mixins.base import BaseFlexibleMixin
-from fl4health.mixins.core_protocols import FlexibleClientProtocol, FlexibleClientProtocolPreSetup
+from fl4health.mixins.core_protocols import FlexibleClientProtocol
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -33,7 +33,7 @@ class AdaptiveDriftConstrainedProtocol(FlexibleClientProtocol, Protocol):
 
 
 class AdaptiveDriftConstrainedMixin(BaseFlexibleMixin):
-    def __init__(self, *args: Any, **kwargs: Any):
+    def __init__(self: AdaptiveDriftConstrainedProtocol, *args: Any, **kwargs: Any):
         """
         Adaptive Drift Constrained Mixin.
 
@@ -43,9 +43,6 @@ class AdaptiveDriftConstrainedMixin(BaseFlexibleMixin):
         **NOTE**: Rather than using ``AdaptiveDriftConstraintClient``, if a client subclasses
         ``FlexibleClient``, than this mixin could be used on that subclass to implement the
         adaptive drift constraint.
-
-        Raises:
-            RuntimeError: When the inheriting class does not satisfy ``FlexibleClientProtocolPreSetup``.
         """
         # Initialize mixin-specific attributes with default values
         self.loss_for_adaptation = 0.1
@@ -54,7 +51,6 @@ class AdaptiveDriftConstrainedMixin(BaseFlexibleMixin):
 
         super().__init__(*args, **kwargs)
 
-        assert isinstance(self, FlexibleClientProtocolPreSetup)
         self.penalty_loss_function = WeightDriftLoss(self.device)
 
     def get_parameters(self: AdaptiveDriftConstrainedProtocol, config: Config) -> NDArrays:

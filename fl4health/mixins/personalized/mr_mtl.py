@@ -48,7 +48,7 @@ class MrMtlPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         self.initial_global_model: torch.nn.Module | None = None
         self.initial_global_tensors: list[torch.Tensor] = []
 
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)  # type: ignore[misc]
 
     def get_global_model(self: MrMtlPersonalizedProtocol, config: Config) -> nn.Module:
         """
