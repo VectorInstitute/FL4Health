@@ -218,7 +218,7 @@ if __name__ == "__main__":
         Defaults to None, in which case a random name is generated for the client",
     )
     parser.add_argument(
-        "--personalized-strategy",
+        "--personalized_strategy",
         type=str,
         required=False,
         default="ditto",

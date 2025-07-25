@@ -522,7 +522,7 @@ async def test_nnunet_pfl_mr_mtl_config_3d(tolerance: float) -> None:
         client_python_path="examples.nnunet_pfl_example.client",
         config_path="tests/smoke_tests/nnunet_config_3d.yaml",
         dataset_path="examples/datasets/nnunet",
-        additional_client_args={"--personalized-strategy": "mr_mtl"},
+        additional_client_args={"--personalized_strategy": "mr_mtl"},
         tolerance=tolerance,
         read_logs_timeout=450,
     )
@@ -538,7 +538,7 @@ async def test_nnunet_pfl_mr_mtl_config_2d(tolerance: float) -> None:
         client_python_path="examples.nnunet_pfl_example.client",
         config_path="tests/smoke_tests/nnunet_config_2d.yaml",
         dataset_path="examples/datasets/nnunet",
-        additional_client_args={"--personalized-strategy": "mr_mtl"},
+        additional_client_args={"--personalized_strategy": "mr_mtl"},
         tolerance=tolerance,
         read_logs_timeout=450,
     )
