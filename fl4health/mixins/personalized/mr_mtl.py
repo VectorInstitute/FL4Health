@@ -25,13 +25,14 @@ from fl4health.utils.typing import (
 @runtime_checkable
 class MrMtlPersonalizedProtocol(AdaptiveDriftConstrainedProtocol, Protocol):
     initial_global_model: torch.nn.Module | None
+    initial_global_tensors: list[torch.Tensor]
 
     def get_global_model(self, config: Config) -> nn.Module:
         pass  # pragma: no cover
 
 
 class MrMtlPersonalizedMixin(AdaptiveDriftConstrainedMixin):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self: MrMtlPersonalizedProtocol, *args: Any, **kwargs: Any) -> None:
         """
         This client implements the MR-MTL algorithm from MR-MTL: On Privacy and Personalization in Cross-Silo
         Federated Learning. The idea is that we want to train personalized versions of the global model for each
@@ -48,7 +49,7 @@ class MrMtlPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         self.initial_global_model: torch.nn.Module | None = None
         self.initial_global_tensors: list[torch.Tensor] = []
 
-        super().__init__(*args, **kwargs)  # type: ignore[misc]
+        super().__init__(*args, **kwargs)
 
     def get_global_model(self: MrMtlPersonalizedProtocol, config: Config) -> nn.Module:
         """
