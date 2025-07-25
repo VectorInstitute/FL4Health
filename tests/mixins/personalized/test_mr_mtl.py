@@ -62,6 +62,9 @@ def test_init() -> None:
 def test_get_optimizer(get_global_model: MagicMock) -> None:
     # setup client
     client = _TestMrMtlPersonalizedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    assert client.initial_global_model is None
+    mock_global_model = "mock-global-model"
+    get_global_model.return_value = mock_global_model
     client.model = torch.nn.Linear(5, 5)
     client.optimizers = {"local": torch.optim.SGD(client.model.parameters(), lr=0.0001)}
     client.train_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
@@ -74,3 +77,4 @@ def test_get_optimizer(get_global_model: MagicMock) -> None:
 
     # assert
     get_global_model.assert_called_once_with(mock_config)
+    assert client.initial_global_model == mock_global_model
