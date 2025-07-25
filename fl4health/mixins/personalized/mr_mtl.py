@@ -100,7 +100,7 @@ class MrMtlPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         """
         if self.initial_global_model is None:
             # try set it here
-            self.initial_global_model = self.get_global_model(config)  # is this the same config?
+            self.initial_global_model = self.get_global_model(config)
             log(
                 INFO,
                 f"initial_global_model set: {type(self.initial_global_model).__name__} within `get_optimizer`",

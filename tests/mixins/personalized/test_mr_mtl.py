@@ -1,8 +1,10 @@
 from contextlib import nullcontext as no_error_raised
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 import torch
+from flwr.common.typing import Config
 
 # from torch.testing import assert_close
 from torch.utils.data import DataLoader, TensorDataset
@@ -54,3 +56,21 @@ def test_init() -> None:
 
     assert isinstance(client, FlexibleClientProtocol)
     assert isinstance(client, MrMtlPersonalizedProtocol)
+
+
+@patch.object(_TestMrMtlPersonalizedClient, "get_global_model")
+def test_get_optimizer(get_global_model: MagicMock) -> None:
+    # setup client
+    client = _TestMrMtlPersonalizedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    client.model = torch.nn.Linear(5, 5)
+    client.optimizers = {"local": torch.optim.SGD(client.model.parameters(), lr=0.0001)}
+    client.train_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
+    client.val_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))
+    client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
+
+    # act
+    mock_config: Config = {}
+    _ = client.get_optimizer(mock_config)
+
+    # assert
+    get_global_model.assert_called_once_with(mock_config)
