@@ -1,22 +1,25 @@
 from collections.abc import Sequence
-from logging import ERROR, INFO
+from logging import ERROR
 from pathlib import Path
 
 import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, Scalar
+from torch import nn
 
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointAndStateModule
 from fl4health.clients.mr_mtl_client import MrMtlClient
-from fl4health.losses.mkmmd_loss import MkMmdLoss
+from fl4health.losses.deep_mmd_loss import DeepMmdLoss
 from fl4health.metrics.base_metrics import Metric
 from fl4health.model_bases.feature_extractor_buffer import FeatureExtractorBuffer
 from fl4health.reporting.base_reporter import BaseReporter
-from fl4health.utils.losses import LossMeterType, TrainingLosses
+from fl4health.utils.client import clone_and_freeze_model
+from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
+from fl4health.utils.random import restore_random_state, save_random_state
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
-class MrMtlMkMmdClient(MrMtlClient):
+class MrMtlDeepMmdClient(MrMtlClient):
     def __init__(
         self,
         data_path: Path,
@@ -27,16 +30,15 @@ class MrMtlMkMmdClient(MrMtlClient):
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
         client_name: str | None = None,
-        mkmmd_loss_weight: float = 10.0,
-        feature_extraction_layers: Sequence[str] | None = None,
-        feature_l2_norm_weight: float = 0.0,
-        beta_global_update_interval: int = 20,
+        deep_mmd_loss_weight: float = 10.0,
+        feature_extraction_layers_with_size: dict[str, int] | None = None,
+        mmd_kernel_train_interval: int = 20,
         num_accumulating_batches: int | None = None,
     ) -> None:
         """
-        This client implements the MK-MMD loss function in the MR-MTL framework. The MK-MMD loss is a measure of the
-        distance between the distributions of the features of the local model and initial global model of each round.
-        The MK-MMD loss is added to the local loss to penalize the local model for drifting away from the initial
+        This client implements the Deep MMD loss function in the MR-MTL framework. The Deep MMD loss is a measure of
+        the distance between the distributions of the features of the local model and initial global model of each
+        round. The Deep MMD loss is added to the local loss to penalize the local model for drifting away from the
         global model.
 
         Args:
@@ -57,18 +59,16 @@ class MrMtlMkMmdClient(MrMtlClient):
             client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
-            mkmmd_loss_weight (float, optional): weight applied to the MK-MMD loss. Defaults to 10.0.
-            feature_extraction_layers (Sequence[str] | None, optional): List of layers from which to extract
-                and flatten features. Defaults to None.
-            feature_l2_norm_weight (float, optional): weight applied to the L2 norm of the features.
-                Defaults to 0.0.
-            beta_global_update_interval (int, optional): interval at which to update the betas for the MK-MMD loss. If
-                set to above 0, the betas will be updated based on whole distribution of latent features of data with
-                the given update interval. If set to 0, the betas will not be updated. If set to -1, the betas will be
-                updated after each individual batch based on only that individual batch. Defaults to 20.
+            deep_mmd_loss_weight (float, optional): weight applied to the Deep MMD loss. Defaults to 10.0.
+            feature_extraction_layers_with_size (dict[str, int] | None, optional): Dictionary of layers to extract
+                features from them and their respective feature size. Defaults to None.
+            mmd_kernel_train_interval (int, optional): interval at which to train and update the Deep MMD kernel. If
+                set to above 0, the kernel will be train based on whole distribution of latent features of data with
+                the given train interval. If set to 0, the kernel will not be trained. If set to -1, the kernel will
+                be trained after each individual batch based on only that individual batch. Defaults to 20.
             num_accumulating_batches (int, optional): Number of batches to accumulate features to approximate the whole
-                distribution of the latent features for updating beta of the MK-MMD loss. This parameter is only used
-                if ``beta_global_update_interval`` is set to larger than 0. Defaults to None.
+                distribution of the latent features for updating Deep MMD kernel. This parameter is only used
+                if ``mmd_kernel_train_interval`` is set to larger than 0. Defaults to None.
         """
         super().__init__(
             data_path=data_path,
@@ -80,38 +80,33 @@ class MrMtlMkMmdClient(MrMtlClient):
             progress_bar=progress_bar,
             client_name=client_name,
         )
-        self.mkmmd_loss_weight = mkmmd_loss_weight
-        if self.mkmmd_loss_weight == 0:
+        self.deep_mmd_loss_weight = deep_mmd_loss_weight
+        if self.deep_mmd_loss_weight == 0:
             log(
                 ERROR,
-                "MK-MMD loss weight is set to 0. As MK-MMD loss will not be computed, ",
+                "Deep MMD loss weight is set to 0. As Deep MMD loss will not be computed, ",
                 "please use vanilla MrMtlClient instead.",
             )
 
-        self.feature_l2_norm_weight = feature_l2_norm_weight
-        self.beta_global_update_interval = beta_global_update_interval
-        if self.beta_global_update_interval == -1:
-            log(INFO, "Betas for the MK-MMD loss will be updated for each individual batch.")
-        elif self.beta_global_update_interval == 0:
-            log(INFO, "Betas for the MK-MMD loss will not be updated.")
-        elif self.beta_global_update_interval > 0:
-            log(INFO, f"Betas for the MK-MMD loss will be updated every {self.beta_global_update_interval} steps.")
-        else:
-            raise ValueError("Invalid beta_global_update_interval. It should be either -1, 0 or a positive integer.")
-        if feature_extraction_layers:
-            # By default, all of the features should be flattened for the MK-MMD loss
-            self.flatten_feature_extraction_layers = dict.fromkeys(feature_extraction_layers, True)
-        else:
-            self.flatten_feature_extraction_layers = {}
-        self.mkmmd_losses: dict[str, MkMmdLoss] = {}
-        for layer in self.flatten_feature_extraction_layers:
-            self.mkmmd_losses[layer] = MkMmdLoss(
-                device=self.device, minimize_type_two_error=True, normalize_features=True, layer_name=layer
+        if feature_extraction_layers_with_size is None:
+            feature_extraction_layers_with_size = {}
+        self.flatten_feature_extraction_layers = dict.fromkeys(feature_extraction_layers_with_size.keys(), True)
+        self.deep_mmd_losses: dict[str, DeepMmdLoss] = {}
+        # Save the random state to be restored after initializing the Deep MMD loss layers.
+        random_state, numpy_state, torch_state = save_random_state()
+        for layer, feature_size in feature_extraction_layers_with_size.items():
+            self.deep_mmd_losses[layer] = DeepMmdLoss(
+                device=self.device,
+                input_size=feature_size,
             ).to(self.device)
+        # Restore the random state after initializing the Deep MMD loss layers. This is to ensure that the random state
+        # would not change after initializing the Deep MMD loss.
+        restore_random_state(random_state, numpy_state, torch_state)
 
         self.local_feature_extractor: FeatureExtractorBuffer
         self.initial_global_feature_extractor: FeatureExtractorBuffer
         self.num_accumulating_batches = num_accumulating_batches
+        self.mmd_kernel_train_interval = mmd_kernel_train_interval
 
     def setup_client(self, config: Config) -> None:
         super().setup_client(config)
@@ -130,26 +125,34 @@ class MrMtlMkMmdClient(MrMtlClient):
         )
         # Register hooks to extract features from the initial global model if not already registered
         self.initial_global_feature_extractor._maybe_register_hooks()
+        # Enable training of Deep MMD loss layers if the mmd_kernel_train_interval is set to -1
+        # meaning that the betas will be updated after each individual batch based on only that
+        # individual batch
+        if self.mmd_kernel_train_interval == -1:
+            for layer in self.flatten_feature_extraction_layers:
+                self.deep_mmd_losses[layer].training = True
 
     def _should_optimize_betas(self, step: int) -> bool:
-        step_at_interval = (step - 1) % self.beta_global_update_interval == 0
+        step_at_interval = (step - 1) % self.mmd_kernel_train_interval == 0
         valid_components_present = self.initial_global_model is not None
-        # If the mkmmd loss doesn't matter, we don't bother optimizing betas
-        weighted_mkmmd_loss = self.mkmmd_loss_weight != 0
-        return step_at_interval and valid_components_present and weighted_mkmmd_loss
+        # If the Deep MMD loss doesn't matter, we don't bother optimizing betas
+        weighted_deep_mmd_loss = self.deep_mmd_loss_weight != 0
+        return step_at_interval and valid_components_present and weighted_deep_mmd_loss
 
     def update_after_step(self, step: int, current_round: int | None = None) -> None:
-        if self.beta_global_update_interval > 0 and self._should_optimize_betas(step):
+        if self.mmd_kernel_train_interval > 0 and self._should_optimize_betas(step):
             # Get the feature distribution of the local and initial global features with evaluation
             # mode
             local_distributions, initial_global_distributions = self.update_buffers(
                 self.model, self.initial_global_model
             )
-            # Update betas for the MK-MMD loss based on gathered features during training
-            for layer, layer_mkmmd_loss in self.mkmmd_losses.items():
-                layer_mkmmd_loss.betas = layer_mkmmd_loss.optimize_betas(
-                    x=local_distributions[layer], y=initial_global_distributions[layer], lambda_m=1e-5
-                )
+            # As we set the training mode of the Deep MMD loss layers to True, we train the
+            # kernel of the Deep MMD loss based on gathered features in the buffer and compute the
+            # Deep MMD loss
+            for layer, layer_deep_mmd_loss in self.deep_mmd_losses.items():
+                layer_deep_mmd_loss.training = True
+                layer_deep_mmd_loss(local_distributions[layer], initial_global_distributions[layer])
+                layer_deep_mmd_loss.training = False
         super().update_after_step(step)
 
     def update_buffers(
@@ -177,8 +180,8 @@ class MrMtlMkMmdClient(MrMtlClient):
         initial_state_local_model = local_model.training
 
         # Set local model to evaluation mode, as we don't want to create a computational graph
-        # for the local model when populating the local buffer with features to compute optimal
-        # betas for the MK-MMD loss
+        # for the local model when populating the local buffer with features to train Deep MMD
+        # kernel
         local_model.eval()
 
         # Make sure the local model is in evaluation mode before populating the local buffer
@@ -227,20 +230,15 @@ class MrMtlMkMmdClient(MrMtlClient):
 
         Returns:
             tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains a dictionary of
-            predictions indexed by name and the second element contains intermediate activations indexed by name. By
-            passing features, we can compute all the losses. All predictions included in dictionary will by default
-            be used to compute metrics separately.
-
-        Raises:
-            TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model's
-                forward method.
-            ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
-                forward.
+            predictions indexed by name and the second element contains intermediate activations indexed by name.
+            By passing features, we can compute all the losses. All predictions included in dictionary will by
+            default be used to compute metrics separately.
         """
+        # We use features from initial_global_model to compute the Deep MMD loss.
         preds = self.model(input)
         features = self.local_feature_extractor.get_extracted_features()
-        if self.mkmmd_loss_weight != 0:
-            # Compute the features of the initial_global_model using register hooks in the update_before_train method
+        if self.deep_mmd_loss_weight != 0:
+            # Compute the features of the initial_global_model
             self.initial_global_model(input)
             initial_global_features = self.initial_global_feature_extractor.get_extracted_features()
             for key, initial_global_feature in initial_global_features.items():
@@ -256,6 +254,17 @@ class MrMtlMkMmdClient(MrMtlClient):
         # each time.
         self.local_feature_extractor._maybe_register_hooks()
 
+    def validate(self, include_losses_in_metrics: bool = False) -> tuple[float, dict[str, Scalar]]:
+        """
+        Validate the current model on the entire validation dataset.
+
+        Returns:
+            tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
+        """
+        for layer in self.flatten_feature_extraction_layers:
+            self.deep_mmd_losses[layer].training = False
+        return super().validate(include_losses_in_metrics)
+
     def compute_training_loss(
         self,
         preds: TorchPredType,
@@ -263,11 +272,10 @@ class MrMtlMkMmdClient(MrMtlClient):
         target: TorchTargetType,
     ) -> TrainingLosses:
         """
-        Computes training losses given predictions of the global and local models and ground truth data.
-        For the local model we add to the vanilla loss function by including Ditto penalty loss which is the
-        :math:`\\ell^2` inner product between the initial global model weights and weights of the local model. This is
-        stored in backward The loss to optimize the global model is stored in the additional losses dictionary
-        under “global_loss”.
+        Computes training losses given predictions of the client model and ground truth data.
+        For the local model we add to the vanilla loss function by including Mean Regularized (MR) penalty loss
+        which is the :math:`\\ell^2` inner product between the initial global model weights and weights of the
+        current model. 
 
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in
@@ -277,14 +285,16 @@ class MrMtlMkMmdClient(MrMtlClient):
 
         Returns:
             TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed by
-            name. Additional losses includes each loss component and the global model loss tensor.
+            name.
         """
-        for layer_loss_module in self.mkmmd_losses.values():
-            assert layer_loss_module.training
-        # Check that both models are in training mode
-        assert self.model.training
+        for layer_loss_module in self.deep_mmd_losses.values():
+            if self.mmd_kernel_train_interval == -1:
+                assert layer_loss_module.training
+            else:
+                assert not layer_loss_module.training
+        # Check that the initial global model isn't in training mode and that the local model is in training mode
+        assert not self.initial_global_model.training and self.model.training
 
-        # local loss is stored in loss, global model loss is stored in additional losses.
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
 
         # Setting the adaptation loss to that of the local model, as its performance should dictate whether more or
@@ -297,16 +307,36 @@ class MrMtlMkMmdClient(MrMtlClient):
         additional_losses["penalty_loss"] = penalty_loss.clone()
         total_loss = loss + penalty_loss
 
-        # Add MK-MMD loss based on computed features during training
-        if self.mkmmd_loss_weight != 0:
-            total_loss += additional_losses["mkmmd_loss_total"]
-
-        if self.feature_l2_norm_weight != 0:
-            total_loss += additional_losses["feature_l2_norm_loss"]
+        # Add Deep MMD loss based on computed features during training
+        if self.deep_mmd_loss_weight != 0:
+            total_loss += additional_losses["deep_mmd_loss_total"]
 
         additional_losses["total_loss"] = total_loss.clone()
 
         return TrainingLosses(backward=total_loss, additional_losses=additional_losses)
+
+    def compute_evaluation_loss(
+        self,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
+    ) -> EvaluationLosses:
+        """
+        Computes evaluation loss given predictions (and potentially features) of the model and ground truth data.
+
+        Args:
+            preds (TorchPredType): Prediction(s) of the model(s) indexed by name. Anything stored in preds will be
+                used to compute metrics.
+            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target: (TorchTargetType): Ground truth data to evaluate predictions against.
+
+        Returns:
+            EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
+            indexed by name.
+        """
+        for layer_loss_module in self.deep_mmd_losses.values():
+            assert not layer_loss_module.training
+        return super().compute_evaluation_loss(preds, features, target)
 
     def compute_loss_and_additional_losses(
         self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
@@ -322,33 +352,22 @@ class MrMtlMkMmdClient(MrMtlClient):
         Returns:
             tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
 
-            - The tensor for the loss.
+            - The tensor for the loss
             - A dictionary of additional losses with their names and values, or None if there are no additional losses.
         """
         assert "prediction" in preds
-        # Compute model loss + MR-MTL constraint term
         loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)
-
+        
         if additional_losses is None:
             additional_losses = {"loss": loss}
-
-        if self.mkmmd_loss_weight != 0:
-            if self.beta_global_update_interval == -1:
-                # Update betas for the MK-MMD loss based on computed features during training
-                for layer, layer_mkmmd_loss in self.mkmmd_losses.items():
-                    layer_mkmmd_loss.betas = layer_mkmmd_loss.optimize_betas(
-                        x=features[layer], y=features[" ".join(["init_global", layer])], lambda_m=1e-5
-                    )
-            # Compute MK-MMD loss
-            total_mkmmd_loss = torch.tensor(0.0, device=self.device)
-            for layer, layer_mkmmd_loss in self.mkmmd_losses.items():
-                mkmmd_loss = layer_mkmmd_loss(features[layer], features[" ".join(["init_global", layer])])
-                additional_losses["_".join(["mkmmd_loss", layer])] = mkmmd_loss.clone()
-                total_mkmmd_loss += mkmmd_loss
-            additional_losses["mkmmd_loss_total"] = self.mkmmd_loss_weight * total_mkmmd_loss
-        if self.feature_l2_norm_weight != 0:
-            # Compute the average L2 norm of the features over the batch
-            feature_l2_norm_loss = torch.linalg.norm(features["features"]) / len(features["features"])
-            additional_losses["feature_l2_norm_loss"] = self.feature_l2_norm_weight * feature_l2_norm_loss
+        
+        if self.deep_mmd_loss_weight != 0:
+            # Compute Deep MMD loss based on computed features during training
+            total_deep_mmd_loss = torch.tensor(0.0, device=self.device)
+            for layer, layer_deep_mmd_loss in self.deep_mmd_losses.items():
+                deep_mmd_loss = layer_deep_mmd_loss(features[layer], features[" ".join(["init_global", layer])])
+                additional_losses["_".join(["deep_mmd_loss", layer])] = deep_mmd_loss.clone()
+                total_deep_mmd_loss += deep_mmd_loss
+            additional_losses["deep_mmd_loss_total"] = self.deep_mmd_loss_weight * total_deep_mmd_loss
 
         return loss, additional_losses
