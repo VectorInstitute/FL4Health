@@ -346,6 +346,7 @@
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.mixins.adaptive_drift_constrained.html">fl4health.mixins.adaptive_drift_constrained module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.mixins.base.html">fl4health.mixins.base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.mixins.core_protocols.html">fl4health.mixins.core_protocols module</a></li>
 </ul>
 </li>
@@ -508,7 +509,6 @@
           <h1>Source code for fl4health.mixins.adaptive_drift_constrained</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;AdaptiveDriftConstrainedMixin.&quot;&quot;&quot;</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">logging</span><span class="w"> </span><span class="kn">import</span> <span class="n">INFO</span><span class="p">,</span> <span class="n">WARNING</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">runtime_checkable</span>
 
@@ -518,7 +518,8 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.clients.flexible.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexibleClient</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.losses.weight_drift_loss</span><span class="w"> </span><span class="kn">import</span> <span class="n">WeightDriftLoss</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.mixins.core_protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexibleClientProtocol</span><span class="p">,</span> <span class="n">FlexibleClientProtocolPreSetup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.mixins.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseFlexibleMixin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.mixins.core_protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexibleClientProtocol</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.parameter_exchange.full_exchanger</span><span class="w"> </span><span class="kn">import</span> <span class="n">FullParameterExchanger</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.parameter_exchange.packing_exchanger</span><span class="w"> </span><span class="kn">import</span> <span class="n">FullParameterExchangerWithPacking</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">fl4health.parameter_exchange.parameter_exchanger_base</span><span class="w"> </span><span class="kn">import</span> <span class="n">ParameterExchanger</span>
@@ -551,10 +552,10 @@
 
 <div class="viewcode-block" id="AdaptiveDriftConstrainedMixin">
 <a class="viewcode-back" href="../../../reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.AdaptiveDriftConstrainedMixin">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">AdaptiveDriftConstrainedMixin</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AdaptiveDriftConstrainedMixin</span><span class="p">(</span><span class="n">BaseFlexibleMixin</span><span class="p">):</span>
 <div class="viewcode-block" id="AdaptiveDriftConstrainedMixin.__init__">
 <a class="viewcode-back" href="../../../reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">AdaptiveDriftConstrainedProtocol</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Adaptive Drift Constrained Mixin.</span>
 
@@ -564,52 +565,16 @@
 <span class="sd">        **NOTE**: Rather than using ``AdaptiveDriftConstraintClient``, if a client subclasses</span>
 <span class="sd">        ``FlexibleClient``, than this mixin could be used on that subclass to implement the</span>
 <span class="sd">        adaptive drift constraint.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            RuntimeError: When the inheriting class does not satisfy ``FlexibleClientProtocolPreSetup``.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># Initialize mixin-specific attributes with default values</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">loss_for_adaptation</span> <span class="o">=</span> <span class="mf">0.1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">drift_penalty_tensors</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">drift_penalty_weight</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="c1"># Call parent&#39;s init</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-            <span class="c1"># if a parent class doesn&#39;t take args/kwargs</span>
-            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="c1"># set penalty_loss_function</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">FlexibleClientProtocolPreSetup</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;This object needs to satisfy `FlexibleClientProtocolPreSetup`.&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">penalty_loss_function</span> <span class="o">=</span> <span class="n">WeightDriftLoss</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span></div>
 
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;This method is called when a class inherits from AdaptiveDriftConstrainedMixin.&quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init_subclass__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-        <span class="c1"># Skip check for other mixins</span>
-        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;Mixin&quot;</span><span class="p">):</span>
-            <span class="k">return</span>
-
-        <span class="c1"># Skip validation for dynamically created classes</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;_dynamically_created&quot;</span><span class="p">):</span>
-            <span class="k">return</span>
-
-        <span class="c1"># Check at class definition time if the parent class satisfies FlexibleClientProtocol</span>
-        <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__bases__</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">base</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">AdaptiveDriftConstrainedMixin</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">FlexibleClient</span><span class="p">):</span>
-                <span class="k">return</span>
-
-        <span class="c1"># If we get here, no compatible base was found</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Class </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> inherits from AdaptiveDriftConstrainedMixin but none of its other &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;base classes is a FlexibleClient. This may cause runtime errors.&quot;</span>
-        <span class="p">)</span>
-        <span class="n">log</span><span class="p">(</span><span class="n">WARNING</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="ne">RuntimeWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
 <div class="viewcode-block" id="AdaptiveDriftConstrainedMixin.get_parameters">
 <a class="viewcode-back" href="../../../reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.get_parameters">[docs]</a>

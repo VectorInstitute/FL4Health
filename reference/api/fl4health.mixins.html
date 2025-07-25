@@ -348,6 +348,7 @@
 </ul>
 </li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.mixins.adaptive_drift_constrained.html">fl4health.mixins.adaptive_drift_constrained module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.mixins.base.html">fl4health.mixins.base module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.mixins.core_protocols.html">fl4health.mixins.core_protocols module</a></li>
 </ul>
 </li>
@@ -513,7 +514,7 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="fl4health.mixins.AdaptiveDriftConstrainedMixin">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">AdaptiveDriftConstrainedMixin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/adaptive_drift_constrained.html#AdaptiveDriftConstrainedMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.AdaptiveDriftConstrainedMixin" title="Link to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="fl4health.mixins.base.html#fl4health.mixins.base.BaseFlexibleMixin" title="fl4health.mixins.base.BaseFlexibleMixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseFlexibleMixin</span></code></a></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="fl4health.mixins.AdaptiveDriftConstrainedMixin.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/mixins/adaptive_drift_constrained.html#AdaptiveDriftConstrainedMixin.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.mixins.AdaptiveDriftConstrainedMixin.__init__" title="Link to this definition">¶</a></dt>
@@ -523,11 +524,6 @@ losses via a constrained adaptive drift.</p>
 <p><strong>NOTE</strong>: Rather than using <code class="docutils literal notranslate"><span class="pre">AdaptiveDriftConstraintClient</span></code>, if a client subclasses
 <code class="docutils literal notranslate"><span class="pre">FlexibleClient</span></code>, than this mixin could be used on that subclass to implement the
 adaptive drift constraint.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/exceptions.html#RuntimeError" title="(in Python v3.10)"><strong>RuntimeError</strong></a> – When the inheriting class does not satisfy <code class="docutils literal notranslate"><span class="pre">FlexibleClientProtocolPreSetup</span></code>.</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -704,6 +700,7 @@ on the server side.</p>
 <li class="toctree-l2"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.MrMtlPersonalizedProtocol"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.MrMtlPersonalizedProtocol.get_global_model"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.get_global_model()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.MrMtlPersonalizedProtocol.initial_global_model"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.initial_global_model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.MrMtlPersonalizedProtocol.initial_global_tensors"><code class="docutils literal notranslate"><span class="pre">MrMtlPersonalizedProtocol.initial_global_tensors</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="fl4health.mixins.personalized.html#fl4health.mixins.personalized.PersonalizedMode"><code class="docutils literal notranslate"><span class="pre">PersonalizedMode</span></code></a><ul>
@@ -761,6 +758,13 @@ on the server side.</p>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.adaptive_drift_constrained.apply_adaptive_drift_to_client"><code class="docutils literal notranslate"><span class="pre">apply_adaptive_drift_to_client()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="fl4health.mixins.base.html">fl4health.mixins.base module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.mixins.base.html#fl4health.mixins.base.BaseFlexibleMixin"><code class="docutils literal notranslate"><span class="pre">BaseFlexibleMixin</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.mixins.base.html#fl4health.mixins.base.BaseFlexibleMixin.__init__"><code class="docutils literal notranslate"><span class="pre">BaseFlexibleMixin.__init__()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="fl4health.mixins.core_protocols.html">fl4health.mixins.core_protocols module</a><ul>
