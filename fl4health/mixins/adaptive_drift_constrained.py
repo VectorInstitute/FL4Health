@@ -1,6 +1,5 @@
 """AdaptiveDriftConstrainedMixin."""
 
-import warnings
 from logging import INFO, WARNING
 from typing import Any, Protocol, runtime_checkable
 
@@ -10,7 +9,8 @@ from flwr.common.typing import Config, NDArrays
 
 from fl4health.clients.flexible.base import FlexibleClient
 from fl4health.losses.weight_drift_loss import WeightDriftLoss
-from fl4health.mixins.core_protocols import FlexibleClientProtocol, FlexibleClientProtocolPreSetup
+from fl4health.mixins.base import BaseFlexibleMixin
+from fl4health.mixins.core_protocols import FlexibleClientProtocol
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -32,8 +32,8 @@ class AdaptiveDriftConstrainedProtocol(FlexibleClientProtocol, Protocol):
     def setup_client_and_return_all_model_parameters(self, config: Config) -> NDArrays: ...
 
 
-class AdaptiveDriftConstrainedMixin:
-    def __init__(self, *args: Any, **kwargs: Any):
+class AdaptiveDriftConstrainedMixin(BaseFlexibleMixin):
+    def __init__(self: AdaptiveDriftConstrainedProtocol, *args: Any, **kwargs: Any):
         """
         Adaptive Drift Constrained Mixin.
 
@@ -43,51 +43,15 @@ class AdaptiveDriftConstrainedMixin:
         **NOTE**: Rather than using ``AdaptiveDriftConstraintClient``, if a client subclasses
         ``FlexibleClient``, than this mixin could be used on that subclass to implement the
         adaptive drift constraint.
-
-        Raises:
-            RuntimeError: When the inheriting class does not satisfy ``FlexibleClientProtocolPreSetup``.
         """
         # Initialize mixin-specific attributes with default values
         self.loss_for_adaptation = 0.1
         self.drift_penalty_tensors = None
         self.drift_penalty_weight = None
 
-        # Call parent's init
-        try:
-            super().__init__(*args, **kwargs)
-        except TypeError:
-            # if a parent class doesn't take args/kwargs
-            super().__init__()
+        super().__init__(*args, **kwargs)
 
-        # set penalty_loss_function
-        if not isinstance(self, FlexibleClientProtocolPreSetup):
-            raise RuntimeError("This object needs to satisfy `FlexibleClientProtocolPreSetup`.")
         self.penalty_loss_function = WeightDriftLoss(self.device)
-
-    def __init_subclass__(cls, **kwargs: Any):
-        """This method is called when a class inherits from AdaptiveDriftConstrainedMixin."""
-        super().__init_subclass__(**kwargs)
-
-        # Skip check for other mixins
-        if cls.__name__.endswith("Mixin"):
-            return
-
-        # Skip validation for dynamically created classes
-        if hasattr(cls, "_dynamically_created"):
-            return
-
-        # Check at class definition time if the parent class satisfies FlexibleClientProtocol
-        for base in cls.__bases__:
-            if base is not AdaptiveDriftConstrainedMixin and issubclass(base, FlexibleClient):
-                return
-
-        # If we get here, no compatible base was found
-        msg = (
-            f"Class {cls.__name__} inherits from AdaptiveDriftConstrainedMixin but none of its other "
-            f"base classes is a FlexibleClient. This may cause runtime errors."
-        )
-        log(WARNING, msg)
-        warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
     def get_parameters(self: AdaptiveDriftConstrainedProtocol, config: Config) -> NDArrays:
         """

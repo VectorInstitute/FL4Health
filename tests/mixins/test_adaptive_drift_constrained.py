@@ -1,4 +1,4 @@
-import warnings
+from contextlib import nullcontext as no_error_raised
 from logging import INFO
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -43,19 +43,8 @@ def test_init() -> None:
     assert isinstance(client, AdaptiveDriftConstrainedProtocol)
 
 
-# Create an invalid adapted client such as inheriting the Mixin but nothing else.
-# Since invalid it will raise a warning—see test_subclass_checks_raise_warning
-@pytest.mark.filterwarnings("ignore::RuntimeWarning")
-def test_init_raises_value_error_when_basic_client_protocol_not_satisfied() -> None:
-    class _InvalidTestAdaptedClient(AdaptiveDriftConstrainedMixin):
-        pass
-
-    with pytest.raises(RuntimeError, match="This object needs to satisfy `FlexibleClientProtocolPreSetup`."):
-        _InvalidTestAdaptedClient(data_path=Path(""), metrics=[Accuracy()])
-
-
-def test_subclass_checks_raise_no_warning() -> None:
-    with warnings.catch_warnings(record=True) as recorded_warnings:
+def test_subclass_checks_raise_no_error() -> None:
+    with no_error_raised():
 
         class _TestInheritanceMixin(AdaptiveDriftConstrainedMixin, _TestFlexibleClient):
             """Subclass should skip validation if is itself a Mixin that inherits AdaptiveDriftConstrainedMixin."""
@@ -67,15 +56,13 @@ def test_subclass_checks_raise_no_warning() -> None:
 
             _dynamically_created = True
 
-    assert len(recorded_warnings) == 0
 
-
-def test_subclass_checks_raise_warning() -> None:
+def test_subclass_checks_raise_warning_error() -> None:
     msg = (
-        "Class _InvalidSubclass inherits from AdaptiveDriftConstrainedMixin but none of its other "
-        "base classes is a FlexibleClient. This may cause runtime errors."
+        "Class _InvalidSubclass inherits from BaseFlexibleMixin but none of its other "
+        "base classes implement FlexibleClient."
     )
-    with pytest.warns(RuntimeWarning, match=msg):
+    with pytest.raises(RuntimeError, match=msg):
 
         class _InvalidSubclass(AdaptiveDriftConstrainedMixin):
             """Invalid subclass that warns the user that it expects this class to be mixed with a FlexibleClient."""

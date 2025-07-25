@@ -1,7 +1,6 @@
 """Ditto Personalized Mixin."""
 
 import copy
-import warnings
 from logging import ERROR, INFO, WARN
 from typing import Any, Protocol, cast, runtime_checkable
 
@@ -11,12 +10,10 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch import nn
 from torch.optim import Optimizer
 
-from fl4health.clients.flexible.base import FlexibleClient
 from fl4health.mixins.adaptive_drift_constrained import (
     AdaptiveDriftConstrainedMixin,
     AdaptiveDriftConstrainedProtocol,
 )
-from fl4health.mixins.core_protocols import FlexibleClientProtocolPreSetup
 from fl4health.mixins.personalized.utils import ensure_protocol_compliance
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.config import narrow_dict_type
@@ -48,7 +45,7 @@ class DittoPersonalizedProtocol(AdaptiveDriftConstrainedProtocol, Protocol):
 
 
 class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(self: DittoPersonalizedProtocol, *args: Any, **kwargs: Any) -> None:
         """
         This mixin implements the Ditto algorithm from Ditto: Fair and Robust Federated Learning Through
         Personalization. This mixin inherits from the ``AdaptiveDriftConstrainedMixin``, and like that mixin,
@@ -69,40 +66,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         # Initialize mixin-specific attributes
         self.global_model: torch.nn.Module | None = None
 
-        # Call parent's init
-        try:
-            super().__init__(*args, **kwargs)
-        except TypeError:
-            # if a parent class doesn't take args/kwargs
-            super().__init__()
-
-        if not isinstance(self, FlexibleClientProtocolPreSetup):
-            raise RuntimeError("This object needs to satisfy `FlexibleClientProtocolPreSetup`.")  # pragma: no cover
-
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        """This method is called when a class inherits from AdaptiveMixin."""
-        super().__init_subclass__(**kwargs)
-
-        # Skip check for other mixins
-        if cls.__name__.endswith("Mixin"):
-            return
-
-        # Skip validation for dynamically created classes
-        if hasattr(cls, "_dynamically_created"):
-            return
-
-        # Check at class definition time if the parent class satisfies FlexibleClientProtocol
-        for base in cls.__bases__:
-            if base is not DittoPersonalizedMixin and issubclass(base, FlexibleClient):
-                return
-
-        # If we get here, no compatible base was found
-        msg = (
-            f"Class {cls.__name__} inherits from DittoPersonalizedMixin but none of its other "
-            f"base classes implement FlexibleClient. This may cause runtime errors."
-        )
-        log(WARN, msg)
-        warnings.warn(msg, RuntimeWarning, stacklevel=2)
+        super().__init__(*args, **kwargs)
 
     def safe_global_model(self: DittoPersonalizedProtocol) -> nn.Module:
         """

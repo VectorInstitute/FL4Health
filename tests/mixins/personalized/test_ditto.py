@@ -1,5 +1,4 @@
-import re
-import warnings
+from contextlib import nullcontext as no_error_raised
 from logging import INFO
 from pathlib import Path
 from unittest.mock import MagicMock, _Call, patch
@@ -32,10 +31,6 @@ class _TestDittoedClient(DittoPersonalizedMixin, _TestFlexibleClient):
     pass
 
 
-class _TestInvalidDittoedClient(DittoPersonalizedMixin, _DummyParent):
-    pass
-
-
 def test_init() -> None:
     # setup client
     client = _TestDittoedClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
@@ -51,19 +46,8 @@ def test_init() -> None:
     assert isinstance(client, DittoPersonalizedProtocol)
 
 
-# Create an invalid adapted client such as inheriting the Mixin but nothing else.
-# Since invalid it will raise a warning—see test_subclass_checks_raise_warning
-@pytest.mark.filterwarnings("ignore::RuntimeWarning")
-def test_init_raises_value_error_when_basic_client_protocol_not_satisfied() -> None:
-    class _InvalidTestDittoClient(DittoPersonalizedMixin):
-        pass
-
-    with pytest.raises(RuntimeError, match="This object needs to satisfy `FlexibleClientProtocolPreSetup`."):
-        _InvalidTestDittoClient(data_path=Path(""), metrics=[Accuracy()])
-
-
-def test_subclass_checks_raise_no_warning() -> None:
-    with warnings.catch_warnings(record=True) as recorded_warnings:
+def test_subclass_checks_raise_no_error() -> None:
+    with no_error_raised():
 
         class _TestInheritanceMixin(DittoPersonalizedMixin, _TestFlexibleClient):
             """Subclass should skip validation if is itself a Mixin that inherits DittoPersonalizedMixin."""
@@ -73,16 +57,15 @@ def test_subclass_checks_raise_no_warning() -> None:
         # attaches _dynamically_created attr
         _ = make_it_personal(_TestFlexibleClient, PersonalizedMode.DITTO)
 
-    assert len(recorded_warnings) == 0
 
+def test_subclass_checks_raise_error() -> None:
+    msg = (
+        "Class _TestInvalidDittoedClient inherits from BaseFlexibleMixin but none of its other "
+        "base classes implement FlexibleClient."
+    )
+    with pytest.raises(RuntimeError, match=msg):
 
-def test_subclass_checks_raise_warning() -> None:
-    # will raise two warnings, one for DittoPersonalizedMixin and another for its super AdaptiveDriftConstrainedMixin
-    with pytest.warns((RuntimeWarning, RuntimeWarning)):
-
-        class _InvalidSubclass(DittoPersonalizedMixin):
-            """Invalid subclass that warns the user that it expects this class to be mixed with a FlexibleClient."""
-
+        class _TestInvalidDittoedClient(DittoPersonalizedMixin, _DummyParent):
             pass
 
 
@@ -343,11 +326,3 @@ def test_val_step(
             _Call(((client.model, input, target), {})),
         ]
     )
-
-
-def test_raise_runtime_error_not_flexible_client() -> None:
-    """Test that an invalid parent raises RuntimeError."""
-    with pytest.raises(
-        RuntimeError, match=re.escape("This object needs to satisfy `FlexibleClientProtocolPreSetup`.")
-    ):
-        _TestInvalidDittoedClient()
