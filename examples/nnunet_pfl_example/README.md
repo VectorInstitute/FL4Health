@@ -14,10 +14,10 @@ Once the server has started, start the necessary number of clients specified by 
 
 ```bash
 # ditto
-python -m examples.nnunet_pfl_example.client --dataset_path examples/datasets/nnunet --personalized-strategy ditto
+python -m examples.nnunet_pfl_example.client --dataset_path examples/datasets/nnunet --personalized_strategy ditto
 
 # mr-mtl
-python -m examples.nnunet_pfl_example.client --dataset_path examples/datasets/nnunet --personalized-strategy mr_mtl
+python -m examples.nnunet_pfl_example.client --dataset_path examples/datasets/nnunet --personalized_strategy mr_mtl
 ```
 
 The same MSD dataset that was used in the original `nnunet_example` is also used here.
