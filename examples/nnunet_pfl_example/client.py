@@ -34,7 +34,10 @@ from fl4health.utils.random import set_all_random_seeds
 
 N_CLASSES_2D = 2
 
-personalized_client_classes = {"ditto": make_it_personal(FlexibleNnunetClient, PersonalizedMode.DITTO)}
+personalized_client_classes = {
+    "ditto": make_it_personal(FlexibleNnunetClient, PersonalizedMode.DITTO),
+    "mr_mtl": make_it_personal(FlexibleNnunetClient, PersonalizedMode.MR_MTL),
+}
 
 
 def main(
