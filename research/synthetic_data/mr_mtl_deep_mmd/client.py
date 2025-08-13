@@ -60,11 +60,12 @@ class SyntheticDeepMrMtlClient(MrMtlDeepMmdClient):
             client_name=client_name,
             deep_mmd_loss_weight=deep_mmd_loss_weight,
             feature_extraction_layers_with_size=feature_extraction_layers_with_size,
+            mmd_kernel_train_interval = 20,
+            num_accumulating_batches = 50,
         )
         self.client_number = client_number
         self.heterogeneity_level = heterogeneity_level
         self.learning_rate: float = learning_rate
-        self.mmd_kernel_train_interval = -1
 
     def setup_client(self, config: Config) -> None:
         # Check if the client number is within the range of the total number of clients
@@ -98,7 +99,7 @@ class SyntheticDeepMrMtlClient(MrMtlDeepMmdClient):
         return torch.nn.CrossEntropyLoss()
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
+        return torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9, weight_decay=0.001)
 
     def get_model(self, config: Config) -> nn.Module:
         return FullyConnectedNet().to(self.device)

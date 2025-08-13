@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
-from fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client import DittoDeepMmdClient
+from fl4health.clients.deep_mmd_clients.mr_mtl_deep_mmd_client import MrMtlDeepMmdClient
 from fl4health.metrics import Accuracy
 from fl4health.metrics.base_metrics import Metric
 from fl4health.reporting.base_reporter import BaseReporter
@@ -35,7 +35,7 @@ BASELINE_LAYERS["bn2"] = 16384
 BASELINE_LAYERS["fc1"] = 2048
 
 
-class CifarDittoClient(DittoDeepMmdClient):
+class CifarDeepMrMtlClient(MrMtlDeepMmdClient):
     def __init__(
         self,
         data_path: Path,
@@ -72,8 +72,7 @@ class CifarDittoClient(DittoDeepMmdClient):
         self.client_number = client_number
         self.heterogeneity_level = heterogeneity_level
         self.learning_rate: float = learning_rate
-        # Number of batches to accumulate before updating the global model
-        self.num_accumulating_batches = 50
+
 
     def setup_client(self, config: Config) -> None:
         # Check if the client number is within the range of the total number of clients
@@ -134,12 +133,10 @@ class CifarDittoClient(DittoDeepMmdClient):
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
 
-    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
+    def get_optimizer(self, config: Config) -> Optimizer:
         # Following the implementation in pFL-Bench : A Comprehensive Benchmark for Personalized
         # Federated Learning (https://arxiv.org/pdf/2405.17724) for cifar10 dataset we use SGD optimizer
-        global_optimizer = torch.optim.SGD(self.global_model.parameters(), lr=self.learning_rate, momentum=0.9)
-        local_optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9)
-        return {"global": global_optimizer, "local": local_optimizer}
+        return torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9)
 
     def get_model(self, config: Config) -> nn.Module:
         return ConvNet(in_channels=3).to(self.device)
@@ -245,7 +242,7 @@ if __name__ == "__main__":
     )
 
     data_path = Path(args.dataset_dir)
-    client = CifarDittoClient(
+    client = CifarDeepMrMtlClient(
         data_path=data_path,
         metrics=[Accuracy("accuracy")],
         device=device,

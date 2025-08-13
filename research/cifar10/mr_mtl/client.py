@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
-from fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client import DittoDeepMmdClient
+from fl4health.clients.mr_mtl_client import MrMtlClient
 from fl4health.metrics import Accuracy
 from fl4health.metrics.base_metrics import Metric
 from fl4health.reporting.base_reporter import BaseReporter
@@ -29,13 +29,7 @@ from research.cifar10.model import ConvNet
 from research.cifar10.preprocess import get_preprocessed_data, get_test_preprocessed_data
 
 
-BASELINE_LAYERS: OrderedDict[str, int] = OrderedDict()
-BASELINE_LAYERS["bn1"] = 32768
-BASELINE_LAYERS["bn2"] = 16384
-BASELINE_LAYERS["fc1"] = 2048
-
-
-class CifarDittoClient(DittoDeepMmdClient):
+class CifarMrMtlClient(MrMtlClient):
     def __init__(
         self,
         data_path: Path,
@@ -49,11 +43,8 @@ class CifarDittoClient(DittoDeepMmdClient):
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
         client_name: str | None = None,
-        deep_mmd_loss_weight: float = 10,
-        deep_mmd_loss_depth: int = 1,
         use_partitioned_data: bool = True,
     ) -> None:
-        feature_extraction_layers_with_size = OrderedDict(list(BASELINE_LAYERS.items())[-1 * deep_mmd_loss_depth :])
         super().__init__(
             data_path=data_path,
             metrics=metrics,
@@ -63,17 +54,13 @@ class CifarDittoClient(DittoDeepMmdClient):
             reporters=reporters,
             progress_bar=progress_bar,
             client_name=client_name,
-            deep_mmd_loss_weight=deep_mmd_loss_weight,
-            feature_extraction_layers_with_size=feature_extraction_layers_with_size,
-            mmd_kernel_train_interval = 20,
-            num_accumulating_batches = 50,
         )
         self.use_partitioned_data = use_partitioned_data
         self.client_number = client_number
         self.heterogeneity_level = heterogeneity_level
         self.learning_rate: float = learning_rate
-        # Number of batches to accumulate before updating the global model
-        self.num_accumulating_batches = 50
+
+        log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
     def setup_client(self, config: Config) -> None:
         # Check if the client number is within the range of the total number of clients
@@ -134,12 +121,10 @@ class CifarDittoClient(DittoDeepMmdClient):
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
 
-    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
+    def get_optimizer(self, config: Config) -> Optimizer:
         # Following the implementation in pFL-Bench : A Comprehensive Benchmark for Personalized
         # Federated Learning (https://arxiv.org/pdf/2405.17724) for cifar10 dataset we use SGD optimizer
-        global_optimizer = torch.optim.SGD(self.global_model.parameters(), lr=self.learning_rate, momentum=0.9)
-        local_optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9)
-        return {"global": global_optimizer, "local": local_optimizer}
+        return torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9)
 
     def get_model(self, config: Config) -> nn.Module:
         return ConvNet(in_channels=3).to(self.device)
@@ -165,7 +150,7 @@ if __name__ == "__main__":
         "--use_partitioned_data",
         action="store_true",
         help="Use preprocessed partitioned data for training, validation and testing",
-        default=False,
+        default=True,
     )
     parser.add_argument(
         "--run_name",
@@ -204,21 +189,6 @@ if __name__ == "__main__":
         help="Heterogeneity level for the dataset",
         required=True,
     )
-    parser.add_argument(
-        "--mu",
-        action="store",
-        type=float,
-        help="Weight for the Deep MMD losses",
-        required=False,
-    )
-    parser.add_argument(
-        "--deep_mmd_loss_depth",
-        action="store",
-        type=int,
-        help="Depth of applying the Deep MMD loss",
-        required=False,
-        default=1,
-    )
     args = parser.parse_args()
     if args.use_partitioned_data:
         log(INFO, "Using preprocessed partitioned data for training, validation and testing")
@@ -227,9 +197,7 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {device}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
-    log(INFO, f"Mu: {args.mu}")
-    log(INFO, f"DEEP MMD Loss Depth: {args.deep_mmd_loss_depth}")
-
+    log(INFO, f"Beta: {args.beta}")
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
@@ -245,7 +213,7 @@ if __name__ == "__main__":
     )
 
     data_path = Path(args.dataset_dir)
-    client = CifarDittoClient(
+    client = CifarMrMtlClient(
         data_path=data_path,
         metrics=[Accuracy("accuracy")],
         device=device,
@@ -253,8 +221,6 @@ if __name__ == "__main__":
         learning_rate=args.learning_rate,
         heterogeneity_level=args.beta,
         checkpoint_and_state_module=checkpoint_and_state_module,
-        deep_mmd_loss_depth=args.deep_mmd_loss_depth,
-        deep_mmd_loss_weight=args.mu,
         use_partitioned_data=args.use_partitioned_data,
     )
 
