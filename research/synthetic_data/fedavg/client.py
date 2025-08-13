@@ -158,7 +158,7 @@ if __name__ == "__main__":
 
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
-    
+
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     pre_aggregation_best_checkpoint_name = f"pre_aggregation_client_{args.client_number}_best_model.pkl"
     pre_aggregation_last_checkpoint_name = f"pre_aggregation_client_{args.client_number}_last_model.pkl"

@@ -61,7 +61,7 @@ class SyntheticMrMrlMmdClient(MrMtlMkMmdClient):
             feature_extraction_layers=BASELINE_LAYERS[-1 * mkmmd_loss_depth :],
             feature_l2_norm_weight=feature_l2_norm_weight,
             beta_global_update_interval=beta_global_update_interval,
-            num_accumulating_batches= 50, # Number of batches to accumulate before updating the global model
+            num_accumulating_batches=50,  # Number of batches to accumulate before updating the global model
         )
         self.client_number = client_number
         self.heterogeneity_level = heterogeneity_level
@@ -99,7 +99,7 @@ class SyntheticMrMrlMmdClient(MrMtlMkMmdClient):
         return torch.nn.CrossEntropyLoss()
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        return  torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9, weight_decay=0.001)
+        return torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9, weight_decay=0.001)
 
     def get_model(self, config: Config) -> nn.Module:
         return FullyConnectedNet().to(self.device)

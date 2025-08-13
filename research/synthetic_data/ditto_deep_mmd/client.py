@@ -60,8 +60,8 @@ class SyntheticDittoClient(DittoDeepMmdClient):
             client_name=client_name,
             deep_mmd_loss_weight=deep_mmd_loss_weight,
             feature_extraction_layers_with_size=feature_extraction_layers_with_size,
-            mmd_kernel_train_interval = 20,
-            num_accumulating_batches = 50,
+            mmd_kernel_train_interval=20,
+            num_accumulating_batches=50,
         )
         self.client_number = client_number
         self.heterogeneity_level = heterogeneity_level

@@ -1,6 +1,5 @@
 import argparse
 import os
-from collections import OrderedDict
 from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
@@ -88,7 +87,7 @@ class SyntheticMrMtlClient(MrMtlClient):
         return torch.nn.CrossEntropyLoss()
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        return  torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9, weight_decay=0.001)
+        return torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9, weight_decay=0.001)
 
     def get_model(self, config: Config) -> nn.Module:
         return FullyConnectedNet().to(self.device)

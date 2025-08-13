@@ -5,7 +5,6 @@ from pathlib import Path
 import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, Scalar
-from torch import nn
 
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointAndStateModule
 from fl4health.clients.mr_mtl_client import MrMtlClient
@@ -13,7 +12,6 @@ from fl4health.losses.deep_mmd_loss import DeepMmdLoss
 from fl4health.metrics.base_metrics import Metric
 from fl4health.model_bases.feature_extractor_buffer import FeatureExtractorBuffer
 from fl4health.reporting.base_reporter import BaseReporter
-from fl4health.utils.client import clone_and_freeze_model
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.random import restore_random_state, save_random_state
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
@@ -275,7 +273,7 @@ class MrMtlDeepMmdClient(MrMtlClient):
         Computes training losses given predictions of the client model and ground truth data.
         For the local model we add to the vanilla loss function by including Mean Regularized (MR) penalty loss
         which is the :math:`\\ell^2` inner product between the initial global model weights and weights of the
-        current model. 
+        current model.
 
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in
@@ -357,10 +355,10 @@ class MrMtlDeepMmdClient(MrMtlClient):
         """
         assert "prediction" in preds
         loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)
-        
+
         if additional_losses is None:
             additional_losses = {"loss": loss}
-        
+
         if self.deep_mmd_loss_weight != 0:
             # Compute Deep MMD loss based on computed features during training
             total_deep_mmd_loss = torch.tensor(0.0, device=self.device)

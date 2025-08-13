@@ -64,7 +64,7 @@ class CifarMrMtlClient(MrMtlMkMmdClient):
             feature_extraction_layers=BASELINE_LAYERS[-1 * mkmmd_loss_depth :],
             feature_l2_norm_weight=feature_l2_norm_weight,
             beta_global_update_interval=beta_global_update_interval,
-            num_accumulating_batches= 50, # Number of batches to accumulate before updating the global model
+            num_accumulating_batches=50,  # Number of batches to accumulate before updating the global model
         )
         self.use_partitioned_data = use_partitioned_data
         self.client_number = client_number
@@ -129,7 +129,7 @@ class CifarMrMtlClient(MrMtlMkMmdClient):
 
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
-    
+
     def get_optimizer(self, config: Config) -> Optimizer:
         # Following the implementation in pFL-Bench : A Comprehensive Benchmark for Personalized
         # Federated Learning (https://arxiv.org/pdf/2405.17724) for cifar10 dataset we use SGD optimizer
