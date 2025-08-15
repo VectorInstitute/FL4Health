@@ -112,6 +112,7 @@ async def run_smoke_test(
     dataset_path: str,
     checkpoint_path: str | None = None,
     assert_evaluation_logs: bool | None = False,
+    additional_client_args: dict[str, Any] | None = None,
     # The param below exists to work around an issue with some clients
     # not printing the "Current FL Round" log message reliably
     skip_assert_client_fl_rounds: bool | None = False,
@@ -212,6 +213,8 @@ async def run_smoke_test(
             to the client. Defaults to None.
         assert_evaluation_logs (bool | None, optional): Set this to `True` if testing an evaluation model, which
             produces different log outputs. Defaults to False.
+        additional_client_args (dict[str, Any] | None): Additional command line arguments for client command. Defaults
+            to None.
         skip_assert_client_fl_rounds (bool | None, optional): If set to `True`, will skip the assertion of the
             "Current FL Round" message on the clients' logs. This is necessary because some clients (namely
             ``client_level_dp``, ``client_level_dp_weighted``, ``instance_level_dp``) do not reliably print that
@@ -278,6 +281,9 @@ async def run_smoke_test(
                 client_args.extend(["--checkpoint_path", checkpoint_path])
             if seed is not None:
                 client_args.extend(["--seed", str(seed)])
+            if additional_client_args:
+                for k, v in additional_client_args.items():
+                    client_args.extend([k, str(v)])
 
             task = asyncio.create_task(
                 asyncio.create_subprocess_exec(

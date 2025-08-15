@@ -1,4 +1,4 @@
-import warnings
+from contextlib import nullcontext as no_error_raised
 from logging import INFO
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -6,14 +6,10 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 import torch
-from flwr.common.typing import Config, NDArray, Scalar
+from flwr.common.typing import NDArray, Scalar
 from numpy.testing import assert_array_equal
-from torch import nn
-from torch.nn.modules.loss import _Loss
-from torch.optim import Optimizer
 from torch.utils.data import DataLoader, TensorDataset
 
-from fl4health.clients.flexible.base import FlexibleClient
 from fl4health.metrics import Accuracy
 from fl4health.mixins.adaptive_drift_constrained import (
     AdaptiveDriftConstrainedMixin,
@@ -25,19 +21,7 @@ from fl4health.parameter_exchange.packing_exchanger import FullParameterExchange
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 from fl4health.utils.losses import TrainingLosses
 
-
-class _TestFlexibleClient(FlexibleClient):
-    def get_model(self, config: Config) -> nn.Module:
-        return self.model
-
-    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
-        return self.train_loader, self.val_loader
-
-    def get_optimizer(self, config: Config) -> Optimizer | dict[str, Optimizer]:
-        return self.optimizers["global"]
-
-    def get_criterion(self, config: Config) -> _Loss:
-        return torch.nn.CrossEntropyLoss()
+from .conftest import _TestFlexibleClient
 
 
 class _TestAdaptedClient(AdaptiveDriftConstrainedMixin, _TestFlexibleClient):
@@ -59,19 +43,8 @@ def test_init() -> None:
     assert isinstance(client, AdaptiveDriftConstrainedProtocol)
 
 
-# Create an invalid adapted client such as inheriting the Mixin but nothing else.
-# Since invalid it will raise a warning—see test_subclass_checks_raise_warning
-@pytest.mark.filterwarnings("ignore::RuntimeWarning")
-def test_init_raises_value_error_when_basic_client_protocol_not_satisfied() -> None:
-    class _InvalidTestAdaptedClient(AdaptiveDriftConstrainedMixin):
-        pass
-
-    with pytest.raises(RuntimeError, match="This object needs to satisfy `FlexibleClientProtocolPreSetup`."):
-        _InvalidTestAdaptedClient(data_path=Path(""), metrics=[Accuracy()])
-
-
-def test_subclass_checks_raise_no_warning() -> None:
-    with warnings.catch_warnings(record=True) as recorded_warnings:
+def test_subclass_checks_raise_no_error() -> None:
+    with no_error_raised():
 
         class _TestInheritanceMixin(AdaptiveDriftConstrainedMixin, _TestFlexibleClient):
             """Subclass should skip validation if is itself a Mixin that inherits AdaptiveDriftConstrainedMixin."""
@@ -83,15 +56,13 @@ def test_subclass_checks_raise_no_warning() -> None:
 
             _dynamically_created = True
 
-    assert len(recorded_warnings) == 0
 
-
-def test_subclass_checks_raise_warning() -> None:
+def test_subclass_checks_raise_warning_error() -> None:
     msg = (
-        "Class _InvalidSubclass inherits from AdaptiveDriftConstrainedMixin but none of its other "
-        "base classes is a FlexibleClient. This may cause runtime errors."
+        "Class _InvalidSubclass inherits from BaseFlexibleMixin but none of its other "
+        "base classes implement FlexibleClient."
     )
-    with pytest.warns(RuntimeWarning, match=msg):
+    with pytest.raises(RuntimeError, match=msg):
 
         class _InvalidSubclass(AdaptiveDriftConstrainedMixin):
             """Invalid subclass that warns the user that it expects this class to be mixed with a FlexibleClient."""

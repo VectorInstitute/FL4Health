@@ -35,6 +35,9 @@ Once the server has started, start the necessary number of clients specified by 
 
 ```bash
 python -m examples.nnunet_example.client --dataset_path examples/datasets/nnunet
+
+# alternatively, with subclass of FlexibleClient
+python -m examples.nnunet_example.client_flexible --dataset_path examples/datasets/nnunet
 ```
 
 The MSD dataset will be downloaded and prepared automatically by the nnunet example script if it does not already exist. The dataset_path flag is used as more of a data working directory by the client. The client will create nnunet_raw, nnunet_preprocessed and nnunet_results sub directories if they do not already exist in the dataset_path folder. The dataset itself will be stored in a folder within nnunet_raw. Therefore when checking if the data already exists, the client will look for the following folder '{dataset_path}/nnunet_raw/{dataset_name}'
