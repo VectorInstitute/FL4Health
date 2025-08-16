@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
-from fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client import DittoDeepMmdClient
+from fl4health.clients.deep_mmd_clients.mr_mtl_deep_mmd_client import MrMtlDeepMmdClient
 from fl4health.metrics import Accuracy
 from fl4health.metrics.base_metrics import Metric
 from fl4health.reporting.base_reporter import BaseReporter
@@ -31,7 +31,7 @@ BASELINE_LAYERS: OrderedDict[str, int] = OrderedDict()
 BASELINE_LAYERS["linear_1"] = 20
 
 
-class SyntheticDittoClient(DittoDeepMmdClient):
+class SyntheticDeepMrMtlClient(MrMtlDeepMmdClient):
     def __init__(
         self,
         data_path: Path,
@@ -98,14 +98,8 @@ class SyntheticDittoClient(DittoDeepMmdClient):
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
 
-    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
-        global_optimizer = torch.optim.SGD(
-            self.global_model.parameters(), lr=self.learning_rate, momentum=0.9, weight_decay=0.001
-        )
-        local_optimizer = torch.optim.SGD(
-            self.model.parameters(), lr=self.learning_rate, momentum=0.9, weight_decay=0.001
-        )
-        return {"global": global_optimizer, "local": local_optimizer}
+    def get_optimizer(self, config: Config) -> Optimizer:
+        return torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9, weight_decay=0.001)
 
     def get_model(self, config: Config) -> nn.Module:
         return FullyConnectedNet().to(self.device)
@@ -204,7 +198,7 @@ if __name__ == "__main__":
     )
 
     data_path = Path(args.dataset_dir)
-    client = SyntheticDittoClient(
+    client = SyntheticDeepMrMtlClient(
         data_path=data_path,
         metrics=[Accuracy("accuracy")],
         device=device,

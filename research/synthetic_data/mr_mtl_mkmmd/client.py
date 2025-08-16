@@ -1,6 +1,5 @@
 import argparse
 import os
-from collections import OrderedDict
 from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
@@ -16,7 +15,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
-from fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client import DittoDeepMmdClient
+from fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client import MrMtlMkMmdClient
 from fl4health.metrics import Accuracy
 from fl4health.metrics.base_metrics import Metric
 from fl4health.reporting.base_reporter import BaseReporter
@@ -27,11 +26,10 @@ from research.synthetic_data.model import FullyConnectedNet
 from research.synthetic_data.preprocess import get_preprocessed_data, get_test_preprocessed_data
 
 
-BASELINE_LAYERS: OrderedDict[str, int] = OrderedDict()
-BASELINE_LAYERS["linear_1"] = 20
+BASELINE_LAYERS = ["linear_1"]
 
 
-class SyntheticDittoClient(DittoDeepMmdClient):
+class SyntheticMrMrlMmdClient(MrMtlMkMmdClient):
     def __init__(
         self,
         data_path: Path,
@@ -41,14 +39,15 @@ class SyntheticDittoClient(DittoDeepMmdClient):
         learning_rate: float,
         heterogeneity_level: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        mkmmd_loss_weight: float = 10,
+        feature_l2_norm_weight: float = 1,
+        mkmmd_loss_depth: int = 1,
+        beta_global_update_interval: int = 20,
         checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
         client_name: str | None = None,
-        deep_mmd_loss_weight: float = 10,
-        deep_mmd_loss_depth: int = 1,
     ) -> None:
-        feature_extraction_layers_with_size = OrderedDict(list(BASELINE_LAYERS.items())[-1 * deep_mmd_loss_depth :])
         super().__init__(
             data_path=data_path,
             metrics=metrics,
@@ -58,10 +57,11 @@ class SyntheticDittoClient(DittoDeepMmdClient):
             reporters=reporters,
             progress_bar=progress_bar,
             client_name=client_name,
-            deep_mmd_loss_weight=deep_mmd_loss_weight,
-            feature_extraction_layers_with_size=feature_extraction_layers_with_size,
-            mmd_kernel_train_interval=20,
-            num_accumulating_batches=50,
+            mkmmd_loss_weight=mkmmd_loss_weight,
+            feature_extraction_layers=BASELINE_LAYERS[-1 * mkmmd_loss_depth :],
+            feature_l2_norm_weight=feature_l2_norm_weight,
+            beta_global_update_interval=beta_global_update_interval,
+            num_accumulating_batches=50,  # Number of batches to accumulate before updating the global model
         )
         self.client_number = client_number
         self.heterogeneity_level = heterogeneity_level
@@ -98,14 +98,8 @@ class SyntheticDittoClient(DittoDeepMmdClient):
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
 
-    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
-        global_optimizer = torch.optim.SGD(
-            self.global_model.parameters(), lr=self.learning_rate, momentum=0.9, weight_decay=0.001
-        )
-        local_optimizer = torch.optim.SGD(
-            self.model.parameters(), lr=self.learning_rate, momentum=0.9, weight_decay=0.001
-        )
-        return {"global": global_optimizer, "local": local_optimizer}
+    def get_optimizer(self, config: Config) -> Optimizer:
+        return torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9, weight_decay=0.001)
 
     def get_model(self, config: Config) -> nn.Module:
         return FullyConnectedNet().to(self.device)
@@ -168,16 +162,31 @@ if __name__ == "__main__":
         "--mu",
         action="store",
         type=float,
-        help="Weight for the Deep MMD losses",
+        help="Weight for the mkmmd losses",
         required=False,
     )
     parser.add_argument(
-        "--deep_mmd_loss_depth",
+        "--l2",
+        action="store",
+        type=float,
+        help="Weight for the feature l2 norm loss as a regularizer",
+        required=False,
+    )
+    parser.add_argument(
+        "--mkmmd_loss_depth",
         action="store",
         type=int,
-        help="Depth of applying the Deep MMD loss",
+        help="Depth of applying the mkmmd loss",
         required=False,
         default=1,
+    )
+    parser.add_argument(
+        "--beta_update_interval",
+        action="store",
+        type=int,
+        help="Interval for updating the beta values of mkmmd loss",
+        required=False,
+        default=20,
     )
     args = parser.parse_args()
     log(INFO, "Using preprocessed partitioned data for training, validation and testing")
@@ -187,7 +196,9 @@ if __name__ == "__main__":
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
     log(INFO, f"Mu: {args.mu}")
-    log(INFO, f"DEEP MMD Loss Depth: {args.deep_mmd_loss_depth}")
+    log(INFO, f"Feature L2 Norm Weight: {args.l2}")
+    log(INFO, f"MKMMD Loss Depth: {args.mkmmd_loss_depth}")
+    log(INFO, f"Beta Update Interval: {args.beta_update_interval}")
 
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
@@ -204,7 +215,7 @@ if __name__ == "__main__":
     )
 
     data_path = Path(args.dataset_dir)
-    client = SyntheticDittoClient(
+    client = SyntheticMrMrlMmdClient(
         data_path=data_path,
         metrics=[Accuracy("accuracy")],
         device=device,
@@ -212,8 +223,10 @@ if __name__ == "__main__":
         learning_rate=args.learning_rate,
         heterogeneity_level=args.alpha_beta,
         checkpoint_and_state_module=checkpoint_and_state_module,
-        deep_mmd_loss_depth=args.deep_mmd_loss_depth,
-        deep_mmd_loss_weight=args.mu,
+        feature_l2_norm_weight=args.l2,
+        mkmmd_loss_depth=args.mkmmd_loss_depth,
+        mkmmd_loss_weight=args.mu,
+        beta_global_update_interval=args.beta_update_interval,
     )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
