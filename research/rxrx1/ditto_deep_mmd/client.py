@@ -50,6 +50,8 @@ class Rxrx1DittoClient(DittoDeepMmdClient):
         client_name: str | None = None,
         deep_mmd_loss_weight: float = 10,
         deep_mmd_loss_depth: int = 1,
+        mmd_kernel_train_interval: int = 20,
+        num_accumulating_batches: int | None = 50,
     ) -> None:
         feature_extraction_layers_with_size = OrderedDict(list(BASELINE_LAYERS.items())[-1 * deep_mmd_loss_depth :])
         super().__init__(
@@ -63,6 +65,8 @@ class Rxrx1DittoClient(DittoDeepMmdClient):
             client_name=client_name,
             deep_mmd_loss_weight=deep_mmd_loss_weight,
             feature_extraction_layers_with_size=feature_extraction_layers_with_size,
+            mmd_kernel_train_interval=mmd_kernel_train_interval,
+            num_accumulating_batches=num_accumulating_batches,
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate

@@ -15,21 +15,20 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
-from fl4health.clients.mkmmd_clients.ditto_mkmmd_client import DittoMkMmdClient
-from fl4health.datasets.rxrx1.load_data import load_rxrx1_data, load_rxrx1_test_data
+from fl4health.clients.mr_mtl_client import MrMtlClient
 from fl4health.metrics import Accuracy
 from fl4health.metrics.base_metrics import Metric
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
+from fl4health.utils.load_data import load_cifar10_data, load_cifar10_test_data
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.random import set_all_random_seeds
-from research.rxrx1.utils import get_model
+from fl4health.utils.sampler import DirichletLabelBasedSampler
+from research.cifar10.model import ConvNet
+from research.cifar10.preprocess import get_preprocessed_data, get_test_preprocessed_data
 
 
-BASELINE_LAYERS = ["layer1", "layer2", "layer3", "layer4", "avgpool"]
-
-
-class Rxrx1DittoClient(DittoMkMmdClient):
+class CifarMrMtlClient(MrMtlClient):
     def __init__(
         self,
         data_path: Path,
@@ -37,16 +36,13 @@ class Rxrx1DittoClient(DittoMkMmdClient):
         device: torch.device,
         client_number: int,
         learning_rate: float,
+        heterogeneity_level: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        mkmmd_loss_weight: float = 10,
-        feature_l2_norm_weight: float = 1,
-        mkmmd_loss_depth: int = 1,
-        beta_global_update_interval: int = 20,
         checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
         client_name: str | None = None,
-        num_accumulating_batches: int | None = 50,
+        use_partitioned_data: bool = True,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -57,13 +53,10 @@ class Rxrx1DittoClient(DittoMkMmdClient):
             reporters=reporters,
             progress_bar=progress_bar,
             client_name=client_name,
-            mkmmd_loss_weight=mkmmd_loss_weight,
-            feature_extraction_layers=BASELINE_LAYERS[-1 * mkmmd_loss_depth :],
-            feature_l2_norm_weight=feature_l2_norm_weight,
-            beta_global_update_interval=beta_global_update_interval,
-            num_accumulating_batches=num_accumulating_batches,
         )
+        self.use_partitioned_data = use_partitioned_data
         self.client_number = client_number
+        self.heterogeneity_level = heterogeneity_level
         self.learning_rate: float = learning_rate
 
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
@@ -76,31 +69,64 @@ class Rxrx1DittoClient(DittoMkMmdClient):
 
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
-        train_loader, val_loader, _ = load_rxrx1_data(
-            data_path=self.data_path, client_num=self.client_number, batch_size=batch_size, seed=self.client_number
-        )
-
+        # The partitioned data should be generated prior to running the clients via preprocess_data function
+        # in the research/cifar10/preprocess.py file
+        if self.use_partitioned_data:
+            train_loader, val_loader, _ = get_preprocessed_data(
+                self.data_path, self.client_number, batch_size, self.heterogeneity_level
+            )
+        else:
+            n_clients = narrow_dict_type(config, "n_clients", int)
+            # Set client-specific hash_key for sampler to ensure heterogeneous data distribution among clients
+            sampler = DirichletLabelBasedSampler(
+                list(range(10)),
+                sample_percentage=1.0 / n_clients,
+                beta=self.heterogeneity_level,
+                hash_key=self.client_number,
+            )
+            # Set the same hash_key for the train_loader and val_loader to ensure the same data split
+            # of train and validation for all clients
+            train_loader, val_loader, _ = load_cifar10_data(
+                self.data_path,
+                batch_size,
+                validation_proportion=0.2,
+                sampler=sampler,
+                hash_key=100,
+            )
         return train_loader, val_loader
 
     def get_test_data_loader(self, config: Config) -> DataLoader | None:
         batch_size = narrow_dict_type(config, "batch_size", int)
-        test_loader, _ = load_rxrx1_test_data(
-            data_path=self.data_path, client_num=self.client_number, batch_size=batch_size
-        )
-
+        # The partitioned data should be generated prior to running the clients via preprocess_data function
+        # in the research/cifar10/preprocess.py file
+        if self.use_partitioned_data:
+            test_loader, _ = get_test_preprocessed_data(
+                self.data_path, self.client_number, batch_size, self.heterogeneity_level
+            )
+        else:
+            n_clients = narrow_dict_type(config, "n_clients", int)
+            # Set client-specific hash_key for sampler to ensure heterogeneous data distribution among clients
+            # Also as hash_key is same between train and test sampler, the test data distribution will be same
+            # as the train data distribution
+            sampler = DirichletLabelBasedSampler(
+                list(range(10)),
+                sample_percentage=1.0 / n_clients,
+                beta=self.heterogeneity_level,
+                hash_key=self.client_number,
+            )
+            test_loader, _ = load_cifar10_test_data(self.data_path, batch_size, sampler=sampler)
         return test_loader
 
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
 
-    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
-        global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=self.learning_rate)
-        local_optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
-        return {"global": global_optimizer, "local": local_optimizer}
+    def get_optimizer(self, config: Config) -> Optimizer:
+        # Following the implementation in pFL-Bench : A Comprehensive Benchmark for Personalized
+        # Federated Learning (https://arxiv.org/pdf/2405.17724) for cifar10 dataset we use SGD optimizer
+        return torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9)
 
     def get_model(self, config: Config) -> nn.Module:
-        model = get_model()
-        return model.to(self.device)
+        return ConvNet(in_channels=3).to(self.device)
 
 
 if __name__ == "__main__":
@@ -116,8 +142,14 @@ if __name__ == "__main__":
         "--dataset_dir",
         action="store",
         type=str,
-        help="Path to the preprocessed Rxrx1 Dataset",
+        help="Path to the preprocessed Cifar 10 Dataset",
         required=True,
+    )
+    parser.add_argument(
+        "--use_partitioned_data",
+        action="store_true",
+        help="Use preprocessed partitioned data for training, validation and testing",
+        default=True,
     )
     parser.add_argument(
         "--run_name",
@@ -136,7 +168,7 @@ if __name__ == "__main__":
         "--client_number",
         action="store",
         type=int,
-        help="Number of the client for dataset loading (should be 0-3 for Rxrx1)",
+        help="Number of the client for dataset loading",
         required=True,
     )
     parser.add_argument(
@@ -150,46 +182,21 @@ if __name__ == "__main__":
         required=False,
     )
     parser.add_argument(
-        "--mu",
+        "--beta",
         action="store",
         type=float,
-        help="Weight for the mkmmd losses",
-        required=False,
-    )
-    parser.add_argument(
-        "--l2",
-        action="store",
-        type=float,
-        help="Weight for the feature l2 norm loss as a regularizer",
-        required=False,
-    )
-    parser.add_argument(
-        "--mkmmd_loss_depth",
-        action="store",
-        type=int,
-        help="Depth of applying the mkmmd loss",
-        required=False,
-        default=1,
-    )
-    parser.add_argument(
-        "--beta_update_interval",
-        action="store",
-        type=int,
-        help="Interval for updating the beta values of mkmmd loss",
-        required=False,
-        default=20,
+        help="Heterogeneity level for the dataset",
+        required=True,
     )
     args = parser.parse_args()
+    if args.use_partitioned_data:
+        log(INFO, "Using preprocessed partitioned data for training, validation and testing")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log(INFO, f"Device to be used: {device}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
-    log(INFO, f"Mu: {args.mu}")
-    log(INFO, f"Feature L2 Norm Weight: {args.l2}")
-    log(INFO, f"MKMMD Loss Depth: {args.mkmmd_loss_depth}")
-    log(INFO, f"Beta Update Interval: {args.beta_update_interval}")
-
+    log(INFO, f"Beta: {args.beta}")
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
@@ -205,19 +212,16 @@ if __name__ == "__main__":
     )
 
     data_path = Path(args.dataset_dir)
-    client = Rxrx1DittoClient(
+    client = CifarMrMtlClient(
         data_path=data_path,
         metrics=[Accuracy("accuracy")],
         device=device,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
+        heterogeneity_level=args.beta,
         checkpoint_and_state_module=checkpoint_and_state_module,
-        feature_l2_norm_weight=args.l2,
-        mkmmd_loss_depth=args.mkmmd_loss_depth,
-        mkmmd_loss_weight=args.mu,
-        beta_global_update_interval=args.beta_update_interval,
+        use_partitioned_data=args.use_partitioned_data,
     )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
-    # Shutdown the client gracefully
     client.shutdown()

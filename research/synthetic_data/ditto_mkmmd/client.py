@@ -47,6 +47,7 @@ class SyntheticDittoClient(DittoMkMmdClient):
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
         client_name: str | None = None,
+        num_accumulating_batches: int | None = 50,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -61,12 +62,11 @@ class SyntheticDittoClient(DittoMkMmdClient):
             feature_extraction_layers=BASELINE_LAYERS[-1 * mkmmd_loss_depth :],
             feature_l2_norm_weight=feature_l2_norm_weight,
             beta_global_update_interval=beta_global_update_interval,
+            num_accumulating_batches=num_accumulating_batches,
         )
         self.client_number = client_number
         self.heterogeneity_level = heterogeneity_level
         self.learning_rate: float = learning_rate
-        # Number of batches to accumulate before updating the global model
-        self.num_accumulating_batches = 50
 
     def setup_client(self, config: Config) -> None:
         # Check if the client number is within the range of the total number of clients

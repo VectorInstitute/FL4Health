@@ -47,6 +47,8 @@ class FedIsic2019DittoClient(DittoDeepMmdClient):
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
         client_name: str | None = None,
+        mmd_kernel_train_interval: int = 20,
+        num_accumulating_batches: int | None = 64,
     ) -> None:
         feature_extraction_layers_with_size = OrderedDict(
             list(FED_ISIC2019_BASELINE_LAYERS.items())[-1 * deep_mmd_loss_depth :]
@@ -62,6 +64,8 @@ class FedIsic2019DittoClient(DittoDeepMmdClient):
             client_name=client_name,
             deep_mmd_loss_weight=deep_mmd_loss_weight,
             feature_extraction_layers_with_size=feature_extraction_layers_with_size,
+            mmd_kernel_train_interval=mmd_kernel_train_interval,
+            num_accumulating_batches=num_accumulating_batches,
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
