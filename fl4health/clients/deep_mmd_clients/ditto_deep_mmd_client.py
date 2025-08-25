@@ -130,7 +130,7 @@ class DittoDeepMmdClient(DittoClient):
         # Register hooks to extract features from the initial global model if not already registered
         self.initial_global_feature_extractor._maybe_register_hooks()
         # Enable training of Deep MMD loss layers if the mmd_kernel_train_interval is set to -1
-        # meaning that the betas will be updated after each individual batch based on only that
+        # meaning that the kernel parameters will be trained after each individual batch based on only that
         # individual batch
         if self.mmd_kernel_train_interval == -1:
             for layer in self.flatten_feature_extraction_layers:

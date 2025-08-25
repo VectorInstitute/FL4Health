@@ -35,9 +35,9 @@ class MrMtlDeepMmdClient(MrMtlClient):
     ) -> None:
         """
         This client implements the Deep MMD loss function in the MR-MTL framework. The Deep MMD loss is a measure of
-        the distance between the distributions of the features of the local model and initial global model of each
+        the distance between the distributions of the features of the local model and averaged local models of each
         round. The Deep MMD loss is added to the local loss to penalize the local model for drifting away from the
-        global model.
+        averaged local models.
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training.
@@ -124,7 +124,7 @@ class MrMtlDeepMmdClient(MrMtlClient):
         # Register hooks to extract features from the initial global model if not already registered
         self.initial_global_feature_extractor._maybe_register_hooks()
         # Enable training of Deep MMD loss layers if the mmd_kernel_train_interval is set to -1
-        # meaning that the betas will be updated after each individual batch based on only that
+        # meaning that the kernel parameters will be trained after each individual batch based on only that
         # individual batch
         if self.mmd_kernel_train_interval == -1:
             for layer in self.flatten_feature_extraction_layers:

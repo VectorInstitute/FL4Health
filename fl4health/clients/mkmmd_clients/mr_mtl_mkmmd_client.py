@@ -35,9 +35,9 @@ class MrMtlMkMmdClient(MrMtlClient):
     ) -> None:
         """
         This client implements the MK-MMD loss function in the MR-MTL framework. The MK-MMD loss is a measure of the
-        distance between the distributions of the features of the local model and initial global model of each round.
-        The MK-MMD loss is added to the local loss to penalize the local model for drifting away from the initial
-        global model.
+        distance between the distributions of the features of the local model and averaged local models of each round.
+        The MK-MMD loss is added to the local loss to penalize the local model for drifting away from the averaged
+        local models.
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training.

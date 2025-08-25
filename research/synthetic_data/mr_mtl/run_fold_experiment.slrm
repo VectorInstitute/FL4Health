@@ -43,7 +43,7 @@
 #
 # Notes:
 # 1) The sbatch command above should be run from the top level directory of the repository.
-# 2) This example runs MR-MTL Deep MMD. As such the data paths and python launch commands are hardcoded. If you want to change
+# 2) This example runs MR-MTL. As such the data paths and python launch commands are hardcoded. If you want to change
 # the example you run, you need to explicitly modify the code below.
 # 3) The logging directories need to ALREADY EXIST. The script does not create them.
 ###############################################

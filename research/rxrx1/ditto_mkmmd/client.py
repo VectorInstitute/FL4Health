@@ -46,6 +46,7 @@ class Rxrx1DittoClient(DittoMkMmdClient):
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
         client_name: str | None = None,
+        num_accumulating_batches: int | None = 50,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -60,14 +61,12 @@ class Rxrx1DittoClient(DittoMkMmdClient):
             feature_extraction_layers=BASELINE_LAYERS[-1 * mkmmd_loss_depth :],
             feature_l2_norm_weight=feature_l2_norm_weight,
             beta_global_update_interval=beta_global_update_interval,
+            num_accumulating_batches=num_accumulating_batches,
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
 
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
-
-        # Number of batches to accumulate before updating the kernel betas
-        self.num_accumulating_batches = 50
 
     def setup_client(self, config: Config) -> None:
         # Check if the client number is within the range of the total number of clients

@@ -48,6 +48,7 @@ class FedIsic2019DittoClient(DittoMkMmdClient):
         feature_l2_norm_weight: float = 1,
         mkmmd_loss_depth: int = 1,
         beta_global_update_interval: int = 20,
+        num_accumulating_batches: int | None = 50,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -62,6 +63,7 @@ class FedIsic2019DittoClient(DittoMkMmdClient):
             feature_extraction_layers=FED_ISIC2019_BASELINE_LAYERS[-1 * mkmmd_loss_depth :],
             feature_l2_norm_weight=feature_l2_norm_weight,
             beta_global_update_interval=beta_global_update_interval,
+            num_accumulating_batches=num_accumulating_batches,
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
