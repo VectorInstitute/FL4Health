@@ -253,6 +253,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../reference/api/fl4health.clients.html">fl4health.clients package</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle navigation of fl4health.clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/fl4health.clients.deep_mmd_clients.html">fl4health.clients.deep_mmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle navigation of fl4health.clients.deep_mmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client.html">fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/fl4health.clients.deep_mmd_clients.mr_mtl_deep_mmd_client.html">fl4health.clients.deep_mmd_clients.mr_mtl_deep_mmd_client module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -649,7 +650,7 @@
         <span class="c1"># Register hooks to extract features from the initial global model if not already registered</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">initial_global_feature_extractor</span><span class="o">.</span><span class="n">_maybe_register_hooks</span><span class="p">()</span>
         <span class="c1"># Enable training of Deep MMD loss layers if the mmd_kernel_train_interval is set to -1</span>
-        <span class="c1"># meaning that the betas will be updated after each individual batch based on only that</span>
+        <span class="c1"># meaning that the kernel parameters will be trained after each individual batch based on only that</span>
         <span class="c1"># individual batch</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mmd_kernel_train_interval</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">flatten_feature_extraction_layers</span><span class="p">:</span>

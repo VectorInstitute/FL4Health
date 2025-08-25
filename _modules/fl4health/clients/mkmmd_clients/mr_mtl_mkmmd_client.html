@@ -253,6 +253,7 @@
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../../reference/api/fl4health.clients.html">fl4health.clients package</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle navigation of fl4health.clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/fl4health.clients.deep_mmd_clients.html">fl4health.clients.deep_mmd_clients package</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle navigation of fl4health.clients.deep_mmd_clients package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client.html">fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../../../reference/api/fl4health.clients.deep_mmd_clients.mr_mtl_deep_mmd_client.html">fl4health.clients.deep_mmd_clients.mr_mtl_deep_mmd_client module</a></li>
 </ul>
 </li>
 <li class="toctree-l4 has-children"><a class="reference internal" href="../../../../reference/api/fl4health.clients.flexible.html">fl4health.clients.flexible package</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of fl4health.clients.flexible package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
@@ -548,9 +549,9 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This client implements the MK-MMD loss function in the MR-MTL framework. The MK-MMD loss is a measure of the</span>
-<span class="sd">        distance between the distributions of the features of the local model and initial global model of each round.</span>
-<span class="sd">        The MK-MMD loss is added to the local loss to penalize the local model for drifting away from the initial</span>
-<span class="sd">        global model.</span>
+<span class="sd">        distance between the distributions of the features of the local model and averaged local models of each round.</span>
+<span class="sd">        The MK-MMD loss is added to the local loss to penalize the local model for drifting away from the averaged</span>
+<span class="sd">        local models.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            data_path (Path): path to the data to be used to load the data for client-side training.</span>
@@ -820,9 +821,9 @@
 
         <span class="c1"># Setting the adaptation loss to that of the local model, as its performance should dictate whether more or</span>
         <span class="c1"># less weight is used to constrain it to the global model (as in FedProx)</span>
-        <span class="n">additional_losses</span><span class="p">[</span><span class="s2">&quot;loss_for_adaptation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">additional_losses</span><span class="p">[</span><span class="s2">&quot;local_loss&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="n">additional_losses</span><span class="p">[</span><span class="s2">&quot;loss_for_adaptation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">additional_losses</span><span class="p">[</span><span class="s2">&quot;loss&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
 
-        <span class="c1"># This is the Ditto penalty loss of the local model compared with the original Global model weights, scaled</span>
+        <span class="c1"># This is the MR-MTL penalty loss of the local model compared with the original Global model weights, scaled</span>
         <span class="c1"># by drift_penalty_weight (or lambda in the original paper)</span>
         <span class="n">penalty_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_penalty_loss</span><span class="p">()</span>
         <span class="n">additional_losses</span><span class="p">[</span><span class="s2">&quot;penalty_loss&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">penalty_loss</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
