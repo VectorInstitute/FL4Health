@@ -48,7 +48,7 @@ class FedIsic2019DittoClient(DittoMkMmdClient):
         feature_l2_norm_weight: float = 1,
         mkmmd_loss_depth: int = 1,
         beta_global_update_interval: int = 20,
-        num_accumulating_batches: int | None = 50,
+        num_accumulating_batches: int | None = 64,
     ) -> None:
         super().__init__(
             data_path=data_path,
