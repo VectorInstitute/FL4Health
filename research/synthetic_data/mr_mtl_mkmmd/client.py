@@ -15,21 +15,21 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
-from fl4health.clients.mkmmd_clients.ditto_mkmmd_client import DittoMkMmdClient
-from fl4health.datasets.rxrx1.load_data import load_rxrx1_data, load_rxrx1_test_data
+from fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client import MrMtlMkMmdClient
 from fl4health.metrics import Accuracy
 from fl4health.metrics.base_metrics import Metric
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.random import set_all_random_seeds
-from research.rxrx1.utils import get_model
+from research.synthetic_data.model import FullyConnectedNet
+from research.synthetic_data.preprocess import get_preprocessed_data, get_test_preprocessed_data
 
 
-BASELINE_LAYERS = ["layer1", "layer2", "layer3", "layer4", "avgpool"]
+BASELINE_LAYERS = ["linear_1"]
 
 
-class Rxrx1DittoClient(DittoMkMmdClient):
+class SyntheticMrMrlMmdClient(MrMtlMkMmdClient):
     def __init__(
         self,
         data_path: Path,
@@ -37,6 +37,7 @@ class Rxrx1DittoClient(DittoMkMmdClient):
         device: torch.device,
         client_number: int,
         learning_rate: float,
+        heterogeneity_level: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         mkmmd_loss_weight: float = 10,
         feature_l2_norm_weight: float = 1,
@@ -64,9 +65,8 @@ class Rxrx1DittoClient(DittoMkMmdClient):
             num_accumulating_batches=num_accumulating_batches,
         )
         self.client_number = client_number
+        self.heterogeneity_level = heterogeneity_level
         self.learning_rate: float = learning_rate
-
-        log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
     def setup_client(self, config: Config) -> None:
         # Check if the client number is within the range of the total number of clients
@@ -76,31 +76,34 @@ class Rxrx1DittoClient(DittoMkMmdClient):
 
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
-        train_loader, val_loader, _ = load_rxrx1_data(
-            data_path=self.data_path, client_num=self.client_number, batch_size=batch_size, seed=self.client_number
+        # The partitioned data should be generated prior to running the clients via preprocess_data function
+        # in the research/synthetic_data/preprocess.py file
+        train_loader, val_loader, _ = get_preprocessed_data(
+            self.data_path, self.client_number, batch_size, self.heterogeneity_level, self.heterogeneity_level
         )
-
         return train_loader, val_loader
 
     def get_test_data_loader(self, config: Config) -> DataLoader | None:
         batch_size = narrow_dict_type(config, "batch_size", int)
-        test_loader, _ = load_rxrx1_test_data(
-            data_path=self.data_path, client_num=self.client_number, batch_size=batch_size
+        # The partitioned data should be generated prior to running the clients via preprocess_data function
+        # in the research/synthetic_data/preprocess.py file
+        test_loader, _ = get_test_preprocessed_data(
+            self.data_path,
+            self.client_number,
+            batch_size,
+            self.heterogeneity_level,
+            self.heterogeneity_level,
         )
-
         return test_loader
 
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
 
-    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
-        global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=self.learning_rate)
-        local_optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
-        return {"global": global_optimizer, "local": local_optimizer}
+    def get_optimizer(self, config: Config) -> Optimizer:
+        return torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9, weight_decay=0.001)
 
     def get_model(self, config: Config) -> nn.Module:
-        model = get_model()
-        return model.to(self.device)
+        return FullyConnectedNet().to(self.device)
 
 
 if __name__ == "__main__":
@@ -116,7 +119,7 @@ if __name__ == "__main__":
         "--dataset_dir",
         action="store",
         type=str,
-        help="Path to the preprocessed Rxrx1 Dataset",
+        help="Path to the preprocessed Synthetic Dataset",
         required=True,
     )
     parser.add_argument(
@@ -136,7 +139,7 @@ if __name__ == "__main__":
         "--client_number",
         action="store",
         type=int,
-        help="Number of the client for dataset loading (should be 0-3 for Rxrx1)",
+        help="Number of the client for dataset loading",
         required=True,
     )
     parser.add_argument(
@@ -148,6 +151,13 @@ if __name__ == "__main__":
         type=int,
         help="Seed for the random number generators across python, torch, and numpy",
         required=False,
+    )
+    parser.add_argument(
+        "--alpha_beta",
+        action="store",
+        type=float,
+        help="Heterogeneity level for the dataset",
+        required=True,
     )
     parser.add_argument(
         "--mu",
@@ -180,6 +190,7 @@ if __name__ == "__main__":
         default=20,
     )
     args = parser.parse_args()
+    log(INFO, "Using preprocessed partitioned data for training, validation and testing")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log(INFO, f"Device to be used: {device}")
@@ -205,12 +216,13 @@ if __name__ == "__main__":
     )
 
     data_path = Path(args.dataset_dir)
-    client = Rxrx1DittoClient(
+    client = SyntheticMrMrlMmdClient(
         data_path=data_path,
         metrics=[Accuracy("accuracy")],
         device=device,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
+        heterogeneity_level=args.alpha_beta,
         checkpoint_and_state_module=checkpoint_and_state_module,
         feature_l2_norm_weight=args.l2,
         mkmmd_loss_depth=args.mkmmd_loss_depth,
@@ -219,5 +231,4 @@ if __name__ == "__main__":
     )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
-    # Shutdown the client gracefully
     client.shutdown()

@@ -5,21 +5,19 @@ from pathlib import Path
 import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, Scalar
-from torch import nn
 
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointAndStateModule
-from fl4health.clients.ditto_client import DittoClient
+from fl4health.clients.mr_mtl_client import MrMtlClient
 from fl4health.losses.deep_mmd_loss import DeepMmdLoss
 from fl4health.metrics.base_metrics import Metric
 from fl4health.model_bases.feature_extractor_buffer import FeatureExtractorBuffer
 from fl4health.reporting.base_reporter import BaseReporter
-from fl4health.utils.client import clone_and_freeze_model
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.random import restore_random_state, save_random_state
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
-class DittoDeepMmdClient(DittoClient):
+class MrMtlDeepMmdClient(MrMtlClient):
     def __init__(
         self,
         data_path: Path,
@@ -36,10 +34,10 @@ class DittoDeepMmdClient(DittoClient):
         num_accumulating_batches: int | None = None,
     ) -> None:
         """
-        This client implements the Deep MMD loss function in the Ditto framework. The Deep MMD loss is a measure of
-        the distance between the distributions of the features of the local model and initial global model of each
+        This client implements the Deep MMD loss function in the MR-MTL framework. The Deep MMD loss is a measure of
+        the distance between the distributions of the features of the local model and averaged local models of each
         round. The Deep MMD loss is added to the local loss to penalize the local model for drifting away from the
-        global model.
+        averaged local models.
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training.
@@ -85,7 +83,7 @@ class DittoDeepMmdClient(DittoClient):
             log(
                 ERROR,
                 "Deep MMD loss weight is set to 0. As Deep MMD loss will not be computed, ",
-                "please use vanilla DittoClient instead.",
+                "please use vanilla MrMtlClient instead.",
             )
 
         if feature_extraction_layers_with_size is None:
@@ -102,7 +100,7 @@ class DittoDeepMmdClient(DittoClient):
         # Restore the random state after initializing the Deep MMD loss layers. This is to ensure that the random state
         # would not change after initializing the Deep MMD loss.
         restore_random_state(random_state, numpy_state, torch_state)
-        self.initial_global_model: nn.Module
+
         self.local_feature_extractor: FeatureExtractorBuffer
         self.initial_global_feature_extractor: FeatureExtractorBuffer
         self.num_accumulating_batches = num_accumulating_batches
@@ -119,10 +117,6 @@ class DittoDeepMmdClient(DittoClient):
 
     def update_before_train(self, current_server_round: int) -> None:
         super().update_before_train(current_server_round)
-        assert isinstance(self.global_model, nn.Module)
-        # Clone and freeze the initial weights GLOBAL MODEL. These are used to form the Ditto local
-        # update penalty term.
-        self.initial_global_model = clone_and_freeze_model(self.global_model)
         self.initial_global_feature_extractor = FeatureExtractorBuffer(
             model=self.initial_global_model,
             flatten_feature_extraction_layers=self.flatten_feature_extraction_layers,
@@ -225,8 +219,7 @@ class DittoDeepMmdClient(DittoClient):
         input: TorchInputType,
     ) -> tuple[TorchPredType, TorchFeatureType]:
         """
-        Computes the predictions for both the **GLOBAL** and **LOCAL** models and pack them into the prediction
-        dictionary.
+        Computes the predictions for both models and pack them into the prediction dictionary.
 
         Args:
             input (TorchInputType): Inputs to be fed into the model. If input is of type ``dict[str, torch.Tensor]``,
@@ -239,9 +232,8 @@ class DittoDeepMmdClient(DittoClient):
             By passing features, we can compute all the losses. All predictions included in dictionary will by
             default be used to compute metrics separately.
         """
-        # We use features from initial_global_model to compute the Deep MMD loss not the global_model
-        global_preds = self.global_model(input)
-        local_preds = self.model(input)
+        # We use features from initial_global_model to compute the Deep MMD loss.
+        preds = self.model(input)
         features = self.local_feature_extractor.get_extracted_features()
         if self.deep_mmd_loss_weight != 0:
             # Compute the features of the initial_global_model
@@ -250,7 +242,7 @@ class DittoDeepMmdClient(DittoClient):
             for key, initial_global_feature in initial_global_features.items():
                 features[" ".join(["init_global", key])] = initial_global_feature
 
-        return {"global": global_preds, "local": local_preds}, features
+        return {"prediction": preds}, features
 
     def _maybe_checkpoint(self, loss: float, metrics: dict[str, Scalar], checkpoint_mode: CheckpointMode) -> None:
         # Hooks need to be removed before checkpointing the model
@@ -278,11 +270,10 @@ class DittoDeepMmdClient(DittoClient):
         target: TorchTargetType,
     ) -> TrainingLosses:
         """
-        Computes training losses given predictions of the global and local models and ground truth data.
-        For the local model we add to the vanilla loss function by including Ditto penalty loss which is the
-        :math:`\\ell^2` inner product between the initial global model weights and weights of the local model. This is
-        stored in backward The loss to optimize the global model is stored in the additional losses dictionary
-        under “global_loss”.
+        Computes training losses given predictions of the client model and ground truth data.
+        For the local model we add to the vanilla loss function by including Mean Regularized (MR) penalty loss
+        which is the :math:`\\ell^2` inner product between the initial global model weights and weights of the
+        current model.
 
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in
@@ -292,24 +283,23 @@ class DittoDeepMmdClient(DittoClient):
 
         Returns:
             TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed by
-            name. Additional losses includes each loss component and the global model loss tensor.
+            name.
         """
         for layer_loss_module in self.deep_mmd_losses.values():
             if self.mmd_kernel_train_interval == -1:
                 assert layer_loss_module.training
             else:
                 assert not layer_loss_module.training
-        # Check that both models are in training mode
-        assert self.global_model.training and self.model.training
+        # Check that the initial global model isn't in training mode and that the local model is in training mode
+        assert not self.initial_global_model.training and self.model.training
 
-        # local loss is stored in loss, global model loss is stored in additional losses.
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
 
         # Setting the adaptation loss to that of the local model, as its performance should dictate whether more or
         # less weight is used to constrain it to the global model (as in FedProx)
-        additional_losses["loss_for_adaptation"] = additional_losses["local_loss"].clone()
+        additional_losses["loss_for_adaptation"] = additional_losses["loss"].clone()
 
-        # This is the Ditto penalty loss of the local model compared with the original Global model weights, scaled
+        # This is the MR-MTL penalty loss of the local model compared with the original Global model weights, scaled
         # by drift_penalty_weight (or lambda in the original paper)
         penalty_loss = self.compute_penalty_loss()
         additional_losses["penalty_loss"] = penalty_loss.clone()
@@ -363,7 +353,11 @@ class DittoDeepMmdClient(DittoClient):
             - The tensor for the loss
             - A dictionary of additional losses with their names and values, or None if there are no additional losses.
         """
+        assert "prediction" in preds
         loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)
+
+        if additional_losses is None:
+            additional_losses = {"loss": loss}
 
         if self.deep_mmd_loss_weight != 0:
             # Compute Deep MMD loss based on computed features during training
