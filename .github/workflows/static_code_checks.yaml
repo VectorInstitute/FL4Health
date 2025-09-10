@@ -52,6 +52,7 @@ jobs:
           # PYSEC-2024-259 has note that this is disputed by multiple parties because this is intended PyTorch behaviour
           # GHSA-2c2j-9gv5-cj73 is a starlette vulnerability that requires 0.47.2, but FastAPI cannot support moving to this yet.
           # GHSA-xqrq-4mgf-ff32 is a vulnerability in python future. No fix exists yet.
+          # GHSA-p8cm-mm2v-gwjm, GHSA-6vm5-6jv9-rjpj, GHSA-x6ww-pf9m-m73m are all MONAI related with no fixes yet.
           ignore-vulns: |
             GHSA-cjgq-5qmw-rcj6
             GHSA-3749-ghw9-m3mg
@@ -62,3 +63,6 @@ jobs:
             PYSEC-2025-61
             PYSEC-2024-259
             GHSA-xqrq-4mgf-ff32
+            GHSA-p8cm-mm2v-gwjm
+            GHSA-6vm5-6jv9-rjpj
+            GHSA-x6ww-pf9m-m73m
