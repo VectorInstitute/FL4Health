@@ -1,7 +1,6 @@
 import torch
-from torch import nn
-
 from fl4health.model_bases.fedper_base import FedPerModel
+from torch import nn
 
 
 class FedPerGlobalFeatureExtractor(nn.Module):
