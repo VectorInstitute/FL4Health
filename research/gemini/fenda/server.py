@@ -4,6 +4,7 @@ from logging import INFO
 from typing import Any
 
 import flwr as fl
+from fl4health.servers.server import FlServer
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters, Scalar
@@ -14,7 +15,6 @@ from torch import nn
 
 from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
-from fl4health.servers.server import FlServer
 from fl4health.utils.config import load_config
 
 # delirium model

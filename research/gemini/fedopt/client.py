@@ -6,12 +6,12 @@ from pathlib import Path
 import flwr as fl
 import torch
 from data.data import load_train_delirium, load_train_mortality
+from fl4health.clients.numpy_fl_client import NumpyFlClient
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch import nn
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.metrics import AccumulationMeter, Meter, Metric
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from research.gemini.delirium_models.NN import NN as delirium_model
