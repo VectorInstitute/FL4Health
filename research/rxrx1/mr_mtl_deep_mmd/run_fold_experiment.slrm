@@ -3,38 +3,45 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=1
 #SBATCH --gres=gpu:1
-#SBATCH --mem=32G
-#SBATCH --partition=a40
+#SBATCH --mem=64G
+#SBATCH --partition=t4v2
 #SBATCH --qos=normal
 #SBATCH --job-name=fl_five_fold_exp
 #SBATCH --output=%j_%x.out
 #SBATCH --error=%j_%x.err
+#SBATCH --time=12:00:00
 
 ###############################################
 # Usage:
 #
-# sbatch research/flamby/fed_isic2019/fedavg/run_fold_experiment.slrm \
+# sbatch research/rxrx1/mr_mtl_deep_mmd/run_fold_experiment.slrm \
 #   path_to_config.yaml \
 #   path_to_folder_for_artifacts/ \
 #   path_to_folder_for_dataset/ \
 #   path_to_desired_venv/ \
 #   client_side_learning_rate_value \
+#   lambda value \
+#   mu value \
+#   deep_mmd_loss_depth value \
 #   server_address
 #
 # Example:
-# sbatch research/flamby/fed_isic2019/fedavg/run_fold_experiment.slrm \
-#   research/flamby/fed_isic2019/fedavg/config.yaml \
-#   research/flamby/fed_isic2019/fedavg/hp_results/ \
-#   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
+# sbatch research/rxrx1/mr_mtl_deep_mmd/run_fold_experiment.slrm \
+#   research/rxrx1/mr_mtl_deep_mmd/config.yaml \
+#   research/rxrx1/mr_mtl_deep_mmd/hp_results/ \
+#   /datasets/rxrx1 \
 #   /h/demerson/vector_repositories/fl4health_env/ \
 #   0.0001 \
+#   0.01 \
+#   0.1 \
+#   2 \
 #   0.0.0.0:8080
 #
 # Notes:
 # 1) The sbatch command above should be run from the top level directory of the repository.
-# 2) This example runs Fedavg. As such the data paths and python launch commands are hardcoded. If you want to change
+# 2) This example runs mr_mtl Deep MMD. As such the data paths and python launch commands are hardcoded. If you want to change
 # the example you run, you need to explicitly modify the code below.
 # 3) The logging directories need to ALREADY EXIST. The script does not create them.
 ###############################################
@@ -64,13 +71,16 @@ ARTIFACT_DIR=$2
 DATASET_DIR=$3
 VENV_PATH=$4
 CLIENT_LR=$5
-SERVER_ADDRESS=$6
+LAM_VALUE=$6
+MU_VALUE=$7
+DEEP_MMD_LOSS_DEPTH=$8
+SERVER_ADDRESS=$9
 
 # Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
 
-RUN_NAMES=( "Run1" "Run2" "Run3" )
-SEEDS=( 2021 2022 2023 )
+RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )
+SEEDS=( 2021 2022 2023 2024 2025 )
 
 echo "Python Venv Path: ${VENV_PATH}"
 
@@ -84,7 +94,7 @@ source ${VENV_PATH}bin/activate
 echo "Active Environment:"
 which python
 
-for RUN_NAME in "${RUN_NAMES[@]}";
+for ((i=0; i<${#RUN_NAMES[@]}; i++));
 do
     RUN_NAME="${RUN_NAMES[i]}"
     SEED="${SEEDS[i]}"
@@ -119,19 +129,18 @@ do
     echo "Server logging at: ${SERVER_OUTPUT_FILE}"
     echo "Launching Server"
 
-    nohup python -m research.flamby.fed_isic2019.fedavg.server \
+    nohup python -m research.rxrx1.mr_mtl_deep_mmd.server \
         --config_path ${SERVER_CONFIG_PATH} \
-        --artifact_dir ${ARTIFACT_DIR} \
-        --run_name ${RUN_NAME} \
         --server_address ${SERVER_ADDRESS} \
         --seed ${SEED} \
+        --lam ${LAM_VALUE} \
         > ${SERVER_OUTPUT_FILE} 2>&1 &
 
     # Sleep for 20 seconds to allow the server to come up.
     sleep 20
 
     # Start n number of clients and divert the outputs to their own files
-    n_clients=6
+    n_clients=5
     for (( c=0; c<${n_clients}; c++ ))
     do
         CLIENT_NAME="client_${c}"
@@ -139,12 +148,14 @@ do
 
         CLIENT_LOG_PATH="${RUN_DIR}${CLIENT_NAME}.out"
         echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
-        nohup python -m research.flamby.fed_isic2019.fedavg.client \
+        nohup python -m research.rxrx1.mr_mtl_deep_mmd.client \
             --artifact_dir ${ARTIFACT_DIR} \
             --dataset_dir ${DATASET_DIR} \
             --run_name ${RUN_NAME} \
             --client_number ${c} \
             --learning_rate ${CLIENT_LR} \
+            --mu ${MU_VALUE} \
+            --deep_mmd_loss_depth ${DEEP_MMD_LOSS_DEPTH} \
             --server_address ${SERVER_ADDRESS} \
             --seed ${SEED} \
             > ${CLIENT_LOG_PATH} 2>&1 &
