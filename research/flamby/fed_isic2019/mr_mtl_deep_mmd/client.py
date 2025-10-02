@@ -7,10 +7,10 @@ from pathlib import Path
 
 import flwr as fl
 import torch
-import torch.nn as nn
 from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
 from flwr.common.logger import log
 from flwr.common.typing import Config
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -23,6 +23,7 @@ from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
+
 
 FED_ISIC2019_BASELINE_LAYERS: OrderedDict[str, int] = OrderedDict()
 for i in range(16):

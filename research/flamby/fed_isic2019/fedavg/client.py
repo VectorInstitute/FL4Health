@@ -6,10 +6,10 @@ from pathlib import Path
 
 import flwr as fl
 import torch
-import torch.nn as nn
 from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
 from flwr.common.logger import log
 from flwr.common.typing import Config
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -145,7 +145,6 @@ if __name__ == "__main__":
             LatestTorchModuleCheckpointer(checkpoint_dir, post_aggregation_last_checkpoint_name),
         ],
     )
-
 
     client = FedIsic2019FedAvgClient(
         data_path=Path(args.dataset_dir),
