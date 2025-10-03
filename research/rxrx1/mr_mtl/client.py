@@ -18,10 +18,11 @@ from fl4health.checkpointing.checkpointer import LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.mr_mtl_client import MrMtlClient
 from fl4health.datasets.rxrx1.load_data import load_rxrx1_data, load_rxrx1_test_data
+from fl4health.metrics import Accuracy
+from fl4health.metrics.base_metrics import Metric
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
 
 
@@ -79,7 +80,7 @@ class Rxrx1MrMtlClient(MrMtlClient):
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
 
-    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
+    def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
 
     def get_model(self, config: Config) -> nn.Module:
