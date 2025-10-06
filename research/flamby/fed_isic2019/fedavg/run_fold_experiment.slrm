@@ -55,8 +55,10 @@ if [[ "${SLURM_JOB_PARTITION}" == "t4v2" ]] || \
     export NCCL_SOCKET_IFNAME=bond0
 fi
 
-
+# This environment variable must be set in order to force torch to use deterministic algorithms. See documentation
+# in fl4health/utils/random.py for more information
 export CUBLAS_WORKSPACE_CONFIG=:4096:8
+
 # Process Inputs
 
 SERVER_CONFIG_PATH=$1
@@ -69,6 +71,8 @@ SERVER_ADDRESS=$6
 # Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
 
+# Switch to 5 runs for https://arxiv.org/abs/2309.16825 reproduction without seeds
+# RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )
 RUN_NAMES=( "Run1" "Run2" "Run3" )
 SEEDS=( 2021 2022 2023 )
 

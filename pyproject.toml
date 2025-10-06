@@ -41,11 +41,12 @@ flwr-datasets = "^0.5.0"
 dm-tree = "^0.1.9"
 cmake = "^3.31.6"
 matplotlib = "^3.10.1"
+keras = "^3.11.0"
 
 [tool.poetry.group.dev.dependencies]
 # locked the 2.15 version because of restrictions with tensorflow-io
 # (see https://pypi.org/project/tensorflow-io/ section "TensorFlow Version Compatibility")
-tensorflow = "2.15"
+tensorflow = "^2.15"
 nltk = "^3.8.0"
 torchvision = "^0.19.0"
 torchinfo = "^1.8.0"

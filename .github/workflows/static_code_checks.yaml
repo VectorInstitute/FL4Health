@@ -44,7 +44,6 @@ jobs:
         uses: pypa/gh-action-pip-audit@v1.1.0
         with:
           virtual-environment: .venv/
-          # GHSA-cjgq-5qmw-rcj6 is a Keras vulnerability that has no fix yet
           # GHSA-3749-ghw9-m3mg and GHSA-887c-mr87-cxwp are pytorch vulnerabilities that have no fix yet
           # GHSA-53q9-r3pm-6pq6 is a pytorch vulnerability that has a fix in 2.6.0 which we can't upgrade to just yet
           # PYSEC-2024-109 requires upgrading to DeepSpeed 0.15.1, which is currently blocked by pycyclops
@@ -53,8 +52,9 @@ jobs:
           # GHSA-2c2j-9gv5-cj73 is a starlette vulnerability that requires 0.47.2, but FastAPI cannot support moving to this yet.
           # GHSA-xqrq-4mgf-ff32 is a vulnerability in python future. No fix exists yet.
           # GHSA-p8cm-mm2v-gwjm, GHSA-6vm5-6jv9-rjpj, GHSA-x6ww-pf9m-m73m are all MONAI related with no fixes yet.
+          # GHSA-4xh5-x5gv-qwph is a pip vulnerability with tarball extraction that hasn't been patched yet.
+          # GHSA-wf7f-8fxf-xfxc ML Flow vulnerability in deserialization that hasn't been patched yet.
           ignore-vulns: |
-            GHSA-cjgq-5qmw-rcj6
             GHSA-3749-ghw9-m3mg
             GHSA-887c-mr87-cxwp
             GHSA-53q9-r3pm-6pq6
@@ -66,6 +66,5 @@ jobs:
             GHSA-p8cm-mm2v-gwjm
             GHSA-6vm5-6jv9-rjpj
             GHSA-x6ww-pf9m-m73m
-            GHSA-36fq-jgmw-4r9c
             GHSA-wf7f-8fxf-xfxc
             GHSA-4xh5-x5gv-qwph
