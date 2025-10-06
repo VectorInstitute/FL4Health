@@ -1,5 +1,6 @@
 import argparse
 import os
+from collections import OrderedDict
 from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
@@ -16,7 +17,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
-from fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client import MrMtlMkMmdClient
+from fl4health.clients.deep_mmd_clients.mr_mtl_deep_mmd_client import MrMtlDeepMmdClient
 from fl4health.metrics import BalancedAccuracy
 from fl4health.metrics.base_metrics import Metric
 from fl4health.reporting.base_reporter import BaseReporter
@@ -25,13 +26,13 @@ from fl4health.utils.random import set_all_random_seeds
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
 
 
-FED_ISIC2019_BASELINE_LAYERS = []
+FED_ISIC2019_BASELINE_LAYERS: OrderedDict[str, int] = OrderedDict()
 for i in range(16):
-    FED_ISIC2019_BASELINE_LAYERS.append(f"base_model._blocks.{i}")
-FED_ISIC2019_BASELINE_LAYERS += ["base_model._avg_pooling"]
+    FED_ISIC2019_BASELINE_LAYERS[f"base_model._blocks.{i}"] = 64
+FED_ISIC2019_BASELINE_LAYERS["base_model._avg_pooling"] = 1280
 
 
-class FedIsic2019MrMtlClient(MrMtlMkMmdClient):
+class FedIsic2019MrMtlClient(MrMtlDeepMmdClient):
     def __init__(
         self,
         data_path: Path,
@@ -40,15 +41,16 @@ class FedIsic2019MrMtlClient(MrMtlMkMmdClient):
         client_number: int,
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        mkmmd_loss_weight: float = 10,
-        feature_l2_norm_weight: float = 1,
-        mkmmd_loss_depth: int = 1,
-        beta_global_update_interval: int = 20,
+        deep_mmd_loss_weight: float = 10,
+        deep_mmd_loss_depth: int = 1,
         checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
         client_name: str | None = None,
     ) -> None:
+        feature_extraction_layers_with_size = OrderedDict(
+            list(FED_ISIC2019_BASELINE_LAYERS.items())[-1 * deep_mmd_loss_depth :]
+        )
         super().__init__(
             data_path=data_path,
             metrics=metrics,
@@ -58,17 +60,14 @@ class FedIsic2019MrMtlClient(MrMtlMkMmdClient):
             reporters=reporters,
             progress_bar=progress_bar,
             client_name=client_name,
-            mkmmd_loss_weight=mkmmd_loss_weight,
-            feature_extraction_layers=FED_ISIC2019_BASELINE_LAYERS[-1 * mkmmd_loss_depth :],
-            feature_l2_norm_weight=feature_l2_norm_weight,
-            beta_global_update_interval=beta_global_update_interval,
+            deep_mmd_loss_weight=deep_mmd_loss_weight,
+            feature_extraction_layers_with_size=feature_extraction_layers_with_size,
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
-        self.num_accumulating_batches = BATCH_SIZE
 
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
@@ -139,31 +138,16 @@ if __name__ == "__main__":
         "--mu",
         action="store",
         type=float,
-        help="Weight for the mkmmd losses",
+        help="Weight for the Deep MMD losses",
         required=False,
     )
     parser.add_argument(
-        "--l2",
-        action="store",
-        type=float,
-        help="Weight for the feature l2 norm loss as a regularizer",
-        required=False,
-    )
-    parser.add_argument(
-        "--mkmmd_loss_depth",
+        "--deep_mmd_loss_depth",
         action="store",
         type=int,
-        help="Depth of applying the mkmmd loss",
+        help="Depth of applying the Deep MMD loss",
         required=False,
         default=1,
-    )
-    parser.add_argument(
-        "--beta_update_interval",
-        action="store",
-        type=int,
-        help="Interval for updating the beta values",
-        required=False,
-        default=20,
     )
     args = parser.parse_args()
 
@@ -172,9 +156,7 @@ if __name__ == "__main__":
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
     log(INFO, f"Mu: {args.mu}")
-    log(INFO, f"Feature L2 Norm Weight: {args.l2}")
-    log(INFO, f"MKMMD Loss Depth: {args.mkmmd_loss_depth}")
-    log(INFO, f"Beta Update Interval: {args.beta_update_interval}")
+    log(INFO, f"DEEP MMD Loss Depth: {args.deep_mmd_loss_depth}")
 
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
@@ -186,6 +168,7 @@ if __name__ == "__main__":
             LatestTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_last_checkpoint_name),
         ],
     )
+
     client = FedIsic2019MrMtlClient(
         data_path=Path(args.dataset_dir),
         metrics=[BalancedAccuracy("FedIsic2019_balanced_accuracy")],
@@ -193,10 +176,8 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         checkpoint_and_state_module=checkpoint_and_state_module,
-        feature_l2_norm_weight=args.l2,
-        mkmmd_loss_depth=args.mkmmd_loss_depth,
-        mkmmd_loss_weight=args.mu,
-        beta_global_update_interval=args.beta_update_interval,
+        deep_mmd_loss_depth=args.deep_mmd_loss_depth,
+        deep_mmd_loss_weight=args.mu,
     )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())

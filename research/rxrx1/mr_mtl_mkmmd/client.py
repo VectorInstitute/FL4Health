@@ -6,32 +6,30 @@ from pathlib import Path
 
 import flwr as fl
 import torch
-from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
+from torchvision import models
 
-from fl4health.checkpointing.checkpointer import LatestTorchModuleCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client import MrMtlMkMmdClient
-from fl4health.metrics import BalancedAccuracy
+from fl4health.datasets.rxrx1.load_data import load_rxrx1_data, load_rxrx1_test_data
+from fl4health.metrics import Accuracy
 from fl4health.metrics.base_metrics import Metric
 from fl4health.reporting.base_reporter import BaseReporter
+from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.random import set_all_random_seeds
-from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
 
 
-FED_ISIC2019_BASELINE_LAYERS = []
-for i in range(16):
-    FED_ISIC2019_BASELINE_LAYERS.append(f"base_model._blocks.{i}")
-FED_ISIC2019_BASELINE_LAYERS += ["base_model._avg_pooling"]
+BASELINE_LAYERS = ["layer1", "layer2", "layer3", "layer4", "avgpool"]
 
 
-class FedIsic2019MrMtlClient(MrMtlMkMmdClient):
+class Rxrx1MrMtlClient(MrMtlMkMmdClient):
     def __init__(
         self,
         data_path: Path,
@@ -59,34 +57,52 @@ class FedIsic2019MrMtlClient(MrMtlMkMmdClient):
             progress_bar=progress_bar,
             client_name=client_name,
             mkmmd_loss_weight=mkmmd_loss_weight,
-            feature_extraction_layers=FED_ISIC2019_BASELINE_LAYERS[-1 * mkmmd_loss_depth :],
+            feature_extraction_layers=BASELINE_LAYERS[-1 * mkmmd_loss_depth :],
             feature_l2_norm_weight=feature_l2_norm_weight,
             beta_global_update_interval=beta_global_update_interval,
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
 
-        assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
-        self.num_accumulating_batches = BATCH_SIZE
+
+        # Number of batches to accumulate before updating the kernel betas
+        self.num_accumulating_batches = 50
+
+    def setup_client(self, config: Config) -> None:
+        # Check if the client number is within the range of the total number of clients
+        num_clients = narrow_dict_type(config, "n_clients", int)
+        assert 0 <= self.client_number < num_clients
+        super().setup_client(config)
 
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
-        train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
-            self.client_number, str(self.data_path)
+        batch_size = narrow_dict_type(config, "batch_size", int)
+        train_loader, val_loader, _ = load_rxrx1_data(
+            data_path=self.data_path, client_num=self.client_number, batch_size=batch_size, seed=self.client_number
         )
-        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-        val_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False)
+
         return train_loader, val_loader
 
-    def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = Baseline().to(self.device)
-        return model
+    def get_test_data_loader(self, config: Config) -> DataLoader | None:
+        batch_size = narrow_dict_type(config, "batch_size", int)
+        test_loader, _ = load_rxrx1_test_data(
+            data_path=self.data_path, client_num=self.client_number, batch_size=batch_size
+        )
+
+        return test_loader
+
+    def get_criterion(self, config: Config) -> _Loss:
+        return torch.nn.CrossEntropyLoss()
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
 
-    def get_criterion(self, config: Config) -> _Loss:
-        return BaselineLoss()
+    def get_model(self, config: Config) -> nn.Module:
+        model = models.resnet18(pretrained=True)
+        num_classes = 50
+        in_features = model.fc.in_features
+        model.fc = nn.Linear(in_features, num_classes)
+        return model.to(self.device)
 
 
 if __name__ == "__main__":
@@ -102,7 +118,7 @@ if __name__ == "__main__":
         "--dataset_dir",
         action="store",
         type=str,
-        help="Path to the preprocessed FedIsic2019 Dataset (ex. path/to/fedisic2019)",
+        help="Path to the preprocessed Rxrx1 Dataset",
         required=True,
     )
     parser.add_argument(
@@ -122,11 +138,11 @@ if __name__ == "__main__":
         "--client_number",
         action="store",
         type=int,
-        help="Number of the client for dataset loading (should be 0-5 for FedIsic2019)",
+        help="Number of the client for dataset loading (should be 0-3 for Rxrx1)",
         required=True,
     )
     parser.add_argument(
-        "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
+        "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=0.1
     )
     parser.add_argument(
         "--seed",
@@ -161,7 +177,7 @@ if __name__ == "__main__":
         "--beta_update_interval",
         action="store",
         type=int,
-        help="Interval for updating the beta values",
+        help="Interval for updating the beta values of mkmmd loss",
         required=False,
         default=20,
     )
@@ -179,16 +195,27 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
+    # Adding extensive checkpointing for the client
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
+    pre_aggregation_best_checkpoint_name = f"pre_aggregation_client_{args.client_number}_best_model.pkl"
     pre_aggregation_last_checkpoint_name = f"pre_aggregation_client_{args.client_number}_last_model.pkl"
+    post_aggregation_best_checkpoint_name = f"post_aggregation_client_{args.client_number}_best_model.pkl"
+    post_aggregation_last_checkpoint_name = f"post_aggregation_client_{args.client_number}_last_model.pkl"
     checkpoint_and_state_module = ClientCheckpointAndStateModule(
         pre_aggregation=[
+            BestLossTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_best_checkpoint_name),
             LatestTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_last_checkpoint_name),
         ],
+        post_aggregation=[
+            BestLossTorchModuleCheckpointer(checkpoint_dir, post_aggregation_best_checkpoint_name),
+            LatestTorchModuleCheckpointer(checkpoint_dir, post_aggregation_last_checkpoint_name),
+        ],
     )
-    client = FedIsic2019MrMtlClient(
-        data_path=Path(args.dataset_dir),
-        metrics=[BalancedAccuracy("FedIsic2019_balanced_accuracy")],
+
+    data_path = Path(args.dataset_dir)
+    client = Rxrx1MrMtlClient(
+        data_path=data_path,
+        metrics=[Accuracy("accuracy")],
         device=device,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
@@ -200,6 +227,5 @@ if __name__ == "__main__":
     )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
-
     # Shutdown the client gracefully
     client.shutdown()
