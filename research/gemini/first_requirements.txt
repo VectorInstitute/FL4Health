@@ -63,7 +63,7 @@ Jinja2==3.1.2
 joblib==1.2.0
 jupyter_client==8.0.2
 jupyter_core==5.2.0
-keras==2.8.0
+keras==3.12.0
 Keras-Preprocessing==1.1.2
 kiwisolver==1.4.4
 langcodes==3.3.0
