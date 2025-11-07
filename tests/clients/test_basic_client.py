@@ -33,6 +33,7 @@ def get_dummy_dataset() -> TensorDataset:
 
 
 DUMMY_DATASET = get_dummy_dataset()
+DEVICE: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 @freeze_time("2012-12-12 12:12:12")
@@ -160,7 +161,7 @@ def test_validate_by_steps() -> None:
     fl_client = MockBasicClient()
     fl_client.num_validation_steps = 2
     fl_client.model = LinearModel()
-    fl_client.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    fl_client.device = DEVICE
     fl_client.val_loader = DataLoader(DUMMY_DATASET, batch_size=15, shuffle=False)
     loss, metrics = fl_client._validate_by_steps(fl_client.val_loss_meter, fl_client.val_metric_manager)
     assert loss == (1.0 + 2.0) / 2.0
@@ -191,7 +192,7 @@ class MockBasicClient(BasicClient):
         loss: float | None = 0,
         reporters: Sequence[BaseReporter] | None = None,
     ):
-        super().__init__(Path(""), [], torch.device(0), reporters=reporters)
+        super().__init__(Path(""), [], DEVICE, reporters=reporters)
 
         self.mock_loss_dict = loss_dict
         if self.mock_loss_dict is None:

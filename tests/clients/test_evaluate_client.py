@@ -17,6 +17,9 @@ from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 from tests.test_utils.models_for_test import SingleLayerWithSeed
 
 
+DEVICE: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
 def test_evaluate_merge_metrics(caplog: pytest.LogCaptureFixture) -> None:
     global_metrics: dict[str, Scalar] = {
         "global_metric_1": 0.22,
@@ -137,7 +140,7 @@ class MockEvaluateClient(EvaluateClient):
         metrics: dict[str, Scalar] | None = None,
         reporters: Sequence[BaseReporter] | None = None,
     ):
-        super().__init__(Path(""), [], torch.device(0), reporters=reporters)
+        super().__init__(Path(""), [], DEVICE, reporters=reporters)
 
         # Mocking methods
         self.get_data_loader = MagicMock()  # type: ignore
