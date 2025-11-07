@@ -17,7 +17,7 @@ from fl4health.utils.load_data import load_mnist_test_data
 class MnistModelMergeClient(ModelMergeClient):
     def get_model(self, config: Config) -> nn.Module:
         model = MnistNet()
-        checkpoint = torch.load(self.model_path)
+        checkpoint = torch.load(self.model_path, weights_only=False)
         model.load_state_dict(checkpoint["model_state_dict"])
         return model.to(self.device)
 

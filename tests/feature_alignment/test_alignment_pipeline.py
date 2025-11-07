@@ -72,8 +72,7 @@ def test_encoding(create_df1: pd.DataFrame) -> None:
     assert encoder.get_target_columns() == ["Wealth"]
     # Note that since the dataframe is very small (number of unique values is small),
     # both "Name" and "Age" were inferred to be of type
-    #  TabularType.ORDINAL according to
-    # cyclops' type inference algorithm.
+    #  TabularType.ORDINAL
     assert len(encoder.features_by_type(TabularType.ORDINAL)) == 2
     assert len(encoder.features_by_type(TabularType.BINARY)) == 1
     assert len(encoder.features_by_type(TabularType.STRING)) == 0

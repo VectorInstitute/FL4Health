@@ -34,7 +34,7 @@ def test_simple_model_exclusion() -> None:
 def test_nested_model_exclusion() -> None:
     model = UNet3D(num_encoding_blocks=2, out_channels_first_layer=2)
 
-    bn_weights = model.encoder.encoding_blocks[0].conv2.norm_layer.weight.detach().clone()
+    bn_weights = model.encoder.encoding_blocks[0].conv2.norm_layer.weight.detach().clone()  # type: ignore
     # fill model weights with different constants
     exchanger = LayerExchangerWithExclusions(model, {nn.BatchNorm3d})
     shared_layer_list = exchanger.push_parameters(model)
@@ -46,9 +46,10 @@ def test_nested_model_exclusion() -> None:
     exchanger.pull_parameters([0.0 * p for p in shared_layer_list], model)
 
     # Excluded weights should be the same as before, these two weights are actually tied together in the U-net
-    assert torch.all(torch.eq(model.encoder.encoding_blocks[0].conv2.norm_layer.weight, bn_weights))
-    assert torch.all(torch.eq(model.encoder.encoding_blocks[0].conv2.block[1].weight, bn_weights))
+    assert torch.all(torch.eq(model.encoder.encoding_blocks[0].conv2.norm_layer.weight, bn_weights))  # type: ignore
+    assert torch.all(torch.eq(model.encoder.encoding_blocks[0].conv2.block[1].weight, bn_weights))  # type: ignore
 
     # These weights should be zero, as they were "exchanged"
-    weights = model.decoder.decoding_blocks[0].conv2.conv_layer.weight
+    weights = model.decoder.decoding_blocks[0].conv2.conv_layer.weight  # type: ignore
+    assert isinstance(weights, torch.Tensor)
     assert torch.all(torch.eq(weights, torch.zeros_like(weights)))

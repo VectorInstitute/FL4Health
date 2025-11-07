@@ -44,18 +44,10 @@ jobs:
         uses: pypa/gh-action-pip-audit@v1.1.0
         with:
           virtual-environment: .venv/
-          # GHSA-3749-ghw9-m3mg and GHSA-887c-mr87-cxwp are pytorch vulnerabilities that have no fix yet
-          # GHSA-53q9-r3pm-6pq6 is a pytorch vulnerability that has a fix in 2.6.0 which we can't upgrade to just yet
-          # PYSEC-2024-109 requires upgrading to DeepSpeed 0.15.1, which is currently blocked by pycyclops
-          # PYSEC-2025-61 requires upgrading to Pillow 11.3.0}, which is currently blocked by pycyclops
-          # PYSEC-2024-259 has note that this is disputed by multiple parties because this is intended PyTorch behaviour
+          # GHSA-3749-ghw9-m3mg and GHSA-887c-mr87-cxwp are pytorch vulnerabilities that require 2.7 and 2.8 but we're
+          # pinning to 2.6.0 for now.
           # GHSA-wf7f-8fxf-xfxc ML Flow vulnerability in deserialization that hasn't been patched yet.
           ignore-vulns: |
             GHSA-3749-ghw9-m3mg
             GHSA-887c-mr87-cxwp
-            GHSA-53q9-r3pm-6pq6
-            GHSA-2c2j-9gv5-cj73
-            PYSEC-2024-109
-            PYSEC-2025-61
-            PYSEC-2024-259
             GHSA-wf7f-8fxf-xfxc

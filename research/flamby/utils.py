@@ -52,12 +52,12 @@ def write_measurement_results(eval_write_path: str, results: dict[str, float]) -
 
 def load_local_model(run_folder_dir: str, client_number: int) -> nn.Module:
     model_checkpoint_path = os.path.join(run_folder_dir, f"client_{client_number}_best_model.pkl")
-    return torch.load(model_checkpoint_path)
+    return torch.load(model_checkpoint_path, weights_only=False)
 
 
 def load_global_model(run_folder_dir: str) -> nn.Module:
     model_checkpoint_path = os.path.join(run_folder_dir, "server_best_model.pkl")
-    return torch.load(model_checkpoint_path)
+    return torch.load(model_checkpoint_path, weights_only=False)
 
 
 def get_metric_avg_std(metrics: list[float]) -> tuple[float, float]:

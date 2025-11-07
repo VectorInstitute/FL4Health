@@ -42,7 +42,7 @@ class WarmedUpModule:
                 f"Pretrained model path {pretrained_model_path} does not exist."
             )
             log(INFO, f"Loading pretrained model from {pretrained_model_path}")
-            self.pretrained_model_state = torch.load(pretrained_model_path).state_dict()
+            self.pretrained_model_state = torch.load(pretrained_model_path, weights_only=False).state_dict()
 
         else:
             raise AssertionError("At least one of pretrained_model_path and pretrained_model should be provided.")

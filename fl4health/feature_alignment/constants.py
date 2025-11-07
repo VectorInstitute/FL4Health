@@ -18,3 +18,36 @@ INPUT_DIMENSION = "input_dimension"
 OUTPUT_DIMENSION = "output_dimension"
 
 CURRENT_SERVER_ROUND = "current_server_round"
+
+NUMERIC = "numeric"
+BINARY = "binary"
+STRING = "string"
+ORDINAL = "ordinal"
+CATEGORICAL_INDICATOR = "categorical_indicator"
+
+FEATURE_TYPES = [
+    NUMERIC,
+    BINARY,
+    STRING,
+    ORDINAL,
+]
+
+FEATURE_INDICATOR_ATTR = "indicator_of"
+FEATURE_MAPPING_ATTR = "mapping"
+FEATURE_TYPE_ATTR = "type_"
+FEATURE_TARGET_ATTR = "target"
+
+FEATURE_META_ATTR_DEFAULTS = {
+    FEATURE_TARGET_ATTR: False,
+    FEATURE_INDICATOR_ATTR: None,
+    FEATURE_MAPPING_ATTR: None,
+}
+
+FEATURE_META_ATTRS = [
+    FEATURE_TYPE_ATTR,
+    FEATURE_TARGET_ATTR,
+    FEATURE_INDICATOR_ATTR,
+    FEATURE_MAPPING_ATTR,
+]
+
+MISSING_CATEGORY = "null_category"

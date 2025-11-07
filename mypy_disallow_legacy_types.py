@@ -56,9 +56,12 @@ def discover_legacy_imports(file_paths: list[str]) -> None:
             same_line_match = re.search(same_line_import_re, file_contents, flags=re.MULTILINE)
             multi_line_match = re.search(multi_line_import_re, file_contents, flags=re.MULTILINE)
             if same_line_match or multi_line_match:
+                match_string = multi_line_match.group(0) if multi_line_match else ""
+                match_string = same_line_match.group(0) if same_line_match else ""
                 raise ValueError(
-                    f"A legacy mypy type is being imported in file {file_path}. "
-                    f"Disallowed imports from the typing library are: {comma_separated_types}"
+                    f"A legacy mypy type is being imported in file {file_path}.\n"
+                    f"Disallowed imports from the typing library are: {comma_separated_types}\n"
+                    f"Match was: {match_string}"
                 )
 
 

@@ -9,7 +9,7 @@ from flwr.common.logger import log
 from fl4health.utils.dataset import DictionaryDataset, TensorDataset, select_by_indices
 
 
-T = TypeVar("T")
+T = TypeVar("T", bound=int | float | bool)
 D = TypeVar("D", bound=TensorDataset | DictionaryDataset)
 
 

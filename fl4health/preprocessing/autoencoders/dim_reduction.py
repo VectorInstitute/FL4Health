@@ -25,7 +25,7 @@ class AutoEncoderProcessing:
         self.load_autoencoder()
 
     def load_autoencoder(self) -> None:
-        autoencoder = torch.load(self.checkpointing_path)
+        autoencoder = torch.load(self.checkpointing_path, weights_only=False)
         autoencoder.eval()
         self.autoencoder = autoencoder.to(self.device)
 

@@ -11,7 +11,7 @@ from torch.optim import Optimizer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.metrics.base_metrics import Metric
-from fl4health.model_bases.gpfl_base import GpflModel
+from fl4health.model_bases.gpfl_base import Gce, GpflModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
@@ -75,6 +75,9 @@ class GpflClient(BasicClient):
                 ``get_optimizer`` function defined by the client user, or if it is not set by the user, it will be
                 set in ``set_optimizer`` method. Defaults to 0.01.
         """
+        self.model: GpflModel
+        self.gce_frozen: Gce
+
         super().__init__(
             data_path=data_path,
             metrics=metrics,
@@ -236,7 +239,9 @@ class GpflClient(BasicClient):
             current_server_round (int): The number of current server round.
         """
         # Update the frozen GCE
-        self.gce_frozen = clone_and_freeze_model(self.model.gce)
+        cloned_model = clone_and_freeze_model(self.model.gce)
+        assert isinstance(cloned_model, Gce)
+        self.gce_frozen = cloned_model
         # Update conditional inputs before training
         self.compute_conditional_inputs()
 
@@ -321,6 +326,7 @@ class GpflClient(BasicClient):
         # In magnitude level loss, GCE's embedding table is frozen, and the goal is to train
         # the model to generate good global features by making the generated embeddings closer to
         # frozen GCE's global embeddings.
+        assert isinstance(target, torch.Tensor), "GPFL clients take only tensor targets."
         return torch.norm(global_features - self.gce_frozen.lookup(target).detach(), 2)
 
     def compute_training_loss(

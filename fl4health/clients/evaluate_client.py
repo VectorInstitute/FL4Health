@@ -278,5 +278,5 @@ class EvaluateClient(BasicClient):
                 INFO,
                 f"Loading model checkpoint at: {str(self.model_checkpoint_path)}",
             )
-            return torch.load(self.model_checkpoint_path)
+            return torch.load(self.model_checkpoint_path, weights_only=False)
         return None

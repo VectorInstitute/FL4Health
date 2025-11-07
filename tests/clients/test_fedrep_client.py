@@ -39,10 +39,10 @@ def test_client_setup_and_parameter_exchange(get_client: FedRepClient) -> None: 
     assert len(head_module_parameters) == len(original_head_params)
     # Make sure the base module weights were set correctly
     for params_1, params_2 in zip(base_module_parameters, modified_base_params):
-        assert pytest.approx(torch.sum(params_1.cpu().detach() - params_2), abs=0.0001) == 0.0
+        assert pytest.approx(torch.sum(params_1.cpu().detach().numpy() - params_2), abs=0.0001) == 0.0
     # Make sure the head module weights were left un-touched
     for params_1, params_2 in zip(head_module_parameters, original_head_params):
-        assert pytest.approx(torch.sum(params_1.cpu().detach() - params_2), abs=0.0001) == 0.0
+        assert pytest.approx(torch.sum(params_1.cpu().detach().numpy() - params_2), abs=0.0001) == 0.0
 
     torch.seed()  # resetting the seed at the end, just to be safe
 

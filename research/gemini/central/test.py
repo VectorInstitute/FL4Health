@@ -14,7 +14,7 @@ from research.gemini.metrics.metrics import Accuracy, BinaryF1, BinaryRocAuc
 
 def load_centralized_model(run_folder_dir: str) -> nn.Module:
     model_checkpoint_path = os.path.join(run_folder_dir, "centralized_best_model.pkl")
-    model = torch.load(model_checkpoint_path)
+    model = torch.load(model_checkpoint_path, weights_only=False)
     assert isinstance(model, nn.Module)
     return model
 
