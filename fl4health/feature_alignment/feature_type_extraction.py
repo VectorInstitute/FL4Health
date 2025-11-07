@@ -6,14 +6,13 @@ import numpy as np
 import pandas as pd
 
 from fl4health.feature_alignment.constants import (
-    CATEGORICAL_INDICATOR,
     FEATURE_INDICATOR_ATTR,
     FEATURE_META_ATTR_DEFAULTS,
     FEATURE_META_ATTRS,
     FEATURE_TYPE_ATTR,
     FEATURE_TYPES,
 )
-from fl4health.feature_alignment.handle_types import infer_types, to_types
+from fl4health.feature_alignment.handle_types import FeatureType, infer_types, to_types
 
 
 def to_list(obj: Any) -> list[Any]:
@@ -77,9 +76,9 @@ class FeatureMeta:
             raise ValueError("Must specify feature type.")
 
         if kwargs[FEATURE_TYPE_ATTR] not in FEATURE_TYPES:
+            all_feature_types = ", ".join([types.value for types in FEATURE_TYPES])
             raise ValueError(
-                f"""Feature type '{kwargs[FEATURE_TYPE_ATTR]}'
-                not in {", ".join(FEATURE_TYPES)}.""",
+                f"Feature type '{kwargs[FEATURE_TYPE_ATTR]}'\nnot in {all_feature_types}.",
             )
 
         # Set attributes
@@ -96,15 +95,15 @@ class FeatureMeta:
                 f"Invalid feature meta parameters {', '.join(invalid_params)}.",
             )
 
-    def get_type(self) -> str:
+    def get_type(self) -> FeatureType:
         """
         Get the feature type.
 
         Returns:
             str:  Feature type.
         """
-        feature_type = getattr(self, FEATURE_TYPE_ATTR)
-        assert isinstance(feature_type, str)
+        feature_type = FeatureType(getattr(self, FEATURE_TYPE_ATTR))
+        assert isinstance(feature_type, FeatureType)
 
         return feature_type
 
@@ -126,7 +125,7 @@ class Features:
         features: str | list[str],
         by: str | list[str] | None = None,
         targets: str | list[str] | None = None,
-        force_types: dict[str, str] | None = None,
+        force_types: dict[str, FeatureType] | None = None,
     ):
         """
         Features.
@@ -137,8 +136,8 @@ class Features:
             by (str | list[str] | None, optional): Columns to groupby during processing, affecting how the features
                 are treated. Defaults to None.
             targets (str | list[str] | None, optional): Column names to specify as target features. Defaults to None.
-            force_types (dict[str, str] | None, optional): Mapping of column names to type. These columns are forced
-                to be of the specified type. Defaults to None.
+            force_types (dict[str, FeatureType] | None, optional): Mapping of column names to type. These columns are
+                forced to be of the specified type. Defaults to None.
         """
         # Check data
         if not isinstance(data, pd.DataFrame):
@@ -165,7 +164,7 @@ class Features:
         self._infer_feature_types(force_types=force_types)
 
     @property
-    def types(self) -> dict[str, str]:
+    def types(self) -> dict[str, FeatureType]:
         """
         Access as attribute, feature type names.
 
@@ -190,13 +189,15 @@ class Features:
             else:
                 self.meta[col] = FeatureMeta(**info)
 
-    def _to_feature_types(self, data: pd.DataFrame, new_types: dict[str, str], inplace: bool = True) -> pd.DataFrame:
+    def _to_feature_types(
+        self, data: pd.DataFrame, new_types: dict[str, FeatureType], inplace: bool = True
+    ) -> pd.DataFrame:
         """
         Convert feature types.
 
         Args:
             data (pd.DataFrame): Features data.
-            new_types (dict[str, str]): A map from the feature name to the new feature type.
+            new_types (dict[str, FeatureType]): A map from the feature name to the new feature type.
             inplace (bool, optional): Whether to perform in-place, or to simply return the DataFrame. Defaults to True.
 
         Raises:
@@ -210,7 +211,7 @@ class Features:
         if len(invalid) > 0:
             raise ValueError(f"Unrecognized features: {', '.join(invalid)}")
         for col, new_type in new_types.items():
-            if col in self.meta and inplace and new_type == CATEGORICAL_INDICATOR:
+            if col in self.meta and inplace and new_type == FeatureType.CATEGORICAL_INDICATOR:
                 raise ValueError(
                     f"Cannot convert {col} to binary categorical indicators.",
                 )
@@ -226,13 +227,13 @@ class Features:
 
         return data
 
-    def _infer_feature_types(self, force_types: dict[str, str] | None = None) -> None:
+    def _infer_feature_types(self, force_types: dict[str, FeatureType] | None = None) -> None:
         """
         Infer feature types. Can optionally force certain types on specified features.
 
         Args:
-            force_types (dict[str, str] | None, optional): A map from the feature name to the forced feature type.
-                Defaults to None.
+            force_types (dict[str, FeatureType] | None, optional): A map from the feature name to the forced feature
+                type. Defaults to None.
         """
         if force_types is None:
             force_types = {}
@@ -255,7 +256,7 @@ class TabularFeatures(Features):
         features: str | list[str],
         by: str,
         targets: str | list[str] | None = None,
-        force_types: dict[str, str] | None = None,
+        force_types: dict[str, FeatureType] | None = None,
     ):
         """
         Tabular features.
@@ -266,8 +267,8 @@ class TabularFeatures(Features):
             by (str): Columns to groupby during processing, affecting how the features are treated.
             targets (str | list[str] | None, optional): Column names to specify as target features.
                 Defaults to None.
-            force_types (dict[str, str] | None, optional): Mapping of column names to type. These columns are forced
-                to be of the specified type. Defaults to None.
+            force_types (dict[str, FeatureType] | None, optional): Mapping of column names to type. These columns are
+                forced to be of the specified type. Defaults to None.
 
         Raises:
             ValueError: Tabular features index input as a string representing a column

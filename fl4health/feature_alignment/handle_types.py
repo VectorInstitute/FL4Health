@@ -11,15 +11,11 @@ from pandas.api.types import (
 )
 
 from fl4health.feature_alignment.constants import (
-    BINARY,
-    CATEGORICAL_INDICATOR,
     FEATURE_INDICATOR_ATTR,
     FEATURE_MAPPING_ATTR,
     FEATURE_TYPE_ATTR,
     FEATURE_TYPES,
-    NUMERIC,
-    ORDINAL,
-    STRING,
+    FeatureType,
 )
 
 
@@ -34,8 +30,8 @@ def _to_string(series: pd.Series) -> tuple[pd.Series, dict[str, Any]]:
         tuple[pd.Series, dict[str, Any]]: Tuple (pandas.Series, dict) with the updated feature data
         and metadata respectively.
     """
-    convertible_to_type(series, STRING, unique=None, raise_error=True)
-    return to_dtype(series, STRING), {FEATURE_TYPE_ATTR: STRING}
+    convertible_to_type(series, FeatureType.STRING, unique=None, raise_error=True)
+    return to_dtype(series, FeatureType.STRING), {FEATURE_TYPE_ATTR: FeatureType.STRING}
 
 
 def _convertible_to_categorical_indicators(
@@ -91,9 +87,9 @@ def _to_categorical_indicators(
 
     meta = {}
     for dummy_col in dummies.columns:
-        dummies[dummy_col] = to_dtype(dummies[dummy_col], CATEGORICAL_INDICATOR)
+        dummies[dummy_col] = to_dtype(dummies[dummy_col], FeatureType.CATEGORICAL_INDICATOR)
         meta[dummy_col] = {
-            FEATURE_TYPE_ATTR: CATEGORICAL_INDICATOR,
+            FEATURE_TYPE_ATTR: FeatureType.CATEGORICAL_INDICATOR,
             FEATURE_INDICATOR_ATTR: col,
         }
 
@@ -149,8 +145,8 @@ def _to_ordinal(series: pd.Series, unique: np.ndarray | None = None) -> tuple[pd
         and metadata respectively.
     """
     series, meta = _numeric_categorical_mapping(series, unique=unique)
-    meta[FEATURE_TYPE_ATTR] = ORDINAL
-    return to_dtype(series, ORDINAL), meta
+    meta[FEATURE_TYPE_ATTR] = FeatureType.ORDINAL
+    return to_dtype(series, FeatureType.ORDINAL), meta
 
 
 def _numeric_categorical_mapping(
@@ -221,14 +217,14 @@ def _to_binary(series: pd.Series, unique: np.ndarray | None = None) -> tuple[pd.
     """
     if is_bool_dtype(series):
         meta = {
-            FEATURE_TYPE_ATTR: BINARY,
+            FEATURE_TYPE_ATTR: FeatureType.BINARY,
             FEATURE_MAPPING_ATTR: {False: False, True: True},
         }
-        return to_dtype(series, BINARY), meta
+        return to_dtype(series, FeatureType.BINARY), meta
 
     series, meta = _numeric_categorical_mapping(series, unique=unique)
-    meta[FEATURE_TYPE_ATTR] = BINARY
-    return to_dtype(series, BINARY), meta
+    meta[FEATURE_TYPE_ATTR] = FeatureType.BINARY
+    return to_dtype(series, FeatureType.BINARY), meta
 
 
 def _convertible_to_numeric(series: pd.Series, raise_error: bool = False) -> bool:
@@ -267,9 +263,9 @@ def _to_numeric(series: pd.Series, unique: np.ndarray | None = None) -> tuple[pd
         tuple[pd.Series, dict[str, Any]]: Tuple (pandas.Series, dict) with the updated feature data and metadata
         respectively.
     """
-    convertible_to_type(series, NUMERIC, unique=unique, raise_error=True)
+    convertible_to_type(series, FeatureType.NUMERIC, unique=unique, raise_error=True)
     series = pd.to_numeric(series)
-    return to_dtype(series, NUMERIC), {FEATURE_TYPE_ATTR: NUMERIC}
+    return to_dtype(series, FeatureType.NUMERIC), {FEATURE_TYPE_ATTR: FeatureType.NUMERIC}
 
 
 def _convertible_to_categorical(
@@ -308,12 +304,12 @@ def _convertible_to_categorical(
     nonnull_unique = unique[~pd.isnull(unique)]
     nunique = len(nonnull_unique)
 
-    satisfies_mininum_condition = True if category_min is None else nunique >= category_min
+    satisfies_minimum_condition = True if category_min is None else nunique >= category_min
 
     satisfies_maximum_condition = True if category_max is None else nunique <= category_max
 
     # Convertible
-    if satisfies_mininum_condition and satisfies_maximum_condition:
+    if satisfies_minimum_condition and satisfies_maximum_condition:
         return True
 
     # Not convertible
@@ -322,7 +318,7 @@ def _convertible_to_categorical(
             f"Should have at most {category_max} categories, but has {nunique}.",
         )
 
-    if not satisfies_mininum_condition and raise_error_under_min:
+    if not satisfies_minimum_condition and raise_error_under_min:
         raise ValueError(
             f"Should have at least {category_min} categories, but has {nunique}.",
         )
@@ -331,14 +327,14 @@ def _convertible_to_categorical(
 
 
 def convertible_to_type(
-    series: pd.Series, type: str, unique: np.ndarray | None = None, raise_error: bool = False
+    series: pd.Series, type: FeatureType, unique: np.ndarray | None = None, raise_error: bool = False
 ) -> bool:
     """
     Check whether a feature can be converted to some type.
 
     Args:
         series (pd.Series): Feature data.
-        type (str): Feature type name to check for conversion.
+        type (FeatureType): Feature type name to check for conversion.
         unique (np.ndarray | None, optional): _description_. Defaults to None.
         raise_error (bool, optional): Unique values which can be optionally specified. Defaults to False.
 
@@ -349,19 +345,19 @@ def convertible_to_type(
     Returns:
         bool: Whether the feature can be converted.
     """
-    if type == NUMERIC:
+    if type == FeatureType.NUMERIC:
         convertible = _convertible_to_numeric(series)
 
-    elif type == STRING:
+    elif type == FeatureType.STRING:
         convertible = True
 
-    elif type == BINARY:
+    elif type == FeatureType.BINARY:
         convertible = _convertible_to_binary(series, unique=unique)
 
-    elif type == ORDINAL:
+    elif type == FeatureType.ORDINAL:
         convertible = _convertible_to_ordinal(series, unique=unique)
 
-    elif type == CATEGORICAL_INDICATOR:
+    elif type == FeatureType.CATEGORICAL_INDICATOR:
         convertible = _convertible_to_categorical_indicators(series, unique=unique)
 
     elif valid_feature_type(type, raise_error=True):
@@ -394,12 +390,12 @@ def get_unique(values: np.ndarray | pd.Series, unique: np.ndarray | None = None)
     return unique
 
 
-def valid_feature_type(type: str, raise_error: bool = True) -> bool:
+def valid_feature_type(type: FeatureType, raise_error: bool = True) -> bool:
     """
     Check whether a feature type name is valid.
 
     Args:
-        type (str): Feature type name.
+        type (FeatureType): Feature type name.
         raise_error (bool, optional): Whether to raise an error is the type is invalid. Defaults to True.
 
     Raises:
@@ -412,17 +408,18 @@ def valid_feature_type(type: str, raise_error: bool = True) -> bool:
         return True
 
     if raise_error:
-        raise ValueError(f"Feature type '{type}' not in {', '.join(FEATURE_TYPES)}.")
+        all_feature_types = ", ".join([types.value for types in FEATURE_TYPES])
+        raise ValueError(f"Feature type '{type.value}' not in {all_feature_types}.")
 
     return False
 
 
-def _type_to_dtype(type_: str) -> str | None:
+def _type_to_dtype(type: FeatureType) -> str | None:
     """
     Get the Pandas datatype for a feature type name.
 
     Args:
-        type_ (str): Feature type name.
+        type (FeatureType.): Feature type name.
 
     Raises:
         ValueError: Supported type has no corresponding datatype.
@@ -430,31 +427,31 @@ def _type_to_dtype(type_: str) -> str | None:
     Returns:
         type | str | None: The feature's Pandas datatype, or None if no data type conversion is desired.
     """
-    if type_ == STRING:
+    if type == FeatureType.STRING:
         # If string, leave as is - the user can choose the specific length/type.
         return None
 
-    if type_ == NUMERIC:
+    if type == FeatureType.NUMERIC:
         # If numeric, leave as is - the user can choose the precision.
         return None
 
-    if type_ in (BINARY, CATEGORICAL_INDICATOR, ORDINAL):
+    if type in (FeatureType.BINARY, FeatureType.CATEGORICAL_INDICATOR, FeatureType.ORDINAL):
         return "category"
 
     # Check first if the type is valid, if so, then it isn't supported in this function.
-    if valid_feature_type(type_, raise_error=True):
+    if valid_feature_type(type, raise_error=True):
         raise ValueError("Supported type has no corresponding datatype.")
 
     return None
 
 
-def to_dtype(series: pd.Series, type: str) -> pd.Series:
+def to_dtype(series: pd.Series, type: FeatureType) -> pd.Series:
     """
     Set the series datatype according to the feature type.
 
     Args:
         series (pd.Series): Feature data.
-        type (str): Feature type name.
+        type (FeatureType): Feature type name.
 
     Returns:
         pd.Series: The feature with the corresponding datatype.
@@ -470,7 +467,7 @@ def to_dtype(series: pd.Series, type: str) -> pd.Series:
     return series.astype(dtype)  # type: ignore
 
 
-def _infer_type(series: pd.Series, unique: np.ndarray | None = None) -> str:
+def _infer_type(series: pd.Series, unique: np.ndarray | None = None) -> FeatureType:
     """
     Infer intended feature type and perform the relevant conversion.
 
@@ -486,23 +483,23 @@ def _infer_type(series: pd.Series, unique: np.ndarray | None = None) -> str:
     """
     unique = get_unique(series, unique=unique)
 
-    if convertible_to_type(series, BINARY, unique=unique):
-        return BINARY
+    if convertible_to_type(series, FeatureType.BINARY, unique=unique):
+        return FeatureType.BINARY
 
-    if convertible_to_type(series, ORDINAL, unique=unique):
-        return ORDINAL
+    if convertible_to_type(series, FeatureType.ORDINAL, unique=unique):
+        return FeatureType.ORDINAL
 
-    if convertible_to_type(series, NUMERIC, unique=unique):
-        return NUMERIC
+    if convertible_to_type(series, FeatureType.NUMERIC, unique=unique):
+        return FeatureType.NUMERIC
 
-    if convertible_to_type(series, STRING, unique=unique):
-        return STRING
+    if convertible_to_type(series, FeatureType.STRING, unique=unique):
+        return FeatureType.STRING
 
     raise ValueError(f"Could not infer type of series '{series.name}'.")
 
 
 def _to_type(
-    data: pd.DataFrame, col: str, new_type: str, unique: np.ndarray | None = None
+    data: pd.DataFrame, col: str, new_type: FeatureType, unique: np.ndarray | None = None
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     """
     Convert a feature to a given type.
@@ -510,7 +507,7 @@ def _to_type(
     Args:
         data (pd.DataFrame): Features data.
         col (str): Column name for the feature being converted.
-        new_type (str): Feature type name of type to which to convert.
+        new_type (FeatureType): Feature type name of type to which to convert.
         unique (np.ndarray | None, optional): Unique values which can be optionally specified. Defaults to None.
 
     Raises:
@@ -527,19 +524,19 @@ def _to_type(
             "The features data must be passed to keyword argument 'data'.",
         )
 
-    if new_type == CATEGORICAL_INDICATOR:
+    if new_type == FeatureType.CATEGORICAL_INDICATOR:
         return _to_categorical_indicators(data, col, unique=unique)
 
-    if new_type == STRING:
+    if new_type == FeatureType.STRING:
         series, meta = _to_string(data[col])
 
-    elif new_type == ORDINAL:
+    elif new_type == FeatureType.ORDINAL:
         series, meta = _to_ordinal(data[col], unique=unique)
 
-    elif new_type == BINARY:
+    elif new_type == FeatureType.BINARY:
         series, meta = _to_binary(data[col], unique=unique)
 
-    elif new_type == NUMERIC:
+    elif new_type == FeatureType.NUMERIC:
         series, meta = _to_numeric(data[col], unique=unique)
 
     elif valid_feature_type(new_type, raise_error=True):
@@ -552,7 +549,7 @@ def _to_type(
     return data, meta
 
 
-def infer_types(data: pd.DataFrame, features: list[str]) -> dict[str, str]:
+def infer_types(data: pd.DataFrame, features: list[str]) -> dict[str, FeatureType]:
     """
     Infer intended feature types and perform the relevant conversions.
 
@@ -570,7 +567,7 @@ def infer_types(data: pd.DataFrame, features: list[str]) -> dict[str, str]:
     return new_types
 
 
-def to_types(data: pd.DataFrame, new_types: dict[str, str]) -> tuple[pd.DataFrame, dict[str, Any]]:
+def to_types(data: pd.DataFrame, new_types: dict[str, FeatureType]) -> tuple[pd.DataFrame, dict[str, Any]]:
     """
     Convert features to given types.
 

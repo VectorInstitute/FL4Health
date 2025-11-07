@@ -98,7 +98,7 @@ class TabularFeaturesInfoEncoder:
         tabular_features = []
         # Construct TabularFeature objects.
         for feature_name in features_to_types:
-            feature_type = TabularType(features_to_types[feature_name])
+            feature_type = TabularType(features_to_types[feature_name].value)
             tabular_feature = TabularFeaturesInfoEncoder._construct_tab_feature(
                 df, feature_name, feature_type, fill_values
             )

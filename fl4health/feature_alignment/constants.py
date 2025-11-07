@@ -1,3 +1,5 @@
+from enum import Enum
+
 from sklearn.feature_extraction.text import CountVectorizer, HashingVectorizer, TfidfTransformer, TfidfVectorizer
 
 
@@ -19,17 +21,20 @@ OUTPUT_DIMENSION = "output_dimension"
 
 CURRENT_SERVER_ROUND = "current_server_round"
 
-NUMERIC = "numeric"
-BINARY = "binary"
-STRING = "string"
-ORDINAL = "ordinal"
-CATEGORICAL_INDICATOR = "categorical_indicator"
+
+class FeatureType(Enum):
+    NUMERIC = "numeric"
+    BINARY = "binary"
+    STRING = "string"
+    ORDINAL = "ordinal"
+    CATEGORICAL_INDICATOR = "categorical_indicator"
+
 
 FEATURE_TYPES = [
-    NUMERIC,
-    BINARY,
-    STRING,
-    ORDINAL,
+    FeatureType.NUMERIC,
+    FeatureType.BINARY,
+    FeatureType.STRING,
+    FeatureType.ORDINAL,
 ]
 
 FEATURE_INDICATOR_ATTR = "indicator_of"
