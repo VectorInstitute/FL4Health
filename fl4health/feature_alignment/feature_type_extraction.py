@@ -1,4 +1,4 @@
-"""Feature processing."""
+"""Taking from https://github.com/VectorInstitute/cyclops."""
 
 from typing import Any
 
@@ -143,17 +143,21 @@ class Features:
         # Check data
         if not isinstance(data, pd.DataFrame):
             raise ValueError("Feature data must be a pandas.DataFrame.")
-        feature_list = to_list(features)
+
         target_list = [] if targets is None else to_list(targets)
+        feature_list = to_list(features)
         if len(feature_list) == 0:
             raise ValueError("Must specify at least one feature.")
+
         has_columns(data, feature_list, raise_error=True)
         has_columns(data, target_list, raise_error=True)
+
         self.by_ = [] if by is None else to_list(by)
-        if self.by_:
+        if len(self.by_) > 0:
             has_columns(data, self.by_, raise_error=True)
             if len(set(self.by_).intersection(set(feature_list))) != 0:
                 raise ValueError("Columns in 'by' cannot be considered features.")
+
         # Add targets to the list of features if they were not included
         self.features = list(set(feature_list + target_list))
         self.data = data

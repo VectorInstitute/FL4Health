@@ -1,3 +1,5 @@
+"""Taking from https://github.com/VectorInstitute/cyclops."""
+
 from typing import Any
 
 import numpy as np
@@ -23,7 +25,7 @@ from fl4health.feature_alignment.constants import (
 
 def _to_string(series: pd.Series) -> tuple[pd.Series, dict[str, Any]]:
     """
-    Convert type to string.
+    Convert the features to string.
 
     Args:
         series (pd.Series): Feature data.
@@ -67,7 +69,7 @@ def _to_categorical_indicators(
     data: pd.DataFrame, col: str, unique: np.ndarray | None = None
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     """
-    Convert type to binary categorical indicators.
+    Convert the features to binary categorical indicators.
 
     This performs the Pandas equivalent of one-hot encoding.
 
@@ -136,7 +138,7 @@ def _convertible_to_ordinal(
 
 def _to_ordinal(series: pd.Series, unique: np.ndarray | None = None) -> tuple[pd.Series, dict[str, Any]]:
     """
-    Convert type to ordinal.
+    Convert the features to ordinal.
 
     Args:
         series (pd.Series): Feature data.
@@ -207,7 +209,7 @@ def _convertible_to_binary(series: pd.Series, unique: np.ndarray | None = None) 
 
 def _to_binary(series: pd.Series, unique: np.ndarray | None = None) -> tuple[pd.Series, dict[str, Any]]:
     """
-    Convert type to binary.
+    Convert the features to binary.
 
     Args:
         series (pd.Series): Feature data.
@@ -255,7 +257,7 @@ def _convertible_to_numeric(series: pd.Series, raise_error: bool = False) -> boo
 
 def _to_numeric(series: pd.Series, unique: np.ndarray | None = None) -> tuple[pd.Series, dict[str, Any]]:
     """
-    Convert type to numeric.
+    Convert the features to numeric.
 
     Args:
         series (pd.Series): Feature data.
@@ -306,21 +308,21 @@ def _convertible_to_categorical(
     nonnull_unique = unique[~pd.isnull(unique)]
     nunique = len(nonnull_unique)
 
-    min_cond = True if category_min is None else nunique >= category_min
+    satisfies_mininum_condition = True if category_min is None else nunique >= category_min
 
-    max_cond = True if category_max is None else nunique <= category_max
+    satisfies_maximum_condition = True if category_max is None else nunique <= category_max
 
     # Convertible
-    if min_cond and max_cond:
+    if satisfies_mininum_condition and satisfies_maximum_condition:
         return True
 
     # Not convertible
-    if max_cond and raise_error_over_max:
+    if not satisfies_maximum_condition and raise_error_over_max:
         raise ValueError(
             f"Should have at most {category_max} categories, but has {nunique}.",
         )
 
-    if min_cond and raise_error_under_min:
+    if not satisfies_mininum_condition and raise_error_under_min:
         raise ValueError(
             f"Should have at least {category_min} categories, but has {nunique}.",
         )
@@ -415,7 +417,7 @@ def valid_feature_type(type: str, raise_error: bool = True) -> bool:
     return False
 
 
-def _type_to_dtype(type_: str) -> type | str | None:
+def _type_to_dtype(type_: str) -> str | None:
     """
     Get the Pandas datatype for a feature type name.
 
@@ -436,10 +438,7 @@ def _type_to_dtype(type_: str) -> type | str | None:
         # If numeric, leave as is - the user can choose the precision.
         return None
 
-    if type_ in (BINARY, CATEGORICAL_INDICATOR):
-        return "category"
-
-    if type_ == ORDINAL:
+    if type_ in (BINARY, CATEGORICAL_INDICATOR, ORDINAL):
         return "category"
 
     # Check first if the type is valid, if so, then it isn't supported in this function.
