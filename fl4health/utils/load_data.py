@@ -1,7 +1,7 @@
 import random
 import warnings
 from collections.abc import Callable
-from logging import ERROR, INFO
+from logging import INFO
 from pathlib import Path
 
 import numpy as np
@@ -46,8 +46,8 @@ def get_mnist_data_and_target_tensors(data_dir: Path, train: bool) -> tuple[torc
     try:
         # Attempting to remove Yann Lecun Mirror
         MNIST.mirrors.remove("http://yann.lecun.com/exdb/mnist/")
-    except ValueError as e:
-        log(ERROR, f"Removing Yann Lecun Mirror Failed: {e}")
+    except ValueError:
+        log(INFO, "Yann Lecun Mirror not in mirrors")
     mnist_dataset = MNIST(data_dir, train=train, download=True)
     data = torch.Tensor(mnist_dataset.data)
     targets = torch.Tensor(mnist_dataset.targets).long()
