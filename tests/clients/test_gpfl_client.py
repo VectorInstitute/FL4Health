@@ -80,6 +80,8 @@ def test_compute_conditional_inputs(get_gpfl_client: GpflClient) -> None:  # noq
     manual_class_sample_proportion = torch.Tensor([0.3, 0.4, 0.3])
     # Just assigning a dummy GCE model since we don't need it for this test.
     client.gce_frozen = Gce(4, 3)
+    client.feature_dim = 4
+    client.num_classes = 3
     client.gce_frozen.embedding.weight.data = manual_embedding
     client.class_sample_proportion = manual_class_sample_proportion
     # Manually compute the conditional inputs
