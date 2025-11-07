@@ -21,19 +21,18 @@ from fl4health.feature_alignment.constants import (
 )
 
 
-def _to_string(series: pd.Series, unique: np.ndarray | None = None) -> tuple[pd.Series, dict[str, Any]]:
+def _to_string(series: pd.Series) -> tuple[pd.Series, dict[str, Any]]:
     """
     Convert type to string.
 
     Args:
         series (pd.Series): Feature data.
-        unique (np.ndarray | None, optional): Unique values which can be optionally specified. Defaults to None.
 
     Returns:
         tuple[pd.Series, dict[str, Any]]: Tuple (pandas.Series, dict) with the updated feature data
         and metadata respectively.
     """
-    convertible_to_type(series, STRING, unique=unique, raise_error=True)
+    convertible_to_type(series, STRING, unique=None, raise_error=True)
     return to_dtype(series, STRING), {FEATURE_TYPE_ATTR: STRING}
 
 
@@ -427,8 +426,7 @@ def _type_to_dtype(type_: str) -> type | str | None:
         ValueError: Supported type has no corresponding datatype.
 
     Returns:
-        type | str | None: The feature's Pandas datatype, or None if no data type
-        conversion is desired.
+        type | str | None: The feature's Pandas datatype, or None if no data type conversion is desired.
     """
     if type_ == STRING:
         # If string, leave as is - the user can choose the specific length/type.
@@ -525,15 +523,16 @@ def _to_type(
         updated features data and metadata respectively. If converting to categorical indicators, a DataFrame is
         returned, otherwise a Series is returned.
     """
+    if data is None:
+        raise ValueError(
+            "The features data must be passed to keyword argument 'data'.",
+        )
+
     if new_type == CATEGORICAL_INDICATOR:
-        if data is None:
-            raise ValueError(
-                "The features data must be passed to keyword argument 'data'.",
-            )
         return _to_categorical_indicators(data, col, unique=unique)
 
     if new_type == STRING:
-        series, meta = _to_string(data[col], unique=unique)
+        series, meta = _to_string(data[col])
 
     elif new_type == ORDINAL:
         series, meta = _to_ordinal(data[col], unique=unique)
