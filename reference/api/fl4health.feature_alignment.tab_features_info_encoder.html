@@ -203,7 +203,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -311,6 +311,8 @@
 </li>
 <li class="toctree-l3 current has-children"><a class="reference internal" href="fl4health.feature_alignment.html">fl4health.feature_alignment package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle navigation of fl4health.feature_alignment package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.constants.html">fl4health.feature_alignment.constants module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.feature_type_extraction.html">fl4health.feature_alignment.feature_type_extraction module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.handle_types.html">fl4health.feature_alignment.handle_types module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.string_columns_transformer.html">fl4health.feature_alignment.string_columns_transformer module</a></li>
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">fl4health.feature_alignment.tab_features_info_encoder module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html">fl4health.feature_alignment.tab_features_preprocessor module</a></li>
@@ -503,14 +505,145 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
         <article role="main">
-          <section id="fl4health-feature-alignment-tab-features-info-encoder-module">
-<h1>fl4health.feature_alignment.tab_features_info_encoder module<a class="headerlink" href="#fl4health-feature-alignment-tab-features-info-encoder-module" title="Link to this heading">¶</a></h1>
+          <section id="module-fl4health.feature_alignment.tab_features_info_encoder">
+<span id="fl4health-feature-alignment-tab-features-info-encoder-module"></span><h1>fl4health.feature_alignment.tab_features_info_encoder module<a class="headerlink" href="#module-fl4health.feature_alignment.tab_features_info_encoder" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TabularFeaturesInfoEncoder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tabular_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tabular_targets</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_info_encoder.html#TabularFeaturesInfoEncoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tabular_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tabular_targets</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_info_encoder.html#TabularFeaturesInfoEncoder.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>This class encodes all the information required to perform feature alignment on tabular datasets.</p>
+<p><strong>NOTE</strong>: targets are not included in tabular_features</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tabular_features</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference internal" href="fl4health.feature_alignment.tabular_feature.html#fl4health.feature_alignment.tabular_feature.TabularFeature" title="fl4health.feature_alignment.tabular_feature.TabularFeature"><em>TabularFeature</em></a><em>]</em>) – List of all tabular features.</p></li>
+<li><p><strong>tabular_targets</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference internal" href="fl4health.feature_alignment.tabular_feature.html#fl4health.feature_alignment.tabular_feature.TabularFeature" title="fl4health.feature_alignment.tabular_feature.TabularFeature"><em>TabularFeature</em></a><em>]</em>) – List of all targets.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.encoder_from_dataframe">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">encoder_from_dataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_columns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fill_values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_info_encoder.html#TabularFeaturesInfoEncoder.encoder_from_dataframe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.encoder_from_dataframe" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder" title="fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder"><code class="xref py py-class docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.features_by_type">
+<span class="sig-name descname"><span class="pre">features_by_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tabular_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_info_encoder.html#TabularFeaturesInfoEncoder.features_by_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.features_by_type" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="fl4health.feature_alignment.tabular_feature.html#fl4health.feature_alignment.tabular_feature.TabularFeature" title="fl4health.feature_alignment.tabular_feature.TabularFeature"><code class="xref py py-class docutils literal notranslate"><span class="pre">TabularFeature</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.from_json">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">json_str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_info_encoder.html#TabularFeaturesInfoEncoder.from_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.from_json" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder" title="fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder"><code class="xref py py-class docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_categories_list">
+<span class="sig-name descname"><span class="pre">get_categories_list</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_info_encoder.html#TabularFeaturesInfoEncoder.get_categories_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_categories_list" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>] | <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#bytes" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_feature_columns">
+<span class="sig-name descname"><span class="pre">get_feature_columns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_info_encoder.html#TabularFeaturesInfoEncoder.get_feature_columns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_feature_columns" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_tabular_features">
+<span class="sig-name descname"><span class="pre">get_tabular_features</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_info_encoder.html#TabularFeaturesInfoEncoder.get_tabular_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_tabular_features" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="fl4health.feature_alignment.tabular_feature.html#fl4health.feature_alignment.tabular_feature.TabularFeature" title="fl4health.feature_alignment.tabular_feature.TabularFeature"><code class="xref py py-class docutils literal notranslate"><span class="pre">TabularFeature</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_tabular_targets">
+<span class="sig-name descname"><span class="pre">get_tabular_targets</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_info_encoder.html#TabularFeaturesInfoEncoder.get_tabular_targets"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_tabular_targets" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="fl4health.feature_alignment.tabular_feature.html#fl4health.feature_alignment.tabular_feature.TabularFeature" title="fl4health.feature_alignment.tabular_feature.TabularFeature"><code class="xref py py-class docutils literal notranslate"><span class="pre">TabularFeature</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_target_columns">
+<span class="sig-name descname"><span class="pre">get_target_columns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_info_encoder.html#TabularFeaturesInfoEncoder.get_target_columns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_target_columns" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_target_dimension">
+<span class="sig-name descname"><span class="pre">get_target_dimension</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_info_encoder.html#TabularFeaturesInfoEncoder.get_target_dimension"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_target_dimension" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.to_json">
+<span class="sig-name descname"><span class="pre">to_json</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_info_encoder.html#TabularFeaturesInfoEncoder.to_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.to_json" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.type_to_features">
+<span class="sig-name descname"><span class="pre">type_to_features</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_info_encoder.html#TabularFeaturesInfoEncoder.type_to_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.type_to_features" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference internal" href="fl4health.feature_alignment.tabular_type.html#fl4health.feature_alignment.tabular_type.TabularType" title="fl4health.feature_alignment.tabular_type.TabularType"><code class="xref py py-class docutils literal notranslate"><span class="pre">TabularType</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<a class="reference internal" href="fl4health.feature_alignment.tabular_feature.html#fl4health.feature_alignment.tabular_feature.TabularFeature" title="fl4health.feature_alignment.tabular_feature.TabularFeature"><code class="xref py py-class docutils literal notranslate"><span class="pre">TabularFeature</span></code></a>]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 
         </article>
@@ -573,8 +706,41 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">fl4health.feature_alignment.tab_features_info_encoder module</a><ul>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.__init__"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.encoder_from_dataframe"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.encoder_from_dataframe()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.features_by_type"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.features_by_type()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.from_json"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.from_json()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_categories_list"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.get_categories_list()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_feature_columns"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.get_feature_columns()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_tabular_features"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.get_tabular_features()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_tabular_targets"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.get_tabular_targets()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_target_columns"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.get_target_columns()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_target_dimension"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.get_target_dimension()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.to_json"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.to_json()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.type_to_features"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.type_to_features()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>

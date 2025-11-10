@@ -1,0 +1,7 @@
+fl4health.feature\_alignment.handle\_types module
+=================================================
+
+.. automodule:: fl4health.feature_alignment.handle_types
+   :members:
+   :undoc-members:
+   :show-inheritance:

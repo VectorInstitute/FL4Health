@@ -308,6 +308,8 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="reference/api/fl4health.feature_alignment.html">fl4health.feature_alignment package</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle navigation of fl4health.feature_alignment package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.feature_alignment.constants.html">fl4health.feature_alignment.constants module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.feature_alignment.feature_type_extraction.html">fl4health.feature_alignment.feature_type_extraction module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.feature_alignment.handle_types.html">fl4health.feature_alignment.handle_types module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.feature_alignment.string_columns_transformer.html">fl4health.feature_alignment.string_columns_transformer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.feature_alignment.tab_features_info_encoder.html">fl4health.feature_alignment.tab_features_info_encoder module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="reference/api/fl4health.feature_alignment.tab_features_preprocessor.html">fl4health.feature_alignment.tab_features_preprocessor module</a></li>
@@ -637,6 +639,10 @@
 </li>
           <li><a href="reference/api/fl4health.model_bases.feature_extractor_buffer.html#fl4health.model_bases.feature_extractor_buffer.FeatureExtractorBuffer.__init__">(FeatureExtractorBuffer method)</a>
 </li>
+          <li><a href="reference/api/fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.FeatureMeta.__init__">(FeatureMeta method)</a>
+</li>
+          <li><a href="reference/api/fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.Features.__init__">(Features method)</a>
+</li>
           <li><a href="reference/api/fl4health.strategies.fedavg_dynamic_layer.html#fl4health.strategies.fedavg_dynamic_layer.FedAvgDynamicLayer.__init__">(FedAvgDynamicLayer method)</a>
 </li>
           <li><a href="reference/api/fl4health.strategies.fedavg_sparse_coo_tensor.html#fl4health.strategies.fedavg_sparse_coo_tensor.FedAvgSparseCooTensor.__init__">(FedAvgSparseCooTensor method)</a>
@@ -873,7 +879,17 @@
 </li>
           <li><a href="reference/api/fl4health.utils.data_generation.html#fl4health.utils.data_generation.SyntheticNonIidFedProxDataset.__init__">(SyntheticNonIidFedProxDataset method)</a>
 </li>
+          <li><a href="reference/api/fl4health.clients.tabular_data_client.html#fl4health.clients.tabular_data_client.TabularDataClient.__init__">(TabularDataClient method)</a>
+</li>
           <li><a href="reference/api/fl4health.feature_alignment.tabular_feature.html#fl4health.feature_alignment.tabular_feature.TabularFeature.__init__">(TabularFeature method)</a>
+</li>
+          <li><a href="reference/api/fl4health.servers.tabular_feature_alignment_server.html#fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer.__init__">(TabularFeatureAlignmentServer method)</a>
+</li>
+          <li><a href="reference/api/fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.TabularFeatures.__init__">(TabularFeatures method)</a>
+</li>
+          <li><a href="reference/api/fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.__init__">(TabularFeaturesInfoEncoder method)</a>
+</li>
+          <li><a href="reference/api/fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.__init__">(TabularFeaturesPreprocessor method)</a>
 </li>
           <li><a href="reference/api/fl4health.utils.dataset.html#fl4health.utils.dataset.TensorDataset.__init__">(TensorDataset method)</a>
 </li>
@@ -1094,8 +1110,12 @@
 </li>
         <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss.beta_with_extreme_kernel_base_values">beta_with_extreme_kernel_base_values() (MkMmdLoss method)</a>
 </li>
-        <li><a href="reference/api/fl4health.feature_alignment.tabular_type.html#fl4health.feature_alignment.tabular_type.TabularType.BINARY">BINARY (TabularType attribute)</a>
+        <li><a href="reference/api/fl4health.feature_alignment.constants.html#fl4health.feature_alignment.constants.FeatureType.BINARY">BINARY (FeatureType attribute)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.feature_alignment.tabular_type.html#fl4health.feature_alignment.tabular_type.TabularType.BINARY">(TabularType attribute)</a>
 </li>
+        </ul></li>
         <li><a href="reference/api/fl4health.metrics.efficient_metrics_base.html#fl4health.metrics.efficient_metrics_base.BinaryClassificationMetric">BinaryClassificationMetric (class in fl4health.metrics.efficient_metrics_base)</a>
 </li>
         <li><a href="reference/api/fl4health.metrics.efficient_metrics.html#fl4health.metrics.efficient_metrics.BinaryDice">BinaryDice (class in fl4health.metrics.efficient_metrics)</a>
@@ -1121,6 +1141,8 @@
         <li><a href="reference/api/fl4health.clients.clipping_client.html#fl4health.clients.clipping_client.NumpyClippingClient.calculate_parameters_norm">calculate_parameters_norm() (NumpyClippingClient method)</a>
 </li>
         <li><a href="reference/api/fl4health.strategies.client_dp_fedavgm.html#fl4health.strategies.client_dp_fedavgm.ClientLevelDPFedAvgM.calculate_update_with_momentum">calculate_update_with_momentum() (ClientLevelDPFedAvgM method)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.constants.html#fl4health.feature_alignment.constants.FeatureType.CATEGORICAL_INDICATOR">CATEGORICAL_INDICATOR (FeatureType attribute)</a>
 </li>
         <li><a href="reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.center_data">center_data() (PcaModule method)</a>
 </li>
@@ -1424,6 +1446,8 @@
 </li>
         <li><a href="reference/api/fl4health.model_bases.masked_layers.masked_layers_utils.html#fl4health.model_bases.masked_layers.masked_layers_utils.convert_to_masked_model">convert_to_masked_model() (in module fl4health.model_bases.masked_layers.masked_layers_utils)</a>
 </li>
+        <li><a href="reference/api/fl4health.feature_alignment.handle_types.html#fl4health.feature_alignment.handle_types.convertible_to_type">convertible_to_type() (in module fl4health.feature_alignment.handle_types)</a>
+</li>
         <li><a href="reference/api/fl4health.losses.cosine_similarity_loss.html#fl4health.losses.cosine_similarity_loss.CosineSimilarityLoss">CosineSimilarityLoss (class in fl4health.losses.cosine_similarity_loss)</a>
 </li>
         <li><a href="reference/api/fl4health.losses.fenda_loss_config.html#fl4health.losses.fenda_loss_config.CosineSimilarityLossContainer">CosineSimilarityLossContainer (class in fl4health.losses.fenda_loss_config)</a>
@@ -1592,6 +1616,8 @@
           <li><a href="reference/api/fl4health.model_bases.autoencoders_base.html#fl4health.model_bases.autoencoders_base.VariationalAe.encode">(VariationalAe method)</a>
 </li>
         </ul></li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.encoder_from_dataframe">encoder_from_dataframe() (TabularFeaturesInfoEncoder static method)</a>
+</li>
         <li><a href="reference/api/fl4health.model_bases.ensemble_base.html#fl4health.model_bases.ensemble_base.EnsembleModel.ensemble_average">ensemble_average() (EnsembleModel method)</a>
 </li>
         <li><a href="reference/api/fl4health.model_bases.ensemble_base.html#fl4health.model_bases.ensemble_base.EnsembleModel.ensemble_vote">ensemble_vote() (EnsembleModel method)</a>
@@ -1602,10 +1628,10 @@
 </li>
         <li><a href="reference/api/fl4health.model_bases.ensemble_base.html#fl4health.model_bases.ensemble_base.EnsembleModel">EnsembleModel (class in fl4health.model_bases.ensemble_base)</a>
 </li>
-        <li><a href="reference/api/fl4health.mixins.personalized.utils.html#fl4health.mixins.personalized.utils.ensure_protocol_compliance">ensure_protocol_compliance() (in module fl4health.mixins.personalized.utils)</a>
-</li>
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/fl4health.mixins.personalized.utils.html#fl4health.mixins.personalized.utils.ensure_protocol_compliance">ensure_protocol_compliance() (in module fl4health.mixins.personalized.utils)</a>
+</li>
         <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.EnumSnapshotter">EnumSnapshotter (class in fl4health.utils.snapshotter)</a>
 </li>
         <li><a href="reference/api/fl4health.reporting.html#fl4health.reporting.WandBStepType.EPOCH">EPOCH (WandBStepType attribute)</a>, <a href="reference/api/fl4health.reporting.wandb_reporter.html#fl4health.reporting.wandb_reporter.WandBStepType.EPOCH">[1]</a>
@@ -1662,7 +1688,15 @@
 </li>
         <li><a href="reference/api/fl4health.model_bases.feature_extractor_buffer.html#fl4health.model_bases.feature_extractor_buffer.FeatureExtractorBuffer">FeatureExtractorBuffer (class in fl4health.model_bases.feature_extractor_buffer)</a>
 </li>
+        <li><a href="reference/api/fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.FeatureMeta">FeatureMeta (class in fl4health.feature_alignment.feature_type_extraction)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.Features">Features (class in fl4health.feature_alignment.feature_type_extraction)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.features_by_type">features_by_type() (TabularFeaturesInfoEncoder method)</a>
+</li>
         <li><a href="reference/api/fl4health.model_bases.sequential_split_models.html#fl4health.model_bases.sequential_split_models.SequentiallySplitModel.features_forward">features_forward() (SequentiallySplitModel method)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.constants.html#fl4health.feature_alignment.constants.FeatureType">FeatureType (class in fl4health.feature_alignment.constants)</a>
 </li>
         <li><a href="reference/api/fl4health.strategies.fedavg_dynamic_layer.html#fl4health.strategies.fedavg_dynamic_layer.FedAvgDynamicLayer">FedAvgDynamicLayer (class in fl4health.strategies.fedavg_dynamic_layer)</a>
 </li>
@@ -1714,6 +1748,8 @@
 </li>
         <li><a href="reference/api/fl4health.reporting.json_reporter.html#fl4health.reporting.json_reporter.FileReporter">FileReporter (class in fl4health.reporting.json_reporter)</a>
 </li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.fill_in_missing_columns">fill_in_missing_columns() (TabularFeaturesPreprocessor method)</a>
+</li>
         <li><a href="reference/api/fl4health.datasets.rxrx1.preprocess.html#fl4health.datasets.rxrx1.preprocess.filter_and_save_data">filter_and_save_data() (in module fl4health.datasets.rxrx1.preprocess)</a>
 </li>
         <li><a href="reference/api/fl4health.model_bases.feature_extractor_buffer.html#fl4health.model_bases.feature_extractor_buffer.FeatureExtractorBuffer.find_last_common_prefix">find_last_common_prefix() (FeatureExtractorBuffer method)</a>
@@ -1745,11 +1781,15 @@
 </li>
           <li><a href="reference/api/fl4health.servers.scaffold_server.html#fl4health.servers.scaffold_server.ScaffoldServer.fit">(ScaffoldServer method)</a>
 </li>
+          <li><a href="reference/api/fl4health.servers.tabular_feature_alignment_server.html#fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer.fit">(TabularFeatureAlignmentServer method)</a>
+</li>
           <li><a href="reference/api/fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextColumnTransformer.fit">(TextColumnTransformer method)</a>
 </li>
           <li><a href="reference/api/fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextMulticolumnTransformer.fit">(TextMulticolumnTransformer method)</a>
 </li>
         </ul></li>
+        <li><a href="reference/api/fl4health.servers.tabular_feature_alignment_server.html#fl4health.servers.tabular_feature_alignment_server.fit_config">fit_config() (in module fl4health.servers.tabular_feature_alignment_server)</a>
+</li>
         <li><a href="reference/api/fl4health.metrics.metric_aggregation.html#fl4health.metrics.metric_aggregation.fit_metrics_aggregation_fn">fit_metrics_aggregation_fn() (in module fl4health.metrics.metric_aggregation)</a>
 </li>
         <li><a href="reference/api/fl4health.servers.fedpm_server.html#fl4health.servers.fedpm_server.FedPmServer.fit_round">fit_round() (FedPmServer method)</a>
@@ -2105,6 +2145,13 @@
 </li>
         </ul></li>
         <li>
+    fl4health.clients.tabular_data_client
+
+        <ul>
+          <li><a href="reference/api/fl4health.clients.tabular_data_client.html#module-fl4health.clients.tabular_data_client">module</a>
+</li>
+        </ul></li>
+        <li>
     fl4health.datasets
 
         <ul>
@@ -2168,10 +2215,38 @@
 </li>
         </ul></li>
         <li>
+    fl4health.feature_alignment.feature_type_extraction
+
+        <ul>
+          <li><a href="reference/api/fl4health.feature_alignment.feature_type_extraction.html#module-fl4health.feature_alignment.feature_type_extraction">module</a>
+</li>
+        </ul></li>
+        <li>
+    fl4health.feature_alignment.handle_types
+
+        <ul>
+          <li><a href="reference/api/fl4health.feature_alignment.handle_types.html#module-fl4health.feature_alignment.handle_types">module</a>
+</li>
+        </ul></li>
+        <li>
     fl4health.feature_alignment.string_columns_transformer
 
         <ul>
           <li><a href="reference/api/fl4health.feature_alignment.string_columns_transformer.html#module-fl4health.feature_alignment.string_columns_transformer">module</a>
+</li>
+        </ul></li>
+        <li>
+    fl4health.feature_alignment.tab_features_info_encoder
+
+        <ul>
+          <li><a href="reference/api/fl4health.feature_alignment.tab_features_info_encoder.html#module-fl4health.feature_alignment.tab_features_info_encoder">module</a>
+</li>
+        </ul></li>
+        <li>
+    fl4health.feature_alignment.tab_features_preprocessor
+
+        <ul>
+          <li><a href="reference/api/fl4health.feature_alignment.tab_features_preprocessor.html#module-fl4health.feature_alignment.tab_features_preprocessor">module</a>
 </li>
         </ul></li>
         <li>
@@ -2398,6 +2473,8 @@
           <li><a href="reference/api/fl4health.model_bases.ensemble_base.html#module-fl4health.model_bases.ensemble_base">module</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     fl4health.model_bases.feature_extractor_buffer
 
@@ -2419,8 +2496,6 @@
           <li><a href="reference/api/fl4health.model_bases.fedsimclr_base.html#module-fl4health.model_bases.fedsimclr_base">module</a>
 </li>
         </ul></li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li>
     fl4health.model_bases.fenda_base
 
@@ -2776,6 +2851,13 @@
 
         <ul>
           <li><a href="reference/api/fl4health.servers.scaffold_server.html#module-fl4health.servers.scaffold_server">module</a>
+</li>
+        </ul></li>
+        <li>
+    fl4health.servers.tabular_feature_alignment_server
+
+        <ul>
+          <li><a href="reference/api/fl4health.servers.tabular_feature_alignment_server.html#module-fl4health.servers.tabular_feature_alignment_server">module</a>
 </li>
         </ul></li>
         <li>
@@ -3157,7 +3239,11 @@
         <li><a href="reference/api/fl4health.model_bases.fedrep_base.html#fl4health.model_bases.fedrep_base.FedRepModel.freeze_head_module">freeze_head_module() (FedRepModel method)</a>
 </li>
         <li><a href="reference/api/fl4health.feature_alignment.tabular_feature.html#fl4health.feature_alignment.tabular_feature.TabularFeature.from_json">from_json() (TabularFeature static method)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.from_json">(TabularFeaturesInfoEncoder static method)</a>
 </li>
+        </ul></li>
         <li><a href="reference/api/fl4health.model_bases.masked_layers.masked_conv.html#fl4health.model_bases.masked_layers.masked_conv.MaskedConv1d.from_pretrained">from_pretrained() (MaskedConv1d class method)</a>
 
         <ul>
@@ -3230,6 +3316,8 @@
         </ul></li>
         <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss.get_best_vertex_for_objective_function">get_best_vertex_for_objective_function() (MkMmdLoss method)</a>
 </li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_categories_list">get_categories_list() (TabularFeaturesInfoEncoder method)</a>
+</li>
         <li><a href="reference/api/fl4health.utils.load_data.html#fl4health.utils.load_data.get_cifar10_data_and_target_tensors">get_cifar10_data_and_target_tensors() (in module fl4health.utils.load_data)</a>
 </li>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.get_client_specific_logs">get_client_specific_logs() (BasicClient method)</a>
@@ -3262,6 +3350,8 @@
         </ul></li>
         <li><a href="reference/api/fl4health.strategies.feddg_ga.html#fl4health.strategies.feddg_ga.FedDgGa.get_current_weight_step_size">get_current_weight_step_size() (FedDgGa method)</a>
 </li>
+        <li><a href="reference/api/fl4health.clients.tabular_data_client.html#fl4health.clients.tabular_data_client.TabularDataClient.get_data_frame">get_data_frame() (TabularDataClient method)</a>
+</li>
         <li><a href="reference/api/fl4health.clients.evaluate_client.html#fl4health.clients.evaluate_client.EvaluateClient.get_data_loader">get_data_loader() (EvaluateClient method)</a>
 </li>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.get_data_loaders">get_data_loaders() (BasicClient method)</a>
@@ -3280,7 +3370,17 @@
 </li>
         <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.get_dataset_n_voxels">get_dataset_n_voxels() (in module fl4health.utils.nnunet_utils)</a>
 </li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_binary_pipeline">get_default_binary_pipeline() (TabularFeaturesPreprocessor method)</a>
+</li>
         <li><a href="reference/api/fl4health.feature_alignment.tabular_type.html#fl4health.feature_alignment.tabular_type.TabularType.get_default_fill_value">get_default_fill_value() (TabularType static method)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_numeric_pipeline">get_default_numeric_pipeline() (TabularFeaturesPreprocessor method)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_one_hot_pipeline">get_default_one_hot_pipeline() (TabularFeaturesPreprocessor method)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_ordinal_pipeline">get_default_ordinal_pipeline() (TabularFeaturesPreprocessor method)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_string_pipeline">get_default_string_pipeline() (TabularFeaturesPreprocessor method)</a>
 </li>
         <li><a href="reference/api/fl4health.privacy.fl_accountants.html#fl4health.privacy.fl_accountants.ClientLevelAccountant.get_delta">get_delta() (ClientLevelAccountant method)</a>
 
@@ -3315,6 +3415,8 @@
 </li>
         </ul></li>
         <li><a href="reference/api/fl4health.model_bases.feature_extractor_buffer.html#fl4health.model_bases.feature_extractor_buffer.FeatureExtractorBuffer.get_extracted_features">get_extracted_features() (FeatureExtractorBuffer method)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_feature_columns">get_feature_columns() (TabularFeaturesInfoEncoder method)</a>
 </li>
         <li><a href="reference/api/fl4health.feature_alignment.tabular_feature.html#fl4health.feature_alignment.tabular_feature.TabularFeature.get_feature_name">get_feature_name() (TabularFeature method)</a>
 </li>
@@ -3479,8 +3581,18 @@
 </li>
           <li><a href="reference/api/fl4health.clients.nnunet_client.html#fl4health.clients.nnunet_client.NnunetClient.get_properties">(NnunetClient method)</a>
 </li>
+          <li><a href="reference/api/fl4health.clients.tabular_data_client.html#fl4health.clients.tabular_data_client.TabularDataClient.get_properties">(TabularDataClient method)</a>
+</li>
         </ul></li>
         <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.get_segs_from_probs">get_segs_from_probs() (in module fl4health.utils.nnunet_utils)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_tabular_features">get_tabular_features() (TabularFeaturesInfoEncoder method)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_tabular_targets">get_tabular_targets() (TabularFeaturesInfoEncoder method)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_target_columns">get_target_columns() (TabularFeaturesInfoEncoder method)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_target_dimension">get_target_dimension() (TabularFeaturesInfoEncoder method)</a>
 </li>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.get_test_data_loader">get_test_data_loader() (BasicClient method)</a>
 
@@ -3491,6 +3603,10 @@
         <li><a href="reference/api/fl4health.utils.load_data.html#fl4health.utils.load_data.get_train_and_val_cifar10_datasets">get_train_and_val_cifar10_datasets() (in module fl4health.utils.load_data)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.load_data.html#fl4health.utils.load_data.get_train_and_val_mnist_datasets">get_train_and_val_mnist_datasets() (in module fl4health.utils.load_data)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.FeatureMeta.get_type">get_type() (FeatureMeta method)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.handle_types.html#fl4health.feature_alignment.handle_types.get_unique">get_unique() (in module fl4health.feature_alignment.handle_types)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.dataset_converter.html#fl4health.utils.dataset_converter.AutoEncoderDatasetConverter.get_unpacking_function">get_unpacking_function() (AutoEncoderDatasetConverter method)</a>
 </li>
@@ -3518,6 +3634,8 @@
 </li>
         <li><a href="reference/api/fl4health.datasets.skin_cancer.preprocess_skin.html#fl4health.datasets.skin_cancer.preprocess_skin.ham_label_map_func">ham_label_map_func() (in module fl4health.datasets.skin_cancer.preprocess_skin)</a>
 </li>
+        <li><a href="reference/api/fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.has_columns">has_columns() (in module fl4health.feature_alignment.feature_type_extraction)</a>
+</li>
         <li><a href="reference/api/fl4health.losses.fenda_loss_config.html#fl4health.losses.fenda_loss_config.ConstrainedFendaLossContainer.has_contrastive_loss">has_contrastive_loss() (ConstrainedFendaLossContainer method)</a>
 </li>
     </ul></td>
@@ -3541,6 +3659,8 @@
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.metrics.utils.html#fl4health.metrics.utils.infer_label_dim">infer_label_dim() (in module fl4health.metrics.utils)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.handle_types.html#fl4health.feature_alignment.handle_types.infer_types">infer_types() (in module fl4health.feature_alignment.handle_types)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.typing.html#fl4health.utils.typing.LogLevel.INFO">INFO (LogLevel attribute)</a>
 </li>
@@ -3571,6 +3691,8 @@
     </ul></td>
     <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.strategies.scaffold.html#fl4health.strategies.scaffold.Scaffold.initialize_control_variates">initialize_control_variates() (Scaffold method)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.initialize_default_pipelines">initialize_default_pipelines() (TabularFeaturesPreprocessor method)</a>
 </li>
         <li><a href="reference/api/fl4health.clients.evaluate_client.html#fl4health.clients.evaluate_client.EvaluateClient.initialize_global_model">initialize_global_model() (EvaluateClient method)</a>
 </li>
@@ -3992,6 +4114,8 @@
 </li>
           <li><a href="reference/api/fl4health.clients.scaffold_client.html#module-fl4health.clients.scaffold_client">fl4health.clients.scaffold_client</a>
 </li>
+          <li><a href="reference/api/fl4health.clients.tabular_data_client.html#module-fl4health.clients.tabular_data_client">fl4health.clients.tabular_data_client</a>
+</li>
           <li><a href="reference/api/fl4health.datasets.html#module-fl4health.datasets">fl4health.datasets</a>
 </li>
           <li><a href="reference/api/fl4health.datasets.rxrx1.html#module-fl4health.datasets.rxrx1">fl4health.datasets.rxrx1</a>
@@ -4010,7 +4134,15 @@
 </li>
           <li><a href="reference/api/fl4health.feature_alignment.constants.html#module-fl4health.feature_alignment.constants">fl4health.feature_alignment.constants</a>
 </li>
+          <li><a href="reference/api/fl4health.feature_alignment.feature_type_extraction.html#module-fl4health.feature_alignment.feature_type_extraction">fl4health.feature_alignment.feature_type_extraction</a>
+</li>
+          <li><a href="reference/api/fl4health.feature_alignment.handle_types.html#module-fl4health.feature_alignment.handle_types">fl4health.feature_alignment.handle_types</a>
+</li>
           <li><a href="reference/api/fl4health.feature_alignment.string_columns_transformer.html#module-fl4health.feature_alignment.string_columns_transformer">fl4health.feature_alignment.string_columns_transformer</a>
+</li>
+          <li><a href="reference/api/fl4health.feature_alignment.tab_features_info_encoder.html#module-fl4health.feature_alignment.tab_features_info_encoder">fl4health.feature_alignment.tab_features_info_encoder</a>
+</li>
+          <li><a href="reference/api/fl4health.feature_alignment.tab_features_preprocessor.html#module-fl4health.feature_alignment.tab_features_preprocessor">fl4health.feature_alignment.tab_features_preprocessor</a>
 </li>
           <li><a href="reference/api/fl4health.feature_alignment.tabular_feature.html#module-fl4health.feature_alignment.tabular_feature">fl4health.feature_alignment.tabular_feature</a>
 </li>
@@ -4184,6 +4316,8 @@
 </li>
           <li><a href="reference/api/fl4health.servers.scaffold_server.html#module-fl4health.servers.scaffold_server">fl4health.servers.scaffold_server</a>
 </li>
+          <li><a href="reference/api/fl4health.servers.tabular_feature_alignment_server.html#module-fl4health.servers.tabular_feature_alignment_server">fl4health.servers.tabular_feature_alignment_server</a>
+</li>
           <li><a href="reference/api/fl4health.strategies.html#module-fl4health.strategies">fl4health.strategies</a>
 </li>
           <li><a href="reference/api/fl4health.strategies.aggregate_utils.html#module-fl4health.strategies.aggregate_utils">fl4health.strategies.aggregate_utils</a>
@@ -4327,10 +4461,10 @@
 </li>
         <li><a href="reference/api/fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.NnUnetServerCheckpointAndStateModule">NnUnetServerCheckpointAndStateModule (class in fl4health.checkpointing.server_module)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.checkpointing.state_checkpointer.html#fl4health.checkpointing.state_checkpointer.NnUnetServerStateCheckpointer">NnUnetServerStateCheckpointer (class in fl4health.checkpointing.state_checkpointer)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss.normalize">normalize() (MkMmdLoss method)</a>
 </li>
         <li><a href="reference/api/fl4health.metrics.metric_aggregation.html#fl4health.metrics.metric_aggregation.normalize_metrics">normalize_metrics() (in module fl4health.metrics.metric_aggregation)</a>
@@ -4339,8 +4473,12 @@
 </li>
         <li><a href="reference/api/fl4health.losses.contrastive_loss.html#fl4health.losses.contrastive_loss.NtXentLoss">NtXentLoss (class in fl4health.losses.contrastive_loss)</a>
 </li>
-        <li><a href="reference/api/fl4health.feature_alignment.tabular_type.html#fl4health.feature_alignment.tabular_type.TabularType.NUMERIC">NUMERIC (TabularType attribute)</a>
+        <li><a href="reference/api/fl4health.feature_alignment.constants.html#fl4health.feature_alignment.constants.FeatureType.NUMERIC">NUMERIC (FeatureType attribute)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.feature_alignment.tabular_type.html#fl4health.feature_alignment.tabular_type.TabularType.NUMERIC">(TabularType attribute)</a>
 </li>
+        </ul></li>
         <li><a href="reference/api/fl4health.mixins.core_protocols.html#fl4health.mixins.core_protocols.NumPyClientMinimalProtocol">NumPyClientMinimalProtocol (class in fl4health.mixins.core_protocols)</a>
 </li>
         <li><a href="reference/api/fl4health.clients.clipping_client.html#fl4health.clients.clipping_client.NumpyClippingClient">NumpyClippingClient (class in fl4health.clients.clipping_client)</a>
@@ -4365,14 +4503,14 @@
 </li>
         <li><a href="reference/api/fl4health.losses.mkmmd_loss.html#fl4health.losses.mkmmd_loss.MkMmdLoss.optimize_betas">optimize_betas() (MkMmdLoss method)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedMixin.optimizer_keys">optimizer_keys (DittoPersonalizedMixin property)</a>, <a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedMixin.optimizer_keys">[1]</a>
 
         <ul>
           <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.optimizer_keys">(DittoPersonalizedProtocol attribute)</a>, <a href="reference/api/fl4health.mixins.personalized.html#fl4health.mixins.personalized.DittoPersonalizedProtocol.optimizer_keys">[1]</a>
 </li>
         </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.mixins.personalized.ditto.html#fl4health.mixins.personalized.ditto.DittoPersonalizedProtocol.optimizers">optimizers (DittoPersonalizedProtocol attribute)</a>
 
         <ul>
@@ -4383,8 +4521,12 @@
         </ul></li>
         <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.OptimizerSnapshotter">OptimizerSnapshotter (class in fl4health.utils.snapshotter)</a>
 </li>
-        <li><a href="reference/api/fl4health.feature_alignment.tabular_type.html#fl4health.feature_alignment.tabular_type.TabularType.ORDINAL">ORDINAL (TabularType attribute)</a>
+        <li><a href="reference/api/fl4health.feature_alignment.constants.html#fl4health.feature_alignment.constants.FeatureType.ORDINAL">ORDINAL (FeatureType attribute)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.feature_alignment.tabular_type.html#fl4health.feature_alignment.tabular_type.TabularType.ORDINAL">(TabularType attribute)</a>
 </li>
+        </ul></li>
     </ul></td>
   </tr></table>
 </section>
@@ -4487,6 +4629,10 @@
 </li>
         <li><a href="reference/api/fl4health.servers.polling.html#fl4health.servers.polling.poll_clients">poll_clients() (in module fl4health.servers.polling)</a>
 </li>
+        <li><a href="reference/api/fl4health.servers.tabular_feature_alignment_server.html#fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer.poll_clients_for_dimension_info">poll_clients_for_dimension_info() (TabularFeatureAlignmentServer method)</a>
+</li>
+        <li><a href="reference/api/fl4health.servers.tabular_feature_alignment_server.html#fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer.poll_clients_for_feature_info">poll_clients_for_feature_info() (TabularFeatureAlignmentServer method)</a>
+</li>
         <li><a href="reference/api/fl4health.servers.base_server.html#fl4health.servers.base_server.FlServer.poll_clients_for_sample_counts">poll_clients_for_sample_counts() (FlServer method)</a>
 </li>
     </ul></td>
@@ -4535,11 +4681,15 @@
 </li>
         <li><a href="reference/api/fl4health.datasets.skin_cancer.preprocess_skin.html#fl4health.datasets.skin_cancer.preprocess_skin.preprocess_derm7pt">preprocess_derm7pt() (in module fl4health.datasets.skin_cancer.preprocess_skin)</a>
 </li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.preprocess_features">preprocess_features() (TabularFeaturesPreprocessor method)</a>
+</li>
         <li><a href="reference/api/fl4health.datasets.skin_cancer.preprocess_skin.html#fl4health.datasets.skin_cancer.preprocess_skin.preprocess_ham10000">preprocess_ham10000() (in module fl4health.datasets.skin_cancer.preprocess_skin)</a>
 </li>
         <li><a href="reference/api/fl4health.datasets.skin_cancer.preprocess_skin.html#fl4health.datasets.skin_cancer.preprocess_skin.preprocess_isic_2019">preprocess_isic_2019() (in module fl4health.datasets.skin_cancer.preprocess_skin)</a>
 </li>
         <li><a href="reference/api/fl4health.datasets.skin_cancer.preprocess_skin.html#fl4health.datasets.skin_cancer.preprocess_skin.preprocess_pad_ufes_20">preprocess_pad_ufes_20() (in module fl4health.datasets.skin_cancer.preprocess_skin)</a>
+</li>
+        <li><a href="reference/api/fl4health.clients.tabular_data_client.html#fl4health.clients.tabular_data_client.TabularDataClient.preset_specific_pipeline">preset_specific_pipeline() (TabularDataClient method)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.privacy_utilities.html#fl4health.utils.privacy_utilities.privacy_validate_and_fix_modules">privacy_validate_and_fix_modules() (in module fl4health.utils.privacy_utilities)</a>
 </li>
@@ -4636,6 +4786,8 @@
         <li><a href="reference/api/fl4health.client_managers.fixed_sampling_client_manager.html#fl4health.client_managers.fixed_sampling_client_manager.FixedSamplingClientManager.reset_sample">reset_sample() (FixedSamplingClientManager method)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.random.html#fl4health.utils.random.restore_random_state">restore_random_state() (in module fl4health.utils.random)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.return_column_transformer">return_column_transformer() (TabularFeaturesPreprocessor method)</a>
 </li>
         <li><a href="reference/api/fl4health.metrics.html#fl4health.metrics.RocAuc">RocAuc (class in fl4health.metrics)</a>
 
@@ -4787,6 +4939,10 @@
 </li>
         <li><a href="reference/api/fl4health.model_bases.pca.html#fl4health.model_bases.pca.PcaModule.set_data_mean">set_data_mean() (PcaModule method)</a>
 </li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.set_feature_pipeline">set_feature_pipeline() (TabularFeaturesPreprocessor method)</a>
+</li>
+        <li><a href="reference/api/fl4health.clients.tabular_data_client.html#fl4health.clients.tabular_data_client.TabularDataClient.set_feature_specific_pipelines">set_feature_specific_pipelines() (TabularDataClient method)</a>
+</li>
         <li><a href="reference/api/fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextColumnTransformer.set_fit_request">set_fit_request() (TextColumnTransformer method)</a>
 
         <ul>
@@ -4918,6 +5074,8 @@
 </li>
           <li><a href="reference/api/fl4health.clients.scaffold_client.html#fl4health.clients.scaffold_client.ScaffoldClient.setup_client">(ScaffoldClient method)</a>
 </li>
+          <li><a href="reference/api/fl4health.clients.tabular_data_client.html#fl4health.clients.tabular_data_client.TabularDataClient.setup_client">(TabularDataClient method)</a>
+</li>
         </ul></li>
         <li><a href="reference/api/fl4health.mixins.adaptive_drift_constrained.html#fl4health.mixins.adaptive_drift_constrained.AdaptiveDriftConstrainedMixin.setup_client_and_return_all_model_parameters">setup_client_and_return_all_model_parameters() (AdaptiveDriftConstrainedMixin method)</a>, <a href="reference/api/fl4health.mixins.html#fl4health.mixins.AdaptiveDriftConstrainedMixin.setup_client_and_return_all_model_parameters">[1]</a>
 
@@ -5013,8 +5171,12 @@
 </li>
         <li><a href="reference/api/fl4health.utils.nnunet_utils.html#fl4health.utils.nnunet_utils.StreamToLogger">StreamToLogger (class in fl4health.utils.nnunet_utils)</a>
 </li>
-        <li><a href="reference/api/fl4health.feature_alignment.tabular_type.html#fl4health.feature_alignment.tabular_type.TabularType.STRING">STRING (TabularType attribute)</a>
+        <li><a href="reference/api/fl4health.feature_alignment.constants.html#fl4health.feature_alignment.constants.FeatureType.STRING">STRING (FeatureType attribute)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.feature_alignment.tabular_type.html#fl4health.feature_alignment.tabular_type.TabularType.STRING">(TabularType attribute)</a>
 </li>
+        </ul></li>
         <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.StringSnapshotter">StringSnapshotter (class in fl4health.utils.snapshotter)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.sampler.html#fl4health.utils.sampler.DirichletLabelBasedSampler.subsample">subsample() (DirichletLabelBasedSampler method)</a>
@@ -5043,7 +5205,17 @@
   <h2>T</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
     <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="reference/api/fl4health.clients.tabular_data_client.html#fl4health.clients.tabular_data_client.TabularDataClient">TabularDataClient (class in fl4health.clients.tabular_data_client)</a>
+</li>
         <li><a href="reference/api/fl4health.feature_alignment.tabular_feature.html#fl4health.feature_alignment.tabular_feature.TabularFeature">TabularFeature (class in fl4health.feature_alignment.tabular_feature)</a>
+</li>
+        <li><a href="reference/api/fl4health.servers.tabular_feature_alignment_server.html#fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer">TabularFeatureAlignmentServer (class in fl4health.servers.tabular_feature_alignment_server)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.TabularFeatures">TabularFeatures (class in fl4health.feature_alignment.feature_type_extraction)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder">TabularFeaturesInfoEncoder (class in fl4health.feature_alignment.tab_features_info_encoder)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor">TabularFeaturesPreprocessor (class in fl4health.feature_alignment.tab_features_preprocessor)</a>
 </li>
         <li><a href="reference/api/fl4health.feature_alignment.tabular_type.html#fl4health.feature_alignment.tabular_type.TabularType">TabularType (class in fl4health.feature_alignment.tabular_type)</a>
 </li>
@@ -5087,7 +5259,17 @@
 </li>
         <li><a href="reference/api/fl4health.metrics.metrics_utils.html#fl4health.metrics.metrics_utils.threshold_tensor">threshold_tensor() (in module fl4health.metrics.metrics_utils)</a>
 </li>
+        <li><a href="reference/api/fl4health.feature_alignment.handle_types.html#fl4health.feature_alignment.handle_types.to_dtype">to_dtype() (in module fl4health.feature_alignment.handle_types)</a>
+</li>
         <li><a href="reference/api/fl4health.feature_alignment.tabular_feature.html#fl4health.feature_alignment.tabular_feature.TabularFeature.to_json">to_json() (TabularFeature method)</a>
+
+        <ul>
+          <li><a href="reference/api/fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.to_json">(TabularFeaturesInfoEncoder method)</a>
+</li>
+        </ul></li>
+        <li><a href="reference/api/fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.to_list">to_list() (in module fl4health.feature_alignment.feature_type_extraction)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.handle_types.html#fl4health.feature_alignment.handle_types.to_types">to_types() (in module fl4health.feature_alignment.handle_types)</a>
 </li>
         <li><a href="reference/api/fl4health.utils.load_data.html#fl4health.utils.load_data.ToNumpy">ToNumpy (class in fl4health.utils.load_data)</a>
 </li>
@@ -5101,6 +5283,8 @@
 </li>
         <li><a href="reference/api/fl4health.utils.snapshotter.html#fl4health.utils.snapshotter.TorchModuleSnapshotter">TorchModuleSnapshotter (class in fl4health.utils.snapshotter)</a>
 </li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.utils.logging.html#fl4health.utils.logging.LoggingMode.TRAIN">TRAIN (LoggingMode attribute)</a>
 </li>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.train_by_epochs">train_by_epochs() (BasicClient method)</a>
@@ -5111,8 +5295,6 @@
         </ul></li>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.train_by_steps">train_by_steps() (BasicClient method)</a>
 </li>
-    </ul></td>
-    <td style="width: 33%; vertical-align: top;"><ul>
         <li><a href="reference/api/fl4health.clients.fedrep_client.html#fl4health.clients.fedrep_client.FedRepClient.train_fedrep_by_epochs">train_fedrep_by_epochs() (FedRepClient method)</a>
 </li>
         <li><a href="reference/api/fl4health.clients.fedrep_client.html#fl4health.clients.fedrep_client.FedRepClient.train_fedrep_by_steps">train_fedrep_by_steps() (FedRepClient method)</a>
@@ -5185,6 +5367,10 @@
 </li>
         <li><a href="reference/api/fl4health.utils.data_generation.html#fl4health.utils.data_generation.SyntheticFedProxDataset.two_layer_map_inputs_to_outputs">two_layer_map_inputs_to_outputs() (SyntheticFedProxDataset method)</a>
 </li>
+        <li><a href="reference/api/fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.type_to_features">type_to_features() (TabularFeaturesInfoEncoder method)</a>
+</li>
+        <li><a href="reference/api/fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.Features.types">types (Features property)</a>
+</li>
     </ul></td>
   </tr></table>
 </section>
@@ -5237,6 +5423,8 @@
 
         <ul>
           <li><a href="reference/api/fl4health.metrics.compound_metrics.html#fl4health.metrics.compound_metrics.EmaMetric.update">(EmaMetric method)</a>
+</li>
+          <li><a href="reference/api/fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.FeatureMeta.update">(FeatureMeta method)</a>
 </li>
           <li><a href="reference/api/fl4health.utils.losses.html#fl4health.utils.losses.LossMeter.update">(LossMeter method)</a>
 </li>
@@ -5401,6 +5589,8 @@
           <li><a href="reference/api/fl4health.clients.gpfl_client.html#fl4health.clients.gpfl_client.GpflClient.val_step">(GpflClient method)</a>
 </li>
         </ul></li>
+        <li><a href="reference/api/fl4health.feature_alignment.handle_types.html#fl4health.feature_alignment.handle_types.valid_feature_type">valid_feature_type() (in module fl4health.feature_alignment.handle_types)</a>
+</li>
         <li><a href="reference/api/fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient.validate">validate() (BasicClient method)</a>
 
         <ul>

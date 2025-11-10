@@ -310,6 +310,8 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="../../../reference/api/fl4health.feature_alignment.html">fl4health.feature_alignment package</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle navigation of fl4health.feature_alignment package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.feature_alignment.constants.html">fl4health.feature_alignment.constants module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.feature_alignment.feature_type_extraction.html">fl4health.feature_alignment.feature_type_extraction module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.feature_alignment.handle_types.html">fl4health.feature_alignment.handle_types module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.feature_alignment.string_columns_transformer.html">fl4health.feature_alignment.string_columns_transformer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.feature_alignment.tab_features_info_encoder.html">fl4health.feature_alignment.tab_features_info_encoder module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../reference/api/fl4health.feature_alignment.tab_features_preprocessor.html">fl4health.feature_alignment.tab_features_preprocessor module</a></li>
@@ -638,7 +640,7 @@
         <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_exists</span><span class="p">(),</span> <span class="sa">f</span><span class="s2">&quot;Could not verify existence of checkpoint file at </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_path</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="n">log</span><span class="p">(</span><span class="n">INFO</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Loading state from checkpoint at </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_path</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkpoint_path</span><span class="p">,</span> <span class="n">weights_only</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="StateCheckpointer.checkpoint_exists">

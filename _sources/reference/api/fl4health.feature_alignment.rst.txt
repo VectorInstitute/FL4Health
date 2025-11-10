@@ -13,6 +13,8 @@ Submodules
    :maxdepth: 4
 
    fl4health.feature_alignment.constants
+   fl4health.feature_alignment.feature_type_extraction
+   fl4health.feature_alignment.handle_types
    fl4health.feature_alignment.string_columns_transformer
    fl4health.feature_alignment.tab_features_info_encoder
    fl4health.feature_alignment.tab_features_preprocessor

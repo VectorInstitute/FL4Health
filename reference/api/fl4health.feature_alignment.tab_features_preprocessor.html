@@ -203,7 +203,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -311,6 +311,8 @@
 </li>
 <li class="toctree-l3 current has-children"><a class="reference internal" href="fl4health.feature_alignment.html">fl4health.feature_alignment package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle navigation of fl4health.feature_alignment package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.constants.html">fl4health.feature_alignment.constants module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.feature_type_extraction.html">fl4health.feature_alignment.feature_type_extraction module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.handle_types.html">fl4health.feature_alignment.handle_types module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.string_columns_transformer.html">fl4health.feature_alignment.string_columns_transformer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html">fl4health.feature_alignment.tab_features_info_encoder module</a></li>
 <li class="toctree-l4 current current-page"><a class="current reference internal" href="#">fl4health.feature_alignment.tab_features_preprocessor module</a></li>
@@ -503,14 +505,208 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
         <article role="main">
-          <section id="fl4health-feature-alignment-tab-features-preprocessor-module">
-<h1>fl4health.feature_alignment.tab_features_preprocessor module<a class="headerlink" href="#fl4health-feature-alignment-tab-features-preprocessor-module" title="Link to this heading">¶</a></h1>
+          <section id="module-fl4health.feature_alignment.tab_features_preprocessor">
+<span id="fl4health-feature-alignment-tab-features-preprocessor-module"></span><h1>fl4health.feature_alignment.tab_features_preprocessor module<a class="headerlink" href="#module-fl4health.feature_alignment.tab_features_preprocessor" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TabularFeaturesPreprocessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tab_feature_encoder</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_preprocessor.html#TabularFeaturesPreprocessor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#object" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tab_feature_encoder</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_preprocessor.html#TabularFeaturesPreprocessor.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.__init__" title="Link to this definition">¶</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor</span></code> is responsible for constructing the appropriate column transformers based on
+the information encoded in <code class="docutils literal notranslate"><span class="pre">tab_feature_encoder</span></code>. These transformers will then be applied to a pandas
+dataframe.</p>
+<p>Each tabular feature, which corresponds to a column in the pandas dataframe, has its own column transformer.
+A default transformer is initialized for each feature based on its data type, but the user may also manually
+specify a transformer for this feature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tab_feature_encoder</strong> (<a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder" title="fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder"><em>TabularFeaturesInfoEncoder</em></a>) – Encodes the information necessary for constructing the
+column transformers.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.fill_in_missing_columns">
+<span class="sig-name descname"><span class="pre">fill_in_missing_columns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_preprocessor.html#TabularFeaturesPreprocessor.fill_in_missing_columns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.fill_in_missing_columns" title="Link to this definition">¶</a></dt>
+<dd><p>Return a new DataFrame where entire missing columns are filled with values specified in each column’s
+default fill value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> (<em>pd.DataFrame</em>) – Dataframe to be filled</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Filled dataframe</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_binary_pipeline">
+<span class="sig-name descname"><span class="pre">get_default_binary_pipeline</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_preprocessor.html#TabularFeaturesPreprocessor.get_default_binary_pipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_binary_pipeline" title="Link to this definition">¶</a></dt>
+<dd><p>Default binary pipeline factor. Most frequent imputer and an ordinal encoder.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Default binary pipeline</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Pipeline</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_numeric_pipeline">
+<span class="sig-name descname"><span class="pre">get_default_numeric_pipeline</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_preprocessor.html#TabularFeaturesPreprocessor.get_default_numeric_pipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_numeric_pipeline" title="Link to this definition">¶</a></dt>
+<dd><p>Default numeric pipeline factory. Mean imputation and default min-max scaler.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Default numeric pipeline</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Pipeline</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_one_hot_pipeline">
+<span class="sig-name descname"><span class="pre">get_default_one_hot_pipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">categories</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_preprocessor.html#TabularFeaturesPreprocessor.get_default_one_hot_pipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_one_hot_pipeline" title="Link to this definition">¶</a></dt>
+<dd><p>Default one hot encoding pipeline. Unknowns are ignored, categories are provided as an input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>categories</strong> (<em>MetaData</em>) – Categories to be one hot encoded.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Default one-hot encoding pipeline</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Pipeline</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_ordinal_pipeline">
+<span class="sig-name descname"><span class="pre">get_default_ordinal_pipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">categories</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_preprocessor.html#TabularFeaturesPreprocessor.get_default_ordinal_pipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_ordinal_pipeline" title="Link to this definition">¶</a></dt>
+<dd><p>Default ordinal pipeline. Unknowns have a category. Other categories are provided.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>categories</strong> (<em>MetaData</em>) – Categories to be used in encoding</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Default ordinal pipeline</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Pipeline</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_string_pipeline">
+<span class="sig-name descname"><span class="pre">get_default_string_pipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vocabulary</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_preprocessor.html#TabularFeaturesPreprocessor.get_default_string_pipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_string_pipeline" title="Link to this definition">¶</a></dt>
+<dd><p>Default string/text encoding pipeline. The vocabulary is provided and this is used to instantiate a default
+<code class="docutils literal notranslate"><span class="pre">TfidfVectorizer</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>vocabulary</strong> (<em>MetaData</em>) – Vocabulary to serve as the <code class="docutils literal notranslate"><span class="pre">TfidfVectorizer</span></code> vocab.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Default string/text encoding pipeline.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Pipeline</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.initialize_default_pipelines">
+<span class="sig-name descname"><span class="pre">initialize_default_pipelines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tabular_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">one_hot</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_preprocessor.html#TabularFeaturesPreprocessor.initialize_default_pipelines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.initialize_default_pipelines" title="Link to this definition">¶</a></dt>
+<dd><p>Initialize a default Pipeline for every data column in <code class="docutils literal notranslate"><span class="pre">tabular_features</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tabular_features</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference internal" href="fl4health.feature_alignment.tabular_feature.html#fl4health.feature_alignment.tabular_feature.TabularFeature" title="fl4health.feature_alignment.tabular_feature.TabularFeature"><em>TabularFeature</em></a><em>]</em>) – list of tabular features in the data columns.</p></li>
+<li><p><strong>one_hot</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a>) – Whether or not to apply a default one-hot pipeline.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Default feature processing pipeline per feature in the list.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, Pipeline]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.preprocess_features">
+<span class="sig-name descname"><span class="pre">preprocess_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_preprocessor.html#TabularFeaturesPreprocessor.preprocess_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.preprocess_features" title="Link to this definition">¶</a></dt>
+<dd><p>Preprocess the provided dataframe with the specified pipelines.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>df</strong> (<em>pd.DataFrame</em>) – Dataframe to be processed.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Resulting input and target numpy arrays after preprocessing.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)">tuple</a>[NDArray, NDArray]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.return_column_transformer">
+<span class="sig-name descname"><span class="pre">return_column_transformer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pipelines</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_preprocessor.html#TabularFeaturesPreprocessor.return_column_transformer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.return_column_transformer" title="Link to this definition">¶</a></dt>
+<dd><p>Given a set of pipelines create a set of column transformations based on those pipelines.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>pipelines</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Pipeline</em><em>]</em>) – Dictionary of pipelines for columns with the keys of the dictionary
+corresponding to the column names</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Transformer for the specified columns. The unspecified columns are dropped.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ColumnTransformer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.set_feature_pipeline">
+<span class="sig-name descname"><span class="pre">set_feature_pipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pipeline</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/feature_alignment/tab_features_preprocessor.html#TabularFeaturesPreprocessor.set_feature_pipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.set_feature_pipeline" title="Link to this definition">¶</a></dt>
+<dd><p>This method allows the user to customize a specific pipeline to be applied to a specific feature.
+For example, the user may want to use different scalers for two distinct numerical features.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>feature_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – target column name in the dataframe to apply the pipeline to</p></li>
+<li><p><strong>pipeline</strong> (<em>Pipeline</em>) – Pipeline to apply to the associated column.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 
         </article>
@@ -573,8 +769,40 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">fl4health.feature_alignment.tab_features_preprocessor module</a><ul>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.__init__"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.fill_in_missing_columns"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.fill_in_missing_columns()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_binary_pipeline"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.get_default_binary_pipeline()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_numeric_pipeline"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.get_default_numeric_pipeline()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_one_hot_pipeline"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.get_default_one_hot_pipeline()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_ordinal_pipeline"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.get_default_ordinal_pipeline()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_string_pipeline"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.get_default_string_pipeline()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.initialize_default_pipelines"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.initialize_default_pipelines()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.preprocess_features"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.preprocess_features()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.return_column_transformer"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.return_column_transformer()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.set_feature_pipeline"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.set_feature_pipeline()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>

@@ -203,7 +203,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -311,6 +311,8 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.feature_alignment.html">fl4health.feature_alignment package</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle navigation of fl4health.feature_alignment package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.constants.html">fl4health.feature_alignment.constants module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.feature_type_extraction.html">fl4health.feature_alignment.feature_type_extraction module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.handle_types.html">fl4health.feature_alignment.handle_types module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.string_columns_transformer.html">fl4health.feature_alignment.string_columns_transformer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html">fl4health.feature_alignment.tab_features_info_encoder module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html">fl4health.feature_alignment.tab_features_preprocessor module</a></li>
@@ -503,14 +505,136 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
         <article role="main">
-          <section id="fl4health-clients-tabular-data-client-module">
-<h1>fl4health.clients.tabular_data_client module<a class="headerlink" href="#fl4health-clients-tabular-data-client-module" title="Link to this heading">¶</a></h1>
+          <section id="module-fl4health.clients.tabular_data_client">
+<span id="fl4health-clients-tabular-data-client-module"></span><h1>fl4health.clients.tabular_data_client module<a class="headerlink" href="#module-fl4health.clients.tabular_data_client" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="fl4health.clients.tabular_data_client.TabularDataClient">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TabularDataClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_meter_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">LossMeterType.AVERAGE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_and_state_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reporters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/tabular_data_client.html#TabularDataClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.tabular_data_client.TabularDataClient" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="fl4health.clients.basic_client.html#fl4health.clients.basic_client.BasicClient" title="fl4health.clients.basic_client.BasicClient"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasicClient</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.tabular_data_client.TabularDataClient.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id_column</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_meter_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">LossMeterType.AVERAGE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_and_state_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reporters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/tabular_data_client.html#TabularDataClient.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.tabular_data_client.TabularDataClient.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Client to facilitate federated feature space alignment, specifically for tabular data, and then perform
+federated training.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_path</strong> (<em>Path</em>) – path to the data to be used to load the data for client-side training.</p></li>
+<li><p><strong>metrics</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.metrics.base_metrics.html#fl4health.metrics.base_metrics.Metric" title="fl4health.metrics.base_metrics.Metric"><em>Metric</em></a><em>]</em>) – Metrics to be computed based on the labels and predictions of the client model.</p></li>
+<li><p><strong>device</strong> (<em>torch.device</em>) – Device indicator for where to send the model, batches, labels etc. Often “cpu” or
+“cuda”.</p></li>
+<li><p><strong>id_column</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – ID column. This is required for tabular encoding. It should be unique per row, but need
+not necessarily be a meaningful identifier (i.e. could be row number)</p></li>
+<li><p><strong>targets</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#list" title="(in Python v3.10)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>]</em>) – The target column or columns name. This allows for multiple targets to
+be specified if desired.</p></li>
+<li><p><strong>loss_meter_type</strong> (<a class="reference internal" href="fl4health.utils.losses.html#fl4health.utils.losses.LossMeterType" title="fl4health.utils.losses.LossMeterType"><em>LossMeterType</em></a><em>, </em><em>optional</em>) – Type of meter used to track and compute the losses over
+each batch. Defaults to <code class="docutils literal notranslate"><span class="pre">LossMeterType.AVERAGE</span></code>.</p></li>
+<li><p><strong>checkpoint_and_state_module</strong> (<a class="reference internal" href="fl4health.checkpointing.client_module.html#fl4health.checkpointing.client_module.ClientCheckpointAndStateModule" title="fl4health.checkpointing.client_module.ClientCheckpointAndStateModule"><em>ClientCheckpointAndStateModule</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – A module meant to handle
+both checkpointing and state saving. The module, and its underlying model and state checkpointing
+components will determine when and how to do checkpointing during client-side training.
+No checkpointing (state or model) is done if not provided. Defaults to None.</p></li>
+<li><p><strong>reporters</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.reporting.base_reporter.html#fl4health.reporting.base_reporter.BaseReporter" title="fl4health.reporting.base_reporter.BaseReporter"><em>BaseReporter</em></a><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – A sequence of FL4Health reporters which the client
+should send data to. Defaults to None.</p></li>
+<li><p><strong>progress_bar</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Whether or not to display a progress bar during client training and
+validation. Uses <code class="docutils literal notranslate"><span class="pre">tqdm</span></code>. Defaults to False</p></li>
+<li><p><strong>client_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – An optional client name that uniquely identifies a client.
+If not passed, a hash is randomly generated. Client state will use this as part of its state file
+name. Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.tabular_data_client.TabularDataClient.get_data_frame">
+<span class="sig-name descname"><span class="pre">get_data_frame</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/tabular_data_client.html#TabularDataClient.get_data_frame"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.tabular_data_client.TabularDataClient.get_data_frame" title="Link to this definition">¶</a></dt>
+<dd><p>User defined method that returns a pandas dataframe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – Configuration sent by the server for customization of the function</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.tabular_data_client.TabularDataClient.get_properties">
+<span class="sig-name descname"><span class="pre">get_properties</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/tabular_data_client.html#TabularDataClient.get_properties"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.tabular_data_client.TabularDataClient.get_properties" title="Link to this definition">¶</a></dt>
+<dd><p>Return properties of client to be sent to the server. Depending on whether the server has communicated the
+information to be used for feature alignment, the client will send the input/output dimensions so the server
+can use them to initialize the global model.</p>
+<p>First initializes the client because this is called prior to the first federated learning round.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – Configuration sent by the server for customization of the function</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Properties to be returned to the server, providing information about the client.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)">dict</a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)">str</a>, Scalar]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.tabular_data_client.TabularDataClient.preset_specific_pipeline">
+<span class="sig-name descname"><span class="pre">preset_specific_pipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pipeline</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/tabular_data_client.html#TabularDataClient.preset_specific_pipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.tabular_data_client.TabularDataClient.preset_specific_pipeline" title="Link to this definition">¶</a></dt>
+<dd><p>The user may use this method to specify a specific pipeline to be applied to a particular feature. This
+function stores the provided pipeline associated with the provided <code class="docutils literal notranslate"><span class="pre">feature_name</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>feature_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a>) – Name of the feature as a column in the dataframe</p></li>
+<li><p><strong>pipeline</strong> (<em>Pipeline</em>) – Pipeline of transformations to be applied to the target feature</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.tabular_data_client.TabularDataClient.set_feature_specific_pipelines">
+<span class="sig-name descname"><span class="pre">set_feature_specific_pipelines</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/tabular_data_client.html#TabularDataClient.set_feature_specific_pipelines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.tabular_data_client.TabularDataClient.set_feature_specific_pipelines" title="Link to this definition">¶</a></dt>
+<dd><p>Given the feature specific pipelines, at them to the tabular feature preprocessor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.clients.tabular_data_client.TabularDataClient.setup_client">
+<span class="sig-name descname"><span class="pre">setup_client</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/clients/tabular_data_client.html#TabularDataClient.setup_client"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.clients.tabular_data_client.TabularDataClient.setup_client" title="Link to this definition">¶</a></dt>
+<dd><p>Initialize the client by encoding the information of its tabular data and initializing the corresponding
+<code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">config[SOURCE_SPECIFIED]</span></code> indicates whether the server has obtained the source of information to perform
+feature alignment. If it is True, it means the server has obtained such information (either a priori or by
+polling a client). So the client will encode that information and use it instead to perform feature
+preprocessing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>Config</em>) – Configuration sent by the server for customization of the function</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/constants.html#None" title="(in Python v3.10)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 
         </article>
@@ -573,8 +697,35 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">fl4health.clients.tabular_data_client module</a><ul>
+<li><a class="reference internal" href="#fl4health.clients.tabular_data_client.TabularDataClient"><code class="docutils literal notranslate"><span class="pre">TabularDataClient</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.clients.tabular_data_client.TabularDataClient.__init__"><code class="docutils literal notranslate"><span class="pre">TabularDataClient.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.tabular_data_client.TabularDataClient.get_data_frame"><code class="docutils literal notranslate"><span class="pre">TabularDataClient.get_data_frame()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.tabular_data_client.TabularDataClient.get_properties"><code class="docutils literal notranslate"><span class="pre">TabularDataClient.get_properties()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.tabular_data_client.TabularDataClient.preset_specific_pipeline"><code class="docutils literal notranslate"><span class="pre">TabularDataClient.preset_specific_pipeline()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.tabular_data_client.TabularDataClient.set_feature_specific_pipelines"><code class="docutils literal notranslate"><span class="pre">TabularDataClient.set_feature_specific_pipelines()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.clients.tabular_data_client.TabularDataClient.setup_client"><code class="docutils literal notranslate"><span class="pre">TabularDataClient.setup_client()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>

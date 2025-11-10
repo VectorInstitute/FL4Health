@@ -203,7 +203,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -311,6 +311,8 @@
 </li>
 <li class="toctree-l3 has-children"><a class="reference internal" href="fl4health.feature_alignment.html">fl4health.feature_alignment package</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle navigation of fl4health.feature_alignment package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.constants.html">fl4health.feature_alignment.constants module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.feature_type_extraction.html">fl4health.feature_alignment.feature_type_extraction module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.handle_types.html">fl4health.feature_alignment.handle_types module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.string_columns_transformer.html">fl4health.feature_alignment.string_columns_transformer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html">fl4health.feature_alignment.tab_features_info_encoder module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html">fl4health.feature_alignment.tab_features_preprocessor module</a></li>
@@ -503,14 +505,106 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
         </div>
         <article role="main">
-          <section id="fl4health-servers-tabular-feature-alignment-server-module">
-<h1>fl4health.servers.tabular_feature_alignment_server module<a class="headerlink" href="#fl4health-servers-tabular-feature-alignment-server-module" title="Link to this heading">¶</a></h1>
+          <section id="module-fl4health.servers.tabular_feature_alignment_server">
+<span id="fl4health-servers-tabular-feature-alignment-server-module"></span><h1>fl4health.servers.tabular_feature_alignment_server module<a class="headerlink" href="#module-fl4health.servers.tabular_feature_alignment_server" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TabularFeatureAlignmentServer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client_manager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initialize_parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tabular_features_source_of_truth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reporters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_and_state_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_init_parameters_config_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_failures</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/servers/tabular_feature_alignment_server.html#TabularFeatureAlignmentServer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="fl4health.servers.base_server.html#fl4health.servers.base_server.FlServer" title="fl4health.servers.base_server.FlServer"><code class="xref py py-class docutils literal notranslate"><span class="pre">FlServer</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client_manager</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initialize_parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strategy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tabular_features_source_of_truth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reporters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_and_state_module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_init_parameters_config_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accept_failures</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/servers/tabular_feature_alignment_server.html#TabularFeatureAlignmentServer.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>This server is used when the clients all have tabular data that needs to be aligned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>client_manager</strong> (<em>ClientManager</em>) – Determines the mechanism by which clients are sampled by the server, if
+they are to be sampled at all.</p></li>
+<li><p><strong>config</strong> (<em>Config</em>) – <p>This should be the configuration that was used to setup the federated alignment.
+In most cases it should be the “source of truth” for how FL alignment should proceed.</p>
+<p><strong>NOTE</strong>: This config is <strong>DISTINCT</strong> from the Flwr server config, which is extremely minimal.</p>
+</p></li>
+<li><p><strong>initialize_parameters</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>]</em><em>, </em><em>Parameters</em><em>]</em>) – <p>Function used to initialize the model to be
+trained and used for the tabular task.</p>
+<p><strong>NOTE</strong>: The model architecture is not finalized until we are able to determine the dimensionality of
+the input and output space during feature alignment.</p>
+</p></li>
+<li><p><strong>strategy</strong> (<a class="reference internal" href="fl4health.strategies.basic_fedavg.html#fl4health.strategies.basic_fedavg.BasicFedAvg" title="fl4health.strategies.basic_fedavg.BasicFedAvg"><em>BasicFedAvg</em></a>) – The aggregation strategy to be used by the server to handle.
+client updates and other information potentially sent by the participating clients. If None the
+strategy is FedAvg as set by the flwr Server.</p></li>
+<li><p><strong>tabular_features_source_of_truth</strong> (<a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder" title="fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder"><em>TabularFeaturesInfoEncoder</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – The information that is
+required for aligning client features. If it is not specified, then the server will randomly poll a
+client and gather this information from its data source. Defaults to None.</p></li>
+<li><p><strong>reporters</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="fl4health.reporting.base_reporter.html#fl4health.reporting.base_reporter.BaseReporter" title="fl4health.reporting.base_reporter.BaseReporter"><em>BaseReporter</em></a><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – Sequence of FL4Health reporters which the server
+should send data to before and after each round. Defaults to None</p></li>
+<li><p><strong>checkpoint_and_state_module</strong> (<a class="reference internal" href="fl4health.checkpointing.server_module.html#fl4health.checkpointing.server_module.BaseServerCheckpointAndStateModule" title="fl4health.checkpointing.server_module.BaseServerCheckpointAndStateModule"><em>BaseServerCheckpointAndStateModule</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – This module is used
+to handle both model checkpointing and state checkpointing. The former is aimed at saving model
+artifacts to be used or evaluated after training. The latter is used to preserve training state
+(including models) such that if FL training is interrupted, the process may be restarted. If no
+module is provided, no checkpointing or state preservation will happen. Defaults to None.</p></li>
+<li><p><strong>on_init_parameters_config_fn</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><em>int</em></a><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em>, </em><em>Scalar</em><em>]</em><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – Function used to
+configure how one asks a client to provide parameters from which to initialize all other clients by
+providing a <code class="docutils literal notranslate"><span class="pre">Config</span></code> dictionary. If this is none, then a blank config is sent with the parameter
+request (which is default behavior for flower servers). Defaults to None.</p></li>
+<li><p><strong>server_name</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><em>str</em></a><em> | </em><em>None</em><em>, </em><em>optional</em>) – An optional string name to uniquely identify server. This name is also
+used as part of any state checkpointing done by the server. Defaults to None.</p></li>
+<li><p><strong>accept_failures</strong> (<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><em>bool</em></a><em>, </em><em>optional</em>) – Determines whether the server should accept failures during training or
+evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
+and throw an exception. Defaults to True.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer.fit">
+<span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_rounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/servers/tabular_feature_alignment_server.html#TabularFeatureAlignmentServer.fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer.fit" title="Link to this definition">¶</a></dt>
+<dd><p>Run federated averaging for a number of rounds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">History</span></code>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer.poll_clients_for_dimension_info">
+<span class="sig-name descname"><span class="pre">poll_clients_for_dimension_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timeout</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/servers/tabular_feature_alignment_server.html#TabularFeatureAlignmentServer.poll_clients_for_dimension_info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer.poll_clients_for_dimension_info" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#tuple" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer.poll_clients_for_feature_info">
+<span class="sig-name descname"><span class="pre">poll_clients_for_feature_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">timeout</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/servers/tabular_feature_alignment_server.html#TabularFeatureAlignmentServer.poll_clients_for_feature_info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer.poll_clients_for_feature_info" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="fl4health.servers.tabular_feature_alignment_server.fit_config">
+<span class="sig-name descname"><span class="pre">fit_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_specified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">current_server_round</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/fl4health/servers/tabular_feature_alignment_server.html#fit_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fl4health.servers.tabular_feature_alignment_server.fit_config" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#dict" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/typing.html#typing.Union" title="(in Python v3.10)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code></a>[<a class="reference external" href="https://docs.python.org/3.10/library/functions.html#bool" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#bytes" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#float" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/functions.html#int" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, <a class="reference external" href="https://docs.python.org/3.10/library/stdtypes.html#str" title="(in Python v3.10)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 
         </article>
@@ -573,8 +667,34 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">fl4health.servers.tabular_feature_alignment_server module</a><ul>
+<li><a class="reference internal" href="#fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer"><code class="docutils literal notranslate"><span class="pre">TabularFeatureAlignmentServer</span></code></a><ul>
+<li><a class="reference internal" href="#fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer.__init__"><code class="docutils literal notranslate"><span class="pre">TabularFeatureAlignmentServer.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer.fit"><code class="docutils literal notranslate"><span class="pre">TabularFeatureAlignmentServer.fit()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer.poll_clients_for_dimension_info"><code class="docutils literal notranslate"><span class="pre">TabularFeatureAlignmentServer.poll_clients_for_dimension_info()</span></code></a></li>
+<li><a class="reference internal" href="#fl4health.servers.tabular_feature_alignment_server.TabularFeatureAlignmentServer.poll_clients_for_feature_info"><code class="docutils literal notranslate"><span class="pre">TabularFeatureAlignmentServer.poll_clients_for_feature_info()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#fl4health.servers.tabular_feature_alignment_server.fit_config"><code class="docutils literal notranslate"><span class="pre">fit_config()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>

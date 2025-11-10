@@ -311,6 +311,8 @@
 </li>
 <li class="toctree-l3 current has-children current-page"><a class="current reference internal" href="#">fl4health.feature_alignment package</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle navigation of fl4health.feature_alignment package</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.constants.html">fl4health.feature_alignment.constants module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.feature_type_extraction.html">fl4health.feature_alignment.feature_type_extraction module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.handle_types.html">fl4health.feature_alignment.handle_types module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.string_columns_transformer.html">fl4health.feature_alignment.string_columns_transformer module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html">fl4health.feature_alignment.tab_features_info_encoder module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html">fl4health.feature_alignment.tab_features_preprocessor module</a></li>
@@ -515,7 +517,46 @@
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="fl4health.feature_alignment.constants.html">fl4health.feature_alignment.constants module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fl4health.feature_alignment.constants.html">fl4health.feature_alignment.constants module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.feature_alignment.constants.html#fl4health.feature_alignment.constants.FeatureType"><code class="docutils literal notranslate"><span class="pre">FeatureType</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.constants.html#fl4health.feature_alignment.constants.FeatureType.BINARY"><code class="docutils literal notranslate"><span class="pre">FeatureType.BINARY</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.constants.html#fl4health.feature_alignment.constants.FeatureType.CATEGORICAL_INDICATOR"><code class="docutils literal notranslate"><span class="pre">FeatureType.CATEGORICAL_INDICATOR</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.constants.html#fl4health.feature_alignment.constants.FeatureType.NUMERIC"><code class="docutils literal notranslate"><span class="pre">FeatureType.NUMERIC</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.constants.html#fl4health.feature_alignment.constants.FeatureType.ORDINAL"><code class="docutils literal notranslate"><span class="pre">FeatureType.ORDINAL</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.constants.html#fl4health.feature_alignment.constants.FeatureType.STRING"><code class="docutils literal notranslate"><span class="pre">FeatureType.STRING</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="fl4health.feature_alignment.feature_type_extraction.html">fl4health.feature_alignment.feature_type_extraction module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.FeatureMeta"><code class="docutils literal notranslate"><span class="pre">FeatureMeta</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.FeatureMeta.__init__"><code class="docutils literal notranslate"><span class="pre">FeatureMeta.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.FeatureMeta.get_type"><code class="docutils literal notranslate"><span class="pre">FeatureMeta.get_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.FeatureMeta.update"><code class="docutils literal notranslate"><span class="pre">FeatureMeta.update()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.Features"><code class="docutils literal notranslate"><span class="pre">Features</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.Features.__init__"><code class="docutils literal notranslate"><span class="pre">Features.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.Features.types"><code class="docutils literal notranslate"><span class="pre">Features.types</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.TabularFeatures"><code class="docutils literal notranslate"><span class="pre">TabularFeatures</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.TabularFeatures.__init__"><code class="docutils literal notranslate"><span class="pre">TabularFeatures.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.has_columns"><code class="docutils literal notranslate"><span class="pre">has_columns()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.feature_alignment.feature_type_extraction.html#fl4health.feature_alignment.feature_type_extraction.to_list"><code class="docutils literal notranslate"><span class="pre">to_list()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="fl4health.feature_alignment.handle_types.html">fl4health.feature_alignment.handle_types module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.feature_alignment.handle_types.html#fl4health.feature_alignment.handle_types.convertible_to_type"><code class="docutils literal notranslate"><span class="pre">convertible_to_type()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.feature_alignment.handle_types.html#fl4health.feature_alignment.handle_types.get_unique"><code class="docutils literal notranslate"><span class="pre">get_unique()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.feature_alignment.handle_types.html#fl4health.feature_alignment.handle_types.infer_types"><code class="docutils literal notranslate"><span class="pre">infer_types()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.feature_alignment.handle_types.html#fl4health.feature_alignment.handle_types.to_dtype"><code class="docutils literal notranslate"><span class="pre">to_dtype()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.feature_alignment.handle_types.html#fl4health.feature_alignment.handle_types.to_types"><code class="docutils literal notranslate"><span class="pre">to_types()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.feature_alignment.handle_types.html#fl4health.feature_alignment.handle_types.valid_feature_type"><code class="docutils literal notranslate"><span class="pre">valid_feature_type()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="fl4health.feature_alignment.string_columns_transformer.html">fl4health.feature_alignment.string_columns_transformer module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextColumnTransformer"><code class="docutils literal notranslate"><span class="pre">TextColumnTransformer</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.string_columns_transformer.html#fl4health.feature_alignment.string_columns_transformer.TextColumnTransformer.__init__"><code class="docutils literal notranslate"><span class="pre">TextColumnTransformer.__init__()</span></code></a></li>
@@ -535,8 +576,41 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html">fl4health.feature_alignment.tab_features_info_encoder module</a></li>
-<li class="toctree-l1"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html">fl4health.feature_alignment.tab_features_preprocessor module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html">fl4health.feature_alignment.tab_features_info_encoder module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.__init__"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.encoder_from_dataframe"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.encoder_from_dataframe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.features_by_type"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.features_by_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.from_json"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.from_json()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_categories_list"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.get_categories_list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_feature_columns"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.get_feature_columns()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_tabular_features"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.get_tabular_features()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_tabular_targets"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.get_tabular_targets()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_target_columns"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.get_target_columns()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.get_target_dimension"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.get_target_dimension()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.to_json"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.to_json()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_info_encoder.html#fl4health.feature_alignment.tab_features_info_encoder.TabularFeaturesInfoEncoder.type_to_features"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesInfoEncoder.type_to_features()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html">fl4health.feature_alignment.tab_features_preprocessor module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.__init__"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.fill_in_missing_columns"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.fill_in_missing_columns()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_binary_pipeline"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.get_default_binary_pipeline()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_numeric_pipeline"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.get_default_numeric_pipeline()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_one_hot_pipeline"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.get_default_one_hot_pipeline()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_ordinal_pipeline"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.get_default_ordinal_pipeline()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.get_default_string_pipeline"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.get_default_string_pipeline()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.initialize_default_pipelines"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.initialize_default_pipelines()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.preprocess_features"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.preprocess_features()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.return_column_transformer"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.return_column_transformer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tab_features_preprocessor.html#fl4health.feature_alignment.tab_features_preprocessor.TabularFeaturesPreprocessor.set_feature_pipeline"><code class="docutils literal notranslate"><span class="pre">TabularFeaturesPreprocessor.set_feature_pipeline()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="fl4health.feature_alignment.tabular_feature.html">fl4health.feature_alignment.tabular_feature module</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="fl4health.feature_alignment.tabular_feature.html#fl4health.feature_alignment.tabular_feature.TabularFeature"><code class="docutils literal notranslate"><span class="pre">TabularFeature</span></code></a><ul>
 <li class="toctree-l3"><a class="reference internal" href="fl4health.feature_alignment.tabular_feature.html#fl4health.feature_alignment.tabular_feature.TabularFeature.__init__"><code class="docutils literal notranslate"><span class="pre">TabularFeature.__init__()</span></code></a></li>
