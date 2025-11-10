@@ -28,14 +28,14 @@ def write_measurement_results(eval_write_path: str, metric, results: dict[str, f
 
 def load_local_model(run_folder_dir: str, hospital_names: str) -> nn.Module:
     model_checkpoint_path = os.path.join(run_folder_dir, f"client_{hospital_names}_best_model.pkl")
-    model = torch.load(model_checkpoint_path)
+    model = torch.load(model_checkpoint_path, weights_only=False)
     assert isinstance(model, nn.Module)
     return model
 
 
 def load_global_model(run_folder_dir: str) -> nn.Module:
     model_checkpoint_path = os.path.join(run_folder_dir, "server_best_model.pkl")
-    model = torch.load(model_checkpoint_path)
+    model = torch.load(model_checkpoint_path, weights_only=False)
     assert isinstance(model, nn.Module)
     return model
 

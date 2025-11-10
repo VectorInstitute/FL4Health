@@ -76,7 +76,7 @@ class FedSimClrModel(nn.Module):
         Returns:
             FedSimClrModel: A model with pre-existing weights loaded and ``pretrain`` set to False
         """
-        prev_model = torch.load(model_path)
+        prev_model = torch.load(model_path, weights_only=False)
         return FedSimClrModel(
             encoder=prev_model.encoder,
             projection_head=prev_model.projection_head,

@@ -3,10 +3,10 @@ from __future__ import annotations
 import json
 
 import pandas as pd
-from cyclops.data.df.feature import TabularFeatures
 from flwr.common.typing import Scalar
 from sklearn.feature_extraction.text import CountVectorizer
 
+from fl4health.feature_alignment.feature_type_extraction import TabularFeatures
 from fl4health.feature_alignment.tabular_feature import MetaData, TabularFeature
 from fl4health.feature_alignment.tabular_type import TabularType
 
@@ -89,7 +89,6 @@ class TabularFeaturesInfoEncoder:
     ) -> TabularFeaturesInfoEncoder:
         features_list = sorted(df.columns.values.tolist())
         features_list.remove(id_column)
-        # Leverage cyclops to perform type inference
         tab_features = TabularFeatures(
             data=df.reset_index(), features=features_list, by=id_column, targets=target_columns
         )
@@ -99,7 +98,7 @@ class TabularFeaturesInfoEncoder:
         tabular_features = []
         # Construct TabularFeature objects.
         for feature_name in features_to_types:
-            feature_type = TabularType(features_to_types[feature_name])
+            feature_type = TabularType(features_to_types[feature_name].value)
             tabular_feature = TabularFeaturesInfoEncoder._construct_tab_feature(
                 df, feature_name, feature_type, fill_values
             )

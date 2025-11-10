@@ -619,7 +619,7 @@ class Encoder(nn.Module):
 
     @property
     def out_channels(self) -> int:
-        return self.encoding_blocks[-1].out_channels
+        return self.encoding_blocks[-1].out_channels  # type: ignore
 
 
 class EncodingBlock(nn.Module):

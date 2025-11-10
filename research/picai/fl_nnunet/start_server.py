@@ -77,7 +77,7 @@ def main(
     )
 
     if config.get("starting_checkpoint"):
-        model = torch.load(config["starting_checkpoint"])
+        model = torch.load(config["starting_checkpoint"], weights_only=False)
         # Of course nnunet stores their pytorch models differently.
         params = ndarrays_to_parameters([val.cpu().numpy() for _, val in model["network_weights"].items()])
     else:

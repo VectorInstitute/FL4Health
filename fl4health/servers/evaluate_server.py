@@ -71,7 +71,7 @@ class EvaluateServer(Server):
     def load_model_checkpoint_to_parameters(self) -> Parameters:
         assert self.model_checkpoint_path
         log(INFO, f"Loading model checkpoint at: {self.model_checkpoint_path.__str__()}")
-        model = torch.load(self.model_checkpoint_path)
+        model = torch.load(self.model_checkpoint_path, weights_only=False)
         # Extracting all parameters from the model to be sent to the clients
         parameters = ndarrays_to_parameters([val.cpu().numpy() for _, val in model.state_dict().items()])
         log(INFO, "Model loaded and state converted to parameters")

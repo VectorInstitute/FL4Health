@@ -61,8 +61,9 @@ def test_masked_conv1d_from_pretrained() -> None:
     assert masked_conv_module.bias is not None and not masked_conv_module.bias.requires_grad
     assert masked_conv_module.bias_scores.requires_grad
 
-    assert (masked_conv_module.weight == conv_module.weight).all()
-    assert (masked_conv_module.bias == conv_module.bias).all()
+    assert torch.allclose(masked_conv_module.weight, conv_module.weight)
+    assert conv_module.bias is not None
+    assert torch.allclose(masked_conv_module.bias, conv_module.bias)
 
 
 def test_masked_conv2d() -> None:
@@ -82,8 +83,9 @@ def test_masked_conv2d_from_pretrained() -> None:
     assert masked_conv_module.bias is not None and not masked_conv_module.bias.requires_grad
     assert masked_conv_module.bias_scores.requires_grad
 
-    assert (masked_conv_module.weight == conv_module.weight).all()
-    assert (masked_conv_module.bias == conv_module.bias).all()
+    assert torch.allclose(masked_conv_module.weight, conv_module.weight)
+    assert conv_module.bias is not None
+    assert torch.allclose(masked_conv_module.bias, conv_module.bias)
 
 
 def test_masked_conv3d() -> None:
@@ -103,8 +105,9 @@ def test_masked_conv3d_from_pretrained() -> None:
     assert masked_conv_module.bias is not None and not masked_conv_module.bias.requires_grad
     assert masked_conv_module.bias_scores.requires_grad
 
-    assert (masked_conv_module.weight == conv_module.weight).all()
-    assert (masked_conv_module.bias == conv_module.bias).all()
+    assert torch.allclose(masked_conv_module.weight, conv_module.weight)
+    assert conv_module.bias is not None
+    assert torch.allclose(masked_conv_module.bias, conv_module.bias)
 
 
 def test_masked_conv_transposed_1d() -> None:
@@ -126,8 +129,9 @@ def test_masked_conv_transposed_1d_from_pretrained() -> None:
     assert masked_conv_module.bias is not None and not masked_conv_module.bias.requires_grad
     assert masked_conv_module.bias_scores.requires_grad
 
-    assert (masked_conv_module.weight == conv_module.weight).all()
-    assert (masked_conv_module.bias == conv_module.bias).all()
+    assert torch.allclose(masked_conv_module.weight, conv_module.weight)
+    assert conv_module.bias is not None
+    assert torch.allclose(masked_conv_module.bias, conv_module.bias)
 
 
 def test_masked_conv_transposed_2d() -> None:
@@ -147,8 +151,9 @@ def test_masked_conv_transposed_2d_from_pretrained() -> None:
     assert masked_conv_module.bias is not None and not masked_conv_module.bias.requires_grad
     assert masked_conv_module.bias_scores.requires_grad
 
-    assert (masked_conv_module.weight == conv_module.weight).all()
-    assert (masked_conv_module.bias == conv_module.bias).all()
+    assert torch.allclose(masked_conv_module.weight, conv_module.weight)
+    assert conv_module.bias is not None
+    assert torch.allclose(masked_conv_module.bias, conv_module.bias)
 
 
 def test_masked_conv_transposed_3d() -> None:
@@ -168,8 +173,9 @@ def test_masked_conv_transposed_3d_from_pretrained() -> None:
     assert masked_conv_module.bias is not None and not masked_conv_module.bias.requires_grad
     assert masked_conv_module.bias_scores.requires_grad
 
-    assert (masked_conv_module.weight == conv_module.weight).all()
-    assert (masked_conv_module.bias == conv_module.bias).all()
+    assert torch.allclose(masked_conv_module.weight, conv_module.weight)
+    assert conv_module.bias is not None
+    assert torch.allclose(masked_conv_module.bias, conv_module.bias)
 
 
 def test_masked_layer_norm() -> None:

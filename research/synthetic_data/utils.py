@@ -17,12 +17,12 @@ def get_all_run_folders(artifact_dir: str) -> list[str]:
 
 def load_best_global_model(run_folder_dir: str) -> nn.Module:
     model_checkpoint_path = os.path.join(run_folder_dir, "server_best_model.pkl")
-    return torch.load(model_checkpoint_path)
+    return torch.load(model_checkpoint_path, weights_only=False)
 
 
 def load_last_global_model(run_folder_dir: str) -> nn.Module:
     model_checkpoint_path = os.path.join(run_folder_dir, "server_last_model.pkl")
-    return torch.load(model_checkpoint_path)
+    return torch.load(model_checkpoint_path, weights_only=False)
 
 
 def get_metric_avg_std(metrics: list[float]) -> tuple[float, float]:
@@ -51,22 +51,22 @@ def evaluate_synthetic_data_model(
 
 def load_eval_best_pre_aggregation_local_model(run_folder_dir: str, client_number: int) -> nn.Module:
     model_checkpoint_path = os.path.join(run_folder_dir, f"pre_aggregation_client_{client_number}_best_model.pkl")
-    return torch.load(model_checkpoint_path)
+    return torch.load(model_checkpoint_path, weights_only=False)
 
 
 def load_eval_last_pre_aggregation_local_model(run_folder_dir: str, client_number: int) -> nn.Module:
     model_checkpoint_path = os.path.join(run_folder_dir, f"pre_aggregation_client_{client_number}_last_model.pkl")
-    return torch.load(model_checkpoint_path)
+    return torch.load(model_checkpoint_path, weights_only=False)
 
 
 def load_eval_best_post_aggregation_local_model(run_folder_dir: str, client_number: int) -> nn.Module:
     model_checkpoint_path = os.path.join(run_folder_dir, f"post_aggregation_client_{client_number}_best_model.pkl")
-    return torch.load(model_checkpoint_path)
+    return torch.load(model_checkpoint_path, weights_only=False)
 
 
 def load_eval_last_post_aggregation_local_model(run_folder_dir: str, client_number: int) -> nn.Module:
     model_checkpoint_path = os.path.join(run_folder_dir, f"post_aggregation_client_{client_number}_last_model.pkl")
-    return torch.load(model_checkpoint_path)
+    return torch.load(model_checkpoint_path, weights_only=False)
 
 
 def evaluate_model_on_dataset(

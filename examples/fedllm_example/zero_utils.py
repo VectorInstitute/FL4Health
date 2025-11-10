@@ -101,8 +101,10 @@ def safe_save_model_for_zero3(model: torch.nn.Module, training_arguments: Traini
     non_lora_state_dict = get_peft_state_non_lora_maybe_zero_3(model.named_parameters())
 
     if training_arguments.local_rank in [0, -1]:  # Ensures only rank 0 or single-GPU saves
-        model.config.save_pretrained(training_arguments.output_dir)
-        model.save_pretrained(training_arguments.output_dir, state_dict=state_dict)
+        # type ignore because the type in transformers is very indirect
+        model.config.save_pretrained(training_arguments.output_dir)  # type: ignore
+        # type ignore because the type in transformers is very indirect
+        model.save_pretrained(training_arguments.output_dir, state_dict=state_dict)  # type: ignore
         assert training_arguments.output_dir is not None, "training_arguments.output_dir must not be None"
         torch.save(non_lora_state_dict, os.path.join(training_arguments.output_dir, "non_lora_trainables.bin"))
 

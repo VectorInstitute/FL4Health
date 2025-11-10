@@ -19,7 +19,7 @@ class PcaPreprocessor:
         self.pca_module: PcaModule = self.load_pca_module()
 
     def load_pca_module(self) -> PcaModule:
-        pca_module = torch.load(self.checkpointing_path)
+        pca_module = torch.load(self.checkpointing_path, weights_only=False)
         pca_module.eval()
         return pca_module
 

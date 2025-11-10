@@ -43,6 +43,11 @@ def split_data_and_targets(
 
 
 def get_mnist_data_and_target_tensors(data_dir: Path, train: bool) -> tuple[torch.Tensor, torch.Tensor]:
+    try:
+        # Attempting to remove Yann Lecun Mirror
+        MNIST.mirrors.remove("http://yann.lecun.com/exdb/mnist/")
+    except ValueError:
+        log(INFO, "Yann Lecun Mirror not in mirrors")
     mnist_dataset = MNIST(data_dir, train=train, download=True)
     data = torch.Tensor(mnist_dataset.data)
     targets = torch.Tensor(mnist_dataset.targets).long()

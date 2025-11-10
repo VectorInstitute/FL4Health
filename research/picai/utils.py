@@ -56,7 +56,7 @@ class SimpleDictionaryCheckpointer:
         assert self.checkpoint_exists()
         log(INFO, f"Loading state from checkpoint at {self.checkpoint_path}")
 
-        return torch.load(self.checkpoint_path)
+        return torch.load(self.checkpoint_path, weights_only=False)
 
     def checkpoint_exists(self) -> bool:
         """

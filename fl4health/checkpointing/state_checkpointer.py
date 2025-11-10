@@ -115,7 +115,7 @@ class StateCheckpointer(ABC):
         assert self.checkpoint_exists(), f"Could not verify existence of checkpoint file at {self.checkpoint_path}"
         log(INFO, f"Loading state from checkpoint at {self.checkpoint_path}")
 
-        return torch.load(self.checkpoint_path)
+        return torch.load(self.checkpoint_path, weights_only=False)
 
     def checkpoint_exists(self) -> bool:
         """

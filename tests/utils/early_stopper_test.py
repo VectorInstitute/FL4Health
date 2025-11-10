@@ -15,6 +15,9 @@ from fl4health.utils.snapshotter import SingletonSnapshotter
 from fl4health.utils.typing import TorchInputType, TorchTargetType
 
 
+DEVICE: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
 class MinimalMockBasicClient(BasicClient):
     def __init__(self):  # type: ignore
         # Val loss first goes down, then up (for less than interval steps), then down and up again
@@ -48,7 +51,7 @@ class MockBasicClient(BasicClient):
         loss: float | None = 0,
         reporters: Sequence[BaseReporter] | None = None,
     ):
-        super().__init__(Path(""), [], torch.device(0), reporters=reporters)
+        super().__init__(Path(""), [], DEVICE, reporters=reporters)
 
         self.test_attribute_number = 10
         self.learning_rate = 0.0001

@@ -6,6 +6,7 @@ from torch.nn.functional import one_hot
 from torch.utils.data import DataLoader
 
 from fl4health.clients.gpfl_client import GpflClient
+from fl4health.model_bases.gpfl_base import Gce
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.utils.dataset import TensorDataset
 from tests.clients.fixtures import get_gpfl_client  # noqa
@@ -29,8 +30,8 @@ def test_gpfl_model_type(get_gpfl_client: GpflClient) -> None:  # noqa
     """Test that the correct model base is being used."""
     client = get_gpfl_client
     assert isinstance(client.get_parameter_exchanger({}), FixedLayerExchanger)
-    # Change client's model
-    client.model = HeadCnn()
+    # Change client's model, ignoring type as we are testing typing assertion
+    client.model = HeadCnn()  # type: ignore
     with pytest.raises(AssertionError):
         client.get_parameter_exchanger({})
 
@@ -78,10 +79,9 @@ def test_compute_conditional_inputs(get_gpfl_client: GpflClient) -> None:  # noq
     manual_embedding = torch.Tensor([[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8], [0.9, 1.0, 1.1, 1.2]])
     manual_class_sample_proportion = torch.Tensor([0.3, 0.4, 0.3])
     # Just assigning a dummy GCE model since we don't need it for this test.
-    client.gce_frozen = HeadCnn()
+    client.gce_frozen = Gce(4, 3)
     client.feature_dim = 4
     client.num_classes = 3
-    client.gce_frozen.embedding = torch.nn.Embedding(3, 4)
     client.gce_frozen.embedding.weight.data = manual_embedding
     client.class_sample_proportion = manual_class_sample_proportion
     # Manually compute the conditional inputs

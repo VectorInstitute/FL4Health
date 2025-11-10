@@ -176,13 +176,17 @@ def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, 
                 folds = predictor.auto_detect_available_folds(ckpt, "checkpoint_best.pth")
             for fold in folds:
                 f = int(fold) if fold != "all" else fold
-                model = torch.load(join(ckpt, f"fold_{f}", "checkpoint_best.pth"), map_location=torch.device("cpu"))
+                model = torch.load(
+                    join(ckpt, f"fold_{f}", "checkpoint_best.pth"),
+                    map_location=torch.device("cpu"),
+                    weights_only=False,
+                )
                 # nnunet saves their models as dicts always
                 parameters.append(model["network_weights"])
                 trainer_name, mirror_axes = check_for_ckpt_info(model)
 
         else:
-            model = torch.load(ckpt, map_location=torch.device("cpu"))
+            model = torch.load(ckpt, map_location=torch.device("cpu"), weights_only=False)
             if isinstance(model, dict):
                 parameters.append(model["network_weights"])
                 # Check to see if we can get additional info from checkpoint

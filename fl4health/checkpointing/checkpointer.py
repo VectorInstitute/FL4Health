@@ -55,8 +55,8 @@ class TorchModuleCheckpointer(ABC):
             nn.Module: Returns a torch module loaded from the proper checkpoint path.
         """
         if path_to_checkpoint is None:
-            return torch.load(self.checkpoint_path)
-        return torch.load(path_to_checkpoint)
+            return torch.load(self.checkpoint_path, weights_only=False)
+        return torch.load(path_to_checkpoint, weights_only=False)
 
 
 class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):

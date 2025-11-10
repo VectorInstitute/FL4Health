@@ -289,7 +289,8 @@ class LlmClient(BasicClient):
             config (Config): The config from the server.
         """
         self.trainer.save_state()
-        self.model.config.use_cache = True
+        # type ignore because the type in transformers is very indirect
+        self.model.config.use_cache = True  # type: ignore
 
         # In deepspeed Stage 3, we need to save the model differently as all the parameters are also partitioned. We
         # should make sure to gather all of these parameters before saving the model, for safe loading and resuming.

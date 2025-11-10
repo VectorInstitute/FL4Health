@@ -27,13 +27,16 @@ from fl4health.utils.snapshotter import (
 from tests.test_utils.models_for_test import SingleLayerWithSeed
 
 
+DEVICE: torch.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
 def create_fl_client() -> BasicClient:
     metrics = [Accuracy("accuracy")]
     reporter = JsonReporter()
     fl_client = BasicClient(
         data_path=Path(""),
         metrics=metrics,
-        device=torch.device(0),
+        device=DEVICE,
         reporters=[reporter],
         client_name="original_client",
     )
