@@ -1,4 +1,4 @@
-"""Taking from https://github.com/VectorInstitute/cyclops."""
+"""Largely taken from https://github.com/VectorInstitute/cyclops."""
 
 from typing import Any
 

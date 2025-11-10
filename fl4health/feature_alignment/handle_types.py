@@ -1,4 +1,4 @@
-"""Taking from https://github.com/VectorInstitute/cyclops."""
+"""Largely taken from https://github.com/VectorInstitute/cyclops."""
 
 from typing import Any
 
@@ -313,12 +313,12 @@ def _convertible_to_categorical(
         return True
 
     # Not convertible
-    if not satisfies_maximum_condition and raise_error_over_max:
+    if (not satisfies_maximum_condition) and raise_error_over_max:
         raise ValueError(
             f"Should have at most {category_max} categories, but has {nunique}.",
         )
 
-    if not satisfies_minimum_condition and raise_error_under_min:
+    if (not satisfies_minimum_condition) and raise_error_under_min:
         raise ValueError(
             f"Should have at least {category_min} categories, but has {nunique}.",
         )
@@ -425,7 +425,7 @@ def _type_to_dtype(type: FeatureType) -> str | None:
         ValueError: Supported type has no corresponding datatype.
 
     Returns:
-        type | str | None: The feature's Pandas datatype, or None if no data type conversion is desired.
+        str | None: The feature's Pandas datatype, or None if no data type conversion is desired.
     """
     if type == FeatureType.STRING:
         # If string, leave as is - the user can choose the specific length/type.
