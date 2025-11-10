@@ -102,10 +102,7 @@ class FeatureMeta:
         Returns:
             str:  Feature type.
         """
-        feature_type = FeatureType(getattr(self, FEATURE_TYPE_ATTR))
-        assert isinstance(feature_type, FeatureType)
-
-        return feature_type
+        return FeatureType(getattr(self, FEATURE_TYPE_ATTR))
 
     def update(self, meta: list[tuple[str, Any]]) -> None:
         """
