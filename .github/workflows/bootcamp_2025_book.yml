@@ -17,7 +17,7 @@ jobs:
       pull-requests: write  # To create a PR from that branch
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup rust
         uses: actions-rs/toolchain@v1
