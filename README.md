@@ -320,6 +320,6 @@ doi = {10.5281/zenodo.1234},
 license = {Apache-2.0},
 title = {{FL4Health}},
 url = {https://github.com/vectorInstitute/FL4Health/},
-version = {0.3.0}
+version = {0.4.1}
 }
 ```
