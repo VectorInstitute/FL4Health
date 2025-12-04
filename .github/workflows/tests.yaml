@@ -18,21 +18,26 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+
       - name: Install and configure Poetry
         uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
+
       - name: Set up Python 3.10
         uses: actions/setup-python@v6
         with:
           python-version: "3.10"
           cache: "poetry"
+
       # Display the Python version being used
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
+
       - name: Install dependencies
         run: poetry install --with "dev, test"
+
       - name: Run Tests
         run: |
           source .venv/bin/activate
