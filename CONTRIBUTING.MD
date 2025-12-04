@@ -32,7 +32,7 @@ If you need to update the environment libraries, you should change the requireme
 
 ## Coding Guidelines, Formatters, and Checks
 
-For code style, we recommend the [google style guide](https://google.github.io/styleguide/pyguide.html).
+For code style, we recommend the [google style guide](https://google.github.io/styleguide/pyguide.html)..
 
 We use [ruff](https://docs.astral.sh/ruff/) for items such as code formatting and static code analysis. Ruff checks various rules including [flake8](https://docs.astral.sh/ruff faq/#how-does-ruff-compare-to-flake8). The pre-commit hooks (installation described below) show errors which you need to fix before submitting a PR, as these checks will fail and prevent PR merger. This project's configuration details for ruff are found in the `pyproject.toml` under headings prefixed with `tool.ruff.`. In addition to code checks, ruff also has a number of features for imposing documentation formatting that we leverage.
 
