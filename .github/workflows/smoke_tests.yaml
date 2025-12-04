@@ -72,6 +72,6 @@ jobs:
       - name: Cleanup space (before cache save)
         run: |
           df -h /dev/root
-          poetry cache clear --all .
+          poetry cache clear --all . --no-interaction
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android
           df -h /dev/root
