@@ -18,11 +18,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-      - name: Free disk space (optional)
-        run: |
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache/CodeQL
-          sudo docker image prune --all --force
-        continue-on-error: true
       - name: Install and configure Poetry
         uses: snok/install-poetry@v1
         with:
