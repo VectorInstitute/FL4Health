@@ -18,6 +18,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+      - name: Free disk space (optional)
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+        continue-on-error: true
       - name: Set up Python 3.10
         id: setup-python
         uses: actions/setup-python@v6
