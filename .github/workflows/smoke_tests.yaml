@@ -63,3 +63,15 @@ jobs:
           slug: VectorInstitute/FL4Health
           fail_ci_if_error: true
           verbose: true
+
+      # Deleting some temporary files and useless folders to free up space in order to have space for
+      # the cache file, and printing the disk space info at the beggining and end.
+      # Deleting poetry cache should clear ~4GB of space.
+      # Deleting /usr/share/dotnet should clear ~4GB of space.
+      # Deleting /usr/local/lib/android should clear ~12GB of space.
+      - name: Cleanup space (before cache save)
+        run: |
+          df -h /dev/root
+          poetry cache clear --all .
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android
+          df -h /dev/root
