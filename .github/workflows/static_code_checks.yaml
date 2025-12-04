@@ -33,7 +33,7 @@ jobs:
           cache: "poetry"
 
       - name: Install dependencies
-        run: poetry install --with "dev, test"
+        run: poetry install --with "dev, test, codestyle"
 
       - name: Pre-commit Checks
         run: |
