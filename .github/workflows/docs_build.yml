@@ -12,26 +12,15 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v6
-
-      - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
+      - name: Install dependencies and build docs
+        run: python3 -m pip install --upgrade pip && python3 -m pip install poetry
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
-          cache: "poetry"
-
-      - name: Install Dependencies and Build Docs
-        run: |
+          python-version: '3.10'
+          cache: 'poetry'
+      - run: |
           python3 -m pip install --upgrade pip && python3 -m pip install poetry
           poetry env use '3.10'
           source $(poetry env info --path)/bin/activate
           poetry install --with docs,test
           cd docs && rm -rf source/reference/api/_autosummary && make html
-
-      - name: Cleanup workspace (before cache save)
-        run: |
-          rm -rf build dist .pytest_cache .mypy_cache .ruff_cache .coverage coverage htmlcov

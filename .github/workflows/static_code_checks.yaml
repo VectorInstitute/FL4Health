@@ -18,28 +18,28 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
       - name: Install and configure Poetry
         uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
-
-      - name: Set up Python 3.10
-        id: setup-python
-        uses: actions/setup-python@v6
+      - name: Set up cache
+        uses: actions/cache@v4
+        id: cached-poetry-dependencies
         with:
-          python-version: "3.10"
-          cache: "poetry"
-
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install dependencies
         run: poetry install --with "dev, test, codestyle"
-
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
       - name: Pre-commit Checks
         run: |
           source .venv/bin/activate
           pre-commit run --all-files
-
       - name: pip-audit (gh-action-pip-audit)
         uses: pypa/gh-action-pip-audit@v1.1.0
         with:
@@ -52,7 +52,3 @@ jobs:
             GHSA-887c-mr87-cxwp
             GHSA-wf7f-8fxf-xfxc
             GHSA-768j-98cg-p3fv
-
-      - name: Cleanup workspace (before cache save)
-        run: |
-          rm -rf build dist .pytest_cache .mypy_cache .ruff_cache .coverage coverage htmlcov
