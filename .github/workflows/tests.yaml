@@ -16,6 +16,13 @@ jobs:
       contents: read
       actions: write
     steps:
+
+      - name: Free disk space (optional)
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+        continue-on-error: true
+
       - name: Checkout code
         uses: actions/checkout@v6
 
