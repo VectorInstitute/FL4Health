@@ -26,7 +26,7 @@ pip install --upgrade pip poetry
 poetry install --with "dev, test, codestyle"
 ```
 
-Note that the with command is installing all libraries required for the full development workflow. See the `pyproject.toml` file for additional details as to what is installed with each of these options.
+Note that the with command is installing all libraries required for the full development workflow. See the `pyproject.toml` file for additional details as to what is installed with each of these options..
 
 If you need to update the environment libraries, you should change the requirements in the `pyproject.toml` and then update the `poetry.lock` using the command `poetry update`
 
