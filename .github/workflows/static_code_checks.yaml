@@ -55,4 +55,6 @@ jobs:
 
       - name: Cleanup workspace (before cache save)
         run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
           rm -rf build dist .pytest_cache .mypy_cache .ruff_cache .coverage coverage htmlcov ~/.cache/pip
