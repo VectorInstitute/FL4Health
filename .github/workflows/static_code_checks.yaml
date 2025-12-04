@@ -53,8 +53,5 @@ jobs:
             GHSA-wf7f-8fxf-xfxc
             GHSA-768j-98cg-p3fv
 
-      - name: Cleanup workspace (before cache save)
-        run: |
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache/CodeQL
-          sudo docker image prune --all --force
-          rm -rf build dist .pytest_cache .mypy_cache .ruff_cache .coverage coverage htmlcov ~/.cache/pip
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
