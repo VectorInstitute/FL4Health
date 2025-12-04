@@ -56,3 +56,7 @@ jobs:
           slug: VectorInstitute/FL4Health
           fail_ci_if_error: true
           verbose: true
+
+      - name: Cleanup workspace (before cache save)
+        run: |
+          rm -rf build dist .pytest_cache .mypy_cache .ruff_cache .coverage coverage htmlcov

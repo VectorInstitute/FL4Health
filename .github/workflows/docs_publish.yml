@@ -53,3 +53,7 @@ jobs:
         with:
           branch: github_pages
           folder: docs/build/html
+
+      - name: Cleanup workspace (before cache save)
+        run: |
+          rm -rf build dist .pytest_cache .mypy_cache .ruff_cache .coverage coverage htmlcov

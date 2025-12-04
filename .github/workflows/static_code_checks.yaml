@@ -51,3 +51,8 @@ jobs:
             GHSA-3749-ghw9-m3mg
             GHSA-887c-mr87-cxwp
             GHSA-wf7f-8fxf-xfxc
+            GHSA-768j-98cg-p3fv
+
+      - name: Cleanup workspace (before cache save)
+        run: |
+          rm -rf build dist .pytest_cache .mypy_cache .ruff_cache .coverage coverage htmlcov

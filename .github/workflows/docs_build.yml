@@ -31,3 +31,7 @@ jobs:
           source $(poetry env info --path)/bin/activate
           poetry install --with docs,test
           cd docs && rm -rf source/reference/api/_autosummary && make html
+
+      - name: Cleanup workspace (before cache save)
+        run: |
+          rm -rf build dist .pytest_cache .mypy_cache .ruff_cache .coverage coverage htmlcov
