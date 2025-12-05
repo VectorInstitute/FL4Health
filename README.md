@@ -309,7 +309,7 @@ As examples (the version may be out of date)
 
 ```
 # APA Style
-Emerson, D.B., Jewell, J., Ayromlou, S., Carere, S., Tavakoli, F., Zhang, Y., Lotif, M., Fajardo, V. A., & Krishnan, A. FL4Health (Version 0.3.0) [Computer software]. https://doi.org/10.5281/zenodo.1234
+Emerson, D.B., Jewell, J., Ayromlou, S., Carere, S., Tavakoli, F., Zhang, Y., Lotif, M., Fajardo, V. A., & Krishnan, A. FL4Health (Version 0.4.1) [Computer software]. https://doi.org/10.5281/zenodo.1234
 ```
 
 ```bibtex
