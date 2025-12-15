@@ -35,7 +35,7 @@ jobs:
           mdbook build vector-bootcamp-2025
 
       - name: Deploy to github pages
-        uses: JamesIves/github-pages-deploy-action@v4.7.4
+        uses: JamesIves/github-pages-deploy-action@v4.7.6
         with:
           repository-name: VectorInstitute/bootcamp-fl-2025
           token: ${{ secrets.PAT_VECTOR_BOOTCAMP_FL_2025 }}
