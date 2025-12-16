@@ -43,10 +43,16 @@ jobs:
           # GHSA-3749-ghw9-m3mg and GHSA-887c-mr87-cxwp are pytorch vulnerabilities that require 2.7 and 2.8 but we're
           # pinning to 2.6.0 for now.
           # GHSA-wf7f-8fxf-xfxc ML Flow vulnerability in deserialization that hasn't been patched yet.
+          # CVE-2024-55459, CVE-2025-9906, CVE-2025-12058, CVE-2025-12060 are keras vulnerabilities that require 3.11.0+
+          # but we're pinning to keras 2.15 for tensorflow 2.15 compatibility.
           ignore-vulns: |
             GHSA-3749-ghw9-m3mg
             GHSA-887c-mr87-cxwp
             GHSA-wf7f-8fxf-xfxc
+            CVE-2024-55459
+            CVE-2025-9906
+            CVE-2025-12058
+            CVE-2025-12060
 
       # Deleting some temporary files and useless folders to free up space
       # Deleting /usr/share/dotnet should clear ~4GB of space.
