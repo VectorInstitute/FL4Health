@@ -239,9 +239,9 @@ class DittoMkMmdClient(DittoClient):
            be used to compute metrics separately.
 
         Raises:
-             TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model's
+            TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model's
                 forward method.
-             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
+            ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
                 forward.
         """
         # We use features from initial_global_model to compute the MK-MMD loss not the global_model

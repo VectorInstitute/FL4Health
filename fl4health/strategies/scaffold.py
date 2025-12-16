@@ -390,7 +390,7 @@ class OpacusScaffold(Scaffold):
                 training by providing a configuration dictionary. Defaults to None.
             on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
                 client-side validation by providing a ``Config`` dictionary. Defaults to None.
-            accept_failures (bool, optional) :Whether or not accept rounds containing failures. Defaults to True.
+            accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
             evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.

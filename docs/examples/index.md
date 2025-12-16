@@ -1,10 +1,7 @@
-(examples)=
-
 # Examples
 
-```{toctree}
-:hidden:
+This section provides examples demonstrating how to use FL4Health for various federated learning scenarios.
 
-basic/index
+## Available Examples
 
-```
+- [Basic Example](basic/index.md) - A basic federated learning example to get started

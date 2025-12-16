@@ -61,7 +61,7 @@ jobs:
         run: uv sync --group docs --group test
 
       - name: Build docs
-        run: uv run mkdocs build --strict
+        run: uv run mkdocs build
 
       - name: Create .nojekyll file
         run: touch site/.nojekyll

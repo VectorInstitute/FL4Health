@@ -1,10 +1,7 @@
-(module-guides)=
-
 # Module Guides
 
-```{toctree}
-:hidden:
+This section provides detailed guides for the various modules in FL4Health.
 
-checkpointing/index
+## Available Guides
 
-```
+- [Checkpointing](checkpointing/index.md) - Guide to checkpointing models during federated learning

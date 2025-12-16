@@ -4,21 +4,26 @@ site_url: https://vectorinstitute.github.io/FL4Health/
 repo_url: https://github.com/VectorInstitute/FL4Health
 repo_name: VectorInstitute/FL4Health
 
+exclude_docs: |
+  README.md
+
 theme:
   name: material
-  logo: docs/assets/fl4health_rect_logo_no_background.png
-  logo_footer: docs/assets/vector-logo.svg
-  favicon: docs/assets/fl4health_rect_logo_no_background.png
+  logo: assets/fl4health_rect_logo_no_background.png
+  logo_footer: assets/vector-logo.svg
+  favicon: assets/fl4health_rect_logo_no_background.png
   palette:
-    - scheme: default
-      primary: indigo
-      accent: indigo
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: vector
+      accent: vector-teal
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
-    - scheme: slate
-      primary: indigo
-      accent: indigo
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: vector-teal
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
@@ -28,10 +33,14 @@ theme:
     - navigation.tabs
     - navigation.sections
     - navigation.expand
+    - navigation.footer
+    - navigation.top
     - toc.follow
     - search.suggest
     - search.highlight
     - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
   custom_dir: docs/overrides
 
 plugins:
@@ -80,6 +89,12 @@ nav:
 
 extra_css:
   - stylesheets/extra.css
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/VectorInstitute/FL4Health
 
 copyright: >
   Copyright &copy; 2025 Vector Institute for Artificial Intelligence

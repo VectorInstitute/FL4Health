@@ -200,10 +200,10 @@ class ConstrainedFendaClient(FendaClient):
         Returns:
             tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
 
-            - The tensor for the total loss
-            - A dictionary with ``loss``, ``total_loss`` and, based on client attributes set from server config, also
-              ``cos_sim_loss``, ``contrastive_loss``, ``contrastive_loss_minimize`` and ``contrastive_loss_minimize``
-              keys and their respective calculated values.
+                - The tensor for the total loss
+                - A dictionary with ``loss``, ``total_loss`` and, based on client attributes set from server
+                  config, also ``cos_sim_loss``, ``contrastive_loss``, ``contrastive_loss_minimize`` and
+                  ``contrastive_loss_minimize`` keys and their respective calculated values.
         """
         loss = self.criterion(preds["prediction"], target)
         total_loss = loss.clone()

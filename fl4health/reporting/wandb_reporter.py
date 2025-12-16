@@ -1,7 +1,7 @@
 from enum import Enum
 from logging import WARNING
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import wandb
 import wandb.wandb_run
@@ -30,7 +30,7 @@ class WandBReporter(BaseReporter):
         tags: list[str] | None = None,
         name: str | None = None,
         id: str | None = None,
-        resume: str = "allow",
+        resume: Literal["allow", "never", "must", "auto"] | bool | None = "allow",
         **kwargs: Any,
     ) -> None:
         """
@@ -174,7 +174,7 @@ class WandBReporter(BaseReporter):
             resume=self.resume,
             **wandb_init_kwargs,  # Other less commonly used kwargs
         )
-        self.run_id = self.run._run_id  # If run_id was None, we need to reset run id
+        self.run_id = self.run.id  # If run_id was None, we need to reset run id
         self.run_started = True
 
         # Wandb metric definitions

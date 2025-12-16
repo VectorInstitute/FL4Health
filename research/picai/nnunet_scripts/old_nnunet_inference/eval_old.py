@@ -12,10 +12,10 @@ from numpy.typing import NDArray
 
 
 with contextlib.redirect_stdout(open(os.devnull, "w")):
-    from picai_eval import evaluate, evaluate_folder
-    from picai_eval.image_utils import read_image
-    from picai_eval.metrics import Metrics as PicaiEvalMetrics
-    from report_guided_annotation import extract_lesion_candidates
+    from picai_eval import evaluate, evaluate_folder  # type: ignore[import-not-found]
+    from picai_eval.image_utils import read_image  # type: ignore[import-not-found]
+    from picai_eval.metrics import Metrics as PicaiEvalMetrics  # type: ignore[import-not-found]
+    from report_guided_annotation import extract_lesion_candidates  # type: ignore[import-not-found]
 
 warnings.simplefilter("ignore", category=FutureWarning)
 

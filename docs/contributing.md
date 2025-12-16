@@ -16,19 +16,24 @@ We use the standard git development flow of branch and merge to main with PRs on
 
 ## Development Requirements
 
-For development and testing, we use [Poetry](https://python-poetry.org/) for dependency management. The library dependencies and those for development and testing are listed in the `pyproject.toml` file. You may use whatever virtual environment management tool that you would like. These include conda, poetry itself, and virtualenv. Poetry is also used to produce our releases, which are managed and automated by GitHub.
+For development and testing, we use [uv](https://docs.astral.sh/uv/) for dependency management. The library dependencies and those for development and testing are listed in the `pyproject.toml` file.
 
-The easiest way to create and activate a virtual environment is by using the [virtualenv](https://pypi.org/project/virtualenv/) package:
+The easiest way to set up the development environment:
 ```bash
-python -m venv <ENV_PATH>
-source "ENV_PATH/bin/activate"
-pip install --upgrade pip poetry
-poetry install --with "dev, test, codestyle"
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Clone the repository
+git clone https://github.com/VectorInstitute/FL4Health.git
+cd FL4Health
+
+# Install all dependencies
+uv sync --group dev --group test --group codestyle
 ```
 
-Note that the with command is installing all libraries required for the full development workflow. See the `pyproject.toml` file for additional details as to what is installed with each of these options.
+Note that the `--group` flag installs optional dependency groups required for the full development workflow. See the `pyproject.toml` file for details about each group.
 
-If you need to update the environment libraries, you should change the requirements in the `pyproject.toml` and then update the `poetry.lock` using the command `poetry update`
+If you need to update dependencies, you should change the requirements in `pyproject.toml` and then update the `uv.lock` using the command `uv lock`.
 
 ## Coding Guidelines, Formatters, and Checks
 

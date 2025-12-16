@@ -114,7 +114,7 @@ class TensorDataset(BaseDataset):
 
         Returns:
             tuple[torch.Tensor, torch.Tensor]: Input data at the index after applying ``transform`` if any, targets
-               after applying ``target_transform`` if any.
+                after applying ``target_transform`` if any.
         """
         assert self.targets is not None
 
