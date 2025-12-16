@@ -30,7 +30,7 @@ docker-pycreds==0.4.0
 dp-accounting==0.3.0
 etils==1.0.0
 executing==1.2.0
-filelock==3.9.0
+filelock==3.20.1
 fl4health==0.1.6
 flatbuffers==23.1.21
 flwr==1.4.0
