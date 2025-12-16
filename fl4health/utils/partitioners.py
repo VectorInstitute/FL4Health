@@ -65,12 +65,12 @@ class DirichletLabelBasedAllocation(Generic[T]):
 
                 Defaults to None.
             beta (float | None): This controls the heterogeneity of the partition allocations. The smaller the beta,
-              the more skewed the label assignments will be to different clients. It is mutually exclusive with given
-              prior distribution.
+                the more skewed the label assignments will be to different clients. It is mutually exclusive with given
+                prior distribution.
             prior_distribution (dict[T, np.ndarray] | None, optional): This is an optional input if you want to
-              provide a prior distribution for the Dirichlet distribution. This is useful if you want to make sure that
-              the partitioning of test data is similar to the partitioning of the training data. Defaults to None. It
-              is mutually exclusive with the beta parameter and ``min_label_examples``.
+                provide a prior distribution for the Dirichlet distribution. This is useful if you want to make
+                sure that the partitioning of test data is similar to the partitioning of the training data.
+                Defaults to None. It is mutually exclusive with the beta parameter and ``min_label_examples``.
         """
         assert (beta is not None) ^ (prior_distribution is not None), (
             "Either beta or a prior distribution must be provided, but not both."

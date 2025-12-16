@@ -127,7 +127,7 @@ class NnunetClient(BasicClient):
             verbose (bool, optional): If True the client will log some extra INFO logs. Defaults to False unless
                 the log level is DEBUG or lower.
             metrics (Sequence[Metric], optional): Metrics to be computed based on the labels and predictions of the
-            client model. Defaults to None.
+                client model. Defaults to None.
             progress_bar (bool, optional): Whether or not to print a progress bar to stdout for training. Defaults
                 to False
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over each

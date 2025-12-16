@@ -58,9 +58,6 @@ class FedPm(FedAvgDynamicLayer):
                 Defaults to None.
             evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
-            weighted_aggregation (bool, optional): Determines whether parameter aggregation is a linearly weighted
-                average or a uniform average. FedAvg default is weighted average by client dataset counts.
-                Defaults to True.
             weighted_eval_losses (bool, optional): Determines whether losses during evaluation are linearly weighted
                 averages or a uniform average. FedAvg default is weighted average of the losses by client dataset
                 counts. Defaults to True.

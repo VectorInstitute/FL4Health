@@ -274,7 +274,7 @@ class FendaDittoClient(DittoClient):
 
         Raises:
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
-            forward.
+                forward pass.
         """
         if isinstance(input, torch.Tensor):
             global_preds, _ = self.global_model(input)

@@ -33,7 +33,7 @@ uv sync --group dev --group test --group codestyle
 
 Note that the `--group` flag installs optional dependency groups required for the full development workflow. See the `pyproject.toml` file for details about each group.
 
-If you need to update dependencies, you should change the requirements in `pyproject.toml` and then update the `uv.lock` using the command `uv lock`
+If you need to update dependencies, you should change the requirements in `pyproject.toml` and then update the `uv.lock` using the command `uv lock`.
 
 ## Coding Guidelines, Formatters, and Checks
 

@@ -538,11 +538,11 @@ class BasicClient(NumPyClient):
         Returns:
             tuple[str, list[tuple[LogLevel, str]]]:
 
-            - A string to append to the header log string that typically announces the current server round and
-              current epoch at the beginning of each round or local epoch.
-            - A list of tuples where the first element is a ``LogLevel`` as defined in ``fl4health.utils.``
-              typing and the second element is a string message. Each item in the list will be logged at the end of
-              each server round or epoch. Elements will also be logged at the end of validation/testing.
+                - A string to append to the header log string that typically announces the current server round and
+                  current epoch at the beginning of each round or local epoch.
+                - A list of tuples where the first element is a ``LogLevel`` as defined in ``fl4health.utils.``
+                  typing and the second element is a string message. Each item in the list will be logged at the end of
+                  each server round or epoch. Elements will also be logged at the end of validation/testing.
         """
         return "", []
 

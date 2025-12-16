@@ -185,7 +185,7 @@ class LatestTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
             model (nn.Module): Model to be checkpointed whenever this function is called
             loss (float): Loss associated with the provided model. Will potentially contribute to checkpointing
                 decision, based on the score function. NOT USED.
-            metrics (dict[str, Scalar]): Metrics associated with the provided model. Will potentially contribute to
+            _ (dict[str, Scalar]): Metrics associated with the provided model. Will potentially contribute to
                 the checkpointing decision, based on the score function. NOT USED.
 
         Raises:

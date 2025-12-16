@@ -220,10 +220,10 @@ class PerFclClient(BasicClient):
         Returns:
             tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
 
-            - The tensor for the total loss
-            - A dictionary with ``loss``, ``total_loss``, ``global_feature_contrastive_loss``, and
-              ``local_feature_contrastive_loss`` representing the various and relevant pieces of the loss
-              calculations
+                - The tensor for the total loss
+                - A dictionary with ``loss``, ``total_loss``, ``global_feature_contrastive_loss``, and
+                  ``local_feature_contrastive_loss`` representing the various and relevant pieces of the loss
+                  calculations
         """
         loss = self.criterion(preds["prediction"], target)
         # If any of these are None then we don't compute the PerFCL loss. This will happen on the first client-side
