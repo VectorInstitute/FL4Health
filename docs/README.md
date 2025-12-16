@@ -1,31 +1,41 @@
-# Documentation
+# FL4Health Documentation
 
-This section of the repository contains source artifacts for building the docs
-for `fl4health`.
+This directory contains the source files for FL4Health documentation, built with mkdocs and Material for MkDocs.
 
-What follow's next in this README is a guide for those who are interested in
-building and serving the docs locally. You may be interested to do so if you are
-contributing to `fl4health` and need to make appropriate changes to the
-documentation.
+## Building Documentation Locally
 
-## Build Docs
+1. Install documentation dependencies:
+   ```bash
+   uv sync --group docs
+   ```
 
-In order to build the docs, go into the `docs` directory and run the command
-below:
+2. Serve documentation with live reload:
+   ```bash
+   uv run mkdocs serve
+   ```
 
-```sh
-cd docs/
-make serve
+3. Open http://127.0.0.1:8000 in your browser
+
+## Building for Production
+
+```bash
+uv run mkdocs build --strict
 ```
 
-The above command will build the docs as well as serve them locally, watching
-for changes and presenting them in real-time, which is great for development!
+The generated site will be in the `site/` directory.
 
-Building the docs will take a couple of minutes, but once completed they will be
-served on `http://127.0.0.1:8000`. Enter this address in your browser of choice
-to see the docs.
+## Documentation Structure
 
-> [!NOTE]
-> We use sphinx to build our docs and api reference. Adjustments to style and
-> and additional extensions are done via the appropriate modifications in
-> `docs/source/conf.py`.
+- `docs/index.md` - Home page
+- `docs/quickstart.md` - Quick start guide
+- `docs/module_guides/` - Module documentation
+- `docs/examples/` - Example documentation
+- `docs/api.md` - API reference (auto-generated from docstrings using mkdocstrings)
+- `docs/contributing.md` - Contributing guide
+- `docs/assets/` - Images, logos, and static assets
+- `docs/stylesheets/` - Custom CSS (Vector Institute branding)
+- `docs/overrides/` - Theme customization templates
+
+## Configuration
+
+Documentation configuration is in `mkdocs.yml` at the repository root.

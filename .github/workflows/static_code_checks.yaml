@@ -18,28 +18,24 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7.1.5
         with:
-          python-version: "3.10"
-      - name: Install and configure Poetry
-        uses: snok/install-poetry@v1
+          version: "0.9.11"
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.1.0
         with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-      - name: Set up cache
-        uses: actions/cache@v5
-        id: cached-poetry-dependencies
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          python-version-file: ".python-version"
+
       - name: Install dependencies
-        run: poetry install --with "dev, test, codestyle"
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: uv sync --group dev --group test --group codestyle
+
       - name: Pre-commit Checks
-        run: |
-          source .venv/bin/activate
-          pre-commit run --all-files
+        run: uv run pre-commit run --all-files
+
       - name: pip-audit (gh-action-pip-audit)
         uses: pypa/gh-action-pip-audit@v1.1.0
         with:
@@ -52,14 +48,11 @@ jobs:
             GHSA-887c-mr87-cxwp
             GHSA-wf7f-8fxf-xfxc
 
-      # Deleting some temporary files and useless folders to free up space in order to have space for
-      # the cache file, and printing the disk space info at the beggining and end.
-      # Deleting poetry cache should clear ~4GB of space.
+      # Deleting some temporary files and useless folders to free up space
       # Deleting /usr/share/dotnet should clear ~4GB of space.
       # Deleting /usr/local/lib/android should clear ~12GB of space.
       - name: Cleanup space (before cache save)
         run: |
           df -h /dev/root
-          poetry cache clear --all . --no-interaction
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android
           df -h /dev/root
