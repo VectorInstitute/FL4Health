@@ -1,6 +1,7 @@
 import argparse
 import os
 import pickle
+from collections.abc import Hashable
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +25,7 @@ def filter_and_save_data(metadata: pd.DataFrame, top_sirna_ids: list[int], cell_
     filtered_metadata.to_csv(output_path, index=False)
 
 
-def load_image(row: dict[str, Any], root: Path) -> torch.Tensor:
+def load_image(row: dict[Hashable, Any], root: Path) -> torch.Tensor:
     """
     Load an image tensor for a given row of metadata.
 
