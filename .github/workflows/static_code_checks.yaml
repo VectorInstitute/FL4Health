@@ -47,10 +47,12 @@ jobs:
           # GHSA-3749-ghw9-m3mg and GHSA-887c-mr87-cxwp are pytorch vulnerabilities that require 2.7 and 2.8 but we're
           # pinning to 2.6.0 for now.
           # GHSA-wf7f-8fxf-xfxc ML Flow vulnerability in deserialization that hasn't been patched yet.
+          # CVE-2025-53000 NBConvert issue, no fix yet.
           ignore-vulns: |
             GHSA-3749-ghw9-m3mg
             GHSA-887c-mr87-cxwp
             GHSA-wf7f-8fxf-xfxc
+            CVE-2025-53000
 
       # Deleting some temporary files and useless folders to free up space in order to have space for
       # the cache file, and printing the disk space info at the beggining and end.
