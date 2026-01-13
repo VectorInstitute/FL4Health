@@ -57,7 +57,7 @@ def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, 
         Checks model dict for trainer name and ``inference_allowed_mirroring_axes``.
 
         Returns:
-            tuple[str | None, bool]: Tuple with elements ``trainer_name`` and `inference_allowed_mirroring_axes`.
+            (tuple[str | None, bool]): Tuple with elements ``trainer_name`` and `inference_allowed_mirroring_axes`.
                 Defaults to ("nnUNetTrainer", False).
         """
         trainer_name = "nnUNetTrainer"

@@ -247,7 +247,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
                 from clients that experienced an issue during training, such as timeouts or exceptions.
 
         Returns:
-            tuple[Parameters | None, dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
+            (tuple[Parameters | None, dict[str, Scalar]]): The aggregated model weights and the metrics dictionary.
         """
         if not results:
             return None, {}
@@ -295,7 +295,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
                 exceptions from clients that experienced an issue during evaluation, such as timeouts or exceptions.
 
         Returns:
-            tuple[float | None, dict[str, Scalar]]: Aggregated loss values and the aggregated metrics. The metrics
+            (tuple[float | None, dict[str, Scalar]]): Aggregated loss values and the aggregated metrics. The metrics
                 are aggregated according to ``evaluate_metrics_aggregation_fn``.
         """
         if not results:

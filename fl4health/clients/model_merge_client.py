@@ -161,7 +161,7 @@ class ModelMergeClient(NumPyClient):
             TypeError: Raised if data is not one of the types specified by ``TorchInputType`` or ``TorchTargetType``
 
         Returns:
-            TorchTargetType | TorchInputType: The data argument except now it's been moved to ``self.device``
+            (TorchTargetType | TorchInputType): The data argument except now it's been moved to ``self.device``
         """
         # Currently we expect both inputs and targets to be either tensors
         # or dictionaries of tensors

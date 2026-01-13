@@ -104,7 +104,7 @@ class FedPCA(BasicFedAvg):
                 from clients that experienced an issue during training, such as timeouts or exceptions.
 
         Returns:
-            tuple[Parameters | None, dict[str, Scalar]]: The aggregated parameters and the metrics dictionary.
+            (tuple[Parameters | None, dict[str, Scalar]]): The aggregated parameters and the metrics dictionary.
                 In this case, the parameters are the new singular vectors and their corresponding singular values.
         """
         if not results:

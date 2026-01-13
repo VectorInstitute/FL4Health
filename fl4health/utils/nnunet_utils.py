@@ -290,8 +290,8 @@ def prepare_loss_arg(
         tensor (torch.Tensor | dict[str, torch.Tensor]): The input tensor.
 
     Returns:
-        torch.Tensor | list[torch.Tensor]: The tensor ready to be passed to the loss function. A single tensor if not
-        using deep supervision and a list of tensors if deep supervision is on.
+        (torch.Tensor | list[torch.Tensor]): The tensor ready to be passed to the loss function. A single tensor if not
+            using deep supervision and a list of tensors if deep supervision is on.
     """
     # TODO: IDK why we have to make assumptions when we could just have a boolean state
     if isinstance(tensor, torch.Tensor):
@@ -366,7 +366,7 @@ class NnUNetDataLoaderWrapper(DataLoader):
             TypeError: Raised when the targets extracted from the batch objects are not of the right types.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor | dict[str, torch.Tensor]]: A batch of input and target data.
+            (tuple[torch.Tensor, torch.Tensor | dict[str, torch.Tensor]]): A batch of input and target data.
         """
         if not self.infinite and self.current_step == self.__len__():
             self.reset()

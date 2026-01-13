@@ -70,7 +70,7 @@ def filter_split_on_subject_id(
         train (bool): Whether to use the train or the test split.
 
     Returns:
-        dict[str, Sequence[float] | Sequence[str]]: A Dict containing image_paths, label_paths
+        (dict[str, Sequence[float] | Sequence[str]]): A Dict containing image_paths, label_paths
             and case_label for each sample part of the split.
     """
     train_or_val_string = "train" if train else "val"

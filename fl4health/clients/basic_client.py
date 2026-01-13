@@ -258,9 +258,10 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            tuple[int | None, int | None, int, bool, bool]: Returns the ``local_epochs``, ``local_steps``,
-            ``current_server_round``, ``evaluate_after_fit`` and ``pack_losses_with_val_metrics``. Ensures only one of
-            ``local_epochs`` and ``local_steps`` is defined in the config and sets the one that is not to None.
+            (tuple[int | None, int | None, int, bool, bool]): Returns the ``local_epochs``, ``local_steps``,
+                ``current_server_round``, ``evaluate_after_fit`` and ``pack_losses_with_val_metrics``. Ensures only
+                one of ``local_epochs`` and ``local_steps`` is defined in the config and sets the one that is not to
+                None.
 
         Raises:
             ValueError: If the config contains both ``local_steps`` and local epochs or if ``local_steps``,
@@ -1042,10 +1043,11 @@ class BasicClient(NumPyClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            tuple[torch.Tensor, dict[str, torch.Tensor] | None]: A tuple with:
+            (tuple[torch.Tensor, dict[str, torch.Tensor] | None]): A tuple with:
 
-            - The tensor for the loss.
-            - A dictionary of additional losses with their names and values, or None if there are no additional losses.
+                - The tensor for the loss.
+                - A dictionary of additional losses with their names and values, or None if there are no additional
+                  losses.
         """
         return self.criterion(preds["prediction"], target), None
 
@@ -1131,7 +1133,7 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            DataLoader | None: The optional client test loader.
+            (DataLoader | None): The optional client test loader.
         """
         return None
 
@@ -1176,8 +1178,7 @@ class BasicClient(NumPyClient):
             config (Config): The config sent from the server.
 
         Returns:
-            Optimizer | dict[str, Optimizer]: An optimizer or dictionary of optimizers to
-            train model.
+            (Optimizer | dict[str, Optimizer]): An optimizer or dictionary of optimizers to train model.
 
         Raises:
             NotImplementedError: To be defined in child class.
@@ -1211,7 +1212,7 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            LRScheduler | None: Client learning rate schedulers.
+            (LRScheduler | None): Client learning rate schedulers.
         """
         return None
 

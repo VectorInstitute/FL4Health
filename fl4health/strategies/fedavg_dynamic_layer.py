@@ -102,7 +102,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
                 from clients that experienced an issue during training, such as timeouts or exceptions.
 
         Returns:
-            tuple[Parameters | None, dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
+            (tuple[Parameters | None, dict[str, Scalar]]): The aggregated model weights and the metrics dictionary.
                 For dynamic layer exchange we also pack in the names of all of the layers that were aggregated in this
                 phase to allow client's to insert the values into the proper areas of their models.
         """

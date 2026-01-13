@@ -92,7 +92,7 @@ class LlmClient(BasicClient):
             config (Config): The config from the server.
 
         Returns:
-            tuple[int | None, int | None, int, bool, bool]: Returns the local_epochs, local_steps,
+            (tuple[int | None, int | None, int, bool, bool]): Returns the local_epochs, local_steps,
                 current_server_round, evaluate_after_fit and pack_losses_with_val_metrics. Ensures only one of
                 local_epochs and local_steps is defined in the config and sets the one that is not to None.
         """

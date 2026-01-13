@@ -291,7 +291,7 @@ class FlServer(Server):
                 Defaults to None, which indicates indefinite timeout.
 
         Returns:
-            tuple[Parameters | None, dict[str, Scalar], FitResultsAndFailures] | None: The results of training
+            (tuple[Parameters | None, dict[str, Scalar], FitResultsAndFailures] | None): The results of training
                 on the client sit. The first set of parameters are the **AGGREGATED** parameters from the strategy. The
                 second is a dictionary of **AGGREGATED** metrics. The third component holds the individual
                 (non-aggregated) parameters, loss, and metrics for successful and unsuccessful client-side training.
@@ -374,7 +374,7 @@ class FlServer(Server):
                 Defaults to None, which indicates indefinite timeout.
 
         Returns:
-            tuple[float | None, dict[str, Scalar], EvaluateResultsAndFailures] | None: Tuple of loss value, metrics
+            (tuple[float | None, dict[str, Scalar], EvaluateResultsAndFailures] | None): Tuple of loss value, metrics
                 dictionary and individual client results (client ids and failures).
         """
         start_time = datetime.datetime.now()

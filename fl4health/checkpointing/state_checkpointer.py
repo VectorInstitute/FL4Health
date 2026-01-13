@@ -495,7 +495,7 @@ class ServerStateCheckpointer(StateCheckpointer):
                 attributes specified in ``snapshot_attrs`` are loaded. Defaults to None.
 
         Returns:
-            nn.Module | None: Returns a model if a checkpoint exists to load from. Otherwise returns None.
+            (nn.Module | None): Returns a model if a checkpoint exists to load from. Otherwise returns None.
         """
         # Store server for access in functions
         self.server = server

@@ -667,7 +667,7 @@ class NnunetClient(BasicClient):
                 are given, target must be a dictionary with the same number of tensors
 
         Returns:
-            tuple[torch.Tensor, dict[str, torch.Tensor] | None]: A tuple where the first element is the loss and the
+            (tuple[torch.Tensor, dict[str, torch.Tensor] | None]): A tuple where the first element is the loss and the
                 second element is an optional additional loss
         """
         # If deep supervision is turned on we must convert loss and target dicts into lists

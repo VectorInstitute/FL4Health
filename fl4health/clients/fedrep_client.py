@@ -192,9 +192,9 @@ class FedRepClient(BasicClient):
             config (Config): The config from the server.
 
         Returns:
-            tuple[int | None, int | None, int | None, int | None, int, bool]: Returns the ``local_epochs``,
-            ``local_steps``, ``current_server_round`` and ``evaluate_after_fit``. Ensures only one of
-            ``local_epochs`` and ``local_steps`` is defined in the config and sets the one that is not to None.
+            (tuple[int | None, int | None, int | None, int | None, int, bool]): Returns the ``local_epochs``,
+                ``local_steps``, ``current_server_round`` and ``evaluate_after_fit``. Ensures only one of
+                ``local_epochs`` and ``local_steps`` is defined in the config and sets the one that is not to None.
 
         Raises:
             ValueError: If the config contains both local_steps and local epochs or if ``local_steps``,

@@ -317,7 +317,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
                 from clients that experienced an issue during training, such as timeouts or exceptions.
 
         Returns:
-            tuple[Parameters | None, dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
+            (tuple[Parameters | None, dict[str, Scalar]]): The aggregated model weights and the metrics dictionary.
                 For this strategy, the server also packs a clipping bound to be sent to the clients. This is sent even
                 if adaptive clipping is turned off and the value simply remains constant.
         """

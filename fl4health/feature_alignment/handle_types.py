@@ -425,7 +425,7 @@ def _type_to_dtype(type: FeatureType) -> str | None:
         ValueError: Supported type has no corresponding datatype.
 
     Returns:
-        str | None: The feature's Pandas datatype, or None if no data type conversion is desired.
+        (str | None): The feature's Pandas datatype, or None if no data type conversion is desired.
     """
     if type == FeatureType.STRING:
         # If string, leave as is - the user can choose the specific length/type.
@@ -515,9 +515,9 @@ def _to_type(
         ValueError: Cannot convert to the new type.
 
     Returns:
-        tuple[pd.Series | pd.DataFrame, dict[str, Any]]: Tuple (pandas.Series or pandas.DataFrame, dict) with the
-        updated features data and metadata respectively. If converting to categorical indicators, a DataFrame is
-        returned, otherwise a Series is returned.
+        (tuple[pd.Series | pd.DataFrame, dict[str, Any]]): Tuple (pandas.Series or pandas.DataFrame, dict) with the
+            updated features data and metadata respectively. If converting to categorical indicators, a DataFrame is
+            returned, otherwise a Series is returned.
     """
     if data is None:
         raise ValueError(

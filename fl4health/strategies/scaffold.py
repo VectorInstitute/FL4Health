@@ -164,7 +164,7 @@ class Scaffold(BasicFedAvg):
                 "failed" during the training phase for one reason or another, including timeouts and exceptions.
 
         Returns:
-            tuple[Parameters | None, dict[str, Scalar]]: The aggregated weighted and metrics dictionary. The
+            (tuple[Parameters | None, dict[str, Scalar]]): The aggregated weighted and metrics dictionary. The
                 parameters are optional and will be none in the even that there are no successful clients or there
                 were failures and they are not accepted.
         """
