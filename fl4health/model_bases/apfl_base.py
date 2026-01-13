@@ -43,7 +43,7 @@ class ApflModule(PartialLayerExchangeModel):
             input (torch.Tensor): tensor to be run through the global model
 
         Returns:
-            torch.Tensor: output from the global model only.
+            (torch.Tensor): output from the global model only.
         """
         return self.global_model(input)
 
@@ -55,7 +55,7 @@ class ApflModule(PartialLayerExchangeModel):
             input (torch.Tensor): tensor to be run through the local model.
 
         Returns:
-            torch.Tensor: output from the local model only.
+            (torch.Tensor): output from the local model only.
         """
         return self.local_model(input)
 

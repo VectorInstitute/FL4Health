@@ -208,7 +208,7 @@ class MoonClient(BasicClient):
             target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses
+            (TrainingLosses): An instance of ``TrainingLosses`` containing backward loss and additional losses
                 indexed by name.
         """
         # Check that the model is in training mode
@@ -240,7 +240,7 @@ class MoonClient(BasicClient):
             target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
+            (EvaluationLosses): An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
                 indexed by name.
         """
         # Check that the model is in evaluation mode

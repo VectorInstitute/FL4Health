@@ -37,7 +37,7 @@ class VaeLoss(_Loss):
             logvar (torch.Tensor): Log variance of the estimated distribution.
 
         Returns:
-            torch.Tensor: KL divergence loss.
+            (torch.Tensor): KL divergence loss.
         """
         return -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
 
@@ -72,7 +72,7 @@ class VaeLoss(_Loss):
             target (torch.Tensor): Target values.
 
         Returns:
-            torch.Tensor: Total loss composed of base loss and KL divergence loss.
+            (torch.Tensor): Total loss composed of base loss and KL divergence loss.
         """
         flattened_output, mu, logvar = self.unpack_model_output(preds)
         kl_loss = self.standard_normal_kl_divergence_loss(mu, logvar)

@@ -156,7 +156,7 @@ class ClientCheckpointAndStateModule:
             ValueError: Throws an error if this function is called, but no state checkpointer has been provided.
 
         Returns:
-            bool: If the state checkpoint properly exists and is loaded correctly, client's attributes are set to
+            (bool): If the state checkpoint properly exists and is loaded correctly, client's attributes are set to
                 the loaded values, and True is returned. Otherwise, we return False (or throw an exception).
         """
         if self.state_checkpointer is not None:

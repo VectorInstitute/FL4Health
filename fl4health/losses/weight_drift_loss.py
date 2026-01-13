@@ -27,7 +27,7 @@ class WeightDriftLoss(nn.Module):
             y (torch.Tensor): second tensor
 
         Returns:
-            torch.Tensor: Frobenius norm of their difference
+            (torch.Tensor): Frobenius norm of their difference
         """
         return torch.pow(torch.linalg.norm(x - y), 2.0)
 
@@ -44,7 +44,7 @@ class WeightDriftLoss(nn.Module):
             weight (float): Weight with which to scale the loss.
 
         Returns:
-            torch.Tensor: Loss value.
+            (torch.Tensor): Loss value.
         """
         # move model and tensors to device if needed
         target_model = target_model.to(self.device)

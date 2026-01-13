@@ -65,7 +65,7 @@ def load_data(partition_id: int, num_partitions: int, dataset_name: str) -> Data
         dataset_name (str): The dataset name.
 
     Returns:
-        Dataset: The partitioned data
+        (Dataset): The partitioned data
 
     """
     partitioner = IidPartitioner(num_partitions=num_partitions)

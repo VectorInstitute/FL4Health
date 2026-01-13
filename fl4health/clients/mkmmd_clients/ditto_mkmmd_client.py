@@ -285,8 +285,8 @@ class DittoMkMmdClient(DittoClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed by
-                name. Additional losses includes each loss component and the global model loss tensor.
+            (TrainingLosses): An instance of ``TrainingLosses`` containing backward loss and additional losses indexed
+                by name. Additional losses includes each loss component and the global model loss tensor.
         """
         for layer_loss_module in self.mkmmd_losses.values():
             assert layer_loss_module.training

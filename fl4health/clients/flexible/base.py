@@ -176,7 +176,7 @@ class FlexibleClient(BasicClient):
             losses (TrainingLosses): the losses to apply backwards on
 
         Returns:
-            TrainingLosses: The losses object post backwards application
+            (TrainingLosses): The losses object post backwards application
         """
         # Compute backward pass and update parameters with optimizer
         losses.backward["backward"].backward()

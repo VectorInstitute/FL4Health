@@ -220,7 +220,7 @@ class ClassificationMetric(Metric, ABC):
             count_tensor (torch.Tensor): The count tensor after reducing dimensions.
 
         Returns:
-            torch.Tensor: If ``count_tensor`` was 1D then it is returned unchanged. Otherwise this is the
+            (torch.Tensor): If ``count_tensor`` was 1D then it is returned unchanged. Otherwise this is the
                 ``count_tensor`` with shape (``batch_size``, ``num_labels``).
         """
         if count_tensor.ndim != MAX_COUNT_TENSOR_DIMS:
@@ -293,7 +293,7 @@ class ClassificationMetric(Metric, ABC):
                 dictionary.
 
         Returns:
-            Metrics: A dictionary of string and ``Scalar`` representing the computed metric and its associated key.
+            (Metrics): A dictionary of string and ``Scalar`` representing the computed metric and its associated key.
         """
         metrics = self.compute_from_counts(
             true_positives=self.true_positives,
@@ -411,7 +411,7 @@ class ClassificationMetric(Metric, ABC):
             NotImplementedError: Must be implemented by the inheriting class.
 
         Returns:
-            Metrics: Metrics computed from the provided outcome counts.
+            (Metrics): Metrics computed from the provided outcome counts.
         """
         raise NotImplementedError
 
@@ -548,7 +548,7 @@ class BinaryClassificationMetric(ClassificationMetric):
             ValueError: Raises errors if the tensor does not have the right shape for the expected setting
 
         Returns:
-            torch.Tensor: Count tensor of the appropriate shape and structure. If ``self.batch_dim`` is not None
+            (torch.Tensor): Count tensor of the appropriate shape and structure. If ``self.batch_dim`` is not None
                 then the postprocessed ``count_tensor`` will have shape ``(batch size, 1)``, Otherwise, it will have
                 shape ``(1,)``. In both settings, the count is relative to the label at index 1 (implied or explicit).
         """
@@ -688,7 +688,7 @@ class BinaryClassificationMetric(ClassificationMetric):
             NotImplementedError: Must be implemented by the inheriting class.
 
         Returns:
-            Metrics: Metrics computed from the provided outcome counts.
+            (Metrics): Metrics computed from the provided outcome counts.
         """
         raise NotImplementedError
 
@@ -913,6 +913,6 @@ class MultiClassificationMetric(ClassificationMetric):
             NotImplementedError: Must be implemented by the inheriting class.
 
         Returns:
-            Metrics: Metrics computed from the provided outcome counts.
+            (Metrics): Metrics computed from the provided outcome counts.
         """
         raise NotImplementedError

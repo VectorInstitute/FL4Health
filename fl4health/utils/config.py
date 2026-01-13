@@ -54,7 +54,7 @@ def narrow_dict_type(dictionary: dict[str, Any], key: str, narrow_type_to: type[
         narrow_type_to (type[T]): The expected type of dictionary[key]
 
     Returns:
-        T: The type-checked value at dictionary[key].
+        (T): The type-checked value at dictionary[key].
 
     Raises:
         ValueError: If dictionary[key] is not of type ``narrow_type_to`` or if the key is not present in dictionary.

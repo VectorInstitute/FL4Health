@@ -21,7 +21,7 @@ def maybe_zero_3(param: Any, ignore_status: bool = False, name: str | None = Non
         name (str, optional): The name of the parameter. Defaults to None.
 
     Returns:
-        Any: The gathered parameter.
+        (Any): The gathered parameter.
     """
     if hasattr(param, "ds_id"):
         if param.ds_status == ZeroParamStatus.NOT_AVAILABLE and not ignore_status:

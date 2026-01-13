@@ -197,7 +197,7 @@ class MomentsAccountant:
             delta (float): This is the delta in (epsilon, delta)-Privacy, that we require.
 
         Returns:
-            float: The corresponding epsilon
+            (float): The corresponding epsilon
         """
         self._validate_accountant_input(sampling_strategies, noise_multiplier, updates)
         rdp_accountant = self._construct_rdp_accountant(sampling_strategies, noise_multiplier, updates)
@@ -250,7 +250,7 @@ class MomentsAccountant:
             epsilon (float): This is the epsilon in (epsilon, delta)-Privacy, that we require.
 
         Returns:
-            float: delta for the provided epsilon
+            (float): delta for the provided epsilon
         """
         self._validate_accountant_input(sampling_strategies, noise_multiplier, updates)
         rdp_accountant = self._construct_rdp_accountant(sampling_strategies, noise_multiplier, updates)

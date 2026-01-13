@@ -159,7 +159,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         Printable representation of the object.
 
         Returns:
-            str: Printable representation of the object.
+            (str): Printable representation of the object.
         """
         return f"ClientLevelDPFedAvgM(accept_failures={self.accept_failures})"
 
@@ -188,7 +188,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
                 up with a sqrt of a negative number. If this happens a value error is raised.
 
         Returns:
-            float: The modified noise multiplier when performing adaptive clipping.
+            (float): The modified noise multiplier when performing adaptive clipping.
         """
         # Modifying the noise multiplier as in Algorithm 1 of Differentially Private Learning with Adaptive Clipping
         sqrt_argument = pow(self.weight_noise_multiplier, -2.0) - pow(2.0 * self.clipping_noise_multiplier, -2.0)

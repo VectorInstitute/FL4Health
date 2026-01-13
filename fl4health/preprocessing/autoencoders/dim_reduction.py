@@ -34,7 +34,7 @@ class AutoEncoderProcessing:
         Printable representation of the object.
 
         Returns:
-            str: Printable representation of the object.
+            (str): Printable representation of the object.
         """
         return f"{self.__class__.__name__}"
 
@@ -151,7 +151,7 @@ class CvaeVariableConditionProcessor(AutoEncoderProcessing):
                 data.
 
         Returns:
-            torch.Tensor: Encoded sample(s).
+            (torch.Tensor): Encoded sample(s).
         """
         # This transformer is called for the input samples after they are transformed into torch tensors.
         # We assume condition and data are "batch first".

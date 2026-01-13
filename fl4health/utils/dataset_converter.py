@@ -48,7 +48,7 @@ class DatasetConverter(TensorDataset):
         the dataset is not None.
 
         Returns:
-            int: Dataset length.
+            (int): Dataset length.
         """
         assert self.dataset is not None, "Error: dataset is should be either converted or initiated."
         return len(self.dataset)
@@ -143,7 +143,7 @@ class AutoEncoderDatasetConverter(DatasetConverter):
         condition and handles the concatenation.
 
         Returns:
-            Callable: The suitable converter function based on the condition.
+            (Callable): The suitable converter function based on the condition.
         """
         # If the autoencoder is conditional
         if self.condition is not None:

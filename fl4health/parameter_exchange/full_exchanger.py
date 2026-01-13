@@ -22,7 +22,7 @@ class FullParameterExchanger(ParameterExchanger):
             config (Config | None, optional): Not Used. Defaults to None.
 
         Returns:
-            NDArrays: All parameters contained in the ``state_dict`` of the model parameter. The ``state_dict``
+            (NDArrays): All parameters contained in the ``state_dict`` of the model parameter. The ``state_dict``
                 maintains a specific order.
         """
         # Sending all of parameters ordered by state_dict keys

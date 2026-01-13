@@ -130,7 +130,7 @@ class MultiClassDice(MultiClassificationMetric):
             false_negatives (torch.Tensor): Counts associated with negative predictions and positive labels.
 
         Returns:
-            Metrics: A mean dice score associated with the counts.
+            (Metrics): A mean dice score associated with the counts.
         """
         # compute dice coefficients and return mean
         dice = compute_dice_on_count_tensors(true_positives, false_positives, false_negatives, self.zero_division)
@@ -147,7 +147,7 @@ class MultiClassDice(MultiClassificationMetric):
             target (torch.Tensor): target tensor.
 
         Returns:
-            Scalar: Mean dice score for the provided tensors.
+            (Scalar): Mean dice score for the provided tensors.
         """
         true_positives, false_positives, true_negatives, false_negatives = self.count_tp_fp_tn_fn(input, target)
         dice_metric = self.compute_from_counts(true_positives, false_positives, true_negatives, false_negatives)
@@ -274,7 +274,7 @@ class BinaryDice(BinaryClassificationMetric):
             false_negatives (torch.Tensor): Counts associated with negative predictions and positive labels.
 
         Returns:
-            Metrics: A mean dice score associated with the counts.
+            (Metrics): A mean dice score associated with the counts.
         """
         # compute dice coefficients and return mean
         dice = compute_dice_on_count_tensors(true_positives, false_positives, false_negatives, self.zero_division)
@@ -291,7 +291,7 @@ class BinaryDice(BinaryClassificationMetric):
             target (torch.Tensor): target tensor.
 
         Returns:
-            Scalar: Mean dice score for the provided tensors.
+            (Scalar): Mean dice score for the provided tensors.
         """
         true_positives, false_positives, true_negatives, false_negatives = self.count_tp_fp_tn_fn(input, target)
         dice_metric = self.compute_from_counts(true_positives, false_positives, true_negatives, false_negatives)

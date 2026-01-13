@@ -111,6 +111,6 @@ def generate_hash(length: int = 8) -> str:
        length (int): The length of the hash generated. Maximum length is 32.
 
     Returns:
-        str: hash
+        (str): hash
     """
     return str(uuid.uuid4()).replace("-", "")[:length]

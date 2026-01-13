@@ -110,7 +110,7 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
                 best score seen by this checkpointer.
 
         Returns:
-            bool: Whether or not to checkpoint the model based on the provided score
+            (bool): Whether or not to checkpoint the model based on the provided score
         """
         if self.best_score:
             if self.maximize:

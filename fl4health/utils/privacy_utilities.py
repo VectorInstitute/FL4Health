@@ -60,7 +60,7 @@ def convert_model_to_opacus_model(
         **kwargs (Any): Another other kwargs that need to go to the wrap function.
 
     Returns:
-        GradSampleModule: The Opacus wrapped ``GradSampleModule``
+        (GradSampleModule): The Opacus wrapped ``GradSampleModule``
     """
     if isinstance(model, GradSampleModule):
         log(INFO, f"Provided model is already of type {type(model)}, skipping conversion to Opacus model type")
@@ -85,7 +85,7 @@ def map_model_to_opacus_model(
         **kwargs (Any): Another other kwargs that need to go to the conversion function.
 
     Returns:
-        GradSampleModule: The Opacus-compliant, wrapped ``GradSampleModule``.
+        (GradSampleModule): The Opacus-compliant, wrapped ``GradSampleModule``.
     """
     model, _ = privacy_validate_and_fix_modules(model)
     return convert_model_to_opacus_model(model, grad_sample_mode, *args, **kwargs)

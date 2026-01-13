@@ -161,7 +161,7 @@ class GpflClient(BasicClient):
             config (Config): Config from the server..
 
         Returns:
-            ParameterExchanger: FixedLayerExchanger used to exchange a set of fixed and specific layers.
+            (ParameterExchanger): FixedLayerExchanger used to exchange a set of fixed and specific layers.
         """
         assert isinstance(self.model, GpflModel)
         return FixedLayerExchanger(self.model.layers_to_exchange())
@@ -172,7 +172,7 @@ class GpflClient(BasicClient):
         It computes the proportion of samples for each class in the training dataset.
 
         Returns:
-            torch.Tensor: A tensor containing the proportion of samples for each class.
+            (torch.Tensor): A tensor containing the proportion of samples for each class.
         """
         class_sample_proportion = torch.zeros(self.num_classes, device=self.device)
         one_hot_n_dim = 2  # To avoid having magic numbers
@@ -256,7 +256,7 @@ class GpflClient(BasicClient):
             input (TorchInputType): Input tensor.
 
         Returns:
-            TorchInputType: Transformed input tensor.
+            (TorchInputType): Transformed input tensor.
         """
         # Attach the global and personalized conditional inputs to the input
         if isinstance(input, torch.Tensor):
@@ -321,7 +321,7 @@ class GpflClient(BasicClient):
             target (TorchTargetType): Either a tensor of class indices or one-hot encoded tensors.
 
         Returns:
-            torch.Tensor: L2 norm loss between the global features and the frozen GCE's global features.
+            (torch.Tensor): L2 norm loss between the global features and the frozen GCE's global features.
         """
         # In magnitude level loss, GCE's embedding table is frozen, and the goal is to train
         # the model to generate good global features by making the generated embeddings closer to
@@ -346,7 +346,7 @@ class GpflClient(BasicClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses
+            (TrainingLosses): An instance of ``TrainingLosses`` containing backward loss and additional losses
                 indexed by name.
         """
         # The loss used during training is a combination of the prediction loss (CrossEntropy used in the paper),

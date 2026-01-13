@@ -125,7 +125,7 @@ def ham_image_path_func(row: pd.Series) -> str:
         row (pd.Series): A row from the dataframe.
 
     Returns:
-        str: The constructed image path.
+        (str): The constructed image path.
     """
     return os.path.join("fl4health", "datasets", "skin_cancer", "HAM10000", row["image_id"] + ".jpg")
 
@@ -138,7 +138,7 @@ def ham_label_map_func(row: pd.Series) -> str:
         row (pd.Series): A row from the dataframe.
 
     Returns:
-        str: The mapped label.
+        (str): The mapped label.
     """
     ham_labelmap = {
         "akiec": "AK",
@@ -199,7 +199,7 @@ def pad_image_path_func(row: pd.Series) -> str:
         row (pd.Series): A row from the dataframe.
 
     Returns:
-        str: The constructed image path.
+        (str): The constructed image path.
     """
     return os.path.join("fl4health", "datasets", "skin_cancer", "PAD-UFES-20", row["img_id"])
 
@@ -212,7 +212,7 @@ def pad_label_map_func(row: pd.Series) -> str:
         row (pd.Series): A row from the dataframe.
 
     Returns:
-        str: The mapped label.
+        (str): The mapped label.
     """
     pad_ufes_20_labelmap = {
         "ACK": "AK",
@@ -258,7 +258,7 @@ def derm7pt_image_path_func(row: pd.Series) -> str:
         row (pd.Series): A row from the dataframe.
 
     Returns:
-        str:  The constructed image path.
+        (str):  The constructed image path.
     """
     return os.path.join("fl4health", "datasets", "skin_cancer", "Derm7pt", "images", row["derm"])
 
@@ -271,7 +271,7 @@ def derm7pt_label_map_func(row: pd.Series) -> str:
         row (pd.Series): A row from the dataframe.
 
     Returns:
-        str:  The mapped label.
+        (str):  The mapped label.
     """
     derm7pt_labelmap = {
         "basal cell carcinoma": "BCC",

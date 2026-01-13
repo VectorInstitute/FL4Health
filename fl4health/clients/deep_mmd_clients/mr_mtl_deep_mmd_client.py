@@ -282,8 +282,8 @@ class MrMtlDeepMmdClient(MrMtlClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed by
-                name.
+            (TrainingLosses): An instance of ``TrainingLosses`` containing backward loss and additional losses indexed
+                by name.
         """
         for layer_loss_module in self.deep_mmd_losses.values():
             if self.mmd_kernel_train_interval == -1:
@@ -329,7 +329,7 @@ class MrMtlDeepMmdClient(MrMtlClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
+            (EvaluationLosses): An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
                 indexed by name.
         """
         for layer_loss_module in self.deep_mmd_losses.values():

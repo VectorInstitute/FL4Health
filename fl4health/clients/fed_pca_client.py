@@ -49,7 +49,7 @@ class FedPCAClient(NumPyClient):
             length (int, optional): Length of the generated hash. Defaults to 8.
 
         Returns:
-            str: Generated hash of length ``length``
+            (str): Generated hash of length ``length``
         """
         return "".join(random.choice(string.ascii_lowercase) for _ in range(length))
 
@@ -62,7 +62,7 @@ class FedPCAClient(NumPyClient):
             config (Config): Configurations to allow for customization of this functions behavior
 
         Returns:
-            NDArrays: Parameters representing the principal components computed by the client that need to be
+            (NDArrays): Parameters representing the principal components computed by the client that need to be
                 aggregated in some way.
         """
         if not self.initialized:
@@ -125,7 +125,7 @@ class FedPCAClient(NumPyClient):
             config (Config): Configurations sent by the server to allow for customization of this functions behavior.
 
         Returns:
-            PcaModule: Module that determines how local FedPCA optimization will be performed.
+            (PcaModule): Module that determines how local FedPCA optimization will be performed.
         """
         low_rank = narrow_dict_type(config, "low_rank", bool)
         full_svd = narrow_dict_type(config, "full_svd", bool)
@@ -165,7 +165,7 @@ class FedPCAClient(NumPyClient):
             NotImplementedError: Should be defined by the child class
 
         Returns:
-            Tensor: Single torch tensor representing all of the data stacked together.
+            (Tensor): Single torch tensor representing all of the data stacked together.
         """
         raise NotImplementedError
 

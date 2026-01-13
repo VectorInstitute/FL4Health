@@ -58,7 +58,7 @@ class SyntheticFedProxDataset(ABC):
         1 in this notation. The matrix is of dimension ``input_dim`` x ``input_dim``.
 
         Returns:
-            torch.Tensor: Covariance matrix for generation of input features.
+            (torch.Tensor): Covariance matrix for generation of input features.
         """
         sigma_diagonal = torch.zeros(self.input_dim)
         for i in range(self.input_dim):
@@ -83,7 +83,7 @@ class SyntheticFedProxDataset(ABC):
             b (torch.Tensor): The bias in the linear transformation. Shape is (``output_dim``, 1)
 
         Returns:
-            torch.Tensor: The labels associated with each of the inputs. The shape is (dataset size, ``output_dim``)
+            (torch.Tensor): The labels associated with each of the inputs. The shape is (dataset size, ``output_dim``)
         """
         raw_y = (torch.matmul(x, w.T) + b.T.repeat(self.samples_per_client, 1)) / self.temperature
         distributions = F.softmax(raw_y, dim=1)
@@ -112,7 +112,7 @@ class SyntheticFedProxDataset(ABC):
             b_2 (torch.Tensor): The bias in the second linear transformation. Shape is (``output_dim``, 1).
 
         Returns:
-            torch.Tensor: The labels associated with each of the inputs. The shape is (dataset size, ``output_dim``).
+            (torch.Tensor): The labels associated with each of the inputs. The shape is (dataset size, ``output_dim``).
         """
         latent = (torch.matmul(x, w_1.T) + b_1.T.repeat(self.samples_per_client, 1)) / self.temperature
         raw_y = torch.matmul(latent, w_2.T) + b_2.T.repeat(self.samples_per_client, 1)

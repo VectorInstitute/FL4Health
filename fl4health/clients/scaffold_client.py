@@ -84,7 +84,7 @@ class ScaffoldClient(BasicClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            NDArrays: Model parameters and control variates packed together.
+            (NDArrays): Model parameters and control variates packed together.
         """
         if not self.initialized:
             return self.setup_client_and_return_all_model_parameters(config)
@@ -211,7 +211,7 @@ class ScaffoldClient(BasicClient):
             params_2 (NDArrays): Second set of parameters
 
         Returns:
-            NDArrays: :math:`\\text{params}_1 - \\text{params}_2`
+            (NDArrays): :math:`\\text{params}_1 - \\text{params}_2`
         """
         parameter_delta: NDArrays = [param_1 - param_2 for param_1, param_2 in zip(params_1, params_2)]
 
@@ -251,7 +251,7 @@ class ScaffoldClient(BasicClient):
                 variates :math:`c_i - c`.
 
         Returns:
-            NDArrays: Updated client control variates
+            (NDArrays): Updated client control variates
         """
         # coef = 1 / (K * eta_l)
         scaling_coefficient = 1 / (local_steps * self.learning_rate)

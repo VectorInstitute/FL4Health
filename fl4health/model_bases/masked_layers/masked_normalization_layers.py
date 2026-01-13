@@ -91,7 +91,7 @@ class MaskedLayerNorm(nn.LayerNorm):
             input (Tensor): Tensor to be mapped by the layer.
 
         Returns:
-            Tensor: Output tensor after mapping of the input tensor.
+            (Tensor): Output tensor after mapping of the input tensor.
         """
         if not self.elementwise_affine:
             return F.layer_norm(input, self.normalized_shape, self.weight, self.bias, self.eps)
@@ -117,7 +117,7 @@ class MaskedLayerNorm(nn.LayerNorm):
             layer_norm_module (nn.LayerNorm): Target module to be converted
 
         Returns:
-            MaskedLayerNorm: New copy of the provided module with mask layers added to enable FedPM
+            (MaskedLayerNorm): New copy of the provided module with mask layers added to enable FedPM
         """
         masked_layer_norm_module = cls(
             # layer_norm_module.normalized_shape is a tuple so we
@@ -213,7 +213,7 @@ class _MaskedBatchNorm(_BatchNorm):
             input (Tensor): Tensor to be mapped via the ``_MaskedBatchNorm``
 
         Returns:
-            Tensor: Output tensor after mapping
+            (Tensor): Output tensor after mapping
         """
         self._check_input_dim(input)
         exponential_average_factor = 0.0 if self.momentum is None else self.momentum
@@ -266,7 +266,7 @@ class _MaskedBatchNorm(_BatchNorm):
             batch_norm_module (_BatchNorm): Module to be transformed to a masked module through layer insertion
 
         Returns:
-            _MaskedBatchNorm: New copy of the input module with masked layers to enable FedPM
+            (_MaskedBatchNorm): New copy of the input module with masked layers to enable FedPM
         """
         masked_batch_norm_module = cls(
             num_features=batch_norm_module.num_features,

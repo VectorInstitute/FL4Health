@@ -19,7 +19,7 @@ def infer_label_dim(tensor1: torch.Tensor, tensor2: torch.Tensor) -> int:
             next to the label dimension has the same size.
 
     Returns:
-        int: Index of the dimension along tensor 1 that corresponds to the label dimension.
+        (int): Index of the dimension along tensor 1 that corresponds to the label dimension.
     """
     assert tensor1.shape != tensor2.shape, (
         f"Could not infer the label dimension of tensors with the same shape: {tensor1.shape}"
@@ -98,7 +98,7 @@ def map_label_index_tensor_to_one_hot(
         label_dim (int): Dimension to one-hot encode.
 
     Returns:
-        torch.Tensor: Tensor with one-hot encoded ``label_dim``.
+        (torch.Tensor): Tensor with one-hot encoded ``label_dim``.
     """
     label_index_tensor_shape = label_index_tensor.shape
 

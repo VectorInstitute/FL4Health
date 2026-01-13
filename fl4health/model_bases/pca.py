@@ -102,7 +102,7 @@ class PcaModule(nn.Module):
             x (Tensor): Data matrix.
 
         Returns:
-            Tensor: Tensor flattened to be 2D.
+            (Tensor): Tensor flattened to be 2D.
         """
         if len(x.size()) == TWO_D_TENSOR_SHAPE_LENGTH:
             return torch.squeeze(x.float())
@@ -134,7 +134,7 @@ class PcaModule(nn.Module):
                 an exception will be thrown if it is not.
 
         Returns:
-            Tensor: Prepared data matrix.
+            (Tensor): Prepared data matrix.
         """
         x = self.maybe_reshape(x)
         if center_data:
@@ -162,7 +162,7 @@ class PcaModule(nn.Module):
                 expected that the data has already been centered in this manner by the user. Defaults to False.
 
         Returns:
-            Tensor: Projection result.
+            (Tensor): Projection result.
         """
         x_prime = self.maybe_reshape(x)
         if center_data:
@@ -183,7 +183,7 @@ class PcaModule(nn.Module):
                 now wish to add back the data mean. Defaults to False.
 
         Returns:
-            Tensor: Reconstruction of data points.
+            (Tensor): Reconstruction of data points.
         """
         x_lower_dim_prime = self.maybe_reshape(x_lower_dim)
         k = x_lower_dim.size(1)
@@ -210,7 +210,7 @@ class PcaModule(nn.Module):
                 lower-dimensional subspace, and whether to add the data mean after projecting back. Defaults to False.
 
         Returns:
-            float: Reconstruction loss as defined above.
+            (float): Reconstruction loss as defined above.
         """
         n = x.size(0)
         x_lower_dim = self.project_lower_dim(x, k, center_data=center_data)
@@ -230,7 +230,7 @@ class PcaModule(nn.Module):
                 lower-dimensional subspace, and whether to add the data mean after projecting back. Defaults to False.
 
         Returns:
-            float: Variance after projection as defined above.
+            (float): Variance after projection as defined above.
         """
         return (torch.linalg.norm(self.project_lower_dim(x, k, center_data)) ** 2).item()
 

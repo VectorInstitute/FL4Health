@@ -38,7 +38,7 @@ class ParallelSplitHeadModule(nn.Module, ABC):
             NotImplementedError: Any implementing child class must produce this method if it is to be used.
 
         Returns:
-            torch.Tensor: A single tensor with the two tensors joined together in some way.
+            (torch.Tensor): A single tensor with the two tensors joined together in some way.
         """
         raise NotImplementedError
 
@@ -54,7 +54,7 @@ class ParallelSplitHeadModule(nn.Module, ABC):
             NotImplementedError: Must be implemented by any child class.
 
         Returns:
-            torch.Tensor: Output of the head module from the given input.
+            (torch.Tensor): Output of the head module from the given input.
         """
         raise NotImplementedError
 
@@ -70,7 +70,7 @@ class ParallelSplitHeadModule(nn.Module, ABC):
             second_tensor (torch.Tensor): Output from one parallel module.
 
         Returns:
-            torch.Tensor: Output from the head module.
+            (torch.Tensor): Output from the head module.
         """
         head_input = (
             self.parallel_output_join(first_tensor, second_tensor)

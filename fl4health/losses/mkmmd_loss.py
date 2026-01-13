@@ -85,7 +85,7 @@ class MkMmdLoss(torch.nn.Module):
             y (torch.Tensor): Second set of feature tensors
 
         Returns:
-            torch.Tensor: Quadruples of the form described above.
+            (torch.Tensor): Quadruples of the form described above.
         """
         n_samples, n_features = x.shape
         # truncate if not divisible by 2
@@ -447,6 +447,6 @@ class MkMmdLoss(torch.nn.Module):
             x_t (torch.Tensor): Target domain data, shape (``n_samples``, ``n_features``).
 
         Returns:
-            torch.Tensor: MK-MMD value.
+            (torch.Tensor): MK-MMD value.
         """
         return self.compute_mkmmd(x_s, x_t, self.betas)

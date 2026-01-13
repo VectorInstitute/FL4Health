@@ -33,7 +33,7 @@ def cosine_annealing(
         learning_rate_min (float, optional): The minimum learning rate. Defaults to 0.0.
 
     Returns:
-        float: The learning rate for the current round.
+        (float): The learning rate for the current round.
     """
     cos_inner = math.pi * current_round / total_round
     return learning_rate_min + 0.5 * (learning_rate_max - learning_rate_min) * (1 + math.cos(cos_inner))
@@ -49,7 +49,7 @@ def get_model(model_cfg: dict[str, Any]) -> torch.nn.Module:
         model_cfg (dict[str, Any]): The model configuration.
 
     Returns:
-        torch.nn.Module: The model.
+        (torch.nn.Module): The model.
     """
     quantization_config = model_cfg["quantization"]
     if quantization_config == FOUR_BIT:

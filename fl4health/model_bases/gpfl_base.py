@@ -36,7 +36,7 @@ class Gce(nn.Module):
             label (torch.Tensor): The true label for the input data, which is used to compute the loss.
 
         Returns:
-            torch.Tensor: Log softmax loss.
+            (torch.Tensor): Log softmax loss.
         """
         # Invoke the forward of the embedding layer to make sure the computation graph is connected
         # and embedding parameters are updated during the backward pass.
@@ -66,7 +66,7 @@ class Gce(nn.Module):
                 of the classes to look up.
 
         Returns:
-            torch.Tensor: The class embeddings corresponding to the provided targets.
+            (torch.Tensor): The class embeddings corresponding to the provided targets.
         """
         if self.training:
             log(
@@ -127,7 +127,7 @@ class CoV(nn.Module):
             context (torch.Tensor): The conditional tensor that could be global or personalized.
 
         Returns:
-            torch.Tensor: The transformed feature tensor after applying the conditional affine transformation.
+            (torch.Tensor): The transformed feature tensor after applying the conditional affine transformation.
         """
         # Call submodules to compute gamma and beta vectors.
         gamma = self.conditional_gamma(context)

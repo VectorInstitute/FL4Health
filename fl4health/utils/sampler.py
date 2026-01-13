@@ -58,7 +58,7 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
             dataset (D): Dataset to be modified, through downsampling on specified labels.
 
         Returns:
-            D: New dataset with downsampled labels.
+            (D): New dataset with downsampled labels.
         """
         assert dataset.targets is not None, "A label-based sampler requires targets but this dataset has no targets"
         selected_indices_list: list[torch.Tensor] = []
@@ -87,7 +87,7 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
             subsample_size (int): How many rows we want to extract from the tensor.
 
         Returns:
-            torch.Tensor: New tensor with subsampled rows
+            (torch.Tensor): New tensor with subsampled rows
         """
         # NOTE: Assumes subsampling on rows
         tensor_size = tensor_to_subsample.shape[0]
@@ -152,7 +152,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
             dataset (D): Dataset to be modified, through downsampling on specified labels.
 
         Returns:
-            D: New dataset with downsampled labels.
+            (D): New dataset with downsampled labels.
         """
         assert dataset.targets is not None, "A label-based sampler requires targets but this dataset has no targets"
         assert self.sample_percentage <= 1.0

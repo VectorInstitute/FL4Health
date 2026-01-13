@@ -83,7 +83,7 @@ class EmaMetric(Metric, Generic[T]):
                 metrics dictionary. Defaults to None.
 
         Returns:
-            Metrics: A dictionary of string and ``Scalar`` representing the computed metric and its associated key.
+            (Metrics): A dictionary of string and ``Scalar`` representing the computed metric and its associated key.
         """
         # Temporarily change name of the underlying metric so that we get the EMAMetric name in keys of metrics_dict
         metric_name = self.metric.name

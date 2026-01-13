@@ -147,8 +147,8 @@ class MrMtlClient(AdaptiveDriftConstraintClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed by
-                name. Additional losses includes each loss component of the total loss.
+            (TrainingLosses): An instance of ``TrainingLosses`` containing backward loss and additional losses indexed
+                by name. Additional losses includes each loss component of the total loss.
         """
         # Check that the initial global model isn't in training mode and that the local model is in training mode
         assert not self.initial_global_model.training and self.model.training

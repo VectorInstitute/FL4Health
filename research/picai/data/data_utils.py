@@ -38,7 +38,7 @@ class MoveDim(Transform):
             data (torch.Tensor): Data to be transformed.
 
         Returns:
-            torch.Tensor: Data with moved dimensions.
+            (torch.Tensor): Data with moved dimensions.
         """
         return torch.movedim(data, self.source_dim, self.target_dim)
 
@@ -62,7 +62,7 @@ class OneHotEncode(Transform):
             data (torch.Tensor): Data to be transformed.
 
         Returns:
-            torch.Tensor: One hot encoded data.
+            (torch.Tensor): One hot encoded data.
         """
         return F.one_hot(data.squeeze().long(), num_classes=self.num_classes)
 
@@ -78,7 +78,7 @@ class ZScoreNormalization(Transform):
             data (torch.Tensor): Input data to be normalized.
 
         Returns:
-            torch.Tensor: Normalized data.
+            (torch.Tensor): Normalized data.
         """
         return z_score_norm(data)
 
@@ -89,7 +89,7 @@ def get_img_transform() -> Compose:
     performing z score normalization, random rotation, intensity scaling and adjusting contrast.
 
     Returns:
-        Compose: Image transformation pipeline.
+        (Compose): Image transformation pipeline.
     """
     transforms = [
         EnsureType(),
@@ -108,7 +108,7 @@ def get_seg_transform() -> Compose:
     along with One-Hot-Encoding.
 
     Returns:
-        Compose: Segmentation label transformation pipeline.
+        (Compose): Segmentation label transformation pipeline.
     """
     transforms = [EnsureType(), EnsureChannelFirst(), MoveDim(-1, 1), OneHotEncode(num_classes=2), MoveDim(-1, 0)]
     return Compose(transforms)
@@ -125,7 +125,7 @@ def z_score_norm(image: torch.Tensor, quantile: float | None = None) -> torch.Te
             If None, no clipping occurs. If a quantile is specified, must be 0 =< 0.5
 
     Returns:
-       torch.Tensor: Z-Score Normalized version of input that is clipped if a quantile is specified.
+       (torch.Tensor): Z-Score Normalized version of input that is clipped if a quantile is specified.
     """
     image = image.float()
 
@@ -259,7 +259,7 @@ def get_dataloader(
         num_workers (int, optional): The number of workers used by the DataLoader. Defaults to 2.
 
     Returns:
-        DataLoader: MONAI dataloader.
+        (DataLoader): MONAI dataloader.
     """
     # Ignoring type of image_files because Sequence[Sequence[str]] is valid input
     # list of files interpreted as multi-parametric sequence. Supported by image loader:

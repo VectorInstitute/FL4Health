@@ -132,7 +132,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            NDArrays: **GLOBAL** model weights to be sent to the server for aggregation.
+            (NDArrays): **GLOBAL** model weights to be sent to the server for aggregation.
         """
         if not self.initialized:
             return self.setup_client_and_return_all_model_parameters(config)
@@ -343,8 +343,8 @@ class DittoClient(AdaptiveDriftConstraintClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed by
-                name. Additional losses includes each loss component and the global model loss tensor.
+            (TrainingLosses): An instance of ``TrainingLosses`` containing backward loss and additional losses indexed
+                by name. Additional losses includes each loss component and the global model loss tensor.
         """
         # Check that both models are in training mode
         assert self.global_model.training and self.model.training
@@ -392,7 +392,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
+            (EvaluationLosses): An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
                 indexed by name.
         """
         # Check that both models are in eval mode

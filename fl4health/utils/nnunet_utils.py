@@ -224,8 +224,8 @@ def get_segs_from_probs(preds: torch.Tensor, has_regions: bool = False, threshol
             an output is a part of a class.
 
     Returns:
-        torch.Tensor: tensor containing the predicted segmentations as a one hot encoded binary tensor of 64-bit
-        integers.
+        (torch.Tensor): tensor containing the predicted segmentations as a one hot encoded binary tensor of 64-bit
+            integers.
     """
     if has_regions:
         pred_segs = preds > threshold
@@ -253,7 +253,7 @@ def collapse_one_hot_tensor(input: torch.Tensor, dim: int = 0) -> torch.Tensor:
         dim (int, optional): Dimension over which to collapse the one-hot tensor. Defaults to 0.
 
     Returns:
-        torch.Tensor: Integer tensor with the specified dim collapsed.
+        (torch.Tensor): Integer tensor with the specified dim collapsed.
     """
     return torch.argmax(input.long(), dim=dim).to(input.device)
 
@@ -267,7 +267,7 @@ def get_dataset_n_voxels(source_plans: dict, n_cases: int) -> float:
         n_cases (int): The number of cases in the dataset.
 
     Returns:
-        float: The total number of voxels in the local client dataset.
+        (float): The total number of voxels in the local client dataset.
     """
     # Need to determine input dimensionality
     if NnunetConfig._3D_FULLRES.value in source_plans["configurations"]:
@@ -421,7 +421,7 @@ class NnUNetDataLoaderWrapper(DataLoader):
         Define the iter conversion for an NnUNetDataLoaderWrapper.
 
         Returns:
-            DataLoader: The iterator, which is just the NnUNetDataLoaderWrapper itself.
+            (DataLoader): The iterator, which is just the NnUNetDataLoaderWrapper itself.
         """
         # mypy gets angry that the return type is different
         return self
@@ -459,7 +459,7 @@ class Module2LossWrapper(_Loss):
             target (torch.Tensor): Target tensor.
 
         Returns:
-            torch.Tensor: Loss output.
+            (torch.Tensor): Loss output.
         """
         return self.loss(pred, target)
 

@@ -77,7 +77,7 @@ def poll_clients(
         timeout (float | None): How long the executor should wait to receive a response before moving on.
 
     Returns:
-        PollResultsAndFailures: Object holding the results and failures associate with the concurrent polling.
+        (PollResultsAndFailures): Object holding the results and failures associate with the concurrent polling.
     """
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         submitted_fs = {

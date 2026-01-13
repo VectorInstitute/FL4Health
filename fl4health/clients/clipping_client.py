@@ -77,7 +77,7 @@ class NumpyClippingClient(BasicClient):
             parameters (NDArrays): Tensor to measure with the norm
 
         Returns:
-            float: Squared sum of all values in the NDArrays
+            (float): Squared sum of all values in the NDArrays
         """
         layer_inner_products = [pow(linalg.norm(layer_weights), 2) for layer_weights in parameters]
         # network Frobenius norm

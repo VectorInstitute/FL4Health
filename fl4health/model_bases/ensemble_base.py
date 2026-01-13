@@ -67,7 +67,7 @@ class EnsembleModel(nn.Module):
             preds_list (list[torch.Tensor]): A list of predictions of the models in the ensemble.
 
         Returns:
-            torch.Tensor: The vote prediction of the ensemble.
+            (torch.Tensor): The vote prediction of the ensemble.
         """
         assert all(preds.shape == preds_list[0].shape for preds in preds_list)
         preds_dimension = list(preds_list[0].shape)
@@ -101,7 +101,7 @@ class EnsembleModel(nn.Module):
             preds_list (list[torch.Tensor]): A list of predictions of the models in the ensemble.
 
         Returns:
-            torch.Tensor: The average prediction of the ensemble.
+            (torch.Tensor): The average prediction of the ensemble.
         """
         stacked_model_preds = torch.stack(preds_list)
         return torch.mean(stacked_model_preds, dim=0)

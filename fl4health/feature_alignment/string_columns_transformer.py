@@ -27,7 +27,7 @@ class TextMulticolumnTransformer(BaseEstimator, TransformerMixin):
             y (pd.DataFrame | None, optional): Not used. Defaults to None.
 
         Returns:
-            TextMulticolumnTransformer: The fit transformer
+            (TextMulticolumnTransformer): The fit transformer
         """
         joined_x = x.apply(lambda x: " ".join(x), axis=1)
         self.transformer.fit(joined_x)
@@ -41,7 +41,7 @@ class TextMulticolumnTransformer(BaseEstimator, TransformerMixin):
             x (pd.DataFrame): Dataframe of text-based columns to be transformed
 
         Returns:
-            pd.DataFrame: Transformed dataframe.
+            (pd.DataFrame): Transformed dataframe.
         """
         joined_x = x.apply(lambda x: " ".join(x), axis=1)
         return self.transformer.transform(joined_x)
@@ -68,7 +68,7 @@ class TextColumnTransformer(BaseEstimator, TransformerMixin):
             y (pd.DataFrame | None, optional): Not used. Defaults to None.
 
         Returns:
-            TextColumnTransformer: The fit transformer
+            (TextColumnTransformer): The fit transformer
         """
         assert isinstance(x, pd.DataFrame) and x.shape[1] == 1
         self.transformer.fit(x[x.columns[0]])
@@ -82,7 +82,7 @@ class TextColumnTransformer(BaseEstimator, TransformerMixin):
             x (pd.DataFrame): Dataframe of text-based column to be transformed
 
         Returns:
-            pd.DataFrame: Transformed dataframe.
+            (pd.DataFrame): Transformed dataframe.
         """
         assert isinstance(x, pd.DataFrame) and x.shape[1] == 1
         return self.transformer.transform(x[x.columns[0]])

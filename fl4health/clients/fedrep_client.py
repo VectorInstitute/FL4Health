@@ -146,7 +146,7 @@ class FedRepClient(BasicClient):
                 wrong.
 
         Returns:
-            EpochsAndStepsTuple: Returns a tuple of epochs and steps for which to train the head and representation
+            (EpochsAndStepsTuple): Returns a tuple of epochs and steps for which to train the head and representation
                 modules. Only two of the four possible values will be defined, depending on whether we're doing
                 epoch-based or step based training.
         """

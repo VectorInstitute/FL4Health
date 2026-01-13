@@ -101,7 +101,7 @@ class ConstrainedFendaLossContainer:
             negative_pairs (torch.Tensor): negative pair features to compare to.
 
         Returns:
-            torch.Tensor: loss function
+            (torch.Tensor): loss function
         """
         assert self.contrastive_loss_config is not None
         contrastive_loss = self.contrastive_loss_config.contrastive_loss_function(
@@ -120,7 +120,7 @@ class ConstrainedFendaLossContainer:
             second_features (torch.Tensor): second set of features in the cosine comparison
 
         Returns:
-            torch.Tensor: cosine similarity loss between the provided features.
+            (torch.Tensor): cosine similarity loss between the provided features.
         """
         assert self.cos_sim_loss_config is not None
         cosine_similarity_loss = self.cos_sim_loss_config.cos_sim_loss_function(first_features, second_features)

@@ -91,7 +91,7 @@ class AdaptiveDriftConstraintClient(BasicClient):
             config (Config): Configurations to allow for customization of this functions behavior
 
         Returns:
-            NDArrays: Parameters and training loss packed together into a list of numpy arrays to be sent to the
+            (NDArrays): Parameters and training loss packed together into a list of numpy arrays to be sent to the
                 server.
         """
         if not self.initialized:
@@ -144,7 +144,7 @@ class AdaptiveDriftConstraintClient(BasicClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed
+            (TrainingLosses): An instance of ``TrainingLosses`` containing backward loss and additional losses indexed
                 by name. Additional losses includes penalty loss.
         """
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
@@ -170,7 +170,7 @@ class AdaptiveDriftConstraintClient(BasicClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            ParameterExchanger: Exchanger that can handle packing/unpacking auxiliary server information.
+            (ParameterExchanger): Exchanger that can handle packing/unpacking auxiliary server information.
         """
         return FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
 
@@ -195,7 +195,7 @@ class AdaptiveDriftConstraintClient(BasicClient):
         Computes the drift loss for the client model and drift tensors.
 
         Returns:
-            torch.Tensor: Computed penalty loss tensor.
+            (torch.Tensor): Computed penalty loss tensor.
         """
         # Penalty tensors must have been set for these clients.
         assert self.drift_penalty_tensors is not None

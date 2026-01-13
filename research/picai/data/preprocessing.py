@@ -192,7 +192,7 @@ class PreprocessingTransform(ABC):
             case (Case): The case to be processed.
 
         Returns:
-            Case: The Case after the transformation has been applied.
+            (Case): The Case after the transformation has been applied.
         """
         raise NotImplementedError
 
@@ -206,7 +206,7 @@ class ResampleToFirstScan(PreprocessingTransform):
             case (Case): The case to be processed.
 
         Returns:
-            Case: The resampled Case.
+            (Case): The resampled Case.
         """
         # set up resampler to resolution, field of view, etc. of first scan
         resampler = sitk.ResampleImageFilter()  # default linear
@@ -232,7 +232,7 @@ class ResampleSpacing(PreprocessingTransform):
             case (Case): The case to be processed.
 
         Returns:
-            Case: The Case where scans and annotation have specified spacing.
+            (Case): The Case where scans and annotation have specified spacing.
         """
         assert case.settings.spacing is not None
         # resample scans to target resolution
@@ -253,7 +253,7 @@ class CentreCropAndOrPad(PreprocessingTransform):
             case (Case): The case to be processed.
 
         Returns:
-            Case: The Case after centre crop and/or padding.
+            (Case): The Case after centre crop and/or padding.
         """
         assert case.settings.size is not None
         case.annotation = crop_or_pad(case.annotation, case.settings.size, case.settings.physical_size)
@@ -278,7 +278,7 @@ class AlignOriginAndDirection(PreprocessingTransform):
             case (Case): The case to be processed.
 
         Returns:
-            Case: The Case after aligning origin and direction.
+            (Case): The Case after aligning origin and direction.
         """
         case_origin, case_direction, case_spacing = None, None, None
         for scan in case.scans:
@@ -319,7 +319,7 @@ class BinarizeAnnotation(PreprocessingTransform):
             case (Case): The case to be processed.
 
         Returns:
-            Case: The Case after binarizing the annotation.
+            (Case): The Case after binarizing the annotation.
         """
         annotation_array = sitk.GetArrayFromImage(case.annotation)
 

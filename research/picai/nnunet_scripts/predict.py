@@ -48,7 +48,7 @@ def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, 
             preprocessing.
 
     Returns:
-        nUNetPredictor: An ``nnUNetPredictor`` class for the set of models specified by the ckpt_list.
+        (nUNetPredictor): An ``nnUNetPredictor`` class for the set of models specified by the ckpt_list.
     """
 
     # Helper function to make code cleaner

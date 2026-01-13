@@ -81,7 +81,7 @@ class EvaluationLosses(Losses):
             loss_meter (LossMeter[EvaluationLosses]): The loss meter object with the collected evaluation losses.
 
         Returns:
-            EvaluationLosses: An instance of ``EvaluationLosses`` with the aggregated losses.
+            (EvaluationLosses): An instance of ``EvaluationLosses`` with the aggregated losses.
         """
         checkpoint_loss = torch.sum(
             torch.FloatTensor([losses.checkpoint for losses in loss_meter.losses_list])  # type: ignore
@@ -138,7 +138,7 @@ class TrainingLosses(Losses):
             loss_meter (LossMeter[TrainingLosses]): The loss meter object with the collected training losses.
 
         Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` with the aggregated losses.
+            (TrainingLosses): An instance of ``TrainingLosses`` with the aggregated losses.
         """
         additional_losses_list = [losses.additional_losses for losses in loss_meter.losses_list]
         additional_losses_dict = LossMeter.aggregate_losses_dict(additional_losses_list, loss_meter.loss_meter_type)
@@ -198,7 +198,7 @@ class LossMeter(Generic[LossesType]):
         Computes the aggregation of current list of losses if non-empty.
 
         Returns:
-            LossesType: New Losses object with the aggregation of losses in ``losses_list``.
+            (LossesType): New Losses object with the aggregation of losses in ``losses_list``.
         """
         assert len(self.losses_list) > 0
         return self.losses_type.aggregate(self)  # type: ignore

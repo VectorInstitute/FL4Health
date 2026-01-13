@@ -40,7 +40,7 @@ def load_images_from_folder(
             Defaults to [".nii.gz", ".nii", ".mha", ".mhd", ".npz", ".npy"].
 
     Returns:
-        NDArray: A numpy array containing the images for each case identifier.
+        (NDArray): A numpy array containing the images for each case identifier.
             The first dimension will be the number of images and those images
             will be in the same order as was given by the case_identifiers
             argument
@@ -68,7 +68,7 @@ def get_detection_maps(probability_maps: NDArray) -> NDArray:
             probability maps. Should be shape (num_samples, num_classes, ...)
 
     Returns:
-        NDArray: A numpy array of the detection maps for each class. Note that
+        (NDArray): A numpy array of the detection maps for each class. Note that
             a detection map is not created for the background class which is
             assumed to be at index 0. Therefore the output shape is
             (num_samples, num_classes-1, ...)

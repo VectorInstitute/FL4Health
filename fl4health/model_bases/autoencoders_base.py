@@ -37,7 +37,7 @@ class AbstractAe(nn.Module, ABC):
             NotImplementedError: Should be implemented in inheriting classes.
 
         Returns:
-            torch.Tensor: Tensor after passing through module.
+            (torch.Tensor): Tensor after passing through module.
         """
         raise NotImplementedError
 
@@ -65,7 +65,7 @@ class BasicAe(AbstractAe):
             input (torch.Tensor): Input tensor to be encoded.
 
         Returns:
-            torch.Tensor: Encoding associated with the input tensor.
+            (torch.Tensor): Encoding associated with the input tensor.
         """
         return self.encoder(input)
 
@@ -77,7 +77,7 @@ class BasicAe(AbstractAe):
             latent_vector (torch.Tensor): Latent vector to be decoded.
 
         Returns:
-            torch.Tensor: Decoded tensor.
+            (torch.Tensor): Decoded tensor.
         """
         return self.decoder(latent_vector)
 
@@ -90,7 +90,7 @@ class BasicAe(AbstractAe):
             input (torch.Tensor): Input to pass through the encoder.
 
         Returns:
-            torch.Tensor: Reconstructed input after encoding and decoding with the model.
+            (torch.Tensor): Reconstructed input after encoding and decoding with the model.
         """
         z = self.encode(input)
         return self.decode(z)
@@ -142,7 +142,7 @@ class VariationalAe(AbstractAe):
                 where :math:`\\epsilon \\sim \\mathcal{N}(\\mathbf{0}, I)`.
 
         Returns:
-            torch.Tensor: Decoding from the latent vector.
+            (torch.Tensor): Decoding from the latent vector.
         """
         return self.decoder(latent_vector)
 
@@ -156,7 +156,7 @@ class VariationalAe(AbstractAe):
             logvar (torch.Tensor): Log of the variance of the normal distribution from which to sample.
 
         Returns:
-            torch.Tensor: Latent vector sampled from the appropriate normal distribution.
+            (torch.Tensor): Latent vector sampled from the appropriate normal distribution.
         """
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
@@ -170,7 +170,7 @@ class VariationalAe(AbstractAe):
             input (torch.Tensor): input tensor.
 
         Returns:
-            torch.Tensor: reconstruction of the input tensor.
+            (torch.Tensor): reconstruction of the input tensor.
         """
         mu, logvar = self.encode(input)
         z = self.sampling(mu, logvar)
@@ -235,7 +235,7 @@ class ConditionalVae(AbstractAe):
                 mapping of the ``latent_vector`` to an output. Defaults to None.
 
         Returns:
-            torch.Tensor: Decoded tensor from the latent vector and (potentially) the conditioning vector.
+            (torch.Tensor): Decoded tensor from the latent vector and (potentially) the conditioning vector.
         """
         return self.decoder(latent_vector, condition)
 
@@ -249,7 +249,7 @@ class ConditionalVae(AbstractAe):
             logvar (torch.Tensor): Log of the variance of the normal distribution from which to sample.
 
         Returns:
-            torch.Tensor: Latent vector sampled from the appropriate normal distribution.
+            (torch.Tensor): Latent vector sampled from the appropriate normal distribution.
         """
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
@@ -272,8 +272,8 @@ class ConditionalVae(AbstractAe):
             input (torch.Tensor): Input vector.
 
         Returns:
-            torch.Tensor: Reconstructed input vector, which has been flattened and concatenated with the mu and logvar
-                tensors.
+            (torch.Tensor): Reconstructed input vector, which has been flattened and concatenated with the mu and
+                logvar tensors.
         """
         assert self.unpack_input_condition is not None
         input, condition = self.unpack_input_condition(input)

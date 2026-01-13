@@ -26,7 +26,7 @@ def compute_dice_on_count_tensors(
             been undefined.
 
     Returns:
-        torch.Tensor: Dice scores computed for each element in the TP, FP, FN tensors computed **ELEMENTWISE** with
+        (torch.Tensor): Dice scores computed for each element in the TP, FP, FN tensors computed **ELEMENTWISE** with
         replacement or dropping of undefined entries. The tensor returned is flattened to be 1D.
     """
     # Compute union and intersection
@@ -57,7 +57,7 @@ def threshold_tensor(input: torch.Tensor, threshold: float | int) -> torch.Tenso
             prediction.
 
     Returns:
-        torch.Tensor: Thresholded tensor.
+        (torch.Tensor): Thresholded tensor.
     """
     if isinstance(threshold, float):
         thresholded_tensor = torch.zeros_like(input)

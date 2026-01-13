@@ -24,7 +24,7 @@ class CosineSimilarityLoss(nn.Module):
             x2 (torch.Tensor): Second set of tensors to compute cosine sim, shape (``batch_size``, ``n_features``)
 
         Returns:
-            torch.Tensor: Mean absolute value of the cosine similarity between vectors across the mutual batch size.
+            (torch.Tensor): Mean absolute value of the cosine similarity between vectors across the mutual batch size.
         """
         assert len(x1) == len(x2), "Tensors have different batch sizes"
         return torch.abs(self.cosine_similarity_function(x1, x2)).mean()

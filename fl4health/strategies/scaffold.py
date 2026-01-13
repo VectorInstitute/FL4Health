@@ -118,8 +118,8 @@ class Scaffold(BasicFedAvg):
                 If ``initial_control_variates`` are provided, they take precedence. Defaults to None.
 
         Returns:
-            Parameters: This quantity represents the initial values for the control variates for the server and on the
-                client-side.
+            (Parameters): This quantity represents the initial values for the control variates for the server and on
+                the client-side.
 
         Raises:
             ValueError: This error will be raised if neither a model nor initial control variates are provided.
@@ -210,7 +210,7 @@ class Scaffold(BasicFedAvg):
             params_2 (NDArrays): Parameters to subtract from ``params_1``.
 
         Returns:
-            NDArrays: Element-wise subtraction result across all numpy arrays.
+            (NDArrays): Element-wise subtraction result across all numpy arrays.
         """
         parameter_delta: NDArrays = [param_1 - param_2 for param_1, param_2 in zip(params_1, params_2)]
 
@@ -235,7 +235,7 @@ class Scaffold(BasicFedAvg):
             parameter_updates (NDArrays): Update direction to update the ``original_params``.
 
         Returns:
-            NDArrays: Updated numpy arrays according to
+            (NDArrays): Updated numpy arrays according to
                 :math:`\\text{original_params} + \\text{scaling_coefficient} \\cdot \\text{parameter_updates}`.
         """
         return [
@@ -252,7 +252,7 @@ class Scaffold(BasicFedAvg):
             params (list[NDArrays]): numpy arrays whose entries are to be averaged together.
 
         Returns:
-            NDArrays: Element-wise average over the list of numpy arrays.
+            (NDArrays): Element-wise average over the list of numpy arrays.
         """
         num_clients = len(params)
 
@@ -314,7 +314,7 @@ class Scaffold(BasicFedAvg):
             weights (NDArrays): The updated weights (aggregated from the clients).
 
         Returns:
-            NDArrays: ``self.server_model_weights + self.learning_rate * (weights - self.server_model_weights)``
+            (NDArrays): ``self.server_model_weights + self.learning_rate * (weights - self.server_model_weights)``
                 These are the updated server model weights.
         """
         # x_update = y_i - x
@@ -340,7 +340,7 @@ class Scaffold(BasicFedAvg):
                 averaged).
 
         Returns:
-            NDArrays: Updated server control variates according to the formula.
+            (NDArrays): Updated server control variates according to the formula.
         """
         # c = c + |S| / N * c_update
         return self.compute_updated_parameters(

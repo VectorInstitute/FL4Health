@@ -159,7 +159,7 @@ class BasicClient(NumPyClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            NDArrays: These are the parameters to be sent to the server. At minimum they represent the relevant model
+            (NDArrays): These are the parameters to be sent to the server. At minimum they represent the relevant model
                 parameters to be aggregated, but can contain more information.
         """
         if not self.initialized:
@@ -223,7 +223,7 @@ class BasicClient(NumPyClient):
             config (Config): Configuration to be used  in setting up the client.
 
         Returns:
-            NDArrays: All parameters associated with the ``self.model`` property of the client.
+            (NDArrays): All parameters associated with the ``self.model`` property of the client.
         """
         log(INFO, "Setting up client and providing full model parameters to the server for initialization")
         if not config:
@@ -447,7 +447,7 @@ class BasicClient(NumPyClient):
                 fit to be performed through the config.
 
         Returns:
-            bool: Whether to perform an evaluation on the client validation set after fitting.
+            (bool): Whether to perform an evaluation on the client validation set after fitting.
         """
         pre_aggregation_checkpointing_enabled = (
             self.checkpoint_and_state_module is not None
@@ -985,7 +985,7 @@ class BasicClient(NumPyClient):
             config (Config): The config from server.
 
         Returns:
-            ParameterExchanger: Used to exchange parameters between server and client.
+            (ParameterExchanger): Used to exchange parameters between server and client.
         """
         return FullParameterExchanger()
 
@@ -1067,7 +1067,7 @@ class BasicClient(NumPyClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses
+            (TrainingLosses): An instance of ``TrainingLosses`` containing backward loss and additional losses
                 indexed by name.
         """
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
@@ -1089,7 +1089,7 @@ class BasicClient(NumPyClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
+            (EvaluationLosses): An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
                 indexed by name.
         """
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
@@ -1151,7 +1151,7 @@ class BasicClient(NumPyClient):
             target (TorchTargetType): The target or label used to compute the loss.
 
         Returns:
-            TorchTargetType: Identical to target.
+            (TorchTargetType): Identical to target.
         """
         return target
 

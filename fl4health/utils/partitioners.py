@@ -182,7 +182,7 @@ class DirichletLabelBasedAllocation(Generic[T]):
             ValueError: Throws this error if the retries have been exhausted and the user provided minimum is not met.
 
         Returns:
-            (tuple[list[D], dict[T, np.ndarray]]: ``list[D])`` is the partitioned datasets, length should correspond to
+            (tuple[list[D], dict[T, np.ndarray]]): ``list[D]`` is the partitioned datasets, length should correspond to
                 ``self.number_of_partitions``. ``dict[T, np.ndarray]`` is the Dirichlet distribution used to partition
                 the data points for each label.
         """

@@ -34,7 +34,7 @@ class SequentiallySplitModel(nn.Module):
                 **BATCH FIRST.**
 
         Returns:
-            torch.Tensor: Flattened feature tensor of shape (``batch_size``, -1)
+            (torch.Tensor): Flattened feature tensor of shape (``batch_size``, -1)
         """
         return features.reshape(len(features), -1)
 
@@ -61,7 +61,7 @@ class SequentiallySplitModel(nn.Module):
             input (torch.Tensor): Input to the model forward pass. Expected to be of shape (``batch_size``, \\*)
 
         Returns:
-            torch.Tensor: Returns the potentially flatten features tensor from the base module.
+            (torch.Tensor): Returns the potentially flatten features tensor from the base module.
         """
         features = self.base_module.forward(input)
 

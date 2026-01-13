@@ -107,7 +107,7 @@ class FendaDittoClient(DittoClient):
             config (Config): The config from the server.
 
         Returns:
-            FendaModel: The client FENDA model.
+            (FendaModel): The client FENDA model.
 
         Raises:
             NotImplementedError: To be defined in child class.
@@ -122,7 +122,7 @@ class FendaDittoClient(DittoClient):
             config (Config): The config from the server.
 
         Returns:
-            SequentiallySplitModel: The global (Ditto) model.
+            (SequentiallySplitModel): The global (Ditto) model.
 
         Raises:
             NotImplementedError: To be defined in child class.
@@ -172,7 +172,7 @@ class FendaDittoClient(DittoClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            NDArrays: **GLOBAL** model weights to be sent to the server for aggregation.
+            (NDArrays): **GLOBAL** model weights to be sent to the server for aggregation.
         """
         if not self.initialized:
             log(INFO, "Setting up client")
@@ -317,7 +317,7 @@ class FendaDittoClient(DittoClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing the backward loss and additional losses
+            (TrainingLosses): An instance of ``TrainingLosses`` containing the backward loss and additional losses
                 indexed by name. Additional losses include each loss component and the global model loss tensor.
         """
         # Check that both models are in training mode

@@ -51,7 +51,7 @@ class MyNnUNetPredictor(nnUNetPredictor):
                 Defaults to nnunet's default number of processes (at time of writing this is 8)
 
         Returns:
-            List: A dictionary containing the predicted annotations and the data properties for each file. The
+            (List): A dictionary containing the predicted annotations and the data properties for each file. The
                 dictionary may also contain the predicted probabilities and the output file names associated with each
                 sample.
         """
@@ -139,7 +139,7 @@ def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, 
             Contains important information about data preprocessing.
 
     Returns:
-        MyNnUNetPredictor: A subclass of the nnUNetPredictor class for the set
+        (MyNnUNetPredictor): A subclass of the nnUNetPredictor class for the set
             of models specified by the ckpt_list. The subclasses only
             difference is that it returns a dictionary with more information
             as opposed to just a list of numpy arrays.

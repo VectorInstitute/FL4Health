@@ -100,7 +100,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             original_optimizer (Optimizer): original optimizer of the underlying `FlexibleClient`.
 
         Returns:
-            Optimizer: a copy of the original optimizer to be used by the global model.
+            (Optimizer): a copy of the original optimizer to be used by the global model.
         """
         optim_class = original_optimizer.__class__
         state_dict = original_optimizer.state_dict()
@@ -223,7 +223,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            NDArrays: **GLOBAL** model weights to be sent to the server for aggregation.
+            (NDArrays): **GLOBAL** model weights to be sent to the server for aggregation.
         """
         if not self.initialized:
             return self.setup_client_and_return_all_model_parameters(config)
@@ -430,7 +430,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
+            (EvaluationLosses): An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
                 indexed by name.
         """
         # Check that both models are in eval mode

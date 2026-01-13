@@ -53,7 +53,7 @@ class FedSimClrModel(nn.Module):
                 training phase.
 
         Returns:
-            torch.Tensor: The output from either the ``projection_head`` module if pre-training or the
+            (torch.Tensor): The output from either the ``projection_head`` module if pre-training or the
                 ``prediction_head`` if fine-tuning.
         """
         features = self.encoder(input)
@@ -74,7 +74,7 @@ class FedSimClrModel(nn.Module):
             model_path (Path): Path to a ``FedSimClrModel`` object saved using ``torch.save``
 
         Returns:
-            FedSimClrModel: A model with pre-existing weights loaded and ``pretrain`` set to False
+            (FedSimClrModel): A model with pre-existing weights loaded and ``pretrain`` set to False
         """
         prev_model = torch.load(model_path, weights_only=False)
         return FedSimClrModel(

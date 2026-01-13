@@ -102,8 +102,8 @@ class PerFclClient(BasicClient):
             config (Config): Configuration provided by the server.
 
         Returns:
-            ParameterExchanger: ``FixedLayerExchanger`` meant to only exchange a subset of model layers with the server
-                for aggregation.
+            (ParameterExchanger): ``FixedLayerExchanger`` meant to only exchange a subset of model layers with the
+                server for aggregation.
         """
         assert isinstance(self.model, PerFclModel)
         return FixedLayerExchanger(self.model.layers_to_exchange())
@@ -116,7 +116,7 @@ class PerFclClient(BasicClient):
             features (torch.Tensor): features to be flattened
 
         Returns:
-            torch.Tensor: flattened feature vectors of shape (batch, -1)
+            (torch.Tensor): flattened feature vectors of shape (batch, -1)
         """
         return features.reshape(len(features), -1)
 
@@ -128,7 +128,7 @@ class PerFclClient(BasicClient):
         old_global_module components will not have been.
 
         Returns:
-            bool: Indicates True if all of the modules are not None
+            (bool): Indicates True if all of the modules are not None
         """
         return (
             self.old_local_module is not None
@@ -271,7 +271,7 @@ class PerFclClient(BasicClient):
             target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
+            (EvaluationLosses): An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
                 indexed by name.
         """
         _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)

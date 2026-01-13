@@ -258,7 +258,7 @@ class FlexibleNnunetClient(FlexibleClient):
             losses (TrainingLosses): the losses to apply backwards on
 
         Returns:
-            TrainingLosses: The losses object after backwards application
+            (TrainingLosses): The losses object after backwards application
         """
         # If the device type is not cuda, we don't use mixed precision training and therefore can use parent method.
         if self.device.type != "cuda":

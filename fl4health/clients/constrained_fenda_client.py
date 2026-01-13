@@ -97,7 +97,7 @@ class ConstrainedFendaClient(FendaClient):
             features (torch.Tensor): features to be flattened
 
         Returns:
-            torch.Tensor: flattened feature vectors of shape (batch, -1)
+            (torch.Tensor): flattened feature vectors of shape (batch, -1)
         """
         return features.reshape(len(features), -1)
 
@@ -259,7 +259,7 @@ class ConstrainedFendaClient(FendaClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
+            (EvaluationLosses): An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
                 indexed by name. Additional losses may include ``cosine_similarity_loss``, ``contrastive_loss``
                 and ``perfcl_loss``.
         """

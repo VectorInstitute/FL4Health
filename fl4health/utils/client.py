@@ -54,7 +54,7 @@ def move_data_to_device(data: T, device: torch.device) -> T:
         TypeError: Raised if data is not one of the types specified by ``TorchInputType`` or ``TorchTargetType``
 
     Returns:
-        T: The data argument except now it's been moved to ``self.device``
+        (T): The data argument except now it's been moved to ``self.device``
     """
     # Currently we expect both inputs and targets to be either tensors
     # or dictionaries of tensors
@@ -85,7 +85,7 @@ def check_if_batch_is_empty_and_verify_input(input: TorchInputType) -> bool:
             the same size.
 
     Returns:
-        bool: True if input is an empty batch.
+        (bool): True if input is an empty batch.
     """
     if isinstance(input, torch.Tensor):
         return len(input) == 0
@@ -128,7 +128,7 @@ def maybe_progress_bar(iterable: Iterable, display_progress_bar: bool) -> Iterab
         display_progress_bar (bool): Whether we want to display a progress bar or not.
 
     Returns:
-        Iterable: An iterator which acts exactly like the original iterable, but prints a dynamically updating
+        (Iterable): An iterator which acts exactly like the original iterable, but prints a dynamically updating
         progress bar every time a value is requested. Or the original iterable if ``self.progress_bar`` is False
     """
     if not display_progress_bar:

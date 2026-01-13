@@ -78,7 +78,7 @@ def is_masked_module(module: nn.Module) -> bool:
         module (nn.Module): Module to be checked
 
     Returns:
-        bool: True if the module is a masked type and False otherwise.
+        (bool): True if the module is a masked type and False otherwise.
     """
     return isinstance(
         module,

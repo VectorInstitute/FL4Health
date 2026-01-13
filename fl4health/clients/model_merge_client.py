@@ -89,7 +89,7 @@ class ModelMergeClient(NumPyClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            NDArrays: These are the parameters to be sent to the server. At minimum they represent the relevant model
+            (NDArrays): These are the parameters to be sent to the server. At minimum they represent the relevant model
                 parameters to be aggregated, but can contain more information.
         """
         assert self.model is not None
@@ -221,7 +221,7 @@ class ModelMergeClient(NumPyClient):
             config (Config): Configuration object from the server.
 
         Returns:
-            FullParameterExchanger: The parameter exchanger used to set and get parameters.
+            (FullParameterExchanger): The parameter exchanger used to set and get parameters.
         """
         return FullParameterExchanger()
 
@@ -251,6 +251,6 @@ class ModelMergeClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            DataLoader: Client test data loader.
+            (DataLoader): Client test data loader.
         """
         raise NotImplementedError

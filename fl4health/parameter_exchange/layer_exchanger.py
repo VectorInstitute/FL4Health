@@ -35,7 +35,7 @@ class FixedLayerExchanger(ParameterExchanger):
             model (nn.Module): Model whose parameters are to be filtered then transferred.
 
         Returns:
-            NDArrays: Filter set of model parameters.
+            (NDArrays): Filter set of model parameters.
         """
         model_state_dict = model.state_dict()
         return [model_state_dict[layer_to_transfer].cpu().numpy() for layer_to_transfer in self.layers_to_transfer]

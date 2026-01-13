@@ -64,7 +64,7 @@ class SimpleDictionaryCheckpointer:
         ``checkpoint_name`` during initialization.
 
         Returns:
-            bool: True if checkpoint exists, otherwise false.
+            (bool): True if checkpoint exists, otherwise false.
         """
         return os.path.exists(self.checkpoint_path)
 
@@ -212,7 +212,7 @@ class MultiAttributeEnum(Enum):
             attributes (Any): The attributes used to define the members
 
         Returns:
-            Any: The main attribute value given a member's attributes.
+            (Any): The main attribute value given a member's attributes.
         """
         if isinstance(attributes, dict):
             return list(attributes.values())[0]

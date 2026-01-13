@@ -123,7 +123,7 @@ class StateCheckpointer(ABC):
         ``checkpoint_name``.
 
         Returns:
-            bool: True if checkpoint exists, otherwise false.
+            (bool): True if checkpoint exists, otherwise false.
         """
         assert self.checkpoint_path is not None, "A checkpoint_path should be set but is no"
         return os.path.exists(self.checkpoint_path)
@@ -202,7 +202,7 @@ class StateCheckpointer(ABC):
             name (str): Name of the attribute.
 
         Returns:
-            Any: The attribute value.
+            (Any): The attribute value.
         """
         raise NotImplementedError("get_attribute must be implemented by inheriting classes")
 
@@ -364,7 +364,7 @@ class ClientStateCheckpointer(StateCheckpointer):
                 attributes specified in ``snapshot_attrs`` are loaded. Defaults to None.
 
         Returns:
-            bool: True if a checkpoint is successfully loaded. False otherwise.
+            (bool): True if a checkpoint is successfully loaded. False otherwise.
         """
         # Store client for access in functions
         self.client = client
@@ -391,7 +391,7 @@ class ClientStateCheckpointer(StateCheckpointer):
             name (str): Name of the attribute.
 
         Returns:
-            Any: The attribute value.
+            (Any): The attribute value.
         """
         assert self.client is not None, "Client is not set."
         return getattr(self.client, name)
@@ -525,7 +525,7 @@ class ServerStateCheckpointer(StateCheckpointer):
             name (str): Name of the attribute.
 
         Returns:
-            Any: The attribute value.
+            (Any): The attribute value.
         """
         assert self.server is not None, "Server is not set."
         if name == "model":

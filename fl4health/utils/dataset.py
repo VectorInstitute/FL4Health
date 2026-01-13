@@ -67,7 +67,7 @@ class BaseDataset(ABC, Dataset):
             NotImplementedError: Throws if one attempts to use this function.
 
         Returns:
-            int: Length of the underlying data.
+            (int): Length of the underlying data.
         """
         raise NotImplementedError
 
@@ -133,7 +133,7 @@ class TensorDataset(BaseDataset):
         Length of the dataset as determined by len() applied to torch dataset.
 
         Returns:
-            int: Length of dataset.
+            (int): Length of dataset.
         """
         return len(self.data)
 
@@ -240,7 +240,7 @@ class DictionaryDataset(Dataset):
         uniform.
 
         Returns:
-            int: Dataset length.
+            (int): Dataset length.
         """
         first_key = list(self.data.keys())[0]
         return len(self.data[first_key])
@@ -284,7 +284,7 @@ class SyntheticDataset(TensorDataset):
         Returns the length of the dataset. Identical to the pytorch dataset length function.
 
         Returns:
-            int: Length of the data.
+            (int): Length of the data.
         """
         return len(self.data)
 
@@ -305,7 +305,7 @@ def select_by_indices(dataset: D, selected_indices: torch.Tensor) -> D:
         TypeError: Will throw an error if the dataset provided is not supported.
 
     Returns:
-        D: Dataset with only the data associated with the provided indices. Must be of a supported type.
+        (D): Dataset with only the data associated with the provided indices. Must be of a supported type.
     """
     if isinstance(dataset, TensorDataset):
         modified_dataset = copy.deepcopy(dataset)
