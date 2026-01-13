@@ -135,7 +135,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
 
         Returns:
             list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
-            be sent to each client (packaged as ``FitIns``).
+                be sent to each client (packaged as ``FitIns``).
         """
         if isinstance(client_manager, BaseFractionSamplingManager):
             # Using one of the custom FractionSamplingManager classes, sampling fraction is based on fraction_fit
@@ -172,7 +172,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
 
         Returns:
             list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
-            to be sent to each client (packaged as ``EvaluateIns``).
+                to be sent to each client (packaged as ``EvaluateIns``).
         """
         # Do not configure federated evaluation if fraction eval is 0.
         if self.fraction_evaluate == 0.0:
@@ -210,7 +210,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
 
         Returns:
             list[tuple[ClientProxy, GetPropertiesIns]]: List of sampled client identifiers and the configuration
-            to be sent to each client (packaged as ``GetPropertiesIns``).
+                to be sent to each client (packaged as ``GetPropertiesIns``).
         """
         config = {}
         if self.on_fit_config_fn is not None:
@@ -296,7 +296,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
 
         Returns:
             tuple[float | None, dict[str, Scalar]]: Aggregated loss values and the aggregated metrics. The metrics
-            are aggregated according to ``evaluate_metrics_aggregation_fn``.
+                are aggregated according to ``evaluate_metrics_aggregation_fn``.
         """
         if not results:
             return None, {}

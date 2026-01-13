@@ -217,7 +217,7 @@ class AutoEncoderDatasetConverter(DatasetConverter):
 
         Returns:
             tuple[torch.Tensor, torch.Tensor]: Data in its original shape, and the condition vector to be fed into the
-            model.
+                model.
         """
         # We assume data is "batch first".
         x = packed_data[:, : -1 * cond_vec_size]  # Exclude the condition from input

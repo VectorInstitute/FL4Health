@@ -106,7 +106,7 @@ class EnsembleClient(BasicClient):
 
         Returns:
             tuple[TrainingLosses, dict[str, torch.Tensor]]: The losses object from the train step along with
-            a dictionary of any predictions produced by the model.
+                a dictionary of any predictions produced by the model.
         """
         assert isinstance(input, torch.Tensor)
         for optimizer in self.optimizers.values():
@@ -143,7 +143,7 @@ class EnsembleClient(BasicClient):
 
         Returns:
             TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses
-            indexed by name.
+                indexed by name.
         """
         loss_dict = {}
         for key, pred in preds.items():
@@ -170,7 +170,7 @@ class EnsembleClient(BasicClient):
 
         Returns:
             EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
-            indexed by name.
+                indexed by name.
         """
         loss_dict = {}
         for key, pred in preds.items():

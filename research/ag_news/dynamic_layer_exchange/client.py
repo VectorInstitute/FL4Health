@@ -89,7 +89,7 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
 
         Returns:
             ParameterExchanger: This exchanger handles the exchange orchestration between clients and server during
-            federated training
+                federated training.
         """
         normalize = narrow_dict_type(config, "normalize", bool)
         filter_by_percentage = narrow_dict_type(config, "filter_by_percentage", bool)

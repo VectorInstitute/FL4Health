@@ -224,7 +224,8 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
 
         Returns:
             tuple[torch.Tensor, torch.Tensor]: ``X`` and ``Y`` for the clients synthetic dataset. Shape of ``X`` is
-            ``n_samples`` x input dimension. Shape of ``Y`` is ``n_samples`` x ``output_dim`` and is one-hot encoded
+                ``n_samples`` x input dimension. Shape of ``Y`` is ``n_samples`` x ``output_dim`` and is one-hot
+                encoded.
         """
         multivariate_normal = MultivariateNormal(loc=v, covariance_matrix=sigma)
         # size of x should be samples_per_client x input_dim
@@ -328,7 +329,8 @@ class SyntheticIidFedProxDataset(SyntheticFedProxDataset):
 
         Returns:
             tuple[torch.Tensor, torch.Tensor]: ``X`` and ``Y`` for the clients synthetic dataset. Shape of ``X`` is
-            ``n_samples`` x input dimension. Shape of ``Y`` is ``n_samples`` x ``output_dim`` and is one-hot encoded
+                ``n_samples`` x input dimension. Shape of ``Y`` is ``n_samples`` x ``output_dim`` and is one-hot
+                encoded.
         """
         # size of x should be samples_per_client x input_dim
         x = self.input_multivariate_normal.sample(torch.Size((self.samples_per_client,)))

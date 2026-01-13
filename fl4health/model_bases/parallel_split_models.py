@@ -114,8 +114,8 @@ class ParallelSplitModel(nn.Module):
 
         Returns:
             tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: Prediction tensor from the head model. These
-            predictions are stored under the "prediction" key of the dictionary. The second feature dictionary is
-            empty by default.
+                predictions are stored under the "prediction" key of the dictionary. The second feature dictionary is
+                empty by default.
         """
         first_output = self.first_feature_extractor.forward(input)
         second_output = self.second_feature_extractor.forward(input)

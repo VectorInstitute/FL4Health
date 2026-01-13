@@ -135,8 +135,8 @@ class ApflClient(BasicClient):
         Returns:
             tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
 
-            - The tensor for the personal loss
-            - A dictionary of with "global_loss" and "local_loss" keys and their calculated values
+                - The tensor for the personal loss
+                - A dictionary of with "global_loss" and "local_loss" keys and their calculated values
         """
         assert isinstance(preds, dict)
         personal_loss = self.criterion(preds["personal"], target)

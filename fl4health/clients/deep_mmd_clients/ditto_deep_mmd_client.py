@@ -171,7 +171,7 @@ class DittoDeepMmdClient(DittoClient):
 
         Returns:
             tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple containing the extracted
-            features using the local and initial global models.
+                features using the local and initial global models.
         """
         self.local_feature_extractor.clear_buffers()
         self.initial_global_feature_extractor.clear_buffers()
@@ -235,9 +235,9 @@ class DittoDeepMmdClient(DittoClient):
 
         Returns:
             tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains a dictionary of
-            predictions indexed by name and the second element contains intermediate activations indexed by name.
-            By passing features, we can compute all the losses. All predictions included in dictionary will by
-            default be used to compute metrics separately.
+                predictions indexed by name and the second element contains intermediate activations indexed by name.
+                By passing features, we can compute all the losses. All predictions included in dictionary will by
+                default be used to compute metrics separately.
         """
         # We use features from initial_global_model to compute the Deep MMD loss not the global_model
         global_preds = self.global_model(input)
@@ -292,7 +292,7 @@ class DittoDeepMmdClient(DittoClient):
 
         Returns:
             TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed by
-            name. Additional losses includes each loss component and the global model loss tensor.
+                name. Additional losses includes each loss component and the global model loss tensor.
         """
         for layer_loss_module in self.deep_mmd_losses.values():
             if self.mmd_kernel_train_interval == -1:
@@ -340,7 +340,7 @@ class DittoDeepMmdClient(DittoClient):
 
         Returns:
             EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
-            indexed by name.
+                indexed by name.
         """
         for layer_loss_module in self.deep_mmd_losses.values():
             assert not layer_loss_module.training

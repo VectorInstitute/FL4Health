@@ -23,7 +23,7 @@ class FullParameterExchanger(ParameterExchanger):
 
         Returns:
             NDArrays: All parameters contained in the ``state_dict`` of the model parameter. The ``state_dict``
-            maintains a specific order.
+                maintains a specific order.
         """
         # Sending all of parameters ordered by state_dict keys
         # NOTE: Order matters, because it is relied upon by pull_parameters below

@@ -92,7 +92,7 @@ class AdaptiveDriftConstraintClient(BasicClient):
 
         Returns:
             NDArrays: Parameters and training loss packed together into a list of numpy arrays to be sent to the
-            server.
+                server.
         """
         if not self.initialized:
             return self.setup_client_and_return_all_model_parameters(config)
@@ -145,7 +145,7 @@ class AdaptiveDriftConstraintClient(BasicClient):
 
         Returns:
             TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed
-            by name. Additional losses includes penalty loss.
+                by name. Additional losses includes penalty loss.
         """
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         if additional_losses is None:

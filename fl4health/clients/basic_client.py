@@ -160,7 +160,7 @@ class BasicClient(NumPyClient):
 
         Returns:
             NDArrays: These are the parameters to be sent to the server. At minimum they represent the relevant model
-            parameters to be aggregated, but can contain more information.
+                parameters to be aggregated, but can contain more information.
         """
         if not self.initialized:
             return self.setup_client_and_return_all_model_parameters(config)
@@ -394,7 +394,7 @@ class BasicClient(NumPyClient):
 
         Returns:
             tuple[float, int, dict[str, Scalar]]: A loss associated with the evaluation, the number of samples in the
-            validation/test set and the ``metric_values`` associated with evaluation.
+                validation/test set and the ``metric_values`` associated with evaluation.
         """
         if not self.initialized:
             self.setup_client(config)
@@ -586,7 +586,7 @@ class BasicClient(NumPyClient):
 
         Returns:
             tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with a dictionary of
-            any predictions produced by the model.
+                any predictions produced by the model.
         """
         # Clear gradients from optimizer if they exist
         self.optimizers["global"].zero_grad()
@@ -613,7 +613,7 @@ class BasicClient(NumPyClient):
 
         Returns:
             tuple[EvaluationLosses, TorchPredType]: The losses object from the val step along with a dictionary of the
-            predictions produced by the model.
+                predictions produced by the model.
         """
         # Get preds and compute loss
         with torch.no_grad():
@@ -637,7 +637,7 @@ class BasicClient(NumPyClient):
 
         Returns:
             tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
-            Loss is a dictionary of one or more losses that represent the different components of the loss.
+                Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         self.model.train()
         steps_this_round = 0  # Reset number of steps this round
@@ -709,7 +709,7 @@ class BasicClient(NumPyClient):
 
         Returns:
             tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
-            Loss is a dictionary of one or more losses that represent the different components of the loss.
+                Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         self.model.train()
 
@@ -874,7 +874,7 @@ class BasicClient(NumPyClient):
 
         Returns:
             tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation
-            (and test if present).
+                (and test if present).
         """
         if self.num_validation_steps is None:
             val_loss, val_metrics = self._fully_validate_or_test(
@@ -915,7 +915,7 @@ class BasicClient(NumPyClient):
 
         Returns:
             dict[str, Scalar]: A dictionary with two entries corresponding to the sample counts in
-            the train and validation set.
+                the train and validation set.
         """
         if not self.initialized:
             self.setup_client(config)
@@ -1066,7 +1066,7 @@ class BasicClient(NumPyClient):
 
         Returns:
             TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses
-            indexed by name.
+                indexed by name.
         """
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         return TrainingLosses(backward=loss, additional_losses=additional_losses)
@@ -1088,7 +1088,7 @@ class BasicClient(NumPyClient):
 
         Returns:
             EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
-            indexed by name.
+                indexed by name.
         """
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         return EvaluationLosses(checkpoint=loss, additional_losses=additional_losses)

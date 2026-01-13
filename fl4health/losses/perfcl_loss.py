@@ -67,8 +67,8 @@ class PerFclLoss(nn.Module):
 
         Returns:
             tuple[torch.Tensor, torch.Tensor]: Tuple containing the two components of the PerFCL loss function to
-            be weighted and summed. The first tensor corresponds to the global feature loss, the second is
-            associated with the local feature loss.
+                be weighted and summed. The first tensor corresponds to the global feature loss, the second is
+                associated with the local feature loss.
         """
         # The more general contrastive loss function requires 3D tensors, where the first dimension is potentially
         # greater than 1. For the PerFCL loss, this will always just be 1.

@@ -95,7 +95,7 @@ class NumpyClippingClient(BasicClient):
 
         Returns:
             tuple[NDArrays, float]: Clipped parameters and the associated clipping bit indicating whether the norm
-            was below ``self.clipping_bound``. If ``self.adaptive_clipping`` is false, this bit is always 0.0
+                was below ``self.clipping_bound``. If ``self.adaptive_clipping`` is false, this bit is always 0.0
         """
         assert self.clipping_bound is not None
         assert self.adaptive_clipping is not None

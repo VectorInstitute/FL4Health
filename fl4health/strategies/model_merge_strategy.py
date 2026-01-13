@@ -106,7 +106,7 @@ class ModelMergeStrategy(Strategy):
 
         Returns:
             list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
-            be sent to each client (packaged as ``FitIns``).
+                be sent to each client (packaged as ``FitIns``).
         """
         config = {}
         if self.on_fit_config_fn is not None:
@@ -139,7 +139,7 @@ class ModelMergeStrategy(Strategy):
 
         Returns:
             list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
-            to be sent to each client (packaged as ``EvaluateIns``).
+                to be sent to each client (packaged as ``EvaluateIns``).
         """
         # Do not configure federated evaluation if fraction eval is 0.
         if self.fraction_evaluate == 0.0:
@@ -230,7 +230,7 @@ class ModelMergeStrategy(Strategy):
 
         Returns:
             tuple[float | None, dict[str, Scalar]]: Aggregated loss values and the aggregated metrics. The metrics
-            are aggregated according to ``evaluate_metrics_aggregation_fn``.
+                are aggregated according to ``evaluate_metrics_aggregation_fn``.
         """
         if not results:
             return None, {}
@@ -259,7 +259,7 @@ class ModelMergeStrategy(Strategy):
 
         Returns:
             tuple[float, dict[str, Scalar]] | None: A Tuple containing loss and a dictionary containing task-specific
-            metrics (e.g., accuracy).
+                metrics (e.g., accuracy).
         """
         if self.evaluate_fn is None:
             return None

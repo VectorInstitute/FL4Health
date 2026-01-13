@@ -31,7 +31,7 @@ class PerFclModel(PartialLayerExchangeModel, ParallelSplitModel):
 
         Returns:
             list[str]: List of layers associated with the global model (``second_feature_extractor``) corresponding
-            to keys in the state dictionary.
+                to keys in the state dictionary.
         """
         return [layer_name for layer_name in self.state_dict() if layer_name.startswith("second_feature_extractor.")]
 
@@ -44,8 +44,8 @@ class PerFclModel(PartialLayerExchangeModel, ParallelSplitModel):
 
         Returns:
             tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: Tuple of predictions and feature maps. PerFCL
-            predictions are simply stored under the key "prediction." The features for the local and global feature
-            extraction modules are stored under keys "local_features" and "global_features," respectively.
+                predictions are simply stored under the key "prediction." The features for the local and global feature
+                extraction modules are stored under keys "local_features" and "global_features," respectively.
         """
         local_output = self.first_feature_extractor.forward(input)
         global_output = self.second_feature_extractor.forward(input)

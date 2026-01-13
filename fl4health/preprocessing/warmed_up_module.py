@@ -69,7 +69,7 @@ class WarmedUpModule:
 
         Returns:
             str | None: If no weights mapping dict is provided, returns the key. Otherwise, if the key is in the
-            weights mapping dict, returns the matching component of the key. Otherwise, returns None.
+                weights mapping dict, returns the matching component of the key. Otherwise, returns None.
         """
         if self.weights_mapping_dict is None:
             return key

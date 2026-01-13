@@ -103,7 +103,7 @@ class PerFclClient(BasicClient):
 
         Returns:
             ParameterExchanger: ``FixedLayerExchanger`` meant to only exchange a subset of model layers with the server
-            for aggregation.
+                for aggregation.
         """
         assert isinstance(self.model, PerFclModel)
         return FixedLayerExchanger(self.model.layers_to_exchange())
@@ -146,9 +146,9 @@ class PerFclClient(BasicClient):
 
         Returns:
             tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple in which the first element
-            contains predictions indexed by name and the second element contains intermediate activations
-            index by name. Specifically the features of the model, features of the global model and features of
-            the old model are returned. All predictions included in dictionary will be used to compute metrics.
+                contains predictions indexed by name and the second element contains intermediate activations
+                index by name. Specifically the features of the model, features of the global model and features of
+                the old model are returned. All predictions included in dictionary will be used to compute metrics.
         """
         # For PerFCL models, we required the input to simply be a torch.Tensor
         assert isinstance(input, torch.Tensor)
@@ -272,7 +272,7 @@ class PerFclClient(BasicClient):
 
         Returns:
             EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
-            indexed by name.
+                indexed by name.
         """
         _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         return EvaluationLosses(checkpoint=additional_losses["loss"], additional_losses=additional_losses)

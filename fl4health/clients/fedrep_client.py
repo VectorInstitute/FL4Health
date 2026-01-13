@@ -147,8 +147,8 @@ class FedRepClient(BasicClient):
 
         Returns:
             EpochsAndStepsTuple: Returns a tuple of epochs and steps for which to train the head and representation
-            modules. Only two of the four possible values will be defined, depending on whether we're doing
-            epoch-based or step based training.
+                modules. Only two of the four possible values will be defined, depending on whether we're doing
+                epoch-based or step based training.
         """
         epochs_specified = ("local_head_epochs" in config) and ("local_rep_epochs" in config)
         steps_specified = ("local_head_steps" in config) and ("local_rep_steps" in config)
@@ -323,7 +323,7 @@ class FedRepClient(BasicClient):
 
         Returns:
             tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
-            Loss is a dictionary of one or more losses that represent the different components of the loss.
+                Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         # First we train the head module for head_epochs with the representations frozen in place
         self._prepare_train_head()
@@ -363,7 +363,7 @@ class FedRepClient(BasicClient):
 
         Returns:
             tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
-            Loss is a dictionary of one or more losses that represent the different components of the loss.
+                Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         assert isinstance(self.model, FedRepModel)
         # First we train the head module for head_steps with the representations frozen in place
@@ -404,7 +404,7 @@ class FedRepClient(BasicClient):
 
         Returns:
             tuple[TrainingLosses, dict[str, torch.Tensor]]: The losses object from the train step along with
-            a dictionary of any predictions produced by the model.
+                a dictionary of any predictions produced by the model.
         """
         # Clear gradients from the optimizers if they exits. We do both regardless of the client mode.
         self.optimizers["representation"].zero_grad()

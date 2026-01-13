@@ -269,7 +269,7 @@ class FedDgGa(FedAvg):
 
         Returns:
             (tuple[Parameters | None, dict[str, Scalar]]): A tuple containing the aggregated parameters and the
-            aggregated fit metrics.
+                aggregated fit metrics.
         """
         if not results:
             return None, {}
@@ -312,7 +312,7 @@ class FedDgGa(FedAvg):
 
         Returns:
             (tuple[float | None, dict[str, Scalar]]): A tuple containing the aggregated evaluation loss and the
-            aggregated evaluation metrics.
+                aggregated evaluation metrics.
         """
         loss_aggregated, metrics_aggregated = super().aggregate_evaluate(server_round, results, failures)
 

@@ -214,7 +214,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
 
         Returns:
             tuple[list[tuple[NDArrays, int]], NDArrays]: The first tuple is the set of (weights, training counts) per
-            client. The second is a set of clipping bits, one for each client.
+                client. The second is a set of clipping bits, one for each client.
         """
         # Sorting the results by elements and sample counts. This is primarily to reduce numerical fluctuations in
         # summing the numpy arrays during aggregation. This ensures that addition will occur in the same order,
@@ -318,8 +318,8 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
 
         Returns:
             tuple[Parameters | None, dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
-            For this strategy, the server also packs a clipping bound to be sent to the clients. This is sent even
-            if adaptive clipping is turned off and the value simply remains constant.
+                For this strategy, the server also packs a clipping bound to be sent to the clients. This is sent even
+                if adaptive clipping is turned off and the value simply remains constant.
         """
         if not results:
             return None, {}
@@ -405,7 +405,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
 
         Returns:
             list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
-            be sent to each client (packaged as ``FitIns``).
+                be sent to each client (packaged as ``FitIns``).
         """
         # This strategy requires the client manager to be of type at least BaseFractionSamplingManager
         assert isinstance(client_manager, BaseFractionSamplingManager)
@@ -442,7 +442,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
 
         Returns:
             list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
-            to be sent to each client (packaged as ``EvaluateIns``).
+                to be sent to each client (packaged as ``EvaluateIns``).
         """
         # This strategy requires the client manager to be of type at least BaseFractionSamplingManager
         assert isinstance(client_manager, BaseFractionSamplingManager)

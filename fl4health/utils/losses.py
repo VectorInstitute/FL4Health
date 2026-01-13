@@ -66,7 +66,7 @@ class EvaluationLosses(Losses):
 
         Returns:
             dict[str, float]: A dictionary with the checkpoint loss, plus each one of the keys in additional losses if
-            they exist.
+                they exist.
         """
         loss_dict = super().as_dict()
         loss_dict["checkpoint"] = float(self.checkpoint.item())
@@ -120,7 +120,7 @@ class TrainingLosses(Losses):
 
         Returns:
             dict[str, float]: A dictionary where each key represents one of the  backward losses, plus additional
-            losses if they exist.
+                losses if they exist.
         """
         loss_dict = super().as_dict()
 
@@ -217,7 +217,7 @@ class LossMeter(Generic[LossesType]):
 
         Returns:
             dict[str, torch.Tensor]: A single dictionary with the aggregated losses according to the given loss
-            meter type.
+                meter type.
         """
         # We don't know the keys of the dict (backward or additional losses) beforehand. We don't obtain them
         # from the first entry because losses can have different keys. We get list of all the keys from

@@ -171,7 +171,7 @@ class ClassificationMetric(Metric, ABC):
 
         Returns:
             tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: True positive, false positive,
-            true negative, and false negative indications for each of the predictions in the provided tensors.
+                true negative, and false negative indications for each of the predictions in the provided tensors.
         """
         true_positives = (preds * targets) if not self.discard_tp else torch.tensor([])
         false_positives = (preds * (1 - targets)) if not self.discard_fp else torch.tensor([])
@@ -200,7 +200,7 @@ class ClassificationMetric(Metric, ABC):
 
         Returns:
             tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors reduced over the specified axes
-            in the order ``true_positives``, ``false_positives``, ``true_negatives``, ``false_negatives``.
+                in the order ``true_positives``, ``false_positives``, ``true_negatives``, ``false_negatives``.
         """
         true_positives = true_positives.sum(sum_axes, dtype=self.dtype) if not self.discard_tp else true_positives
         false_positives = false_positives.sum(sum_axes, dtype=self.dtype) if not self.discard_fp else false_positives
@@ -220,7 +220,7 @@ class ClassificationMetric(Metric, ABC):
 
         Returns:
             torch.Tensor: If ``count_tensor`` was 1D then it is returned unchanged. Otherwise this is the
-            ``count_tensor`` with shape (``batch_size``, ``num_labels``).
+                ``count_tensor`` with shape (``batch_size``, ``num_labels``).
         """
         if count_tensor.ndim != MAX_COUNT_TENSOR_DIMS:
             return count_tensor
@@ -548,8 +548,8 @@ class BinaryClassificationMetric(ClassificationMetric):
 
         Returns:
             torch.Tensor: Count tensor of the appropriate shape and structure. If ``self.batch_dim`` is not None
-            then the postprocessed ``count_tensor`` will have shape ``(batch size, 1)``, Otherwise, it will have shape
-            ``(1,)``. In both settings, the count is relative to the label at index 1 (implied or explicit).
+                then the postprocessed ``count_tensor`` will have shape ``(batch size, 1)``, Otherwise, it will have
+                shape ``(1,)``. In both settings, the count is relative to the label at index 1 (implied or explicit).
         """
         # If tensor is empty, we do nothing
         if count_tensor.numel() == 0:
@@ -638,10 +638,10 @@ class BinaryClassificationMetric(ClassificationMetric):
 
         Returns:
             tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
-            specified dimensions for each of true positives, false positives, true negatives, and false negatives,
-            respectively. If ``self.batch_dim`` is not None then these tensors will have shape
-            ``(batch_size, 1)``, Otherwise, it will have shape ``(1,)``. The counts will be relative to the
-            index of ``self.pos_label``.
+                specified dimensions for each of true positives, false positives, true negatives, and false negatives,
+                respectively. If ``self.batch_dim`` is not None then these tensors will have shape
+                ``(batch_size, 1)``, Otherwise, it will have shape ``(1,)``. The counts will be relative to the
+                index of ``self.pos_label``.
         """
         true_positives, false_positives, true_negatives, false_negatives = super().count_tp_fp_tn_fn(preds, targets)
 

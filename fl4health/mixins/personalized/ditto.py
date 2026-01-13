@@ -336,8 +336,8 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
 
         Returns:
             tuple[TrainingLosses, TorchPredType]: Returns relevant loss values from both the global and local
-            model optimization steps. The prediction dictionary contains predictions indexed a "global" and "local"
-            corresponding to predictions from the global and local Ditto models for metric evaluations.
+                model optimization steps. The prediction dictionary contains predictions indexed a "global" and "local"
+                corresponding to predictions from the global and local Ditto models for metric evaluations.
         """
         # global
         global_losses, global_preds = self._compute_preds_and_losses(
@@ -431,7 +431,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
 
         Returns:
             EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
-            indexed by name.
+                indexed by name.
         """
         # Check that both models are in eval mode
         assert self.global_model is not None and not self.global_model.training and not self.model.training

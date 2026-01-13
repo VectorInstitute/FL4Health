@@ -98,7 +98,7 @@ class PartialWeightExchangeClient(BasicClient):
 
         Returns:
             ParameterExchanger: This exchanger handles the exchange orchestration between clients and server during
-            federated training
+                federated training
         """
         raise NotImplementedError
 

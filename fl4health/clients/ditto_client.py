@@ -229,8 +229,8 @@ class DittoClient(AdaptiveDriftConstraintClient):
 
         Returns:
             tuple[TrainingLosses, TorchPredType]: Returns relevant loss values from both the global and local
-            model optimization steps. The prediction dictionary contains predictions indexed a "global" and "local"
-            corresponding to predictions from the global and local Ditto models for metric evaluations.
+                model optimization steps. The prediction dictionary contains predictions indexed a "global" and "local"
+                corresponding to predictions from the global and local Ditto models for metric evaluations.
         """
         # Clear gradients from optimizers if they exist
         self.optimizers["global"].zero_grad()
@@ -344,8 +344,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
 
         Returns:
             TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed by
-            name. Additional losses includes each loss component and the global model
-            loss tensor.
+                name. Additional losses includes each loss component and the global model loss tensor.
         """
         # Check that both models are in training mode
         assert self.global_model.training and self.model.training
@@ -394,7 +393,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
 
         Returns:
             EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
-            indexed by name.
+                indexed by name.
         """
         # Check that both models are in eval mode
         assert not self.global_model.training and not self.model.training

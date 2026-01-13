@@ -63,7 +63,7 @@ class FedPCAClient(NumPyClient):
 
         Returns:
             NDArrays: Parameters representing the principal components computed by the client that need to be
-            aggregated in some way.
+                aggregated in some way.
         """
         if not self.initialized:
             log(INFO, "Setting up client and providing full model parameters to the server for initialization")
@@ -180,7 +180,7 @@ class FedPCAClient(NumPyClient):
 
         Returns:
             tuple[NDArrays, int, dict[str, Scalar]]: The local principal components following the local training along
-            with the number of samples in the local training dataset and the computed metrics throughout the fit.
+                with the number of samples in the local training dataset and the computed metrics throughout the fit.
         """
         if not self.initialized:
             self.setup_client(config)
@@ -207,7 +207,7 @@ class FedPCAClient(NumPyClient):
 
         Returns:
             tuple[float, int, dict[str, Scalar]]: A loss associated with the evaluation, the number of samples in the
-            validation/test set and the ``metric_values`` associated with evaluation.
+                validation/test set and the ``metric_values`` associated with evaluation.
         """
         if not self.initialized:
             self.setup_client(config)

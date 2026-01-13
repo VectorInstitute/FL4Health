@@ -307,7 +307,7 @@ class LlmClient(BasicClient):
 
         Returns:
             tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics
-            from validation (and test if present).
+                from validation (and test if present).
         """
         results = self.trainer.evaluate()
 

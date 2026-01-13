@@ -95,9 +95,9 @@ class MoonClient(BasicClient):
 
         Returns:
             tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple in which the first element
-            contains predictions indexed by name and the second element contains intermediate activations
-            index by name. Specifically the features of the model, features of the global model and features of
-            the old model are returned. All predictions included in dictionary will be used to compute metrics.
+                contains predictions indexed by name and the second element contains intermediate activations
+                index by name. Specifically the features of the model, features of the global model and features of
+                the old model are returned. All predictions included in dictionary will be used to compute metrics.
         """
         assert isinstance(input, torch.Tensor)
         preds, features = self.model(input)
@@ -209,7 +209,7 @@ class MoonClient(BasicClient):
 
         Returns:
             TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses
-            indexed by name.
+                indexed by name.
         """
         # Check that the model is in training mode
         assert self.model.training
@@ -241,7 +241,7 @@ class MoonClient(BasicClient):
 
         Returns:
             EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
-            indexed by name.
+                indexed by name.
         """
         # Check that the model is in evaluation mode
         assert not self.model.training

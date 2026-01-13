@@ -133,7 +133,7 @@ class SparseCooParameterPacker(ParameterPacker[tuple[NDArrays, NDArrays, list[st
 
         Returns:
             tuple[NDArray, NDArray, NDArray]: The nonzero values of x, the indices of those values within x, and the
-            shape of x.
+                shape of x.
         """
         selected_parameters = x[torch.nonzero(x, as_tuple=True)].cpu().numpy()
         selected_indices = torch.nonzero(x, as_tuple=False).cpu().numpy()

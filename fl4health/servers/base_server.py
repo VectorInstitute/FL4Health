@@ -153,8 +153,8 @@ class FlServer(Server):
 
         Returns:
             tuple[History, float]: The first element of the tuple is a ``History`` object containing the losses and
-            metrics computed during training and validation. The second element of the tuple is the elapsed time in
-            seconds.
+                metrics computed during training and validation. The second element of the tuple is the elapsed time in
+                seconds.
         """
         log(INFO, "Initializing server state and global parameters")
         self.parameters = self._get_initial_parameters(server_round=0, timeout=timeout)
@@ -242,8 +242,8 @@ class FlServer(Server):
 
         Returns:
             tuple[History, float]: The first element of the tuple is a ``History`` object containing the full set of
-            FL training results, including things like aggregated loss and metrics. Tuple also contains the elapsed
-            time in seconds for the round.
+                FL training results, including things like aggregated loss and metrics. Tuple also contains the elapsed
+                time in seconds for the round.
         """
         start_time = datetime.datetime.now()
         self.reports_manager.report(
@@ -292,9 +292,9 @@ class FlServer(Server):
 
         Returns:
             tuple[Parameters | None, dict[str, Scalar], FitResultsAndFailures] | None: The results of training
-            on the client sit. The first set of parameters are the **AGGREGATED** parameters from the strategy. The
-            second is a dictionary of **AGGREGATED** metrics. The third component holds the individual (non-aggregated)
-            parameters, loss, and metrics for successful and unsuccessful client-side training.
+                on the client sit. The first set of parameters are the **AGGREGATED** parameters from the strategy. The
+                second is a dictionary of **AGGREGATED** metrics. The third component holds the individual
+                (non-aggregated) parameters, loss, and metrics for successful and unsuccessful client-side training.
         """
         round_start = datetime.datetime.now()
         fit_round_results = super().fit_round(server_round, timeout)
@@ -375,7 +375,7 @@ class FlServer(Server):
 
         Returns:
             tuple[float | None, dict[str, Scalar], EvaluateResultsAndFailures] | None: Tuple of loss value, metrics
-            dictionary and individual client results (client ids and failures).
+                dictionary and individual client results (client ids and failures).
         """
         start_time = datetime.datetime.now()
         eval_round_results = self._evaluate_round(server_round, timeout)

@@ -79,8 +79,9 @@ class FlashClient(BasicClient):
 
         Returns:
             tuple[int | None, int | None, int, bool, bool]: Returns the ``local_epochs``, ``local_steps``,
-            ``current_server_round``, ``evaluate_after_fit`` and ``pack_losses_with_val_metrics``. Ensures only one of
-            ``local_epochs`` and ``local_steps`` is defined in the config and sets the one that is not to None.
+                ``current_server_round``, ``evaluate_after_fit`` and ``pack_losses_with_val_metrics``. Ensures only
+                one of ``local_epochs`` and ``local_steps`` is defined in the config and sets the one that is not to
+                None.
         """
         local_epochs, local_steps, current_server_round, evaluate_after_fit, pack_losses_with_val_metrics = (
             super().process_config(config)
@@ -106,7 +107,7 @@ class FlashClient(BasicClient):
 
         Returns:
             tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
-            Loss is a dictionary of one or more losses that represent the different components of the loss.
+                Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         if self.gamma is None:
             return super().train_by_epochs(epochs, current_round)

@@ -289,7 +289,7 @@ class FlexibleNnunetClient(FlexibleClient):
 
         Returns:
             tuple[DataLoader, DataLoader]: A tuple of length two. The client train and validation dataloaders as
-            pytorch dataloaders
+                pytorch dataloaders
         """
         start_time = time.time()
         # Set the number of processes for each dataloader.
@@ -666,7 +666,7 @@ class FlexibleNnunetClient(FlexibleClient):
 
         Returns:
             tuple[TorchPredType, dict[str, torch.Tensor]]: A tuple in which the first element model outputs indexed by
-            name. The second element is unused by this subclass and therefore is always an empty dict
+                name. The second element is unused by this subclass and therefore is always an empty dict
         """
         if isinstance(input, torch.Tensor):
             # If device type is cuda, nnUNet defaults to mixed precision forward pass
@@ -708,7 +708,7 @@ class FlexibleNnunetClient(FlexibleClient):
 
         Returns:
             tuple[torch.Tensor, dict[str, torch.Tensor] | None]: A tuple where the first element is the loss and the
-            second element is an optional additional loss
+                second element is an optional additional loss
         """
         # If deep supervision is turned on we must convert loss and target dicts into lists
         loss_preds = prepare_loss_arg(preds)
@@ -879,7 +879,7 @@ class FlexibleNnunetClient(FlexibleClient):
 
         Returns:
             dict[str, Scalar]: A dictionary containing the train and validation sample counts as well as the
-            serialized nnunet plans
+                serialized nnunet plans.
         """
         # Check if nnunet plans have already been initialized
         if "nnunet_plans" not in config:

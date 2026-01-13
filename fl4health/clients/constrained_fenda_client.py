@@ -119,9 +119,9 @@ class ConstrainedFendaClient(FendaClient):
 
         Returns:
             tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple in which the first element
-            contains predictions indexed by name and the second element contains intermediate activations
-            index by name. Specifically the features of the model, features of the global model and features of
-            the old model are returned. All predictions included in dictionary will be used to compute metrics.
+                contains predictions indexed by name and the second element contains intermediate activations
+                index by name. Specifically the features of the model, features of the global model and features of
+                the old model are returned. All predictions included in dictionary will be used to compute metrics.
         """
         assert isinstance(input, torch.Tensor)
         assert isinstance(self.model, FendaModelWithFeatureState)
@@ -260,8 +260,8 @@ class ConstrainedFendaClient(FendaClient):
 
         Returns:
             EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
-            indexed by name. Additional losses may include ``cosine_similarity_loss``, ``contrastive_loss``
-            and ``perfcl_loss``.
+                indexed by name. Additional losses may include ``cosine_similarity_loss``, ``contrastive_loss``
+                and ``perfcl_loss``.
         """
         _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         return EvaluationLosses(checkpoint=additional_losses["loss"], additional_losses=additional_losses)

@@ -66,7 +66,7 @@ class AdaptiveDriftConstrainedMixin(BaseFlexibleMixin):
 
         Returns:
             NDArrays: Parameters and training loss packed together into a list of numpy arrays to be sent to the
-            server.
+                server.
         """
         if not self.initialized:
             return self.setup_client_and_return_all_model_parameters(config)

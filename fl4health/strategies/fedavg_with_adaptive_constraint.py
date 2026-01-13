@@ -155,8 +155,8 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
 
         Returns:
             tuple[Parameters | None, dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
-            For adaptive constraints, the server also packs a constraint weight to be sent to the clients. This is
-            sent even if adaptive constraint weights are turned off and the value simply remains constant.
+                For adaptive constraints, the server also packs a constraint weight to be sent to the clients. This is
+                sent even if adaptive constraint weights are turned off and the value simply remains constant.
         """
         if not results:
             return None, {}

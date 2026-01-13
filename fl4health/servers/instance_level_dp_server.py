@@ -119,8 +119,8 @@ class InstanceLevelDpServer(FlServer):
 
         Returns:
             tuple[History, float]: The first element of the tuple is a ``History`` object containing the full set of FL
-            training results, including things like aggregated loss and metrics. Tuple also includes elapsed time in
-            seconds for round.
+                training results, including things like aggregated loss and metrics. Tuple also includes elapsed time
+                in seconds for round.
         """
         assert isinstance(self.strategy, StrategyWithPolling)
         sample_counts = self.poll_clients_for_sample_counts(timeout)

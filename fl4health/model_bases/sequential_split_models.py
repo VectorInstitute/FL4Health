@@ -77,8 +77,8 @@ class SequentiallySplitModel(nn.Module):
 
         Returns:
             tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: Return the prediction dictionary and a features
-            dictionaries representing the output of the ``base_module`` either in the standard tensor shape or
-            flattened,  to be compatible, for example, with MOON contrastive losses.
+                dictionaries representing the output of the ``base_module`` either in the standard tensor shape or
+                flattened,  to be compatible, for example, with MOON contrastive losses.
         """
         predictions, features = self.sequential_forward(input)
         predictions_dict = {"prediction": predictions}
@@ -101,6 +101,6 @@ class SequentiallySplitExchangeBaseModel(SequentiallySplitModel, PartialLayerExc
 
         Returns:
             list[str]: The names of the layers to be exchanged with the server. This is used by the
-            ``FixedLayerExchanger`` class
+                ``FixedLayerExchanger`` class
         """
         return [layer_name for layer_name in self.state_dict() if layer_name.startswith("base_module.")]

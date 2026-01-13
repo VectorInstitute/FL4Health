@@ -286,7 +286,7 @@ class GpflClient(BasicClient):
 
         Returns:
             tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
-            a dictionary of any predictions produced by the model.
+        `            a dictionary of any predictions produced by the model.
         """
         # Clear gradients from the optimizers if they exist
         self.optimizers["model"].zero_grad()
@@ -347,7 +347,7 @@ class GpflClient(BasicClient):
 
         Returns:
             TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses
-            indexed by name.
+                indexed by name.
         """
         # The loss used during training is a combination of the prediction loss (CrossEntropy used in the paper),
         # angel-level (GCE loss) and magnitude-level global losses.
@@ -376,8 +376,8 @@ class GpflClient(BasicClient):
 
         Returns:
             tuple[EvaluationLosses, TorchPredType]: tuple[EvaluationLosses, TorchPredType]:
-            The losses object from the val step along with a dictionary of the predictions produced
-            by the model.
+                The losses object from the val step along with a dictionary of the predictions produced
+                by the model.
         """
         input = self.transform_input(input)
         return super().val_step(input, target)

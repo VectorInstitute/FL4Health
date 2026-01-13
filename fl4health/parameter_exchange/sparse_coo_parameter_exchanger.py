@@ -89,7 +89,7 @@ class SparseCooParameterExchanger(PartialParameterExchanger[tuple[NDArrays, NDAr
 
         Returns:
             tuple[NDArrays, tuple[NDArrays, NDArrays, list[str]]]: The selected parameters and other information,
-            as detailed above.
+                as detailed above.
         """
         all_parameter_scores = self.generate_parameter_scores(model, initial_model)
         all_scores = torch.cat([val.flatten() for _, val in all_parameter_scores.items()])

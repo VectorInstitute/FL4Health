@@ -74,7 +74,7 @@ class PcaModule(nn.Module):
 
         Returns:
             tuple[Tensor, Tensor]: The principal components (i.e., right singular vectors) and their corresponding
-            singular values.
+                singular values.
         """
         x_prime = self.prepare_data_forward(x, center_data=center_data)
         if self.low_rank:

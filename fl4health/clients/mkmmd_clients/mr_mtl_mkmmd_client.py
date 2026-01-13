@@ -164,7 +164,7 @@ class MrMtlMkMmdClient(MrMtlClient):
 
         Returns:
             tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple containing the extracted
-            features using the local and initial global models.
+                features using the local and initial global models.
         """
         self.local_feature_extractor.clear_buffers()
         self.initial_global_feature_extractor.clear_buffers()
@@ -277,7 +277,7 @@ class MrMtlMkMmdClient(MrMtlClient):
 
         Returns:
             TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed by
-            name. Additional losses includes each loss component and the global model loss tensor.
+                name. Additional losses includes each loss component and the global model loss tensor.
         """
         for layer_loss_module in self.mkmmd_losses.values():
             assert layer_loss_module.training

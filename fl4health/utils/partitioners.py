@@ -183,8 +183,8 @@ class DirichletLabelBasedAllocation(Generic[T]):
 
         Returns:
             tuple[list[D], dict[T, np.ndarray]]: ``list[D]`` is the partitioned datasets, length should correspond to
-            ``self.number_of_partitions``. ``dict[T, np.ndarray]`` is the Dirichlet distribution used to partition the
-            data points for each label.
+                ``self.number_of_partitions``. ``dict[T, np.ndarray]`` is the Dirichlet distribution used to partition
+                the data points for each label.
         """
         targets = original_dataset.targets
         assert targets is not None, "A label-based partitioner requires targets but this dataset has no targets"

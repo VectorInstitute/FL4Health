@@ -165,8 +165,8 @@ class Scaffold(BasicFedAvg):
 
         Returns:
             tuple[Parameters | None, dict[str, Scalar]]: The aggregated weighted and metrics dictionary. The
-            parameters are optional and will be none in the even that there are no successful clients or there
-            were failures and they are not accepted.
+                parameters are optional and will be none in the even that there are no successful clients or there
+                were failures and they are not accepted.
         """
         if not results:
             return None, {}
@@ -236,7 +236,7 @@ class Scaffold(BasicFedAvg):
 
         Returns:
             NDArrays: Updated numpy arrays according to
-            :math:`\\text{original_params} + \\text{scaling_coefficient} \\cdot \\text{parameter_updates}`.
+                :math:`\\text{original_params} + \\text{scaling_coefficient} \\cdot \\text{parameter_updates}`.
         """
         return [
             original_param + scaling_coefficient * update
@@ -282,7 +282,7 @@ class Scaffold(BasicFedAvg):
 
         Returns:
             list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
-            be sent to each client (packaged as ``FitIns``).
+                be sent to each client (packaged as ``FitIns``).
         """
         # This strategy requires the client manager to be of type at least BaseFractionSamplingManager
         assert isinstance(client_manager, BaseFractionSamplingManager)
@@ -315,7 +315,7 @@ class Scaffold(BasicFedAvg):
 
         Returns:
             NDArrays: ``self.server_model_weights + self.learning_rate * (weights - self.server_model_weights)``
-            These are the updated server model weights.
+                These are the updated server model weights.
         """
         # x_update = y_i - x
         delta_weights = self.compute_parameter_delta(weights, self.server_model_weights)

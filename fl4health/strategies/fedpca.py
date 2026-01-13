@@ -105,7 +105,7 @@ class FedPCA(BasicFedAvg):
 
         Returns:
             tuple[Parameters | None, dict[str, Scalar]]: The aggregated parameters and the metrics dictionary.
-            In this case, the parameters are the new singular vectors and their corresponding singular values.
+                In this case, the parameters are the new singular vectors and their corresponding singular values.
         """
         if not results:
             return None, {}

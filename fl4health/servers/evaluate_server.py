@@ -89,7 +89,7 @@ class EvaluateServer(Server):
 
         Returns:
             tuple[History, float]: The first element of the tuple is a ``History`` object containing the aggregated
-            metrics returned from the clients. Tuple also contains elapsed time in seconds for round.
+                metrics returned from the clients. Tuple also contains elapsed time in seconds for round.
         """
         history = History()
 
@@ -144,9 +144,9 @@ class EvaluateServer(Server):
 
         Returns:
             tuple[float | None, dict[str, Scalar], EvaluateResultsAndFailures] | None: The first value is the
-            loss, which is ignored since we pack loss from the global and local models into the metrics dictionary
-            The second is the aggregated metrics passed from the clients, the third is the set of raw results and
-            failure objects returned by the clients.
+                loss, which is ignored since we pack loss from the global and local models into the metrics dictionary
+                The second is the aggregated metrics passed from the clients, the third is the set of raw results and
+                failure objects returned by the clients.
         """
         # Get clients and their respective instructions from client manager
         client_instructions = self.configure_evaluate()
@@ -190,8 +190,8 @@ class EvaluateServer(Server):
 
         Returns:
             list[tuple[ClientProxy, EvaluateIns]]: List of configuration instructions for the clients selected by the
-            client manager for evaluation. These configuration objects are sent to the clients to customize
-            evaluation.
+                client manager for evaluation. These configuration objects are sent to the clients to customize
+                evaluation.
         """
         # Do not configure federated evaluation if fraction eval is 0.
         if self.fraction_evaluate == 0.0:
@@ -232,7 +232,7 @@ class EvaluateServer(Server):
 
         Returns:
             tuple[float | None, dict[str, Scalar]]: A dummy float for the "loss" (these are packed with the metrics)
-            and the aggregated metrics dictionary.
+                and the aggregated metrics dictionary.
         """
         if not results:
             return None, {}

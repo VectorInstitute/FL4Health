@@ -153,7 +153,7 @@ class PicaiCase(Case):
 
         Returns:
             tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths for the scans
-            and the second entry is the file path to the corresponding annotation.
+                and the second entry is the file path to the corresponding annotation.
         """
         modality_suffix_map = {"t2w": "0000", "adc": "0001", "hbv": "0002"}
         preprocessed_scan_paths = []

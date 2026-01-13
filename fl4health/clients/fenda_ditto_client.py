@@ -318,7 +318,7 @@ class FendaDittoClient(DittoClient):
 
         Returns:
             TrainingLosses: An instance of ``TrainingLosses`` containing the backward loss and additional losses
-            indexed by name. Additional losses include each loss component and the global model loss tensor.
+                indexed by name. Additional losses include each loss component and the global model loss tensor.
         """
         # Check that both models are in training mode
         assert self.global_model.training and self.model.training

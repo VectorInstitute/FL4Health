@@ -161,8 +161,7 @@ class GpflBaseAndHeadModules(SequentiallySplitExchangeBaseModel):
             input (torch.Tensor): Input to the model forward pass.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Return the prediction dictionary and a features
-            dictionaries.
+            tuple[torch.Tensor, torch.Tensor]: Return the prediction dictionary and a features dictionaries.
         """
         # Throw an error because this function should not directly be called with this class.
         raise NotImplementedError("Forward pass should not be used for the GpflBaseAndHeadModules class. ")
@@ -266,7 +265,7 @@ class GpflModel(PartialLayerExchangeModel):
 
         Returns:
             list[str]: A list of layer names that should be exchanged. This is used by the
-            ``FixedLayerExchanger`` class to determine which layers to exchange during the FL process.
+                ``FixedLayerExchanger`` class to determine which layers to exchange during the FL process.
         """
         base_layers = self.gpfl_main_module.layers_to_exchange()
         # gpfl_main_module's layers_to_exchange returns base module layers starting with "base_module."

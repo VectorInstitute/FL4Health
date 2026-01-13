@@ -90,7 +90,7 @@ class ModelMergeClient(NumPyClient):
 
         Returns:
             NDArrays: These are the parameters to be sent to the server. At minimum they represent the relevant model
-            parameters to be aggregated, but can contain more information.
+                parameters to be aggregated, but can contain more information.
         """
         assert self.model is not None
         return self.parameter_exchanger.push_parameters(self.model, config=config)
@@ -202,8 +202,8 @@ class ModelMergeClient(NumPyClient):
 
         Returns:
             tuple[float, int, dict[str, Scalar]: The float represents the loss which is assumed to be 0 for the
-            ``ModelMergeClient``. The int represents the number of examples in the local test dataset and the
-            dictionary is the computed metrics on the test set.
+                ``ModelMergeClient``. The int represents the number of examples in the local test dataset and the
+                dictionary is the computed metrics on the test set.
         """
         self.set_parameters(parameters, config)
         metrics = self.validate()

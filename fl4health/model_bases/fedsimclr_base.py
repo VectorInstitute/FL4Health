@@ -54,7 +54,7 @@ class FedSimClrModel(nn.Module):
 
         Returns:
             torch.Tensor: The output from either the ``projection_head`` module if pre-training or the
-            ``prediction_head`` if fine-tuning.
+                ``prediction_head`` if fine-tuning.
         """
         features = self.encoder(input)
         if self.pretrain:

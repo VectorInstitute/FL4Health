@@ -37,7 +37,7 @@ class MoonContrastiveLoss(nn.Module):
 
         Returns:
             torch.Tensor: Cosine similarities of the batch of features provided with the set of batches of negative
-            pairs. The shape is ``n_pairs`` x ``batch_size``
+                pairs. The shape is ``n_pairs`` x ``batch_size``.
         """
         # Check that features and each of the negatives pairs have the same shape
         assert features.shape == negative_pairs.shape[1:]

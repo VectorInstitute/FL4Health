@@ -52,8 +52,8 @@ class MyNnUNetPredictor(nnUNetPredictor):
 
         Returns:
             List: A dictionary containing the predicted annotations and the data properties for each file. The
-            dictionary may also contain the predicted probabilities and the output file names associated with each
-            sample
+                dictionary may also contain the predicted probabilities and the output file names associated with each
+                sample.
         """
         with multiprocessing.get_context("spawn").Pool(num_processes) as pool:
             # Have to ignore errors when defining worker list because mypy
@@ -152,7 +152,7 @@ def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, 
 
         Returns:
             tuple[str | None, bool]: Tuple with elements trainer_name and ``inference_allowed_mirroring_axes``.
-            Defaults to ("nnUNetTrainer", False)
+                Defaults to ("nnUNetTrainer", False).
         """
         trainer_name = "nnUNetTrainer"
         inference_allowed_mirror_axes = False
