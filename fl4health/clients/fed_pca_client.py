@@ -110,7 +110,7 @@ class FedPCAClient(NumPyClient):
             config (Config): Configurations sent by the server to allow for customization of this functions behavior.
 
         Returns:
-            tuple[DataLoader, DataLoader]: Tuple of length 2. The client train and validation loader.
+            (tuple[DataLoader, DataLoader]): Tuple of length 2. The client train and validation loader.
 
         Raises:
             NotImplementedError: To be defined in child class.
@@ -179,8 +179,9 @@ class FedPCAClient(NumPyClient):
             config (Config): Configurations sent by the server to allow for customization of this functions behavior.
 
         Returns:
-            tuple[NDArrays, int, dict[str, Scalar]]: The local principal components following the local training along
-                with the number of samples in the local training dataset and the computed metrics throughout the fit.
+            (tuple[NDArrays, int, dict[str, Scalar]]): The local principal components following the local training
+                along with the number of samples in the local training dataset and the computed metrics throughout the
+                fit.
         """
         if not self.initialized:
             self.setup_client(config)
@@ -206,7 +207,7 @@ class FedPCAClient(NumPyClient):
             config (Config): Configurations sent by the server to allow for customization of this functions behavior.
 
         Returns:
-            tuple[float, int, dict[str, Scalar]]: A loss associated with the evaluation, the number of samples in the
+            (tuple[float, int, dict[str, Scalar]]): A loss associated with the evaluation, the number of samples in the
                 validation/test set and the ``metric_values`` associated with evaluation.
         """
         if not self.initialized:

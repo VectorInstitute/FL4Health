@@ -49,7 +49,7 @@ class VaeLoss(_Loss):
             preds (torch.Tensor): Model predictions.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor, torch.Tensor]: Unpacked output containing predictions, mu, and logvar.
+            (tuple[torch.Tensor, torch.Tensor, torch.Tensor]): Unpacked output containing predictions, mu, and logvar.
         """
         # This methods assumes "preds" are batch first, and preds are 2D dimensional (already flattened).
         assert preds.dim() == REQUIRED_PREDS_DIMENSIONS, (

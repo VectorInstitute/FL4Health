@@ -335,7 +335,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             target (TorchTargetType): target tensor to be used to compute a loss given each models outputs.
 
         Returns:
-            tuple[TrainingLosses, TorchPredType]: Returns relevant loss values from both the global and local
+            (tuple[TrainingLosses, TorchPredType]): Returns relevant loss values from both the global and local
                 model optimization steps. The prediction dictionary contains predictions indexed a "global" and "local"
                 corresponding to predictions from the global and local Ditto models for metric evaluations.
         """
@@ -405,7 +405,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         Validate the current model on the entire validation dataset.
 
         Returns:
-            tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
+            (tuple[float, dict[str, Scalar]]): The validation loss and a dictionary of metrics from validation.
         """
         # Set the global model to evaluate mode
         self.safe_global_model().eval()

@@ -302,7 +302,7 @@ class BasicClient(NumPyClient):
             config (NDArrays): The config from the server.
 
         Returns:
-            tuple[NDArrays, int, dict[str, Scalar]]: The parameters following the local training along with the
+            (tuple[NDArrays, int, dict[str, Scalar]]): The parameters following the local training along with the
             number of samples in the local training dataset and the computed metrics throughout the fit.
 
         Raises:
@@ -394,7 +394,7 @@ class BasicClient(NumPyClient):
             config (NDArrays): The config object from the server.
 
         Returns:
-            tuple[float, int, dict[str, Scalar]]: A loss associated with the evaluation, the number of samples in the
+            (tuple[float, int, dict[str, Scalar]]): A loss associated with the evaluation, the number of samples in the
                 validation/test set and the ``metric_values`` associated with evaluation.
         """
         if not self.initialized:
@@ -537,7 +537,7 @@ class BasicClient(NumPyClient):
             logging_mode (LoggingMode): The logging mode (Training, Validation, or Testing).
 
         Returns:
-            tuple[str, list[tuple[LogLevel, str]]]:
+            (tuple[str, list[tuple[LogLevel, str]]]):
 
                 - A string to append to the header log string that typically announces the current server round and
                   current epoch at the beginning of each round or local epoch.
@@ -586,7 +586,7 @@ class BasicClient(NumPyClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with a dictionary of
+            (tuple[TrainingLosses, TorchPredType]): The losses object from the train step along with a dictionary of
                 any predictions produced by the model.
         """
         # Clear gradients from optimizer if they exist
@@ -613,8 +613,8 @@ class BasicClient(NumPyClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            tuple[EvaluationLosses, TorchPredType]: The losses object from the val step along with a dictionary of the
-                predictions produced by the model.
+            (tuple[EvaluationLosses, TorchPredType]): The losses object from the val step along with a dictionary of
+                the predictions produced by the model.
         """
         # Get preds and compute loss
         with torch.no_grad():
@@ -637,7 +637,7 @@ class BasicClient(NumPyClient):
             current_round (int | None, optional): The current FL round.
 
         Returns:
-            tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
+            (tuple[dict[str, float], dict[str, Scalar]]): The loss and metrics dictionary from the local training.
                 Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         self.model.train()
@@ -709,7 +709,7 @@ class BasicClient(NumPyClient):
             current_round (int | None, optional): The current FL round
 
         Returns:
-            tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
+            (tuple[dict[str, float], dict[str, Scalar]]): The loss and metrics dictionary from the local training.
                 Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         self.model.train()
@@ -778,7 +778,7 @@ class BasicClient(NumPyClient):
                 dictionary. Defaults to False.
 
         Returns:
-            tuple[float, dict[str, Scalar]]: The loss and a dictionary of metrics from evaluation.
+            (tuple[float, dict[str, Scalar]]): The loss and a dictionary of metrics from evaluation.
         """
         assert self.num_validation_steps is not None, "num_validation_steps must be defined to use this function"
 
@@ -839,7 +839,7 @@ class BasicClient(NumPyClient):
                 dictionary. Defaults to False.
 
         Returns:
-            tuple[float, dict[str, Scalar]]: The loss and a dictionary of metrics from evaluation.
+            (tuple[float, dict[str, Scalar]]): The loss and a dictionary of metrics from evaluation.
         """
         assert logging_mode in [LoggingMode.VALIDATION, LoggingMode.TEST], "logging_mode must be VALIDATION or TEST"
 
@@ -874,7 +874,7 @@ class BasicClient(NumPyClient):
                 metrics that are sent back to the server. Defaults to False.
 
         Returns:
-            tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation
+            (tuple[float, dict[str, Scalar]]): The validation loss and a dictionary of metrics from validation
                 (and test if present).
         """
         if self.num_validation_steps is None:
@@ -999,7 +999,7 @@ class BasicClient(NumPyClient):
                 ``self.model.forward().``
 
         Returns:
-            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains a dictionary of
+            (tuple[TorchPredType, TorchFeatureType]): A tuple in which the first element contains a dictionary of
             predictions indexed by name and the second element contains intermediate activations indexed by name. By
             passing features, we can compute losses such as the contrastive loss in MOON. All predictions included in
             dictionary will by default be used to compute metrics separately.

@@ -285,7 +285,7 @@ class GpflClient(BasicClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
+            (tuple[TrainingLosses, TorchPredType]): The losses object from the train step along with
         `            a dictionary of any predictions produced by the model.
         """
         # Clear gradients from the optimizers if they exist
@@ -375,7 +375,7 @@ class GpflClient(BasicClient):
             target (TorchTargetType): The target corresponding to the input..
 
         Returns:
-            tuple[EvaluationLosses, TorchPredType]: tuple[EvaluationLosses, TorchPredType]:
+            (tuple[EvaluationLosses, TorchPredType]: tuple[EvaluationLosses, TorchPredType]):
                 The losses object from the val step along with a dictionary of the predictions produced
                 by the model.
         """

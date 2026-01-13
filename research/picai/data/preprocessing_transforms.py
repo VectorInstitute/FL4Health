@@ -85,7 +85,7 @@ def input_verification_crop_or_pad(
             Expected to be in Depth x Height x Width format.
 
     Returns:
-        tuple[tuple[int, int, int], tuple[int, int, int]]:
+        (tuple[tuple[int, int, int], tuple[int, int, int]]):
             Shape of original image (in convention of SimpleITK (x, y, z) or numpy (z, y, x)) and
             Size of target image (in convention of SimpleITK (x, y, z) or numpy (z, y, x))
     """

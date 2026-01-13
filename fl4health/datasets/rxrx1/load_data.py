@@ -33,7 +33,7 @@ def construct_rxrx1_tensor_dataset(
         transform (Callable | None): Transformation function to apply to the images. Defaults to None.
 
     Returns:
-        tuple[TensorDataset, dict[int, int]]: A ``TensorDataset`` containing the processed images and label map.
+        (tuple[TensorDataset, dict[int, int]]): A ``TensorDataset`` containing the processed images and label map.
     """
     label_map = {label: idx for idx, label in enumerate(sorted(metadata["sirna_id"].unique()))}
     original_label_map = {new_label: original_label for original_label, new_label in label_map.items()}
@@ -92,7 +92,8 @@ def create_splits(
         train_fraction (float, optional): Fraction of data to use for training. Defaults to 0.8.
 
     Returns:
-        tuple[list[int], list[int]]: Indices associated with the selected datapoints for the train and validation sets
+        (tuple[list[int], list[int]]): Indices associated with the selected datapoints for the train and validation
+            sets
     """
     # Group indices by label
     label_to_indices = defaultdict(list)
@@ -138,7 +139,7 @@ def load_rxrx1_data(
         num_workers (int, optional): Number of threads to be used by the dataloaders. Defaults to 0.
 
     Returns:
-        tuple[DataLoader, DataLoader, dict[str, int]]: Train and validation dataloaders and a dictionary holding the
+        (tuple[DataLoader, DataLoader, dict[str, int]]): Train and validation dataloaders and a dictionary holding the
         size of each dataset.
     """
     # Read the CSV file
@@ -180,7 +181,8 @@ def load_rxrx1_test_data(
         num_workers (int, optional): Number of workers associated with the test dataloader. Defaults to 0.
 
     Returns:
-        tuple[DataLoader, dict[str, int]]: Test dataloader, dictionary containing count of the data points in the set.
+        (tuple[DataLoader, dict[str, int]]): Test dataloader, dictionary containing count of the data points in the
+            set.
     """
     # Read the CSV file
     data = pd.read_csv(f"{data_path}/clients/meta_data_{client_num + 1}.csv")

@@ -170,7 +170,7 @@ class DittoDeepMmdClient(DittoClient):
             initial_global_model (torch.nn.Module): Initial global model to extract features from.
 
         Returns:
-            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple containing the extracted
+            (tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]): A tuple containing the extracted
                 features using the local and initial global models.
         """
         self.local_feature_extractor.clear_buffers()
@@ -234,7 +234,7 @@ class DittoDeepMmdClient(DittoClient):
                 ``self.model.forward()``.
 
         Returns:
-            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains a dictionary of
+            (tuple[TorchPredType, TorchFeatureType]): A tuple in which the first element contains a dictionary of
                 predictions indexed by name and the second element contains intermediate activations indexed by name.
                 By passing features, we can compute all the losses. All predictions included in dictionary will by
                 default be used to compute metrics separately.
@@ -265,7 +265,7 @@ class DittoDeepMmdClient(DittoClient):
         Validate the current model on the entire validation dataset.
 
         Returns:
-            tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
+            (tuple[float, dict[str, Scalar]]): The validation loss and a dictionary of metrics from validation.
         """
         for layer in self.flatten_feature_extraction_layers:
             self.deep_mmd_losses[layer].training = False
@@ -358,7 +358,7 @@ class DittoDeepMmdClient(DittoClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
+            (tuple[torch.Tensor, dict[str, torch.Tensor]]): A tuple with:
 
             - The tensor for the loss
             - A dictionary of additional losses with their names and values, or None if there are no additional losses.

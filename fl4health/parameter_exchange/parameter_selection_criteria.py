@@ -91,7 +91,7 @@ def select_layers_by_threshold(
         initial_model (nn.Module): Model that we started with to which we are comparing parameters.
 
     Returns:
-        tuple[NDArrays, list[str]]: Layers selected by the process and their corresponding names in the model's
+        (tuple[NDArrays, list[str]]): Layers selected by the process and their corresponding names in the model's
         ``state_dict``.
     """
     layer_names = []

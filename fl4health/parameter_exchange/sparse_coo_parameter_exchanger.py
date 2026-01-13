@@ -88,7 +88,7 @@ class SparseCooParameterExchanger(PartialParameterExchanger[tuple[NDArrays, NDAr
             initial_model (nn.Module): Initial model.
 
         Returns:
-            tuple[NDArrays, tuple[NDArrays, NDArrays, list[str]]]: The selected parameters and other information,
+            (tuple[NDArrays, tuple[NDArrays, NDArrays, list[str]]]): The selected parameters and other information,
                 as detailed above.
         """
         all_parameter_scores = self.generate_parameter_scores(model, initial_model)

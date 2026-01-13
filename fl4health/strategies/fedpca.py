@@ -190,7 +190,7 @@ class FedPCA(BasicFedAvg):
             client_singular_values (NDArrays): Singular values corresponding to local PCs.
 
         Returns:
-            tuple[NDArray, NDArray]: Merged PCs and corresponding singular values.
+            (tuple[NDArray, NDArray]): Merged PCs and corresponding singular values.
         """
         x = [u @ np.diag(s) for u, s in zip(client_singular_vectors, client_singular_values)]
         svd_input = np.concatenate(x, axis=1)
@@ -234,7 +234,7 @@ class FedPCA(BasicFedAvg):
             client_singular_values (NDArrays): Singular values corresponding to local PCs.
 
         Returns:
-            tuple[NDArray, NDArray]: Merged PCs and corresponding singular values.
+            (tuple[NDArray, NDArray]): Merged PCs and corresponding singular values.
         """
         assert len(client_singular_values) >= MINIMUM_PCA_ClIENTS
         if len(client_singular_values) == MINIMUM_PCA_ClIENTS:

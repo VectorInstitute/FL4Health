@@ -249,7 +249,7 @@ class FedRepClient(BasicClient):
             config (NDArrays): The config from the server.
 
         Returns:
-            tuple[NDArrays, int, dict[str, Scalar]]: The parameters following the local training along with the
+            (tuple[NDArrays, int, dict[str, Scalar]]): The parameters following the local training along with the
             number of samples in the local training dataset and the computed metrics throughout the fit.
 
         Raises:
@@ -322,7 +322,7 @@ class FedRepClient(BasicClient):
             current_round (int | None, optional): The current FL round. Defaults to None.
 
         Returns:
-            tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
+            (tuple[dict[str, float], dict[str, Scalar]]): The loss and metrics dictionary from the local training.
                 Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         # First we train the head module for head_epochs with the representations frozen in place
@@ -362,7 +362,7 @@ class FedRepClient(BasicClient):
             current_round (int | None, optional): What round of FL training we're currently on. Defaults to None.
 
         Returns:
-            tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
+            (tuple[dict[str, float], dict[str, Scalar]]): The loss and metrics dictionary from the local training.
                 Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         assert isinstance(self.model, FedRepModel)
@@ -403,7 +403,7 @@ class FedRepClient(BasicClient):
             target (torch.Tensor): target tensor to be used to compute a loss given the model's outputs.
 
         Returns:
-            tuple[TrainingLosses, dict[str, torch.Tensor]]: The losses object from the train step along with
+            (tuple[TrainingLosses, dict[str, torch.Tensor]]): The losses object from the train step along with
                 a dictionary of any predictions produced by the model.
         """
         # Clear gradients from the optimizers if they exits. We do both regardless of the client mode.

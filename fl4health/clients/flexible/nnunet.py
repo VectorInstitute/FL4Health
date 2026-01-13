@@ -288,7 +288,7 @@ class FlexibleNnunetClient(FlexibleClient):
             config (Config): The config file from the server
 
         Returns:
-            tuple[DataLoader, DataLoader]: A tuple of length two. The client train and validation dataloaders as
+            (tuple[DataLoader, DataLoader]): A tuple of length two. The client train and validation dataloaders as
                 pytorch dataloaders
         """
         start_time = time.time()
@@ -665,8 +665,8 @@ class FlexibleNnunetClient(FlexibleClient):
             input (TorchInputType): The model inputs
 
         Returns:
-            tuple[TorchPredType, dict[str, torch.Tensor]]: A tuple in which the first element model outputs indexed by
-                name. The second element is unused by this subclass and therefore is always an empty dict
+            (tuple[TorchPredType, dict[str, torch.Tensor]]): A tuple in which the first element model outputs indexed
+                by name. The second element is unused by this subclass and therefore is always an empty dict
         """
         if isinstance(input, torch.Tensor):
             # If device type is cuda, nnUNet defaults to mixed precision forward pass
@@ -748,7 +748,7 @@ class FlexibleNnunetClient(FlexibleClient):
             target (torch.Tensor): The ground truth segmentation map with shape ``(batch, classes, x, y(, z))``
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Tuple of:
+            (tuple[torch.Tensor, torch.Tensor]): Tuple of:
 
             - torch.Tensor: The masked one hot encoded predicted segmentation maps
             - torch.Tensor: The masked target segmentation maps

@@ -213,7 +213,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
                 aggregated along with a clipping bit calculated during training.
 
         Returns:
-            tuple[list[tuple[NDArrays, int]], NDArrays]: The first tuple is the set of (weights, training counts) per
+            (tuple[list[tuple[NDArrays, int]], NDArrays]): The first tuple is the set of (weights, training counts) per
                 client. The second is a set of clipping bits, one for each client.
         """
         # Sorting the results by elements and sample counts. This is primarily to reduce numerical fluctuations in

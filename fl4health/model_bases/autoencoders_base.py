@@ -121,7 +121,7 @@ class VariationalAe(AbstractAe):
             input (torch.Tensor): Input to be encoded.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Mean and log variance values of the same dimensionality representing
+            (tuple[torch.Tensor, torch.Tensor]): Mean and log variance values of the same dimensionality representing
                 the latent vector information to be used in VAE reconstruction.
         """
         mu, logvar = self.encoder(input)
@@ -212,7 +212,7 @@ class ConditionalVae(AbstractAe):
                 None.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: ``mu`` and ``logvar``, similar to the variational auto-encoder.
+            (tuple[torch.Tensor, torch.Tensor]): ``mu`` and ``logvar``, similar to the variational auto-encoder.
         """
         mu, logvar = self.encoder(input, condition)
         return mu, logvar

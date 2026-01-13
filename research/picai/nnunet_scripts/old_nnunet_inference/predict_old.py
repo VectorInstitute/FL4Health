@@ -255,7 +255,7 @@ def predict(
             Defaults to True.
 
     Returns:
-        tuple[NDArray, NDArray, list[str]]: A numpy array with a single predicted probability map for each input
+        (tuple[NDArray, NDArray, list[str]]): A numpy array with a single predicted probability map for each input
             image. Shape:  (num_samples, num_classes, ...). A numpy array with a single predicted annotation map for
             each input image. Unlike the predicted  probabilities these are NOT one hot encoded.
             Shape: (num_samples, spatial_dims...). A list containing the unique case identifier for each prediction.

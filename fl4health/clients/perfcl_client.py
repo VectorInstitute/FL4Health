@@ -145,7 +145,7 @@ class PerFclClient(BasicClient):
                 for the union of ``torch.Tensor`` and ``dict[str, torch.Tensor]``.
 
         Returns:
-            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple in which the first element
+            (tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]): A tuple in which the first element
                 contains predictions indexed by name and the second element contains intermediate activations
                 index by name. Specifically the features of the model, features of the global model and features of
                 the old model are returned. All predictions included in dictionary will be used to compute metrics.
@@ -218,7 +218,7 @@ class PerFclClient(BasicClient):
             target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
+            (tuple[torch.Tensor, dict[str, torch.Tensor]]): A tuple with:
 
                 - The tensor for the total loss
                 - A dictionary with ``loss``, ``total_loss``, ``global_feature_contrastive_loss``, and

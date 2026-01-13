@@ -145,7 +145,7 @@ class ConstrainedFendaLossContainer:
             initial_global_features (torch.Tensor): See PerFCL loss documentation
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: PerFCL loss based on the input values
+            (tuple[torch.Tensor, torch.Tensor]): PerFCL loss based on the input values
         """
         assert self.perfcl_loss_config is not None
         global_feature_contrastive_loss, local_feature_contrastive_loss = self.perfcl_loss_config.perfcl_loss_function(

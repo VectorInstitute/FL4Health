@@ -155,7 +155,8 @@ def align_pred_and_target_shapes(
             the label dimension if it is needed.
 
     Returns:
-        tuple[torch.Tensor, torch.Tensor]: The pred and target tensors respectively now ensured to have the same shape.
+        (tuple[torch.Tensor, torch.Tensor]): The pred and target tensors respectively now ensured to have the same
+            shape.
     """
     # Shapes are already aligned.
     if preds.shape == targets.shape:

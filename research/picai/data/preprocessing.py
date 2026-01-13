@@ -100,7 +100,7 @@ class Case(ABC):
         destination and returns the file paths.
 
         Returns:
-            tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths for the scans
+            (tuple[Sequence[Path], Path]): A tuple in which the first entry is a sequence of file paths for the scans
             and the second entry is the file path to the corresponding annotation.
 
         Raises:
@@ -152,7 +152,7 @@ class PicaiCase(Case):
         below.
 
         Returns:
-            tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths for the scans
+            (tuple[Sequence[Path], Path]): A tuple in which the first entry is a sequence of file paths for the scans
                 and the second entry is the file path to the corresponding annotation.
         """
         modality_suffix_map = {"t2w": "0000", "adc": "0001", "hbv": "0002"}
@@ -343,7 +343,7 @@ def apply_transform(case: Case, transforms: Sequence[PreprocessingTransform]) ->
         transforms (Sequence[PreprocessingTransform]): The sequence of transformation to be applied.
 
     Returns:
-        tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths
+        (tuple[Sequence[Path], Path]): A tuple in which the first entry is a sequence of file paths
             for the scans and the second entry is the file path to the corresponding annotation.
 
     Raises:

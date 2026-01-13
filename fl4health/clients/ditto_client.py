@@ -228,7 +228,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
             target (TorchTargetType): target tensor to be used to compute a loss given each models outputs.
 
         Returns:
-            tuple[TrainingLosses, TorchPredType]: Returns relevant loss values from both the global and local
+            (tuple[TrainingLosses, TorchPredType]): Returns relevant loss values from both the global and local
                 model optimization steps. The prediction dictionary contains predictions indexed a "global" and "local"
                 corresponding to predictions from the global and local Ditto models for metric evaluations.
         """
@@ -266,8 +266,8 @@ class DittoClient(AdaptiveDriftConstraintClient):
             input (TorchInputType): Inputs to be fed into both models.
 
         Returns:
-            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains predictions indexed by
-            name and the second element contains intermediate activations index by name. For Ditto, we only need the
+            (tuple[TorchPredType, TorchFeatureType]): A tuple in which the first element contains predictions indexed
+            by name and the second element contains intermediate activations index by name. For Ditto, we only need the
             predictions, so the second dictionary is simply empty.
 
         Raises:
@@ -306,7 +306,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
+            (tuple[torch.Tensor, dict[str, torch.Tensor]]): A tuple with:
 
             - The tensor for the model loss
             - A dictionary with ``local_loss``, ``global_loss`` as additionally reported loss values.
@@ -368,7 +368,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
         Validate the current model on the entire validation dataset.
 
         Returns:
-            tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
+            (tuple[float, dict[str, Scalar]]): The validation loss and a dictionary of metrics from validation.
         """
         # Set the global model to evaluate mode
         self.global_model.eval()

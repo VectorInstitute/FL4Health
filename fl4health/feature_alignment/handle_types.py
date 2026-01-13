@@ -27,7 +27,7 @@ def _to_string(series: pd.Series) -> tuple[pd.Series, dict[str, Any]]:
         series (pd.Series): Feature data.
 
     Returns:
-        tuple[pd.Series, dict[str, Any]]: Tuple (pandas.Series, dict) with the updated feature data
+        (tuple[pd.Series, dict[str, Any]]): Tuple (pandas.Series, dict) with the updated feature data
         and metadata respectively.
     """
     convertible_to_type(series, FeatureType.STRING, unique=None, raise_error=True)
@@ -78,7 +78,7 @@ def _to_categorical_indicators(
         ValueError: Error if here are column duplicates.
 
     Returns:
-        tuple[pd.DataFrame, dict[str, Any]]: Tuple (pandas.DataFrame, dict) with the updated features data
+        (tuple[pd.DataFrame, dict[str, Any]]): Tuple (pandas.DataFrame, dict) with the updated features data
         and metadata respectively.
     """
     series = data[col]
@@ -141,7 +141,7 @@ def _to_ordinal(series: pd.Series, unique: np.ndarray | None = None) -> tuple[pd
         unique (np.ndarray | None, optional): Unique values which can be optionally specified. Defaults to None.
 
     Returns:
-        tuple[pd.Series, dict[str, Any]]: Tuple (pandas.Series, dict) with the updated feature data
+        (tuple[pd.Series, dict[str, Any]]): Tuple (pandas.Series, dict) with the updated feature data
         and metadata respectively.
     """
     series, meta = _numeric_categorical_mapping(series, unique=unique)
@@ -160,7 +160,7 @@ def _numeric_categorical_mapping(
         unique (np.ndarray | None, optional): Unique values which can be optionally specified. Defaults to None.
 
     Returns:
-        tuple[pd.Series, dict[str, Any]]: Tuple (pandas.Series, dict) with the updated feature data and metadata
+        (tuple[pd.Series, dict[str, Any]]): Tuple (pandas.Series, dict) with the updated feature data and metadata
         respectively.
     """
     unique = get_unique(series, unique=unique)
@@ -212,7 +212,7 @@ def _to_binary(series: pd.Series, unique: np.ndarray | None = None) -> tuple[pd.
         unique (np.ndarray | None, optional): Unique values which can be optionally specified. Defaults to None.
 
     Returns:
-        tuple[pd.Series, dict[str, Any]]: Tuple (pandas.Series, dict) with the updated feature data and metadata
+        (tuple[pd.Series, dict[str, Any]]): Tuple (pandas.Series, dict) with the updated feature data and metadata
         respectively.
     """
     if is_bool_dtype(series):
@@ -260,7 +260,7 @@ def _to_numeric(series: pd.Series, unique: np.ndarray | None = None) -> tuple[pd
         unique (np.ndarray | None, optional): Unique values which can be optionally specified. Defaults to None.
 
     Returns:
-        tuple[pd.Series, dict[str, Any]]: Tuple (pandas.Series, dict) with the updated feature data and metadata
+        (tuple[pd.Series, dict[str, Any]]): Tuple (pandas.Series, dict) with the updated feature data and metadata
         respectively.
     """
     convertible_to_type(series, FeatureType.NUMERIC, unique=unique, raise_error=True)
@@ -576,7 +576,7 @@ def to_types(data: pd.DataFrame, new_types: dict[str, FeatureType]) -> tuple[pd.
         new_types (dict[str, str]): Map from the feature column name to its new type.
 
     Returns:
-        tuple[pd.DataFrame, dict[str, Any]]: Tuple (pandas.DataFrame, dict) with the updated features data and
+        (tuple[pd.DataFrame, dict[str, Any]]): Tuple (pandas.DataFrame, dict) with the updated features data and
         metadata respectively.
     """
     meta = {}

@@ -191,7 +191,7 @@ class TabularFeaturesPreprocessor:
             df (pd.DataFrame): Dataframe to be processed.
 
         Returns:
-            tuple[NDArray, NDArray]: Resulting input and target numpy arrays after preprocessing.
+            (tuple[NDArray, NDArray]): Resulting input and target numpy arrays after preprocessing.
         """
         # If the dataframe has an entire column missing, we need to fill it with some default value first.
         df_filled = self.fill_in_missing_columns(df)

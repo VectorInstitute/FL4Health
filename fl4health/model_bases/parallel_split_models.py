@@ -113,7 +113,7 @@ class ParallelSplitModel(nn.Module):
             input (torch.Tensor): Input tensor to be passed through the set of forwards.
 
         Returns:
-            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: Prediction tensor from the head model. These
+            (tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]): Prediction tensor from the head model. These
                 predictions are stored under the "prediction" key of the dictionary. The second feature dictionary is
                 empty by default.
         """

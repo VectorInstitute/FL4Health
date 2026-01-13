@@ -73,7 +73,7 @@ class PcaModule(nn.Module):
                 and an exception will be thrown if it is not.
 
         Returns:
-            tuple[Tensor, Tensor]: The principal components (i.e., right singular vectors) and their corresponding
+            (tuple[Tensor, Tensor]): The principal components (i.e., right singular vectors) and their corresponding
                 singular values.
         """
         x_prime = self.prepare_data_forward(x, center_data=center_data)

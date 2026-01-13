@@ -94,7 +94,7 @@ class NumpyClippingClient(BasicClient):
             parameters (NDArrays): Parameters to clip
 
         Returns:
-            tuple[NDArrays, float]: Clipped parameters and the associated clipping bit indicating whether the norm
+            (tuple[NDArrays, float]): Clipped parameters and the associated clipping bit indicating whether the norm
                 was below ``self.clipping_bound``. If ``self.adaptive_clipping`` is false, this bit is always 0.0
         """
         assert self.clipping_bound is not None
@@ -119,7 +119,7 @@ class NumpyClippingClient(BasicClient):
             parameters (NDArrays): Updated parameters to compute the delta from and clip thereafter.
 
         Returns:
-            tuple[NDArrays, float]: Clipped weighted updates (weight deltas) and the associated clipping bit.
+            (tuple[NDArrays, float]): Clipped weighted updates (weight deltas) and the associated clipping bit.
         """
         assert self.initial_weights is not None
         assert len(parameters) == len(self.initial_weights)

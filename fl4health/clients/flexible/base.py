@@ -148,7 +148,7 @@ class FlexibleClient(BasicClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with a dictionary of
+            (tuple[TrainingLosses, TorchPredType]): The losses object from the train step along with a dictionary of
                 any predictions produced by the model prior to the application of the backwards phase
         """
         # Clear gradients from optimizer if they exist
@@ -205,7 +205,7 @@ class FlexibleClient(BasicClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
+            (tuple[TrainingLosses, TorchPredType]): The losses object from the train step along with
                 a dictionary of any predictions produced by the model.
         """
         losses, preds = self._compute_preds_and_losses(model, optimizer, input, target)
@@ -224,7 +224,7 @@ class FlexibleClient(BasicClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
+            (tuple[TrainingLosses, TorchPredType]): The losses object from the train step along with
                 a dictionary of any predictions produced by the model.
         """
         return self._train_step_with_model_and_optimizer(self.model, self.optimizers["global"], input, target)
@@ -244,8 +244,8 @@ class FlexibleClient(BasicClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            tuple[EvaluationLosses, TorchPredType]: The losses object from the val step along with a dictionary of the
-                predictions produced by the model.
+            (tuple[EvaluationLosses, TorchPredType]): The losses object from the val step along with a dictionary of
+                the predictions produced by the model.
         """
         # Get preds and compute loss
         with torch.no_grad():
@@ -264,8 +264,8 @@ class FlexibleClient(BasicClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            tuple[EvaluationLosses, TorchPredType]: The losses object from the val step along with a dictionary of the
-                predictions produced by the model.
+            (tuple[EvaluationLosses, TorchPredType]): The losses object from the val step along with a dictionary of
+                the predictions produced by the model.
         """
         return self._val_step_with_model(self.model, input, target)
 
@@ -285,7 +285,7 @@ class FlexibleClient(BasicClient):
                 ``self.model.forward().``
 
         Returns:
-            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains a dictionary of
+            (tuple[TorchPredType, TorchFeatureType]): A tuple in which the first element contains a dictionary of
             predictions indexed by name and the second element contains intermediate activations indexed by name. By
             passing features, we can compute losses such as the contrastive loss in MOON. All predictions included in
             dictionary will by default be used to compute metrics separately.

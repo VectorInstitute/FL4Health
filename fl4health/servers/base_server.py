@@ -152,7 +152,7 @@ class FlServer(Server):
             timeout (float | None): The timeout for clients to return results in a given FL round.
 
         Returns:
-            tuple[History, float]: The first element of the tuple is a ``History`` object containing the losses and
+            (tuple[History, float]): The first element of the tuple is a ``History`` object containing the losses and
                 metrics computed during training and validation. The second element of the tuple is the elapsed time in
                 seconds.
         """
@@ -241,7 +241,7 @@ class FlServer(Server):
                 clients selected to participate in federated training.
 
         Returns:
-            tuple[History, float]: The first element of the tuple is a ``History`` object containing the full set of
+            (tuple[History, float]): The first element of the tuple is a ``History`` object containing the full set of
                 FL training results, including things like aggregated loss and metrics. Tuple also contains the elapsed
                 time in seconds for the round.
         """

@@ -223,7 +223,7 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
                 input ``x``. It  should be a diagonal matrix as well.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: ``X`` and ``Y`` for the clients synthetic dataset. Shape of ``X`` is
+            (tuple[torch.Tensor, torch.Tensor]): ``X`` and ``Y`` for the clients synthetic dataset. Shape of ``X`` is
                 ``n_samples`` x input dimension. Shape of ``Y`` is ``n_samples`` x ``output_dim`` and is one-hot
                 encoded.
         """
@@ -328,7 +328,7 @@ class SyntheticIidFedProxDataset(SyntheticFedProxDataset):
         multidimensional normal distribution with diagonal covariance matrix shared across clients.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: ``X`` and ``Y`` for the clients synthetic dataset. Shape of ``X`` is
+            (tuple[torch.Tensor, torch.Tensor]): ``X`` and ``Y`` for the clients synthetic dataset. Shape of ``X`` is
                 ``n_samples`` x input dimension. Shape of ``Y`` is ``n_samples`` x ``output_dim`` and is one-hot
                 encoded.
         """

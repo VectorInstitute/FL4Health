@@ -14,7 +14,7 @@ def uniform_metric_aggregation(
             client.
 
     Returns:
-        tuple[defaultdict[str, int], Metrics]: Client counts per metric and the uniformly aggregated metrics.
+        (tuple[defaultdict[str, int], Metrics]): Client counts per metric and the uniformly aggregated metrics.
     """
     aggregated_metrics: Metrics = {}
     total_client_count_by_metric: defaultdict[str, int] = defaultdict(int)
@@ -49,7 +49,7 @@ def metric_aggregation(
             client.
 
     Returns:
-        tuple[int, Metrics]: The total number of examples along with aggregated metrics.
+        (tuple[int, Metrics]): The total number of examples along with aggregated metrics.
     """
     aggregated_metrics: Metrics = {}
     total_examples = 0

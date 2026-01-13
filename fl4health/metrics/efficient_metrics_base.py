@@ -133,7 +133,8 @@ class ClassificationMetric(Metric, ABC):
             targets (torch.Tensor): Targets tensor.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Potentially transformed predictions and targets tensors, in that order.
+            (tuple[torch.Tensor, torch.Tensor]): Potentially transformed predictions and targets tensors, in that
+                order.
         """
         # On the off chance were given booleans convert them to integers
         preds = preds.to(torch.uint8) if preds.dtype == torch.bool else preds
@@ -170,7 +171,7 @@ class ClassificationMetric(Metric, ABC):
             targets (torch.Tensor): Targets tensor.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: True positive, false positive,
+            (tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]): True positive, false positive,
                 true negative, and false negative indications for each of the predictions in the provided tensors.
         """
         true_positives = (preds * targets) if not self.discard_tp else torch.tensor([])
@@ -199,7 +200,7 @@ class ClassificationMetric(Metric, ABC):
             false_negatives (torch.Tensor): Tensor with entry of 1 indicating a false negative for a pred/target pair.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors reduced over the specified axes
+            (tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]): Tensors reduced over the specified axes
                 in the order ``true_positives``, ``false_positives``, ``true_negatives``, ``false_negatives``.
         """
         true_positives = true_positives.sum(sum_axes, dtype=self.dtype) if not self.discard_tp else true_positives
@@ -329,7 +330,7 @@ class ClassificationMetric(Metric, ABC):
             targets (torch.Tensor): Tensor containing prediction targets. Must be same shape as preds.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
+            (tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]): Tensors containing the counts along the
             specified dimensions for each of true positives, false positives, true negatives, and false negatives
             respectively. The output shape of these tensors depends on if ``self.batch_dim`` and ``self.label_dim`` are
             specified. The batch dimension, if it exists in the output, will always come first. For example, if the
@@ -637,7 +638,7 @@ class BinaryClassificationMetric(ClassificationMetric):
              targets (torch.Tensor): Tensor containing prediction targets. Must be same shape as preds.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
+            (tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]): Tensors containing the counts along the
                 specified dimensions for each of true positives, false positives, true negatives, and false negatives,
                 respectively. If ``self.batch_dim`` is not None then these tensors will have shape
                 ``(batch_size, 1)``, Otherwise, it will have shape ``(1,)``. The counts will be relative to the
@@ -806,7 +807,8 @@ class MultiClassificationMetric(ClassificationMetric):
             targets (torch.Tensor): targets tensor.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: predictions and targets tensor with the appropriate background removed.
+            (tuple[torch.Tensor, torch.Tensor]): predictions and targets tensor with the appropriate background
+                removed.
         """
         assert preds.shape == targets.shape, (
             f"Preds ({preds.shape}) and targets ({targets.shape}) should have the same shape but do not."
@@ -834,7 +836,8 @@ class MultiClassificationMetric(ClassificationMetric):
             targets (torch.Tensor): Targets tensor.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Potentially transformed predictions and targets tensors, in that order.
+            (tuple[torch.Tensor, torch.Tensor]): Potentially transformed predictions and targets tensors, in that
+                order.
         """
         preds, targets = super()._transform_tensors(preds, targets)
 

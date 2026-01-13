@@ -266,7 +266,7 @@ class LlmClient(BasicClient):
             current_round (int | None, optional): The current FL round
 
         Returns:
-            tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
+            (tuple[dict[str, float], dict[str, Scalar]]): The loss and metrics dictionary from the local training.
                 Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         # Do local training
@@ -306,8 +306,8 @@ class LlmClient(BasicClient):
         Validate the current model on the entire validation set.
 
         Returns:
-            tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics
-                from validation (and test if present).
+            (tuple[float, dict[str, Scalar]]): The validation loss and a dictionary of metrics from validation (and
+                test if present).
         """
         results = self.trainer.evaluate()
 

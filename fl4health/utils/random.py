@@ -73,7 +73,7 @@ def save_random_state() -> tuple[tuple[Any, ...], dict[str, Any], torch.Tensor]:
     state of the random number generators at a later time.
 
     Returns:
-        tuple[tuple[Any, ...], dict[str, Any], torch.Tensor]: A tuple containing the state of the random number
+        (tuple[tuple[Any, ...], dict[str, Any], torch.Tensor]): A tuple containing the state of the random number
         generators for Python, NumPy, and PyTorch.
     """
     log(INFO, "Saving random state.")

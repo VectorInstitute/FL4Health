@@ -173,9 +173,9 @@ class ScaffoldServer(FlServer):
                 server waits for the minimum number of clients to be available set in the strategy.
 
         Returns:
-            tuple[History, float]: The first element of the tuple is a ``History`` object containing the full set of FL
-                training results, including things like aggregated loss and metrics. Tuple also includes elapsed time
-                in seconds for round.
+            (tuple[History, float]): The first element of the tuple is a ``History`` object containing the full set of
+                FL training results, including things like aggregated loss and metrics. Tuple also includes elapsed
+                time in seconds for round.
         """
         assert isinstance(self.strategy, Scaffold)
         return super().fit(num_rounds=num_rounds, timeout=timeout)
@@ -292,7 +292,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
                 server waits for the minimum number of clients to be available set in the strategy.
 
         Returns:
-            tuple[History, float]: First element of tuple is history object containing the full set of FL training
+            (tuple[History, float]): First element of tuple is history object containing the full set of FL training
                 results, including aggregated loss and metrics. Tuple also includes the elapsed time in seconds for
                 round.
         """

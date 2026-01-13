@@ -189,7 +189,7 @@ class MrMtlPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         Validate the current model on the entire validation dataset.
 
         Returns:
-            tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
+            (tuple[float, dict[str, Scalar]]): The validation loss and a dictionary of metrics from validation.
         """
         # ensure that the initial global model is in eval mode
         assert self.initial_global_model is not None and not self.initial_global_model.training

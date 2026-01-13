@@ -66,7 +66,7 @@ class PerFclLoss(nn.Module):
                 across clients. Shape (``batch_size``, ``n_features``)
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Tuple containing the two components of the PerFCL loss function to
+            (tuple[torch.Tensor, torch.Tensor]): Tuple containing the two components of the PerFCL loss function to
                 be weighted and summed. The first tensor corresponds to the global feature loss, the second is
                 associated with the local feature loss.
         """

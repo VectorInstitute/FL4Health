@@ -62,7 +62,7 @@ class FendaModelWithFeatureState(FendaModel):
             input (torch.Tensor): input is expected to be of shape (``batch_size``, \\*)
 
         Returns:
-            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: Tuple of predictions and feature maps. FENDA
+            (tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]): Tuple of predictions and feature maps. FENDA
                 predictions are simply stored under the key "prediction." The features for the local and global feature
                 extraction modules are stored under keys "local_features" and "global_features," respectively.
         """

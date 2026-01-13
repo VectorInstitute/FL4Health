@@ -167,7 +167,7 @@ def get_img_and_seg_paths(
         include_hbv (bool): Whether or not to include hbv Sequence as part of the input data.
 
     Returns:
-        tuple[Sequence[Sequence[str]], Sequence[str], torch.Tensor]: The first element of the returned tuple
+        (tuple[Sequence[Sequence[str]], Sequence[str], torch.Tensor]): The first element of the returned tuple
             is a list of list of strings where the outer list represents a list of file paths corresponding
             to the different MRI Sequences for a given patient exam. The second element is a list of strings
             representing the associated segmentation labels. The final element of the returned tuple is a
@@ -221,7 +221,7 @@ def split_img_and_seg_paths(
     splits (int): The number of splits to partition the dataset.
 
     Returns:
-        tuple[Sequence[Sequence[str]], Sequence[str]]: The image and segmentation paths for
+        (tuple[Sequence[Sequence[str]], Sequence[str]]): The image and segmentation paths for
         images and segmentation labels.
     """
     assert len(img_paths) == len(seg_paths)

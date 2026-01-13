@@ -237,7 +237,7 @@ async def run_smoke_test(
             do not finish correctly
 
     Returns:
-        tuple[list[str], list[str]]: (server_errors, client_errors) list of errors from server and client processes,
+        (tuple[list[str], list[str]]): (server_errors, client_errors) list of errors from server and client processes,
             respectively.
     """
     try:
@@ -432,7 +432,7 @@ async def run_fault_tolerance_smoke_test(
             servers. Defaults to DEFAULT_READ_LOGS_TIMEOUT.
 
     Returns:
-        tuple[list[str], list[str]]: (server_errors, client_errors) list of errors from server and client processes,
+        (tuple[list[str], list[str]]): (server_errors, client_errors) list of errors from server and client processes,
             respectively.
     """
     try:

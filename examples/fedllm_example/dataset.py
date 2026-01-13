@@ -40,7 +40,7 @@ def get_alpaca_tokenizer_and_data_collator(
         model_name (str): Model name that is supported by the Hugging Face Transformers library.
 
     Returns:
-        tuple[PreTrainedTokenizer, DataCollatorForCompletionOnlyLM]: The tokenizer and data collator.
+        (tuple[PreTrainedTokenizer, DataCollatorForCompletionOnlyLM]): The tokenizer and data collator.
     """
     # From: https://huggingface.co/docs/trl/en/sft_trainer
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, padding_side="right")

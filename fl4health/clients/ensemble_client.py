@@ -105,7 +105,7 @@ class EnsembleClient(BasicClient):
             target (torch.Tensor): The target corresponding to the input.
 
         Returns:
-            tuple[TrainingLosses, dict[str, torch.Tensor]]: The losses object from the train step along with
+            (tuple[TrainingLosses, dict[str, torch.Tensor]]): The losses object from the train step along with
                 a dictionary of any predictions produced by the model.
         """
         assert isinstance(input, torch.Tensor)

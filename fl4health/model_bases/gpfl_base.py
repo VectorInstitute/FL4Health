@@ -161,7 +161,7 @@ class GpflBaseAndHeadModules(SequentiallySplitExchangeBaseModel):
             input (torch.Tensor): Input to the model forward pass.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Return the prediction dictionary and a features dictionaries.
+            (tuple[torch.Tensor, torch.Tensor]): Return the prediction dictionary and a features dictionaries.
         """
         # Throw an error because this function should not directly be called with this class.
         raise NotImplementedError("Forward pass should not be used for the GpflBaseAndHeadModules class. ")
@@ -234,7 +234,7 @@ class GpflModel(PartialLayerExchangeModel):
                 to generate the local features.
 
         Returns:
-            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple in which the first element
+            (tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]): A tuple in which the first element
                 contains a dictionary of predictions and the second element contains intermediate features
                 indexed by name.
         """

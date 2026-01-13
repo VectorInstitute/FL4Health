@@ -94,7 +94,7 @@ class MoonClient(BasicClient):
                 input to simply be of type ``torch.Tensor``
 
         Returns:
-            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple in which the first element
+            (tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]): A tuple in which the first element
                 contains predictions indexed by name and the second element contains intermediate activations
                 index by name. Specifically the features of the model, features of the global model and features of
                 the old model are returned. All predictions included in dictionary will be used to compute metrics.
@@ -169,7 +169,7 @@ class MoonClient(BasicClient):
             target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
+            (tuple[torch.Tensor, dict[str, torch.Tensor]]): A tuple with:
 
             - The tensor for the total loss
             - A dictionary with ``loss``, ``contrastive_loss`` and ``total_loss`` keys and their calculated values.

@@ -126,7 +126,7 @@ class ModelMergeClient(NumPyClient):
             config (NDArrays): The config from the server.
 
         Returns:
-            tuple[NDArrays, int, dict[str, Scalar]]: The local model parameters along with the number of samples in
+            (tuple[NDArrays, int, dict[str, Scalar]]): The local model parameters along with the number of samples in
             the local test dataset and the computed metrics of the local model on the local test dataset.
 
         Raises:
@@ -179,7 +179,7 @@ class ModelMergeClient(NumPyClient):
         Validate the model on the test dataset.
 
         Returns:
-            tuple[float, dict[str, Scalar]]: The loss and a dictionary of metrics from test set.
+            (tuple[float, dict[str, Scalar]]): The loss and a dictionary of metrics from test set.
         """
         self.model.eval()
         self.test_metric_manager.clear()
@@ -201,7 +201,7 @@ class ModelMergeClient(NumPyClient):
             config (Config): Configuration object from the server.
 
         Returns:
-            tuple[float, int, dict[str, Scalar]: The float represents the loss which is assumed to be 0 for the
+            (tuple[float, int, dict[str, Scalar]): The float represents the loss which is assumed to be 0 for the
                 ``ModelMergeClient``. The int represents the number of examples in the local test dataset and the
                 dictionary is the computed metrics on the test set.
         """

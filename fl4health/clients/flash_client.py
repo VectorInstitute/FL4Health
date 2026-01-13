@@ -106,7 +106,7 @@ class FlashClient(BasicClient):
             current_round (int | None, optional): Current server round being performed. Defaults to None.
 
         Returns:
-            tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
+            (tuple[dict[str, float], dict[str, Scalar]]): The loss and metrics dictionary from the local training.
                 Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         if self.gamma is None:

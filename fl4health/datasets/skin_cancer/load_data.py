@@ -32,7 +32,7 @@ def load_image(item: dict[str, Any], transform: Callable | None) -> tuple[torch.
         transform (Callable | None): Transformation function to apply to the images.
 
     Returns:
-        tuple[torch.Tensor, int]: A tuple containing the transformed image tensor and the target label.
+        (tuple[torch.Tensor, int]): A tuple containing the transformed image tensor and the target label.
     """
     image_path = item["img_path"]
     image = Image.open(image_path).convert("RGB")
@@ -96,7 +96,7 @@ def load_skin_cancer_data(
         seed (int | None): Random seed for shuffling data. Defaults to None.
 
     Returns:
-        tuple[DataLoader, DataLoader, DataLoader, dict[str, int]]: DataLoaders for the training, validation,
+        (tuple[DataLoader, DataLoader, DataLoader, dict[str, int]]): DataLoaders for the training, validation,
         and test sets, and a dictionary with the number of examples in each set.
     """
     if sum(split_percents) != 1.0:

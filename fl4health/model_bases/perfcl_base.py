@@ -43,7 +43,7 @@ class PerFclModel(PartialLayerExchangeModel, ParallelSplitModel):
             input (torch.Tensor): input is expected to be of shape (``batch_size``, \\*)
 
         Returns:
-            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: Tuple of predictions and feature maps. PerFCL
+            (tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]): Tuple of predictions and feature maps. PerFCL
                 predictions are simply stored under the key "prediction." The features for the local and global feature
                 extraction modules are stored under keys "local_features" and "global_features," respectively.
         """

@@ -108,7 +108,7 @@ class DirichletLabelBasedAllocation(Generic[T]):
             ValueError: Either beta or a prior distribution must be provided.
 
         Returns:
-            tuple[list[torch.Tensor], int, np.ndarray]: Tuple of:
+            (tuple[list[torch.Tensor], int, np.ndarray]): Tuple of:
 
             - ``torch.Tensor``: partitioned indices of datapoints with the corresponding label.
             - ``int``: The minimum number of data points assigned to a partition.
@@ -182,7 +182,7 @@ class DirichletLabelBasedAllocation(Generic[T]):
             ValueError: Throws this error if the retries have been exhausted and the user provided minimum is not met.
 
         Returns:
-            tuple[list[D], dict[T, np.ndarray]]: ``list[D]`` is the partitioned datasets, length should correspond to
+            (tuple[list[D], dict[T, np.ndarray]]: ``list[D])`` is the partitioned datasets, length should correspond to
                 ``self.number_of_partitions``. ``dict[T, np.ndarray]`` is the Dirichlet distribution used to partition
                 the data points for each label.
         """
