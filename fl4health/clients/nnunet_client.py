@@ -712,8 +712,8 @@ class NnunetClient(BasicClient):
         Returns:
             (tuple[torch.Tensor, torch.Tensor]): Tuple of:
 
-            - torch.Tensor: The masked one hot encoded predicted segmentation maps.
-            - torch.Tensor: The masked target segmentation maps.
+                - torch.Tensor: The masked one hot encoded predicted segmentation maps.
+                - torch.Tensor: The masked target segmentation maps.
         """
         # create mask where 1 is where pixels in target are not ignore label
         # Modify target to remove the last class which is the ignore_label class

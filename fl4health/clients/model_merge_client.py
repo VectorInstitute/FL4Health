@@ -127,7 +127,7 @@ class ModelMergeClient(NumPyClient):
 
         Returns:
             (tuple[NDArrays, int, dict[str, Scalar]]): The local model parameters along with the number of samples in
-            the local test dataset and the computed metrics of the local model on the local test dataset.
+                the local test dataset and the computed metrics of the local model on the local test dataset.
 
         Raises:
             AssertionError: If model is initialized prior to fit method being called which should not happen in the

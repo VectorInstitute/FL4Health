@@ -267,8 +267,8 @@ class DittoClient(AdaptiveDriftConstraintClient):
 
         Returns:
             (tuple[TorchPredType, TorchFeatureType]): A tuple in which the first element contains predictions indexed
-            by name and the second element contains intermediate activations index by name. For Ditto, we only need the
-            predictions, so the second dictionary is simply empty.
+                by name and the second element contains intermediate activations index by name. For Ditto, we only
+                need the predictions, so the second dictionary is simply empty.
 
         Raises:
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
@@ -308,8 +308,8 @@ class DittoClient(AdaptiveDriftConstraintClient):
         Returns:
             (tuple[torch.Tensor, dict[str, torch.Tensor]]): A tuple with:
 
-            - The tensor for the model loss
-            - A dictionary with ``local_loss``, ``global_loss`` as additionally reported loss values.
+                - The tensor for the model loss
+                - A dictionary with ``local_loss``, ``global_loss`` as additionally reported loss values.
         """
         # Compute global model vanilla loss
         assert "global" in preds

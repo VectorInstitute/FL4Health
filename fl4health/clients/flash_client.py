@@ -75,7 +75,7 @@ class FlashClient(BasicClient):
             config (Config): The config object from the server.
 
         Raises:
-            ValueError: Throws if the user is attempting to train by steps instead of epochs for this method
+            ValueError: Throws if the user is attempting to train by steps instead of epochs for this method.
 
         Returns:
             (tuple[int | None, int | None, int, bool, bool]): Returns the ``local_epochs``, ``local_steps``,

@@ -350,8 +350,9 @@ class MrMtlDeepMmdClient(MrMtlClient):
         Returns:
             (tuple[torch.Tensor, dict[str, torch.Tensor]]): A tuple with:
 
-            - The tensor for the loss
-            - A dictionary of additional losses with their names and values, or None if there are no additional losses.
+                - The tensor for the loss
+                - A dictionary of additional losses with their names and values, or None if there are no additional
+                  losses.
         """
         assert "prediction" in preds
         loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)

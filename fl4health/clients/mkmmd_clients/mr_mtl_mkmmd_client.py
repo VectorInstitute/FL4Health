@@ -227,9 +227,9 @@ class MrMtlMkMmdClient(MrMtlClient):
 
         Returns:
             (tuple[TorchPredType, TorchFeatureType]): A tuple in which the first element contains a dictionary of
-            predictions indexed by name and the second element contains intermediate activations indexed by name. By
-            passing features, we can compute all the losses. All predictions included in dictionary will by default
-            be used to compute metrics separately.
+                predictions indexed by name and the second element contains intermediate activations indexed by name.
+                By passing features, we can compute all the losses. All predictions included in dictionary will by
+                default be used to compute metrics separately.
 
         Raises:
             TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model's
@@ -322,8 +322,9 @@ class MrMtlMkMmdClient(MrMtlClient):
         Returns:
             (tuple[torch.Tensor, dict[str, torch.Tensor]]): A tuple with:
 
-            - The tensor for the loss.
-            - A dictionary of additional losses with their names and values, or None if there are no additional losses.
+                - The tensor for the loss.
+                - A dictionary of additional losses with their names and values, or None if there are no additional
+                  losses.
         """
         assert "prediction" in preds
         # Compute model loss + MR-MTL constraint term

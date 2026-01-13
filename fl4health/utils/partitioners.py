@@ -110,9 +110,9 @@ class DirichletLabelBasedAllocation(Generic[T]):
         Returns:
             (tuple[list[torch.Tensor], int, np.ndarray]): Tuple of:
 
-            - ``torch.Tensor``: partitioned indices of datapoints with the corresponding label.
-            - ``int``: The minimum number of data points assigned to a partition.
-            - ``np.ndarray``: The Dirichlet distribution used to partition the data points.
+                - ``torch.Tensor``: partitioned indices of datapoints with the corresponding label.
+                - ``int``: The minimum number of data points assigned to a partition.
+                - ``np.ndarray``: The Dirichlet distribution used to partition the data points.
         """
         if self.prior_distribution is not None:
             label_prior_distribution = self.prior_distribution[label]

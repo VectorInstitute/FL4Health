@@ -37,7 +37,7 @@ class TorchModuleCheckpointer(ABC):
             metrics (dict[str, float]): Computed metrics associated with the model.
 
         Raises:
-            NotImplementedError: Must be implemented by the checkpointer
+            NotImplementedError: Must be implemented by the checkpointer.
         """
         raise NotImplementedError("maybe_checkpoint must be implemented by inheriting classes")
 

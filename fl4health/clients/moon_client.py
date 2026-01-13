@@ -171,8 +171,8 @@ class MoonClient(BasicClient):
         Returns:
             (tuple[torch.Tensor, dict[str, torch.Tensor]]): A tuple with:
 
-            - The tensor for the total loss
-            - A dictionary with ``loss``, ``contrastive_loss`` and ``total_loss`` keys and their calculated values.
+                - The tensor for the total loss
+                - A dictionary with ``loss``, ``contrastive_loss`` and ``total_loss`` keys and their calculated values.
         """
         loss = self.criterion(preds["prediction"], target)
         total_loss = loss.clone()

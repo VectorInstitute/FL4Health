@@ -250,7 +250,7 @@ class FedRepClient(BasicClient):
 
         Returns:
             (tuple[NDArrays, int, dict[str, Scalar]]): The parameters following the local training along with the
-            number of samples in the local training dataset and the computed metrics throughout the fit.
+                number of samples in the local training dataset and the computed metrics throughout the fit.
 
         Raises:
             ValueError: If the steps or epochs for the representation and head module training processes are are

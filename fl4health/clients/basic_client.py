@@ -303,7 +303,7 @@ class BasicClient(NumPyClient):
 
         Returns:
             (tuple[NDArrays, int, dict[str, Scalar]]): The parameters following the local training along with the
-            number of samples in the local training dataset and the computed metrics throughout the fit.
+                number of samples in the local training dataset and the computed metrics throughout the fit.
 
         Raises:
             ValueError: If ``local_steps`` or ``local_epochs`` is not specified in config.
@@ -1000,9 +1000,9 @@ class BasicClient(NumPyClient):
 
         Returns:
             (tuple[TorchPredType, TorchFeatureType]): A tuple in which the first element contains a dictionary of
-            predictions indexed by name and the second element contains intermediate activations indexed by name. By
-            passing features, we can compute losses such as the contrastive loss in MOON. All predictions included in
-            dictionary will by default be used to compute metrics separately.
+                predictions indexed by name and the second element contains intermediate activations indexed by name.
+                By passing features, we can compute losses such as the contrastive loss in MOON. All predictions
+                included in dictionary will by default be used to compute metrics separately.
 
         Raises:
             TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model's
@@ -1116,7 +1116,7 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            tuple[DataLoader, DataLoader Tuple of length 2. The client train and validation loader.
+            (tuple[DataLoader, DataLoader]) Tuple of length 2. The client train and validation loader.
 
         Raises:
             NotImplementedError: To be defined in child class.

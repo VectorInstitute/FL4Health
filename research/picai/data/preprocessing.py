@@ -101,7 +101,7 @@ class Case(ABC):
 
         Returns:
             (tuple[Sequence[Path], Path]): A tuple in which the first entry is a sequence of file paths for the scans
-            and the second entry is the file path to the corresponding annotation.
+                and the second entry is the file path to the corresponding annotation.
 
         Raises:
             NotImplementedError
@@ -370,8 +370,8 @@ def preprocess(
         num_threads (int): The number of threads to use for preprocessing.
 
     Returns:
-        Sequence[tuple[Sequence[Path], Path]]: A sequence of tuples in which the first entry is a sequence of
-        file paths for the scans and the second entry is the file path to the corresponding annotation.
+        (Sequence[tuple[Sequence[Path], Path]]): A sequence of tuples in which the first entry is a sequence of
+            file paths for the scans and the second entry is the file path to the corresponding annotation.
 
     Raises:
         PreprocessingException if an error occurs during preprocessing of any of the cases.

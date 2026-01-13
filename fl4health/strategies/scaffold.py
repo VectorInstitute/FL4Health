@@ -119,7 +119,7 @@ class Scaffold(BasicFedAvg):
 
         Returns:
             Parameters: This quantity represents the initial values for the control variates for the server and on the
-            client-side.
+                client-side.
 
         Raises:
             ValueError: This error will be raised if neither a model nor initial control variates are provided.

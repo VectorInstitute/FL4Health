@@ -269,8 +269,8 @@ class FendaDittoClient(DittoClient):
 
         Returns:
             (tuple[TorchPredType, TorchFeatureType]): A tuple in which the first element contains predictions indexed
-            by name and the second element contains intermediate activations index by name. For Ditto+FENDA, we only
-            need the predictions, so the second dictionary is simply empty.
+                by name and the second element contains intermediate activations index by name. For Ditto+FENDA, we
+                only need the predictions, so the second dictionary is simply empty.
 
         Raises:
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model

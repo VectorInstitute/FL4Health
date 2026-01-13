@@ -286,9 +286,9 @@ class FlexibleClient(BasicClient):
 
         Returns:
             (tuple[TorchPredType, TorchFeatureType]): A tuple in which the first element contains a dictionary of
-            predictions indexed by name and the second element contains intermediate activations indexed by name. By
-            passing features, we can compute losses such as the contrastive loss in MOON. All predictions included in
-            dictionary will by default be used to compute metrics separately.
+                predictions indexed by name and the second element contains intermediate activations indexed by name.
+                By passing features, we can compute losses such as the contrastive loss in MOON. All predictions
+                included in dictionary will by default be used to compute metrics separately.
 
         Raises:
             TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model's
