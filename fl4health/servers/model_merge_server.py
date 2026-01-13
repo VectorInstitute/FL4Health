@@ -145,7 +145,7 @@ class ModelMergeServer(Server):
         Method used for converting server parameters into a torch model that can be checkpointed.
 
         Returns:
-            nn.Module: Torch model to be checkpointed by a torch checkpointer.
+            (nn.Module): Torch model to be checkpointed by a torch checkpointer.
         """
         assert self.server_model is not None, (
             "Model hydration has been called but no server_model is defined to hydrate. The functionality of "

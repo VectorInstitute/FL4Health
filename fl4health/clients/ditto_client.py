@@ -105,7 +105,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
             config (Config): The config from the server.
 
         Returns:
-            nn.Module: The PyTorch model serving as the global model for Ditto
+            (nn.Module): The PyTorch model serving as the global model for Ditto
         """
         return self.get_model(config).to(self.device)
 

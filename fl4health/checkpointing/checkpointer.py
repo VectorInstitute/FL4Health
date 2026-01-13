@@ -52,7 +52,7 @@ class TorchModuleCheckpointer(ABC):
                 If not specified, the checkpointer will load from ``self.checkpoint_path``. Defaults to None.
 
         Returns:
-            nn.Module: Returns a torch module loaded from the proper checkpoint path.
+            (nn.Module): Returns a torch module loaded from the proper checkpoint path.
         """
         if path_to_checkpoint is None:
             return torch.load(self.checkpoint_path, weights_only=False)

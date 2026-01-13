@@ -108,7 +108,7 @@ def clone_and_freeze_model(model: nn.Module) -> nn.Module:
         model (nn.Module): Model to clone and freeze.
 
     Returns:
-        nn.Module: Cloned and frozen model.
+        (nn.Module): Cloned and frozen model.
     """
     cloned_model = copy.deepcopy(model)
     for param in cloned_model.parameters():

@@ -63,7 +63,7 @@ class MrMtlPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             config (Config): The config from the server.
 
         Returns:
-            nn.Module: The PyTorch model serving as the global model for Ditto
+            (nn.Module): The PyTorch model serving as the global model for Ditto
         """
         model_copy = copy.deepcopy(self.get_model(config))
         return model_copy.to(self.device)

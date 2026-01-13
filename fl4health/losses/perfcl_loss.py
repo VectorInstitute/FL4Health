@@ -12,7 +12,8 @@ class PerFclLoss(nn.Module):
         local_feature_loss_temperature: float = 0.5,
     ) -> None:
         """
-        Loss function for local model training with the PerFCL Method: https://ieeexplore.ieee.org/document/10020518/
+        Loss function for local model training with the PerFCL Method: https://ieeexplore.ieee.org/document/10020518/.
+
         It is essentially a combination of two separate MOON contrastive losses.
 
         Args:

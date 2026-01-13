@@ -577,7 +577,7 @@ def to_types(data: pd.DataFrame, new_types: dict[str, FeatureType]) -> tuple[pd.
 
     Returns:
         (tuple[pd.DataFrame, dict[str, Any]]): Tuple of pandas.DataFrame and dict with the updated features data and
-        metadata respectively.
+            metadata respectively.
     """
     meta = {}
     for col, new_type in new_types.items():

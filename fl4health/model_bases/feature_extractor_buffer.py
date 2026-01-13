@@ -72,7 +72,7 @@ class FeatureExtractorBuffer:
             layer_hierarchy (list[str]): The hierarchical list of name of desired layer.
 
         Returns:
-            nn.Module: The desired layer of the model.
+            (nn.Module): The desired layer of the model.
         """
         if len(layer_hierarchy) == 1:
             return getattr(module, layer_hierarchy[0])

@@ -114,7 +114,7 @@ def get_picai_metrics(
             arguments
 
     Returns:
-        picai_eval.metrics.Metrics: A picai eval metrics object that has
+        (picai_eval.metrics.Metrics): A picai eval metrics object that has
             combined the results from all classes into a single object
     """
     if "y_det" in kwargs or "y_true" in kwargs or "subject_list" in kwargs:

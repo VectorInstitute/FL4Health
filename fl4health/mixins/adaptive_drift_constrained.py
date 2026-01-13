@@ -209,7 +209,7 @@ def apply_adaptive_drift_to_client(client_base_type: type[FlexibleClient]) -> ty
         client_base_type (type[FlexibleClient]): The class to be mixed.
 
     Returns:
-        type[FlexibleClient]: A basic client that has been mixed with `AdaptiveDriftConstrainedMixin`.
+        (type[FlexibleClient]): A basic client that has been mixed with `AdaptiveDriftConstrainedMixin`.
     """
     return type(
         f"AdaptiveDrift{client_base_type.__name__}",

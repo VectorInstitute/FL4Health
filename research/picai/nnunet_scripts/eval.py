@@ -338,7 +338,7 @@ def get_picai_metrics(
             arguments
 
     Returns:
-        picai_eval.metrics.Metrics: A picai eval metrics object that has
+        (picai_eval.metrics.Metrics): A picai eval metrics object that has
             combined the results from all classes into a single object
     """
     t_start = time.time()

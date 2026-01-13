@@ -23,7 +23,7 @@ def to_list(obj: Any) -> list[Any]:
         obj (Any): The object to convert to a list.
 
     Returns:
-        list[Any]: The processed object.
+        (list[Any]): The processed object.
     """
     if isinstance(obj, list):
         return obj

@@ -24,7 +24,7 @@ def resample_img(
         pad_value (float | int | None): Amount of padding to use.
 
     Returns:
-        sitk.Image: The resampled image.
+        (sitk.Image): The resampled image.
     """
     # get original spacing and size (x, y, z convention)
     original_spacing = image.GetSpacing()
@@ -148,7 +148,7 @@ def crop_or_pad(
             to False.
 
     Returns:
-        sitk.Image: Cropped or padded image.
+        (sitk.Image): Cropped or padded image.
     """
     # input conversion and verification
     shape, size = input_verification_crop_or_pad(image, size, physical_size)

@@ -331,15 +331,15 @@ class ClassificationMetric(Metric, ABC):
 
         Returns:
             (tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]): Tensors containing the counts along the
-            specified dimensions for each of true positives, false positives, true negatives, and false negatives
-            respectively. The output shape of these tensors depends on if ``self.batch_dim`` and ``self.label_dim`` are
-            specified. The batch dimension, if it exists in the output, will always come first. For example, if the
-            batch and label dimensions have sizes 2 and 3 respectively:
+                specified dimensions for each of true positives, false positives, true negatives, and false negatives
+                respectively. The output shape of these tensors depends on if ``self.batch_dim`` and ``self.label_dim``
+                are specified. The batch dimension, if it exists in the output, will always come first. For example,
+                if the batch and label dimensions have sizes 2 and 3 respectively:
 
-            - Both ``batch_dim`` and ``label_dim`` are specified: ``Size([2, 3])``
-            - Only ``batch_dim`` is specified: ``Size([2])``
-            - Only ``label_dim`` is specified: ``Size([3])``
-            - Neither specified: ``Size([])``
+                - Both ``batch_dim`` and ``label_dim`` are specified: ``Size([2, 3])``
+                - Only ``batch_dim`` is specified: ``Size([2])``
+                - Only ``label_dim`` is specified: ``Size([3])``
+                - Neither specified: ``Size([])``
         """
         # Transform predictions and targets to get them ready for computation
         preds, targets = self._transform_tensors(preds, targets)

@@ -235,7 +235,7 @@ class ModelMergeClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            nn.Module: The client model.
+            (nn.Module): The client model.
 
         Raises:
             NotImplementedError: To be defined in child class.

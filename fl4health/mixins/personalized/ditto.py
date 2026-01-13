@@ -76,7 +76,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             ValueError: If the ``global_model`` attribute has not yet been set, we will raise an error.
 
         Returns:
-            nn.Module: the global model if it has been set.
+            (nn.Module): the global model if it has been set.
         """
         if self.global_model:
             return self.global_model
@@ -143,7 +143,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             config (Config): The config from the server.
 
         Returns:
-            nn.Module: The PyTorch model serving as the global model for Ditto
+            (nn.Module): The PyTorch model serving as the global model for Ditto
         """
         model_copy = copy.deepcopy(self.get_model(config))
         return model_copy.to(self.device)

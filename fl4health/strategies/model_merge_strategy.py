@@ -278,8 +278,5 @@ class ModelMergeStrategy(Strategy):
 
         Args:
             client_manager (ClientManager): Unused.
-
-        Returns:
-            None
         """
         return None
