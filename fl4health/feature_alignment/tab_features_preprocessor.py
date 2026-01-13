@@ -122,7 +122,7 @@ class TabularFeaturesPreprocessor:
             one_hot (bool): Whether or not to apply a default one-hot pipeline.
 
         Returns:
-            dict[str, Pipeline]: Default feature processing pipeline per feature in the list.
+            (dict[str, Pipeline]): Default feature processing pipeline per feature in the list.
         """
         columns_to_pipelines = {}
         for tab_feature in tabular_features:

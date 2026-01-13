@@ -381,7 +381,7 @@ class FlexibleNnunetClient(FlexibleClient):
             optimizer_key (str): Key of the optimizer to which the scheduler will be applied.
             config (Config): The server config. This method will look for the
         Returns:
-            _LRScheduler: The default nnunet LR Scheduler for nnunetv2 2.5.1
+            (_LRScheduler): The default nnunet LR Scheduler for nnunetv2 2.5.1
         """
         if not isinstance(self.nnunet_trainer.lr_scheduler, PolyLRScheduler):
             log(
@@ -437,7 +437,7 @@ class FlexibleNnunetClient(FlexibleClient):
                 dictionary as the value
 
         Returns:
-            dict[str, Any]: The modified nnunet plans for the client
+            (dict[str, Any]): The modified nnunet plans for the client
         """
         # TODO: Make this an external function or part of another class and explicitly accept the required arguments
         # rather than using class attributes.
@@ -878,7 +878,7 @@ class FlexibleNnunetClient(FlexibleClient):
             config (Config): The config from the server
 
         Returns:
-            dict[str, Scalar]: A dictionary containing the train and validation sample counts as well as the
+            (dict[str, Scalar]): A dictionary containing the train and validation sample counts as well as the
                 serialized nnunet plans.
         """
         # Check if nnunet plans have already been initialized

@@ -43,7 +43,7 @@ def get_peft_state_maybe_zero_3(named_params: Iterator[tuple[str, Parameter]], b
         bias (str): The bias to consider.
 
     Returns:
-        dict[str, Any]: The state dict for the PEFT model.
+        (dict[str, Any]): The state dict for the PEFT model.
     """
     if bias == "none":
         to_return = {k: t for k, t in named_params if "lora_" in k}
@@ -80,7 +80,7 @@ def get_peft_state_non_lora_maybe_zero_3(
         require_grad_only (bool, optional): Whether to require gradients. Defaults to True.
 
     Returns:
-        dict[str, Any]: The state dict for the non-LoRA trainable parameters.
+        (dict[str, Any]): The state dict for the non-LoRA trainable parameters.
     """
     to_return = {k: t for k, t in named_params if "lora_" not in k}
     if require_grad_only:

@@ -154,7 +154,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
                 alignment during aggregation.
 
         Returns:
-            dict[str, NDArray]: A dictionary mapping the name of the layer that was aggregated to the aggregated
+            (dict[str, NDArray]): A dictionary mapping the name of the layer that was aggregated to the aggregated
                 weights.
         """
         if self.weighted_aggregation:
@@ -174,7 +174,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
                 alignment during aggregation.
 
         Returns:
-            dict[str, NDArray]: A dictionary mapping the name of the layer that was aggregated to the aggregated
+            (dict[str, NDArray]): A dictionary mapping the name of the layer that was aggregated to the aggregated
                 weights.
         """
         names_to_layers: defaultdict[str, list[NDArray]] = defaultdict(list)
@@ -204,7 +204,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
                 alignment during aggregation.
 
         Returns:
-            dict[str, NDArray]: A dictionary mapping the name of the layer that was aggregated to the aggregated
+            (dict[str, NDArray]): A dictionary mapping the name of the layer that was aggregated to the aggregated
                 weights.
         """
         names_to_layers: defaultdict[str, list[NDArray]] = defaultdict(list)

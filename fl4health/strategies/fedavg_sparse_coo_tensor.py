@@ -187,7 +187,7 @@ class FedAvgSparseCooTensor(BasicFedAvg):
                 to allow for alignment during aggregation.
 
         Returns:
-            dict[str, Tensor]: A dictionary mapping the name of the tensor that was aggregated to the aggregated
+            (dict[str, Tensor]): A dictionary mapping the name of the tensor that was aggregated to the aggregated
                 weights.
         """
         if self.weighted_aggregation:
@@ -223,7 +223,7 @@ class FedAvgSparseCooTensor(BasicFedAvg):
                 aggregation.
 
         Returns:
-            dict[str, Tensor]: A dictionary mapping the name of the tensor that was aggregated to the aggregated
+            (dict[str, Tensor]): A dictionary mapping the name of the tensor that was aggregated to the aggregated
                 weights.
         """
         names_to_dense_tensors: defaultdict[str, list[Tensor]] = defaultdict(list)
@@ -283,7 +283,7 @@ class FedAvgSparseCooTensor(BasicFedAvg):
                 aggregation.
 
         Returns:
-            dict[str, Tensor]: A dictionary mapping the name of the tensor that was aggregated to the aggregated
+            (dict[str, Tensor]): A dictionary mapping the name of the tensor that was aggregated to the aggregated
                 weights.
         """
         names_to_dense_tensors: defaultdict[str, list[Tensor]] = defaultdict(list)

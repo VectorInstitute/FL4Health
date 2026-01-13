@@ -71,9 +71,9 @@ class ApflModule(PartialLayerExchangeModel):
             input (torch.Tensor): Input tensor to be run through both the local and global models
 
         Returns:
-            dict[str, torch.Tensor]: Final prediction after mixing predictions produced by the local and global models.
-                This dictionary stores these predictions under the key "personal" while the local and global model
-                predictions are stored under the keys "global" and "local."
+            (dict[str, torch.Tensor]): Final prediction after mixing predictions produced by the local and global
+                models. This dictionary stores these predictions under the key "personal" while the local and global
+                model predictions are stored under the keys "global" and "local."
         """
         # Forward return dictionary because APFL has multiple different prediction types
         global_logits = self.global_forward(input)
@@ -123,7 +123,7 @@ class ApflModule(PartialLayerExchangeModel):
         of the local model are aggregated on the server side, nor is :math:`\\alpha`.
 
         Returns:
-            list[str]: Names of layers associated with the global model. These correspond to the layer names in the
+            (list[str]): Names of layers associated with the global model. These correspond to the layer names in the
                 state dictionary of this entire module.
         """
         layers_to_exchange: list[str] = [layer for layer in self.state_dict() if layer.startswith("global_model.")]

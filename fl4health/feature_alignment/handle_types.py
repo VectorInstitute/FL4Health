@@ -558,7 +558,7 @@ def infer_types(data: pd.DataFrame, features: list[str]) -> dict[str, FeatureTyp
         features (list[str]): Features to consider.
 
     Returns:
-        dict[str, str]: A tuple (pandas.DataFrame, dict) with the updated features data and metadata respectively.
+        (dict[str, str]): A tuple (pandas.DataFrame, dict) with the updated features data and metadata respectively.
     """
     new_types = {}
     for col in features:

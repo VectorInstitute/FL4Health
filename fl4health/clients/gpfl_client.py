@@ -111,7 +111,7 @@ class GpflClient(BasicClient):
             config (Config): The config from the server.
 
         Returns:
-            dict[str, Optimizer]: A dictionary of optimizers defined by the user
+            (dict[str, Optimizer]): A dictionary of optimizers defined by the user
         """
         raise NotImplementedError(
             "User Clients must define a function that returns a dict[str, Optimizer] with keys 'model',"

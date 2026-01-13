@@ -52,7 +52,7 @@ class SparseCooParameterExchanger(PartialParameterExchanger[tuple[NDArrays, NDAr
             initial_model (nn.Module | None): Model to which the weights will be compared/scored
 
         Returns:
-            dict[str, Tensor]: scores associated with each layer of the model.
+            (dict[str, Tensor]): scores associated with each layer of the model.
         """
         return self.score_gen_function(model, initial_model)
 

@@ -109,7 +109,7 @@ class StateCheckpointer(ABC):
         it does not exist, an assertion error will be thrown.
 
         Returns:
-            dict[str, Any]: A dictionary representing the checkpointed state, as loaded by ``torch.load``.
+            (dict[str, Any]): A dictionary representing the checkpointed state, as loaded by ``torch.load``.
         """
         assert self.checkpoint_path is not None, "Checkpoint path is not set but load_checkpoint has been called."
         assert self.checkpoint_exists(), f"Could not verify existence of checkpoint file at {self.checkpoint_path}"
@@ -226,7 +226,7 @@ class StateCheckpointer(ABC):
             expected_type (type[T]): Expected type of the attribute.
 
         Returns:
-            dict[str, T]: Wrapped attribute as a dictionary.
+            (dict[str, T]): Wrapped attribute as a dictionary.
         """
         attribute = self.get_attribute(name)
         if isinstance(attribute, expected_type):
@@ -248,7 +248,7 @@ class StateCheckpointer(ABC):
             expected_type (type[T]): Expected type of the attribute.
 
         Returns:
-            dict[str, Any]: A dictionary containing the state of the attribute.
+            (dict[str, Any]): A dictionary containing the state of the attribute.
         """
         attribute = self._dict_wrap_attr(name, expected_type)
         return {name: snapshotter.save_attribute(attribute)}

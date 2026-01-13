@@ -101,7 +101,7 @@ class SequentiallySplitExchangeBaseModel(SequentiallySplitModel, PartialLayerExc
         associated with the ``base_model``.
 
         Returns:
-            list[str]: The names of the layers to be exchanged with the server. This is used by the
+            (list[str]): The names of the layers to be exchanged with the server. This is used by the
                 ``FixedLayerExchanger`` class
         """
         return [layer_name for layer_name in self.state_dict() if layer_name.startswith("base_module.")]

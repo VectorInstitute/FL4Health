@@ -123,7 +123,7 @@ class FedPm(FedAvgDynamicLayer):
             results (list[tuple[NDArrays, int]]): Binary masks sent to the server for aggregation
 
         Returns:
-            dict[str, NDArray]: Aggregated binary masks
+            (dict[str, NDArray]): Aggregated binary masks
         """
         names_to_layers: defaultdict[str, list[NDArray]] = defaultdict(list)
         total_num_clients: defaultdict[str, int] = defaultdict(int)

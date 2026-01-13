@@ -39,7 +39,7 @@ def get_labels(paths_for_each_sample: Sequence[tuple[Sequence[Path], Path]]) -> 
             is tuple where the first entry is a list of scan paths and the second in the annotation path.
 
     Returns:
-        Sequence[float]: The label for each of the samples.
+        (Sequence[float]): The label for each of the samples.
     """
     _, annotation_paths = zip(*paths_for_each_sample)
     case_labels = []

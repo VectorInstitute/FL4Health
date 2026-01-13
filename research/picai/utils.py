@@ -51,7 +51,7 @@ class SimpleDictionaryCheckpointer:
         it does not exist, an assertion error will be thrown.
 
         Returns:
-            dict[str, Any]: A dictionary representing the checkpointed state, as loaded by ``torch.load``.
+            (dict[str, Any]): A dictionary representing the checkpointed state, as loaded by ``torch.load``.
         """
         assert self.checkpoint_exists()
         log(INFO, f"Loading state from checkpoint at {self.checkpoint_path}")
@@ -169,7 +169,7 @@ class MultiAttributeEnum(Enum):
         Gets the names of the enum attributes.
 
         Returns:
-            list[str]: a list containing the names of the attributes for this member
+            (list[str]): a list containing the names of the attributes for this member
         """
         return self.attribute_keys  # These are set in __new__ for each member
 
@@ -178,7 +178,7 @@ class MultiAttributeEnum(Enum):
         Gets enum values.
 
         Returns:
-            list[Any]: A list of the attribute values for this member
+            (list[Any]): A list of the attribute values for this member
         """
         return self.attribute_values
 

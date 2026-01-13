@@ -193,7 +193,7 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
                 these the FitRes object contains both model weights and training losses which need to be processed.
 
         Returns:
-            list[tuple[int, float]]: A list of the training losses produced by client training
+            (list[tuple[int, float]]): A list of the training losses produced by client training
         """
         train_losses_and_counts: list[tuple[int, float]] = []
         for _, fit_res in results:

@@ -63,7 +63,7 @@ class OpacusCheckpointer(FunctionTorchModuleCheckpointer):
             opacus_state_dict (dict[str, Any]): A state dictionary produced by an Opacus ``GradSamplingModule``
 
         Returns:
-            dict[str, Any]: A state dictionary with the ``_module``. removed from the key prefixes to facilitate
+            (dict[str, Any]): A state dictionary with the ``_module``. removed from the key prefixes to facilitate
                 loading the state dictionary into a non-Opacus model.
         """
         return {key.removeprefix("_module."): val for key, val in opacus_state_dict.items()}

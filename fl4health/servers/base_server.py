@@ -334,7 +334,7 @@ class FlServer(Server):
                 then the server waits indefinitely.
 
         Returns:
-            list[int]: The number of training samples held by each client in the pool of available clients.
+            (list[int]): The number of training samples held by each client in the pool of available clients.
         """
         # Poll clients for sample counts, if you want to use this functionality your strategy needs to inherit from
         # the StrategyWithPolling ABC and implement a configure_poll function

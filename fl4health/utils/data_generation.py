@@ -125,7 +125,7 @@ class SyntheticFedProxDataset(ABC):
         Based on the class parameters, generate a list of synthetic ``TensorDatasets``, one for each client.
 
         Returns:
-            list[TensorDataset]: Synthetic datasets for each client.
+            (list[TensorDataset]): Synthetic datasets for each client.
         """
         client_tensors = self.generate_client_tensors()
         assert len(client_tensors) == self.num_clients, (
@@ -141,7 +141,7 @@ class SyntheticFedProxDataset(ABC):
         in this function.
 
         Returns:
-            list[tuple[torch.Tensor, torch.Tensor]]: Input and output tensors for each of the clients.
+            (list[tuple[torch.Tensor, torch.Tensor]]): Input and output tensors for each of the clients.
         """
         pass
 
@@ -253,7 +253,7 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
         the larger the variance in these values, implying higher probability of heterogeneity.
 
         Returns:
-            list[tuple[torch.Tensor, torch.Tensor]]: Set of input and output tensors for each client.
+            (list[tuple[torch.Tensor, torch.Tensor]]): Set of input and output tensors for each client.
         """
         tensors_per_client: list[tuple[torch.Tensor, torch.Tensor]] = []
         for _ in range(self.num_clients):
@@ -344,7 +344,7 @@ class SyntheticIidFedProxDataset(SyntheticFedProxDataset):
         generation, as these are all shared across clients.
 
         Returns:
-            list[tuple[torch.Tensor, torch.Tensor]]: Set of input and output tensors for each client.
+            (list[tuple[torch.Tensor, torch.Tensor]]): Set of input and output tensors for each client.
         """
         tensors_per_client: list[tuple[torch.Tensor, torch.Tensor]] = []
         for _ in range(self.num_clients):

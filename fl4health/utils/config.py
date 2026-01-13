@@ -106,7 +106,8 @@ def make_dict_with_epochs_or_steps(local_epochs: int | None = None, local_steps:
         local_steps (int | None, optional): Number of local steps of training to perform in FL. Defaults to None.
 
     Returns:
-        dict[str, int]: Dictionary with at most one of the non-none values, keyed by the name of the non-none variable.
+        (dict[str, int]): Dictionary with at most one of the non-none values, keyed by the name of the non-none
+            variable.
     """
     if local_epochs is not None:
         return {"local_epochs": local_epochs}

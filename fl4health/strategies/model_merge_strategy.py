@@ -105,7 +105,7 @@ class ModelMergeStrategy(Strategy):
             client_manager (ClientManager): The manager used to sample from the available clients.
 
         Returns:
-            list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
+            (list[tuple[ClientProxy, FitIns]]): List of sampled client identifiers and the configuration/parameters to
                 be sent to each client (packaged as ``FitIns``).
         """
         config = {}
@@ -138,8 +138,8 @@ class ModelMergeStrategy(Strategy):
             client_manager (ClientManager): The manager used to sample from the available clients.
 
         Returns:
-            list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
-                to be sent to each client (packaged as ``EvaluateIns``).
+            (list[tuple[ClientProxy, EvaluateIns]]): List of sampled client identifiers and the
+                configuration/parameters to be sent to each client (packaged as ``EvaluateIns``).
         """
         # Do not configure federated evaluation if fraction eval is 0.
         if self.fraction_evaluate == 0.0:

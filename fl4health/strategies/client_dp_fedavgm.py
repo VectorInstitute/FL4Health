@@ -404,7 +404,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
                 be ``BaseFractionSamplingManager``, which has a ``sample_fraction`` function built in.
 
         Returns:
-            list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
+            (list[tuple[ClientProxy, FitIns]]): List of sampled client identifiers and the configuration/parameters to
                 be sent to each client (packaged as ``FitIns``).
         """
         # This strategy requires the client manager to be of type at least BaseFractionSamplingManager
@@ -441,8 +441,8 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
                 be ``BaseFractionSamplingManager``, which has a ``sample_fraction`` function built in.
 
         Returns:
-            list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
-                to be sent to each client (packaged as ``EvaluateIns``).
+            (list[tuple[ClientProxy, EvaluateIns]]): List of sampled client identifiers and the
+                configuration/parameters to be sent to each client (packaged as ``EvaluateIns``).
         """
         # This strategy requires the client manager to be of type at least BaseFractionSamplingManager
         assert isinstance(client_manager, BaseFractionSamplingManager)

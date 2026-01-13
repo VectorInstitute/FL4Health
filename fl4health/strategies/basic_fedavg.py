@@ -134,7 +134,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
             client_manager (ClientManager): The manager used to sample from the available clients.
 
         Returns:
-            list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
+            (list[tuple[ClientProxy, FitIns]]): List of sampled client identifiers and the configuration/parameters to
                 be sent to each client (packaged as ``FitIns``).
         """
         if isinstance(client_manager, BaseFractionSamplingManager):
@@ -171,8 +171,8 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
             client_manager (ClientManager): The manager used to sample from the available clients.
 
         Returns:
-            list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
-                to be sent to each client (packaged as ``EvaluateIns``).
+            (list[tuple[ClientProxy, EvaluateIns]]): List of sampled client identifiers and the
+                configuration/parameters to be sent to each client (packaged as ``EvaluateIns``).
         """
         # Do not configure federated evaluation if fraction eval is 0.
         if self.fraction_evaluate == 0.0:
@@ -209,7 +209,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
             client_manager (ClientManager): The manager used to sample all available clients.
 
         Returns:
-            list[tuple[ClientProxy, GetPropertiesIns]]: List of sampled client identifiers and the configuration
+            (list[tuple[ClientProxy, GetPropertiesIns]]): List of sampled client identifiers and the configuration
                 to be sent to each client (packaged as ``GetPropertiesIns``).
         """
         config = {}

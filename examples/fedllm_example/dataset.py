@@ -15,7 +15,7 @@ def formatting_prompts_func(input: dict[str, list[str]]) -> list[str]:
         input (dict[str, list[str]]): A dictionary containing the instruction and response.
 
     Returns:
-        list[str]: A list of formatted prompts.
+        (list[str]): A list of formatted prompts.
     """
     output_texts = []
 

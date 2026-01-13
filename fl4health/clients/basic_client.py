@@ -553,7 +553,7 @@ class BasicClient(NumPyClient):
         the ``wandb_reporter``.
 
         Returns:
-            dict[str, Any]: A dictionary of things to report.
+            (dict[str, Any]): A dictionary of things to report.
         """
         return {}
 
@@ -915,7 +915,7 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            dict[str, Scalar]: A dictionary with two entries corresponding to the sample counts in
+            (dict[str, Scalar]): A dictionary with two entries corresponding to the sample counts in
                 the train and validation set.
         """
         if not self.initialized:

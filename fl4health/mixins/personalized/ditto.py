@@ -88,7 +88,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         Property for optimizer keys.
 
         Returns:
-            list[str]: list of keys for the optimizers dictionary.
+            (list[str]): list of keys for the optimizers dictionary.
         """
         return ["local", "global"]
 

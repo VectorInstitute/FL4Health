@@ -264,7 +264,7 @@ class GpflModel(PartialLayerExchangeModel):
         Returns a list of layer names that should be exchanged between the server and clients.
 
         Returns:
-            list[str]: A list of layer names that should be exchanged. This is used by the
+            (list[str]): A list of layer names that should be exchanged. This is used by the
                 ``FixedLayerExchanger`` class to determine which layers to exchange during the FL process.
         """
         base_layers = self.gpfl_main_module.layers_to_exchange()

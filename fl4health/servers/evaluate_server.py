@@ -189,7 +189,7 @@ class EvaluateServer(Server):
         sampled.
 
         Returns:
-            list[tuple[ClientProxy, EvaluateIns]]: List of configuration instructions for the clients selected by the
+            (list[tuple[ClientProxy, EvaluateIns]]): List of configuration instructions for the clients selected by the
                 client manager for evaluation. These configuration objects are sent to the clients to customize
                 evaluation.
         """

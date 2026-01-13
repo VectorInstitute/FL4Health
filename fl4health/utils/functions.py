@@ -98,7 +98,7 @@ def decode_and_pseudo_sort_results(
         results (list[tuple[ClientProxy, FitRes]]): Results from a federated training round.
 
     Returns:
-        list[tuple[ClientProxy, NDArrays, int]]: The ordered set of weights as ``NDarrays`` and the corresponding
+        (list[tuple[ClientProxy, NDArrays, int]]): The ordered set of weights as ``NDarrays`` and the corresponding
         number of examples.
     """
     ndarrays_results = [

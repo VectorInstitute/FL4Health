@@ -281,7 +281,7 @@ class Scaffold(BasicFedAvg):
                 be ``BaseFractionSamplingManager``, which has a "sample all" function built in.
 
         Returns:
-            list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
+            (list[tuple[ClientProxy, FitIns]]): List of sampled client identifiers and the configuration/parameters to
                 be sent to each client (packaged as ``FitIns``).
         """
         # This strategy requires the client manager to be of type at least BaseFractionSamplingManager

@@ -188,7 +188,7 @@ class EnsembleClient(BasicClient):
             config (Config): The config sent from the server.
 
         Returns:
-            dict[str, Optimizer]: An optimizer or dictionary of optimizers to train model.
+            (dict[str, Optimizer]): An optimizer or dictionary of optimizers to train model.
 
         Raises:
             NotImplementedError: To be defined in child class.

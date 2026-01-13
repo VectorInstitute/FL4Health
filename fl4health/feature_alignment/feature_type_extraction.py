@@ -168,7 +168,7 @@ class Features:
         NOTE: These are framework-specific feature names.
 
         Returns:
-            dict[str, str]: Feature type mapped for each feature.
+            (dict[str, str]): Feature type mapped for each feature.
         """
         return {name: meta.get_type() for name, meta in self.meta.items()}
 

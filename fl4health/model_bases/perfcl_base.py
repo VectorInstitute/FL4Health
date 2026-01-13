@@ -30,7 +30,7 @@ class PerFclModel(PartialLayerExchangeModel, ParallelSplitModel):
         **GLOBAL** feature extractor for the PerFCL model.
 
         Returns:
-            list[str]: List of layers associated with the global model (``second_feature_extractor``) corresponding
+            (list[str]): List of layers associated with the global model (``second_feature_extractor``) corresponding
                 to keys in the state dictionary.
         """
         return [layer_name for layer_name in self.state_dict() if layer_name.startswith("second_feature_extractor.")]

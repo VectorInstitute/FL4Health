@@ -104,7 +104,7 @@ def convert_deepsupervision_list_to_dict(
         num_spatial_dims (int): The number of spatial dimensions. Assumes the spatial dimensions are last.
 
     Returns:
-        dict[str, torch.Tensor]: A dictionary containing the tensors as values where the keys are 'i-XxYxZ' where i
+        (dict[str, torch.Tensor]): A dictionary containing the tensors as values where the keys are 'i-XxYxZ' where i
         was the tensor's index in the list and X,Y,Z are the spatial dimensions of the tensor.
     """
     # Convert list of targets into a dictionary
@@ -128,7 +128,7 @@ def convert_deepsupervision_dict_to_list(tensor_dict: dict[str, torch.Tensor]) -
             list.
 
     Returns:
-        list[torch.Tensor]: A list of ``torch.Tensors``.
+        (list[torch.Tensor]): A list of ``torch.Tensors``.
     """
     sorted_list = sorted(tensor_dict.items(), key=lambda x: int(x[0].split("-")[0]))
     return [tensor for key, tensor in sorted_list]
