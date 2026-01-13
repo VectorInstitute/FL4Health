@@ -272,8 +272,8 @@ class MrMtlMkMmdClient(MrMtlClient):
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in
                 dictionary will be used to compute metrics.
-            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
-            target: (TorchTargetType): Ground truth data to evaluate predictions against.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
             TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed by

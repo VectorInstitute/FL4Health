@@ -745,7 +745,7 @@ class FlexibleNnunetClient(FlexibleClient):
         Args:
             pred (torch.Tensor): The one hot encoded predicted segmentation maps with shape
                 ``(batch, classes, x, y(, z))``
-            target (torch.Tensor): The ground truth segmentation map with shape ``(batch, classes, x, y(, z))``
+            target (TorchTargetType): The ground truth segmentation map with shape ``(batch, classes, x, y(, z))``
 
         Returns:
             (tuple[torch.Tensor, torch.Tensor]): Tuple of:

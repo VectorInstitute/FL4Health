@@ -311,10 +311,10 @@ class FendaDittoClient(DittoClient):
         loss to optimize the global model is stored in the additional losses dictionary under “global_loss”.
 
         Args:
-            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. All predictions included
+            preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included
                 in the dictionary will be used to compute metrics.
-            features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target (torch.Tensor): Ground truth data to evaluate predictions against.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
             TrainingLosses: An instance of ``TrainingLosses`` containing the backward loss and additional losses

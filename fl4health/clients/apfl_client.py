@@ -128,9 +128,9 @@ class ApflClient(BasicClient):
         For APFL, the loss will be the personal loss and the additional losses are the global and local loss.
 
         Args:
-            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
-            features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target (torch.Tensor): Ground truth data to evaluate predictions against.
+            preds (TorchPredType): Prediction(s) of the model(s) indexed by name.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
             (tuple[torch.Tensor, dict[str, torch.Tensor]]): A tuple with:

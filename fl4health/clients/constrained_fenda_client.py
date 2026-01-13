@@ -193,9 +193,9 @@ class ConstrainedFendaClient(FendaClient):
         client attributes set from server config, cosine similarity loss, contrastive loss and perfcl losses.
 
         Args:
-            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
-            features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target (torch.Tensor): Ground truth data to evaluate predictions against.
+            preds (TorchPredType): Prediction(s) of the model(s) indexed by name.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
             (tuple[torch.Tensor, dict[str, torch.Tensor]]): A tuple with:
@@ -253,10 +253,10 @@ class ConstrainedFendaClient(FendaClient):
         on client attributes set from server config.
 
         Args:
-            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            preds (TorchPredType): Prediction(s) of the model(s) indexed by name.
                 All predictions included in dictionary will be used to compute metrics.
-            features: (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
             EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses

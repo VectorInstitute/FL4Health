@@ -102,7 +102,7 @@ class EnsembleClient(BasicClient):
         Args:
             input (TorchInputType): The input to be fed into the model. ``TorchInputType`` is simply an alias for the
                 union of ``torch.Tensor`` and ``dict[str, torch.Tensor]``.
-            target (torch.Tensor): The target corresponding to the input.
+            target (TorchTargetType): The target corresponding to the input.
 
         Returns:
             (tuple[TrainingLosses, dict[str, torch.Tensor]]): The losses object from the train step along with
@@ -136,10 +136,10 @@ class EnsembleClient(BasicClient):
         Since the ensemble client has more than one model, there are multiple backward losses that exist.
 
         Args:
-            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
+            preds (TorchPredType): Prediction(s) of the model(s) indexed by name. Anything stored
                 in preds will be used to compute metrics.
-            features: (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+            features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
             TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses
@@ -163,10 +163,10 @@ class EnsembleClient(BasicClient):
         Since the ensemble client has more than one model, there are multiple backward losses that exist.
 
         Args:
-            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
+            preds (TorchPredType): Prediction(s) of the model(s) indexed by name. Anything stored
                 in preds will be used to compute metrics.
-            features: (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+            features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
             EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses

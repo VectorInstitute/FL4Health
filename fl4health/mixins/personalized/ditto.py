@@ -426,8 +426,8 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. Anything stored
                 in preds will be used to compute metrics.
-            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
-            target: (TorchTargetType): Ground truth data to evaluate predictions against.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
             EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses

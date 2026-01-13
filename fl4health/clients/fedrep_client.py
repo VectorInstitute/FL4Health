@@ -400,7 +400,7 @@ class FedRepClient(BasicClient):
         Args:
             input (TorchInputType): input tensor to be run through the model. Here, ``TorchInputType`` is simply an
                 alias for the union of ``torch.Tensor`` and ``dict[str, torch.Tensor]``.
-            target (torch.Tensor): target tensor to be used to compute a loss given the model's outputs.
+            target (TorchTargetType): target tensor to be used to compute a loss given the model's outputs.
 
         Returns:
             (tuple[TrainingLosses, dict[str, torch.Tensor]]): The losses object from the train step along with

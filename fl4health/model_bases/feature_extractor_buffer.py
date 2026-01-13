@@ -167,7 +167,7 @@ class FeatureExtractorBuffer:
         Returns a dictionary of extracted features.
 
         Returns:
-            features (dict[str, torch.Tensor]): A dictionary where the keys are the layer names and the values are
+            (dict[str, torch.Tensor]): A dictionary where the keys are the layer names and the values are
                 the extracted features as torch Tensors.
         """
         features = {}

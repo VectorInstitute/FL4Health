@@ -224,8 +224,8 @@ class NnunetClient(BasicClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            Tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with a dictionary of any
-                predictions produced by the model.
+            (tuple[TrainingLosses, TorchPredType]): The losses object from the train step along with a dictionary of
+                any predictions produced by the model.
         """
         # If the device type is not cuda, we don't use mixed precision training and therefore can use parent method.
         if self.device.type != "cuda":
