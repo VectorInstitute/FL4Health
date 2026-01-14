@@ -49,7 +49,7 @@ dependencies = [
 dev = [
     # locked the 2.15 version because of restrictions with tensorflow-io
     # (see https://pypi.org/project/tensorflow-io/ section "TensorFlow Version Compatibility")
-    # Note: tensorflow 2.15 requires keras<2.16, so keras is also in dev group
+    # Note: tensorflow 2.15 requires keras<2.16
     "tensorflow>=2.15,<2.16",
     "keras>=2.15.0,<2.16",
     "nltk>=3.8.0,<4.0.0",

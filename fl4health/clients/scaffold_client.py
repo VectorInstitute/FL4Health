@@ -211,7 +211,7 @@ class ScaffoldClient(BasicClient):
             params_2 (NDArrays): Second set of parameters
 
         Returns:
-            (NDArrays): :math:`\\text{params}_1 - \\text{params}_2`
+            (NDArrays): \\(\\text{params}_1 - \\text{params}_2\\)
         """
         parameter_delta: NDArrays = [param_1 - param_2 for param_1, param_2 in zip(params_1, params_2)]
 
@@ -244,11 +244,11 @@ class ScaffoldClient(BasicClient):
         where lr is the local learning rate.
 
         Args:
-            local_steps (int): Number of local steps that were taken during local training (:math:`K`)
+            local_steps (int): Number of local steps that were taken during local training (\\(K\\))
             delta_model_weights (NDArrays): difference between the locally trained weights and the initial weights
                 prior to local training
-            delta_control_variates (NDArrays): difference between local (:math:`c_i`) and server (:math:`c`) control
-                variates :math:`c_i - c`.
+            delta_control_variates (NDArrays): difference between local (\\(c_i\\)) and server (\\(c\\)) control
+                variates \\(c_i - c\\).
 
         Returns:
             (NDArrays): Updated client control variates
@@ -268,12 +268,12 @@ class ScaffoldClient(BasicClient):
         return FullParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
 
     def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
-        """
+        r"""
         Called after training with the number of ``local_steps`` performed over the FL round and the corresponding
         loss dictionary.
 
         Args:
-            local_steps (int): Number of local steps that were taken during local training (:math:`K`)
+            local_steps (int): Number of local steps that were taken during local training (\(K\))
             loss_dict (dict[str, float]): dictionary of losses computed during training
             config (Config): The config from the server.
         """

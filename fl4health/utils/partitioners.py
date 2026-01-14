@@ -31,7 +31,7 @@ class DirichletLabelBasedAllocation(Generic[T]):
         **NOTE**: This differs in kind from label-based Dirichlet sampling. There, an existing dataset is subsampled in
         place (rather than partitioned) such that its labels match a Dirichlet distribution.
 
-        **NOTE**: The range for beta is (0, :math:`\\infty`). The larger the value of beta, the more uniform the
+        **NOTE**: The range for beta is (0, \\(\\infty\\)). The larger the value of beta, the more uniform the
         multinomial probability of the clients will be. The smaller beta is the more heterogeneous it is.
 
         :code:`np.random.dirichlet([1]*5): array([0.23645891, 0.08857052, 0.29519184, 0.2999956 , 0.07978313])`
@@ -40,9 +40,11 @@ class DirichletLabelBasedAllocation(Generic[T]):
 
         Example Usage:
 
-        .. code-block:: python
+        ```python
 
-            original_dataset = SyntheticDataset(
+        original_dataset = SyntheticDataset(
+
+        ```
                 torch.rand((10000, 3, 3)), torch.randint(low=0, high=10, size=(10000, 1))
             )
 

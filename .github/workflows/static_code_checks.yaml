@@ -30,6 +30,13 @@ jobs:
         with:
           python-version-file: ".python-version"
 
+      - name: Set up cache
+        uses: actions/cache@v5
+        id: cached-uv-dependencies
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/uv.lock') }}
+
       - name: Install dependencies
         run: uv sync --group dev --group test --group codestyle
 
@@ -43,18 +50,12 @@ jobs:
           # GHSA-3749-ghw9-m3mg and GHSA-887c-mr87-cxwp are pytorch vulnerabilities that require 2.7 and 2.8 but we're
           # pinning to 2.6.0 for now.
           # GHSA-wf7f-8fxf-xfxc ML Flow vulnerability in deserialization that hasn't been patched yet.
-          # CVE-2024-55459, CVE-2025-9906, CVE-2025-12058, CVE-2025-12060 are keras vulnerabilities that require 3.11.0+
-          # but we're pinning to keras 2.15 for tensorflow 2.15 compatibility.
           # CVE-2025-53000 NBConvert issue, no fix yet.
           # CVE-2026-21851 is a MonAI issue with no fix at the moment.
           ignore-vulns: |
             GHSA-3749-ghw9-m3mg
             GHSA-887c-mr87-cxwp
             GHSA-wf7f-8fxf-xfxc
-            CVE-2024-55459
-            CVE-2025-9906
-            CVE-2025-12058
-            CVE-2025-12060
             CVE-2025-53000
             CVE-2026-21851
 

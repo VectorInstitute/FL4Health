@@ -11,7 +11,10 @@ def compute_dice_on_count_tensors(
     Given a set of count tensors representing true positives (TP), false positives (FP), and false negatives (FN),
     compute the  Dice score as...
 
-    .. math ::
+    \\[
+
+
+    \\]
         \\frac{2 \\cdot TP}{2 \\cdot TP + FP + FN}
 
     **ELEMENTWISE**. The zero division argument determines how to deal with examples with all true negatives, which

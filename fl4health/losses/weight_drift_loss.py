@@ -7,8 +7,8 @@ class WeightDriftLoss(nn.Module):
         self,
         device: torch.device,
     ) -> None:
-        """
-        Used to compute the :math:`l_2`-inner product between a Torch model and a reference set of weights
+        r"""
+        Used to compute the \(l_2\)-inner product between a Torch model and a reference set of weights
         corresponding to a past version of that model.
 
         Args:
@@ -19,8 +19,8 @@ class WeightDriftLoss(nn.Module):
 
     def _compute_weight_difference_inner_product(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         """
-        Compute the :math:`l_2`-inner product between two tensors. This amounts to the Frobenius norm of the
-        difference between the tensors :math:`\\Vert x - y \\Vert_F`.
+        Compute the \\(l_2\\)-inner product between two tensors. This amounts to the Frobenius norm of the
+        difference between the tensors \\(\\Vert x - y \\Vert_F\\).
 
         Args:
             x (torch.Tensor): first tensor
@@ -32,8 +32,8 @@ class WeightDriftLoss(nn.Module):
         return torch.pow(torch.linalg.norm(x - y), 2.0)
 
     def forward(self, target_model: nn.Module, constraint_tensors: list[torch.Tensor], weight: float) -> torch.Tensor:
-        """
-        Compute the :math:`l_2`-inner product between a Torch model and a reference set of weights in a differentiable
+        r"""
+        Compute the \(l_2\)-inner product between a Torch model and a reference set of weights in a differentiable
         way. The ```constraint_tensors``` are frozen.
 
         Args:

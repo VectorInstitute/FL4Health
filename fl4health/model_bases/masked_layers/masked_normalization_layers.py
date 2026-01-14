@@ -155,7 +155,7 @@ class _MaskedBatchNorm(_BatchNorm):
         device: torch.device | None = None,
         dtype: torch.dtype | None = None,
     ) -> None:
-        """
+        r"""
         Base class for masked batch normalization modules of various dimensions. When affine is True,
         ``_BatchNorm`` has a learnable weight and bias. For ``_MaskedBatchNorm``, the weight and bias do not
         receive gradient in back propagation. Instead, two score tensors - one for the weight and another for the
@@ -170,7 +170,7 @@ class _MaskedBatchNorm(_BatchNorm):
         **NOTE**: The scores are not assumed to be bounded between 0 and 1.
 
         Args:
-            num_features (int): Number of features or channels :math:`C` of the input
+            num_features (int): Number of features or channels \(C\) of the input
             eps (float, optional): A value added to the denominator for numerical stability. Defaults to 1e-5.
             momentum (float | None, optional): The value used for the running_mean and ``running_var`` computation.
                 Can be set to ``None`` for cumulative moving average (i.e. simple average). Defaults to 0.1.

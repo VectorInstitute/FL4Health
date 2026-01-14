@@ -135,18 +135,18 @@ def align_pred_and_target_shapes(
 
     For example, consider a problem with 3 label classes with the preds vector encoded and the targets label encoded
 
-    .. code-block:: python
+    ```python
+    preds = torch.Tensor([[0.1, 0.2, 0.7], [0.9, 0.1, 0.0]])
 
-        preds = torch.Tensor([[0.1, 0.2, 0.7], [0.9, 0.1, 0.0]])
-
-        targets = torch.Tensor([[2], [1]])
+    targets = torch.Tensor([[2], [1]])
+    ```
 
     preds has shape ``(2, 3)`` and targets has shape ``(2, 1)``. This function will convert targets to a
     one-hot-encode tensor with contents
 
-    .. code-block:: python
-
-        targets = torch.Tensor([0, 0, 1], [0, 1, 0])
+    ```python
+    targets = torch.Tensor([0, 0, 1], [0, 1, 0])
+    ```
 
     Args:
         preds (torch.Tensor): The tensor with model predictions.

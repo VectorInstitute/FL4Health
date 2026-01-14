@@ -61,7 +61,7 @@ Need a specific FL algorithm implemented? Submit an issue in our Github, or
 even better contribute to our open-source project!
 
 - [FL4Health Python Github](https://github.com/VectorInstitute/FL4Health)
-- [FL4Health on PyPi](https://pypi.org/project/fl4health/)
+- [FL4Health on PyPI](https://pypi.org/project/fl4health/)
 - [FL4Health Contributing Guide](https://github.com/VectorInstitute/FL4Health/blob/main/CONTRIBUTING.MD)
 
 ## What's Next?

@@ -20,7 +20,7 @@ class LayerSelectionFunctionConstructor:
 
         Args:
             norm_threshold (float): A nonnegative real number used to select those layers whose drift in
-                :math:`\\ell^2` norm exceeds (or falls short of) it.
+                \\(\\ell^2\\) norm exceeds (or falls short of) it.
             exchange_percentage (float): Indicates the percentage of layers that are selected.
             normalize (bool, optional): Indicates whether when calculating the norm of a layer, we also divide by the
                 number of parameters in that layer. Defaults to True.
@@ -79,7 +79,7 @@ def select_layers_by_threshold(
     initial_model: nn.Module,
 ) -> tuple[NDArrays, list[str]]:
     """
-    Return those layers of model that deviate (in :math:`\\ell^2` norm) away from corresponding layers of
+    Return those layers of model that deviate (in \\(\\ell^2\\) norm) away from corresponding layers of
     ``self.initial_model`` by at least (or at most) ``self.threshold``.
 
     Args:

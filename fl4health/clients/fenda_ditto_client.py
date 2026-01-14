@@ -303,7 +303,7 @@ class FendaDittoClient(DittoClient):
         """
         Computes training losses given predictions of the global and local models and ground truth data.
         For the local model, we add to the vanilla loss function by including a Ditto penalty loss. This penalty
-        is the :math:`\\ell^2` inner product between the initial global model feature extractor weights and the
+        is the \\(\\ell^2\\) inner product between the initial global model feature extractor weights and the
         feature extractor weights of the local model. If the global feature extractor is not frozen, the penalty is
         computed using the global feature extractor of the local model. If it is frozen, the penalty is computed using
         the local feature extractor of the local model. This allows for flexibility in training scenarios where the

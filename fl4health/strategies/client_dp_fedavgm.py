@@ -94,7 +94,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             weighted_eval_losses (bool, optional): Determines whether losses during evaluation are linearly weighted
                 averages or a uniform average. FedAvg default is weighted average of the losses by client dataset
                 counts. Defaults to True.
-            per_client_example_cap (float | None, optional): The maximum number samples per client. :math:`\\hat{w}` in
+            per_client_example_cap (float | None, optional): The maximum number samples per client. \\(\\hat{w}\\) in
                 https://arxiv.org/pdf/1710.06963.pdf. Defaults to None.
             adaptive_clipping (bool, optional): If enabled, the model expects the last entry of the parameter list to
                 be a binary value indicating whether or not the batch gradient was clipped. Defaults to False.
@@ -102,7 +102,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             clipping_learning_rate (float, optional): Learning rate for the clipping bound. Only used if adaptive
                 clipping is turned on. Defaults to 1.0.
             clipping_quantile (float, optional): Quantile we are trying to estimate in adaptive clipping.
-                i.e. :math:`P(\\Vert g \\Vert < C_t) \\approx` ``clipping_quantile``. Only used if adaptive clipping
+                i.e. \\(P(\\Vert g \\Vert < C_t) \\approx\\) ``clipping_quantile``. Only used if adaptive clipping
                 is turned on. Defaults to 0.5.
             initial_clipping_bound (float, optional):  Initial guess for the clipping bound corresponding to the
                 clipping quantile described above.
@@ -251,11 +251,11 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             ]
 
     def update_current_weights(self) -> None:
-        """
-        This function updates each of the layer weights using the server learning rate and the :math:`m_t` values
+        r"""
+        This function updates each of the layer weights using the server learning rate and the \(m_t\) values
         (computed with or without momentum).
 
-        **NOTE**: It assumes that the values in :math:`m_t` are **UPDATES** rather than raw weights.
+        **NOTE**: It assumes that the values in \(m_t\) are **UPDATES** rather than raw weights.
         """
         assert self.m_t is not None
         self.current_weights = [

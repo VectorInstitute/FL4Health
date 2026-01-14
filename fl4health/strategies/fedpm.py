@@ -106,13 +106,13 @@ class FedPm(FedAvgDynamicLayer):
 
         In this case, the updates performed are:
 
-        .. code-block:: python
+        ```python
+        alpha_new = alpha + M
 
-            alpha_new = alpha + M
+        beta_new = beta + K * 1 - M
 
-            beta_new = beta + K * 1 - M
-
-            theta = (alpha_new - 1) / (alpha_new + beta_new - 2)
+        theta = (alpha_new - 1) / (alpha_new + beta_new - 2)
+        ```
 
         where ``M`` is the sum of all binary masks corresponding to a particular parameter tensor, ``K`` is the number
         of clients, and "1" in the second equation refers to an array of all ones of the same shape as ``M``.

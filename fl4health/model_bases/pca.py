@@ -15,18 +15,18 @@ class PcaModule(nn.Module):
         PyTorch module for performing Principal Component Analysis.
 
         Notes:
-        - If ``low_rank`` is set to True, then a value :math:`q` for ``rank_estimation`` is required (either specified
-          by the user or via its default value). If :math:`q` is too far away from the actual rank :math:`k` of the
+        - If ``low_rank`` is set to True, then a value \\(q\\) for ``rank_estimation`` is required (either specified
+          by the user or via its default value). If \\(q\\) is too far away from the actual rank \\(k\\) of the
           data matrix, then the resulting rank-q svd approximation is not guaranteed to be a good approximation of the
           data matrix.
-        - If ``low_rank`` is set to True, then a value :math:`q` for ``rank_estimation`` can be chosen according to the
+        - If ``low_rank`` is set to True, then a value \\(q\\) for ``rank_estimation`` can be chosen according to the
           following criteria:
 
-          - In general, :math:`k \\leq q \\leq \\min(2\\cdot k, m, n)`. For large low-rank matrices, take
-            :math:`q = k + l`, where :math:`5 \\leq l \\leq 10`.
-            If :math:`k` is relatively small compared to :math:`\\min(m, n)`, choosing :math:`l = 0, 1, 2` may be
+          - In general, \\(k \\leq q \\leq \\min(2\\cdot k, m, n)\\). For large low-rank matrices, take
+            \\(q = k + l\\), where \\(5 \\leq l \\leq 10\\).
+            If \\(k\\) is relatively small compared to \\(\\min(m, n)\\), choosing \\(l = 0, 1, 2\\) may be
             sufficient.
-        - If ``low_rank`` is set to True and ``rank_estimation`` is set to :math:`q`, then the module will utilize a
+        - If ``low_rank`` is set to True and ``rank_estimation`` is set to \\(q\\), then the module will utilize a
           randomized algorithm to compute a rank-q approximation of the data matrix via SVD.
 
         For more details on this, see:

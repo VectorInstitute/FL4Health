@@ -236,7 +236,7 @@ class Scaffold(BasicFedAvg):
 
         Returns:
             (NDArrays): Updated numpy arrays according to
-                :math:`\\text{original_params} + \\text{scaling_coefficient} \\cdot \\text{parameter_updates}`.
+                \\(\\text{original_params} + \\text{scaling_coefficient} \\cdot \\text{parameter_updates}\\).
         """
         return [
             original_param + scaling_coefficient * update
@@ -326,14 +326,14 @@ class Scaffold(BasicFedAvg):
     def compute_updated_control_variates(self, control_variates_update: NDArrays) -> NDArrays:
         """
         Given the aggregated control variates from the clients, this updates the server control variates in line with
-        the paper. If :math:`c` is the server control variates and ``c_update`` is the client control variates, then
+        the paper. If \\(c\\) is the server control variates and ``c_update`` is the client control variates, then
         this update takes the following form.
 
         .. math::
             c + \\frac{\\vert S \\vert}{N} \\cdot c_{\\text{update}},
 
-        where :math:`\\vert S\\vert` is the number of clients that participated and N is
-        the total number of clients :math:`\\frac{\\vert S \\vert}{N}` is the proportion given by fraction fit.
+        where \\(\\vert S\\vert\\) is the number of clients that participated and N is
+        the total number of clients \\(\\frac{\\vert S \\vert}{N}\\) is the proportion given by fraction fit.
 
         Args:
             control_variates_update (NDArrays): Aggregated control variates received from the clients (uniformly

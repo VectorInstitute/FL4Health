@@ -476,19 +476,19 @@ class BinaryClassificationMetric(ClassificationMetric):
                 dimension specified. That is, counts are maintained for each training sample **INDIVIDUALLY**. For
                 example, if ``batch_dim = 1`` and ``label_dim = 0``, then
 
-                .. code-block:: python
+                ```python
+                p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])  # Size([1, 2, 4])
 
-                    p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])  # Size([1, 2, 4])
+                t = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]])  # Size([1, 2, 4])
 
-                    t = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]])  # Size([1, 2, 4])
+                self.tp = torch.Tensor([[0], [4]])  # Size([2, 1])
 
-                    self.tp = torch.Tensor([[0], [4]])  # Size([2, 1])
+                self.tn = torch.Tensor([[2], [0]])  # Size([2, 1])
 
-                    self.tn = torch.Tensor([[2], [0]])  # Size([2, 1])
+                self.fp = torch.Tensor([[1], [0]])  # Size([2, 1])
 
-                    self.fp = torch.Tensor([[1], [0]])  # Size([2, 1])
-
-                    self.fn = torch.Tensor([[1], [0]])  # Size([2, 1])
+                self.fn = torch.Tensor([[1], [0]])  # Size([2, 1])
+                ```
 
                 **NOTE**: The resulting counts will always be presented batch dimension first, then label dimension,
                 regardless of input shape. Defaults to None.
@@ -742,19 +742,21 @@ class MultiClassificationMetric(ClassificationMetric):
                 **NOTE**: If ``batch_dim`` is specified, then counts will be presented batch dimension
                 first, then label dimension. For example, if ``batch_dim = 1`` and ``label_dim = 0``, then
 
-                .. code-block:: python
+                ```python
 
-                    p = torch.tensor([[[1.0, 1.0, 1.0, 0.0]], [[0.0, 0.0, 0.0, 1.0]]])  # Size([2, 1, 4])
+                p = torch.tensor([[[1.0, 1.0, 1.0, 0.0]], [[0.0, 0.0, 0.0, 1.0]]])  # Size([2, 1, 4])
 
-                    t = torch.tensor([[[1.0, 1.0, 0.0, 0.0]], [[0.0, 0.0, 1.0, 1.0]]])  # Size([2, 1, 4])
+                t = torch.tensor([[[1.0, 1.0, 0.0, 0.0]], [[0.0, 0.0, 1.0, 1.0]]])  # Size([2, 1, 4])
 
-                    self.tp = torch.Tensor([[2, 1]]]) # Size([1, 2])
+                self.tp = torch.Tensor([[2, 1]]]) # Size([1, 2])
 
-                    self.tn = torch.Tensor([[1, 2]])  # Size([1, 2])
+                self.tn = torch.Tensor([[1, 2]])  # Size([1, 2])
 
-                    self.fp = torch.Tensor([[1, 0]])  # Size([1, 2])
+                self.fp = torch.Tensor([[1, 0]])  # Size([1, 2])
 
-                    self.fn = torch.Tensor([[0, 1]])  # Size([1, 2])
+                self.fn = torch.Tensor([[0, 1]])  # Size([1, 2])
+
+                ```
 
                 **NOTE**: The resulting counts will always be presented batch dimension first, then label dimension,
                 regardless of input shape. Defaults to None.

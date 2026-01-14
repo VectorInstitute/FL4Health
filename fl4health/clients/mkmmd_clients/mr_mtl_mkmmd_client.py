@@ -265,7 +265,7 @@ class MrMtlMkMmdClient(MrMtlClient):
         """
         Computes training losses given predictions of the global and local models and ground truth data.
         For the local model we add to the vanilla loss function by including Ditto penalty loss which is the
-        :math:`\\ell^2` inner product between the initial global model weights and weights of the local model. This is
+        \\(\\ell^2\\) inner product between the initial global model weights and weights of the local model. This is
         stored in backward The loss to optimize the global model is stored in the additional losses dictionary
         under “global_loss”.
 

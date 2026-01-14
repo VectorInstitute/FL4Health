@@ -272,7 +272,7 @@ class MrMtlDeepMmdClient(MrMtlClient):
         """
         Computes training losses given predictions of the client model and ground truth data.
         For the local model we add to the vanilla loss function by including Mean Regularized (MR) penalty loss
-        which is the :math:`\\ell^2` inner product between the initial global model weights and weights of the
+        which is the \\(\\ell^2\\) inner product between the initial global model weights and weights of the
         current model.
 
         Args:

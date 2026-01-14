@@ -20,11 +20,11 @@ class ApflModule(PartialLayerExchangeModel):
         Args:
             model (nn.Module): The underlying model architecture to be optimized. A twin of this model will be created
                 to initialize a local and global version of this architecture.
-            adaptive_alpha (bool, optional): Whether or not the mixing parameter :math:`\\alpha` will be adapted
-                during training. Predictions of the local and global models are combined using :math:`\\alpha` to
+            adaptive_alpha (bool, optional): Whether or not the mixing parameter \\(\\alpha\\) will be adapted
+                during training. Predictions of the local and global models are combined using \\(\\alpha\\) to
                 provide a final prediction. Defaults to True.
-            alpha (float, optional): The initial value for the mixing parameter :math:`\\alpha`. Defaults to 0.5.
-            alpha_lr (float, optional): The learning rate to be applied when adaptive :math:`\\alpha` during training.
+            alpha (float, optional): The initial value for the mixing parameter \\(\\alpha\\). Defaults to 0.5.
+            alpha_lr (float, optional): The learning rate to be applied when adaptive \\(\\alpha\\) during training.
                 If ``adaptive_alpha`` is False, then this parameter does nothing. Defaults to 0.01.
         """
         super().__init__()
@@ -62,7 +62,7 @@ class ApflModule(PartialLayerExchangeModel):
     def forward(self, input: torch.Tensor) -> dict[str, torch.Tensor]:
         """
         Forward function for the full APFL model. This includes mixing of the global and local model predictions using
-        :math:`\\alpha`. The predictions are combined as follows.
+        \\(\\alpha\\). The predictions are combined as follows.
 
         .. math::
             \\alpha \\cdot \\text{local_logits} + (1.0 - \\alpha) \\cdot \\text{global_logits}
@@ -120,7 +120,7 @@ class ApflModule(PartialLayerExchangeModel):
         """
         Specifies the model layers to be exchanged with the server. These are a fixed set of layers exchanged every
         round. For APFL, these are any layers associated with the ``global_model``. That is, none of the parameters
-        of the local model are aggregated on the server side, nor is :math:`\\alpha`.
+        of the local model are aggregated on the server side, nor is \\(\\alpha\\).
 
         Returns:
             (list[str]): Names of layers associated with the global model. These correspond to the layer names in the

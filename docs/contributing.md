@@ -39,7 +39,7 @@ If you need to update dependencies, you should change the requirements in `pypro
 
 For code style, we recommend the [google style guide](https://google.github.io/styleguide/pyguide.html).
 
-We use [ruff](https://docs.astral.sh/ruff/) for items such as code formatting and static code analysis. Ruff checks various rules including [flake8](https://docs.astral.sh/ruff faq/#how-does-ruff-compare-to-flake8). The pre-commit hooks (installation described below) show errors which you need to fix before submitting a PR, as these checks will fail and prevent PR merger. This project's configuration details for ruff are found in the `pyproject.toml` under headings prefixed with `tool.ruff.`. In addition to code checks, ruff also has a number of features for imposing documentation formatting that we leverage.
+We use [ruff](https://docs.astral.sh/ruff/) for items such as code formatting and static code analysis. Ruff checks various rules including [flake8](https://docs.astral.sh/ruff/faq/#how-does-ruffs-linter-compare-to-flake8). The pre-commit hooks (installation described below) show errors which you need to fix before submitting a PR, as these checks will fail and prevent PR merger. This project's configuration details for ruff are found in the `pyproject.toml` under headings prefixed with `tool.ruff.`. In addition to code checks, ruff also has a number of features for imposing documentation formatting that we leverage.
 
 If you want to run run (independent of the other pre-commit checks), you can run
 ```bash
@@ -81,8 +81,8 @@ If you're using VS Code for development, pre-commit should setup git hooks that 
 
 For code documentation, we try to adhere to the Google docstring style (See [here](https://google.github.io/styleguide/pyguide.html), Section: Comments and Doc-strings). The implementation of an extensive set of comments for the code in this repository is a work-in-progress. However, we are continuing to work towards a better commented state for the code. For development, as stated in the style guide, __any non-trivial or non-obvious methods added to the library should have a doc string__. For our library this applies only to code added to the main library in `fl4health`. Examples, research code, and tests need not incorporate the strict rules of documentation, though clarifying and helpful comments in that code is also __strongly encouraged__.
 
-> [!NOTE]
-> As a matter of convention choice, classes are documented through their `__init__` functions rather than at the "class" level.
+!!! note
+    As a matter of convention choice, classes are documented through their `__init__` functions rather than at the "class" level.
 
 If you are using VS Code a very helpful integration is available to facilitate the creation of properly formatted doc-strings called autoDocstring [VS Code Page](https://marketplace.visualstudio.com/items?itemName=njpwerner.autodocstring) and [Documentation](https://github.com/NilsJPWerner/autoDocstring). This tool will automatically generate a docstring template when starting a docstring with triple quotation marks (`"""`). To get the correct format, the following settings should be prescribed in your VS Code settings JSON:
 
@@ -138,5 +138,5 @@ In addition to the unit and integration tests through `pytest` a number of **smo
 
 For code coverage, we use [Codecov](https://about.codecov.io/) (by Sentry) and have configured this tool to pass only if a PR's overall code coverage is above 80%.
 
-> [!NOTE]
-> The contents of the tests folder is not packed with the FL4Health library on release to PyPi
+!!! note
+    The contents of the tests folder is not packed with the FL4Health library on release to PyPI

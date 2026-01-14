@@ -314,7 +314,7 @@ class GpflClient(BasicClient):
         target: TorchTargetType,
     ) -> torch.Tensor:
         """
-        Computes magnitude level loss corresponds to :math:`\\mathcal{L}_i^{\text{mlg}}` in the paper.
+        Computes magnitude level loss corresponds to \\(\\mathcal{L}_i^{\text{mlg}}\\) in the paper.
 
         Args:
             global_features (torch.Tensor): global features computed in this client.

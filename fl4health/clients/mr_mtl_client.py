@@ -137,7 +137,7 @@ class MrMtlClient(AdaptiveDriftConstraintClient):
     ) -> TrainingLosses:
         """
         Computes training losses given predictions of the modes and ground truth data. We add to vanilla loss
-        function by including Mean Regularized (MR) penalty loss which is the :math:`\\ell^2` inner product between the
+        function by including Mean Regularized (MR) penalty loss which is the \\(\\ell^2\\) inner product between the
         initial global model weights and weights of the current model.
 
         Args:

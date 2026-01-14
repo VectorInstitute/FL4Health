@@ -52,9 +52,9 @@ class SyntheticFedProxDataset(ABC):
         self.input_covariance = self.construct_covariance_matrix()
 
     def construct_covariance_matrix(self) -> torch.Tensor:
-        """
+        r"""
         This function generations the covariance matrix used in generating input features. It is fixed across all
-        datasets. It is a diagonal matrix with diagonal entries :math:`x_{j, j} = j^{-1.2}`, where :math:`j` starts at
+        datasets. It is a diagonal matrix with diagonal entries \(x_{j, j} = j^{-1.2}\), where \(j\) starts at
         1 in this notation. The matrix is of dimension ``input_dim`` x ``input_dim``.
 
         Returns:
@@ -74,7 +74,7 @@ class SyntheticFedProxDataset(ABC):
         .. math::
             \\hat{y} = \\frac{1}{T} \\cdot (Wx + b).
 
-        Then :math:`y = \\text{softmax}(\\hat{y})`. Getting the argmax from the distribution, we then
+        Then \\(y = \\text{softmax}(\\hat{y})\\). Getting the argmax from the distribution, we then
         one hot encode the resulting label sample.
 
         Args:
@@ -101,7 +101,7 @@ class SyntheticFedProxDataset(ABC):
             \\text{latent} = \\frac{1}{T} \\cdot (W_1 \\cdot x + b_1)
             \\hat{y} = \\cdot (W_2 \\cdot \\text{latent} + b_2).
 
-        Then :math:`y = \\text{softmax}(\\hat{y})`. Getting the argmax from the distribution, we then
+        Then \\(y = \\text{softmax}(\\hat{y})\\). Getting the argmax from the distribution, we then
         one hot encode the resulting label sample.
 
         Args:
@@ -182,7 +182,7 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
                 ``b``.
             beta (float): This is the standard deviation for each element of the multidimensional mean (``v_k``),
                 drawn from a centered normal distribution, which is used to generate the elements of the input features
-                for :math:`x \\sim \\mathcal{N}(B_k, \\Sigma)`.
+                for \\(x \\sim \\mathcal{N}(B_k, \\Sigma)\\).
             temperature (float, optional): Temperature used for the softmax mapping to labels. Defaults to 1.0.
             input_dim (int, optional): Dimension of the input features for the synthetic dataset. Default is as in the
                 FedProx paper. Defaults to 60.
@@ -214,12 +214,12 @@ class SyntheticNonIidFedProxDataset(SyntheticFedProxDataset):
         and produces the input, output tensor pairs with the appropriate dimensions.
 
         Args:
-            mu (list[float]): List of the mean values from which each element of :math:`W_i` and :math:`b_i` are to be
-                drawn ~ :math:`\\mathcal{N}(\\mu[i], 1)`
+            mu (list[float]): List of the mean values from which each element of \\(W_i\\) and \\(b_i\\) are to be
+                drawn ~ \\(\\mathcal{N}(\\mu[i], 1)\\)
             v (torch.Tensor): This is assumed to be a 1D tensor of size self.input_dim and represents the mean for the
                 multivariate normal from which to draw the input ``x``
             sigma (torch.Tensor): This is assumed to be a 2D tensor of shape (``input_dim``, ``input_dim``) and
-                represents the covariance matrix :math:`\\Sigma` of the multivariate normal from which to draw the
+                represents the covariance matrix \\(\\Sigma\\) of the multivariate normal from which to draw the
                 input ``x``. It  should be a diagonal matrix as well.
 
         Returns:

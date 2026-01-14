@@ -165,13 +165,13 @@ class MomentsAccountant:
 
         Ex.
 
-        .. code-block:: python
+        ```python
+        sampling_strategies = [PoissonSampling(q_1), PoissonSampling(q_2)]
 
-            sampling_strategies = [PoissonSampling(q_1), PoissonSampling(q_2)]
+        noise_multiplier = [z_1, z_2]
 
-            noise_multiplier = [z_1, z_2]
-
-            updates = [t_1, t_2]
+        updates = [t_1, t_2]
+        ```
 
         implies that ``q_1``, ``z_1`` were applied for ``t_1`` updates, followed by ``q_2``, ``z_2`` for ``t_2``
         updates.
@@ -217,13 +217,13 @@ class MomentsAccountant:
 
         Ex.
 
-        .. code-block:: python
+        ```python
+        sampling_strategies = [PoissonSampling(q_1), PoissonSampling(q_2)]
 
-            sampling_strategies = [PoissonSampling(q_1), PoissonSampling(q_2)]
+        noise_multiplier = [z_1, z_2]
 
-            noise_multiplier = [z_1, z_2]
-
-            updates = [t_1, t_2]
+        updates = [t_1, t_2]
+        ```
 
         implies that ``q_1``, ``z_1`` were applied for ``t_1`` updates, followed by ``q_2``, ``z_2`` for ``t_2``
         updates.
