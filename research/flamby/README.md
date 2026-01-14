@@ -14,8 +14,8 @@ conda activate flamby_fl4health
 Install the FL4Health requirements
 ``` bash
 cd <fl4health_repository>
-pip install --upgrade pip poetry
-poetry install --with "dev, test, codestyle"
+pip install uv
+uv sync --extra dev --extra test --extra codestyle
 cd <FLamby_repository>
 pip install albumentations==1.4.20
 pip install -e ".[cam16, heart, isic2019, ixi, lidc, tcga]"
