@@ -5,8 +5,8 @@ class FedProxClient(AdaptiveDriftConstraintClient):
     """
     This client implements the FedProx algorithm from Federated Optimization in Heterogeneous Networks. The idea is
     fairly straightforward. The local loss for each client is augmented with a norm on the difference between the
-    local client weights during training (\\(\\mathbf{w}\\)) and the initial globally shared weights
-    (\\(\\mathbf{w}^t\\)).
+    local client weights during training \\(\\mathbf{w}\\) and the initial globally shared weights
+    \\(\\mathbf{w}^t\\).
 
     **NOTE**: The initial value for mu (the drift penalty weight) is set on the server side and passed to each client
     through parameter exchange. It is stored as the more generally named ``drift_penalty_weight``.

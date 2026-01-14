@@ -92,13 +92,13 @@ class CoV(nn.Module):
         """
         Taken from the official implementation at : https://github.com/TsingZ0/GPFL/blob/main/system/flcore/servers/servergp.py
         CoV (Conditional Value) module as described in the GPFL paper. This module consists of two parts.
-        1) First, uses the provided context tensor to compute two vectors, $\\gamma$ and $\beta$ using
+        1) First, uses the provided context tensor to compute two vectors, \\(\\gamma\\) and \\(\\beta\\) using
         ``conditional_gamma`` and ``conditional_beta`` sub-modules, respectively.
-        In the paper: $[\\mathbf{\\gamma_i}, \\mathbf{\beta_i} = \text{CoV}(\\mathbf{f}_i, \\cdot, V)]$
+        In the paper: \\([\\mathbf{\\gamma_i}, \\mathbf{\\beta_i} = \\text{CoV}(\\mathbf{f}_i, \\cdot, V)]\\)
         2) Then, applies an affine transformation followed by a ReLU activation to the feature tensors based on
-        the computed $\\gamma$ and $\beta$ vectors.
-        Affine transformation in the paper: $[(\\mathbf{\\gamma} + \\mathbf{1})\\odot \\mathbf{f}_i + \\mathbf{\beta}]$
-        Parameters of the sub-modules (``conditional_gamma`` and ``conditional_beta``$`` modules) are the main
+        the computed \\(\\gamma\\) and \\(\\beta\\) vectors.
+        Affine transformation in the paper: \\([(\\mathbf{\\gamma} + \\mathbf{1})\\odot \\mathbf{f}_i + \\mathbf{\\beta}]\\)
+        Parameters of the sub-modules (``conditional_gamma`` and ``conditional_beta`` modules) are the main
         components of this module, and are optimized during the training process.
 
         Args:

@@ -52,12 +52,19 @@ jobs:
           # GHSA-wf7f-8fxf-xfxc ML Flow vulnerability in deserialization that hasn't been patched yet.
           # CVE-2025-53000 NBConvert issue, no fix yet.
           # CVE-2026-21851 is a MonAI issue with no fix at the moment.
+          # CVE-2024-55459, CVE-2025-9906, CVE-2025-12058, CVE-2025-12060 are keras vulnerabilities that require
+          # keras>=3.12.0 which needs tensorflow>=2.16, but we're pinning to tensorflow 2.15 due to tensorflow-io
+          # compatibility constraints.
           ignore-vulns: |
             GHSA-3749-ghw9-m3mg
             GHSA-887c-mr87-cxwp
             GHSA-wf7f-8fxf-xfxc
             CVE-2025-53000
             CVE-2026-21851
+            CVE-2024-55459
+            CVE-2025-9906
+            CVE-2025-12058
+            CVE-2025-12060
 
       # Deleting some temporary files and useless folders to free up space
       # Deleting /usr/share/dotnet should clear ~4GB of space.
