@@ -68,6 +68,37 @@ def postprocess_logs(logs: str) -> str:
     return re.sub(r"E.*recvmsg encountered uncommon error: Message too long\n", "\n", logs)
 
 
+def contains_actual_error(logs: str) -> bool:
+    """
+    Check if logs contain actual errors (exceptions, tracebacks) rather than just warnings.
+
+    This function looks for patterns that indicate real errors such as Python tracebacks,
+    exception messages, or gRPC errors, while ignoring deprecation warnings and other
+    informational messages that happen to contain the word "error".
+
+    Args:
+        logs: The log output to check
+
+    Returns:
+        True if actual errors are found, False otherwise
+    """
+    # Check for Python exceptions and tracebacks
+    if re.search(r"Traceback \(most recent call last\)", logs):
+        return True
+
+    # Check for common Python exception patterns (Error at end of line with context)
+    # This matches lines like "ValueError: invalid literal" or "RuntimeError: connection failed"
+    if re.search(r"^[A-Z]\w*Error:\s+\S", logs, re.MULTILINE):
+        return True
+
+    # Check for gRPC/network errors that indicate actual failures
+    if re.search(r"(grpc\._channel\._InactiveRpcError|StatusCode\.[A-Z_]+)", logs):
+        return True
+
+    # Check for explicit ERROR log level messages (but not in DeprecationWarning)
+    return bool(re.search(r"^ERROR:", logs, re.MULTILINE))
+
+
 def graceful_shutdown(processes: list[asyncio.subprocess.Process]) -> None:
     """Graceful shutdown of subprocesses."""
     for p in processes:
@@ -316,7 +347,7 @@ async def run_smoke_test(
         logger.info("Server has finished execution")
 
         # Server assertions
-        if "error" in full_server_output.lower():
+        if contains_actual_error(full_server_output):
             raise SmokeTestAssertError("[ASSERT ERROR] Error message found for server.")
 
         if assert_evaluation_logs:
@@ -351,7 +382,7 @@ async def run_smoke_test(
         for i, raw_full_client_output in enumerate(full_client_outputs):
             full_client_output = postprocess_logs(raw_full_client_output)
 
-            if "error" in full_client_output.lower():
+            if contains_actual_error(full_client_output):
                 raise SmokeTestAssertError(f"[ASSERT ERROR] Error message found for client {i}.")
 
             if "Disconnect and shut down" not in full_client_output:
