@@ -40,7 +40,7 @@ class TorchMetric(Metric):
                 dictionary.
 
         Returns:
-           Metrics: A dictionary of string and ``Scalar`` representing the computed metric and its associated key.
+           (Metrics): A dictionary of string and ``Scalar`` representing the computed metric and its associated key.
         """
         result_key = f"{name} - {self.name}" if name is not None else self.name
         result = self.metric.compute().item()
@@ -87,7 +87,7 @@ class SimpleMetric(Metric, ABC):
             AssertionError: Input and target lists must be non empty.
 
         Returns:
-            Metrics: A dictionary of string and ``Scalar`` representing the computed metric and its associated key.
+            (Metrics): A dictionary of string and ``Scalar`` representing the computed metric and its associated key.
         """
         assert len(self.accumulated_inputs) > 0 and len(self.accumulated_targets) > 0
         stacked_inputs = torch.cat(self.accumulated_inputs)

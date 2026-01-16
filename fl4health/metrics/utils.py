@@ -19,7 +19,7 @@ def infer_label_dim(tensor1: torch.Tensor, tensor2: torch.Tensor) -> int:
             next to the label dimension has the same size.
 
     Returns:
-        int: Index of the dimension along tensor 1 that corresponds to the label dimension.
+        (int): Index of the dimension along tensor 1 that corresponds to the label dimension.
     """
     assert tensor1.shape != tensor2.shape, (
         f"Could not infer the label dimension of tensors with the same shape: {tensor1.shape}"
@@ -98,7 +98,7 @@ def map_label_index_tensor_to_one_hot(
         label_dim (int): Dimension to one-hot encode.
 
     Returns:
-        torch.Tensor: Tensor with one-hot encoded ``label_dim``.
+        (torch.Tensor): Tensor with one-hot encoded ``label_dim``.
     """
     label_index_tensor_shape = label_index_tensor.shape
 
@@ -135,18 +135,18 @@ def align_pred_and_target_shapes(
 
     For example, consider a problem with 3 label classes with the preds vector encoded and the targets label encoded
 
-    .. code-block:: python
+    ```python
+    preds = torch.Tensor([[0.1, 0.2, 0.7], [0.9, 0.1, 0.0]])
 
-        preds = torch.Tensor([[0.1, 0.2, 0.7], [0.9, 0.1, 0.0]])
-
-        targets = torch.Tensor([[2], [1]])
+    targets = torch.Tensor([[2], [1]])
+    ```
 
     preds has shape ``(2, 3)`` and targets has shape ``(2, 1)``. This function will convert targets to a
     one-hot-encode tensor with contents
 
-    .. code-block:: python
-
-        targets = torch.Tensor([0, 0, 1], [0, 1, 0])
+    ```python
+    targets = torch.Tensor([0, 0, 1], [0, 1, 0])
+    ```
 
     Args:
         preds (torch.Tensor): The tensor with model predictions.
@@ -155,7 +155,8 @@ def align_pred_and_target_shapes(
             the label dimension if it is needed.
 
     Returns:
-        tuple[torch.Tensor, torch.Tensor]: The pred and target tensors respectively now ensured to have the same shape.
+        (tuple[torch.Tensor, torch.Tensor]): The pred and target tensors respectively now ensured to have the same
+            shape.
     """
     # Shapes are already aligned.
     if preds.shape == targets.shape:

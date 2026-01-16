@@ -20,7 +20,7 @@ class LayerSelectionFunctionConstructor:
 
         Args:
             norm_threshold (float): A nonnegative real number used to select those layers whose drift in
-                :math:`\\ell^2` norm exceeds (or falls short of) it.
+                \\(\\ell^2\\) norm exceeds (or falls short of) it.
             exchange_percentage (float): Indicates the percentage of layers that are selected.
             normalize (bool, optional): Indicates whether when calculating the norm of a layer, we also divide by the
                 number of parameters in that layer. Defaults to True.
@@ -62,7 +62,7 @@ def _calculate_drift_norm(t1: torch.Tensor, t2: torch.Tensor, normalize: bool) -
         normalize (bool): Whether to divide the difference between the tensors by their number of elements.
 
     Returns:
-        float: Norm of the difference between ``t1`` and ``t2`` based on the specified calculation.
+        (float): Norm of the difference between ``t1`` and ``t2`` based on the specified calculation.
     """
     t_diff = (t1 - t2).float()
     drift_norm = torch.linalg.norm(t_diff)
@@ -79,7 +79,7 @@ def select_layers_by_threshold(
     initial_model: nn.Module,
 ) -> tuple[NDArrays, list[str]]:
     """
-    Return those layers of model that deviate (in :math:`\\ell^2` norm) away from corresponding layers of
+    Return those layers of model that deviate (in \\(\\ell^2\\) norm) away from corresponding layers of
     ``self.initial_model`` by at least (or at most) ``self.threshold``.
 
     Args:
@@ -91,7 +91,7 @@ def select_layers_by_threshold(
         initial_model (nn.Module): Model that we started with to which we are comparing parameters.
 
     Returns:
-        tuple[NDArrays, list[str]]: Layers selected by the process and their corresponding names in the model's
+        (tuple[NDArrays, list[str]]): Layers selected by the process and their corresponding names in the model's
         ``state_dict``.
     """
     layer_names = []

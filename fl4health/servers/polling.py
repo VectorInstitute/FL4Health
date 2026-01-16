@@ -54,7 +54,7 @@ def poll_client(client: ClientProxy, ins: GetPropertiesIns) -> tuple[ClientProxy
             properties.
 
     Returns:
-        tuple[ClientProxy, GetPropertiesRes]: Returns the resulting properties from the client response.
+        (tuple[ClientProxy, GetPropertiesRes]): Returns the resulting properties from the client response.
     """
     property_res: GetPropertiesRes = client.get_properties(ins=ins, timeout=None, group_id=None)
     return client, property_res
@@ -77,7 +77,7 @@ def poll_clients(
         timeout (float | None): How long the executor should wait to receive a response before moving on.
 
     Returns:
-        PollResultsAndFailures: Object holding the results and failures associate with the concurrent polling.
+        (PollResultsAndFailures): Object holding the results and failures associate with the concurrent polling.
     """
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         submitted_fs = {

@@ -68,7 +68,7 @@ class EarlyStopper:
             steps (int): Number of steps since the start of the training.
 
         Returns:
-            bool: True if training should stop, otherwise False.
+            (bool): True if training should stop, otherwise False.
         """
         if steps % self.interval_steps != 0:
             return False

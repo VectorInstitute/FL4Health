@@ -12,10 +12,10 @@ from numpy.typing import NDArray
 
 
 with contextlib.redirect_stdout(open(os.devnull, "w")):
-    from picai_eval import evaluate, evaluate_folder
-    from picai_eval.image_utils import read_image
-    from picai_eval.metrics import Metrics as PicaiEvalMetrics
-    from report_guided_annotation import extract_lesion_candidates
+    from picai_eval import evaluate, evaluate_folder  # type: ignore[import-not-found]
+    from picai_eval.image_utils import read_image  # type: ignore[import-not-found]
+    from picai_eval.metrics import Metrics as PicaiEvalMetrics  # type: ignore[import-not-found]
+    from report_guided_annotation import extract_lesion_candidates  # type: ignore[import-not-found]
 
 warnings.simplefilter("ignore", category=FutureWarning)
 
@@ -40,7 +40,7 @@ def load_images_from_folder(
             Defaults to [".nii.gz", ".nii", ".mha", ".mhd", ".npz", ".npy"].
 
     Returns:
-        NDArray: A numpy array containing the images for each case identifier.
+        (NDArray): A numpy array containing the images for each case identifier.
             The first dimension will be the number of images and those images
             will be in the same order as was given by the case_identifiers
             argument
@@ -68,7 +68,7 @@ def get_detection_maps(probability_maps: NDArray) -> NDArray:
             probability maps. Should be shape (num_samples, num_classes, ...)
 
     Returns:
-        NDArray: A numpy array of the detection maps for each class. Note that
+        (NDArray): A numpy array of the detection maps for each class. Note that
             a detection map is not created for the background class which is
             assumed to be at index 0. Therefore the output shape is
             (num_samples, num_classes-1, ...)
@@ -114,7 +114,7 @@ def get_picai_metrics(
             arguments
 
     Returns:
-        picai_eval.metrics.Metrics: A picai eval metrics object that has
+        (picai_eval.metrics.Metrics): A picai eval metrics object that has
             combined the results from all classes into a single object
     """
     if "y_det" in kwargs or "y_true" in kwargs or "subject_list" in kwargs:

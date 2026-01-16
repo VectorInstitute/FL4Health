@@ -73,7 +73,7 @@ def save_random_state() -> tuple[tuple[Any, ...], dict[str, Any], torch.Tensor]:
     state of the random number generators at a later time.
 
     Returns:
-        tuple[tuple[Any, ...], dict[str, Any], torch.Tensor]: A tuple containing the state of the random number
+        (tuple[tuple[Any, ...], dict[str, Any], torch.Tensor]): A tuple containing the state of the random number
         generators for Python, NumPy, and PyTorch.
     """
     log(INFO, "Saving random state.")
@@ -111,6 +111,6 @@ def generate_hash(length: int = 8) -> str:
        length (int): The length of the hash generated. Maximum length is 32.
 
     Returns:
-        str: hash
+        (str): hash
     """
     return str(uuid.uuid4()).replace("-", "")[:length]

@@ -91,7 +91,7 @@ class MaskedLayerNorm(nn.LayerNorm):
             input (Tensor): Tensor to be mapped by the layer.
 
         Returns:
-            Tensor: Output tensor after mapping of the input tensor.
+            (Tensor): Output tensor after mapping of the input tensor.
         """
         if not self.elementwise_affine:
             return F.layer_norm(input, self.normalized_shape, self.weight, self.bias, self.eps)
@@ -117,7 +117,7 @@ class MaskedLayerNorm(nn.LayerNorm):
             layer_norm_module (nn.LayerNorm): Target module to be converted
 
         Returns:
-            MaskedLayerNorm: New copy of the provided module with mask layers added to enable FedPM
+            (MaskedLayerNorm): New copy of the provided module with mask layers added to enable FedPM
         """
         masked_layer_norm_module = cls(
             # layer_norm_module.normalized_shape is a tuple so we
@@ -155,7 +155,7 @@ class _MaskedBatchNorm(_BatchNorm):
         device: torch.device | None = None,
         dtype: torch.dtype | None = None,
     ) -> None:
-        """
+        r"""
         Base class for masked batch normalization modules of various dimensions. When affine is True,
         ``_BatchNorm`` has a learnable weight and bias. For ``_MaskedBatchNorm``, the weight and bias do not
         receive gradient in back propagation. Instead, two score tensors - one for the weight and another for the
@@ -170,7 +170,7 @@ class _MaskedBatchNorm(_BatchNorm):
         **NOTE**: The scores are not assumed to be bounded between 0 and 1.
 
         Args:
-            num_features (int): Number of features or channels :math:`C` of the input
+            num_features (int): Number of features or channels \(C\) of the input
             eps (float, optional): A value added to the denominator for numerical stability. Defaults to 1e-5.
             momentum (float | None, optional): The value used for the running_mean and ``running_var`` computation.
                 Can be set to ``None`` for cumulative moving average (i.e. simple average). Defaults to 0.1.
@@ -213,7 +213,7 @@ class _MaskedBatchNorm(_BatchNorm):
             input (Tensor): Tensor to be mapped via the ``_MaskedBatchNorm``
 
         Returns:
-            Tensor: Output tensor after mapping
+            (Tensor): Output tensor after mapping
         """
         self._check_input_dim(input)
         exponential_average_factor = 0.0 if self.momentum is None else self.momentum
@@ -266,7 +266,7 @@ class _MaskedBatchNorm(_BatchNorm):
             batch_norm_module (_BatchNorm): Module to be transformed to a masked module through layer insertion
 
         Returns:
-            _MaskedBatchNorm: New copy of the input module with masked layers to enable FedPM
+            (_MaskedBatchNorm): New copy of the input module with masked layers to enable FedPM
         """
         masked_batch_norm_module = cls(
             num_features=batch_norm_module.num_features,

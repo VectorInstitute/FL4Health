@@ -155,7 +155,7 @@ class TabularDataClient(BasicClient):
             config (Config): Configuration sent by the server for customization of the function
 
         Returns:
-            dict[str, Scalar]: Properties to be returned to the server, providing information about the client.
+            (dict[str, Scalar]): Properties to be returned to the server, providing information about the client.
         """
         if not self.initialized:
             self.setup_client(config)

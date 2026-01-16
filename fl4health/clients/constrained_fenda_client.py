@@ -97,7 +97,7 @@ class ConstrainedFendaClient(FendaClient):
             features (torch.Tensor): features to be flattened
 
         Returns:
-            torch.Tensor: flattened feature vectors of shape (batch, -1)
+            (torch.Tensor): flattened feature vectors of shape (batch, -1)
         """
         return features.reshape(len(features), -1)
 
@@ -118,10 +118,10 @@ class ConstrainedFendaClient(FendaClient):
                 for the union of ``torch.Tensor`` and ``dict[str, torch.Tensor]``.
 
         Returns:
-            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple in which the first element
-            contains predictions indexed by name and the second element contains intermediate activations
-            index by name. Specifically the features of the model, features of the global model and features of
-            the old model are returned. All predictions included in dictionary will be used to compute metrics.
+            (tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]): A tuple in which the first element
+                contains predictions indexed by name and the second element contains intermediate activations
+                index by name. Specifically the features of the model, features of the global model and features of
+                the old model are returned. All predictions included in dictionary will be used to compute metrics.
         """
         assert isinstance(input, torch.Tensor)
         assert isinstance(self.model, FendaModelWithFeatureState)
@@ -193,17 +193,17 @@ class ConstrainedFendaClient(FendaClient):
         client attributes set from server config, cosine similarity loss, contrastive loss and perfcl losses.
 
         Args:
-            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
-            features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target (torch.Tensor): Ground truth data to evaluate predictions against.
+            preds (TorchPredType): Prediction(s) of the model(s) indexed by name.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
+            (tuple[torch.Tensor, dict[str, torch.Tensor]]): A tuple with:
 
-            - The tensor for the total loss
-            - A dictionary with ``loss``, ``total_loss`` and, based on client attributes set from server config, also
-              ``cos_sim_loss``, ``contrastive_loss``, ``contrastive_loss_minimize`` and ``contrastive_loss_minimize``
-              keys and their respective calculated values.
+                - The tensor for the total loss
+                - A dictionary with ``loss``, ``total_loss`` and, based on client attributes set from server
+                  config, also ``cos_sim_loss``, ``contrastive_loss``, ``contrastive_loss_minimize`` and
+                  ``contrastive_loss_minimize`` keys and their respective calculated values.
         """
         loss = self.criterion(preds["prediction"], target)
         total_loss = loss.clone()
@@ -253,15 +253,15 @@ class ConstrainedFendaClient(FendaClient):
         on client attributes set from server config.
 
         Args:
-            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            preds (TorchPredType): Prediction(s) of the model(s) indexed by name.
                 All predictions included in dictionary will be used to compute metrics.
-            features: (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
-            indexed by name. Additional losses may include ``cosine_similarity_loss``, ``contrastive_loss``
-            and ``perfcl_loss``.
+            (EvaluationLosses): An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
+                indexed by name. Additional losses may include ``cosine_similarity_loss``, ``contrastive_loss``
+                and ``perfcl_loss``.
         """
         _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         return EvaluationLosses(checkpoint=additional_losses["loss"], additional_losses=additional_losses)

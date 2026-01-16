@@ -54,7 +54,7 @@ def narrow_dict_type(dictionary: dict[str, Any], key: str, narrow_type_to: type[
         narrow_type_to (type[T]): The expected type of dictionary[key]
 
     Returns:
-        T: The type-checked value at dictionary[key].
+        (T): The type-checked value at dictionary[key].
 
     Raises:
         ValueError: If dictionary[key] is not of type ``narrow_type_to`` or if the key is not present in dictionary.
@@ -106,7 +106,8 @@ def make_dict_with_epochs_or_steps(local_epochs: int | None = None, local_steps:
         local_steps (int | None, optional): Number of local steps of training to perform in FL. Defaults to None.
 
     Returns:
-        dict[str, int]: Dictionary with at most one of the non-none values, keyed by the name of the non-none variable.
+        (dict[str, int]): Dictionary with at most one of the non-none values, keyed by the name of the non-none
+            variable.
     """
     if local_epochs is not None:
         return {"local_epochs": local_epochs}

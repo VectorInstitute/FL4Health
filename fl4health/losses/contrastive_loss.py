@@ -36,8 +36,8 @@ class MoonContrastiveLoss(nn.Module):
                 (``n_pairs``, ``batch_size``, ``n_features``)
 
         Returns:
-            torch.Tensor: Cosine similarities of the batch of features provided with the set of batches of negative
-            pairs. The shape is ``n_pairs`` x ``batch_size``
+            (torch.Tensor): Cosine similarities of the batch of features provided with the set of batches of negative
+                pairs. The shape is ``n_pairs`` x ``batch_size``.
         """
         # Check that features and each of the negatives pairs have the same shape
         assert features.shape == negative_pairs.shape[1:]
@@ -60,7 +60,7 @@ class MoonContrastiveLoss(nn.Module):
                 shape (``n_pairs``, ``batch_size``, ``n_features``)
 
         Returns:
-            torch.Tensor: Contrastive loss value
+            (torch.Tensor): Contrastive loss value
         """
         # TODO: We can extend it to support multiple positive pairs using multi-label classification
 
@@ -116,10 +116,10 @@ class NtXentLoss(nn.Module):
         self.temperature = temperature
 
     def forward(self, features: torch.Tensor, transformed_features: torch.Tensor) -> torch.Tensor:
-        """
+        r"""
         Compute the contrastive loss based on the features and ``transformed_features``. Given N features
         and N ``transformed_features`` per batch, ``features[i]`` and ``transformed_features[i]`` are positive pairs
-        and the remaining :math:`2N - 2` are negative pairs.
+        and the remaining \(2N - 2\) are negative pairs.
 
         Args:
             features (torch.Tensor): Features of input without transformation applied.
@@ -128,7 +128,7 @@ class NtXentLoss(nn.Module):
                 Shaped (``batch_size``, ``feature_dimension``).
 
         Returns:
-            torch.Tensor: Contrastive loss value.
+            (torch.Tensor): Contrastive loss value.
         """
         features.to(self.device)
         transformed_features.to(self.device)

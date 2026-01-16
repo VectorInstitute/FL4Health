@@ -61,7 +61,7 @@ class MaskedLinear(nn.Linear):
             input (Tensor): input tensor to be transformed.
 
         Returns:
-            Tensor: output tensor from the layer.
+            (Tensor): output tensor from the layer.
         """
         # Produce probability scores and perform Bernoulli sampling
         weight_prob_scores = torch.sigmoid(self.weight_scores)
@@ -88,7 +88,7 @@ class MaskedLinear(nn.Linear):
             linear_module (nn.Linear): Target layer to be transformed.
 
         Returns:
-            MaskedLinear: New copy of the provided module with masked layers inserted to enable FedPM.
+            (MaskedLinear): New copy of the provided module with masked layers inserted to enable FedPM.
         """
         has_bias = linear_module.bias is not None
         masked_linear_module = cls(

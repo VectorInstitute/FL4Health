@@ -23,7 +23,7 @@
 # Example:
 # sbatch research/picai/fl_nnunet/run_fl_single_node.slrm \
 #   research/picai/fl_nnunet/config.yaml \
-#   ~/.cache/pypoetry/virtualenvs/fl4health-MVmwdY85-py3.10/ \
+#   /path/to/fl4health_env/ \
 #   1 \
 #   0 \
 #   005 \

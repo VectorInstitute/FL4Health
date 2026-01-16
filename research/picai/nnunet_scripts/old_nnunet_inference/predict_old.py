@@ -51,9 +51,9 @@ class MyNnUNetPredictor(nnUNetPredictor):
                 Defaults to nnunet's default number of processes (at time of writing this is 8)
 
         Returns:
-            List: A dictionary containing the predicted annotations and the data properties for each file. The
-            dictionary may also contain the predicted probabilities and the output file names associated with each
-            sample
+            (List): A dictionary containing the predicted annotations and the data properties for each file. The
+                dictionary may also contain the predicted probabilities and the output file names associated with each
+                sample.
         """
         with multiprocessing.get_context("spawn").Pool(num_processes) as pool:
             # Have to ignore errors when defining worker list because mypy
@@ -139,7 +139,7 @@ def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, 
             Contains important information about data preprocessing.
 
     Returns:
-        MyNnUNetPredictor: A subclass of the nnUNetPredictor class for the set
+        (MyNnUNetPredictor): A subclass of the nnUNetPredictor class for the set
             of models specified by the ckpt_list. The subclasses only
             difference is that it returns a dictionary with more information
             as opposed to just a list of numpy arrays.
@@ -151,8 +151,8 @@ def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, 
         Checks model dict for trainer name and ``inference_allowed_mirroring_axes``.
 
         Returns:
-            tuple[str | None, bool]: Tuple with elements trainer_name and ``inference_allowed_mirroring_axes``.
-            Defaults to ("nnUNetTrainer", False)
+            (tuple[str | None, bool]): Tuple with elements trainer_name and ``inference_allowed_mirroring_axes``.
+                Defaults to ("nnUNetTrainer", False).
         """
         trainer_name = "nnUNetTrainer"
         inference_allowed_mirror_axes = False
@@ -255,7 +255,7 @@ def predict(
             Defaults to True.
 
     Returns:
-        tuple[NDArray, NDArray, list[str]]: A numpy array with a single predicted probability map for each input
+        (tuple[NDArray, NDArray, list[str]]): A numpy array with a single predicted probability map for each input
             image. Shape:  (num_samples, num_classes, ...). A numpy array with a single predicted annotation map for
             each input image. Unlike the predicted  probabilities these are NOT one hot encoded.
             Shape: (num_samples, spatial_dims...). A list containing the unique case identifier for each prediction.

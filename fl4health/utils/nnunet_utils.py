@@ -178,7 +178,7 @@ def convert_deep_supervision_list_to_dict(
         num_spatial_dims (int): The number of spatial dimensions. Assumes the spatial dimensions are last.
 
     Returns:
-        dict[str, torch.Tensor]: A dictionary containing the tensors as values where the keys are 'i-XxYxZ' where i
+        (dict[str, torch.Tensor]): A dictionary containing the tensors as values where the keys are 'i-XxYxZ' where i
         was the tensor's index in the list and X,Y,Z are the spatial dimensions of the tensor.
     """
     # Convert list of targets into a dictionary
@@ -204,7 +204,7 @@ def convert_deep_supervision_dict_to_list(
             list.
 
     Returns:
-        list[torch.Tensor]: A list of ``torch.Tensors``.
+        (list[torch.Tensor]): A list of ``torch.Tensors``.
     """
     sorted_list = sorted(tensor_dict.items(), key=lambda x: int(x[0].split("-")[0]))
     return [tensor for key, tensor in sorted_list]
@@ -224,8 +224,8 @@ def get_segs_from_probs(preds: torch.Tensor, has_regions: bool = False, threshol
             an output is a part of a class.
 
     Returns:
-        torch.Tensor: tensor containing the predicted segmentations as a one hot encoded binary tensor of 64-bit
-        integers.
+        (torch.Tensor): tensor containing the predicted segmentations as a one hot encoded binary tensor of 64-bit
+            integers.
     """
     if has_regions:
         pred_segs = preds > threshold
@@ -253,7 +253,7 @@ def collapse_one_hot_tensor(input: torch.Tensor, dim: int = 0) -> torch.Tensor:
         dim (int, optional): Dimension over which to collapse the one-hot tensor. Defaults to 0.
 
     Returns:
-        torch.Tensor: Integer tensor with the specified dim collapsed.
+        (torch.Tensor): Integer tensor with the specified dim collapsed.
     """
     return torch.argmax(input.long(), dim=dim).to(input.device)
 
@@ -267,7 +267,7 @@ def get_dataset_n_voxels(source_plans: dict, n_cases: int) -> float:
         n_cases (int): The number of cases in the dataset.
 
     Returns:
-        float: The total number of voxels in the local client dataset.
+        (float): The total number of voxels in the local client dataset.
     """
     # Need to determine input dimensionality
     if NnunetConfig._3D_FULLRES.value in source_plans["configurations"]:
@@ -290,8 +290,8 @@ def prepare_loss_arg(
         tensor (torch.Tensor | dict[str, torch.Tensor]): The input tensor.
 
     Returns:
-        torch.Tensor | list[torch.Tensor]: The tensor ready to be passed to the loss function. A single tensor if not
-        using deep supervision and a list of tensors if deep supervision is on.
+        (torch.Tensor | list[torch.Tensor]): The tensor ready to be passed to the loss function. A single tensor if not
+            using deep supervision and a list of tensors if deep supervision is on.
     """
     # TODO: IDK why we have to make assumptions when we could just have a boolean state
     if isinstance(tensor, torch.Tensor):
@@ -366,7 +366,7 @@ class NnUNetDataLoaderWrapper(DataLoader):
             TypeError: Raised when the targets extracted from the batch objects are not of the right types.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor | dict[str, torch.Tensor]]: A batch of input and target data.
+            (tuple[torch.Tensor, torch.Tensor | dict[str, torch.Tensor]]): A batch of input and target data.
         """
         if not self.infinite and self.current_step == self.__len__():
             self.reset()
@@ -421,7 +421,7 @@ class NnUNetDataLoaderWrapper(DataLoader):
         Define the iter conversion for an NnUNetDataLoaderWrapper.
 
         Returns:
-            DataLoader: The iterator, which is just the NnUNetDataLoaderWrapper itself.
+            (DataLoader): The iterator, which is just the NnUNetDataLoaderWrapper itself.
         """
         # mypy gets angry that the return type is different
         return self
@@ -459,7 +459,7 @@ class Module2LossWrapper(_Loss):
             target (torch.Tensor): Target tensor.
 
         Returns:
-            torch.Tensor: Loss output.
+            (torch.Tensor): Loss output.
         """
         return self.loss(pred, target)
 
@@ -528,7 +528,7 @@ class PolyLRSchedulerWrapper(_LRScheduler):
         Get the current LR of the scheduler.
 
         Returns:
-            Sequence[float]: A uniform sequence of LR for each of the parameter groups in the optimizer.
+            (Sequence[float]): A uniform sequence of LR for each of the parameter groups in the optimizer.
         """
         if self._step_count - 1 == self.max_steps + 1:
             log(

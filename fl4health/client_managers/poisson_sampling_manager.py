@@ -35,7 +35,7 @@ class PoissonSamplingClientManager(BaseFractionSamplingManager):
             criterion (Criterion | None, optional): Criterion to sample clients based on. Defaults to None.
 
         Returns:
-            list[ClientProxy]: List of selected ClientProxy objects represented the clients selected by the process.
+            (list[ClientProxy]): List of selected ClientProxy objects represented the clients selected by the process.
         """
         available_cids = self.wait_and_filter(min_num_clients, criterion)
         n_available_cids = len(available_cids)

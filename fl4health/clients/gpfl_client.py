@@ -111,7 +111,7 @@ class GpflClient(BasicClient):
             config (Config): The config from the server.
 
         Returns:
-            dict[str, Optimizer]: A dictionary of optimizers defined by the user
+            (dict[str, Optimizer]): A dictionary of optimizers defined by the user
         """
         raise NotImplementedError(
             "User Clients must define a function that returns a dict[str, Optimizer] with keys 'model',"
@@ -161,7 +161,7 @@ class GpflClient(BasicClient):
             config (Config): Config from the server..
 
         Returns:
-            ParameterExchanger: FixedLayerExchanger used to exchange a set of fixed and specific layers.
+            (ParameterExchanger): FixedLayerExchanger used to exchange a set of fixed and specific layers.
         """
         assert isinstance(self.model, GpflModel)
         return FixedLayerExchanger(self.model.layers_to_exchange())
@@ -172,7 +172,7 @@ class GpflClient(BasicClient):
         It computes the proportion of samples for each class in the training dataset.
 
         Returns:
-            torch.Tensor: A tensor containing the proportion of samples for each class.
+            (torch.Tensor): A tensor containing the proportion of samples for each class.
         """
         class_sample_proportion = torch.zeros(self.num_classes, device=self.device)
         one_hot_n_dim = 2  # To avoid having magic numbers
@@ -256,7 +256,7 @@ class GpflClient(BasicClient):
             input (TorchInputType): Input tensor.
 
         Returns:
-            TorchInputType: Transformed input tensor.
+            (TorchInputType): Transformed input tensor.
         """
         # Attach the global and personalized conditional inputs to the input
         if isinstance(input, torch.Tensor):
@@ -285,8 +285,8 @@ class GpflClient(BasicClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
-            a dictionary of any predictions produced by the model.
+            (tuple[TrainingLosses, TorchPredType]): The losses object from the train step along with
+        `            a dictionary of any predictions produced by the model.
         """
         # Clear gradients from the optimizers if they exist
         self.optimizers["model"].zero_grad()
@@ -314,14 +314,14 @@ class GpflClient(BasicClient):
         target: TorchTargetType,
     ) -> torch.Tensor:
         """
-        Computes magnitude level loss corresponds to :math:`\\mathcal{L}_i^{\text{mlg}}` in the paper.
+        Computes magnitude level loss corresponds to \\(\\mathcal{L}_i^{\text{mlg}}\\) in the paper.
 
         Args:
             global_features (torch.Tensor): global features computed in this client.
             target (TorchTargetType): Either a tensor of class indices or one-hot encoded tensors.
 
         Returns:
-            torch.Tensor: L2 norm loss between the global features and the frozen GCE's global features.
+            (torch.Tensor): L2 norm loss between the global features and the frozen GCE's global features.
         """
         # In magnitude level loss, GCE's embedding table is frozen, and the goal is to train
         # the model to generate good global features by making the generated embeddings closer to
@@ -342,12 +342,12 @@ class GpflClient(BasicClient):
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. Anything stored
                 in preds will be used to compute metrics.
-            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
-            target: (TorchTargetType): Ground truth data to evaluate predictions against.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses
-            indexed by name.
+            (TrainingLosses): An instance of ``TrainingLosses`` containing backward loss and additional losses
+                indexed by name.
         """
         # The loss used during training is a combination of the prediction loss (CrossEntropy used in the paper),
         # angel-level (GCE loss) and magnitude-level global losses.
@@ -375,9 +375,9 @@ class GpflClient(BasicClient):
             target (TorchTargetType): The target corresponding to the input..
 
         Returns:
-            tuple[EvaluationLosses, TorchPredType]: tuple[EvaluationLosses, TorchPredType]:
-            The losses object from the val step along with a dictionary of the predictions produced
-            by the model.
+            (tuple[EvaluationLosses, TorchPredType]: tuple[EvaluationLosses, TorchPredType]):
+                The losses object from the val step along with a dictionary of the predictions produced
+                by the model.
         """
         input = self.transform_input(input)
         return super().val_step(input, target)

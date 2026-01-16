@@ -28,7 +28,7 @@ def convert_to_masked_model(original_model: nn.Module) -> nn.Module:
         original_model (nn.Module): Module to be converted to a masked module.
 
     Returns:
-        nn.Module: New copy of the original model but with masked layers injected to enable FedPM.
+        (nn.Module): New copy of the original model but with masked layers injected to enable FedPM.
     """
 
     def replace_with_masked(module: nn.Module) -> None:
@@ -78,7 +78,7 @@ def is_masked_module(module: nn.Module) -> bool:
         module (nn.Module): Module to be checked
 
     Returns:
-        bool: True if the module is a masked type and False otherwise.
+        (bool): True if the module is a masked type and False otherwise.
     """
     return isinstance(
         module,

@@ -14,7 +14,7 @@ def uniform_metric_aggregation(
             client.
 
     Returns:
-        tuple[defaultdict[str, int], Metrics]: Client counts per metric and the uniformly aggregated metrics.
+        (tuple[defaultdict[str, int], Metrics]): Client counts per metric and the uniformly aggregated metrics.
     """
     aggregated_metrics: Metrics = {}
     total_client_count_by_metric: defaultdict[str, int] = defaultdict(int)
@@ -49,7 +49,7 @@ def metric_aggregation(
             client.
 
     Returns:
-        tuple[int, Metrics]: The total number of examples along with aggregated metrics.
+        (tuple[int, Metrics]): The total number of examples along with aggregated metrics.
     """
     aggregated_metrics: Metrics = {}
     total_examples = 0
@@ -81,7 +81,7 @@ def normalize_metrics(total_examples: int, aggregated_metrics: Metrics) -> Metri
         aggregated_metrics (Metrics): Metrics that have been aggregated across clients.
 
     Returns:
-        Metrics: The metrics normalized by ``total_examples``.
+        (Metrics): The metrics normalized by ``total_examples``.
     """
     # Normalize all metric values by the total count of examples seen.
     normalized_metrics: Metrics = {}
@@ -102,7 +102,7 @@ def uniform_normalize_metrics(
         aggregated_metrics (Metrics): Metrics that have been aggregated across clients.
 
     Returns:
-        Metrics: The normalized metrics.
+        (Metrics): The normalized metrics.
     """
     # Normalize all metric values by the total count of clients that contributed to the metric.
     normalized_metrics: Metrics = {}
@@ -124,7 +124,7 @@ def fit_metrics_aggregation_fn(
             client.
 
     Returns:
-        Metrics: The aggregated normalized metrics.
+        (Metrics): The aggregated normalized metrics.
     """
     # This function is run by the server to aggregate metrics returned by each clients fit function
     # NOTE: The first value of the tuple is number of examples for FedAvg
@@ -144,7 +144,7 @@ def evaluate_metrics_aggregation_fn(
             client.
 
     Returns:
-        Metrics: The aggregated normalized metrics.
+        (Metrics): The aggregated normalized metrics.
     """
     # This function is run by the server to aggregate metrics returned by each clients evaluate function
     # NOTE: The first value of the tuple is number of examples for FedAvg
@@ -164,7 +164,7 @@ def uniform_evaluate_metrics_aggregation_fn(
             client.
 
     Returns:
-        Metrics: The aggregated normalized metrics.
+        (Metrics): The aggregated normalized metrics.
     """
     # This function is run by the server to aggregate metrics returned by each clients evaluate function
     # NOTE: The first value of the tuple is number of examples for FedAvg, but it is not used here.

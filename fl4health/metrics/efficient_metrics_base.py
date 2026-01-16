@@ -133,7 +133,8 @@ class ClassificationMetric(Metric, ABC):
             targets (torch.Tensor): Targets tensor.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Potentially transformed predictions and targets tensors, in that order.
+            (tuple[torch.Tensor, torch.Tensor]): Potentially transformed predictions and targets tensors, in that
+                order.
         """
         # On the off chance were given booleans convert them to integers
         preds = preds.to(torch.uint8) if preds.dtype == torch.bool else preds
@@ -170,8 +171,8 @@ class ClassificationMetric(Metric, ABC):
             targets (torch.Tensor): Targets tensor.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: True positive, false positive,
-            true negative, and false negative indications for each of the predictions in the provided tensors.
+            (tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]): True positive, false positive,
+                true negative, and false negative indications for each of the predictions in the provided tensors.
         """
         true_positives = (preds * targets) if not self.discard_tp else torch.tensor([])
         false_positives = (preds * (1 - targets)) if not self.discard_fp else torch.tensor([])
@@ -199,8 +200,8 @@ class ClassificationMetric(Metric, ABC):
             false_negatives (torch.Tensor): Tensor with entry of 1 indicating a false negative for a pred/target pair.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors reduced over the specified axes
-            in the order ``true_positives``, ``false_positives``, ``true_negatives``, ``false_negatives``.
+            (tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]): Tensors reduced over the specified axes
+                in the order ``true_positives``, ``false_positives``, ``true_negatives``, ``false_negatives``.
         """
         true_positives = true_positives.sum(sum_axes, dtype=self.dtype) if not self.discard_tp else true_positives
         false_positives = false_positives.sum(sum_axes, dtype=self.dtype) if not self.discard_fp else false_positives
@@ -219,8 +220,8 @@ class ClassificationMetric(Metric, ABC):
             count_tensor (torch.Tensor): The count tensor after reducing dimensions.
 
         Returns:
-            torch.Tensor: If ``count_tensor`` was 1D then it is returned unchanged. Otherwise this is the
-            ``count_tensor`` with shape (``batch_size``, ``num_labels``).
+            (torch.Tensor): If ``count_tensor`` was 1D then it is returned unchanged. Otherwise this is the
+                ``count_tensor`` with shape (``batch_size``, ``num_labels``).
         """
         if count_tensor.ndim != MAX_COUNT_TENSOR_DIMS:
             return count_tensor
@@ -292,7 +293,7 @@ class ClassificationMetric(Metric, ABC):
                 dictionary.
 
         Returns:
-            Metrics: A dictionary of string and ``Scalar`` representing the computed metric and its associated key.
+            (Metrics): A dictionary of string and ``Scalar`` representing the computed metric and its associated key.
         """
         metrics = self.compute_from_counts(
             true_positives=self.true_positives,
@@ -329,16 +330,16 @@ class ClassificationMetric(Metric, ABC):
             targets (torch.Tensor): Tensor containing prediction targets. Must be same shape as preds.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
-            specified dimensions for each of true positives, false positives, true negatives, and false negatives
-            respectively. The output shape of these tensors depends on if ``self.batch_dim`` and ``self.label_dim`` are
-            specified. The batch dimension, if it exists in the output, will always come first. For example, if the
-            batch and label dimensions have sizes 2 and 3 respectively:
+            (tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]): Tensors containing the counts along the
+                specified dimensions for each of true positives, false positives, true negatives, and false negatives
+                respectively. The output shape of these tensors depends on if ``self.batch_dim`` and ``self.label_dim``
+                are specified. The batch dimension, if it exists in the output, will always come first. For example,
+                if the batch and label dimensions have sizes 2 and 3 respectively:
 
-            - Both ``batch_dim`` and ``label_dim`` are specified: ``Size([2, 3])``
-            - Only ``batch_dim`` is specified: ``Size([2])``
-            - Only ``label_dim`` is specified: ``Size([3])``
-            - Neither specified: ``Size([])``
+                - Both ``batch_dim`` and ``label_dim`` are specified: ``Size([2, 3])``
+                - Only ``batch_dim`` is specified: ``Size([2])``
+                - Only ``label_dim`` is specified: ``Size([3])``
+                - Neither specified: ``Size([])``
         """
         # Transform predictions and targets to get them ready for computation
         preds, targets = self._transform_tensors(preds, targets)
@@ -410,7 +411,7 @@ class ClassificationMetric(Metric, ABC):
             NotImplementedError: Must be implemented by the inheriting class.
 
         Returns:
-            Metrics: Metrics computed from the provided outcome counts.
+            (Metrics): Metrics computed from the provided outcome counts.
         """
         raise NotImplementedError
 
@@ -475,19 +476,19 @@ class BinaryClassificationMetric(ClassificationMetric):
                 dimension specified. That is, counts are maintained for each training sample **INDIVIDUALLY**. For
                 example, if ``batch_dim = 1`` and ``label_dim = 0``, then
 
-                .. code-block:: python
+                ```python
+                p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])  # Size([1, 2, 4])
 
-                    p = torch.tensor([[[0, 0, 0, 1], [1, 1, 1, 1]]])  # Size([1, 2, 4])
+                t = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]])  # Size([1, 2, 4])
 
-                    t = torch.tensor([[[0, 0, 1, 0], [1, 1, 1, 1]]])  # Size([1, 2, 4])
+                self.tp = torch.Tensor([[0], [4]])  # Size([2, 1])
 
-                    self.tp = torch.Tensor([[0], [4]])  # Size([2, 1])
+                self.tn = torch.Tensor([[2], [0]])  # Size([2, 1])
 
-                    self.tn = torch.Tensor([[2], [0]])  # Size([2, 1])
+                self.fp = torch.Tensor([[1], [0]])  # Size([2, 1])
 
-                    self.fp = torch.Tensor([[1], [0]])  # Size([2, 1])
-
-                    self.fn = torch.Tensor([[1], [0]])  # Size([2, 1])
+                self.fn = torch.Tensor([[1], [0]])  # Size([2, 1])
+                ```
 
                 **NOTE**: The resulting counts will always be presented batch dimension first, then label dimension,
                 regardless of input shape. Defaults to None.
@@ -547,9 +548,9 @@ class BinaryClassificationMetric(ClassificationMetric):
             ValueError: Raises errors if the tensor does not have the right shape for the expected setting
 
         Returns:
-            torch.Tensor: Count tensor of the appropriate shape and structure. If ``self.batch_dim`` is not None
-            then the postprocessed ``count_tensor`` will have shape ``(batch size, 1)``, Otherwise, it will have shape
-            ``(1,)``. In both settings, the count is relative to the label at index 1 (implied or explicit).
+            (torch.Tensor): Count tensor of the appropriate shape and structure. If ``self.batch_dim`` is not None
+                then the postprocessed ``count_tensor`` will have shape ``(batch size, 1)``, Otherwise, it will have
+                shape ``(1,)``. In both settings, the count is relative to the label at index 1 (implied or explicit).
         """
         # If tensor is empty, we do nothing
         if count_tensor.numel() == 0:
@@ -637,11 +638,11 @@ class BinaryClassificationMetric(ClassificationMetric):
              targets (torch.Tensor): Tensor containing prediction targets. Must be same shape as preds.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]: Tensors containing the counts along the
-            specified dimensions for each of true positives, false positives, true negatives, and false negatives,
-            respectively. If ``self.batch_dim`` is not None then these tensors will have shape
-            ``(batch_size, 1)``, Otherwise, it will have shape ``(1,)``. The counts will be relative to the
-            index of ``self.pos_label``.
+            (tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]): Tensors containing the counts along the
+                specified dimensions for each of true positives, false positives, true negatives, and false negatives,
+                respectively. If ``self.batch_dim`` is not None then these tensors will have shape
+                ``(batch_size, 1)``, Otherwise, it will have shape ``(1,)``. The counts will be relative to the
+                index of ``self.pos_label``.
         """
         true_positives, false_positives, true_negatives, false_negatives = super().count_tp_fp_tn_fn(preds, targets)
 
@@ -687,7 +688,7 @@ class BinaryClassificationMetric(ClassificationMetric):
             NotImplementedError: Must be implemented by the inheriting class.
 
         Returns:
-            Metrics: Metrics computed from the provided outcome counts.
+            (Metrics): Metrics computed from the provided outcome counts.
         """
         raise NotImplementedError
 
@@ -741,19 +742,21 @@ class MultiClassificationMetric(ClassificationMetric):
                 **NOTE**: If ``batch_dim`` is specified, then counts will be presented batch dimension
                 first, then label dimension. For example, if ``batch_dim = 1`` and ``label_dim = 0``, then
 
-                .. code-block:: python
+                ```python
 
-                    p = torch.tensor([[[1.0, 1.0, 1.0, 0.0]], [[0.0, 0.0, 0.0, 1.0]]])  # Size([2, 1, 4])
+                p = torch.tensor([[[1.0, 1.0, 1.0, 0.0]], [[0.0, 0.0, 0.0, 1.0]]])  # Size([2, 1, 4])
 
-                    t = torch.tensor([[[1.0, 1.0, 0.0, 0.0]], [[0.0, 0.0, 1.0, 1.0]]])  # Size([2, 1, 4])
+                t = torch.tensor([[[1.0, 1.0, 0.0, 0.0]], [[0.0, 0.0, 1.0, 1.0]]])  # Size([2, 1, 4])
 
-                    self.tp = torch.Tensor([[2, 1]]]) # Size([1, 2])
+                self.tp = torch.Tensor([[2, 1]]]) # Size([1, 2])
 
-                    self.tn = torch.Tensor([[1, 2]])  # Size([1, 2])
+                self.tn = torch.Tensor([[1, 2]])  # Size([1, 2])
 
-                    self.fp = torch.Tensor([[1, 0]])  # Size([1, 2])
+                self.fp = torch.Tensor([[1, 0]])  # Size([1, 2])
 
-                    self.fn = torch.Tensor([[0, 1]])  # Size([1, 2])
+                self.fn = torch.Tensor([[0, 1]])  # Size([1, 2])
+
+                ```
 
                 **NOTE**: The resulting counts will always be presented batch dimension first, then label dimension,
                 regardless of input shape. Defaults to None.
@@ -806,7 +809,8 @@ class MultiClassificationMetric(ClassificationMetric):
             targets (torch.Tensor): targets tensor.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: predictions and targets tensor with the appropriate background removed.
+            (tuple[torch.Tensor, torch.Tensor]): predictions and targets tensor with the appropriate background
+                removed.
         """
         assert preds.shape == targets.shape, (
             f"Preds ({preds.shape}) and targets ({targets.shape}) should have the same shape but do not."
@@ -834,7 +838,8 @@ class MultiClassificationMetric(ClassificationMetric):
             targets (torch.Tensor): Targets tensor.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Potentially transformed predictions and targets tensors, in that order.
+            (tuple[torch.Tensor, torch.Tensor]): Potentially transformed predictions and targets tensors, in that
+                order.
         """
         preds, targets = super()._transform_tensors(preds, targets)
 
@@ -910,6 +915,6 @@ class MultiClassificationMetric(ClassificationMetric):
             NotImplementedError: Must be implemented by the inheriting class.
 
         Returns:
-            Metrics: Metrics computed from the provided outcome counts.
+            (Metrics): Metrics computed from the provided outcome counts.
         """
         raise NotImplementedError

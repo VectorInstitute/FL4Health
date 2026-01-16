@@ -31,7 +31,7 @@ class ModelLatentF(torch.nn.Module):
             input (torch.Tensor): The input tensor to the deep network.
 
         Returns:
-            torch.Tensor: The output tensor of the deep network.
+            (torch.Tensor): The output tensor of the deep network.
         """
         return self.latent(input)
 
@@ -108,7 +108,7 @@ class DeepMmdLoss(torch.nn.Module):
             y (torch.Tensor): The input tensor y.
 
         Returns:
-            torch.Tensor: The paired distance between X and Y.
+            (torch.Tensor): The paired distance between X and Y.
         """
         x_norm = (x**2).sum(1).view(-1, 1)
         y_norm = (y**2).sum(1).view(1, -1)
@@ -133,7 +133,8 @@ class DeepMmdLoss(torch.nn.Module):
             is_var_computed (bool): Whether to compute the variance of the MMD.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor | None]: The value of MMD and the variance of MMD if required to compute.
+            (tuple[torch.Tensor, torch.Tensor | None]): The value of MMD and the variance of MMD if required to
+                compute.
         """
         nx = k_x.shape[0]
         ny = k_y.shape[0]
@@ -186,7 +187,8 @@ class DeepMmdLoss(torch.nn.Module):
             is_var_computed (bool, optional): Whether to compute the variance of the MMD. Defaults to True.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor | None]: The value of MMD and the variance of MMD if required to compute.
+            (tuple[torch.Tensor, torch.Tensor | None]): The value of MMD and the variance of MMD if required to
+                compute.
         """
         x = features[0:len_s, :]  # fetch the sample 1 (features of deep networks)
         y = features[len_s:, :]  # fetch the sample 2 (features of deep networks)
@@ -280,7 +282,7 @@ class DeepMmdLoss(torch.nn.Module):
             y (torch.Tensor): The input tensor y.
 
         Returns:
-            torch.Tensor: The value of Deep MMD Loss.
+            (torch.Tensor): The value of Deep MMD Loss.
         """
         self.featurizer.eval()
         self.sigma_q_opt.requires_grad = False
@@ -318,7 +320,7 @@ class DeepMmdLoss(torch.nn.Module):
             x_t (torch.Tensor): The target input tensor.
 
         Returns:
-            torch.Tensor: The value of Deep MMD Loss.
+            (torch.Tensor): The value of Deep MMD Loss.
         """
         if self.training:
             for _ in range(self.optimization_steps):

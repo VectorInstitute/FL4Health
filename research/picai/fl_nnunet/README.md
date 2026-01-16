@@ -15,7 +15,7 @@ starting_checkpoint: /home/shawn/Code/nnunet_storage/nnUNet_results/Dataset012_P
 
 The required keys in the config are `n_server_rounds`, `nnunet_config`, `n_clients` and `local_steps` or `local_epochs`. `server_address` is optional and defaults to `localhost:8080`. If `nnunet_plans` is not specified, a client is selected at random to initialize it.
 
-After creating a config file start a server using the following command. Ensure your virtual environment has been properly set up using poetry and that you have included the 'picai' group in ```poetry install```
+After creating a config file start a server using the following command. Ensure your virtual environment has been properly set up using uv and that you have included the 'picai' extra in ```uv sync --extra picai```
 
 ```bash
 python -m research.picai.fl_nnunet.start_server --config-path path/to/config.yaml
@@ -37,7 +37,7 @@ sbatch research/picai/fl_nnunet/run_fl_single_node.slrm path_to_config.yaml path
 ```
 __An example__
 ```bash
-sbatch research/picai/fl_nnunet/run_fl_single_node.slrm research/picai/fl_nnunet/config.yaml /h/jewtay/fl4health_env/ 2 0 005
+sbatch research/picai/fl_nnunet/run_fl_single_node.slrm research/picai/fl_nnunet/config.yaml /path/to/fl4health/.venv/ 2 0 005
 ```
 
-__Note__: The path `/h/jewtay/fl4health_env/` is a full path to the python venv we want to activate for the server and client python executions on each node. Artifacts from the experiment will be stored at /experiment/${USER}/$SLURM_JOB_ID.
+__Note__: The path `/path/to/fl4health/.venv/` is a full path to the python venv we want to activate for the server and client python executions on each node (typically the `.venv/` directory within your FL4Health repository). Artifacts from the experiment will be stored at /experiment/${USER}/$SLURM_JOB_ID.

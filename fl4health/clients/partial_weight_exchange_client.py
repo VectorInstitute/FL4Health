@@ -97,8 +97,8 @@ class PartialWeightExchangeClient(BasicClient):
             config (Config): Configuration used to setup the weight exchanger properties for dynamic exchange
 
         Returns:
-            ParameterExchanger: This exchanger handles the exchange orchestration between clients and server during
-            federated training
+            (ParameterExchanger): This exchanger handles the exchange orchestration between clients and server during
+                federated training
         """
         raise NotImplementedError
 
@@ -113,7 +113,7 @@ class PartialWeightExchangeClient(BasicClient):
             config (Config): configuration used to setup the exchange
 
         Returns:
-            NDArrays: The list of weights to be sent to the server from the client
+            (NDArrays): The list of weights to be sent to the server from the client
         """
         if not self.initialized:
             return self.setup_client_and_return_all_model_parameters(config)

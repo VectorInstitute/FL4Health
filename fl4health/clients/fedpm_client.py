@@ -90,6 +90,6 @@ class FedPmClient(BasicClient):
             config (Config): Configuration specifying all of the required parameters for training.
 
         Returns:
-            ParameterExchanger: returns a ``FedPmExchanger`` to facilitate exchange properly
+            (ParameterExchanger): returns a ``FedPmExchanger`` to facilitate exchange properly
         """
         return FedPmExchanger()

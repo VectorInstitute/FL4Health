@@ -15,7 +15,7 @@ def formatting_prompts_func(input: dict[str, list[str]]) -> list[str]:
         input (dict[str, list[str]]): A dictionary containing the instruction and response.
 
     Returns:
-        list[str]: A list of formatted prompts.
+        (list[str]): A list of formatted prompts.
     """
     output_texts = []
 
@@ -40,7 +40,7 @@ def get_alpaca_tokenizer_and_data_collator(
         model_name (str): Model name that is supported by the Hugging Face Transformers library.
 
     Returns:
-        tuple[PreTrainedTokenizer, DataCollatorForCompletionOnlyLM]: The tokenizer and data collator.
+        (tuple[PreTrainedTokenizer, DataCollatorForCompletionOnlyLM]): The tokenizer and data collator.
     """
     # From: https://huggingface.co/docs/trl/en/sft_trainer
     tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True, padding_side="right")
@@ -65,7 +65,7 @@ def load_data(partition_id: int, num_partitions: int, dataset_name: str) -> Data
         dataset_name (str): The dataset name.
 
     Returns:
-        Dataset: The partitioned data
+        (Dataset): The partitioned data
 
     """
     partitioner = IidPartitioner(num_partitions=num_partitions)

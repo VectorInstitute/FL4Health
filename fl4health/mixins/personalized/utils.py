@@ -23,7 +23,7 @@ def ensure_protocol_compliance(func: Callable, instance: Any | None, args: Any, 
         TypeError: We raise this error if the instance is not a ``FlexibleClient``.
 
     Returns:
-        Any: Application of the function to the args and kwargs.
+        (Any): Application of the function to the args and kwargs.
     """
     # validate self is a FlexibleClient
     if not isinstance(instance, FlexibleClient):

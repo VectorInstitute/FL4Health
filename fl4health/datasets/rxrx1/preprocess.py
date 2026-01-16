@@ -34,7 +34,7 @@ def load_image(row: dict[Hashable, Any], root: Path) -> torch.Tensor:
         root (Path): Root directory containing the image files.
 
     Returns:
-        torch.Tensor: The loaded image tensor.
+        (torch.Tensor): The loaded image tensor.
     """
     experiment = row["experiment"]
     plate = row["plate"]

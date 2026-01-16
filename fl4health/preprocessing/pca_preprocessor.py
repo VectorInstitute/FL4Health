@@ -42,7 +42,7 @@ class PcaPreprocessor:
             dataset (BaseDataset): Dataset containing data whose dimension is to be reduced.
 
         Returns:
-            BaseDataset: Dataset consisting of data with reduced dimension.
+            (BaseDataset): Dataset consisting of data with reduced dimension.
         """
         projection = partial(self.pca_module.project_lower_dim, k=new_dimension)
         dataset.update_transform(projection)

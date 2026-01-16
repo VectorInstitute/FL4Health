@@ -7,19 +7,21 @@ The scripts in this folder use the client and server scripts from the [FedProx E
 ```
 __An example__
 ```bash
-./research/fedprox_cluster/run_fl_cluster.sh 8111 examples/fedprox_example/config.yaml research/fedprox_cluster/server_logs/ research/fedprox_cluster/client_logs/ /h/demerson/vector_repositories/fl4health_env/
+./research/fedprox_cluster/run_fl_cluster.sh 8111 examples/fedprox_example/config.yaml research/fedprox_cluster/server_logs/ research/fedprox_cluster/client_logs/ /path/to/fl4health/.venv/
 ```
 
-__Note__: The `server_logs/` and `client_logs/` folders must already exist and this is where the python logs will be placed, capturing outputs of the training/evaluation on the servers and clients, respectively. The path `/h/demerson/vector_repositories/fl4health_env/` is a full path to the python venv we want to activate for the server and client python executions on each node.
+__Note__: The `server_logs/` and `client_logs/` folders must already exist and this is where the python logs will be placed, capturing outputs of the training/evaluation on the servers and clients, respectively. The path `/path/to/fl4health/.venv/` is a full path to the python venv we want to activate for the server and client python executions on each node (typically this will be the `.venv/` directory within your FL4Health repository).
 
 ### Establishing a Python VENV on Vector's Cluster
 
-In the directory of your choice run
+Navigate to the FL4Health repository directory and run
 
 ```bash
 module load python/3.10.12
-python3.10 -m venv <name_of_env>
-source <name_of_env>/bin/activate
-pip install --upgrade pip poetry
-poetry install --with "dev, test, codestyle"
+cd path/to/fl4health
+pip install uv
+uv sync --extra dev --extra test --extra codestyle
+source .venv/bin/activate
 ```
+
+This will create a virtual environment in `.venv/` within the repository directory.

@@ -27,7 +27,7 @@ def _to_string(series: pd.Series) -> tuple[pd.Series, dict[str, Any]]:
         series (pd.Series): Feature data.
 
     Returns:
-        tuple[pd.Series, dict[str, Any]]: Tuple (pandas.Series, dict) with the updated feature data
+        (tuple[pd.Series, dict[str, Any]]): Tuple (pandas.Series, dict) with the updated feature data
         and metadata respectively.
     """
     convertible_to_type(series, FeatureType.STRING, unique=None, raise_error=True)
@@ -50,7 +50,7 @@ def _convertible_to_categorical_indicators(
         raise_error_over_max (bool, optional): Whether to raise an error if categories exceeds max. Defaults to False.
 
     Returns:
-        bool:  Whether the feature can be converted.
+        (bool):  Whether the feature can be converted.
     """
     return _convertible_to_categorical(
         series,
@@ -78,7 +78,7 @@ def _to_categorical_indicators(
         ValueError: Error if here are column duplicates.
 
     Returns:
-        tuple[pd.DataFrame, dict[str, Any]]: Tuple (pandas.DataFrame, dict) with the updated features data
+        (tuple[pd.DataFrame, dict[str, Any]]): Tuple (pandas.DataFrame, dict) with the updated features data
         and metadata respectively.
     """
     series = data[col]
@@ -121,7 +121,7 @@ def _convertible_to_ordinal(
             Defaults to False.
 
     Returns:
-        bool: Whether the feature can be converted.
+        (bool): Whether the feature can be converted.
     """
     return _convertible_to_categorical(
         series,
@@ -141,7 +141,7 @@ def _to_ordinal(series: pd.Series, unique: np.ndarray | None = None) -> tuple[pd
         unique (np.ndarray | None, optional): Unique values which can be optionally specified. Defaults to None.
 
     Returns:
-        tuple[pd.Series, dict[str, Any]]: Tuple (pandas.Series, dict) with the updated feature data
+        (tuple[pd.Series, dict[str, Any]]): Tuple (pandas.Series, dict) with the updated feature data
         and metadata respectively.
     """
     series, meta = _numeric_categorical_mapping(series, unique=unique)
@@ -160,7 +160,7 @@ def _numeric_categorical_mapping(
         unique (np.ndarray | None, optional): Unique values which can be optionally specified. Defaults to None.
 
     Returns:
-        tuple[pd.Series, dict[str, Any]]: Tuple (pandas.Series, dict) with the updated feature data and metadata
+        (tuple[pd.Series, dict[str, Any]]): Tuple (pandas.Series, dict) with the updated feature data and metadata
         respectively.
     """
     unique = get_unique(series, unique=unique)
@@ -190,7 +190,7 @@ def _convertible_to_binary(series: pd.Series, unique: np.ndarray | None = None) 
         unique (np.ndarray | None, optional): Unique values which can be optionally specified. Defaults to None.
 
     Returns:
-        bool: Whether the feature can be converted.
+        (bool): Whether the feature can be converted.
     """
     if is_bool_dtype(series):
         return True
@@ -212,7 +212,7 @@ def _to_binary(series: pd.Series, unique: np.ndarray | None = None) -> tuple[pd.
         unique (np.ndarray | None, optional): Unique values which can be optionally specified. Defaults to None.
 
     Returns:
-        tuple[pd.Series, dict[str, Any]]: Tuple (pandas.Series, dict) with the updated feature data and metadata
+        (tuple[pd.Series, dict[str, Any]]): Tuple (pandas.Series, dict) with the updated feature data and metadata
         respectively.
     """
     if is_bool_dtype(series):
@@ -236,7 +236,7 @@ def _convertible_to_numeric(series: pd.Series, raise_error: bool = False) -> boo
         raise_error (bool, optional): Whether to raise an error if the type cannot be converted. Defaults to False.
 
     Returns:
-        bool: Whether the feature can be converted.
+        (bool): Whether the feature can be converted.
     """
     if raise_error:
         pd.to_numeric(series)
@@ -260,7 +260,7 @@ def _to_numeric(series: pd.Series, unique: np.ndarray | None = None) -> tuple[pd
         unique (np.ndarray | None, optional): Unique values which can be optionally specified. Defaults to None.
 
     Returns:
-        tuple[pd.Series, dict[str, Any]]: Tuple (pandas.Series, dict) with the updated feature data and metadata
+        (tuple[pd.Series, dict[str, Any]]): Tuple (pandas.Series, dict) with the updated feature data and metadata
         respectively.
     """
     convertible_to_type(series, FeatureType.NUMERIC, unique=unique, raise_error=True)
@@ -294,7 +294,7 @@ def _convertible_to_categorical(
         ValueError: Raise an error if there are less categories than min and ``raise_error_under_min`` is True
 
     Returns:
-        bool: Whether the feature can be converted.
+        (bool): Whether the feature can be converted.
     """
     # If numeric, only allow conversion if an integer type
     if is_numeric_dtype(series) and not is_integer_dtype(series):
@@ -343,7 +343,7 @@ def convertible_to_type(
         ValueError: Cannot convert series to the provided type and ``raise_error`` is true.
 
     Returns:
-        bool: Whether the feature can be converted.
+        (bool): Whether the feature can be converted.
     """
     if type == FeatureType.NUMERIC:
         convertible = _convertible_to_numeric(series)
@@ -382,7 +382,7 @@ def get_unique(values: np.ndarray | pd.Series, unique: np.ndarray | None = None)
         unique (np.ndarray | None, optional): Unique values which can be optionally specified. Defaults to None.
 
     Returns:
-        np.ndarray: The unique values.
+        (np.ndarray): The unique values.
     """
     if unique is None:
         return np.array(values.unique())  # type: ignore
@@ -402,7 +402,7 @@ def valid_feature_type(type: FeatureType, raise_error: bool = True) -> bool:
         ValueError: Raise when the type is invalid and ``raise_error`` is True
 
     Returns:
-        bool: Whether the type is valid.
+        (bool): Whether the type is valid.
     """
     if type in FEATURE_TYPES:
         return True
@@ -425,7 +425,7 @@ def _type_to_dtype(type: FeatureType) -> str | None:
         ValueError: Supported type has no corresponding datatype.
 
     Returns:
-        str | None: The feature's Pandas datatype, or None if no data type conversion is desired.
+        (str | None): The feature's Pandas datatype, or None if no data type conversion is desired.
     """
     if type == FeatureType.STRING:
         # If string, leave as is - the user can choose the specific length/type.
@@ -454,7 +454,7 @@ def to_dtype(series: pd.Series, type: FeatureType) -> pd.Series:
         type (FeatureType): Feature type name.
 
     Returns:
-        pd.Series: The feature with the corresponding datatype.
+        (pd.Series): The feature with the corresponding datatype.
     """
     dtype = _type_to_dtype(type)
 
@@ -479,7 +479,7 @@ def _infer_type(series: pd.Series, unique: np.ndarray | None = None) -> FeatureT
         ValueError: Could not infer type of series
 
     Returns:
-        str: Feature type name.
+        (str): Feature type name.
     """
     unique = get_unique(series, unique=unique)
 
@@ -515,9 +515,9 @@ def _to_type(
         ValueError: Cannot convert to the new type.
 
     Returns:
-        tuple[pd.Series | pd.DataFrame, dict[str, Any]]: Tuple (pandas.Series or pandas.DataFrame, dict) with the
-        updated features data and metadata respectively. If converting to categorical indicators, a DataFrame is
-        returned, otherwise a Series is returned.
+        (tuple[pd.Series | pd.DataFrame, dict[str, Any]]): Tuple (pandas.Series or pandas.DataFrame, dict) with the
+            updated features data and metadata respectively. If converting to categorical indicators, a DataFrame is
+            returned, otherwise a Series is returned.
     """
     if data is None:
         raise ValueError(
@@ -558,7 +558,7 @@ def infer_types(data: pd.DataFrame, features: list[str]) -> dict[str, FeatureTyp
         features (list[str]): Features to consider.
 
     Returns:
-        dict[str, str]: A tuple (pandas.DataFrame, dict) with the updated features data and metadata respectively.
+        (dict[str, str]): Feature name to feature type dictionary.
     """
     new_types = {}
     for col in features:
@@ -576,8 +576,8 @@ def to_types(data: pd.DataFrame, new_types: dict[str, FeatureType]) -> tuple[pd.
         new_types (dict[str, str]): Map from the feature column name to its new type.
 
     Returns:
-        tuple[pd.DataFrame, dict[str, Any]]: Tuple (pandas.DataFrame, dict) with the updated features data and
-        metadata respectively.
+        (tuple[pd.DataFrame, dict[str, Any]]): Tuple of pandas.DataFrame and dict with the updated features data and
+            metadata respectively.
     """
     meta = {}
     for col, new_type in new_types.items():

@@ -36,7 +36,7 @@ class Gce(nn.Module):
             label (torch.Tensor): The true label for the input data, which is used to compute the loss.
 
         Returns:
-            torch.Tensor: Log softmax loss.
+            (torch.Tensor): Log softmax loss.
         """
         # Invoke the forward of the embedding layer to make sure the computation graph is connected
         # and embedding parameters are updated during the backward pass.
@@ -66,7 +66,7 @@ class Gce(nn.Module):
                 of the classes to look up.
 
         Returns:
-            torch.Tensor: The class embeddings corresponding to the provided targets.
+            (torch.Tensor): The class embeddings corresponding to the provided targets.
         """
         if self.training:
             log(
@@ -92,13 +92,14 @@ class CoV(nn.Module):
         """
         Taken from the official implementation at : https://github.com/TsingZ0/GPFL/blob/main/system/flcore/servers/servergp.py
         CoV (Conditional Value) module as described in the GPFL paper. This module consists of two parts.
-        1) First, uses the provided context tensor to compute two vectors, $\\gamma$ and $\beta$ using
+        1) First, uses the provided context tensor to compute two vectors, \\(\\gamma\\) and \\(\\beta\\) using
         ``conditional_gamma`` and ``conditional_beta`` sub-modules, respectively.
-        In the paper: $[\\mathbf{\\gamma_i}, \\mathbf{\beta_i} = \text{CoV}(\\mathbf{f}_i, \\cdot, V)]$
+        In the paper: \\([\\mathbf{\\gamma_i}, \\mathbf{\\beta_i} = \\text{CoV}(\\mathbf{f}_i, \\cdot, V)]\\)
         2) Then, applies an affine transformation followed by a ReLU activation to the feature tensors based on
-        the computed $\\gamma$ and $\beta$ vectors.
-        Affine transformation in the paper: $[(\\mathbf{\\gamma} + \\mathbf{1})\\odot \\mathbf{f}_i + \\mathbf{\beta}]$
-        Parameters of the sub-modules (``conditional_gamma`` and ``conditional_beta``$`` modules) are the main
+        the computed \\(\\gamma\\) and \\(\\beta\\) vectors.
+        Affine transformation in the paper:
+        \\([(\\mathbf{\\gamma} + \\mathbf{1})\\odot \\mathbf{f}_i + \\mathbf{\\beta}]\\)
+        Parameters of the sub-modules (``conditional_gamma`` and ``conditional_beta`` modules) are the main
         components of this module, and are optimized during the training process.
 
         Args:
@@ -127,7 +128,7 @@ class CoV(nn.Module):
             context (torch.Tensor): The conditional tensor that could be global or personalized.
 
         Returns:
-            torch.Tensor: The transformed feature tensor after applying the conditional affine transformation.
+            (torch.Tensor): The transformed feature tensor after applying the conditional affine transformation.
         """
         # Call submodules to compute gamma and beta vectors.
         gamma = self.conditional_gamma(context)
@@ -161,8 +162,7 @@ class GpflBaseAndHeadModules(SequentiallySplitExchangeBaseModel):
             input (torch.Tensor): Input to the model forward pass.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Return the prediction dictionary and a features
-            dictionaries.
+            (tuple[torch.Tensor, torch.Tensor]): Return the prediction dictionary and a features dictionaries.
         """
         # Throw an error because this function should not directly be called with this class.
         raise NotImplementedError("Forward pass should not be used for the GpflBaseAndHeadModules class. ")
@@ -235,7 +235,7 @@ class GpflModel(PartialLayerExchangeModel):
                 to generate the local features.
 
         Returns:
-            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple in which the first element
+            (tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]): A tuple in which the first element
                 contains a dictionary of predictions and the second element contains intermediate features
                 indexed by name.
         """
@@ -265,8 +265,8 @@ class GpflModel(PartialLayerExchangeModel):
         Returns a list of layer names that should be exchanged between the server and clients.
 
         Returns:
-            list[str]: A list of layer names that should be exchanged. This is used by the
-            ``FixedLayerExchanger`` class to determine which layers to exchange during the FL process.
+            (list[str]): A list of layer names that should be exchanged. This is used by the
+                ``FixedLayerExchanger`` class to determine which layers to exchange during the FL process.
         """
         base_layers = self.gpfl_main_module.layers_to_exchange()
         # gpfl_main_module's layers_to_exchange returns base module layers starting with "base_module."

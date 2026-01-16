@@ -152,9 +152,9 @@ class FlServer(Server):
             timeout (float | None): The timeout for clients to return results in a given FL round.
 
         Returns:
-            tuple[History, float]: The first element of the tuple is a ``History`` object containing the losses and
-            metrics computed during training and validation. The second element of the tuple is the elapsed time in
-            seconds.
+            (tuple[History, float]): The first element of the tuple is a ``History`` object containing the losses and
+                metrics computed during training and validation. The second element of the tuple is the elapsed time in
+                seconds.
         """
         log(INFO, "Initializing server state and global parameters")
         self.parameters = self._get_initial_parameters(server_round=0, timeout=timeout)
@@ -241,9 +241,9 @@ class FlServer(Server):
                 clients selected to participate in federated training.
 
         Returns:
-            tuple[History, float]: The first element of the tuple is a ``History`` object containing the full set of
-            FL training results, including things like aggregated loss and metrics. Tuple also contains the elapsed
-            time in seconds for the round.
+            (tuple[History, float]): The first element of the tuple is a ``History`` object containing the full set of
+                FL training results, including things like aggregated loss and metrics. Tuple also contains the elapsed
+                time in seconds for the round.
         """
         start_time = datetime.datetime.now()
         self.reports_manager.report(
@@ -291,10 +291,10 @@ class FlServer(Server):
                 Defaults to None, which indicates indefinite timeout.
 
         Returns:
-            tuple[Parameters | None, dict[str, Scalar], FitResultsAndFailures] | None: The results of training
-            on the client sit. The first set of parameters are the **AGGREGATED** parameters from the strategy. The
-            second is a dictionary of **AGGREGATED** metrics. The third component holds the individual (non-aggregated)
-            parameters, loss, and metrics for successful and unsuccessful client-side training.
+            (tuple[Parameters | None, dict[str, Scalar], FitResultsAndFailures] | None): The results of training
+                on the client sit. The first set of parameters are the **AGGREGATED** parameters from the strategy. The
+                second is a dictionary of **AGGREGATED** metrics. The third component holds the individual
+                (non-aggregated) parameters, loss, and metrics for successful and unsuccessful client-side training.
         """
         round_start = datetime.datetime.now()
         fit_round_results = super().fit_round(server_round, timeout)
@@ -334,7 +334,7 @@ class FlServer(Server):
                 then the server waits indefinitely.
 
         Returns:
-            list[int]: The number of training samples held by each client in the pool of available clients.
+            (list[int]): The number of training samples held by each client in the pool of available clients.
         """
         # Poll clients for sample counts, if you want to use this functionality your strategy needs to inherit from
         # the StrategyWithPolling ABC and implement a configure_poll function
@@ -374,8 +374,8 @@ class FlServer(Server):
                 Defaults to None, which indicates indefinite timeout.
 
         Returns:
-            tuple[float | None, dict[str, Scalar], EvaluateResultsAndFailures] | None: Tuple of loss value, metrics
-            dictionary and individual client results (client ids and failures).
+            (tuple[float | None, dict[str, Scalar], EvaluateResultsAndFailures] | None): Tuple of loss value, metrics
+                dictionary and individual client results (client ids and failures).
         """
         start_time = datetime.datetime.now()
         eval_round_results = self._evaluate_round(server_round, timeout)

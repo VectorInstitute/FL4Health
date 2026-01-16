@@ -41,7 +41,7 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
     ) -> None:
         """
         A generalization of the fedavg strategy for approaches that use a penalty constraint that we might want to
-        adapt based on the loss trajectory. A quintessential example is FedProx, which uses an :math:`\\ell^2`: penalty
+        adapt based on the loss trajectory. A quintessential example is FedProx, which uses an \\(\\ell^2\\): penalty
         on model weight drift and potentially adapts the coefficient based on the aggregated loss. In addition to the
         model weights, the server also receives the training loss from the clients. If adaptation is enabled, these
         losses are used to update the loss weight parameter according to the FedProx paper recommendations.
@@ -154,9 +154,9 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
                 from clients that experienced an issue during training, such as timeouts or exceptions.
 
         Returns:
-            tuple[Parameters | None, dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
-            For adaptive constraints, the server also packs a constraint weight to be sent to the clients. This is
-            sent even if adaptive constraint weights are turned off and the value simply remains constant.
+            (tuple[Parameters | None, dict[str, Scalar]]): The aggregated model weights and the metrics dictionary.
+                For adaptive constraints, the server also packs a constraint weight to be sent to the clients. This is
+                sent even if adaptive constraint weights are turned off and the value simply remains constant.
         """
         if not results:
             return None, {}

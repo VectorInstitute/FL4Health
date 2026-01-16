@@ -49,7 +49,7 @@ class FedPCAClient(NumPyClient):
             length (int, optional): Length of the generated hash. Defaults to 8.
 
         Returns:
-            str: Generated hash of length ``length``
+            (str): Generated hash of length ``length``
         """
         return "".join(random.choice(string.ascii_lowercase) for _ in range(length))
 
@@ -62,8 +62,8 @@ class FedPCAClient(NumPyClient):
             config (Config): Configurations to allow for customization of this functions behavior
 
         Returns:
-            NDArrays: Parameters representing the principal components computed by the client that need to be
-            aggregated in some way.
+            (NDArrays): Parameters representing the principal components computed by the client that need to be
+                aggregated in some way.
         """
         if not self.initialized:
             log(INFO, "Setting up client and providing full model parameters to the server for initialization")
@@ -110,7 +110,7 @@ class FedPCAClient(NumPyClient):
             config (Config): Configurations sent by the server to allow for customization of this functions behavior.
 
         Returns:
-            tuple[DataLoader, DataLoader]: Tuple of length 2. The client train and validation loader.
+            (tuple[DataLoader, DataLoader]): Tuple of length 2. The client train and validation loader.
 
         Raises:
             NotImplementedError: To be defined in child class.
@@ -125,7 +125,7 @@ class FedPCAClient(NumPyClient):
             config (Config): Configurations sent by the server to allow for customization of this functions behavior.
 
         Returns:
-            PcaModule: Module that determines how local FedPCA optimization will be performed.
+            (PcaModule): Module that determines how local FedPCA optimization will be performed.
         """
         low_rank = narrow_dict_type(config, "low_rank", bool)
         full_svd = narrow_dict_type(config, "full_svd", bool)
@@ -165,7 +165,7 @@ class FedPCAClient(NumPyClient):
             NotImplementedError: Should be defined by the child class
 
         Returns:
-            Tensor: Single torch tensor representing all of the data stacked together.
+            (Tensor): Single torch tensor representing all of the data stacked together.
         """
         raise NotImplementedError
 
@@ -179,8 +179,9 @@ class FedPCAClient(NumPyClient):
             config (Config): Configurations sent by the server to allow for customization of this functions behavior.
 
         Returns:
-            tuple[NDArrays, int, dict[str, Scalar]]: The local principal components following the local training along
-            with the number of samples in the local training dataset and the computed metrics throughout the fit.
+            (tuple[NDArrays, int, dict[str, Scalar]]): The local principal components following the local training
+                along with the number of samples in the local training dataset and the computed metrics throughout the
+                fit.
         """
         if not self.initialized:
             self.setup_client(config)
@@ -206,8 +207,8 @@ class FedPCAClient(NumPyClient):
             config (Config): Configurations sent by the server to allow for customization of this functions behavior.
 
         Returns:
-            tuple[float, int, dict[str, Scalar]]: A loss associated with the evaluation, the number of samples in the
-            validation/test set and the ``metric_values`` associated with evaluation.
+            (tuple[float, int, dict[str, Scalar]]): A loss associated with the evaluation, the number of samples in the
+                validation/test set and the ``metric_values`` associated with evaluation.
         """
         if not self.initialized:
             self.setup_client(config)

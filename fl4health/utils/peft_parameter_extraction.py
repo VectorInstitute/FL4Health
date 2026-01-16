@@ -13,7 +13,7 @@ def get_all_peft_parameters_from_model(model: nn.Module) -> Parameters:
         model (nn.Module): PyTorch model whose parameters are to be extracted.
 
     Returns:
-        Parameters: Flower Parameters object containing all of the target models state.
+        (Parameters): Flower Parameters object containing all of the target models state.
     """
     state_dict = get_peft_model_state_dict(model)
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in state_dict.items()])

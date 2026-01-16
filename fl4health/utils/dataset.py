@@ -54,7 +54,7 @@ class BaseDataset(ABC, Dataset):
             NotImplementedError: Throws if one attempts to use this function.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Input and target tensors extracted at the provided index.
+            (tuple[torch.Tensor, torch.Tensor]): Input and target tensors extracted at the provided index.
         """
         raise NotImplementedError
 
@@ -67,7 +67,7 @@ class BaseDataset(ABC, Dataset):
             NotImplementedError: Throws if one attempts to use this function.
 
         Returns:
-            int: Length of the underlying data.
+            (int): Length of the underlying data.
         """
         raise NotImplementedError
 
@@ -113,8 +113,8 @@ class TensorDataset(BaseDataset):
             index (int): Index in the dataset to extract.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Input data at the index after applying ``transform`` if any, targets
-               after applying ``target_transform`` if any.
+            (tuple[torch.Tensor, torch.Tensor]): Input data at the index after applying ``transform`` if any, targets
+                after applying ``target_transform`` if any.
         """
         assert self.targets is not None
 
@@ -133,7 +133,7 @@ class TensorDataset(BaseDataset):
         Length of the dataset as determined by len() applied to torch dataset.
 
         Returns:
-            int: Length of dataset.
+            (int): Length of dataset.
         """
         return len(self.data)
 
@@ -183,7 +183,7 @@ class SslTensorDataset(TensorDataset):
             index (int): Index in the dataset to extract.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Input data at the index after applying ``transform`` if any, targets
+            (tuple[torch.Tensor, torch.Tensor]): Input data at the index after applying ``transform`` if any, targets
                 derived from data after applying ``transform`` and ``target_transform`` in sequence.
         """
         data = self.data[index]
@@ -226,8 +226,9 @@ class DictionaryDataset(Dataset):
             index (int): Index of the data to be extracted from the dataset.
 
         Returns:
-            tuple[dict[str, torch.Tensor], torch.Tensor]: Dictionary with the same keys as the dataset data dictionary
-                with data extracted at the provided index, target data extracted from the targets tensor at index.
+            (tuple[dict[str, torch.Tensor], torch.Tensor]): Dictionary with the same keys as the dataset data
+                dictionary with data extracted at the provided index, target data extracted from the targets tensor at
+                index.
         """
         return {key: val[index] for key, val in self.data.items()}, self.targets[index]
 
@@ -239,7 +240,7 @@ class DictionaryDataset(Dataset):
         uniform.
 
         Returns:
-            int: Dataset length.
+            (int): Dataset length.
         """
         first_key = list(self.data.keys())[0]
         return len(self.data[first_key])
@@ -271,7 +272,7 @@ class SyntheticDataset(TensorDataset):
             index (int): Index of the data in the dataset to be returned
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Input and targets at the provided index.
+            (tuple[torch.Tensor, torch.Tensor]): Input and targets at the provided index.
         """
         assert self.targets is not None
 
@@ -283,7 +284,7 @@ class SyntheticDataset(TensorDataset):
         Returns the length of the dataset. Identical to the pytorch dataset length function.
 
         Returns:
-            int: Length of the data.
+            (int): Length of the data.
         """
         return len(self.data)
 
@@ -304,7 +305,7 @@ def select_by_indices(dataset: D, selected_indices: torch.Tensor) -> D:
         TypeError: Will throw an error if the dataset provided is not supported.
 
     Returns:
-        D: Dataset with only the data associated with the provided indices. Must be of a supported type.
+        (D): Dataset with only the data associated with the provided indices. Must be of a supported type.
     """
     if isinstance(dataset, TensorDataset):
         modified_dataset = copy.deepcopy(dataset)

@@ -1,0 +1,106 @@
+site_name: FL4Health
+site_description: Federated Learning for Health - A Research Library
+site_url: https://vectorinstitute.github.io/FL4Health/
+repo_url: https://github.com/VectorInstitute/FL4Health
+repo_name: VectorInstitute/FL4Health
+
+exclude_docs: |
+  README.md
+
+theme:
+  name: material
+  logo: assets/fl4health_rect_logo_no_background.png
+  logo_footer: assets/vector-logo.svg
+  favicon: assets/fl4health_rect_logo_no_background.png
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: vector
+      accent: vector-teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: vector-teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.footer
+    - navigation.top
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+  custom_dir: docs/overrides
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_root_toc_entry: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.arithmatex:
+      generic: true
+  - toc:
+      permalink: true
+  - tables
+  - attr_list
+  - md_in_html
+
+nav:
+  - Home: index.md
+  - Quick Start: quickstart.md
+  - Module Guides:
+      - Overview: module_guides/index.md
+      - Checkpointing: module_guides/checkpointing/index.md
+  - Examples:
+      - Overview: examples/index.md
+      - Basic Example: examples/basic/index.md
+  - API Reference: api.md
+  - Contributing: contributing.md
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/VectorInstitute/FL4Health
+
+copyright: >
+  Copyright &copy; 2025 Vector Institute for Artificial Intelligence

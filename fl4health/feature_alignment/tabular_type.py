@@ -24,7 +24,7 @@ class TabularType(str, Enum):
             ValueError: If the tabular type is unknown this will be thrown.
 
         Returns:
-            Scalar: Default imputation value for the specified ``TabularType``
+            (Scalar): Default imputation value for the specified ``TabularType``
         """
         if tabular_type is TabularType.NUMERIC:
             return 0.0

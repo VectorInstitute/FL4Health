@@ -52,7 +52,7 @@ class Metric(ABC):
             NotImplementedError: To be defined in the classes extending this class.
 
         Returns:
-           Metrics: A dictionary of string and ``Scalar`` representing the computed metric and its associated key.
+           (Metrics): A dictionary of string and ``Scalar`` representing the computed metric and its associated key.
         """
         raise NotImplementedError
 

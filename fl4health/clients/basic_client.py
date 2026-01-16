@@ -159,8 +159,8 @@ class BasicClient(NumPyClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            NDArrays: These are the parameters to be sent to the server. At minimum they represent the relevant model
-            parameters to be aggregated, but can contain more information.
+            (NDArrays): These are the parameters to be sent to the server. At minimum they represent the relevant model
+                parameters to be aggregated, but can contain more information.
         """
         if not self.initialized:
             return self.setup_client_and_return_all_model_parameters(config)
@@ -223,7 +223,7 @@ class BasicClient(NumPyClient):
             config (Config): Configuration to be used  in setting up the client.
 
         Returns:
-            NDArrays: All parameters associated with the ``self.model`` property of the client.
+            (NDArrays): All parameters associated with the ``self.model`` property of the client.
         """
         log(INFO, "Setting up client and providing full model parameters to the server for initialization")
         if not config:
@@ -258,9 +258,10 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            tuple[int | None, int | None, int, bool, bool]: Returns the ``local_epochs``, ``local_steps``,
-            ``current_server_round``, ``evaluate_after_fit`` and ``pack_losses_with_val_metrics``. Ensures only one of
-            ``local_epochs`` and ``local_steps`` is defined in the config and sets the one that is not to None.
+            (tuple[int | None, int | None, int, bool, bool]): Returns the ``local_epochs``, ``local_steps``,
+                ``current_server_round``, ``evaluate_after_fit`` and ``pack_losses_with_val_metrics``. Ensures only
+                one of ``local_epochs`` and ``local_steps`` is defined in the config and sets the one that is not to
+                None.
 
         Raises:
             ValueError: If the config contains both ``local_steps`` and local epochs or if ``local_steps``,
@@ -301,8 +302,8 @@ class BasicClient(NumPyClient):
             config (NDArrays): The config from the server.
 
         Returns:
-            tuple[NDArrays, int, dict[str, Scalar]]: The parameters following the local training along with the
-            number of samples in the local training dataset and the computed metrics throughout the fit.
+            (tuple[NDArrays, int, dict[str, Scalar]]): The parameters following the local training along with the
+                number of samples in the local training dataset and the computed metrics throughout the fit.
 
         Raises:
             ValueError: If ``local_steps`` or ``local_epochs`` is not specified in config.
@@ -393,8 +394,8 @@ class BasicClient(NumPyClient):
             config (NDArrays): The config object from the server.
 
         Returns:
-            tuple[float, int, dict[str, Scalar]]: A loss associated with the evaluation, the number of samples in the
-            validation/test set and the ``metric_values`` associated with evaluation.
+            (tuple[float, int, dict[str, Scalar]]): A loss associated with the evaluation, the number of samples in the
+                validation/test set and the ``metric_values`` associated with evaluation.
         """
         if not self.initialized:
             self.setup_client(config)
@@ -446,7 +447,7 @@ class BasicClient(NumPyClient):
                 fit to be performed through the config.
 
         Returns:
-            bool: Whether to perform an evaluation on the client validation set after fitting.
+            (bool): Whether to perform an evaluation on the client validation set after fitting.
         """
         pre_aggregation_checkpointing_enabled = (
             self.checkpoint_and_state_module is not None
@@ -536,13 +537,13 @@ class BasicClient(NumPyClient):
             logging_mode (LoggingMode): The logging mode (Training, Validation, or Testing).
 
         Returns:
-            tuple[str, list[tuple[LogLevel, str]]]:
+            (tuple[str, list[tuple[LogLevel, str]]]):
 
-            - A string to append to the header log string that typically announces the current server round and
-              current epoch at the beginning of each round or local epoch.
-            - A list of tuples where the first element is a ``LogLevel`` as defined in ``fl4health.utils.``
-              typing and the second element is a string message. Each item in the list will be logged at the end of
-              each server round or epoch. Elements will also be logged at the end of validation/testing.
+                - A string to append to the header log string that typically announces the current server round and
+                  current epoch at the beginning of each round or local epoch.
+                - A list of tuples where the first element is a ``LogLevel`` as defined in ``fl4health.utils.``
+                  typing and the second element is a string message. Each item in the list will be logged at the end of
+                  each server round or epoch. Elements will also be logged at the end of validation/testing.
         """
         return "", []
 
@@ -552,7 +553,7 @@ class BasicClient(NumPyClient):
         the ``wandb_reporter``.
 
         Returns:
-            dict[str, Any]: A dictionary of things to report.
+            (dict[str, Any]): A dictionary of things to report.
         """
         return {}
 
@@ -585,8 +586,8 @@ class BasicClient(NumPyClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with a dictionary of
-            any predictions produced by the model.
+            (tuple[TrainingLosses, TorchPredType]): The losses object from the train step along with a dictionary of
+                any predictions produced by the model.
         """
         # Clear gradients from optimizer if they exist
         self.optimizers["global"].zero_grad()
@@ -612,8 +613,8 @@ class BasicClient(NumPyClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            tuple[EvaluationLosses, TorchPredType]: The losses object from the val step along with a dictionary of the
-            predictions produced by the model.
+            (tuple[EvaluationLosses, TorchPredType]): The losses object from the val step along with a dictionary of
+                the predictions produced by the model.
         """
         # Get preds and compute loss
         with torch.no_grad():
@@ -636,8 +637,8 @@ class BasicClient(NumPyClient):
             current_round (int | None, optional): The current FL round.
 
         Returns:
-            tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
-            Loss is a dictionary of one or more losses that represent the different components of the loss.
+            (tuple[dict[str, float], dict[str, Scalar]]): The loss and metrics dictionary from the local training.
+                Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         self.model.train()
         steps_this_round = 0  # Reset number of steps this round
@@ -708,8 +709,8 @@ class BasicClient(NumPyClient):
             current_round (int | None, optional): The current FL round
 
         Returns:
-            tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
-            Loss is a dictionary of one or more losses that represent the different components of the loss.
+            (tuple[dict[str, float], dict[str, Scalar]]): The loss and metrics dictionary from the local training.
+                Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         self.model.train()
 
@@ -777,7 +778,7 @@ class BasicClient(NumPyClient):
                 dictionary. Defaults to False.
 
         Returns:
-            tuple[float, dict[str, Scalar]]: The loss and a dictionary of metrics from evaluation.
+            (tuple[float, dict[str, Scalar]]): The loss and a dictionary of metrics from evaluation.
         """
         assert self.num_validation_steps is not None, "num_validation_steps must be defined to use this function"
 
@@ -838,7 +839,7 @@ class BasicClient(NumPyClient):
                 dictionary. Defaults to False.
 
         Returns:
-            tuple[float, dict[str, Scalar]]: The loss and a dictionary of metrics from evaluation.
+            (tuple[float, dict[str, Scalar]]): The loss and a dictionary of metrics from evaluation.
         """
         assert logging_mode in [LoggingMode.VALIDATION, LoggingMode.TEST], "logging_mode must be VALIDATION or TEST"
 
@@ -873,8 +874,8 @@ class BasicClient(NumPyClient):
                 metrics that are sent back to the server. Defaults to False.
 
         Returns:
-            tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation
-            (and test if present).
+            (tuple[float, dict[str, Scalar]]): The validation loss and a dictionary of metrics from validation
+                (and test if present).
         """
         if self.num_validation_steps is None:
             val_loss, val_metrics = self._fully_validate_or_test(
@@ -914,8 +915,8 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            dict[str, Scalar]: A dictionary with two entries corresponding to the sample counts in
-            the train and validation set.
+            (dict[str, Scalar]): A dictionary with two entries corresponding to the sample counts in
+                the train and validation set.
         """
         if not self.initialized:
             self.setup_client(config)
@@ -984,7 +985,7 @@ class BasicClient(NumPyClient):
             config (Config): The config from server.
 
         Returns:
-            ParameterExchanger: Used to exchange parameters between server and client.
+            (ParameterExchanger): Used to exchange parameters between server and client.
         """
         return FullParameterExchanger()
 
@@ -998,10 +999,10 @@ class BasicClient(NumPyClient):
                 ``self.model.forward().``
 
         Returns:
-            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains a dictionary of
-            predictions indexed by name and the second element contains intermediate activations indexed by name. By
-            passing features, we can compute losses such as the contrastive loss in MOON. All predictions included in
-            dictionary will by default be used to compute metrics separately.
+            (tuple[TorchPredType, TorchFeatureType]): A tuple in which the first element contains a dictionary of
+                predictions indexed by name and the second element contains intermediate activations indexed by name.
+                By passing features, we can compute losses such as the contrastive loss in MOON. All predictions
+                included in dictionary will by default be used to compute metrics separately.
 
         Raises:
             TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model's
@@ -1042,10 +1043,11 @@ class BasicClient(NumPyClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            tuple[torch.Tensor, dict[str, torch.Tensor] | None]: A tuple with:
+            (tuple[torch.Tensor, dict[str, torch.Tensor] | None]): A tuple with:
 
-            - The tensor for the loss.
-            - A dictionary of additional losses with their names and values, or None if there are no additional losses.
+                - The tensor for the loss.
+                - A dictionary of additional losses with their names and values, or None if there are no additional
+                  losses.
         """
         return self.criterion(preds["prediction"], target), None
 
@@ -1061,12 +1063,12 @@ class BasicClient(NumPyClient):
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. Anything stored
                 in preds will be used to compute metrics.
-            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
-            target: (TorchTargetType): Ground truth data to evaluate predictions against.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses
-            indexed by name.
+            (TrainingLosses): An instance of ``TrainingLosses`` containing backward loss and additional losses
+                indexed by name.
         """
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         return TrainingLosses(backward=loss, additional_losses=additional_losses)
@@ -1083,12 +1085,12 @@ class BasicClient(NumPyClient):
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. Anything stored
                 in preds will be used to compute metrics.
-            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
-            target: (TorchTargetType): Ground truth data to evaluate predictions against.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
-            indexed by name.
+            (EvaluationLosses): An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
+                indexed by name.
         """
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         return EvaluationLosses(checkpoint=loss, additional_losses=additional_losses)
@@ -1114,7 +1116,7 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            tuple[DataLoader, DataLoader Tuple of length 2. The client train and validation loader.
+            (tuple[DataLoader, DataLoader]) Tuple of length 2. The client train and validation loader.
 
         Raises:
             NotImplementedError: To be defined in child class.
@@ -1131,7 +1133,7 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            DataLoader | None: The optional client test loader.
+            (DataLoader | None): The optional client test loader.
         """
         return None
 
@@ -1149,7 +1151,7 @@ class BasicClient(NumPyClient):
             target (TorchTargetType): The target or label used to compute the loss.
 
         Returns:
-            TorchTargetType: Identical to target.
+            (TorchTargetType): Identical to target.
         """
         return target
 
@@ -1176,8 +1178,7 @@ class BasicClient(NumPyClient):
             config (Config): The config sent from the server.
 
         Returns:
-            Optimizer | dict[str, Optimizer]: An optimizer or dictionary of optimizers to
-            train model.
+            (Optimizer | dict[str, Optimizer]): An optimizer or dictionary of optimizers to train model.
 
         Raises:
             NotImplementedError: To be defined in child class.
@@ -1192,7 +1193,7 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            nn.Module: The client model.
+            (nn.Module): The client model.
 
         Raises:
             NotImplementedError: To be defined in child class.
@@ -1211,7 +1212,7 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            LRScheduler | None: Client learning rate schedulers.
+            (LRScheduler | None): Client learning rate schedulers.
         """
         return None
 

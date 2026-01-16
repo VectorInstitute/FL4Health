@@ -1,9 +1,9 @@
 ## Setting up nnUNet
 
-The nnunetv2 package can be install by including th picai group when installing dependencies to your virtual environment using poetry
+The nnunetv2 package can be installed by including the picai extra when installing dependencies to your virtual environment using uv
 
 ```bash
-poetry install --with "picai"
+uv sync --extra picai
 ```
 
 In order to run the nnUNet autosegmentation pipeline, the following environment variables must be set. Add them to .bashrc for convenience

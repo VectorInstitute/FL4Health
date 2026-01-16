@@ -65,8 +65,8 @@ class AdaptiveDriftConstrainedMixin(BaseFlexibleMixin):
             config (Config): Configurations to allow for customization of this functions behavior
 
         Returns:
-            NDArrays: Parameters and training loss packed together into a list of numpy arrays to be sent to the
-            server.
+            (NDArrays): Parameters and training loss packed together into a list of numpy arrays to be sent to the
+                server.
         """
         if not self.initialized:
             return self.setup_client_and_return_all_model_parameters(config)
@@ -91,7 +91,7 @@ class AdaptiveDriftConstrainedMixin(BaseFlexibleMixin):
             config (Config): Configuration to be used  in setting up the client.
 
         Returns:
-            NDArrays: All parameters associated with the ``self.model`` property of the client.
+            (NDArrays): All parameters associated with the ``self.model`` property of the client.
         """
         log(INFO, "Setting up client and providing full model parameters to the server for initialization")
         if not config:
@@ -166,7 +166,7 @@ class AdaptiveDriftConstrainedMixin(BaseFlexibleMixin):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            ParameterExchanger: Exchanger that can handle packing/unpacking auxiliary server information.
+            (ParameterExchanger): Exchanger that can handle packing/unpacking auxiliary server information.
         """
         return FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
 
@@ -193,7 +193,7 @@ class AdaptiveDriftConstrainedMixin(BaseFlexibleMixin):
         Computes the drift loss for the client model and drift tensors.
 
         Returns:
-            torch.Tensor: Computed penalty loss tensor.
+            (torch.Tensor): Computed penalty loss tensor.
         """
         # Penalty tensors must have been set for these clients.
         assert self.drift_penalty_tensors is not None
@@ -209,7 +209,7 @@ def apply_adaptive_drift_to_client(client_base_type: type[FlexibleClient]) -> ty
         client_base_type (type[FlexibleClient]): The class to be mixed.
 
     Returns:
-        type[FlexibleClient]: A basic client that has been mixed with `AdaptiveDriftConstrainedMixin`.
+        (type[FlexibleClient]): A basic client that has been mixed with `AdaptiveDriftConstrainedMixin`.
     """
     return type(
         f"AdaptiveDrift{client_base_type.__name__}",

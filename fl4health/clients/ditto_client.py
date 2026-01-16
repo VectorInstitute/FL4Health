@@ -105,7 +105,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
             config (Config): The config from the server.
 
         Returns:
-            nn.Module: The PyTorch model serving as the global model for Ditto
+            (nn.Module): The PyTorch model serving as the global model for Ditto
         """
         return self.get_model(config).to(self.device)
 
@@ -132,7 +132,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            NDArrays: **GLOBAL** model weights to be sent to the server for aggregation.
+            (NDArrays): **GLOBAL** model weights to be sent to the server for aggregation.
         """
         if not self.initialized:
             return self.setup_client_and_return_all_model_parameters(config)
@@ -228,9 +228,9 @@ class DittoClient(AdaptiveDriftConstraintClient):
             target (TorchTargetType): target tensor to be used to compute a loss given each models outputs.
 
         Returns:
-            tuple[TrainingLosses, TorchPredType]: Returns relevant loss values from both the global and local
-            model optimization steps. The prediction dictionary contains predictions indexed a "global" and "local"
-            corresponding to predictions from the global and local Ditto models for metric evaluations.
+            (tuple[TrainingLosses, TorchPredType]): Returns relevant loss values from both the global and local
+                model optimization steps. The prediction dictionary contains predictions indexed a "global" and "local"
+                corresponding to predictions from the global and local Ditto models for metric evaluations.
         """
         # Clear gradients from optimizers if they exist
         self.optimizers["global"].zero_grad()
@@ -266,9 +266,9 @@ class DittoClient(AdaptiveDriftConstraintClient):
             input (TorchInputType): Inputs to be fed into both models.
 
         Returns:
-            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains predictions indexed by
-            name and the second element contains intermediate activations index by name. For Ditto, we only need the
-            predictions, so the second dictionary is simply empty.
+            (tuple[TorchPredType, TorchFeatureType]): A tuple in which the first element contains predictions indexed
+                by name and the second element contains intermediate activations index by name. For Ditto, we only
+                need the predictions, so the second dictionary is simply empty.
 
         Raises:
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
@@ -306,10 +306,10 @@ class DittoClient(AdaptiveDriftConstraintClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
+            (tuple[torch.Tensor, dict[str, torch.Tensor]]): A tuple with:
 
-            - The tensor for the model loss
-            - A dictionary with ``local_loss``, ``global_loss`` as additionally reported loss values.
+                - The tensor for the model loss
+                - A dictionary with ``local_loss``, ``global_loss`` as additionally reported loss values.
         """
         # Compute global model vanilla loss
         assert "global" in preds
@@ -332,20 +332,19 @@ class DittoClient(AdaptiveDriftConstraintClient):
         """
         Computes training losses given predictions of the global and local models and ground truth data.
         For the local model we add to the vanilla loss function by including Ditto penalty loss which is the
-        :math:`\\ell^2` inner product between the initial global model weights and weights of the local model. This is
+        \\(\\ell^2\\) inner product between the initial global model weights and weights of the local model. This is
         stored in backward The loss to optimize the global model is stored in the additional losses dictionary under
         “global_loss”.
 
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in
                 dictionary will be used to compute metrics.
-            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
-            target: (TorchTargetType): Ground truth data to evaluate predictions against.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed by
-            name. Additional losses includes each loss component and the global model
-            loss tensor.
+            (TrainingLosses): An instance of ``TrainingLosses`` containing backward loss and additional losses indexed
+                by name. Additional losses includes each loss component and the global model loss tensor.
         """
         # Check that both models are in training mode
         assert self.global_model.training and self.model.training
@@ -369,7 +368,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
         Validate the current model on the entire validation dataset.
 
         Returns:
-            tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
+            (tuple[float, dict[str, Scalar]]): The validation loss and a dictionary of metrics from validation.
         """
         # Set the global model to evaluate mode
         self.global_model.eval()
@@ -389,12 +388,12 @@ class DittoClient(AdaptiveDriftConstraintClient):
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. Anything stored
                 in preds will be used to compute metrics.
-            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
-            target: (TorchTargetType): Ground truth data to evaluate predictions against.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
-            indexed by name.
+            (EvaluationLosses): An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
+                indexed by name.
         """
         # Check that both models are in eval mode
         assert not self.global_model.training and not self.model.training

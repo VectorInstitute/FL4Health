@@ -64,7 +64,7 @@ class FlInstanceLevelAccountant:
             delta (float): Delta value from which to compute epsilon.
 
         Returns:
-            float: Epsilon.
+            (float): Epsilon.
         """
         epsilons = []
         for num_batch, sampling_strategy in zip(self.num_batches_per_client, self.sampling_strategies_per_client):
@@ -83,7 +83,7 @@ class FlInstanceLevelAccountant:
             epsilon (float): Epsilon value from which to compute delta.
 
         Returns:
-            float: delta.
+            (float): delta.
         """
         deltas = []
         for num_batch, sampling_strategy in zip(self.num_batches_per_client, self.sampling_strategies_per_client):
@@ -161,7 +161,7 @@ class FlClientLevelAccountantPoissonSampling(ClientLevelAccountant):
             delta (float): Delta value from which to compute epsilon.
 
         Returns:
-            float: epsilon.
+            (float): epsilon.
         """
         self._validate_server_updates(server_updates)
         return self.accountant.get_epsilon(self.sampling_strategy, self.noise_multiplier, server_updates, delta)
@@ -175,7 +175,7 @@ class FlClientLevelAccountantPoissonSampling(ClientLevelAccountant):
             epsilon (float): Epsilon value from which to compute delta.
 
         Returns:
-            float: delta.
+            (float): delta.
         """
         self._validate_server_updates(server_updates)
         return self.accountant.get_delta(self.sampling_strategy, self.noise_multiplier, server_updates, epsilon)
@@ -222,7 +222,7 @@ class FlClientLevelAccountantFixedSamplingNoReplacement(ClientLevelAccountant):
             delta (float): Delta value from which to compute epsilon.
 
         Returns:
-            float: epsilon.
+            (float): epsilon.
         """
         self._validate_server_updates(server_updates)
         return self.accountant.get_epsilon(self.sampling_strategy, self.noise_multiplier, server_updates, delta)
@@ -236,7 +236,7 @@ class FlClientLevelAccountantFixedSamplingNoReplacement(ClientLevelAccountant):
             epsilon (float): Epsilon value from which to compute delta.
 
         Returns:
-            float: delta.
+            (float): delta.
         """
         self._validate_server_updates(server_updates)
         return self.accountant.get_delta(self.sampling_strategy, self.noise_multiplier, server_updates, epsilon)

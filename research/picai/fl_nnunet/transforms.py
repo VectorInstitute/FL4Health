@@ -28,8 +28,8 @@ def get_annotations_from_probs(preds: torch.Tensor, has_regions: bool = False, t
             output is a part of a class.
 
     Returns:
-        torch.Tensor: tensor containing the predicted annotations as a one hot encoded binary tensor of 64-bit
-        integers.
+        (torch.Tensor): tensor containing the predicted annotations as a one hot encoded binary tensor of 64-bit
+            integers.
     """
     if has_regions:
         pred_annotations = preds > threshold
@@ -57,6 +57,6 @@ def collapse_one_hot_tensor(input: torch.Tensor, dim: int = 0) -> torch.Tensor:
         dim (int, optional): Dimension over which to collapse the one-hot tensor. Defaults to 0.
 
     Returns:
-        torch.Tensor: Integer tensor with the specified dim collapsed.
+        (torch.Tensor): Integer tensor with the specified dim collapsed.
     """
     return torch.argmax(input.long(), dim=dim).to(input.device)

@@ -25,31 +25,24 @@ instructions here
 3) Using `pyenv` following the readme here: [link](https://github.com/pyenv/pyenv/blob/master/README.md). Note that
 `pyenv` can be somewhat involved to use.
 
-Thereafter, you run the commands (or variations if your system python is not 3.10 or you’re using an environment
+Thereafter, you run the commands (or variations if your system python is not 3.10 or you're using an environment
 manager like `conda`).
 ```bash
 cd path/to/fl4health
-python -m venv ENV_PATH/env_name>
-source ENV_PATH/env_name/bin/activate
-pip install --upgrade pip poetry
-poetry install --with "dev, test, codestyle"
+pip install uv
+uv sync --extra dev --extra test --extra codestyle
+source .venv/bin/activate
 ```
 
 ```admonish
-The environment creation step may be different depending on how 3.10 is installed on your system or whether you’re
+The environment creation step may be different depending on how 3.10 is installed on your system or whether you're
 using, for example, the conda steps to create the environment.
 
-For example, if python 3.10 is not designated as your local systems python, you may need to adjust the path in the
-command
+For example, if python 3.10 is not designated as your local systems python, you may need to ensure the correct
+python version is available before running `uv sync`. You can specify the python version with:
 ```bash
-python -m venv ENV_PATH/env_name
+uv python install 3.10
 ```
-to the right python path as, for example
-```bash
-path/to/python -m venv ENV_PATH/env_name
-```
-Here `ENV_PATH/env_name` is whatever you want to call the environment to be created. Mine is simply
-called `fl4health`.
 
 If you're using `conda` then you can specify a python version to use as
 ```bash
@@ -66,9 +59,9 @@ and proceed with the remainder of the instructions unaltered.
 
 **Any time you want to run code in the library, this environment must be active.**
 
-The command to activate the environment is
+With uv, the environment is automatically created in `.venv/` and the command to activate it is:
 ```bash
-source ENV_PATH/env_name/bin/activate
+source .venv/bin/activate
 ```
 
 Many of the examples in the library can be run locally in a reasonable amount of time on a cpu. However, there are a
@@ -111,15 +104,14 @@ ssh username@v.vectorinstitute.ai
 ```
 going through the steps of two-factor authentication.
 
-The process is nearly the same as on your local machine. However, prior to creating the environment, you will need to
-activate python 3.10 on the cluster. This makes the process one step longer as
+The process is nearly the same as on your local machine. However, prior to installing dependencies, you will need to
+activate python 3.10 on the cluster.
 ```bash
 module load python/3.10.12
 cd path/to/fl4health
-python -m venv ENV_PATH
-source ENV_PATH/bin/activate
-pip install --upgrade pip poetry
-poetry install --with "dev, test, codestyle"
+pip install uv
+uv sync --extra dev --extra test --extra codestyle
+source .venv/bin/activate
 ```
 
 ### Accessing a Cluster GPU through your Local VS Code

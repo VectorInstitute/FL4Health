@@ -94,10 +94,10 @@ class MoonClient(BasicClient):
                 input to simply be of type ``torch.Tensor``
 
         Returns:
-            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple in which the first element
-            contains predictions indexed by name and the second element contains intermediate activations
-            index by name. Specifically the features of the model, features of the global model and features of
-            the old model are returned. All predictions included in dictionary will be used to compute metrics.
+            (tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]): A tuple in which the first element
+                contains predictions indexed by name and the second element contains intermediate activations
+                index by name. Specifically the features of the model, features of the global model and features of
+                the old model are returned. All predictions included in dictionary will be used to compute metrics.
         """
         assert isinstance(input, torch.Tensor)
         preds, features = self.model(input)
@@ -164,15 +164,15 @@ class MoonClient(BasicClient):
         the loss, (unweighted) contrastive loss, and total loss.
 
         Args:
-            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
-            features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target (torch.Tensor): Ground truth data to evaluate predictions against.
+            preds (TorchPredType): Prediction(s) of the model(s) indexed by name.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
+            (tuple[torch.Tensor, dict[str, torch.Tensor]]): A tuple with:
 
-            - The tensor for the total loss
-            - A dictionary with ``loss``, ``contrastive_loss`` and ``total_loss`` keys and their calculated values.
+                - The tensor for the total loss
+                - A dictionary with ``loss``, ``contrastive_loss`` and ``total_loss`` keys and their calculated values.
         """
         loss = self.criterion(preds["prediction"], target)
         total_loss = loss.clone()
@@ -202,14 +202,14 @@ class MoonClient(BasicClient):
         base loss plus a model contrastive loss.
 
         Args:
-            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            preds (TorchPredType): Prediction(s) of the model(s) indexed by name.
                 All predictions included in dictionary will be used to compute metrics.
-            features: (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+            features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses
-            indexed by name.
+            (TrainingLosses): An instance of ``TrainingLosses`` containing backward loss and additional losses
+                indexed by name.
         """
         # Check that the model is in training mode
         assert self.model.training
@@ -234,14 +234,14 @@ class MoonClient(BasicClient):
         base loss plus a model contrastive loss.
 
         Args:
-            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            preds (TorchPredType): Prediction(s) of the model(s) indexed by name.
                 All predictions included in dictionary will be used to compute metrics.
-            features: (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+            features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
-            indexed by name.
+            (EvaluationLosses): An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
+                indexed by name.
         """
         # Check that the model is in evaluation mode
         assert not self.model.training

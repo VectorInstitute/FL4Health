@@ -15,7 +15,7 @@ def add_noise_to_array(layer: NDArray, noise_std_dev: float, denominator: int) -
         denominator (int): Normalization value for scaling down the values in the array.
 
     Returns:
-        NDArray: The element-wise noised array, scaled by the denominator value.
+        (NDArray): The element-wise noised array, scaled by the denominator value.
     """
     layer_noise = np.random.normal(0.0, noise_std_dev, layer.shape)
     return (1.0 / denominator) * (layer + layer_noise)
@@ -35,7 +35,7 @@ def add_noise_to_ndarrays(client_model_updates: list[NDArrays], sigma: float, n_
             ``client_model_updates`` in almost all cases.
 
     Returns:
-        NDArrays: Average of the centered Gaussian noised arrays.
+        (NDArrays): Average of the centered Gaussian noised arrays.
     """
     layer_sums: NDArrays = [
         add_noise_to_array(reduce(np.add, layer_updates), sigma, n_clients)
@@ -58,7 +58,7 @@ def gaussian_noisy_unweighted_aggregate(
         clipping_bound (float): The clipping bound applied to client model updates.
 
     Returns:
-        NDArrays: Model update for a given round.
+        (NDArrays): Model update for a given round.
     """
     n_clients = len(results)
     # dropping number of data points component
@@ -92,7 +92,7 @@ def gaussian_noisy_weighted_aggregate(
         total_client_weight (float): The total client weight across samples.
 
     Returns:
-        NDArrays: Noised model update for a given round.
+        (NDArrays): Noised model update for a given round.
     """
     n_clients = len(results)
     client_model_updates: list[NDArrays] = []
@@ -133,7 +133,7 @@ def gaussian_noisy_aggregate_clipping_bits(bits: NDArrays, noise_std_dev: float)
         noise_std_dev (float): The standard deviation of the centered Gaussian noise applied to the bits.
 
     Returns:
-        float: The uniformly averaged noisy bit.
+        (float): The uniformly averaged noisy bit.
     """
     n_clients = len(bits)
     bit_sum = reduce(np.add, bits)

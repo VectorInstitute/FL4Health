@@ -17,9 +17,9 @@ from numpy.typing import NDArray
 
 
 with contextlib.redirect_stdout(open(os.devnull, "w")):
-    from picai_eval.eval import evaluate_case
-    from picai_eval.metrics import Metrics as PicaiEvalMetrics
-    from report_guided_annotation import extract_lesion_candidates
+    from picai_eval.eval import evaluate_case  # type: ignore
+    from picai_eval.metrics import Metrics as PicaiEvalMetrics  # type: ignore
+    from report_guided_annotation import extract_lesion_candidates  # type: ignore
 
 warnings.simplefilter("ignore", category=FutureWarning)
 
@@ -224,7 +224,7 @@ def generate_detection_maps(
             function from the report_guided_annotation API.
 
     Returns:
-        list[str]: A list of unique case identifiers. The case identifiers are
+        (list[str]): A list of unique case identifiers. The case identifiers are
             the file basenames of the chosen input probability map files
             stripped of the the specified postfixes and their extension.
     """
@@ -338,7 +338,7 @@ def get_picai_metrics(
             arguments
 
     Returns:
-        picai_eval.metrics.Metrics: A picai eval metrics object that has
+        (picai_eval.metrics.Metrics): A picai eval metrics object that has
             combined the results from all classes into a single object
     """
     t_start = time.time()

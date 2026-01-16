@@ -40,8 +40,8 @@ class EnsembleModel(nn.Module):
             input (torch.Tensor): A batch of input data.
 
         Returns:
-            dict[str, torch.Tensor]: A dictionary of predictions of the individual ensemble models as well as
-            prediction of the ensemble as a whole.
+            (dict[str, torch.Tensor]): A dictionary of predictions of the individual ensemble models as well as
+                prediction of the ensemble as a whole.
         """
         preds = {}
         for key, model in self.ensemble_models.items():
@@ -67,7 +67,7 @@ class EnsembleModel(nn.Module):
             preds_list (list[torch.Tensor]): A list of predictions of the models in the ensemble.
 
         Returns:
-            torch.Tensor: The vote prediction of the ensemble.
+            (torch.Tensor): The vote prediction of the ensemble.
         """
         assert all(preds.shape == preds_list[0].shape for preds in preds_list)
         preds_dimension = list(preds_list[0].shape)
@@ -101,7 +101,7 @@ class EnsembleModel(nn.Module):
             preds_list (list[torch.Tensor]): A list of predictions of the models in the ensemble.
 
         Returns:
-            torch.Tensor: The average prediction of the ensemble.
+            (torch.Tensor): The average prediction of the ensemble.
         """
         stacked_model_preds = torch.stack(preds_list)
         return torch.mean(stacked_model_preds, dim=0)

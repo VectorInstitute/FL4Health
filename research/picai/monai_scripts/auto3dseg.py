@@ -28,7 +28,7 @@ def gen_dataset_list(data_dir: str, output_path: str | None = None, ext: str = "
         ext (str, optional): Extension to use. Defaults to ".nii.gz".
 
     Returns:
-        str: The path to where the datalist file was saved
+        (str): The path to where the datalist file was saved
     """
     train_dir = join(data_dir, "imagesTr")
     test_dir = join(data_dir, "testTr")

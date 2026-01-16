@@ -50,7 +50,7 @@ class TabularFeaturesPreprocessor:
         Default numeric pipeline factory. Mean imputation and default min-max scaler.
 
         Returns:
-            Pipeline: Default numeric pipeline
+            (Pipeline): Default numeric pipeline
         """
         return Pipeline(steps=[("imputer", SimpleImputer(strategy="mean")), ("scaler", MinMaxScaler())])
 
@@ -59,7 +59,7 @@ class TabularFeaturesPreprocessor:
         Default binary pipeline factor. Most frequent imputer and an ordinal encoder.
 
         Returns:
-            Pipeline: Default binary pipeline
+            (Pipeline): Default binary pipeline
         """
         return Pipeline(steps=[("imputer", SimpleImputer(strategy="most_frequent")), ("encoder", OrdinalEncoder())])
 
@@ -71,7 +71,7 @@ class TabularFeaturesPreprocessor:
             categories (MetaData): Categories to be one hot encoded.
 
         Returns:
-            Pipeline: Default one-hot encoding pipeline
+            (Pipeline): Default one-hot encoding pipeline
         """
         return Pipeline(steps=[("encoder", OneHotEncoder(handle_unknown="ignore", categories=[categories]))])
 
@@ -83,7 +83,7 @@ class TabularFeaturesPreprocessor:
             categories (MetaData): Categories to be used in encoding
 
         Returns:
-            Pipeline: Default ordinal pipeline
+            (Pipeline): Default ordinal pipeline
         """
         return Pipeline(
             steps=[
@@ -107,7 +107,7 @@ class TabularFeaturesPreprocessor:
             vocabulary (MetaData): Vocabulary to serve as the ``TfidfVectorizer`` vocab.
 
         Returns:
-            Pipeline: Default string/text encoding pipeline.
+            (Pipeline): Default string/text encoding pipeline.
         """
         return Pipeline(steps=[("vectorizer", TextColumnTransformer(TfidfVectorizer(vocabulary=vocabulary)))])
 
@@ -122,7 +122,7 @@ class TabularFeaturesPreprocessor:
             one_hot (bool): Whether or not to apply a default one-hot pipeline.
 
         Returns:
-            dict[str, Pipeline]: Default feature processing pipeline per feature in the list.
+            (dict[str, Pipeline]): Default feature processing pipeline per feature in the list.
         """
         columns_to_pipelines = {}
         for tab_feature in tabular_features:
@@ -153,7 +153,7 @@ class TabularFeaturesPreprocessor:
                 corresponding to the column names
 
         Returns:
-            ColumnTransformer: Transformer for the specified columns. The unspecified columns are dropped.
+            (ColumnTransformer): Transformer for the specified columns. The unspecified columns are dropped.
         """
         transformers = [
             (f"{feature_name}_pipeline", pipelines[feature_name], [feature_name])
@@ -191,7 +191,7 @@ class TabularFeaturesPreprocessor:
             df (pd.DataFrame): Dataframe to be processed.
 
         Returns:
-            tuple[NDArray, NDArray]: Resulting input and target numpy arrays after preprocessing.
+            (tuple[NDArray, NDArray]): Resulting input and target numpy arrays after preprocessing.
         """
         # If the dataframe has an entire column missing, we need to fill it with some default value first.
         df_filled = self.fill_in_missing_columns(df)
@@ -210,7 +210,7 @@ class TabularFeaturesPreprocessor:
             df (pd.DataFrame): Dataframe to be filled
 
         Returns:
-            pd.DataFrame: Filled dataframe
+            (pd.DataFrame): Filled dataframe
         """
         df_new = df.copy(deep=True)
         for tab_feature in self.tabular_features:

@@ -55,7 +55,7 @@ class MetricManager:
         Computes set of metrics for each prediction type.
 
         Returns:
-            Metrics: dictionary containing computed metrics along with string identifiers for each prediction type.
+            (Metrics): dictionary containing computed metrics along with string identifiers for each prediction type.
         """
         all_results = {}
         for metrics_key, metrics in self.metrics_per_prediction_type.items():

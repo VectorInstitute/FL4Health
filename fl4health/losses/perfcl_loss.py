@@ -12,7 +12,8 @@ class PerFclLoss(nn.Module):
         local_feature_loss_temperature: float = 0.5,
     ) -> None:
         """
-        Loss function for local model training with the PerFCL Method: https://ieeexplore.ieee.org/document/10020518/
+        Loss function for local model training with the PerFCL Method: https://ieeexplore.ieee.org/document/10020518/.
+
         It is essentially a combination of two separate MOON contrastive losses.
 
         Args:
@@ -39,36 +40,36 @@ class PerFclLoss(nn.Module):
 
         This paper introduced two contrastive loss functions:
 
-        - First one aims to enhance the similarity between the current global features (:math:`z_s`) and aggregated
-          global features (:math:`z_g`) (saved at the start of client-side training) as positive pairs while reducing
-          the similarity between the current global features (:math:`z_s`) and old global features
-          (:math:`\\hat{z}_s`) from the end of the previous client-side training as negative pairs.
-        - Second one aims to enhance the similarity between the current local features (:math:`z_p`) and old local
-          features (:math:`\\hat{z}_p`) from the end of the previous client-side training as positive pairs while
-          reducing the similarity between the current local features (:math:`z_p`) and aggregated global features
-          (:math:`z_g`) (saved at the start of client-side training) as negative pairs.
+        - First one aims to enhance the similarity between the current global features (\\(z_s\\)) and aggregated
+          global features (\\(z_g\\)) (saved at the start of client-side training) as positive pairs while reducing
+          the similarity between the current global features (\\(z_s\\)) and old global features
+          (\\(\\hat{z}_s\\)) from the end of the previous client-side training as negative pairs.
+        - Second one aims to enhance the similarity between the current local features (\\(z_p\\)) and old local
+          features (\\(\\hat{z}_p\\)) from the end of the previous client-side training as positive pairs while
+          reducing the similarity between the current local features (\\(z_p\\)) and aggregated global features
+          (\\(z_g\\)) (saved at the start of client-side training) as negative pairs.
 
         Args:
             local_features (torch.Tensor): Features produced by the local feature extractor of the model during the
-                client-side training. Denoted as :math:`z_p` in the original paper. Shape
+                client-side training. Denoted as \\(z_p\\) in the original paper. Shape
                 (``batch_size``, ``n_features``)
             old_local_features (torch.Tensor): Features produced by the FINAL local feature extractor of the model
-                from the PREVIOUS server round. Denoted as :math:`\\hat{z}_p` in the original paper. Shape
+                from the PREVIOUS server round. Denoted as \\(\\hat{z}_p\\) in the original paper. Shape
                 (``batch_size``, ``n_features``)
             global_features (torch.Tensor): Features produced by the global feature extractor of the model during the
-                client-side training. Denoted as :math:`z_s` in the original paper. Shape
+                client-side training. Denoted as \\(z_s\\) in the original paper. Shape
                 (``batch_size``, ``n_features``)
             old_global_features (torch.Tensor): Features produced by the FINAL global feature extractor of the model
-                from the PREVIOUS server round. Denoted as :math:`\\hat{z}_s` in the original paper. Shape
+                from the PREVIOUS server round. Denoted as \\(\\hat{z}_s\\) in the original paper. Shape
                 (``batch_size``, ``n_features``)
             initial_global_features (torch.Tensor): Features produced by the **INITIAL** global feature extractor of
                 the model at the start of client-side training. This feature extractor is the **AGGREGATED** weights
                 across clients. Shape (``batch_size``, ``n_features``)
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Tuple containing the two components of the PerFCL loss function to
-            be weighted and summed. The first tensor corresponds to the global feature loss, the second is
-            associated with the local feature loss.
+            (tuple[torch.Tensor, torch.Tensor]): Tuple containing the two components of the PerFCL loss function to
+                be weighted and summed. The first tensor corresponds to the global feature loss, the second is
+                associated with the local feature loss.
         """
         # The more general contrastive loss function requires 3D tensors, where the first dimension is potentially
         # greater than 1. For the PerFCL loss, this will always just be 1.

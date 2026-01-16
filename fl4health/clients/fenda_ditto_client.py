@@ -107,7 +107,7 @@ class FendaDittoClient(DittoClient):
             config (Config): The config from the server.
 
         Returns:
-            FendaModel: The client FENDA model.
+            (FendaModel): The client FENDA model.
 
         Raises:
             NotImplementedError: To be defined in child class.
@@ -122,7 +122,7 @@ class FendaDittoClient(DittoClient):
             config (Config): The config from the server.
 
         Returns:
-            SequentiallySplitModel: The global (Ditto) model.
+            (SequentiallySplitModel): The global (Ditto) model.
 
         Raises:
             NotImplementedError: To be defined in child class.
@@ -172,7 +172,7 @@ class FendaDittoClient(DittoClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            NDArrays: **GLOBAL** model weights to be sent to the server for aggregation.
+            (NDArrays): **GLOBAL** model weights to be sent to the server for aggregation.
         """
         if not self.initialized:
             log(INFO, "Setting up client")
@@ -268,13 +268,13 @@ class FendaDittoClient(DittoClient):
             input (TorchInputType): Inputs to be fed into both models.
 
         Returns:
-            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains predictions indexed
-            by name and the second element contains intermediate activations index by name. For Ditto+FENDA, we only
-            need the predictions, so the second dictionary is simply empty.
+            (tuple[TorchPredType, TorchFeatureType]): A tuple in which the first element contains predictions indexed
+                by name and the second element contains intermediate activations index by name. For Ditto+FENDA, we
+                only need the predictions, so the second dictionary is simply empty.
 
         Raises:
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
-            forward.
+                forward pass.
         """
         if isinstance(input, torch.Tensor):
             global_preds, _ = self.global_model(input)
@@ -303,7 +303,7 @@ class FendaDittoClient(DittoClient):
         """
         Computes training losses given predictions of the global and local models and ground truth data.
         For the local model, we add to the vanilla loss function by including a Ditto penalty loss. This penalty
-        is the :math:`\\ell^2` inner product between the initial global model feature extractor weights and the
+        is the \\(\\ell^2\\) inner product between the initial global model feature extractor weights and the
         feature extractor weights of the local model. If the global feature extractor is not frozen, the penalty is
         computed using the global feature extractor of the local model. If it is frozen, the penalty is computed using
         the local feature extractor of the local model. This allows for flexibility in training scenarios where the
@@ -311,14 +311,14 @@ class FendaDittoClient(DittoClient):
         loss to optimize the global model is stored in the additional losses dictionary under “global_loss”.
 
         Args:
-            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. All predictions included
+            preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included
                 in the dictionary will be used to compute metrics.
-            features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target (torch.Tensor): Ground truth data to evaluate predictions against.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing the backward loss and additional losses
-            indexed by name. Additional losses include each loss component and the global model loss tensor.
+            (TrainingLosses): An instance of ``TrainingLosses`` containing the backward loss and additional losses
+                indexed by name. Additional losses include each loss component and the global model loss tensor.
         """
         # Check that both models are in training mode
         assert self.global_model.training and self.model.training

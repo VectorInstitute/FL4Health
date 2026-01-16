@@ -88,7 +88,7 @@ class MaskedConv1d(nn.Conv1d):
             input (Tensor): input tensor for the layer
 
         Returns:
-            Tensor: output tensor for the convolution
+            (Tensor): output tensor for the convolution
         """
         weight_prob_scores = torch.sigmoid(self.weight_scores)
         weight_mask = bernoulli_sample(weight_prob_scores)
@@ -110,7 +110,7 @@ class MaskedConv1d(nn.Conv1d):
             conv_module (nn.Conv1d): Module to be converted.
 
         Returns:
-            MaskedConv1d: Module with masked layers added to enable FedPM training.
+            (MaskedConv1d): Module with masked layers added to enable FedPM training.
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
@@ -216,7 +216,7 @@ class MaskedConv2d(nn.Conv2d):
             input (Tensor): input tensor for the layer.
 
         Returns:
-            Tensor: output tensor for the convolution
+            (Tensor): output tensor for the convolution
         """
         weight_prob_scores = torch.sigmoid(self.weight_scores)
         weight_mask = bernoulli_sample(weight_prob_scores)
@@ -238,7 +238,7 @@ class MaskedConv2d(nn.Conv2d):
             conv_module (nn.Conv2d): Module to be converted.
 
         Returns:
-            MaskedConv2d: Module with masked layers to enable FedPM.
+            (MaskedConv2d): Module with masked layers to enable FedPM.
         """
         has_bias = conv_module.bias is not None
         kernel_size_ = _pair(conv_module.kernel_size)
@@ -342,7 +342,7 @@ class MaskedConv3d(nn.Conv3d):
             input (Tensor): input tensor for the layer.
 
         Returns:
-            Tensor: output tensor for the convolution.
+            (Tensor): output tensor for the convolution.
         """
         weight_prob_scores = torch.sigmoid(self.weight_scores)
         weight_mask = bernoulli_sample(weight_prob_scores)
@@ -364,7 +364,7 @@ class MaskedConv3d(nn.Conv3d):
             conv_module (nn.Conv3d): Module to convert.
 
         Returns:
-            MaskedConv3d: Module with mask layers added to enable FedPM.
+            (MaskedConv3d): Module with mask layers added to enable FedPM.
         """
         has_bias = conv_module.bias is not None
         kernel_size_ = _triple(conv_module.kernel_size)
@@ -479,7 +479,7 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
             ValueError: If something other than "zeros" padding has been requested.
 
         Returns:
-            Tensor: Output tensors.
+            (Tensor): Output tensors.
         """
         # Note: the same check is already present in super().__init__
         if self.padding_mode != "zeros":
@@ -523,7 +523,7 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
             conv_module (nn.ConvTranspose1d): Target module to be converted.
 
         Returns:
-            MaskedConvTranspose1d: Module with masked layers to enable FedPM.
+            (MaskedConvTranspose1d): Module with masked layers to enable FedPM.
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
@@ -643,7 +643,7 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
             ValueError: Thrown if anything except "zeros" padding is requested.
 
         Returns:
-            Tensor: Mapped tensor.
+            (Tensor): Mapped tensor.
         """
         # Note: the same check is already present in super().__init__
         if self.padding_mode != "zeros":
@@ -684,7 +684,7 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
             conv_module (nn.ConvTranspose2d): Target module to be converted.
 
         Returns:
-            MaskedConvTranspose2d: Module with mask layers added to enable FedPM.
+            (MaskedConvTranspose2d): Module with mask layers added to enable FedPM.
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
@@ -804,7 +804,7 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
             ValueError: Throws if anything except "zeros" padding is requested.
 
         Returns:
-            Tensor: Mapped tensor.
+            (Tensor): Mapped tensor.
         """
         # Note: the same check is already present in super().__init__
         if self.padding_mode != "zeros":
@@ -845,7 +845,7 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
             conv_module (nn.ConvTranspose3d): Target module to be converted.
 
         Returns:
-            MaskedConvTranspose3d: Module with masked layers added to enable FedPM.
+            (MaskedConvTranspose3d): Module with masked layers added to enable FedPM.
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has

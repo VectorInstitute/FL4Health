@@ -91,8 +91,8 @@ class AdaptiveDriftConstraintClient(BasicClient):
             config (Config): Configurations to allow for customization of this functions behavior
 
         Returns:
-            NDArrays: Parameters and training loss packed together into a list of numpy arrays to be sent to the
-            server.
+            (NDArrays): Parameters and training loss packed together into a list of numpy arrays to be sent to the
+                server.
         """
         if not self.initialized:
             return self.setup_client_and_return_all_model_parameters(config)
@@ -140,12 +140,12 @@ class AdaptiveDriftConstraintClient(BasicClient):
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in
                 dictionary will be used to compute metrics.
-            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
-            target: (TorchTargetType): Ground truth data to evaluate predictions against.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed
-            by name. Additional losses includes penalty loss.
+            (TrainingLosses): An instance of ``TrainingLosses`` containing backward loss and additional losses indexed
+                by name. Additional losses includes penalty loss.
         """
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         if additional_losses is None:
@@ -170,7 +170,7 @@ class AdaptiveDriftConstraintClient(BasicClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            ParameterExchanger: Exchanger that can handle packing/unpacking auxiliary server information.
+            (ParameterExchanger): Exchanger that can handle packing/unpacking auxiliary server information.
         """
         return FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
 
@@ -195,7 +195,7 @@ class AdaptiveDriftConstraintClient(BasicClient):
         Computes the drift loss for the client model and drift tensors.
 
         Returns:
-            torch.Tensor: Computed penalty loss tensor.
+            (torch.Tensor): Computed penalty loss tensor.
         """
         # Penalty tensors must have been set for these clients.
         assert self.drift_penalty_tensors is not None

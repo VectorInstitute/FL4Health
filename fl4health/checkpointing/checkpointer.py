@@ -37,7 +37,7 @@ class TorchModuleCheckpointer(ABC):
             metrics (dict[str, float]): Computed metrics associated with the model.
 
         Raises:
-            NotImplementedError: Must be implemented by the checkpointer
+            NotImplementedError: Must be implemented by the checkpointer.
         """
         raise NotImplementedError("maybe_checkpoint must be implemented by inheriting classes")
 
@@ -52,7 +52,7 @@ class TorchModuleCheckpointer(ABC):
                 If not specified, the checkpointer will load from ``self.checkpoint_path``. Defaults to None.
 
         Returns:
-            nn.Module: Returns a torch module loaded from the proper checkpoint path.
+            (nn.Module): Returns a torch module loaded from the proper checkpoint path.
         """
         if path_to_checkpoint is None:
             return torch.load(self.checkpoint_path, weights_only=False)
@@ -110,7 +110,7 @@ class FunctionTorchModuleCheckpointer(TorchModuleCheckpointer):
                 best score seen by this checkpointer.
 
         Returns:
-            bool: Whether or not to checkpoint the model based on the provided score
+            (bool): Whether or not to checkpoint the model based on the provided score
         """
         if self.best_score:
             if self.maximize:
@@ -185,7 +185,7 @@ class LatestTorchModuleCheckpointer(FunctionTorchModuleCheckpointer):
             model (nn.Module): Model to be checkpointed whenever this function is called
             loss (float): Loss associated with the provided model. Will potentially contribute to checkpointing
                 decision, based on the score function. NOT USED.
-            metrics (dict[str, Scalar]): Metrics associated with the provided model. Will potentially contribute to
+            _ (dict[str, Scalar]): Metrics associated with the provided model. Will potentially contribute to
                 the checkpointing decision, based on the score function. NOT USED.
 
         Raises:

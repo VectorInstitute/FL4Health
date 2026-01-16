@@ -66,7 +66,7 @@ class TabularFeature:
         Converge the information in this class to json format for serialization.
 
         Returns:
-            str: Json with all of the pieces of information in this class
+            (str): Json with all of the pieces of information in this class
         """
         return json.dumps(
             {
@@ -87,7 +87,7 @@ class TabularFeature:
                 object
 
         Returns:
-            TabularFeature: Reconstructed ``TabularFeature`` object from the provided JSON
+            (TabularFeature): Reconstructed ``TabularFeature`` object from the provided JSON
         """
         attributes = json.loads(json_str)
         return TabularFeature(

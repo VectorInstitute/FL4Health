@@ -37,7 +37,7 @@ def assert_metrics_dict(metrics_to_assert: dict[str, Any], metrics_saved: dict[s
             to be tested.
 
     Returns:
-        list[str]: A list of error messages. If the assertion passes then this list will be empty.
+        (list[str]): A list of error messages. If the assertion passes then this list will be empty.
     """
     errors = []
 

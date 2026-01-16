@@ -35,7 +35,7 @@ class BaseFractionSamplingManager(SimpleClientManager):
             criterion (Criterion | None, optional): criterion used to filter available clients. Defaults to None.
 
         Returns:
-            list[str]: List of CIDs representing available and filtered clients.
+            (list[str]): List of CIDs representing available and filtered clients.
         """
         if min_num_clients is not None:
             self.wait_for(min_num_clients)
@@ -60,7 +60,8 @@ class BaseFractionSamplingManager(SimpleClientManager):
                 applied. Defaults to None.
 
         Returns:
-            list[ClientProxy]: Selected client represented by a ClientProxy object in list form as expected by server.
+            (list[ClientProxy]): Selected client represented by a ClientProxy object in list form as expected by
+                server.
         """
         available_cids = self.wait_and_filter(min_num_clients, criterion)
         # Sample exactly on client randomly
@@ -79,7 +80,7 @@ class BaseFractionSamplingManager(SimpleClientManager):
                 applied. Defaults to None.
 
         Returns:
-            list[ClientProxy]: List of selected clients represented by ``ClientProxy`` objects.
+            (list[ClientProxy]): List of selected clients represented by ``ClientProxy`` objects.
         """
         available_cids = self.wait_and_filter(min_num_clients, criterion)
 

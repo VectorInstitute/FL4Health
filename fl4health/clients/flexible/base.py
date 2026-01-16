@@ -148,9 +148,8 @@ class FlexibleClient(BasicClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
-            a dictionary of any predictions produced by the model prior to the
-            application of the backwards phase
+            (tuple[TrainingLosses, TorchPredType]): The losses object from the train step along with a dictionary of
+                any predictions produced by the model prior to the application of the backwards phase
         """
         # Clear gradients from optimizer if they exist
         optimizer.zero_grad()
@@ -177,7 +176,7 @@ class FlexibleClient(BasicClient):
             losses (TrainingLosses): the losses to apply backwards on
 
         Returns:
-            TrainingLosses: The losses object post backwards application
+            (TrainingLosses): The losses object post backwards application
         """
         # Compute backward pass and update parameters with optimizer
         losses.backward["backward"].backward()
@@ -206,8 +205,8 @@ class FlexibleClient(BasicClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
-            a dictionary of any predictions produced by the model.
+            (tuple[TrainingLosses, TorchPredType]): The losses object from the train step along with
+                a dictionary of any predictions produced by the model.
         """
         losses, preds = self._compute_preds_and_losses(model, optimizer, input, target)
         losses = self._apply_backwards_on_losses_and_take_step(model, optimizer, losses)
@@ -225,8 +224,8 @@ class FlexibleClient(BasicClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
-            a dictionary of any predictions produced by the model.
+            (tuple[TrainingLosses, TorchPredType]): The losses object from the train step along with
+                a dictionary of any predictions produced by the model.
         """
         return self._train_step_with_model_and_optimizer(self.model, self.optimizers["global"], input, target)
 
@@ -245,8 +244,8 @@ class FlexibleClient(BasicClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            tuple[EvaluationLosses, TorchPredType]: The losses object from the val step along with a dictionary of the
-            predictions produced by the model.
+            (tuple[EvaluationLosses, TorchPredType]): The losses object from the val step along with a dictionary of
+                the predictions produced by the model.
         """
         # Get preds and compute loss
         with torch.no_grad():
@@ -265,8 +264,8 @@ class FlexibleClient(BasicClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            tuple[EvaluationLosses, TorchPredType]: The losses object from the val step along with a dictionary of the
-            predictions produced by the model.
+            (tuple[EvaluationLosses, TorchPredType]): The losses object from the val step along with a dictionary of
+                the predictions produced by the model.
         """
         return self._val_step_with_model(self.model, input, target)
 
@@ -286,10 +285,10 @@ class FlexibleClient(BasicClient):
                 ``self.model.forward().``
 
         Returns:
-            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains a dictionary of
-            predictions indexed by name and the second element contains intermediate activations indexed by name. By
-            passing features, we can compute losses such as the contrastive loss in MOON. All predictions included in
-            dictionary will by default be used to compute metrics separately.
+            (tuple[TorchPredType, TorchFeatureType]): A tuple in which the first element contains a dictionary of
+                predictions indexed by name and the second element contains intermediate activations indexed by name.
+                By passing features, we can compute losses such as the contrastive loss in MOON. All predictions
+                included in dictionary will by default be used to compute metrics separately.
 
         Raises:
             TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model's

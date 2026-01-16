@@ -20,7 +20,7 @@ def privacy_validate_and_fix_modules(model: nn.Module) -> tuple[nn.Module, bool]
         model (nn.Module): The model to be validated and potentially modified to be Opacus compliant.
 
     Returns:
-        tuple[nn.Module, bool]: Returns a (possibly) modified pytorch model and a boolean indicating whether a
+        (tuple[nn.Module, bool]): Returns a (possibly) modified pytorch model and a boolean indicating whether a
         reinitialization of any optimizers associated with the model will be required. Reinitialization of the
         optimizer parameters is required, for example, when the model layers are modified, yielding a mismatch
         in the optimizer parameters and the new model parameters.
@@ -60,7 +60,7 @@ def convert_model_to_opacus_model(
         **kwargs (Any): Another other kwargs that need to go to the wrap function.
 
     Returns:
-        GradSampleModule: The Opacus wrapped ``GradSampleModule``
+        (GradSampleModule): The Opacus wrapped ``GradSampleModule``
     """
     if isinstance(model, GradSampleModule):
         log(INFO, f"Provided model is already of type {type(model)}, skipping conversion to Opacus model type")
@@ -85,7 +85,7 @@ def map_model_to_opacus_model(
         **kwargs (Any): Another other kwargs that need to go to the conversion function.
 
     Returns:
-        GradSampleModule: The Opacus-compliant, wrapped ``GradSampleModule``.
+        (GradSampleModule): The Opacus-compliant, wrapped ``GradSampleModule``.
     """
     model, _ = privacy_validate_and_fix_modules(model)
     return convert_model_to_opacus_model(model, grad_sample_mode, *args, **kwargs)

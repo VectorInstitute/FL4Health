@@ -30,7 +30,7 @@ class FocalLoss(_Loss):
             targets (torch.Tensor): The ground truth segmentation labels.
 
         Returns:
-            torch.Tensor: The focal loss for the batch.
+            (torch.Tensor): The focal loss for the batch.
 
         """
         inputs = torch.sigmoid(inputs)

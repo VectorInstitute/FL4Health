@@ -32,7 +32,7 @@ class FixedSamplingByFractionClientManager(BaseFractionSamplingManager):
                 Defaults to None.
 
         Returns:
-            list[ClientProxy]: List of ClientProxy objects representing the selected clients.
+            (list[ClientProxy]): List of ClientProxy objects representing the selected clients.
         """
         available_cids = self.wait_and_filter(min_num_clients, criterion)
         n_available_cids = len(available_cids)

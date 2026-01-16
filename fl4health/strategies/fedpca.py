@@ -104,8 +104,8 @@ class FedPCA(BasicFedAvg):
                 from clients that experienced an issue during training, such as timeouts or exceptions.
 
         Returns:
-            tuple[Parameters | None, dict[str, Scalar]]: The aggregated parameters and the metrics dictionary.
-            In this case, the parameters are the new singular vectors and their corresponding singular values.
+            (tuple[Parameters | None, dict[str, Scalar]]): The aggregated parameters and the metrics dictionary.
+                In this case, the parameters are the new singular vectors and their corresponding singular values.
         """
         if not results:
             return None, {}
@@ -190,7 +190,7 @@ class FedPCA(BasicFedAvg):
             client_singular_values (NDArrays): Singular values corresponding to local PCs.
 
         Returns:
-            tuple[NDArray, NDArray]: Merged PCs and corresponding singular values.
+            (tuple[NDArray, NDArray]): Merged PCs and corresponding singular values.
         """
         x = [u @ np.diag(s) for u, s in zip(client_singular_vectors, client_singular_values)]
         svd_input = np.concatenate(x, axis=1)
@@ -234,7 +234,7 @@ class FedPCA(BasicFedAvg):
             client_singular_values (NDArrays): Singular values corresponding to local PCs.
 
         Returns:
-            tuple[NDArray, NDArray]: Merged PCs and corresponding singular values.
+            (tuple[NDArray, NDArray]): Merged PCs and corresponding singular values.
         """
         assert len(client_singular_values) >= MINIMUM_PCA_ClIENTS
         if len(client_singular_values) == MINIMUM_PCA_ClIENTS:

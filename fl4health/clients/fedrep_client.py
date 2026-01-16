@@ -146,9 +146,9 @@ class FedRepClient(BasicClient):
                 wrong.
 
         Returns:
-            EpochsAndStepsTuple: Returns a tuple of epochs and steps for which to train the head and representation
-            modules. Only two of the four possible values will be defined, depending on whether we're doing
-            epoch-based or step based training.
+            (EpochsAndStepsTuple): Returns a tuple of epochs and steps for which to train the head and representation
+                modules. Only two of the four possible values will be defined, depending on whether we're doing
+                epoch-based or step based training.
         """
         epochs_specified = ("local_head_epochs" in config) and ("local_rep_epochs" in config)
         steps_specified = ("local_head_steps" in config) and ("local_rep_steps" in config)
@@ -192,9 +192,9 @@ class FedRepClient(BasicClient):
             config (Config): The config from the server.
 
         Returns:
-            tuple[int | None, int | None, int | None, int | None, int, bool]: Returns the ``local_epochs``,
-            ``local_steps``, ``current_server_round`` and ``evaluate_after_fit``. Ensures only one of
-            ``local_epochs`` and ``local_steps`` is defined in the config and sets the one that is not to None.
+            (tuple[int | None, int | None, int | None, int | None, int, bool]): Returns the ``local_epochs``,
+                ``local_steps``, ``current_server_round`` and ``evaluate_after_fit``. Ensures only one of
+                ``local_epochs`` and ``local_steps`` is defined in the config and sets the one that is not to None.
 
         Raises:
             ValueError: If the config contains both local_steps and local epochs or if ``local_steps``,
@@ -249,8 +249,8 @@ class FedRepClient(BasicClient):
             config (NDArrays): The config from the server.
 
         Returns:
-            tuple[NDArrays, int, dict[str, Scalar]]: The parameters following the local training along with the
-            number of samples in the local training dataset and the computed metrics throughout the fit.
+            (tuple[NDArrays, int, dict[str, Scalar]]): The parameters following the local training along with the
+                number of samples in the local training dataset and the computed metrics throughout the fit.
 
         Raises:
             ValueError: If the steps or epochs for the representation and head module training processes are are
@@ -322,8 +322,8 @@ class FedRepClient(BasicClient):
             current_round (int | None, optional): The current FL round. Defaults to None.
 
         Returns:
-            tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
-            Loss is a dictionary of one or more losses that represent the different components of the loss.
+            (tuple[dict[str, float], dict[str, Scalar]]): The loss and metrics dictionary from the local training.
+                Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         # First we train the head module for head_epochs with the representations frozen in place
         self._prepare_train_head()
@@ -362,8 +362,8 @@ class FedRepClient(BasicClient):
             current_round (int | None, optional): What round of FL training we're currently on. Defaults to None.
 
         Returns:
-            tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
-            Loss is a dictionary of one or more losses that represent the different components of the loss.
+            (tuple[dict[str, float], dict[str, Scalar]]): The loss and metrics dictionary from the local training.
+                Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         assert isinstance(self.model, FedRepModel)
         # First we train the head module for head_steps with the representations frozen in place
@@ -400,11 +400,11 @@ class FedRepClient(BasicClient):
         Args:
             input (TorchInputType): input tensor to be run through the model. Here, ``TorchInputType`` is simply an
                 alias for the union of ``torch.Tensor`` and ``dict[str, torch.Tensor]``.
-            target (torch.Tensor): target tensor to be used to compute a loss given the model's outputs.
+            target (TorchTargetType): target tensor to be used to compute a loss given the model's outputs.
 
         Returns:
-            tuple[TrainingLosses, dict[str, torch.Tensor]]: The losses object from the train step along with
-            a dictionary of any predictions produced by the model.
+            (tuple[TrainingLosses, dict[str, torch.Tensor]]): The losses object from the train step along with
+                a dictionary of any predictions produced by the model.
         """
         # Clear gradients from the optimizers if they exits. We do both regardless of the client mode.
         self.optimizers["representation"].zero_grad()

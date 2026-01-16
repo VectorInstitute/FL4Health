@@ -92,7 +92,7 @@ class LlmClient(BasicClient):
             config (Config): The config from the server.
 
         Returns:
-            tuple[int | None, int | None, int, bool, bool]: Returns the local_epochs, local_steps,
+            (tuple[int | None, int | None, int, bool, bool]): Returns the local_epochs, local_steps,
                 current_server_round, evaluate_after_fit and pack_losses_with_val_metrics. Ensures only one of
                 local_epochs and local_steps is defined in the config and sets the one that is not to None.
         """
@@ -266,7 +266,7 @@ class LlmClient(BasicClient):
             current_round (int | None, optional): The current FL round
 
         Returns:
-            tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
+            (tuple[dict[str, float], dict[str, Scalar]]): The loss and metrics dictionary from the local training.
                 Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         # Do local training
@@ -306,8 +306,8 @@ class LlmClient(BasicClient):
         Validate the current model on the entire validation set.
 
         Returns:
-            tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics
-            from validation (and test if present).
+            (tuple[float, dict[str, Scalar]]): The validation loss and a dictionary of metrics from validation (and
+                test if present).
         """
         results = self.trainer.evaluate()
 
