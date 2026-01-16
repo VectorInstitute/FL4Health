@@ -21,9 +21,13 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class MnistApflClient(ApflClient):
+    def __init__(self, *args, seed: int | None = None, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.seed = seed
+
     def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
-        sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75)
+        sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, hash_key=self.seed)
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader
 
@@ -58,6 +62,6 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    client = MnistApflClient(data_path, [Accuracy()], device, reporters=[JsonReporter()])
+    client = MnistApflClient(data_path, [Accuracy()], device, seed=args.seed, reporters=[JsonReporter()])
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()
