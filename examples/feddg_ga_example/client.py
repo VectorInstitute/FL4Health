@@ -1,5 +1,6 @@
 import argparse
 from pathlib import Path
+from typing import Any
 
 import flwr as fl
 import torch
@@ -21,7 +22,7 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class MnistApflClient(ApflClient):
-    def __init__(self, *args, seed: int | None = None, **kwargs) -> None:
+    def __init__(self, *args: Any, seed: int | None = None, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.seed = seed
 
