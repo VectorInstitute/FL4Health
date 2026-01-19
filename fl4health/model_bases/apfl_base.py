@@ -64,8 +64,7 @@ class ApflModule(PartialLayerExchangeModel):
         Forward function for the full APFL model. This includes mixing of the global and local model predictions using
         \\(\\alpha\\). The predictions are combined as follows.
 
-        .. math::
-            \\alpha \\cdot \\text{local_logits} + (1.0 - \\alpha) \\cdot \\text{global_logits}
+        \\[\\alpha \\cdot \\text{local_logits} + (1.0 - \\alpha) \\cdot \\text{global_logits}\\]
 
         Args:
             input (torch.Tensor): Input tensor to be run through both the local and global models

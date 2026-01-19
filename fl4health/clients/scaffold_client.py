@@ -203,8 +203,7 @@ class ScaffoldClient(BasicClient):
 
         Each ``NDArray`` in the list of ``NDArrays`` are subtracted as
 
-        .. math::
-            \\text{params}_{1, i} - \\text{params}_{2, i}
+        \\[\\text{params}_{1, i} - \\text{params}_{2, i}\\]
 
         Args:
             params_1 (NDArrays): First set of parameters
@@ -238,8 +237,7 @@ class ScaffoldClient(BasicClient):
 
         The calculation is
 
-        .. math::
-            c_i^+ = c_i - c + \\frac{1}{(K \\cdot lr)} \\cdot (x - y_i)
+        \\[c_i^+ = c_i - c + \\frac{1}{(K \\cdot lr)} \\cdot (x - y_i)\\]
 
         where lr is the local learning rate.
 

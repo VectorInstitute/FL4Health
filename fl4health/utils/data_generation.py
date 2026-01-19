@@ -71,8 +71,7 @@ class SyntheticFedProxDataset(ABC):
         This function maps features x to a label y as done in the original paper. The first stage is the affine
         transformation.
 
-        .. math::
-            \\hat{y} = \\frac{1}{T} \\cdot (Wx + b).
+        \\[\\hat{y} = \\frac{1}{T} \\cdot (Wx + b).\\]
 
         Then \\(y = \\text{softmax}(\\hat{y})\\). Getting the argmax from the distribution, we then
         one hot encode the resulting label sample.
@@ -97,9 +96,8 @@ class SyntheticFedProxDataset(ABC):
         This function maps features x to a label y in an alternative way to include two layers. The first stage is two
         affine transformations.
 
-        .. math::
-            \\text{latent} = \\frac{1}{T} \\cdot (W_1 \\cdot x + b_1)
-            \\hat{y} = \\cdot (W_2 \\cdot \\text{latent} + b_2).
+        \\begin{align} & \\text{latent} = \\frac{1}{T} \\cdot (W_1 \\cdot x + b_1) \\\\
+        & \\hat{y} = (W_2 \\cdot \\text{latent} + b_2). \\end{align}
 
         Then \\(y = \\text{softmax}(\\hat{y})\\). Getting the argmax from the distribution, we then
         one hot encode the resulting label sample.

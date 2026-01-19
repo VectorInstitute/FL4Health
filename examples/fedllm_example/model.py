@@ -22,9 +22,9 @@ def cosine_annealing(
 
     Cosine annealing is computed as:
 
-    .. math::
-            \\text{lr}_t = \\text{lr}_{\\text{min}} + 0.5 \\cdot (\\text{lr}_{\\text{max}} - \\text{lr}_{\\text{min}})
-            (1 + \\cos(\\frac{\\text{current_round}}{\\text{total_round}} \\cdot \\pi)
+    \\begin{align} & \\text{lr}_t = \\text{lr}_{\\text{min}} + 0.5 \\cdot (\\text{lr}_{\\text{max}}
+    - \\text{lr}_{\\text{min}}) \\\\
+    & (1 + \\cos(\\frac{\\text{current_round}}{\\text{total_round}} \\cdot \\pi)\\end{align}
 
     Args:
         total_round (int): The total number of rounds.

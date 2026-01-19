@@ -87,8 +87,7 @@ class NumpyClippingClient(BasicClient):
         """
         Performs "flat clipping" on the parameters as follows.
 
-        .. math::
-            \\text{parameters} \\cdot \\min \\left(1, \\frac{C}{\\Vert \\text{parameters} \\Vert_2} \\right)
+        \\[\\text{parameters} \\cdot \\min \\left(1, \\frac{C}{\\Vert \\text{parameters} \\Vert_2} \\right)\\]
 
         Args:
             parameters (NDArrays): Parameters to clip

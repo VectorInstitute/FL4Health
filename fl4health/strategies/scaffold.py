@@ -225,8 +225,7 @@ class Scaffold(BasicFedAvg):
 
         Calculates
 
-        .. math::
-            \\text{original_params} + \\text{scaling_coefficient} \\cdot \\text{parameter_updates}.
+        \\[\\text{original_params} + \\text{scaling_coefficient} \\cdot \\text{parameter_updates}.\\]
 
         Args:
             scaling_coefficient (float): Scaling length for the parameter updates (can be thought of as
@@ -329,8 +328,7 @@ class Scaffold(BasicFedAvg):
         the paper. If \\(c\\) is the server control variates and ``c_update`` is the client control variates, then
         this update takes the following form.
 
-        .. math::
-            c + \\frac{\\vert S \\vert}{N} \\cdot c_{\\text{update}},
+        \\[c + \\frac{\\vert S \\vert}{N} \\cdot c_{\\text{update}},\\]
 
         where \\(\\vert S\\vert\\) is the number of clients that participated and N is
         the total number of clients \\(\\frac{\\vert S \\vert}{N}\\) is the proportion given by fraction fit.
