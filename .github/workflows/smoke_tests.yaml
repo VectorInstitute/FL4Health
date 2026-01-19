@@ -36,13 +36,6 @@ jobs:
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
 
-      - name: Set up cache
-        uses: actions/cache@v5
-        id: cached-uv-dependencies
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ hashFiles('**/uv.lock') }}
-
       - name: Set up file descriptor limit
         run: ulimit -n 4096
 
@@ -59,12 +52,3 @@ jobs:
           slug: VectorInstitute/FL4Health
           fail_ci_if_error: true
           verbose: true
-
-      # Deleting some temporary files and useless folders to free up space
-      # Deleting /usr/share/dotnet should clear ~4GB of space.
-      # Deleting /usr/local/lib/android should clear ~12GB of space.
-      - name: Cleanup space (before cache save)
-        run: |
-          df -h /dev/root
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android
-          df -h /dev/root
