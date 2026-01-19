@@ -133,7 +133,6 @@ async def start_server_process_and_wait_for_stabilization(server_process: asynci
         raise SmokeTestAssertError("[ASSERT_ERROR] Startup log message not found in server output.")
 
     logger.info("Server started")
-    print("HELLO OUT THERE")
     return full_server_output
 
 
@@ -667,6 +666,7 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
             await asyncio.sleep(0)  # give control back to loop manager
             output = output_in_bytes.decode().replace("\\n", "\n")
             logger.info(f"{process_name} output: {output}")
+            print(f"{process_name} output: {output}")
             full_output += output
             return_code = process.returncode
 
