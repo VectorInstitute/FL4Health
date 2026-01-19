@@ -16,7 +16,7 @@ We use the standard git development flow of branch and merge to main with PRs on
 
 ## Development Requirements
 
-For development and testing, we use [uv](https://docs.astral.sh/uv/) for dependency management. The library dependencies and those for development and testing are listed in the `pyproject.toml` file.
+For development and testing, we use [uv](https://docs.astral.sh/uv/) for dependency management. The library dependencies and those for development and testing are listed in the `pyproject.toml` file. ``uv`` is also used to produce our releases, which are managed and automated by GitHub.
 
 The easiest way to set up the development environment:
 ```bash
