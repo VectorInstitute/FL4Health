@@ -182,7 +182,6 @@ class NnunetClient(BasicClient):
 
         # Auto set verbose to True if console handler is on DEBUG mode
         self.verbose = verbose if console_handler.level >= INFO else True
-        self.verbose = True
 
         # Used to redirect stdout to logger
         self.stream2debug = StreamToLogger(FLOWER_LOGGER, DEBUG)
@@ -522,17 +521,14 @@ class NnunetClient(BasicClient):
         """Checks if nnunet dataset fingerprint already exists and if not extracts one from the dataset."""
         # Check first whether this client instance has already extracted a dataset fp
         # Possible if the client was asked to generate the nnunet plans for the server
-        log(INFO, "HERE 0")
         if not self.fingerprint_extracted:
             fp_path = join(nnUNet_preprocessed, self.dataset_name, "dataset_fingerprint.json")
             # Check if fp already exists or if we want to redo fp extraction
             if self.always_preprocess or not exists(fp_path):
                 start = time.time()
                 # Unless log level is DEBUG or lower hide nnunet output
-                # with redirect_stdout(self.stream2debug):
-                log(INFO, "HERE 1")
-                extract_fingerprints(dataset_ids=[self.dataset_id])
-                log(INFO, "HERE 2")
+                with redirect_stdout(self.stream2debug):
+                    extract_fingerprints(dataset_ids=[self.dataset_id])
                 if self.verbose:
                     log(
                         INFO,
@@ -548,7 +544,6 @@ class NnunetClient(BasicClient):
                 INFO,
                 "\tThis client has already extracted the dataset fingerprint during this session. Skipping.",
             )
-        log(INFO, "HERE 3")
         # Avoid extracting fingerprint multiple times when always_preprocess is true
         self.fingerprint_extracted = True
 
@@ -843,8 +838,6 @@ class NnunetClient(BasicClient):
             # Check if local nnunet dataset fingerprint needs to be extracted
             self.maybe_extract_fingerprint()
 
-            log(INFO, "Get Props 1")
-
             # Create experiment planner and plans.
             # Plans name must be temp_plans so that we can safely delete the generated plans file
             planner = ExperimentPlanner(dataset_name_or_id=self.dataset_id, plans_name="temp_plans")
@@ -857,14 +850,10 @@ class NnunetClient(BasicClient):
             plans["plans_name"] = self.dataset_name + "_plans"
             plans_bytes = pickle.dumps(plans)
 
-            log(INFO, "Get Props 2")
-
             # Remove plans file . A new one will be generated in self.setup_client
             plans_path = join(nnUNet_preprocessed, self.dataset_name, planner.plans_identifier + ".json")
             if exists(plans_path):
                 os.remove(plans_path)
-
-            log(INFO, "Get Props 3")
 
             # Update local config with plans
             config["nnunet_plans"] = plans_bytes
@@ -877,14 +866,10 @@ class NnunetClient(BasicClient):
         if not self.initialized:
             self.setup_client(config)  # Client must be setup in order to initialize nnunet_trainer
 
-        log(INFO, "Get Props 4")
-
         # Add additional properties from nnunet trainer to properties dict. We may want to add more keys later
         properties["num_input_channels"] = self.nnunet_trainer.num_input_channels
         properties["num_segmentation_heads"] = self.nnunet_trainer.label_manager.num_segmentation_heads
         properties["enable_deep_supervision"] = self.nnunet_trainer.enable_deep_supervision
-
-        log(INFO, "Get Props 4")
 
         return properties
 

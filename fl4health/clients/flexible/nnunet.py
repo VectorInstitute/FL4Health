@@ -555,17 +555,14 @@ class FlexibleNnunetClient(FlexibleClient):
         """Checks if nnunet dataset fingerprint already exists and if not extracts one from the dataset."""
         # Check first whether this client instance has already extracted a dataset fp
         # Possible if the client was asked to generate the nnunet plans for the server
-        log(INFO, "HERE 0")
         if not self.fingerprint_extracted:
             fp_path = join(nnUNet_preprocessed, self.dataset_name, "dataset_fingerprint.json")
             # Check if fp already exists or if we want to redo fp extraction
             if self.always_preprocess or not exists(fp_path):
                 start = time.time()
                 # Unless log level is DEBUG or lower hide nnunet output
-                # with redirect_stdout(self.stream2debug):
-                log(INFO, "HERE 1")
-                extract_fingerprints(dataset_ids=[self.dataset_id])
-                log(INFO, "HERE 2")
+                with redirect_stdout(self.stream2debug):
+                    extract_fingerprints(dataset_ids=[self.dataset_id])
                 if self.verbose:
                     log(
                         INFO,
@@ -581,7 +578,6 @@ class FlexibleNnunetClient(FlexibleClient):
                 INFO,
                 "\tThis client has already extracted the dataset fingerprint during this session. Skipping.",
             )
-        log(INFO, "HERE 3")
         # Avoid extracting fingerprint multiple times when always_preprocess is true
         self.fingerprint_extracted = True
 
