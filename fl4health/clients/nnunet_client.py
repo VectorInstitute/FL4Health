@@ -522,6 +522,7 @@ class NnunetClient(BasicClient):
         """Checks if nnunet dataset fingerprint already exists and if not extracts one from the dataset."""
         # Check first whether this client instance has already extracted a dataset fp
         # Possible if the client was asked to generate the nnunet plans for the server
+        log(INFO, "HERE 0")
         if not self.fingerprint_extracted:
             fp_path = join(nnUNet_preprocessed, self.dataset_name, "dataset_fingerprint.json")
             # Check if fp already exists or if we want to redo fp extraction
