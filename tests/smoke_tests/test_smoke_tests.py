@@ -80,7 +80,7 @@ async def test_nnunet_config_2d(tolerance: float) -> None:
         config_path="tests/smoke_tests/nnunet_config_2d.yaml",
         dataset_path="examples/datasets/nnunet",
         tolerance=tolerance,
-        read_logs_timeout=450,
+        read_logs_timeout=300,
     )
     task = asyncio.create_task(coroutine)
     await try_running_test_task(task)
@@ -95,7 +95,7 @@ async def test_nnunet_config_3d(tolerance: float) -> None:
         config_path="tests/smoke_tests/nnunet_config_3d.yaml",
         dataset_path="examples/datasets/nnunet",
         tolerance=tolerance,
-        read_logs_timeout=450,
+        read_logs_timeout=300,
     )
     task = asyncio.create_task(coroutine)
     await try_running_test_task(task)
@@ -477,7 +477,7 @@ async def test_flexible_nnunet_config_2d(tolerance: float) -> None:
         config_path="tests/smoke_tests/nnunet_config_2d.yaml",
         dataset_path="examples/datasets/nnunet",
         tolerance=tolerance,
-        read_logs_timeout=450,
+        read_logs_timeout=300,
     )
     task = asyncio.create_task(coroutine)
     await try_running_test_task(task)
@@ -492,7 +492,7 @@ async def test_flexible_nnunet_config_3d(tolerance: float) -> None:
         config_path="tests/smoke_tests/nnunet_config_3d.yaml",
         dataset_path="examples/datasets/nnunet",
         tolerance=tolerance,
-        read_logs_timeout=450,
+        read_logs_timeout=300,
     )
     task = asyncio.create_task(coroutine)
     await try_running_test_task(task)
@@ -507,7 +507,7 @@ async def test_ditto_flexible_nnunet_config_2d(tolerance: float) -> None:
         config_path="tests/smoke_tests/nnunet_config_2d.yaml",
         dataset_path="examples/datasets/nnunet",
         tolerance=tolerance,
-        read_logs_timeout=450,
+        read_logs_timeout=300,
     )
     task = asyncio.create_task(coroutine)
     await try_running_test_task(task)
@@ -523,7 +523,7 @@ async def test_nnunet_pfl_mr_mtl_config_3d(tolerance: float) -> None:
         dataset_path="examples/datasets/nnunet",
         additional_client_args={"--personalized_strategy": "mr_mtl"},
         tolerance=tolerance,
-        read_logs_timeout=450,
+        read_logs_timeout=300,
     )
     task = asyncio.create_task(coroutine)
     await try_running_test_task(task)
@@ -539,7 +539,7 @@ async def test_nnunet_pfl_mr_mtl_config_2d(tolerance: float) -> None:
         dataset_path="examples/datasets/nnunet",
         additional_client_args={"--personalized_strategy": "mr_mtl"},
         tolerance=tolerance,
-        read_logs_timeout=450,
+        read_logs_timeout=300,
     )
     task = asyncio.create_task(coroutine)
     await try_running_test_task(task)
