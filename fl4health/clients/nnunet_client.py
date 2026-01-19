@@ -182,6 +182,7 @@ class NnunetClient(BasicClient):
 
         # Auto set verbose to True if console handler is on DEBUG mode
         self.verbose = verbose if console_handler.level >= INFO else True
+        self.verbose = True
 
         # Used to redirect stdout to logger
         self.stream2debug = StreamToLogger(FLOWER_LOGGER, DEBUG)
@@ -528,7 +529,9 @@ class NnunetClient(BasicClient):
                 start = time.time()
                 # Unless log level is DEBUG or lower hide nnunet output
                 # with redirect_stdout(self.stream2debug):
+                log(INFO, "HERE 1")
                 extract_fingerprints(dataset_ids=[self.dataset_id])
+                log(INFO, "HERE 2")
                 if self.verbose:
                     log(
                         INFO,
@@ -544,7 +547,7 @@ class NnunetClient(BasicClient):
                 INFO,
                 "\tThis client has already extracted the dataset fingerprint during this session. Skipping.",
             )
-
+        log(INFO, "HERE 3")
         # Avoid extracting fingerprint multiple times when always_preprocess is true
         self.fingerprint_extracted = True
 
