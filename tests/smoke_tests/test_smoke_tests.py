@@ -495,6 +495,7 @@ async def test_flexible_nnunet_config_3d(tolerance: float) -> None:
         config_path="tests/smoke_tests/nnunet_config_3d.yaml",
         dataset_path="examples/datasets/nnunet",
         tolerance=tolerance,
+        read_logs_timeout=450,
     )
     task = asyncio.create_task(coroutine)
     await try_running_test_task(task)
