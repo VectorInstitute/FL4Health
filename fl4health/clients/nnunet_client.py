@@ -839,6 +839,8 @@ class NnunetClient(BasicClient):
             # Check if local nnunet dataset fingerprint needs to be extracted
             self.maybe_extract_fingerprint()
 
+            log(INFO, "Get Props 1")
+
             # Create experiment planner and plans.
             # Plans name must be temp_plans so that we can safely delete the generated plans file
             planner = ExperimentPlanner(dataset_name_or_id=self.dataset_id, plans_name="temp_plans")
@@ -851,10 +853,14 @@ class NnunetClient(BasicClient):
             plans["plans_name"] = self.dataset_name + "_plans"
             plans_bytes = pickle.dumps(plans)
 
+            log(INFO, "Get Props 2")
+
             # Remove plans file . A new one will be generated in self.setup_client
             plans_path = join(nnUNet_preprocessed, self.dataset_name, planner.plans_identifier + ".json")
             if exists(plans_path):
                 os.remove(plans_path)
+
+            log(INFO, "Get Props 3")
 
             # Update local config with plans
             config["nnunet_plans"] = plans_bytes
@@ -867,10 +873,14 @@ class NnunetClient(BasicClient):
         if not self.initialized:
             self.setup_client(config)  # Client must be setup in order to initialize nnunet_trainer
 
+        log(INFO, "Get Props 4")
+
         # Add additional properties from nnunet trainer to properties dict. We may want to add more keys later
         properties["num_input_channels"] = self.nnunet_trainer.num_input_channels
         properties["num_segmentation_heads"] = self.nnunet_trainer.label_manager.num_segmentation_heads
         properties["enable_deep_supervision"] = self.nnunet_trainer.enable_deep_supervision
+
+        log(INFO, "Get Props 4")
 
         return properties
 

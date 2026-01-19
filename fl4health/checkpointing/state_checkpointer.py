@@ -423,7 +423,7 @@ class ServerStateCheckpointer(StateCheckpointer):
                 ``set_checkpoint_path``
             checkpoint_name (str | None, optional): Name of the checkpoint to be saved. If None, but ``checkpoint_dir``
                 is set then a default ``checkpoint_name`` based on the underlying name of the client to be
-                checkpointed will be set of the form ``f"f"server_{self.server.server_name}_state.pt""``. This can be
+                checkpointed will be set of the form ``f"server_{self.server.server_name}_state.pt"``. This can be
                 updated later  with ``set_checkpoint_path``. Defaults to None.
             snapshot_attrs (dict[str, tuple[AbstractSnapshotter, Any]] | None, optional): Attributes that we need to
                 save in order to allow for restarting of training. If None, a sensible default set of attributes and
@@ -562,7 +562,7 @@ class NnUnetServerStateCheckpointer(ServerStateCheckpointer):
                 ``set_checkpoint_path``
             checkpoint_name (str | None, optional): Name of the checkpoint to be saved. If None, but ``checkpoint_dir``
                 is set then a default ``checkpoint_name`` based on the underlying name of the client to be
-                checkpointed will be set of the form ``f"f"server_{self.server.server_name}_state.pt""``. This can be
+                checkpointed will be set of the form ``f"server_{self.server.server_name}_state.pt"``. This can be
                 updated later  with ``set_checkpoint_path``. Defaults to None.
         """
         # Go beyond default snapshot_attrs with nnUNet-specific attributes.
