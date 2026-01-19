@@ -133,6 +133,7 @@ async def start_server_process_and_wait_for_stabilization(server_process: asynci
         raise SmokeTestAssertError("[ASSERT_ERROR] Startup log message not found in server output.")
 
     logger.info("Server started")
+    print("HELLO OUT THERE")
     return full_server_output
 
 
