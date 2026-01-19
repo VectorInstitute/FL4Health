@@ -527,8 +527,8 @@ class NnunetClient(BasicClient):
             if self.always_preprocess or not exists(fp_path):
                 start = time.time()
                 # Unless log level is DEBUG or lower hide nnunet output
-                with redirect_stdout(self.stream2debug):
-                    extract_fingerprints(dataset_ids=[self.dataset_id])
+                # with redirect_stdout(self.stream2debug):
+                extract_fingerprints(dataset_ids=[self.dataset_id])
                 if self.verbose:
                     log(
                         INFO,

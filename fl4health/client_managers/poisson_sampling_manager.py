@@ -10,7 +10,7 @@ from fl4health.client_managers.base_sampling_manager import BaseFractionSampling
 
 class PoissonSamplingClientManager(BaseFractionSamplingManager):
     """
-    Overrides the ``BaseFractionSamplingManager`` to Provide Poisson Sampling for Clients rather than fixed without
+    Overrides the ``BaseFractionSamplingManager`` to provide Poisson sampling for clients rather than fixed without
     replacement sampling.
     """
 
