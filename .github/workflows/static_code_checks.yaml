@@ -58,7 +58,6 @@ jobs:
           ignore-vulns: |
             GHSA-3749-ghw9-m3mg
             GHSA-887c-mr87-cxwp
-            GHSA-wf7f-8fxf-xfxc
             CVE-2025-53000
             CVE-2026-21851
             CVE-2024-55459

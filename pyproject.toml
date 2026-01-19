@@ -43,6 +43,7 @@ dependencies = [
     "dm-tree>=0.1.9,<0.2.0",
     "cmake>=3.31.6,<4.0.0",
     "matplotlib>=3.10.1,<4.0.0",
+    "pyasn1>=0.6.2",
 ]
 
 [dependency-groups]
