@@ -328,14 +328,6 @@ async def run_smoke_test(
 
         client_processes = await asyncio.gather(*client_tasks)
 
-        # Collecting the server output when its process finish
-        full_server_output = await _wait_for_process_to_finish_and_retrieve_logs(
-            server_process, "Server", read_logs_timeout
-        )
-        full_server_output = postprocess_logs(full_server_output)
-
-        logger.info("Server has finished execution")
-
         # Collecting the clients output when their processes finish
         client_result_tasks = []
         for i, client_process in enumerate(client_processes):
@@ -345,6 +337,14 @@ async def run_smoke_test(
 
         full_client_outputs = await asyncio.gather(*client_result_tasks)
         logger.info("All clients finished execution")
+
+        # Collecting the server output when its process finish
+        full_server_output = await _wait_for_process_to_finish_and_retrieve_logs(
+            server_process, "Server", read_logs_timeout
+        )
+        full_server_output = postprocess_logs(full_server_output)
+
+        logger.info("Server has finished execution")
 
         # Server assertions
         if contains_actual_error(full_server_output):
