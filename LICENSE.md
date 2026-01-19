@@ -1,201 +1,78 @@
-                                 Apache License
-                           Version 2.0, January 2004
-                        http://www.apache.org/licenses/
+<p align="center"><b>Vector Institute License**</b></p>
 
-   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+<p align="center">Last updated: 12-08-2025</p>
 
-   1. Definitions.
+THIS VECTOR INSTITUTE LICENSE (“AGREEMENT”) IS A LEGALLY BINDING AGREEMENT BETWEEN YOU OR THE ENTITY YOU REPRESENT AND THE VECTOR INSTITUTE (“VECTOR”) AND GOVERNS YOUR USE OF THE WORK THAT HAS BEEN PROVIDED TO YOU BY VECTOR AND/OR ANY OF ITS AFFILIATES. THE WORK MAY ONLY BE ACCESSED AND USED BY ACADEMIC ENTITIES, SPONSORS, OR PARTNERS (ALL AS DEFINED BELOW). BY ACCESSING OR USING THE WORK, YOU REPRESENT AND WARRANT THAT YOU ARE AN ACADEMIC ENTITY, A SPONSOR, OR A PARTNER OR THAT YOU ARE ENTERING INTO THIS AGREEMENT ON BEHALF OF AN ACADEMIC ENTITY, A SPONSOR, OR A PARTNER. IF YOU ARE ENTERING INTO THIS AGREEMENT ON BEHALF OF AN ACADEMIC ENTITY, A SPONSOR, OR A PARTNER, YOU FURTHER REPRESENT AND WARRANT THAT YOU HAVE FULL LEGAL AUTHORITY TO BIND THEM TO THESE TERMS AND ACKNOWLEDGE THAT ALL REFERENCES TO “YOU” IN THE TERMS REFER TO THAT ENTITY. IF YOU ARE UNABLE TO MAKE THESE REPRESENTATIONS OR COMPLY WITH THE TERMS OF THIS AGREEMENT, DO NOT ACCESS OR USE THE WORK. **<ins>BY ACCESSING OR USING THE WORK, YOU AGREE TO BE BOUND BY THE TERMS OF THIS AGREEMENT</ins>.**
 
-      "License" shall mean the terms and conditions for use, reproduction,
-      and distribution as defined by Sections 1 through 9 of this document.
+1. **Definitions**.
+   1. “**Academic Entity**” means a not-for-profit degree-granting academic institution approved by Vector. Please contact Vector at dataoffice@vectorinstitute.ai for approval.
 
-      "Licensor" shall mean the copyright owner or entity authorized by
-      the copyright owner that is granting the License.
+   1. “**Academic Research Purposes**” shall mean use for non-commercial academic research performed by an Academic Entity.
 
-      "Legal Entity" shall mean the union of the acting entity and all
-      other entities that control, are controlled by, or are under common
-      control with that entity. For the purposes of this definition,
-      "control" means (i) the power, direct or indirect, to cause the
-      direction or management of such entity, whether by contract or
-      otherwise, or (ii) ownership of fifty percent (50%) or more of the
-      outstanding shares, or (iii) beneficial ownership of such entity.
+   2. “**Partner**” means a legal entity that has entered into a Partnership Agreement, Collaboration Agreement, or FastLane Company Agreement with Vector.
 
-      "You" (or "Your") shall mean an individual or Legal Entity
-      exercising permissions granted by this License.
+   3. “**Sell**” means practicing any or all of the rights granted under this Agreement to provide to any third party, for a fee or other consideration (including, without limitation, fees for hosting or consulting/support services related to the Work), a product or service whose value derives, entirely or substantially, from the functionality of the Work.
 
-      "Source" form shall mean the preferred form for making modifications,
-      including but not limited to software source code, documentation
-      source, and configuration files.
+   4. “**Sponsor**” means a legal entity that has entered into a Sponsorship Agreement with Vector.
 
-      "Object" form shall mean any form resulting from mechanical
-      transformation or translation of a Source form, including but
-      not limited to compiled object code, generated documentation,
-      and conversions to other media types.
+   5. “**You**” or “**Your**” means the Academic Entity, Sponsor, or Partner entering into this Agreement.
 
-      "Work" shall mean the work of authorship, whether in Source or
-      Object form, made available under the License, as indicated by a
-      copyright notice that is included in or attached to the work
-      (an example is provided in the Appendix below).
+   6. “**Your Product**” means a product or service You create (at least in part) by accessing or using the Work and/or that incorporates portions of the Work.
 
-      "Derivative Works" shall mean any work, whether in Source or Object
-      form, that is based on (or derived from) the Work and for which the
-      editorial revisions, annotations, elaborations, or other modifications
-      represent, as a whole, an original work of authorship. For the purposes
-      of this License, Derivative Works shall not include works that remain
-      separable from, or merely link (or bind by name) to the interfaces of,
-      the Work and Derivative Works thereof.
+   7. “**Work**” means any work, whether or not subject to copyright protection, including, but not limited to, software code (whether in source code or object code form), frameworks, models, applications, documentation, or data licensed pursuant to this Agreement.
 
-      "Contribution" shall mean any work of authorship, including
-      the original version of the Work and any modifications or additions
-      to that Work or Derivative Works thereof, that is intentionally
-      submitted to Licensor for inclusion in the Work by the copyright owner
-      or by an individual or Legal Entity authorized to submit on behalf of
-      the copyright owner. For the purposes of this definition, "submitted"
-      means any form of electronic, verbal, or written communication sent
-      to the Licensor or its representatives, including but not limited to
-      communication on electronic mailing lists, source code control systems,
-      and issue tracking systems that are managed by, or on behalf of, the
-      Licensor for the purpose of discussing and improving the Work, but
-      excluding communication that is conspicuously marked or otherwise
-      designated in writing by the copyright owner as "Not a Contribution."
+2. **License Grant**. If You are an Academic Entity, Vector grants You a limited, royalty-free, non-exclusive, non-sublicensable, non-transferable license to use, copy, modify, merge, publish, and/or distribute the Work solely internally for Academic Research Purposes and subject to the restrictions herein. If You are a Sponsor or a Partner, Vector grants You a limited, royalty-free, non-exclusive, non-sublicensable, non-transferable license to use, copy, modify, merge, publish and/or distribute the Work, subject to the restrictions herein. For the avoidance of doubt and notwithstanding anything herein to the contrary, You are not granted any rights to, and are not permitted to, Sell the Work.
 
-      "Contributor" shall mean Licensor and any individual or Legal Entity
-      on behalf of whom a Contribution has been received by Licensor and
-      subsequently incorporated within the Work.
+3. **License Restrictions**. Any use of the Work by any person or entity that is not an Academic Entity, a Sponsor, or a Partner or other than in accordance with this Agreement is strictly prohibited. You may not:
 
-   2. Grant of Copyright License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      copyright license to reproduce, prepare Derivative Works of,
-      publicly display, publicly perform, sublicense, and distribute the
-      Work and such Derivative Works in Source or Object form.
+   1. copy any feature, design, or graphic of the Work;
 
-   3. Grant of Patent License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      (except as stated in this section) patent license to make, have made,
-      use, offer to sell, sell, import, and otherwise transfer the Work,
-      where such license applies only to those patent claims licensable
-      by such Contributor that are necessarily infringed by their
-      Contribution(s) alone or by combination of their Contribution(s)
-      with the Work to which such Contribution(s) was submitted. If You
-      institute patent litigation against any entity (including a
-      cross-claim or counterclaim in a lawsuit) alleging that the Work
-      or a Contribution incorporated within the Work constitutes direct
-      or contributory patent infringement, then any patent licenses
-      granted to You under this License for that Work shall terminate
-      as of the date such litigation is filed.
+   2. reverse engineer, re-engineer, decompile or disassemble the Work or cause or allow discovery of the source code or underlying ideas or algorithms of the Work;
 
-   4. Redistribution. You may reproduce and distribute copies of the
-      Work or Derivative Works thereof in any medium, with or without
-      modifications, and in Source or Object form, provided that You
-      meet the following conditions:
+   3. use or access the Work in order to build a competitive product or service or to assist someone else to build a competitive product or service or in connection with any other work that has the same or similar functionality as the Work;
 
-      (a) You must give any other recipients of the Work or
-          Derivative Works a copy of this License; and
+   4. use the Work for performance, benchmarking or comparison testing or analysis, or disclose to any third party or otherwise disseminate any results thereof (all of which shall be considered confidential information of Vector);
 
-      (b) You must cause any modified files to carry prominent notices
-          stating that You changed the files; and
+   5. remove, obscure or modify any copyright, trademark, or other proprietary or intellectual property rights notices in the Work;
 
-      (c) You must retain, in the Source form of any Derivative Works
-          that You distribute, all copyright, patent, trademark, and
-          attribution notices from the Source form of the Work,
-          excluding those notices that do not pertain to any part of
-          the Derivative Works; and
+   6. use the Work in a manner that violates any applicable law, ordinance, regulation, or administrative order, or applicable Vector policies; or
 
-      (d) If the Work includes a "NOTICE" text file as part of its
-          distribution, then any Derivative Works that You distribute must
-          include a readable copy of the attribution notices contained
-          within such NOTICE file, excluding those notices that do not
-          pertain to any part of the Derivative Works, in at least one
-          of the following places: within a NOTICE text file distributed
-          as part of the Derivative Works; within the Source form or
-          documentation, if provided along with the Derivative Works; or,
-          within a display generated by the Derivative Works, if and
-          wherever such third-party notices normally appear. The contents
-          of the NOTICE file are for informational purposes only and
-          do not modify the License. You may add Your own attribution
-          notices within Derivative Works that You distribute, alongside
-          or as an addendum to the NOTICE text from the Work, provided
-          that such additional attribution notices cannot be construed
-          as modifying the License.
+   7. in any way attempt to do, or assist anyone else with, any of the foregoing. To the extent permissible by law, You waive any rights that You may have to do any of the foregoing.
 
-      You may add Your own copyright statement to Your modifications and
-      may provide additional or different license terms and conditions
-      for use, reproduction, or distribution of Your modifications, or
-      for any such Derivative Works as a whole, provided Your use,
-      reproduction, and distribution of the Work otherwise complies with
-      the conditions stated in this License.
+4. **Additional License Restrictions for Sponsors and Partners**. If You are a Sponsor or a Partner:
 
-   5. Submission of Contributions. Unless You explicitly state otherwise,
-      any Contribution intentionally submitted for inclusion in the Work
-      by You to the Licensor shall be under the terms and conditions of
-      this License, without any additional terms or conditions.
-      Notwithstanding the above, nothing herein shall supersede or modify
-      the terms of any separate license agreement you may have executed
-      with Licensor regarding such Contributions.
+   1. You may only publish and/or distribute the Work as part of Your Product and may not otherwise transfer, distribute, host, or allow any third party (other than third parties acting on your behalf and bound by written terms at least as protective of Vector as this Agreement) to access or use the Work; and
 
-   6. Trademarks. This License does not grant permission to use the trade
-      names, trademarks, service marks, or product names of the Licensor,
-      except as required for reasonable and customary use in describing the
-      origin of the Work and reproducing the content of the NOTICE file.
+   2. You must ensure that Your customers access and use the Work solely as incorporated into Your Product and solely as necessary for such customers to access and use Your Product.
 
-   7. Disclaimer of Warranty. Unless required by applicable law or
-      agreed to in writing, Licensor provides the Work (and each
-      Contributor provides its Contributions) on an "AS IS" BASIS,
-      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-      implied, including, without limitation, any warranties or conditions
-      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
-      PARTICULAR PURPOSE. You are solely responsible for determining the
-      appropriateness of using or redistributing the Work and assume any
-      risks associated with Your exercise of permissions under this License.
+5. **Term and Termination**. This Agreement shall immediately and automatically terminate upon Your breach of this Agreement. Upon any termination of this Agreement, You shall cease all use of the Work and delete all copies in Your possession or control. The provisions of this Agreement which by their express or implied terms extend beyond the termination of this Agreement shall continue in full force and effect notwithstanding the termination or expiration of this Agreement.<br></br>
+If You are an Academic Entity, Vector may terminate this Agreement for any or no reason, with immediate effect. <br></br>
+If You are a Sponsor or a Partner, Vector, acting reasonably, may terminate this Agreement upon one hundred and eighty (180) days notice to You. <br></br>
+If You are a Sponsor or a Partner, You may, upon expiration or termination of Your Partner or Sponsor relationship with Vector, continue to use only the version(s) of the Work that You obtained from Vector subject to this Agreement when You were a Sponsor or Partner unless and until this Agreement is terminated by Vector.
 
-   8. Limitation of Liability. In no event and under no legal theory,
-      whether in tort (including negligence), contract, or otherwise,
-      unless required by applicable law (such as deliberate and grossly
-      negligent acts) or agreed to in writing, shall any Contributor be
-      liable to You for damages, including any direct, indirect, special,
-      incidental, or consequential damages of any character arising as a
-      result of this License or out of the use or inability to use the
-      Work (including but not limited to damages for loss of goodwill,
-      work stoppage, computer failure or malfunction, or any and all
-      other commercial damages or losses), even if such Contributor
-      has been advised of the possibility of such damages.
+6. **Ownership**. The Work is licensed to You, not sold. Vector retains all rights, title, and interest in and to the Work, including all copyrights, trade secrets, trademarks, patents, and other forms of proprietary and intellectual property rights therein and thereto, belong to Vector or its licensors. This Agreement does not convey to You any interest in or to any Work, but only a limited right of use revocable in accordance with the terms of this Agreement. No rights are granted to You hereunder other than as expressly set forth in this Agreement and Vector reserves all rights not expressly granted herein.
 
-   9. Accepting Warranty or Additional Liability. While redistributing
-      the Work or Derivative Works thereof, You may choose to offer,
-      and charge a fee for, acceptance of support, warranty, indemnity,
-      or other liability obligations and/or rights consistent with this
-      License. However, in accepting such obligations, You may act only
-      on Your own behalf and on Your sole responsibility, not on behalf
-      of any other Contributor, and only if You agree to indemnify,
-      defend, and hold each Contributor harmless for any liability
-      incurred by, or claims asserted against, such Contributor by reason
-      of your accepting any such warranty or additional liability.
+7. **No Maintenance**. Vector has no obligation under this Agreement to provide any maintenance, support, training or other services for or related to the Work. Vector may cease making the Work available at any time.
 
-   END OF TERMS AND CONDITIONS
+8. **Notice and Attribution / Publicity**. You must (a) retain all copyright, patent, trademark, attribution, and other notices that are present in the Work and (b) include the following attribution notice within a "Notice" text file distributed as a part of the Work: "This work is licensed under the Vector Institute License, Copyright © Vector Institute. All Rights Reserved."<br></br>
+For products or services built using the Work,  prominently display 'Built with Vector Institute [Name]’ (where You are to populate the [Name] field with the name and version, if applicable, of the relevant software, model, framework and/or dataset) on all related materials, documentation, blogs, press releases or other customary places where other such statements are typically provided to users.
 
-   APPENDIX: How to apply the Apache License to your work.
+9. **Disclaimer of Warranty**. THE WORK IS PROVIDED “AS IS,” “WHERE IS,” “AS AVAILABLE,” “WITH ALL FAULTS” AND, TO THE FULLEST EXTENT PERMITTED BY LAW, WITHOUT WARRANTY OF ANY KIND. VECTOR AND ITS LICENSORS DISCLAIM ALL WARRANTIES WITH RESPECT TO THE WORK, WHETHER EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF, MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, TITLE, SATISFACTORY QUALITY OR ARISING FROM A COURSE OF DEALING, LAW, USAGE, OR TRADE PRACTICE, AND ANY WARRANTIES REGARDING THE SECURITY, QUIET ENJOYMENT, QUALITY OF INFORMATION, RELIABILITY, TIMELINESS, AND PERFORMANCE ARE HEREBY DISCLAIMED TO THE EXTENT ALLOWED BY APPLICABLE LAW. THIS DISCLAIMER OF WARRANTY CONSTITUTES AN ESSENTIAL PART OF THIS AGREEMENT. NO ACCESS TO OR USE OF ANY WORK IS AUTHORIZED UNDER THIS AGREEMENT EXCEPT UNDER THIS DISCLAIMER.
 
-      To apply the Apache License to your work, attach the following
-      boilerplate notice, with the fields enclosed by brackets "[]"
-      replaced with your own identifying information. (Don't include
-      the brackets!)  The text should be enclosed in the appropriate
-      comment syntax for the file format. We also recommend that a
-      file or class name and description of purpose be included on the
-      same "printed page" as the copyright notice for easier
-      identification within third-party archives.
+10. **Limitation of Liability**. VECTOR SHALL HAVE NO LIABILITIES TO YOU WHATSOEVER ARISING IN CONNECTION WITH THIS AGREEMENT OR THE WORK. UNDER NO CIRCUMSTANCES AND UNDER NO LEGAL THEORY, WHETHER TORT (INCLUDING NEGLIGENCE), CONTRACT, OR OTHERWISE, SHALL VECTOR OR ITS LICENSORS BE LIABLE FOR ANY DAMAGES, INCLUDING, BUT NOT LIMITED TO, DIRECT, INDIRECT, CONSEQUENTIAL, INCIDENTAL, SPECIAL, PUNITIVE, OR EXEMPLARY DAMAGES, OR ANY LOSS OF REVENUE, PROFITS, SALES, DATA, DATA USE, GOODWILL OR REPUTATION, EVEN IF VECTOR HAS BEEN INFORMED OF THE POSSIBILITY OF SUCH DAMAGES, EVEN IF VECTOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES AND REGARDLESS OF THE FORM OF ACTION (INCLUDING CONTRACT, NEGLIGENCE, TORT OR WARRANTY).
 
-   Copyright 2022, Vector Institute
+11. **Indemnification**. You shall indemnify, hold harmless, and defend Vector and its officers, directors, licensors, and employees against any and all losses, damages, liabilities, deficiencies, claims, actions, judgments, settlements, interest, awards, penalties, fines, costs, or expenses of whatever kind, including reasonable legal fees and the costs of enforcing any right to indemnification hereunder arising out of Your access to or use of the Work. You are responsible for the acts and omissions of Your employees, contractors, customers, and other users in respect of the Work.
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+12. **Export Controls**. The Work may include information that may not be received, exported, imported, used, transferred, distributed, accessed, or re-exported except in compliance with the applicable laws and regulations of the relevant government authorities, including U.S. and Canadian export control and sanction regulations, such as provided in the Canadian Sanctions webpage (https://www.international.gc.ca/world-monde/international_relations-relations_internationales/sanctions/index.aspx). You also represent and covenant not to directly or indirectly allow access to or use of the Work in embargoed or sanctioned countries or regions, by sanctioned or denied persons, or for prohibited end-uses under U.S. or Canadian law. You confirm that You are not named on any Canadian or U.S. government list of persons or entities prohibited from transacting with any Canadian or U.S. person; (b) You are not a national of, or a company registered in, any sanctioned jurisdiction; (c) You will not allow any third party to access or use the Work in violation of any Canadian, U.S. or other export embargoes, prohibitions or restrictions; and (d) You will comply with all laws regarding the transmission of data exported from the country in which You (or Your users) are located to Canada and the United States.
 
-       http://www.apache.org/licenses/LICENSE-2.0
+13. **Governing Law**. This Agreement and all matters arising out of or relating to this Agreement, are governed by, and construed in accordance with, the laws of Ontario and the federal laws of Canada applicable therein without regard to the choice or conflict of law provisions thereof. Any action arising from or relating to this Agreement shall only be brought in a court of competent jurisdiction in Ontario, and the parties consent to the jurisdiction, venue, and convenience of such courts. This Agreement shall not be governed by the United Nations Convention on Contracts for the International Sale of Goods, the application of which is hereby expressly excluded.
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+14. **Assignment**. Vector may assign its rights under this Agreement, in whole or part, to any party without Your consent. You may not assign this Agreement or any of the rights granted herein or delegate any of Your obligations to any party, whether by operation of law or otherwise, without the prior written consent of Vector. Any change in control or other transaction that results in a change in Your majority ownership shall be considered an assignment under this Agreement and shall require prior written consent of Vector. Any assignment in violation of this section shall be void. This Agreement is binding upon and enforceable by each party’s permitted successors and assignees.
+
+15. **No Partnership**. This Agreement shall not be interpreted or construed to create an association, joint venture, agency relationship, or partnership between You and Vector or to impose any partnership obligation or partnership liability upon You or Vector. Neither You nor Vector shall have any right, power or authority to enter into any agreement or undertaking for, or act on behalf of, or to act as or be an agent or representative, or to otherwise bind, each other.
+
+16. **Miscellaneous**.
+In the event any term or provision of this Agreement or any application thereof shall be deemed to be illegal, void, or unenforceable, then the same shall not affect the remaining portions of this Agreement or any other application of the same which are not determined to be illegal, void or unenforceable, which remaining provisions and any other such application shall survive and constitute the agreement of the parties.<br></br>
+Vector’s failure at any time to require performance of any provision of this Agreement or to exercise any right provided for herein shall not be deemed a waiver of such provision or such right. All waivers must be in writing. Unless the written waiver contains an express statement to the contrary, no waiver by Vector of any breach of any provision of this Agreement or of any right provided for herein shall be construed as a waiver of any continuing or succeeding breach of such provision, a waiver of the provision itself, or a waiver of any right under this Agreement.<br></br>
+This Agreement constitutes the entire agreement between the parties pertaining to the Work, and supersedes all prior oral and written negotiations, agreements or understandings between the parties with respect to the subject matter hereof. No modification of any provision of this Agreement shall be valid or binding unless made in writing and signed by an authorized officer of Vector. <br></br>
+Section headings are used herein for convenience only and shall not be deemed to affect the scope, meaning or intent of this Agreement or any provisions hereof. Whenever examples are used in this Agreement with the words “including” or “such as,” or any derivation thereof, such examples are intended to be illustrative and not in limitation thereof.
