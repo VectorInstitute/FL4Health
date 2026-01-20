@@ -1,7 +1,0 @@
-fl4health.mixins.base module
-============================
-
-.. automodule:: fl4health.mixins.base
-   :members:
-   :undoc-members:
-   :show-inheritance:

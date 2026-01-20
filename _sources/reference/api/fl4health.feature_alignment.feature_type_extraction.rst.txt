@@ -1,7 +1,0 @@
-fl4health.feature\_alignment.feature\_type\_extraction module
-=============================================================
-
-.. automodule:: fl4health.feature_alignment.feature_type_extraction
-   :members:
-   :undoc-members:
-   :show-inheritance:

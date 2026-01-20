@@ -1,7 +1,0 @@
-fl4health.clients.gpfl\_client module
-=====================================
-
-.. automodule:: fl4health.clients.gpfl_client
-   :members:
-   :undoc-members:
-   :show-inheritance:
