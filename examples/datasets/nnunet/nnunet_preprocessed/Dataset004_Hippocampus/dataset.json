@@ -1,0 +1,19 @@
+{
+    "name": "Hippocampus",
+    "description": "Left and right hippocampus segmentation",
+    "reference": " Vanderbilt University Medical Center",
+    "licence": "CC-BY-SA 4.0",
+    "relase": "1.0 04/05/2018",
+    "tensorImageSize": "3D",
+    "labels": {
+        "background": 0,
+        "Anterior": 1,
+        "Posterior": 2
+    },
+    "numTraining": 260,
+    "numTest": 130,
+    "file_ending": ".nii.gz",
+    "channel_names": {
+        "0": "MRI"
+    }
+}
