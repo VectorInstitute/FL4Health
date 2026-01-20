@@ -127,7 +127,7 @@ class NnunetClient(BasicClient):
             verbose (bool, optional): If True the client will log some extra INFO logs. Defaults to False unless
                 the log level is DEBUG or lower.
             metrics (Sequence[Metric], optional): Metrics to be computed based on the labels and predictions of the
-            client model. Defaults to None.
+                client model. Defaults to None.
             progress_bar (bool, optional): Whether or not to print a progress bar to stdout for training. Defaults
                 to False
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over each
@@ -224,8 +224,8 @@ class NnunetClient(BasicClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            Tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with a dictionary of any
-            predictions produced by the model.
+            (tuple[TrainingLosses, TorchPredType]): The losses object from the train step along with a dictionary of
+                any predictions produced by the model.
         """
         # If the device type is not cuda, we don't use mixed precision training and therefore can use parent method.
         if self.device.type != "cuda":
@@ -263,8 +263,8 @@ class NnunetClient(BasicClient):
             config (Config): The config file from the server
 
         Returns:
-            tuple[DataLoader, DataLoader]: A tuple of length two. The client train and validation dataloaders as
-            pytorch dataloaders
+            (tuple[DataLoader, DataLoader]): A tuple of length two. The client train and validation dataloaders as
+                pytorch dataloaders
         """
         start_time = time.time()
         # Set the number of processes for each dataloader.
@@ -350,7 +350,7 @@ class NnunetClient(BasicClient):
             ValueError: Thrown if the configuration does not contain either a steps or epochs specification.
 
         Returns:
-            _LRScheduler: The default nnunet LR Scheduler for nnunetv2 2.5.1
+            (_LRScheduler): The default nnunet LR Scheduler for nnunetv2 2.5.1
         """
         if not isinstance(self.nnunet_trainer.lr_scheduler, PolyLRScheduler):
             log(
@@ -406,7 +406,7 @@ class NnunetClient(BasicClient):
                 dictionary as the value
 
         Returns:
-            dict[str, Any]: The modified nnunet plans for the client
+            (dict[str, Any]): The modified nnunet plans for the client
         """
         # TODO: Make this an external function or part of another class and explicitly accept the required arguments
         # rather than using class attributes.
@@ -544,7 +544,6 @@ class NnunetClient(BasicClient):
                 INFO,
                 "\tThis client has already extracted the dataset fingerprint during this session. Skipping.",
             )
-
         # Avoid extracting fingerprint multiple times when always_preprocess is true
         self.fingerprint_extracted = True
 
@@ -626,8 +625,8 @@ class NnunetClient(BasicClient):
             input (TorchInputType): The model inputs
 
         Returns:
-            tuple[TorchPredType, dict[str, torch.Tensor]]: A tuple in which the first element model outputs indexed by
-            name. The second element is unused by this subclass and therefore is always an empty dict
+            (tuple[TorchPredType, dict[str, torch.Tensor]]): A tuple in which the first element model outputs indexed
+                by name. The second element is unused by this subclass and therefore is always an empty dict
         """
         if isinstance(input, torch.Tensor):
             # If device type is cuda, nnUNet defaults to mixed precision forward pass
@@ -667,8 +666,8 @@ class NnunetClient(BasicClient):
                 are given, target must be a dictionary with the same number of tensors
 
         Returns:
-            tuple[torch.Tensor, dict[str, torch.Tensor] | None]: A tuple where the first element is the loss and the
-            second element is an optional additional loss
+            (tuple[torch.Tensor, dict[str, torch.Tensor] | None]): A tuple where the first element is the loss and the
+                second element is an optional additional loss
         """
         # If deep supervision is turned on we must convert loss and target dicts into lists
         loss_preds = prepare_loss_arg(preds)
@@ -710,10 +709,10 @@ class NnunetClient(BasicClient):
             target (torch.Tensor): The ground truth segmentation map with shape ``(batch, classes, x, y(, z))``
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Tuple of:
+            (tuple[torch.Tensor, torch.Tensor]): Tuple of:
 
-            - torch.Tensor: The masked one hot encoded predicted segmentation maps.
-            - torch.Tensor: The masked target segmentation maps.
+                - torch.Tensor: The masked one hot encoded predicted segmentation maps.
+                - torch.Tensor: The masked target segmentation maps.
         """
         # create mask where 1 is where pixels in target are not ignore label
         # Modify target to remove the last class which is the ignore_label class
@@ -829,8 +828,8 @@ class NnunetClient(BasicClient):
             config (Config): The config from the server
 
         Returns:
-            dict[str, Scalar]: A dictionary containing the train and validation sample counts as well as the
-            serialized nnunet plans
+            (dict[str, Scalar]): A dictionary containing the train and validation sample counts as well as the
+                serialized nnunet plans
         """
         # Check if nnunet plans have already been initialized
         if "nnunet_plans" not in config:

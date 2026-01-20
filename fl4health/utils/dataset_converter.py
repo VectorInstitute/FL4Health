@@ -35,7 +35,7 @@ class DatasetConverter(TensorDataset):
             index (int): The index of the batch of data to be extracted.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Get the raw batch data (input, target) and apply the
+            (tuple[torch.Tensor, torch.Tensor]): Get the raw batch data (input, target) and apply the
                 ``converter_function`` before returning.
         """
         assert self.dataset is not None, "Error: no dataset is set, use convert_dataset(your_dataset: TensorDataset)"
@@ -48,7 +48,7 @@ class DatasetConverter(TensorDataset):
         the dataset is not None.
 
         Returns:
-            int: Dataset length.
+            (int): Dataset length.
         """
         assert self.dataset is not None, "Error: dataset is should be either converted or initiated."
         return len(self.dataset)
@@ -143,7 +143,7 @@ class AutoEncoderDatasetConverter(DatasetConverter):
         condition and handles the concatenation.
 
         Returns:
-            Callable: The suitable converter function based on the condition.
+            (Callable): The suitable converter function based on the condition.
         """
         # If the autoencoder is conditional
         if self.condition is not None:
@@ -216,8 +216,8 @@ class AutoEncoderDatasetConverter(DatasetConverter):
                 vector.
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Data in its original shape, and the condition vector to be fed into the
-            model.
+            (tuple[torch.Tensor, torch.Tensor]): Data in its original shape, and the condition vector to be fed into
+                the model.
         """
         # We assume data is "batch first".
         x = packed_data[:, : -1 * cond_vec_size]  # Exclude the condition from input

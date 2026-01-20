@@ -164,8 +164,8 @@ class MrMtlDeepMmdClient(MrMtlClient):
             initial_global_model (torch.nn.Module): Initial global model to extract features from.
 
         Returns:
-            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple containing the extracted
-            features using the local and initial global models.
+            (tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]): A tuple containing the extracted
+                features using the local and initial global models.
         """
         self.local_feature_extractor.clear_buffers()
         self.initial_global_feature_extractor.clear_buffers()
@@ -227,10 +227,10 @@ class MrMtlDeepMmdClient(MrMtlClient):
                 ``self.model.forward()``.
 
         Returns:
-            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains a dictionary of
-            predictions indexed by name and the second element contains intermediate activations indexed by name.
-            By passing features, we can compute all the losses. All predictions included in dictionary will by
-            default be used to compute metrics separately.
+            (tuple[TorchPredType, TorchFeatureType]): A tuple in which the first element contains a dictionary of
+                predictions indexed by name and the second element contains intermediate activations indexed by name.
+                By passing features, we can compute all the losses. All predictions included in dictionary will by
+                default be used to compute metrics separately.
         """
         # We use features from initial_global_model to compute the Deep MMD loss.
         preds = self.model(input)
@@ -257,7 +257,7 @@ class MrMtlDeepMmdClient(MrMtlClient):
         Validate the current model on the entire validation dataset.
 
         Returns:
-            tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
+            (tuple[float, dict[str, Scalar]]): The validation loss and a dictionary of metrics from validation.
         """
         for layer in self.flatten_feature_extraction_layers:
             self.deep_mmd_losses[layer].training = False
@@ -272,18 +272,18 @@ class MrMtlDeepMmdClient(MrMtlClient):
         """
         Computes training losses given predictions of the client model and ground truth data.
         For the local model we add to the vanilla loss function by including Mean Regularized (MR) penalty loss
-        which is the :math:`\\ell^2` inner product between the initial global model weights and weights of the
+        which is the \\(\\ell^2\\) inner product between the initial global model weights and weights of the
         current model.
 
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in
                 dictionary will be used to compute metrics.
-            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
-            target: (TorchTargetType): Ground truth data to evaluate predictions against.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed by
-            name.
+            (TrainingLosses): An instance of ``TrainingLosses`` containing backward loss and additional losses indexed
+                by name.
         """
         for layer_loss_module in self.deep_mmd_losses.values():
             if self.mmd_kernel_train_interval == -1:
@@ -325,12 +325,12 @@ class MrMtlDeepMmdClient(MrMtlClient):
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. Anything stored in preds will be
                 used to compute metrics.
-            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
-            target: (TorchTargetType): Ground truth data to evaluate predictions against.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
-            indexed by name.
+            (EvaluationLosses): An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
+                indexed by name.
         """
         for layer_loss_module in self.deep_mmd_losses.values():
             assert not layer_loss_module.training
@@ -348,10 +348,11 @@ class MrMtlDeepMmdClient(MrMtlClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
+            (tuple[torch.Tensor, dict[str, torch.Tensor]]): A tuple with:
 
-            - The tensor for the loss
-            - A dictionary of additional losses with their names and values, or None if there are no additional losses.
+                - The tensor for the loss
+                - A dictionary of additional losses with their names and values, or None if there are no additional
+                  losses.
         """
         assert "prediction" in preds
         loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)

@@ -35,7 +35,7 @@ class FixedSamplingClientManager(SimpleClientManager):
                 applied during selection/sampling. Defaults to None.
 
         Returns:
-            list[ClientProxy]: A list of sampled clients as ``ClientProxy`` instances.
+            (list[ClientProxy]): A list of sampled clients as ``ClientProxy`` instances.
         """
         if self.current_sample is None:
             self.current_sample = super().sample(num_clients, min_num_clients, criterion)

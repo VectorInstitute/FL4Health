@@ -7,7 +7,7 @@ coverage:
 ignore:
   - ".gitignore"
   - ".flake8"
-  - "poetry.lock"
+  - "uv.lock"
   - "**/*.yaml"
   - "**/*.yml"
   - "**/*.toml"

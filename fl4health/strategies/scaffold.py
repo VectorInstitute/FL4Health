@@ -118,8 +118,8 @@ class Scaffold(BasicFedAvg):
                 If ``initial_control_variates`` are provided, they take precedence. Defaults to None.
 
         Returns:
-            Parameters: This quantity represents the initial values for the control variates for the server and on the
-            client-side.
+            (Parameters): This quantity represents the initial values for the control variates for the server and on
+                the client-side.
 
         Raises:
             ValueError: This error will be raised if neither a model nor initial control variates are provided.
@@ -164,9 +164,9 @@ class Scaffold(BasicFedAvg):
                 "failed" during the training phase for one reason or another, including timeouts and exceptions.
 
         Returns:
-            tuple[Parameters | None, dict[str, Scalar]]: The aggregated weighted and metrics dictionary. The
-            parameters are optional and will be none in the even that there are no successful clients or there
-            were failures and they are not accepted.
+            (tuple[Parameters | None, dict[str, Scalar]]): The aggregated weighted and metrics dictionary. The
+                parameters are optional and will be none in the even that there are no successful clients or there
+                were failures and they are not accepted.
         """
         if not results:
             return None, {}
@@ -210,7 +210,7 @@ class Scaffold(BasicFedAvg):
             params_2 (NDArrays): Parameters to subtract from ``params_1``.
 
         Returns:
-            NDArrays: Element-wise subtraction result across all numpy arrays.
+            (NDArrays): Element-wise subtraction result across all numpy arrays.
         """
         parameter_delta: NDArrays = [param_1 - param_2 for param_1, param_2 in zip(params_1, params_2)]
 
@@ -225,8 +225,7 @@ class Scaffold(BasicFedAvg):
 
         Calculates
 
-        .. math::
-            \\text{original_params} + \\text{scaling_coefficient} \\cdot \\text{parameter_updates}.
+        \\[\\text{original_params} + \\text{scaling_coefficient} \\cdot \\text{parameter_updates}.\\]
 
         Args:
             scaling_coefficient (float): Scaling length for the parameter updates (can be thought of as
@@ -235,8 +234,8 @@ class Scaffold(BasicFedAvg):
             parameter_updates (NDArrays): Update direction to update the ``original_params``.
 
         Returns:
-            NDArrays: Updated numpy arrays according to
-            :math:`\\text{original_params} + \\text{scaling_coefficient} \\cdot \\text{parameter_updates}`.
+            (NDArrays): Updated numpy arrays according to
+                \\(\\text{original_params} + \\text{scaling_coefficient} \\cdot \\text{parameter_updates}\\).
         """
         return [
             original_param + scaling_coefficient * update
@@ -252,7 +251,7 @@ class Scaffold(BasicFedAvg):
             params (list[NDArrays]): numpy arrays whose entries are to be averaged together.
 
         Returns:
-            NDArrays: Element-wise average over the list of numpy arrays.
+            (NDArrays): Element-wise average over the list of numpy arrays.
         """
         num_clients = len(params)
 
@@ -281,8 +280,8 @@ class Scaffold(BasicFedAvg):
                 be ``BaseFractionSamplingManager``, which has a "sample all" function built in.
 
         Returns:
-            list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
-            be sent to each client (packaged as ``FitIns``).
+            (list[tuple[ClientProxy, FitIns]]): List of sampled client identifiers and the configuration/parameters to
+                be sent to each client (packaged as ``FitIns``).
         """
         # This strategy requires the client manager to be of type at least BaseFractionSamplingManager
         assert isinstance(client_manager, BaseFractionSamplingManager)
@@ -314,8 +313,8 @@ class Scaffold(BasicFedAvg):
             weights (NDArrays): The updated weights (aggregated from the clients).
 
         Returns:
-            NDArrays: ``self.server_model_weights + self.learning_rate * (weights - self.server_model_weights)``
-            These are the updated server model weights.
+            (NDArrays): ``self.server_model_weights + self.learning_rate * (weights - self.server_model_weights)``
+                These are the updated server model weights.
         """
         # x_update = y_i - x
         delta_weights = self.compute_parameter_delta(weights, self.server_model_weights)
@@ -326,21 +325,20 @@ class Scaffold(BasicFedAvg):
     def compute_updated_control_variates(self, control_variates_update: NDArrays) -> NDArrays:
         """
         Given the aggregated control variates from the clients, this updates the server control variates in line with
-        the paper. If :math:`c` is the server control variates and ``c_update`` is the client control variates, then
+        the paper. If \\(c\\) is the server control variates and ``c_update`` is the client control variates, then
         this update takes the following form.
 
-        .. math::
-            c + \\frac{\\vert S \\vert}{N} \\cdot c_{\\text{update}},
+        \\[c + \\frac{\\vert S \\vert}{N} \\cdot c_{\\text{update}},\\]
 
-        where :math:`\\vert S\\vert` is the number of clients that participated and N is
-        the total number of clients :math:`\\frac{\\vert S \\vert}{N}` is the proportion given by fraction fit.
+        where \\(\\vert S\\vert\\) is the number of clients that participated and N is
+        the total number of clients \\(\\frac{\\vert S \\vert}{N}\\) is the proportion given by fraction fit.
 
         Args:
             control_variates_update (NDArrays): Aggregated control variates received from the clients (uniformly
                 averaged).
 
         Returns:
-            NDArrays: Updated server control variates according to the formula.
+            (NDArrays): Updated server control variates according to the formula.
         """
         # c = c + |S| / N * c_update
         return self.compute_updated_parameters(
@@ -390,7 +388,7 @@ class OpacusScaffold(Scaffold):
                 training by providing a configuration dictionary. Defaults to None.
             on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to configure
                 client-side validation by providing a ``Config`` dictionary. Defaults to None.
-            accept_failures (bool, optional) :Whether or not accept rounds containing failures. Defaults to True.
+            accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
             evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.

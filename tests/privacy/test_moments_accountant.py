@@ -63,7 +63,7 @@ def test_user_level_accountant_poisson_sampling_reproduce_results() -> None:
     2020 through https://arxiv.org/abs/2004.00010 Proposition 12 (in v4). See the documentation in the
     ``rdp_privacy_accountant`` get_epsilon function. If you revert to the previous best bound of
 
-    :code:`epsilon = min( rdp - math.log(delta) / (orders - 1) )`
+    `#!python epsilon = min( rdp - math.log(delta) / (orders - 1) )`
 
     from https://arxiv.org/abs/1702.07476 Proposition 3 in v3 the results are reproduced exactly.
     """

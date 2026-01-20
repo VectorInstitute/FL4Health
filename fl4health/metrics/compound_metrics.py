@@ -24,29 +24,29 @@ class EmaMetric(Metric, Generic[T]):
         For example, if we use ``Accuracy`` from ``fl4health.metrics``, which accumulates batches, we get the following
         behavior in the code block below.
 
-        .. code-block:: python
+        ```python
+        from fl4health.metrics import Accuracy
 
-            from fl4health.metrics import Accuracy
+        ema = EmaMetric(Accuracy(), 0.1)
 
-            ema = EmaMetric(Accuracy(), 0.1)
+        preds_1 = torch.Tensor([1, 0, 1]), targets_1 = torch.Tensor([1, 1, 1])
 
-            preds_1 = torch.Tensor([1, 0, 1]), targets_1 = torch.Tensor([1, 1, 1])
+        ema.update(preds_1, targets_1)
 
-            ema.update(preds_1, targets_1)
+        ema.compute() -> 0.667
 
-            ema.compute() -> 0.667
+        preds_2 = torch.Tensor([0, 0, 1]), targets_2 = torch.Tensor([1, 1, 1])
 
-            preds_2 = torch.Tensor([0, 0, 1]), targets_2 = torch.Tensor([1, 1, 1])
+        # If no clear before update (new accuracy is computed using both pred_1 and pred_2)
 
-            # If no clear before update (new accuracy is computed using both pred_1 and pred_2)
+        ema.update(preds_2, targets_2) = 0.9(0.667) + 0.1 (0.5)
 
-            ema.update(preds_2, targets_2) = 0.9(0.667) + 0.1 (0.5)
+        # If there were a clear before update (new accuracy is computed using pred_2)
 
-            # If there were a clear before update (new accuracy is computed using pred_2)
+        ema.clear()
 
-            ema.clear()
-
-            ema.update(preds_2, targets_2 = 0.9(0.667) + 0.1(0.333)
+        ema.update(preds_2, targets_2 = 0.9(0.667) + 0.1(0.333)
+        ```
 
         Args:
             metric (T): An FL4Health compatible metric.
@@ -71,10 +71,11 @@ class EmaMetric(Metric, Generic[T]):
         Compute metric on state accumulated over updates.
 
         This computation considers the exponential moving average with respect to previous scores. For time step
-        :math:`t`, and metric score :math:`m_t`, the EMA score is computed
+        \\(t\\), and metric score \\(m_t\\), the EMA score is computed
 
-        .. math ::
-            \\text{smoothing_factor} \\cdot m_t + (1-\\text{smoothing_factor}) \\cdot (m_{t-1}).
+        \\[
+        \\text{smoothing_factor} \\cdot m_t + (1-\\text{smoothing_factor}) \\cdot (m_{t-1}).
+        \\]
 
         The very first score is stored as is.
 
@@ -83,7 +84,7 @@ class EmaMetric(Metric, Generic[T]):
                 metrics dictionary. Defaults to None.
 
         Returns:
-            Metrics: A dictionary of string and ``Scalar`` representing the computed metric and its associated key.
+            (Metrics): A dictionary of string and ``Scalar`` representing the computed metric and its associated key.
         """
         # Temporarily change name of the underlying metric so that we get the EMAMetric name in keys of metrics_dict
         metric_name = self.metric.name

@@ -34,7 +34,7 @@ class SequentiallySplitModel(nn.Module):
                 **BATCH FIRST.**
 
         Returns:
-            torch.Tensor: Flattened feature tensor of shape (``batch_size``, -1)
+            (torch.Tensor): Flattened feature tensor of shape (``batch_size``, -1)
         """
         return features.reshape(len(features), -1)
 
@@ -46,7 +46,8 @@ class SequentiallySplitModel(nn.Module):
             input (torch.Tensor): Input to the model forward pass. Expected to be of shape (``batch_size``, \\*)
 
         Returns:
-            tuple[torch.Tensor, torch.Tensor]: Returns the predictions and features tensor from the sequential forward.
+            (tuple[torch.Tensor, torch.Tensor]): Returns the predictions and features tensor from the sequential
+                forward.
         """
         features = self.base_module.forward(input)
         predictions = self.head_module.forward(features)
@@ -60,7 +61,7 @@ class SequentiallySplitModel(nn.Module):
             input (torch.Tensor): Input to the model forward pass. Expected to be of shape (``batch_size``, \\*)
 
         Returns:
-            torch.Tensor: Returns the potentially flatten features tensor from the base module.
+            (torch.Tensor): Returns the potentially flatten features tensor from the base module.
         """
         features = self.base_module.forward(input)
 
@@ -76,9 +77,9 @@ class SequentiallySplitModel(nn.Module):
             input (torch.Tensor): Input to the model forward pass. Expected to be of shape (``batch_size``, \\*)
 
         Returns:
-            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: Return the prediction dictionary and a features
-            dictionaries representing the output of the ``base_module`` either in the standard tensor shape or
-            flattened,  to be compatible, for example, with MOON contrastive losses.
+            (tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]): Return the prediction dictionary and a features
+                dictionaries representing the output of the ``base_module`` either in the standard tensor shape or
+                flattened,  to be compatible, for example, with MOON contrastive losses.
         """
         predictions, features = self.sequential_forward(input)
         predictions_dict = {"prediction": predictions}
@@ -100,7 +101,7 @@ class SequentiallySplitExchangeBaseModel(SequentiallySplitModel, PartialLayerExc
         associated with the ``base_model``.
 
         Returns:
-            list[str]: The names of the layers to be exchanged with the server. This is used by the
-            ``FixedLayerExchanger`` class
+            (list[str]): The names of the layers to be exchanged with the server. This is used by the
+                ``FixedLayerExchanger`` class
         """
         return [layer_name for layer_name in self.state_dict() if layer_name.startswith("base_module.")]

@@ -89,8 +89,8 @@ class ModelMergeClient(NumPyClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            NDArrays: These are the parameters to be sent to the server. At minimum they represent the relevant model
-            parameters to be aggregated, but can contain more information.
+            (NDArrays): These are the parameters to be sent to the server. At minimum they represent the relevant model
+                parameters to be aggregated, but can contain more information.
         """
         assert self.model is not None
         return self.parameter_exchanger.push_parameters(self.model, config=config)
@@ -126,8 +126,8 @@ class ModelMergeClient(NumPyClient):
             config (NDArrays): The config from the server.
 
         Returns:
-            tuple[NDArrays, int, dict[str, Scalar]]: The local model parameters along with the number of samples in
-            the local test dataset and the computed metrics of the local model on the local test dataset.
+            (tuple[NDArrays, int, dict[str, Scalar]]): The local model parameters along with the number of samples in
+                the local test dataset and the computed metrics of the local model on the local test dataset.
 
         Raises:
             AssertionError: If model is initialized prior to fit method being called which should not happen in the
@@ -161,7 +161,7 @@ class ModelMergeClient(NumPyClient):
             TypeError: Raised if data is not one of the types specified by ``TorchInputType`` or ``TorchTargetType``
 
         Returns:
-            TorchTargetType | TorchInputType: The data argument except now it's been moved to ``self.device``
+            (TorchTargetType | TorchInputType): The data argument except now it's been moved to ``self.device``
         """
         # Currently we expect both inputs and targets to be either tensors
         # or dictionaries of tensors
@@ -179,7 +179,7 @@ class ModelMergeClient(NumPyClient):
         Validate the model on the test dataset.
 
         Returns:
-            tuple[float, dict[str, Scalar]]: The loss and a dictionary of metrics from test set.
+            (tuple[float, dict[str, Scalar]]): The loss and a dictionary of metrics from test set.
         """
         self.model.eval()
         self.test_metric_manager.clear()
@@ -201,9 +201,9 @@ class ModelMergeClient(NumPyClient):
             config (Config): Configuration object from the server.
 
         Returns:
-            tuple[float, int, dict[str, Scalar]: The float represents the loss which is assumed to be 0 for the
-            ``ModelMergeClient``. The int represents the number of examples in the local test dataset and the
-            dictionary is the computed metrics on the test set.
+            (tuple[float, int, dict[str, Scalar]): The float represents the loss which is assumed to be 0 for the
+                ``ModelMergeClient``. The int represents the number of examples in the local test dataset and the
+                dictionary is the computed metrics on the test set.
         """
         self.set_parameters(parameters, config)
         metrics = self.validate()
@@ -221,7 +221,7 @@ class ModelMergeClient(NumPyClient):
             config (Config): Configuration object from the server.
 
         Returns:
-            FullParameterExchanger: The parameter exchanger used to set and get parameters.
+            (FullParameterExchanger): The parameter exchanger used to set and get parameters.
         """
         return FullParameterExchanger()
 
@@ -235,7 +235,7 @@ class ModelMergeClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            nn.Module: The client model.
+            (nn.Module): The client model.
 
         Raises:
             NotImplementedError: To be defined in child class.
@@ -251,6 +251,6 @@ class ModelMergeClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            DataLoader: Client test data loader.
+            (DataLoader): Client test data loader.
         """
         raise NotImplementedError

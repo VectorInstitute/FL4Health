@@ -100,9 +100,9 @@ class ClientLevelDPFedAvgServer(FlServer):
                 clients selected to participate in federated training.
 
         Returns:
-            tuple[History, float]: The first element of the tuple is a ``History`` object containing the full set of
-            FL training results, including things like aggregated loss and metrics. Tuple also contains the elapsed
-            time in seconds for the round.
+            (tuple[History, float]): The first element of the tuple is a ``History`` object containing the full set of
+                FL training results, including things like aggregated loss and metrics. Tuple also contains the elapsed
+                time in seconds for the round.
         """
         assert isinstance(self.strategy, ClientLevelDPFedAvgM)
 

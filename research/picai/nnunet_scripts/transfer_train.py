@@ -23,7 +23,7 @@ def setup_device(device: str) -> torch.device:
         device (str): Either 'cpu', 'cuda' or 'mps'
 
     Returns:
-        torch.device: The corresponding pytorch.device object
+        (torch.device): The corresponding pytorch.device object
     """
     assert device in [
         "cpu",
@@ -105,7 +105,7 @@ def transfer_metadata(finetune_id: int, pretrain_id: int, pretrain_plans: str) -
         pretrain_plans (str): Path to the nnunet plans json used for pretraining
 
     Returns:
-        str: The name of the plans file for finetuning (without an extension)
+        (str): The name of the plans file for finetuning (without an extension)
     """
     # Extract Fingerprint if needed
     ft_dataset_name = convert_id_to_dataset_name(finetune_id)

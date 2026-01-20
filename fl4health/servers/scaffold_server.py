@@ -101,7 +101,7 @@ class ScaffoldServer(FlServer):
                 initialize the models of all clients. Timeout defines how long to wait for a response.
 
         Returns:
-            Parameters: Initial parameters (model weights and control variates).
+            (Parameters): Initial parameters (model weights and control variates).
         """
         assert isinstance(self.strategy, Scaffold)
         # First run basic parameter initialization from the parent server
@@ -173,9 +173,9 @@ class ScaffoldServer(FlServer):
                 server waits for the minimum number of clients to be available set in the strategy.
 
         Returns:
-            tuple[History, float]: The first element of the tuple is a ``History`` object containing the full set of FL
-            training results, including things like aggregated loss and metrics. Tuple also includes elapsed time in
-            seconds for round.
+            (tuple[History, float]): The first element of the tuple is a ``History`` object containing the full set of
+                FL training results, including things like aggregated loss and metrics. Tuple also includes elapsed
+                time in seconds for round.
         """
         assert isinstance(self.strategy, Scaffold)
         return super().fit(num_rounds=num_rounds, timeout=timeout)
@@ -292,8 +292,9 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
                 server waits for the minimum number of clients to be available set in the strategy.
 
         Returns:
-            tuple[History, float]: First element of tuple is history object containing the full set of FL training
-            results, including aggregated loss and metrics. Tuple also includes the elapsed time in seconds for round.
+            (tuple[History, float]): First element of tuple is history object containing the full set of FL training
+                results, including aggregated loss and metrics. Tuple also includes the elapsed time in seconds for
+                round.
         """
         assert isinstance(self.strategy, Scaffold)
         # Now that we initialized the parameters for scaffold, call instance level privacy fit

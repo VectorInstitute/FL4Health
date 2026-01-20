@@ -48,7 +48,7 @@ def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, 
             preprocessing.
 
     Returns:
-        nUNetPredictor: An ``nnUNetPredictor`` class for the set of models specified by the ckpt_list.
+        (nUNetPredictor): An ``nnUNetPredictor`` class for the set of models specified by the ckpt_list.
     """
 
     # Helper function to make code cleaner
@@ -57,8 +57,8 @@ def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, 
         Checks model dict for trainer name and ``inference_allowed_mirroring_axes``.
 
         Returns:
-            tuple[str | None, bool]: Tuple with elements ``trainer_name`` and `inference_allowed_mirroring_axes`.
-            Defaults to ("nnUNetTrainer", False)
+            (tuple[str | None, bool]): Tuple with elements ``trainer_name`` and `inference_allowed_mirroring_axes`.
+                Defaults to ("nnUNetTrainer", False).
         """
         trainer_name = "nnUNetTrainer"
         inference_allowed_mirror_axes = False

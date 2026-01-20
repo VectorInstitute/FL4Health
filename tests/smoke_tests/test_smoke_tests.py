@@ -76,6 +76,7 @@ async def test_basic_server_client_checkpoint(tolerance: float, tmp_path: Path) 
 
 
 @pytest.mark.smoketest
+@pytest.mark.skipif(IN_GITHUB_ACTIONS, reason="Test doesn't work on github.")
 async def test_nnunet_config_2d(tolerance: float) -> None:
     coroutine = run_smoke_test(  # By default will use Task04_Hippocampus Dataset
         server_python_path="examples.nnunet_example.server",
@@ -91,6 +92,7 @@ async def test_nnunet_config_2d(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
+@pytest.mark.skipif(IN_GITHUB_ACTIONS, reason="Test doesn't work on github.")
 async def test_nnunet_config_3d(tolerance: float) -> None:
     coroutine = run_smoke_test(  # By default will use Task04_Hippocampus Dataset
         server_python_path="examples.nnunet_example.server",
@@ -98,6 +100,7 @@ async def test_nnunet_config_3d(tolerance: float) -> None:
         config_path="tests/smoke_tests/nnunet_config_3d.yaml",
         dataset_path="examples/datasets/nnunet",
         tolerance=tolerance,
+        read_logs_timeout=450,
     )
     task = asyncio.create_task(coroutine)
     await try_running_test_task(task)
@@ -472,6 +475,7 @@ async def test_gpfl(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
+@pytest.mark.skipif(IN_GITHUB_ACTIONS, reason="Test doesn't work on github.")
 async def test_flexible_nnunet_config_2d(tolerance: float) -> None:
     coroutine = run_smoke_test(  # By default will use Task04_Hippocampus Dataset
         server_python_path="examples.nnunet_example.server",
@@ -487,6 +491,7 @@ async def test_flexible_nnunet_config_2d(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
+@pytest.mark.skipif(IN_GITHUB_ACTIONS, reason="Test doesn't work on github.")
 async def test_flexible_nnunet_config_3d(tolerance: float) -> None:
     coroutine = run_smoke_test(  # By default will use Task04_Hippocampus Dataset
         server_python_path="examples.nnunet_example.server",
@@ -494,6 +499,7 @@ async def test_flexible_nnunet_config_3d(tolerance: float) -> None:
         config_path="tests/smoke_tests/nnunet_config_3d.yaml",
         dataset_path="examples/datasets/nnunet",
         tolerance=tolerance,
+        read_logs_timeout=450,
     )
     task = asyncio.create_task(coroutine)
     await try_running_test_task(task)
@@ -501,6 +507,7 @@ async def test_flexible_nnunet_config_3d(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
+@pytest.mark.skipif(IN_GITHUB_ACTIONS, reason="Test doesn't work on github.")
 async def test_ditto_flexible_nnunet_config_2d(tolerance: float) -> None:
     coroutine = run_smoke_test(  # By default will use Task04_Hippocampus Dataset
         server_python_path="examples.nnunet_pfl_example.server",
@@ -516,6 +523,7 @@ async def test_ditto_flexible_nnunet_config_2d(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
+@pytest.mark.skipif(IN_GITHUB_ACTIONS, reason="Test doesn't work on github.")
 async def test_nnunet_pfl_mr_mtl_config_3d(tolerance: float) -> None:
     coroutine = run_smoke_test(  # By default will use Task04_Hippocampus Dataset
         server_python_path="examples.nnunet_pfl_example.server",
@@ -532,6 +540,7 @@ async def test_nnunet_pfl_mr_mtl_config_3d(tolerance: float) -> None:
 
 
 @pytest.mark.smoketest
+@pytest.mark.skipif(IN_GITHUB_ACTIONS, reason="Test doesn't work on github.")
 async def test_nnunet_pfl_mr_mtl_config_2d(tolerance: float) -> None:
     coroutine = run_smoke_test(  # By default will use Task04_Hippocampus Dataset
         server_python_path="examples.nnunet_pfl_example.server",

@@ -32,7 +32,7 @@ def load_image(item: dict[str, Any], transform: Callable | None) -> tuple[torch.
         transform (Callable | None): Transformation function to apply to the images.
 
     Returns:
-        tuple[torch.Tensor, int]: A tuple containing the transformed image tensor and the target label.
+        (tuple[torch.Tensor, int]): A tuple containing the transformed image tensor and the target label.
     """
     image_path = item["img_path"]
     image = Image.open(image_path).convert("RGB")
@@ -56,7 +56,7 @@ def construct_skin_cancer_tensor_dataset(
         num_workers (int): Number of workers for parallel processing. Defaults to 8.
 
     Returns:
-        TensorDataset: A ``TensorDataset`` containing the processed images and labels.
+        (TensorDataset): A ``TensorDataset`` containing the processed images and labels.
     """
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
         results = list(executor.map(lambda item: load_image(item, transform), data))
@@ -96,8 +96,8 @@ def load_skin_cancer_data(
         seed (int | None): Random seed for shuffling data. Defaults to None.
 
     Returns:
-        tuple[DataLoader, DataLoader, DataLoader, dict[str, int]]: DataLoaders for the training, validation,
-        and test sets, and a dictionary with the number of examples in each set.
+        (tuple[DataLoader, DataLoader, DataLoader, dict[str, int]]): DataLoaders for the training, validation,
+            and test sets, and a dictionary with the number of examples in each set.
     """
     if sum(split_percents) != 1.0:
         raise ValueError("The split percentages must sum to 1.0")

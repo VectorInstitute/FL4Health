@@ -163,8 +163,8 @@ class MrMtlMkMmdClient(MrMtlClient):
             initial_global_model (torch.nn.Module): Initial global model to extract features from.
 
         Returns:
-            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple containing the extracted
-            features using the local and initial global models.
+            (tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]): A tuple containing the extracted
+                features using the local and initial global models.
         """
         self.local_feature_extractor.clear_buffers()
         self.initial_global_feature_extractor.clear_buffers()
@@ -226,10 +226,10 @@ class MrMtlMkMmdClient(MrMtlClient):
                 ``self.model.forward()``.
 
         Returns:
-            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element contains a dictionary of
-            predictions indexed by name and the second element contains intermediate activations indexed by name. By
-            passing features, we can compute all the losses. All predictions included in dictionary will by default
-            be used to compute metrics separately.
+            (tuple[TorchPredType, TorchFeatureType]): A tuple in which the first element contains a dictionary of
+                predictions indexed by name and the second element contains intermediate activations indexed by name.
+                By passing features, we can compute all the losses. All predictions included in dictionary will by
+                default be used to compute metrics separately.
 
         Raises:
             TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model's
@@ -265,19 +265,19 @@ class MrMtlMkMmdClient(MrMtlClient):
         """
         Computes training losses given predictions of the global and local models and ground truth data.
         For the local model we add to the vanilla loss function by including Ditto penalty loss which is the
-        :math:`\\ell^2` inner product between the initial global model weights and weights of the local model. This is
+        \\(\\ell^2\\) inner product between the initial global model weights and weights of the local model. This is
         stored in backward The loss to optimize the global model is stored in the additional losses dictionary
         under “global_loss”.
 
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included in
                 dictionary will be used to compute metrics.
-            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
-            target: (TorchTargetType): Ground truth data to evaluate predictions against.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed by
-            name. Additional losses includes each loss component and the global model loss tensor.
+            (TrainingLosses): An instance of ``TrainingLosses`` containing backward loss and additional losses indexed
+                by name. Additional losses includes each loss component and the global model loss tensor.
         """
         for layer_loss_module in self.mkmmd_losses.values():
             assert layer_loss_module.training
@@ -320,10 +320,11 @@ class MrMtlMkMmdClient(MrMtlClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
+            (tuple[torch.Tensor, dict[str, torch.Tensor]]): A tuple with:
 
-            - The tensor for the loss.
-            - A dictionary of additional losses with their names and values, or None if there are no additional losses.
+                - The tensor for the loss.
+                - A dictionary of additional losses with their names and values, or None if there are no additional
+                  losses.
         """
         assert "prediction" in preds
         # Compute model loss + MR-MTL constraint term

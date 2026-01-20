@@ -39,7 +39,7 @@ def add_items_to_config_fn(fn: CFG_FN, items: Config) -> CFG_FN:
         items (Config): A ``Config`` containing additional items to update the original config with
 
     Returns:
-        CFG_FN: The wrapped function. Argument and return type is the same
+        (CFG_FN): The wrapped function. Argument and return type is the same
     """
 
     def new_fn(*args: Any, **kwargs: Any) -> Any:

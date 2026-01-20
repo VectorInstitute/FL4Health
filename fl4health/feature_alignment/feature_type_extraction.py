@@ -23,7 +23,7 @@ def to_list(obj: Any) -> list[Any]:
         obj (Any): The object to convert to a list.
 
     Returns:
-        List[Any]: The processed object.
+        (list[Any]): The processed object.
     """
     if isinstance(obj, list):
         return obj
@@ -49,7 +49,7 @@ def has_columns(data: pd.DataFrame, cols: str | list[str], exactly: bool = False
         ValueError: Must have exactly the columns, will throw if not and exactly is True.
 
     Returns:
-        bool: True if all required columns are present, otherwise False.
+        (bool): True if all required columns are present, otherwise False.
     """
     cols = to_list(cols)
     required_set = set(cols)
@@ -100,7 +100,7 @@ class FeatureMeta:
         Get the feature type.
 
         Returns:
-            str:  Feature type.
+            (str):  Feature type.
         """
         return FeatureType(getattr(self, FEATURE_TYPE_ATTR))
 
@@ -168,7 +168,7 @@ class Features:
         NOTE: These are framework-specific feature names.
 
         Returns:
-            dict[str, str]: Feature type mapped for each feature.
+            (dict[str, str]): Feature type mapped for each feature.
         """
         return {name: meta.get_type() for name, meta in self.meta.items()}
 
@@ -202,7 +202,7 @@ class Features:
             ValueError: When conversion fails
 
         Returns:
-            pd.DataFrame: The features data with the relevant conversions.
+            (pd.DataFrame): The features data with the relevant conversions.
         """
         invalid = set(new_types.keys()) - set(self.features)
         if len(invalid) > 0:

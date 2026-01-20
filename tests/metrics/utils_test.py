@@ -96,8 +96,8 @@ def get_dummy_classification_tensors(
         label_dim (int): which dimension of the tensor should be taken as the label dimension.
 
     Returns:
-        tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor | None]: Tensors corresponding to different types
-            of encodings. In order, soft vector encodings, one hot encodings, label index encodings
+        (tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor | None]): Tensors corresponding to different
+            types of encodings. In order, soft vector encodings, one hot encodings, label index encodings.
     """
     n_classes = full_tensor_shape[label_dim]
     assert n_classes > 1, "Must have at least 2 classes"

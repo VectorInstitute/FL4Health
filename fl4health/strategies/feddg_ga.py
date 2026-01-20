@@ -39,7 +39,7 @@ class FairnessMetricType(Enum):
             SignalForTypeException: if type is ``CUSTOM`` as the signal has to be defined by the user.
 
         Returns:
-            float: -1.0 if ``FairnessMetricType.ACCURACY`` or 1.0 if ``FairnessMetricType.LOSS``.
+            (float): -1.0 if ``FairnessMetricType.ACCURACY`` or 1.0 if ``FairnessMetricType.LOSS``.
         """
         # For loss values, large and **positive** gaps imply worse generalization of global
         # weights to local models. Therefore, we want to **increase** weight for these model
@@ -90,7 +90,7 @@ class FairnessMetric:
         String produced when calling str(...) on a Fairness metric object.
 
         Returns:
-            str: Custom string describing the object attributes.
+            (str): Custom string describing the object attributes.
         """
         return f"Metric Type: {self.metric_type}, Metric Name: '{self.metric_name}', Signal: {self.signal}"
 
@@ -269,7 +269,7 @@ class FedDgGa(FedAvg):
 
         Returns:
             (tuple[Parameters | None, dict[str, Scalar]]): A tuple containing the aggregated parameters and the
-            aggregated fit metrics.
+                aggregated fit metrics.
         """
         if not results:
             return None, {}
@@ -312,7 +312,7 @@ class FedDgGa(FedAvg):
 
         Returns:
             (tuple[float | None, dict[str, Scalar]]): A tuple containing the aggregated evaluation loss and the
-            aggregated evaluation metrics.
+                aggregated evaluation metrics.
         """
         loss_aggregated, metrics_aggregated = super().aggregate_evaluate(server_round, results, failures)
 

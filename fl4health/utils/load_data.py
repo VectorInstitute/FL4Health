@@ -100,7 +100,7 @@ def load_mnist_data(
             datasets.
 
     Returns:
-        tuple[DataLoader, DataLoader, dict[str, int]]: The train data loader, validation data loader and a dictionary
+        (tuple[DataLoader, DataLoader, dict[str, int]]): The train data loader, validation data loader and a dictionary
         with the sample counts of datasets underpinning the respective data loaders.
     """
     log(INFO, f"Data directory: {str(data_dir)}")
@@ -149,7 +149,7 @@ def load_mnist_test_data(
         transform (Callable | None): Optional transform to be applied to input samples.
 
     Returns:
-        tuple[DataLoader, dict[str, int]]: The test data loader and a dictionary containing the sample count
+        (tuple[DataLoader, dict[str, int]]): The test data loader and a dictionary containing the sample count
         of the test dataset.
     """
     log(INFO, f"Data directory: {str(data_dir)}")
@@ -221,7 +221,7 @@ def load_cifar10_data(
             datasets.
 
     Returns:
-        tuple[DataLoader, DataLoader, dict[str, int]]: The train data loader, validation data loader and a dictionary
+        (tuple[DataLoader, DataLoader, dict[str, int]]): The train data loader, validation data loader and a dictionary
         with the sample counts of datasets underpinning the respective data loaders.
     """
     log(INFO, f"Data directory: {str(data_dir)}")
@@ -263,7 +263,7 @@ def load_cifar10_test_data(
         sampler (LabelBasedSampler | None): Optional sampler to subsample dataset based on labels.
 
     Returns:
-        tuple[DataLoader, dict[str, int]]: The test data loader and a dictionary containing the sample count of the
+        (tuple[DataLoader, dict[str, int]]): The test data loader and a dictionary containing the sample count of the
         test dataset.
     """
     log(INFO, f"Data directory: {str(data_dir)}")

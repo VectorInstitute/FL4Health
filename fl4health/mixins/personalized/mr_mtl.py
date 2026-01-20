@@ -63,7 +63,7 @@ class MrMtlPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             config (Config): The config from the server.
 
         Returns:
-            nn.Module: The PyTorch model serving as the global model for Ditto
+            (nn.Module): The PyTorch model serving as the global model for Ditto
         """
         model_copy = copy.deepcopy(self.get_model(config))
         return model_copy.to(self.device)
@@ -163,18 +163,18 @@ class MrMtlPersonalizedMixin(AdaptiveDriftConstrainedMixin):
     ) -> TrainingLosses:
         """
         Computes training losses given predictions of the modes and ground truth data. We add to vanilla loss
-        function by including Mean Regularized (MR) penalty loss which is the :math:`\\ell^2` inner product between the
+        function by including Mean Regularized (MR) penalty loss which is the \\(\\ell^2\\) inner product between the
         initial global model weights and weights of the current model.
 
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name.
                 All predictions included in dictionary will be used to compute metrics.
-            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
-            target: (TorchTargetType): Ground truth data to evaluate predictions against.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: An instance of ``TrainingLosses`` containing backward loss and additional losses indexed by
-            name. Additional losses includes each loss component of the total loss.
+            (TrainingLosses): An instance of ``TrainingLosses`` containing backward loss and additional losses indexed
+                by name. Additional losses includes each loss component of the total loss.
         """
         # Check that the initial global model isn't in training mode and that the local model is in training mode
         assert self.initial_global_model is not None and not self.initial_global_model.training and self.model.training
@@ -189,7 +189,7 @@ class MrMtlPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         Validate the current model on the entire validation dataset.
 
         Returns:
-            tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
+            (tuple[float, dict[str, Scalar]]): The validation loss and a dictionary of metrics from validation.
         """
         # ensure that the initial global model is in eval mode
         assert self.initial_global_model is not None and not self.initial_global_model.training

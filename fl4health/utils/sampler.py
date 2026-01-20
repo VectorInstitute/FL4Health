@@ -58,7 +58,7 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
             dataset (D): Dataset to be modified, through downsampling on specified labels.
 
         Returns:
-            D: New dataset with downsampled labels.
+            (D): New dataset with downsampled labels.
         """
         assert dataset.targets is not None, "A label-based sampler requires targets but this dataset has no targets"
         selected_indices_list: list[torch.Tensor] = []
@@ -87,7 +87,7 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
             subsample_size (int): How many rows we want to extract from the tensor.
 
         Returns:
-            torch.Tensor: New tensor with subsampled rows
+            (torch.Tensor): New tensor with subsampled rows
         """
         # NOTE: Assumes subsampling on rows
         tensor_size = tensor_to_subsample.shape[0]
@@ -112,12 +112,12 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
         accomplished by calling the subsample method and passing a ``BaseDataset`` object. This will return the
         resulting  subsampled dataset.
 
-        **NOTE**: The range for beta is (0, :math:`\\infty`). The larger the value of beta, the more evenly the
+        **NOTE**: The range for beta is (0, \\(\\infty\\)). The larger the value of beta, the more evenly the
         multinomial probability of the labels will be. The smaller beta is the more heterogeneous it is.
 
-        :code:`np.random.dirichlet([1]*5): array([0.23645891, 0.08857052, 0.29519184, 0.2999956 , 0.07978313])`
+        `#!python np.random.dirichlet([1]*5): array([0.23645891, 0.08857052, 0.29519184, 0.2999956 , 0.07978313])`
 
-        :code:`np.random.dirichlet([1000]*5): array([0.2066252 , 0.19644968, 0.20080513, 0.19992536, 0.19619462])`
+        `#!python np.random.dirichlet([1000]*5): array([0.2066252 , 0.19644968, 0.20080513, 0.19992536, 0.19619462])`
 
         Args:
             unique_labels (list[Any]): The full set of labels contained in the dataset.
@@ -152,7 +152,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
             dataset (D): Dataset to be modified, through downsampling on specified labels.
 
         Returns:
-            D: New dataset with downsampled labels.
+            (D): New dataset with downsampled labels.
         """
         assert dataset.targets is not None, "A label-based sampler requires targets but this dataset has no targets"
         assert self.sample_percentage <= 1.0

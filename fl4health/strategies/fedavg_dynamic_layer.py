@@ -102,9 +102,9 @@ class FedAvgDynamicLayer(BasicFedAvg):
                 from clients that experienced an issue during training, such as timeouts or exceptions.
 
         Returns:
-            tuple[Parameters | None, dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
-            For dynamic layer exchange we also pack in the names of all of the layers that were aggregated in this
-            phase to allow client's to insert the values into the proper areas of their models.
+            (tuple[Parameters | None, dict[str, Scalar]]): The aggregated model weights and the metrics dictionary.
+                For dynamic layer exchange we also pack in the names of all of the layers that were aggregated in this
+                phase to allow client's to insert the values into the proper areas of their models.
         """
         if not results:
             return None, {}
@@ -154,8 +154,8 @@ class FedAvgDynamicLayer(BasicFedAvg):
                 alignment during aggregation.
 
         Returns:
-            dict[str, NDArray]: A dictionary mapping the name of the layer that was aggregated to the aggregated
-            weights.
+            (dict[str, NDArray]): A dictionary mapping the name of the layer that was aggregated to the aggregated
+                weights.
         """
         if self.weighted_aggregation:
             return self.weighted_aggregate(results)
@@ -174,8 +174,8 @@ class FedAvgDynamicLayer(BasicFedAvg):
                 alignment during aggregation.
 
         Returns:
-            dict[str, NDArray]: A dictionary mapping the name of the layer that was aggregated to the aggregated
-            weights.
+            (dict[str, NDArray]): A dictionary mapping the name of the layer that was aggregated to the aggregated
+                weights.
         """
         names_to_layers: defaultdict[str, list[NDArray]] = defaultdict(list)
         total_num_examples: defaultdict[str, int] = defaultdict(int)
@@ -204,8 +204,8 @@ class FedAvgDynamicLayer(BasicFedAvg):
                 alignment during aggregation.
 
         Returns:
-            dict[str, NDArray]: A dictionary mapping the name of the layer that was aggregated to the aggregated
-            weights.
+            (dict[str, NDArray]): A dictionary mapping the name of the layer that was aggregated to the aggregated
+                weights.
         """
         names_to_layers: defaultdict[str, list[NDArray]] = defaultdict(list)
         total_num_clients: defaultdict[str, int] = defaultdict(int)

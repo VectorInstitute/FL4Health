@@ -73,8 +73,7 @@ class MkMmdLoss(torch.nn.Module):
         In this function, we assume that ``X``, ``Y``: ``n_samples``, ``n_features`` are the same size. We construct
         the quadruples.
 
-        .. math::
-            v_i = [x_{2i-1}, x_{2i}, y_{2i-1}, y_{2i}]
+        \\[v_i = [x_{2i-1}, x_{2i}, y_{2i-1}, y_{2i}]\\]
 
         forming a matrix of dimension (``n_samples/2``, ``4``, ``n_features``).
 
@@ -85,7 +84,7 @@ class MkMmdLoss(torch.nn.Module):
             y (torch.Tensor): Second set of feature tensors
 
         Returns:
-            torch.Tensor: Quadruples of the form described above.
+            (torch.Tensor): Quadruples of the form described above.
         """
         n_samples, n_features = x.shape
         # truncate if not divisible by 2
@@ -447,6 +446,6 @@ class MkMmdLoss(torch.nn.Module):
             x_t (torch.Tensor): Target domain data, shape (``n_samples``, ``n_features``).
 
         Returns:
-            torch.Tensor: MK-MMD value.
+            (torch.Tensor): MK-MMD value.
         """
         return self.compute_mkmmd(x_s, x_t, self.betas)

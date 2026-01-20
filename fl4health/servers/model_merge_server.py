@@ -82,8 +82,8 @@ class ModelMergeServer(Server):
                 If none, then it will wait for the minimum number to respond indefinitely.
 
         Returns:
-            tuple[History, float]: The first element of the tuple is a ``History`` object containing the aggregated
-            metrics returned from the clients. Tuple also contains elapsed time in seconds for round.
+            (tuple[History, float]): The first element of the tuple is a ``History`` object containing the aggregated
+                metrics returned from the clients. Tuple also contains elapsed time in seconds for round.
         """
         self.reports_manager.report({"host_type": "server", "fit_start": datetime.datetime.now()})
 
@@ -145,7 +145,7 @@ class ModelMergeServer(Server):
         Method used for converting server parameters into a torch model that can be checkpointed.
 
         Returns:
-            nn.Module: Torch model to be checkpointed by a torch checkpointer.
+            (nn.Module): Torch model to be checkpointed by a torch checkpointer.
         """
         assert self.server_model is not None, (
             "Model hydration has been called but no server_model is defined to hydrate. The functionality of "

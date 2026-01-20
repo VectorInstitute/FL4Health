@@ -77,7 +77,7 @@ class NumpyClippingClient(BasicClient):
             parameters (NDArrays): Tensor to measure with the norm
 
         Returns:
-            float: Squared sum of all values in the NDArrays
+            (float): Squared sum of all values in the NDArrays
         """
         layer_inner_products = [pow(linalg.norm(layer_weights), 2) for layer_weights in parameters]
         # network Frobenius norm
@@ -87,15 +87,14 @@ class NumpyClippingClient(BasicClient):
         """
         Performs "flat clipping" on the parameters as follows.
 
-        .. math::
-            \\text{parameters} \\cdot \\min \\left(1, \\frac{C}{\\Vert \\text{parameters} \\Vert_2} \\right)
+        \\[\\text{parameters} \\cdot \\min \\left(1, \\frac{C}{\\Vert \\text{parameters} \\Vert_2} \\right)\\]
 
         Args:
             parameters (NDArrays): Parameters to clip
 
         Returns:
-            tuple[NDArrays, float]: Clipped parameters and the associated clipping bit indicating whether the norm
-            was below ``self.clipping_bound``. If ``self.adaptive_clipping`` is false, this bit is always 0.0
+            (tuple[NDArrays, float]): Clipped parameters and the associated clipping bit indicating whether the norm
+                was below ``self.clipping_bound``. If ``self.adaptive_clipping`` is false, this bit is always 0.0
         """
         assert self.clipping_bound is not None
         assert self.adaptive_clipping is not None
@@ -119,7 +118,7 @@ class NumpyClippingClient(BasicClient):
             parameters (NDArrays): Updated parameters to compute the delta from and clip thereafter.
 
         Returns:
-            tuple[NDArrays, float]: Clipped weighted updates (weight deltas) and the associated clipping bit.
+            (tuple[NDArrays, float]): Clipped weighted updates (weight deltas) and the associated clipping bit.
         """
         assert self.initial_weights is not None
         assert len(parameters) == len(self.initial_weights)
