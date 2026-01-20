@@ -1,4 +1,4 @@
-name: Smoke Tests
+name: Standard Smoke Tests
 
 on:
   push:

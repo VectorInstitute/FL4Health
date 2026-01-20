@@ -1,4 +1,4 @@
-name: Smoke Tests
+name: nnUNet Smoke Tests
 
 on:
   push:
