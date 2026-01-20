@@ -165,13 +165,13 @@ class MomentsAccountant:
 
         Ex.
 
-        .. code-block:: python
+        ```python
+        sampling_strategies = [PoissonSampling(q_1), PoissonSampling(q_2)]
 
-            sampling_strategies = [PoissonSampling(q_1), PoissonSampling(q_2)]
+        noise_multiplier = [z_1, z_2]
 
-            noise_multiplier = [z_1, z_2]
-
-            updates = [t_1, t_2]
+        updates = [t_1, t_2]
+        ```
 
         implies that ``q_1``, ``z_1`` were applied for ``t_1`` updates, followed by ``q_2``, ``z_2`` for ``t_2``
         updates.
@@ -197,7 +197,7 @@ class MomentsAccountant:
             delta (float): This is the delta in (epsilon, delta)-Privacy, that we require.
 
         Returns:
-            float: The corresponding epsilon
+            (float): The corresponding epsilon
         """
         self._validate_accountant_input(sampling_strategies, noise_multiplier, updates)
         rdp_accountant = self._construct_rdp_accountant(sampling_strategies, noise_multiplier, updates)
@@ -217,13 +217,13 @@ class MomentsAccountant:
 
         Ex.
 
-        .. code-block:: python
+        ```python
+        sampling_strategies = [PoissonSampling(q_1), PoissonSampling(q_2)]
 
-            sampling_strategies = [PoissonSampling(q_1), PoissonSampling(q_2)]
+        noise_multiplier = [z_1, z_2]
 
-            noise_multiplier = [z_1, z_2]
-
-            updates = [t_1, t_2]
+        updates = [t_1, t_2]
+        ```
 
         implies that ``q_1``, ``z_1`` were applied for ``t_1`` updates, followed by ``q_2``, ``z_2`` for ``t_2``
         updates.
@@ -250,7 +250,7 @@ class MomentsAccountant:
             epsilon (float): This is the epsilon in (epsilon, delta)-Privacy, that we require.
 
         Returns:
-            float: delta for the provided epsilon
+            (float): delta for the provided epsilon
         """
         self._validate_accountant_input(sampling_strategies, noise_multiplier, updates)
         rdp_accountant = self._construct_rdp_accountant(sampling_strategies, noise_multiplier, updates)

@@ -54,7 +54,7 @@ def select_zeroeth_element(array: np.ndarray) -> float:
         array (np.ndarray): Array from which the very first element is selected.
 
     Returns:
-        float: zeroeth element value.
+        (float): zeroeth element value.
     """
     indices = tuple(0 for _ in array.shape)
     return array[indices]
@@ -72,7 +72,7 @@ def pseudo_sort_scoring_function(client_result: tuple[ClientProxy, NDArrays, int
         client_result (tuple[ClientProxy, NDArrays, int]]): Elements to use to determine the score.
 
     Returns:
-        float: Sum of a the zeroeth elements of each array in the ``NDArrays`` and the int of the tuple.
+        (float): Sum of a the zeroeth elements of each array in the ``NDArrays`` and the int of the tuple.
     """
     _, client_arrays, sample_count = client_result
     zeroeth_params = [
@@ -98,7 +98,7 @@ def decode_and_pseudo_sort_results(
         results (list[tuple[ClientProxy, FitRes]]): Results from a federated training round.
 
     Returns:
-        list[tuple[ClientProxy, NDArrays, int]]: The ordered set of weights as ``NDarrays`` and the corresponding
+        (list[tuple[ClientProxy, NDArrays, int]]): The ordered set of weights as ``NDarrays`` and the corresponding
         number of examples.
     """
     ndarrays_results = [

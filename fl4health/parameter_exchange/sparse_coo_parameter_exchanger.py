@@ -52,7 +52,7 @@ class SparseCooParameterExchanger(PartialParameterExchanger[tuple[NDArrays, NDAr
             initial_model (nn.Module | None): Model to which the weights will be compared/scored
 
         Returns:
-            dict[str, Tensor]: scores associated with each layer of the model.
+            (dict[str, Tensor]): scores associated with each layer of the model.
         """
         return self.score_gen_function(model, initial_model)
 
@@ -88,8 +88,8 @@ class SparseCooParameterExchanger(PartialParameterExchanger[tuple[NDArrays, NDAr
             initial_model (nn.Module): Initial model.
 
         Returns:
-            tuple[NDArrays, tuple[NDArrays, NDArrays, list[str]]]: The selected parameters and other information,
-            as detailed above.
+            (tuple[NDArrays, tuple[NDArrays, NDArrays, list[str]]]): The selected parameters and other information,
+                as detailed above.
         """
         all_parameter_scores = self.generate_parameter_scores(model, initial_model)
         all_scores = torch.cat([val.flatten() for _, val in all_parameter_scores.items()])

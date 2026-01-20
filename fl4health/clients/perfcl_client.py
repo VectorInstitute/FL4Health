@@ -102,8 +102,8 @@ class PerFclClient(BasicClient):
             config (Config): Configuration provided by the server.
 
         Returns:
-            ParameterExchanger: ``FixedLayerExchanger`` meant to only exchange a subset of model layers with the server
-            for aggregation.
+            (ParameterExchanger): ``FixedLayerExchanger`` meant to only exchange a subset of model layers with the
+                server for aggregation.
         """
         assert isinstance(self.model, PerFclModel)
         return FixedLayerExchanger(self.model.layers_to_exchange())
@@ -116,7 +116,7 @@ class PerFclClient(BasicClient):
             features (torch.Tensor): features to be flattened
 
         Returns:
-            torch.Tensor: flattened feature vectors of shape (batch, -1)
+            (torch.Tensor): flattened feature vectors of shape (batch, -1)
         """
         return features.reshape(len(features), -1)
 
@@ -128,7 +128,7 @@ class PerFclClient(BasicClient):
         old_global_module components will not have been.
 
         Returns:
-            bool: Indicates True if all of the modules are not None
+            (bool): Indicates True if all of the modules are not None
         """
         return (
             self.old_local_module is not None
@@ -145,10 +145,10 @@ class PerFclClient(BasicClient):
                 for the union of ``torch.Tensor`` and ``dict[str, torch.Tensor]``.
 
         Returns:
-            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple in which the first element
-            contains predictions indexed by name and the second element contains intermediate activations
-            index by name. Specifically the features of the model, features of the global model and features of
-            the old model are returned. All predictions included in dictionary will be used to compute metrics.
+            (tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]): A tuple in which the first element
+                contains predictions indexed by name and the second element contains intermediate activations
+                index by name. Specifically the features of the model, features of the global model and features of
+                the old model are returned. All predictions included in dictionary will be used to compute metrics.
         """
         # For PerFCL models, we required the input to simply be a torch.Tensor
         assert isinstance(input, torch.Tensor)
@@ -213,17 +213,17 @@ class PerFclClient(BasicClient):
         losses aimed at manipulating the local and global feature extractor latent spaces.
 
         Args:
-            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
-            features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target (torch.Tensor): Ground truth data to evaluate predictions against.
+            preds (TorchPredType): Prediction(s) of the model(s) indexed by name.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
+            (tuple[torch.Tensor, dict[str, torch.Tensor]]): A tuple with:
 
-            - The tensor for the total loss
-            - A dictionary with ``loss``, ``total_loss``, ``global_feature_contrastive_loss``, and
-              ``local_feature_contrastive_loss`` representing the various and relevant pieces of the loss
-              calculations
+                - The tensor for the total loss
+                - A dictionary with ``loss``, ``total_loss``, ``global_feature_contrastive_loss``, and
+                  ``local_feature_contrastive_loss`` representing the various and relevant pieces of the loss
+                  calculations
         """
         loss = self.criterion(preds["prediction"], target)
         # If any of these are None then we don't compute the PerFCL loss. This will happen on the first client-side
@@ -265,14 +265,14 @@ class PerFclClient(BasicClient):
         additional loss components associated with the PerFCL loss function.
 
         Args:
-            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. All predictions included
+            preds (TorchPredType): Prediction(s) of the model(s) indexed by name. All predictions included
                 in dictionary will be used to compute metrics.
-            features: (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+            features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
-            indexed by name.
+            (EvaluationLosses): An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
+                indexed by name.
         """
         _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         return EvaluationLosses(checkpoint=additional_losses["loss"], additional_losses=additional_losses)

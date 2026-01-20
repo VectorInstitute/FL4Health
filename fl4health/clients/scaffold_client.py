@@ -84,7 +84,7 @@ class ScaffoldClient(BasicClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            NDArrays: Model parameters and control variates packed together.
+            (NDArrays): Model parameters and control variates packed together.
         """
         if not self.initialized:
             return self.setup_client_and_return_all_model_parameters(config)
@@ -203,15 +203,14 @@ class ScaffoldClient(BasicClient):
 
         Each ``NDArray`` in the list of ``NDArrays`` are subtracted as
 
-        .. math::
-            \\text{params}_{1, i} - \\text{params}_{2, i}
+        \\[\\text{params}_{1, i} - \\text{params}_{2, i}\\]
 
         Args:
             params_1 (NDArrays): First set of parameters
             params_2 (NDArrays): Second set of parameters
 
         Returns:
-            NDArrays: :math:`\\text{params}_1 - \\text{params}_2`
+            (NDArrays): \\(\\text{params}_1 - \\text{params}_2\\)
         """
         parameter_delta: NDArrays = [param_1 - param_2 for param_1, param_2 in zip(params_1, params_2)]
 
@@ -238,20 +237,19 @@ class ScaffoldClient(BasicClient):
 
         The calculation is
 
-        .. math::
-            c_i^+ = c_i - c + \\frac{1}{(K \\cdot lr)} \\cdot (x - y_i)
+        \\[c_i^+ = c_i - c + \\frac{1}{(K \\cdot lr)} \\cdot (x - y_i)\\]
 
         where lr is the local learning rate.
 
         Args:
-            local_steps (int): Number of local steps that were taken during local training (:math:`K`)
+            local_steps (int): Number of local steps that were taken during local training (\\(K\\))
             delta_model_weights (NDArrays): difference between the locally trained weights and the initial weights
                 prior to local training
-            delta_control_variates (NDArrays): difference between local (:math:`c_i`) and server (:math:`c`) control
-                variates :math:`c_i - c`.
+            delta_control_variates (NDArrays): difference between local (\\(c_i\\)) and server (\\(c\\)) control
+                variates \\(c_i - c\\).
 
         Returns:
-            NDArrays: Updated client control variates
+            (NDArrays): Updated client control variates
         """
         # coef = 1 / (K * eta_l)
         scaling_coefficient = 1 / (local_steps * self.learning_rate)
@@ -268,12 +266,12 @@ class ScaffoldClient(BasicClient):
         return FullParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
 
     def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
-        """
+        r"""
         Called after training with the number of ``local_steps`` performed over the FL round and the corresponding
         loss dictionary.
 
         Args:
-            local_steps (int): Number of local steps that were taken during local training (:math:`K`)
+            local_steps (int): Number of local steps that were taken during local training (\(K\))
             loss_dict (dict[str, float]): dictionary of losses computed during training
             config (Config): The config from the server.
         """

@@ -105,8 +105,8 @@ class ModelMergeStrategy(Strategy):
             client_manager (ClientManager): The manager used to sample from the available clients.
 
         Returns:
-            list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
-            be sent to each client (packaged as ``FitIns``).
+            (list[tuple[ClientProxy, FitIns]]): List of sampled client identifiers and the configuration/parameters to
+                be sent to each client (packaged as ``FitIns``).
         """
         config = {}
         if self.on_fit_config_fn is not None:
@@ -138,8 +138,8 @@ class ModelMergeStrategy(Strategy):
             client_manager (ClientManager): The manager used to sample from the available clients.
 
         Returns:
-            list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
-            to be sent to each client (packaged as ``EvaluateIns``).
+            (list[tuple[ClientProxy, EvaluateIns]]): List of sampled client identifiers and the
+                configuration/parameters to be sent to each client (packaged as ``EvaluateIns``).
         """
         # Do not configure federated evaluation if fraction eval is 0.
         if self.fraction_evaluate == 0.0:
@@ -180,7 +180,7 @@ class ModelMergeStrategy(Strategy):
                 from clients that experienced an issue during fit, such as timeouts or exceptions.
 
         Returns:
-            tuple[Parameters | None, dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
+            (tuple[Parameters | None, dict[str, Scalar]]): The aggregated model weights and the metrics dictionary.
         """
         if not results:
             return None, {}
@@ -229,8 +229,8 @@ class ModelMergeStrategy(Strategy):
                 from clients that experienced an issue during evaluation, such as timeouts or exceptions.
 
         Returns:
-            tuple[float | None, dict[str, Scalar]]: Aggregated loss values and the aggregated metrics. The metrics
-            are aggregated according to ``evaluate_metrics_aggregation_fn``.
+            (tuple[float | None, dict[str, Scalar]]): Aggregated loss values and the aggregated metrics. The metrics
+                are aggregated according to ``evaluate_metrics_aggregation_fn``.
         """
         if not results:
             return None, {}
@@ -258,8 +258,8 @@ class ModelMergeStrategy(Strategy):
             parameters: Parameters The current model parameters after merging has occurred.
 
         Returns:
-            tuple[float, dict[str, Scalar]] | None: A Tuple containing loss and a dictionary containing task-specific
-            metrics (e.g., accuracy).
+            (tuple[float, dict[str, Scalar]] | None): A Tuple containing loss and a dictionary containing task-specific
+                metrics (e.g., accuracy).
         """
         if self.evaluate_fn is None:
             return None
@@ -278,8 +278,5 @@ class ModelMergeStrategy(Strategy):
 
         Args:
             client_manager (ClientManager): Unused.
-
-        Returns:
-            None
         """
         return None

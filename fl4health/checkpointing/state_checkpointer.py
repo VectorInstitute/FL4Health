@@ -109,7 +109,7 @@ class StateCheckpointer(ABC):
         it does not exist, an assertion error will be thrown.
 
         Returns:
-            dict[str, Any]: A dictionary representing the checkpointed state, as loaded by ``torch.load``.
+            (dict[str, Any]): A dictionary representing the checkpointed state, as loaded by ``torch.load``.
         """
         assert self.checkpoint_path is not None, "Checkpoint path is not set but load_checkpoint has been called."
         assert self.checkpoint_exists(), f"Could not verify existence of checkpoint file at {self.checkpoint_path}"
@@ -123,7 +123,7 @@ class StateCheckpointer(ABC):
         ``checkpoint_name``.
 
         Returns:
-            bool: True if checkpoint exists, otherwise false.
+            (bool): True if checkpoint exists, otherwise false.
         """
         assert self.checkpoint_path is not None, "A checkpoint_path should be set but is no"
         return os.path.exists(self.checkpoint_path)
@@ -202,7 +202,7 @@ class StateCheckpointer(ABC):
             name (str): Name of the attribute.
 
         Returns:
-            Any: The attribute value.
+            (Any): The attribute value.
         """
         raise NotImplementedError("get_attribute must be implemented by inheriting classes")
 
@@ -226,7 +226,7 @@ class StateCheckpointer(ABC):
             expected_type (type[T]): Expected type of the attribute.
 
         Returns:
-            dict[str, T]: Wrapped attribute as a dictionary.
+            (dict[str, T]): Wrapped attribute as a dictionary.
         """
         attribute = self.get_attribute(name)
         if isinstance(attribute, expected_type):
@@ -248,7 +248,7 @@ class StateCheckpointer(ABC):
             expected_type (type[T]): Expected type of the attribute.
 
         Returns:
-            dict[str, Any]: A dictionary containing the state of the attribute.
+            (dict[str, Any]): A dictionary containing the state of the attribute.
         """
         attribute = self._dict_wrap_attr(name, expected_type)
         return {name: snapshotter.save_attribute(attribute)}
@@ -364,7 +364,7 @@ class ClientStateCheckpointer(StateCheckpointer):
                 attributes specified in ``snapshot_attrs`` are loaded. Defaults to None.
 
         Returns:
-            bool: True if a checkpoint is successfully loaded. False otherwise.
+            (bool): True if a checkpoint is successfully loaded. False otherwise.
         """
         # Store client for access in functions
         self.client = client
@@ -391,7 +391,7 @@ class ClientStateCheckpointer(StateCheckpointer):
             name (str): Name of the attribute.
 
         Returns:
-            Any: The attribute value.
+            (Any): The attribute value.
         """
         assert self.client is not None, "Client is not set."
         return getattr(self.client, name)
@@ -423,7 +423,7 @@ class ServerStateCheckpointer(StateCheckpointer):
                 ``set_checkpoint_path``
             checkpoint_name (str | None, optional): Name of the checkpoint to be saved. If None, but ``checkpoint_dir``
                 is set then a default ``checkpoint_name`` based on the underlying name of the client to be
-                checkpointed will be set of the form ``f"f"server_{self.server.server_name}_state.pt""``. This can be
+                checkpointed will be set of the form ``f"server_{self.server.server_name}_state.pt"``. This can be
                 updated later  with ``set_checkpoint_path``. Defaults to None.
             snapshot_attrs (dict[str, tuple[AbstractSnapshotter, Any]] | None, optional): Attributes that we need to
                 save in order to allow for restarting of training. If None, a sensible default set of attributes and
@@ -495,7 +495,7 @@ class ServerStateCheckpointer(StateCheckpointer):
                 attributes specified in ``snapshot_attrs`` are loaded. Defaults to None.
 
         Returns:
-            nn.Module | None: Returns a model if a checkpoint exists to load from. Otherwise returns None.
+            (nn.Module | None): Returns a model if a checkpoint exists to load from. Otherwise returns None.
         """
         # Store server for access in functions
         self.server = server
@@ -525,7 +525,7 @@ class ServerStateCheckpointer(StateCheckpointer):
             name (str): Name of the attribute.
 
         Returns:
-            Any: The attribute value.
+            (Any): The attribute value.
         """
         assert self.server is not None, "Server is not set."
         if name == "model":
@@ -562,7 +562,7 @@ class NnUnetServerStateCheckpointer(ServerStateCheckpointer):
                 ``set_checkpoint_path``
             checkpoint_name (str | None, optional): Name of the checkpoint to be saved. If None, but ``checkpoint_dir``
                 is set then a default ``checkpoint_name`` based on the underlying name of the client to be
-                checkpointed will be set of the form ``f"f"server_{self.server.server_name}_state.pt""``. This can be
+                checkpointed will be set of the form ``f"server_{self.server.server_name}_state.pt"``. This can be
                 updated later  with ``set_checkpoint_path``. Defaults to None.
         """
         # Go beyond default snapshot_attrs with nnUNet-specific attributes.

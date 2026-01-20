@@ -76,7 +76,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             ValueError: If the ``global_model`` attribute has not yet been set, we will raise an error.
 
         Returns:
-            nn.Module: the global model if it has been set.
+            (nn.Module): the global model if it has been set.
         """
         if self.global_model:
             return self.global_model
@@ -88,7 +88,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         Property for optimizer keys.
 
         Returns:
-            list[str]: list of keys for the optimizers dictionary.
+            (list[str]): list of keys for the optimizers dictionary.
         """
         return ["local", "global"]
 
@@ -100,7 +100,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             original_optimizer (Optimizer): original optimizer of the underlying `FlexibleClient`.
 
         Returns:
-            Optimizer: a copy of the original optimizer to be used by the global model.
+            (Optimizer): a copy of the original optimizer to be used by the global model.
         """
         optim_class = original_optimizer.__class__
         state_dict = original_optimizer.state_dict()
@@ -143,7 +143,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             config (Config): The config from the server.
 
         Returns:
-            nn.Module: The PyTorch model serving as the global model for Ditto
+            (nn.Module): The PyTorch model serving as the global model for Ditto
         """
         model_copy = copy.deepcopy(self.get_model(config))
         return model_copy.to(self.device)
@@ -223,7 +223,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            NDArrays: **GLOBAL** model weights to be sent to the server for aggregation.
+            (NDArrays): **GLOBAL** model weights to be sent to the server for aggregation.
         """
         if not self.initialized:
             return self.setup_client_and_return_all_model_parameters(config)
@@ -335,9 +335,9 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
             target (TorchTargetType): target tensor to be used to compute a loss given each models outputs.
 
         Returns:
-            tuple[TrainingLosses, TorchPredType]: Returns relevant loss values from both the global and local
-            model optimization steps. The prediction dictionary contains predictions indexed a "global" and "local"
-            corresponding to predictions from the global and local Ditto models for metric evaluations.
+            (tuple[TrainingLosses, TorchPredType]): Returns relevant loss values from both the global and local
+                model optimization steps. The prediction dictionary contains predictions indexed a "global" and "local"
+                corresponding to predictions from the global and local Ditto models for metric evaluations.
         """
         # global
         global_losses, global_preds = self._compute_preds_and_losses(
@@ -405,7 +405,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         Validate the current model on the entire validation dataset.
 
         Returns:
-            tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
+            (tuple[float, dict[str, Scalar]]): The validation loss and a dictionary of metrics from validation.
         """
         # Set the global model to evaluate mode
         self.safe_global_model().eval()
@@ -426,12 +426,12 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. Anything stored
                 in preds will be used to compute metrics.
-            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
-            target: (TorchTargetType): Ground truth data to evaluate predictions against.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            EvaluationLosses: An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
-            indexed by name.
+            (EvaluationLosses): An instance of ``EvaluationLosses`` containing checkpoint loss and additional losses
+                indexed by name.
         """
         # Check that both models are in eval mode
         assert self.global_model is not None and not self.global_model.training and not self.model.training

@@ -82,7 +82,8 @@ class ParameterPackerWithLayerNames(ParameterPacker[list[str]]):
                 ``NDArray`` that contains the corresponding names of those parameters.
 
         Returns:
-            tuple[NDArrays, list[str]]: tuple of model parameters and the names of the layers to which they correspond
+            (tuple[NDArrays, list[str]]): tuple of model parameters and the names of the layers to which they
+                correspond.
         """
         split_size = len(packed_parameters) - 1
         model_parameters = packed_parameters[:split_size]
@@ -132,8 +133,8 @@ class SparseCooParameterPacker(ParameterPacker[tuple[NDArrays, NDArrays, list[st
             x (Tensor): Input dense tensor.
 
         Returns:
-            tuple[NDArray, NDArray, NDArray]: The nonzero values of x, the indices of those values within x, and the
-            shape of x.
+            (tuple[NDArray, NDArray, NDArray]): The nonzero values of x, the indices of those values within x, and the
+                shape of x.
         """
         selected_parameters = x[torch.nonzero(x, as_tuple=True)].cpu().numpy()
         selected_indices = torch.nonzero(x, as_tuple=False).cpu().numpy()

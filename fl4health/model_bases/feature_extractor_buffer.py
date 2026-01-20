@@ -72,7 +72,7 @@ class FeatureExtractorBuffer:
             layer_hierarchy (list[str]): The hierarchical list of name of desired layer.
 
         Returns:
-            nn.Module: The desired layer of the model.
+            (nn.Module): The desired layer of the model.
         """
         if len(layer_hierarchy) == 1:
             return getattr(module, layer_hierarchy[0])
@@ -90,7 +90,7 @@ class FeatureExtractorBuffer:
                 will allow the user to specify the generic name of the layer instead of the full hierarchical name.
 
         Returns:
-            str: The complete name of last named layer that matches the prefix.
+            (str): The complete name of last named layer that matches the prefix.
         """
         filtered_layers = [layer for layer in layers_name if layer.startswith(prefix)]
 
@@ -138,7 +138,7 @@ class FeatureExtractorBuffer:
             layer_name (str): The name of the layer.
 
         Returns:
-            Callable: The hook function that takes in a module, input, and output tensors.
+            (Callable): The hook function that takes in a module, input, and output tensors.
         """
 
         def hook(module: nn.Module, input: torch.Tensor, output: torch.Tensor) -> None:
@@ -158,7 +158,7 @@ class FeatureExtractorBuffer:
             features (torch.Tensor): The input tensor of shape (``batch_size``, \\*).
 
         Returns:
-            torch.Tensor: The flattened tensor of shape (``batch_size``, ``feature_size``).
+            (torch.Tensor): The flattened tensor of shape (``batch_size``, ``feature_size``).
         """
         return features.reshape(len(features), -1)
 
@@ -167,8 +167,8 @@ class FeatureExtractorBuffer:
         Returns a dictionary of extracted features.
 
         Returns:
-            features (dict[str, torch.Tensor]): A dictionary where the keys are the layer names and the values are
-            the extracted features as torch Tensors.
+            (dict[str, torch.Tensor]): A dictionary where the keys are the layer names and the values are
+                the extracted features as torch Tensors.
         """
         features = {}
 

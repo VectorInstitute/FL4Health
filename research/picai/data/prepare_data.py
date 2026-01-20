@@ -39,7 +39,7 @@ def get_labels(paths_for_each_sample: Sequence[tuple[Sequence[Path], Path]]) -> 
             is tuple where the first entry is a list of scan paths and the second in the annotation path.
 
     Returns:
-        Sequence[float]: The label for each of the samples.
+        (Sequence[float]): The label for each of the samples.
     """
     _, annotation_paths = zip(*paths_for_each_sample)
     case_labels = []
@@ -70,7 +70,7 @@ def filter_split_on_subject_id(
         train (bool): Whether to use the train or the test split.
 
     Returns:
-        dict[str, Sequence[float] | Sequence[str]]: A Dict containing image_paths, label_paths
+        (dict[str, Sequence[float] | Sequence[str]]): A Dict containing image_paths, label_paths
             and case_label for each sample part of the split.
     """
     train_or_val_string = "train" if train else "val"

@@ -28,7 +28,7 @@ class AbstractSnapshotter(ABC, Generic[T]):
             attribute (dict[str, T]): The attribute to be saved.
 
         Returns:
-            dict[str, Any]: A dictionary containing the state of the attribute.
+            (dict[str, Any]): A dictionary containing the state of the attribute.
         """
 
     @abstractmethod
@@ -52,7 +52,7 @@ class OptimizerSnapshotter(AbstractSnapshotter[Optimizer]):
             attribute (dict[str, Optimizer]): The optimizers to be saved.
 
         Returns:
-            dict[str, Any]: A dictionary containing the state of the optimizers.
+            (dict[str, Any]): A dictionary containing the state of the optimizers.
         """
         output = {}
         for key, optimizer in attribute.items():
@@ -82,7 +82,7 @@ class LRSchedulerSnapshotter(AbstractSnapshotter[LRScheduler]):
             attribute (dict[str, LRScheduler]): The learning rate schedulers to be saved.
 
         Returns:
-            dict[str, Any]: A dictionary containing the state of the learning rate schedulers.
+            (dict[str, Any]): A dictionary containing the state of the learning rate schedulers.
         """
         output = {}
         for key, lr_scheduler in attribute.items():
@@ -110,7 +110,7 @@ class TorchModuleSnapshotter(AbstractSnapshotter[nn.Module]):
             attribute (dict[str, nn.Module]): The ``nn.Modules`` to be saved.
 
         Returns:
-            dict[str, Any]: A dictionary containing the state of the ``nn.Modules``.
+            (dict[str, Any]): A dictionary containing the state of the ``nn.Modules``.
         """
         output = {}
         for key, model in attribute.items():
@@ -138,7 +138,7 @@ class SerializableObjectSnapshotter(AbstractSnapshotter[MetricManager | LossMete
             attribute (dict[str, MetricManager | LossMeter | ReportsManager]): The serializable objects to be saved.
 
         Returns:
-            dict[str, Any]: A dictionary containing the state of the serializable objects.
+            (dict[str, Any]): A dictionary containing the state of the serializable objects.
         """
         return attribute
 
@@ -165,7 +165,7 @@ class SingletonSnapshotter(AbstractSnapshotter[int | float | bool]):
             attribute (dict[str, int | float | bool]): The singleton to be saved.
 
         Returns:
-            dict[str, Any]: A dictionary containing the state of the singletons.
+            (dict[str, Any]): A dictionary containing the state of the singletons.
         """
         return attribute
 
@@ -190,7 +190,7 @@ class HistorySnapshotter(AbstractSnapshotter[History]):
             attribute (dict[str, History]): The history to be saved.
 
         Returns:
-            dict[str, Any]: A dictionary containing the state of the history.
+            (dict[str, Any]): A dictionary containing the state of the history.
         """
         return attribute
 
@@ -215,7 +215,7 @@ class StringSnapshotter(AbstractSnapshotter[str]):
             attribute (dict[str, str]): The string to be saved.
 
         Returns:
-            dict[str, Any]: A dictionary containing the state of the strings.
+            (dict[str, Any]): A dictionary containing the state of the strings.
         """
         return attribute
 
@@ -240,7 +240,7 @@ class BytesSnapshotter(AbstractSnapshotter[bytes]):
             attribute (dict[str, str]): The string to be saved.
 
         Returns:
-            dict[str, Any]: A dictionary containing the state of the bytes.
+            (dict[str, Any]): A dictionary containing the state of the bytes.
         """
         return attribute
 
@@ -265,7 +265,7 @@ class EnumSnapshotter(AbstractSnapshotter[Enum]):
             attribute (dict[str, Enum]): The enum to be saved.
 
         Returns:
-            dict[str, Any]: A dictionary containing the state of the enum.
+            (dict[str, Any]): A dictionary containing the state of the enum.
         """
         return attribute
 

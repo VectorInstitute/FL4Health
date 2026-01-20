@@ -8,7 +8,6 @@
 [![Smoke tests](https://github.com/VectorInstitute/FL4Health/actions/workflows/smoke_tests.yaml/badge.svg)](https://github.com/VectorInstitute/FL4Health/actions/workflows/smoke_tests.yaml)
 [![docs](https://github.com/VectorInstitute/FL4Health/actions/workflows/docs_build.yml/badge.svg)](https://github.com/VectorInstitute/FL4Health/actions/workflows/docs_build.yml/)
 [![codecov](https://codecov.io/github/VectorInstitute/FL4Health/branch/main/graph/badge.svg?token=Ty9hHLCF5g)](https://codecov.io/github/VectorInstitute/FL4Health)
-![License](https://img.shields.io/github/license/VectorInstitute/FL4Health)
 
 Principally, this repository contains the federated learning (FL) engine aimed at facilitating FL research, experimentation, and exploration, with a specific focus on health applications. **Documentation is hosted at**: https://vectorinstitute.github.io/FL4Health/index.html
 
@@ -286,7 +285,7 @@ Note that these strategies are also responsible for unpacking and repacking info
 The examples folder contains an extensive set of ways to use the various components of the library, setup the different strategies implemented in the library, and how to run federated learning in general. These examples are an accessible way to learn what is required to experiment with different FL capabilities. Each example has some documentation describing what is being implemented and how to run the code to see it in action. The examples span basic FedAvg implementations to differentially private SCAFFOLD and beyond.
 
 > [!NOTE]
-> The contents of the examples folder is not packed with the FL4Health library on release to PyPi
+> The contents of the examples folder is not packed with the FL4Health library on release to PyPI
 
 ## Research Code
 
@@ -295,7 +294,7 @@ The research folder houses code associated with various research being conducted
 - [FENDA-FL](https://arxiv.org/pdf/2309.16825.pdf) FLamby and GEMINI Experiments (training scripts and model code only). There is a README in these folders that provide details on how to run the hyper-parameter sweeps, evaluations, and other experiments. The GEMINI experiments are not runnable in a general environment, as they require access to GEMINI data, which is securely held, due to patient privacy.
 
 > [!NOTE]
-> The contents of the research folder is not packed with the FL4Health library on release to PyPi
+> The contents of the research folder is not packed with the FL4Health library on release to PyPI
 
 ## Contributing
 

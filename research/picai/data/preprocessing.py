@@ -100,8 +100,8 @@ class Case(ABC):
         destination and returns the file paths.
 
         Returns:
-            tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths for the scans
-            and the second entry is the file path to the corresponding annotation.
+            (tuple[Sequence[Path], Path]): A tuple in which the first entry is a sequence of file paths for the scans
+                and the second entry is the file path to the corresponding annotation.
 
         Raises:
             NotImplementedError
@@ -152,8 +152,8 @@ class PicaiCase(Case):
         below.
 
         Returns:
-            tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths for the scans
-            and the second entry is the file path to the corresponding annotation.
+            (tuple[Sequence[Path], Path]): A tuple in which the first entry is a sequence of file paths for the scans
+                and the second entry is the file path to the corresponding annotation.
         """
         modality_suffix_map = {"t2w": "0000", "adc": "0001", "hbv": "0002"}
         preprocessed_scan_paths = []
@@ -192,7 +192,7 @@ class PreprocessingTransform(ABC):
             case (Case): The case to be processed.
 
         Returns:
-            Case: The Case after the transformation has been applied.
+            (Case): The Case after the transformation has been applied.
         """
         raise NotImplementedError
 
@@ -206,7 +206,7 @@ class ResampleToFirstScan(PreprocessingTransform):
             case (Case): The case to be processed.
 
         Returns:
-            Case: The resampled Case.
+            (Case): The resampled Case.
         """
         # set up resampler to resolution, field of view, etc. of first scan
         resampler = sitk.ResampleImageFilter()  # default linear
@@ -232,7 +232,7 @@ class ResampleSpacing(PreprocessingTransform):
             case (Case): The case to be processed.
 
         Returns:
-            Case: The Case where scans and annotation have specified spacing.
+            (Case): The Case where scans and annotation have specified spacing.
         """
         assert case.settings.spacing is not None
         # resample scans to target resolution
@@ -253,7 +253,7 @@ class CentreCropAndOrPad(PreprocessingTransform):
             case (Case): The case to be processed.
 
         Returns:
-            Case: The Case after centre crop and/or padding.
+            (Case): The Case after centre crop and/or padding.
         """
         assert case.settings.size is not None
         case.annotation = crop_or_pad(case.annotation, case.settings.size, case.settings.physical_size)
@@ -278,7 +278,7 @@ class AlignOriginAndDirection(PreprocessingTransform):
             case (Case): The case to be processed.
 
         Returns:
-            Case: The Case after aligning origin and direction.
+            (Case): The Case after aligning origin and direction.
         """
         case_origin, case_direction, case_spacing = None, None, None
         for scan in case.scans:
@@ -319,7 +319,7 @@ class BinarizeAnnotation(PreprocessingTransform):
             case (Case): The case to be processed.
 
         Returns:
-            Case: The Case after binarizing the annotation.
+            (Case): The Case after binarizing the annotation.
         """
         annotation_array = sitk.GetArrayFromImage(case.annotation)
 
@@ -343,7 +343,7 @@ def apply_transform(case: Case, transforms: Sequence[PreprocessingTransform]) ->
         transforms (Sequence[PreprocessingTransform]): The sequence of transformation to be applied.
 
     Returns:
-        tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths
+        (tuple[Sequence[Path], Path]): A tuple in which the first entry is a sequence of file paths
             for the scans and the second entry is the file path to the corresponding annotation.
 
     Raises:
@@ -370,8 +370,8 @@ def preprocess(
         num_threads (int): The number of threads to use for preprocessing.
 
     Returns:
-        Sequence[tuple[Sequence[Path], Path]]: A sequence of tuples in which the first entry is a sequence of
-        file paths for the scans and the second entry is the file path to the corresponding annotation.
+        (Sequence[tuple[Sequence[Path], Path]]): A sequence of tuples in which the first entry is a sequence of
+            file paths for the scans and the second entry is the file path to the corresponding annotation.
 
     Raises:
         PreprocessingException if an error occurs during preprocessing of any of the cases.

@@ -144,9 +144,9 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
 
         Returns:
             (tuple[Parameters | None, dict[str, Scalar]]) A tuple containing the aggregated parameters
-            and the aggregated fit metrics. For adaptive constraints, the server also packs a constraint weight
-            to be sent to the clients. This is sent even if adaptive constraint weights are turned off and
-            the value simply remains constant.
+                and the aggregated fit metrics. For adaptive constraints, the server also packs a constraint weight
+                to be sent to the clients. This is sent even if adaptive constraint weights are turned off and
+                the value simply remains constant.
         """
         if not results:
             return None, {}
@@ -193,7 +193,7 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
                 these the FitRes object contains both model weights and training losses which need to be processed.
 
         Returns:
-            list[tuple[int, float]]: A list of the training losses produced by client training
+            (list[tuple[int, float]]): A list of the training losses produced by client training
         """
         train_losses_and_counts: list[tuple[int, float]] = []
         for _, fit_res in results:

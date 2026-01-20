@@ -58,9 +58,6 @@ class FedPm(FedAvgDynamicLayer):
                 Defaults to None.
             evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
-            weighted_aggregation (bool, optional): Determines whether parameter aggregation is a linearly weighted
-                average or a uniform average. FedAvg default is weighted average by client dataset counts.
-                Defaults to True.
             weighted_eval_losses (bool, optional): Determines whether losses during evaluation are linearly weighted
                 averages or a uniform average. FedAvg default is weighted average of the losses by client dataset
                 counts. Defaults to True.
@@ -109,13 +106,13 @@ class FedPm(FedAvgDynamicLayer):
 
         In this case, the updates performed are:
 
-        .. code-block:: python
+        ```python
+        alpha_new = alpha + M
 
-            alpha_new = alpha + M
+        beta_new = beta + K * 1 - M
 
-            beta_new = beta + K * 1 - M
-
-            theta = (alpha_new - 1) / (alpha_new + beta_new - 2)
+        theta = (alpha_new - 1) / (alpha_new + beta_new - 2)
+        ```
 
         where ``M`` is the sum of all binary masks corresponding to a particular parameter tensor, ``K`` is the number
         of clients, and "1" in the second equation refers to an array of all ones of the same shape as ``M``.
@@ -126,7 +123,7 @@ class FedPm(FedAvgDynamicLayer):
             results (list[tuple[NDArrays, int]]): Binary masks sent to the server for aggregation
 
         Returns:
-            dict[str, NDArray]: Aggregated binary masks
+            (dict[str, NDArray]): Aggregated binary masks
         """
         names_to_layers: defaultdict[str, list[NDArray]] = defaultdict(list)
         total_num_clients: defaultdict[str, int] = defaultdict(int)
