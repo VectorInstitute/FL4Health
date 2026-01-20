@@ -50,7 +50,7 @@ jobs:
         run: uv sync --group dev --group test
 
       - name: Run Script
-        run: uv run pytest --test-group-count=4 --test-group=${{ matrix.group }} -v --cov fl4health --cov-report=xml tests/smoke_tests/test_smoke_tests.py
+        run: uv run pytest --test-group-count=4 --test-group=${{ matrix.group }} -v --cov fl4health --cov-report=xml tests/smoke_tests/test_nnunet_smoke_tests.py
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
