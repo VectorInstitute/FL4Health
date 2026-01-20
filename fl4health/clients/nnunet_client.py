@@ -182,7 +182,6 @@ class NnunetClient(BasicClient):
 
         # Auto set verbose to True if console handler is on DEBUG mode
         self.verbose = verbose if console_handler.level >= INFO else True
-        self.verbose = True
 
         # Used to redirect stdout to logger
         self.stream2debug = StreamToLogger(FLOWER_LOGGER, DEBUG)
