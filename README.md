@@ -6,7 +6,7 @@
 [![Static Code Checks](https://github.com/VectorInstitute/FL4Health/actions/workflows/static_code_checks.yaml/badge.svg)](https://github.com/VectorInstitute/FL4Health/actions/workflows/static_code_checks.yaml)
 [![Unit Tests](https://github.com/VectorInstitute/FL4Health/actions/workflows/tests.yaml/badge.svg)](https://github.com/VectorInstitute/FL4Health/actions/workflows/tests.yaml)
 [![Smoke tests](https://github.com/VectorInstitute/FL4Health/actions/workflows/smoke_tests.yaml/badge.svg)](https://github.com/VectorInstitute/FL4Health/actions/workflows/smoke_tests.yaml)
-[![docs](https://github.com/VectorInstitute/FL4Health/actions/workflows/docs_build.yml/badge.svg)](https://github.com/VectorInstitute/FL4Health/actions/workflows/docs_build.yml/)
+[![docs](https://github.com/VectorInstitute/FL4Health/actions/workflows/docs.yml/badge.svg)](https://github.com/VectorInstitute/FL4Health/actions/workflows/docs.yml/)
 [![codecov](https://codecov.io/github/VectorInstitute/FL4Health/branch/main/graph/badge.svg?token=Ty9hHLCF5g)](https://codecov.io/github/VectorInstitute/FL4Health)
 
 Principally, this repository contains the federated learning (FL) engine aimed at facilitating FL research, experimentation, and exploration, with a specific focus on health applications. **Documentation is hosted at**: https://vectorinstitute.github.io/FL4Health/index.html
