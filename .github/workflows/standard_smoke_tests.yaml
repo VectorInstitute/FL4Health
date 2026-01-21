@@ -1,0 +1,73 @@
+name: Standard Smoke Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    strategy:
+      matrix:
+        group: [1, 2, 3, 4]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7.1.5
+        with:
+          version: "0.9.11"
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.1.0
+        with:
+          python-version-file: ".python-version"
+
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Set up cache
+        uses: actions/cache@v5
+        id: cached-uv-dependencies
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ hashFiles('**/uv.lock') }}
+
+      - name: Set up file descriptor limit
+        run: ulimit -n 4096
+
+      - name: Install dependencies
+        run: uv sync --group dev --group test
+
+      - name: Run Script
+        run: uv run pytest --test-group-count=4 --test-group=${{ matrix.group }} -v --cov fl4health --cov-report=xml tests/smoke_tests/test_standard_smoke_tests.py
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: VectorInstitute/FL4Health
+          fail_ci_if_error: true
+          verbose: true
+
+      # Deleting some temporary files and useless folders to free up space
+      # Deleting /usr/share/dotnet should clear ~4GB of space.
+      # Deleting /usr/local/lib/android should clear ~12GB of space.
+      - name: Cleanup space (before cache save)
+        run: |
+          df -h /dev/root
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android
+          df -h /dev/root
+
+      - name: Minimize uv cache
+        run: uv cache prune --ci
