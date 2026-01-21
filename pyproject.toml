@@ -1,6 +1,6 @@
 [project]
 name = "fl4health"
-version = "0.4.1"
+version = "0.4.2"
 description = "Federated Learning for Health"
 authors = [
     {name = "Vector AI Engineering", email = "fl4health@vectorinstitute.ai"}
