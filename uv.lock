@@ -2332,15 +2332,15 @@ wheels = [
 
 [[package]]
 name = "monai"
-version = "1.5.1"
+version = "1.5.2rc1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
     { name = "torch" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d0/19/53c7a105640542a324b3aef1213d18ffa53782f818b4f364a7db3a3e3a53/monai-1.5.1.tar.gz", hash = "sha256:24268e406511a7b00f734c0e741753845185c9d65c20a193704d99a9fe785d9f", size = 1686946, upload-time = "2025-09-22T17:39:59.574Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8f/1a/22e8c8d101a3ee86748203fdac6b003a36de1e07c45c83febbf3bc445794/monai-1.5.2rc1.tar.gz", hash = "sha256:4cbcbaa51bd240a7c4941ba33b2108b031cdbc53145b9ddf688a81dde099e953", size = 1687152, upload-time = "2026-01-26T13:57:43.174Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/83/3b/ee8c03de875507d8d56c86b5ede71514812d657a4a600844d3fa73478098/monai-1.5.1-py3-none-any.whl", hash = "sha256:3112e6ce63352f2ebb8a324a5c199b026aa8e61e914b4912cda3e890e6f7e7c5", size = 2674860, upload-time = "2025-09-22T17:39:57.624Z" },
+    { url = "https://files.pythonhosted.org/packages/58/97/6428a135068d3ffea8511943a58c4756aa132a9231cbe37bce13ec61a30f/monai-1.5.2rc1-py3-none-any.whl", hash = "sha256:ad0e974cb3b67f9ef15a7d880f812c02c647ba9937bc8714bc93dabef831dae8", size = 2674882, upload-time = "2026-01-26T13:57:41.01Z" },
 ]
 
 [[package]]
