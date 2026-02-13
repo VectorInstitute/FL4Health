@@ -90,7 +90,7 @@ def test_multiple_transforms_metric_computation() -> None:
     accuracy_metric = AccuracyForTest("accuracy")
     transform_accuracy_metric = TransformsMetric(
         accuracy_metric,
-        [lambda x: x + 1.0, lambda x: binarize(x)],
+        [lambda x: x + 1.0, binarize],
         [lambda x: x + 1.0, lambda x: x - 1.0],
     )
 
