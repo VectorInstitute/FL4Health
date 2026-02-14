@@ -29,7 +29,7 @@ class TextMulticolumnTransformer(BaseEstimator, TransformerMixin):
         Returns:
             (TextMulticolumnTransformer): The fit transformer
         """
-        joined_x = x.apply(lambda x: " ".join(x), axis=1)
+        joined_x = x.apply(" ".join, axis=1)
         self.transformer.fit(joined_x)
         return self
 
@@ -43,7 +43,7 @@ class TextMulticolumnTransformer(BaseEstimator, TransformerMixin):
         Returns:
             (pd.DataFrame): Transformed dataframe.
         """
-        joined_x = x.apply(lambda x: " ".join(x), axis=1)
+        joined_x = x.apply(" ".join, axis=1)
         return self.transformer.transform(joined_x)
 
 
