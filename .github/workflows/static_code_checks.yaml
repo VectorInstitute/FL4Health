@@ -55,6 +55,9 @@ jobs:
           # keras>=3.12.0 which needs tensorflow>=2.16, but we're pinning to tensorflow 2.15 due to tensorflow-io
           # compatibility constraints.
           # CVE-2026-0994 is a protobuff vulnerability without a fix yet.
+          # CVE-2026-26007 is a cryptography vulnerability that requires cryptography>=46.0.5, but flwr (flower)
+          # requires cryptography<45.0.0, blocking the upgrade.
+          # CVE-2026-25990 is a pillow vulnerability that requires pillow>=12.1.1, pending dependency resolution.
           ignore-vulns: |
             GHSA-3749-ghw9-m3mg
             GHSA-887c-mr87-cxwp
@@ -65,6 +68,8 @@ jobs:
             CVE-2025-12058
             CVE-2025-12060
             CVE-2026-0994
+            CVE-2026-26007
+            CVE-2026-25990
 
       # Deleting some temporary files and useless folders to free up space
       # Deleting /usr/share/dotnet should clear ~4GB of space.
