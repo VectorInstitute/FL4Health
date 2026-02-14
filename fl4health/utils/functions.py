@@ -105,4 +105,4 @@ def decode_and_pseudo_sort_results(
         (client_proxy, parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
         for client_proxy, fit_res in results
     ]
-    return sorted(ndarrays_results, key=lambda x: pseudo_sort_scoring_function(x))
+    return sorted(ndarrays_results, key=pseudo_sort_scoring_function)

@@ -49,7 +49,7 @@ class CondAutoEncoderClient(BasicClient):
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)
         # ToTensor transform is used to make sure pixels stay in the range [0.0, 1.0].
         # Flattening the image data to match the input shape of the model.
-        flatten_transform = transforms.Lambda(lambda x: torch.flatten(x))
+        flatten_transform = transforms.Lambda(torch.flatten)
         transform = transforms.Compose([ToNumpy(), transforms.ToTensor(), flatten_transform])
         train_loader, val_loader, _ = load_mnist_data(
             data_dir=self.data_path,
