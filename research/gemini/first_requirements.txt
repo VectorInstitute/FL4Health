@@ -70,7 +70,7 @@ langcodes==3.3.0
 libclang==15.0.6.1
 llvmlite==0.38.0
 locket==1.0.0
-Markdown==3.4.1
+Markdown==3.8.1
 MarkupSafe==2.1.2
 matplotlib==3.6.3
 matplotlib-inline==0.1.6
