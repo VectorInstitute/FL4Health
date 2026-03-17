@@ -109,7 +109,7 @@ psycopg2-binary==2.8.6
 ptyprocess==0.7.0
 pure-eval==0.2.2
 pyarrow==7.0.0
-pyasn1==0.4.8
+pyasn1==0.6.3
 pyasn1-modules==0.2.8
 pycyclops==0.1.16
 pydantic==1.10.4
