@@ -60,19 +60,6 @@ jobs:
           # GHSA-rf74-v2fm-23pw, CVE-2026-33230, CVE-2026-33231: NLTK vulnerabilities without a fix yet.
           # CVE-2026-4539 pygments vulnerability with no fix yet
           ignore-vulns: |
-            GHSA-3749-ghw9-m3mg
-            GHSA-887c-mr87-cxwp
-            CVE-2025-53000
-            CVE-2026-21851
-            CVE-2024-55459
-            CVE-2025-9906
-            CVE-2025-12058
-            CVE-2025-12060
-            CVE-2026-0994
-            CVE-2026-26007
-            GHSA-rf74-v2fm-23pw
-            CVE-2026-33230
-            CVE-2026-33231
             CVE-2026-4539
 
       # Deleting some temporary files and useless folders to free up space
