@@ -48,7 +48,7 @@ jobs:
         run: uv run pytest -m "not smoketest" -v --cov fl4health --cov-report=xml tests
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: VectorInstitute/FL4Health
