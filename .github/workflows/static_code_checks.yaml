@@ -58,6 +58,7 @@ jobs:
           # CVE-2026-26007 is a cryptography vulnerability that requires cryptography>=46.0.5, but flwr (flower)
           # requires cryptography<45.0.0, blocking the upgrade.
           # GHSA-rf74-v2fm-23pw, CVE-2026-33230, CVE-2026-33231: NLTK vulnerabilities without a fix yet.
+          # CVE-2026-4539 pygments vulnerability with no fix yet
           ignore-vulns: |
             GHSA-3749-ghw9-m3mg
             GHSA-887c-mr87-cxwp
@@ -72,6 +73,7 @@ jobs:
             GHSA-rf74-v2fm-23pw
             CVE-2026-33230
             CVE-2026-33231
+            CVE-2026-4539
 
       # Deleting some temporary files and useless folders to free up space
       # Deleting /usr/share/dotnet should clear ~4GB of space.
