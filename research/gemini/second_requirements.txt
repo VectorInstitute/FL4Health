@@ -83,7 +83,7 @@ packaging==22.0
 pandas==1.5.3
 partd==1.4.1
 patsy==0.5.6
-pillow==10.2.0
+pillow==12.2.0
 portalocker==2.8.2
 promise==2.3
 protobuf==3.20.3

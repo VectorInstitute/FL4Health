@@ -97,7 +97,7 @@ pathtools==0.1.2
 pathy==0.10.1
 pexpect==4.8.0
 pickleshare==0.7.5
-Pillow==9.4.0
+Pillow==12.2.0
 pipx==1.1.0
 platformdirs==3.0.0
 preshed==3.0.8
