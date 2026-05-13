@@ -34,6 +34,7 @@ from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.nnunet_utils import (
     NNUNET_DEFAULT_NP,
     NNUNET_N_SPATIAL_DIMS,
+    LocalPolyLRScheduler,
     Module2LossWrapper,
     NnunetConfig,
     NnUNetDataLoaderWrapper,
@@ -56,6 +57,7 @@ with warnings.catch_warnings():
     # silences a bunch of deprecation warnings related to scipy.ndimage
     # Raised an issue with nnunet. https://github.com/MIC-DKFZ/nnUNet/issues/2370
     warnings.filterwarnings("ignore", category=DeprecationWarning)
+    import nnunetv2.training.nnUNetTrainer.nnUNetTrainer as nnUNetTrainerModule
     from batchgenerators.utilities.file_and_folder_operations import (
         load_json,
         save_json,
@@ -72,7 +74,6 @@ with warnings.catch_warnings():
     from nnunetv2.training.dataloading.utils import unpack_dataset
     from nnunetv2.training.loss.deep_supervision import DeepSupervisionWrapper
     from nnunetv2.training.lr_scheduler.polylr import PolyLRScheduler
-    from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
     from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
 
 # grpcio currently has a log spamming bug that seems to be triggered by multithreading/multiprocessing
@@ -100,7 +101,7 @@ class FlexibleNnunetClient(FlexibleClient):
         checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         client_name: str | None = None,
-        nnunet_trainer_class: type[nnUNetTrainer] = nnUNetTrainer,
+        nnunet_trainer_class: type[nnUNetTrainerModule.nnUNetTrainer] = nnUNetTrainerModule.nnUNetTrainer,
         nnunet_trainer_class_kwargs: dict[str, Any] | None = None,
     ) -> None:
         """
@@ -208,7 +209,7 @@ class FlexibleNnunetClient(FlexibleClient):
         # nnunet specific attributes to be initialized in setup_client
         self.nnunet_trainer_class = nnunet_trainer_class
         self.nnunet_trainer_class_kwargs = nnunet_trainer_class_kwargs or {}
-        self.nnunet_trainer: nnUNetTrainer
+        self.nnunet_trainer: nnUNetTrainerModule.nnUNetTrainer
         self.nnunet_config: NnunetConfig
         self.plans: dict[str, Any] | None = None
         self.steps_per_round: int  # N steps per server round
@@ -620,6 +621,12 @@ class FlexibleNnunetClient(FlexibleClient):
                 device=self.device,
                 **self.nnunet_trainer_class_kwargs,
             )
+
+            # NOTE: Monkey Patch to force the nnunet_trainer to use our version of the PolyLRScheduler instead of
+            # NnUnet version. This is because NnUnet's hasn't updated their scheduler to the new torch signature and
+            # does not appear to intend to do so. The fix is very minimum. So we patch it here.
+            nnUNetTrainerModule.PolyLRScheduler = LocalPolyLRScheduler
+
             # nnunet_trainer initialization
             self.nnunet_trainer.initialize()
             # This is done by nnunet_trainer in self.on_train_start, we
