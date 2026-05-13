@@ -12,11 +12,11 @@
                 "local": 1.6362
             },
             "eval_round_metrics": {
-                "val - personal - accuracy": 0.5269,
+                "val - personal - accuracy": 0.52433,
                 "val - global - accuracy": 0.5331,
-                "val - local - accuracy": 0.4984
+                "val - local - accuracy": 0.49900
             },
-            "eval_round_loss": 1.5862
+            "eval_round_loss": 1.57742
         },
         "2": {
             "fit_round_metrics": {
@@ -30,11 +30,11 @@
                 "local": 0.79530
             },
             "eval_round_metrics": {
-                "val - personal - accuracy": 0.74766,
+                "val - personal - accuracy": 0.74322,
                 "val - global - accuracy": 0.72833,
                 "val - local - accuracy": 0.70289
             },
-            "eval_round_loss": 0.86359
+            "eval_round_loss": 0.85188
         },
         "3": {
             "fit_round_metrics": {
@@ -48,11 +48,11 @@
                 "local": 0.74168
             },
             "eval_round_metrics": {
-                "val - personal - accuracy": 0.80833,
+                "val - personal - accuracy": 0.78300,
                 "val - global - accuracy": 0.75322,
-                "val - local - accuracy": 0.80711
+                "val - local - accuracy": 0.74700
             },
-            "eval_round_loss": 0.65421
+            "eval_round_loss": 0.72138
         }
     }
 }

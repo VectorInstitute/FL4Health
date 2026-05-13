@@ -126,7 +126,7 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
         assert self.global_model is not None
 
         # NOTE: This is a small workaround for torch back-compatibility in AdamW. Torch injects a key (that isn't part
-        # of the class signature) into the param groups called "decoupled_weight_decay" which cases an error in the
+        # of the class signature) into the param groups called "decoupled_weight_decay" which causes an error in the
         # kwargs below. See: https://github.com/pytorch/pytorch/blob/v2.11.0/torch/optim/adamw.py#L57
         if optim_class == torch.optim.AdamW:
             optimizer_kwargs.pop("decoupled_weight_decay")
