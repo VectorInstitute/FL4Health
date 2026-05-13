@@ -47,10 +47,12 @@ jobs:
         uses: pypa/gh-action-pip-audit@v1.1.0
         with:
           virtual-environment: .venv/
-          # CVE-2026-26007 is a cryptography vulnerability that requires cryptography>=46.0.5, but flwr (flower)
-          # requires cryptography<45.0.0, blocking the upgrade.
+          # CVE-2026-26007, CVE-2026-34073 are cryptography vulnerability that requires cryptography>=46.0.5, but
+          # flwr (flower) requires cryptography<45.0.0, blocking the upgrade.
           ignore-vulns: |
             CVE-2026-26007
+            CVE-2026-34073
+
 
       # Deleting some temporary files and useless folders to free up space
       # Deleting /usr/share/dotnet should clear ~4GB of space.
