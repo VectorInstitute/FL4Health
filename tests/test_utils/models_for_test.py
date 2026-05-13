@@ -1,3 +1,5 @@
+from typing import cast
+
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -123,15 +125,23 @@ class HierarchicalCnn(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.h1_layer1["h2_layer1"]["conv"](x)
-        x = self.h1_layer1["h2_layer1"]["pool"](x)
-        x = self.h1_layer1["h2_layer2"]["conv"](x)
-        x = self.h1_layer1["h2_layer2"]["pool"](x)
+        # Unfortunately, mypy doesn't recognize that ModuleDict can be nested. So we're forced to cast
+        h1_layer_1_h2_layer_1: nn.ModuleDict = cast(nn.ModuleDict, self.h1_layer1["h2_layer1"])
+        h1_layer_1_h2_layer_2: nn.ModuleDict = cast(nn.ModuleDict, self.h1_layer1["h2_layer2"])
 
-        x = self.h1_layer2["h2_layer1"]["conv"](x)
-        x = self.h1_layer2["h2_layer1"]["pool"](x)
-        x = self.h1_layer2["h2_layer2"]["conv"](x)
-        x = self.h1_layer2["h2_layer2"]["pool"](x)
+        x = h1_layer_1_h2_layer_1["conv"](x)
+        x = h1_layer_1_h2_layer_1["pool"](x)
+        x = h1_layer_1_h2_layer_2["conv"](x)
+        x = h1_layer_1_h2_layer_2["pool"](x)
+
+        # Unfortunately, mypy doesn't recognize that ModuleDict can be nested. So we're forced to cast
+        h1_layer_2_h2_layer_1: nn.ModuleDict = cast(nn.ModuleDict, self.h1_layer2["h2_layer1"])
+        h1_layer_2_h2_layer_2: nn.ModuleDict = cast(nn.ModuleDict, self.h1_layer2["h2_layer2"])
+
+        x = h1_layer_2_h2_layer_1["conv"](x)
+        x = h1_layer_2_h2_layer_1["pool"](x)
+        x = h1_layer_2_h2_layer_2["conv"](x)
+        x = h1_layer_2_h2_layer_2["pool"](x)
 
         x = torch.flatten(x, 1)
         x = self.classifier["fc"](x)

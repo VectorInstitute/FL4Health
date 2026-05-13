@@ -8,7 +8,7 @@ from enum import Enum
 from importlib import reload
 from logging import DEBUG, INFO, WARN, Logger
 from math import ceil
-from typing import Any, no_type_check
+from typing import Any
 
 import numpy as np
 import torch
@@ -518,12 +518,9 @@ class PolyLRSchedulerWrapper(_LRScheduler):
         # Number of windows with constant LR across training
         self.num_windows = ceil(max_steps / self.steps_per_lr)
         self._step_count: int
-        super().__init__(optimizer, -1, False)
+        super().__init__(optimizer, -1)
 
-    # mypy incorrectly infers get_lr returns a float
-    # Documented issue https://github.com/pytorch/pytorch/issues/100804
-    @no_type_check
-    def get_lr(self) -> Sequence[float]:
+    def get_lr(self) -> list[float | torch.Tensor]:
         """
         Get the current LR of the scheduler.
 

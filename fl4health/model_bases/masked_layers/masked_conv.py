@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
@@ -21,7 +23,7 @@ class MaskedConv1d(nn.Conv1d):
         dilation: _size_1_t = 1,
         groups: int = 1,
         bias: bool = True,
-        padding_mode: str = "zeros",
+        padding_mode: Literal["zeros", "reflect", "replicate", "circular"] = "zeros",
         device: torch.device | None = None,
         dtype: torch.dtype | None = None,
     ) -> None:
@@ -150,7 +152,7 @@ class MaskedConv2d(nn.Conv2d):
         dilation: _size_2_t = 1,
         groups: int = 1,
         bias: bool = True,
-        padding_mode: str = "zeros",
+        padding_mode: Literal["zeros", "reflect", "replicate", "circular"] = "zeros",
         device: torch.device | None = None,
         dtype: torch.dtype | None = None,
     ) -> None:
@@ -276,7 +278,7 @@ class MaskedConv3d(nn.Conv3d):
         dilation: _size_3_t = 1,
         groups: int = 1,
         bias: bool = True,
-        padding_mode: str = "zeros",
+        padding_mode: Literal["zeros", "reflect", "replicate", "circular"] = "zeros",
         device: torch.device | None = None,
         dtype: torch.dtype | None = None,
     ) -> None:
@@ -403,7 +405,7 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
         groups: int = 1,
         bias: bool = True,
         dilation: _size_1_t = 1,
-        padding_mode: str = "zeros",
+        padding_mode: Literal["zeros", "reflect", "replicate", "circular"] = "zeros",
         device: torch.device | None = None,
         dtype: torch.dtype | None = None,
     ) -> None:
@@ -566,7 +568,7 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
         groups: int = 1,
         bias: bool = True,
         dilation: _size_2_t = 1,
-        padding_mode: str = "zeros",
+        padding_mode: Literal["zeros", "reflect", "replicate", "circular"] = "zeros",
         device: torch.device | None = None,
         dtype: torch.dtype | None = None,
     ) -> None:
@@ -727,7 +729,7 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
         groups: int = 1,
         bias: bool = True,
         dilation: _size_3_t = 1,
-        padding_mode: str = "zeros",
+        padding_mode: Literal["zeros", "reflect", "replicate", "circular"] = "zeros",
         device: torch.device | None = None,
         dtype: torch.dtype | None = None,
     ) -> None:
