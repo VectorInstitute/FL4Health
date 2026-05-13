@@ -53,7 +53,7 @@ jobs:
         run: uv run pytest --test-group-count=4 --test-group=${{ matrix.group }} -v --cov fl4health --cov-report=xml tests/smoke_tests/test_standard_smoke_tests.py
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: VectorInstitute/FL4Health

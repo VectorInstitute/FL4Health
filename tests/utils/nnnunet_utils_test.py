@@ -30,6 +30,7 @@ def test_poly_lr_scheduler(caplog: pytest.LogCaptureFixture) -> None:
     prev_lr = None
     for step in range(max_steps):
         curr_lr = lr_scheduler.get_lr()[0]
+        assert isinstance(curr_lr, float)
 
         if step % steps_per_lr == 0:
             assert curr_lr != prev_lr

@@ -8,7 +8,7 @@ from enum import Enum
 from importlib import reload
 from logging import DEBUG, INFO, WARN, Logger
 from math import ceil
-from typing import Any, no_type_check
+from typing import Any
 
 import numpy as np
 import torch
@@ -518,12 +518,9 @@ class PolyLRSchedulerWrapper(_LRScheduler):
         # Number of windows with constant LR across training
         self.num_windows = ceil(max_steps / self.steps_per_lr)
         self._step_count: int
-        super().__init__(optimizer, -1, False)
+        super().__init__(optimizer, -1)
 
-    # mypy incorrectly infers get_lr returns a float
-    # Documented issue https://github.com/pytorch/pytorch/issues/100804
-    @no_type_check
-    def get_lr(self) -> Sequence[float]:
+    def get_lr(self) -> list[float | torch.Tensor]:
         """
         Get the current LR of the scheduler.
 
@@ -546,3 +543,50 @@ class PolyLRSchedulerWrapper(_LRScheduler):
             log(INFO, f"Decaying LR of optimizer to {new_lr} at step {curr_step}")
 
         return [new_lr] * len(self.optimizer.param_groups)
+
+
+class LocalPolyLRScheduler(_LRScheduler):
+    def __init__(
+        self,
+        optimizer: torch.optim.Optimizer,
+        initial_lr: float,
+        max_steps: int,
+        exponent: float = 0.9,
+        current_step: int | None = None,
+    ):
+        """
+        NOTE: This class is PURELY to facilitate a monkey patch within the NnUnetTrainer class that creates a
+        scheduler in its initialize() call with an outdated signature. The fix is quite easy and this class is simple.
+        So we're comfortable doing a quick fix at the moment.
+
+        Learning rate (LR) scheduler with polynomial decay across fixed windows of size ``steps_per_lr``.
+
+        Args:
+            optimizer (Optimizer): The optimizer to apply LR scheduler to.
+            initial_lr (float): The initial learning rate of the optimizer.
+            max_steps (int): The maximum total number of steps across all FL rounds.
+            exponent (float): Controls how quickly LR decreases over time. Higher values lead to more rapid descent.
+                Defaults to 0.9.
+            current_step (int | None, optional): Current training step count. Defaults to None.
+        """
+        self.optimizer = optimizer
+        self.initial_lr = initial_lr
+        self.max_steps = max_steps
+        self.exponent = exponent
+        self.ctr = 0
+        super().__init__(optimizer, current_step if current_step is not None else -1)
+
+    def step(self, current_step: int | None = None) -> None:
+        """
+        Step the learning rate scheduler and update the optimizer's learning rate.
+
+        Args:
+            current_step (int | None, optional): Current training step count. Defaults to None.
+        """
+        if current_step is None or current_step == -1:
+            current_step = self.ctr
+            self.ctr += 1
+
+        new_lr = self.initial_lr * (1 - current_step / self.max_steps) ** self.exponent
+        for param_group in self.optimizer.param_groups:
+            param_group["lr"] = new_lr
