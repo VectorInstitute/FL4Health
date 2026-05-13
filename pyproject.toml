@@ -58,7 +58,7 @@ dev = [
     "torchtext>=0.14.1,<1.0.0",
     "torchdata>=0.7.0,<1.0.0",
     "torcheval>=0.0.6,<1.0.0",
-    "transformers>=5.0.0,<6.0.0",
+    "transformers>=4.37.2,<5.0.0",
     "datasets>=2.17.1,<3.0.0",
 ]
 

@@ -49,9 +49,12 @@ jobs:
           virtual-environment: .venv/
           # CVE-2026-26007, CVE-2026-34073 are cryptography vulnerability that requires cryptography>=46.0.5, but
           # flwr (flower) requires cryptography<45.0.0, blocking the upgrade.
+          # CVE-2026-1839 is a vulnerability in HF transformers, but they've messed up their typing in 5+ so we're
+          # deferring this.
           ignore-vulns: |
             CVE-2026-26007
             CVE-2026-34073
+            CVE-2026-1839
 
 
       # Deleting some temporary files and useless folders to free up space
