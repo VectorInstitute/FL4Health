@@ -124,6 +124,13 @@ class DittoPersonalizedMixin(AdaptiveDriftConstrainedMixin):
 
         optimizer_kwargs = {k: v for k, v in param_group.items() if k not in ("params", "initial_lr")}
         assert self.global_model is not None
+
+        # NOTE: This is a small workaround for torch back-compatibility in AdamW. Torch injects a key (that isn't part
+        # of the class signature) into the param groups called "decoupled_weight_decay" which causes an error in the
+        # kwargs below. See: https://github.com/pytorch/pytorch/blob/v2.11.0/torch/optim/adamw.py#L57
+        if optim_class == torch.optim.AdamW:
+            optimizer_kwargs.pop("decoupled_weight_decay")
+
         global_optimizer = optim_class(self.global_model.parameters(), **optimizer_kwargs)
 
         # maintain initial_lr for schedulers

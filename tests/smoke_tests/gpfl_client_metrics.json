@@ -5,13 +5,13 @@
                 "train - prediction - accuracy": 0.9245
             },
             "fit_round_losses": {
-                "backward": 2.9377,
+                "backward": 2.93887,
                 "prediction_loss": 0.24898,
-                "magnitude_level_loss": 60.6323,
-                "gce_softmax_loss": 2.0824
+                "magnitude_level_loss": 60.67625,
+                "gce_softmax_loss": 2.08305
             },
             "eval_round_metrics": {
-                "val - prediction - accuracy": 0.9396
+                "val - prediction - accuracy": 0.940333
             },
             "eval_round_loss": 0.1954
         },
@@ -20,10 +20,10 @@
                 "train - prediction - accuracy": 0.9649
             },
             "fit_round_losses": {
-                "gce_softmax_loss": 1.9233,
+                "gce_softmax_loss": 1.92257,
                 "prediction_loss": 0.1157,
-                "magnitude_level_loss": 47.6012,
-                "backward": 2.5151
+                "magnitude_level_loss": 47.59576,
+                "backward": 2.51467
             },
             "eval_round_metrics": {
                 "val - prediction - accuracy": 0.96625
@@ -37,7 +37,7 @@
             "fit_round_losses": {
                 "gce_softmax_loss": 1.8773,
                 "prediction_loss": 0.0888,
-                "magnitude_level_loss": 39.9928,
+                "magnitude_level_loss": 39.99481,
                 "backward": 2.3661
             },
             "eval_round_metrics": {
