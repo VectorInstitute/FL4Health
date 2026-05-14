@@ -11,7 +11,7 @@
                 "gce_softmax_loss": 2.0824
             },
             "eval_round_metrics": {
-                "val - prediction - accuracy": 0.9396
+                "val - prediction - accuracy": 0.940333
             },
             "eval_round_loss": 0.1954
         },

@@ -2,7 +2,7 @@
     "rounds": {
         "1": {
             "eval_round_metrics_aggregated": {
-                "val - prediction - accuracy": 0.9396
+                "val - prediction - accuracy": 0.940333
             },
             "val - loss - aggregated": 0.1954
         },
