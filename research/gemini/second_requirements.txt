@@ -42,7 +42,7 @@ grpcio==1.60.0
 h5py==3.10.0
 httplib2==0.22.0
 huggingface-hub==0.20.2
-idna==3.6
+idna==3.15
 immutabledict==2.2.5
 importlib-metadata==7.0.1
 importlib-resources==6.1.1
