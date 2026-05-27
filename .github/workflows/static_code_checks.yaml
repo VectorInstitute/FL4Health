@@ -51,10 +51,15 @@ jobs:
           # flwr (flower) requires cryptography<45.0.0, blocking the upgrade.
           # CVE-2026-1839 is a vulnerability in HF transformers, but they've messed up their typing in 5+ so we're
           # deferring this.
+          # PYSEC-2025-217 is a transformers vulnerability without a fix yet.
+          # PYSEC-2026-73 is a keras vulnerability fixed in 3.13, but this requires upgrade the python version, which
+          # we will defer for now.
           ignore-vulns: |
             CVE-2026-26007
             CVE-2026-34073
             CVE-2026-1839
+            PYSEC-2025-217
+            PYSEC-2026-73
 
 
       # Deleting some temporary files and useless folders to free up space
