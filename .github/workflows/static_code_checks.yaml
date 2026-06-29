@@ -31,7 +31,7 @@ jobs:
           python-version-file: ".python-version"
 
       - name: Set up cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         id: cached-uv-dependencies
         with:
           path: .venv
