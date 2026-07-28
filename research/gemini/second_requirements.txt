@@ -40,7 +40,7 @@ google-pasta==0.2.0
 googleapis-common-protos==1.62.0
 grpcio==1.60.0
 h5py==3.10.0
-httplib2==0.22.0
+httplib2==0.32.0
 huggingface-hub==0.20.2
 idna==3.6
 immutabledict==2.2.5
