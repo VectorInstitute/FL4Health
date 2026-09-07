@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.11.19
+    rev: 0.12.10
     hooks:
       - id: uv-lock
 
@@ -26,7 +26,7 @@ repos:
       - id: check-toml
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 'v0.15.16'
+    rev: 'v0.16.6'
     hooks:
     - id: ruff-check
       args: [--fix, --exit-non-zero-on-fix]
@@ -35,7 +35,7 @@ repos:
       types_or: [python, jupyter]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.1.0
+    rev: v2.3.1
     hooks:
       - id: mypy
         name: mypy
