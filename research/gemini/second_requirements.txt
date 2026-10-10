@@ -16,7 +16,7 @@ contourpy==1.2.0
 cycler==0.12.1
 Cython==3.0.7
 dask==2023.12.1
-datasets==2.16.1
+datasets==5.0.1
 decorator==5.1.1
 dill==0.3.7
 dm-tree==0.1.8
