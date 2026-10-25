@@ -2,13 +2,13 @@
     "rounds": {
         "1": {
             "fit_round_metrics": {
-                "train - personal - accuracy": 0.60938,
-                "train - global - accuracy": 0.6078,
-                "train - local - accuracy": 0.4797
+                "train - personal - accuracy": 0.60625,
+                "train - global - accuracy": 0.60625,
+                "train - local - accuracy": 0.47656
             },
             "fit_round_losses": {
-                "backward": 1.4428,
-                "global": 1.3272,
+                "backward": 1.44501,
+                "global": 1.33127,
                 "local": 1.63674
             },
             "eval_round_metrics": {
@@ -20,14 +20,14 @@
         },
         "2": {
             "fit_round_metrics": {
-                "train - personal - accuracy": 0.78281,
-                "train - global - accuracy": 0.79687,
-                "train - local - accuracy": 0.74688
+                "train - personal - accuracy": 0.77656,
+                "train - global - accuracy": 0.79844,
+                "train - local - accuracy": 0.73125
             },
             "fit_round_losses": {
-                "backward": 0.67673,
-                "global": 0.68586,
-                "local": 0.79693
+                "backward": 0.67997,
+                "global": 0.73669,
+                "local": 0.82620
             },
             "eval_round_metrics": {
                 "val - personal - accuracy": 0.74722,
@@ -38,14 +38,14 @@
         },
         "3": {
             "fit_round_metrics": {
-                "train - personal - accuracy": 0.82656,
-                "train - global - accuracy": 0.85625,
-                "train - local - accuracy": 0.81094
+                "train - personal - accuracy": 0.81563,
+                "train - global - accuracy": 0.84219,
+                "train - local - accuracy": 0.80156
             },
             "fit_round_losses": {
-                "backward": 0.60156,
-                "global": 0.54568,
-                "local": 0.75705
+                "backward": 0.60081,
+                "global": 0.56094,
+                "local": 0.73777
             },
             "eval_round_metrics": {
                 "val - personal - accuracy": 0.80667,
