@@ -54,12 +54,78 @@ jobs:
           # PYSEC-2025-217 is a transformers vulnerability without a fix yet.
           # PYSEC-2026-73 is a keras vulnerability fixed in 3.13, but this requires upgrade the python version, which
           # we will defer for now.
+          # The advisories below have no fixed version installable under this project's pins, so they are deferred
+          # with the same reasoning as above:
+          # - cryptography (PYSEC-2026-3552/3553/3554, GHSA-537c-gmf6-5ccf) and protobuf (PYSEC-2026-1805): fixes
+          #   need cryptography>=48 and protobuf>=5.29.6, but flwr 1.18 requires cryptography<45 and protobuf<5.
+          # - datasets (PYSEC-2026-3716) and fsspec (PYSEC-2026-4217): fixes need datasets 5.0.1, but the dev group
+          #   pins datasets<3 and flwr-datasets requires datasets<5; datasets 2.x caps fsspec at 2024.6.1.
+          # - pillow (13.0.0), filelock (4.2.1) and keras (PYSEC-2026-2324/2547/3856, 3.13.2+) fixes all require
+          #   Python>=3.11, while this project is pinned to Python 3.10.
+          # - transformers (PYSEC-2026-2289/2290/3929/4174): fixes are only in 5.x (deferred, see above) or none yet.
           ignore-vulns: |
             CVE-2026-26007
             CVE-2026-34073
             CVE-2026-1839
             PYSEC-2025-217
             PYSEC-2026-73
+            PYSEC-2026-3552
+            PYSEC-2026-3553
+            PYSEC-2026-3554
+            GHSA-537c-gmf6-5ccf
+            PYSEC-2026-1805
+            PYSEC-2026-3716
+            PYSEC-2026-4217
+            CVE-2026-112906
+            CVE-2026-112907
+            CVE-2026-112913
+            CVE-2026-112914
+            CVE-2026-112937
+            CVE-2026-112940
+            PYSEC-2026-2324
+            PYSEC-2026-2547
+            PYSEC-2026-3856
+            PYSEC-2026-2289
+            PYSEC-2026-2290
+            PYSEC-2026-3929
+            PYSEC-2026-4174
+            CVE-2026-112390
+            CVE-2026-112391
+            CVE-2026-112392
+            CVE-2026-112393
+            CVE-2026-112395
+            CVE-2026-112396
+            CVE-2026-112397
+            CVE-2026-112398
+            CVE-2026-112399
+            CVE-2026-112400
+            CVE-2026-112401
+            CVE-2026-112402
+            CVE-2026-112404
+            CVE-2026-112405
+            CVE-2026-112406
+            CVE-2026-112891
+            CVE-2026-112892
+            CVE-2026-112893
+            CVE-2026-112894
+            CVE-2026-112895
+            CVE-2026-112896
+            CVE-2026-112897
+            CVE-2026-112899
+            CVE-2026-112900
+            CVE-2026-112901
+            CVE-2026-114501
+            CVE-2026-96636
+            CVE-2026-96637
+            CVE-2026-96638
+            CVE-2026-96639
+            CVE-2026-96640
+            CVE-2026-96641
+            CVE-2026-96642
+            CVE-2026-96643
+            CVE-2026-96644
+            CVE-2026-96778
+            GHSA-78g4-xqwv-q3g8
 
 
       # Deleting some temporary files and useless folders to free up space
