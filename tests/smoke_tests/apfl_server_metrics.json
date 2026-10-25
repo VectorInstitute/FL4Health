@@ -2,27 +2,27 @@
     "rounds": {
         "1": {
             "eval_round_metrics_aggregated": {
-                "val - personal - accuracy": 0.52433,
-                "val - global - accuracy": 0.5331,
-                "val - local - accuracy": 0.4990
+                "val - personal - accuracy": 0.52189,
+                "val - global - accuracy": 0.52878,
+                "val - local - accuracy": 0.50644
             },
-            "val - loss - aggregated": 1.57742
+            "val - loss - aggregated": 1.56820
         },
         "2": {
             "eval_round_metrics_aggregated": {
-                "val - personal - accuracy": 0.74322,
-                "val - global - accuracy": 0.72833,
-                "val - local - accuracy": 0.69955
+                "val - personal - accuracy": 0.74722,
+                "val - global - accuracy": 0.76500,
+                "val - local - accuracy": 0.68956
             },
-            "val - loss - aggregated": 0.85188
+            "val - loss - aggregated": 0.84102
         },
         "3": {
             "eval_round_metrics_aggregated": {
-                "val - personal - accuracy": 0.78300,
-                "val - global - accuracy": 0.75322,
-                "val - local - accuracy": 0.74700
+                "val - personal - accuracy": 0.80667,
+                "val - global - accuracy": 0.78544,
+                "val - local - accuracy": 0.81022
             },
-            "val - loss - aggregated": 0.72138
+            "val - loss - aggregated": 0.63707
         }
     }
 }
